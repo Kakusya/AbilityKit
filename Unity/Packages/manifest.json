@@ -9,6 +9,7 @@
     }
   ],
   "dependencies": {
+    "com.coplaydev.unity-mcp": "file:com.coplaydev.unity-mcp",
     "com.unity.collab-proxy": "2.11.2",
     "com.unity.feature.development": "1.0.1",
     "com.unity.ide.visualstudio": "2.0.22",

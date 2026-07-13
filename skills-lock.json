@@ -1,0 +1,175 @@
+{
+  "version": 1,
+  "skills": {
+    "build-cs-skill": {
+      "source": "C:\\Users\\neko\\AppData\\Local\\Temp\\opencode\\CodeStable-main",
+      "sourceType": "local",
+      "computedHash": "db8432176c1ac3b150b1e90eb558247d65cccd47cc9508baa3dc5cf78a93f748"
+    },
+    "cs": {
+      "source": "C:\\Users\\neko\\AppData\\Local\\Temp\\opencode\\CodeStable-main",
+      "sourceType": "local",
+      "computedHash": "06b4346b795caff50857add53d06b0527ae854f8d5d47ba6057a238b7fea8ea7"
+    },
+    "cs-audit": {
+      "source": "C:\\Users\\neko\\AppData\\Local\\Temp\\opencode\\CodeStable-main",
+      "sourceType": "local",
+      "computedHash": "cc79f4a57a52fec303889841f1ca1a91fa7f0df9f80a7f37aebff1bef84cc0a7"
+    },
+    "cs-brainstorm": {
+      "source": "C:\\Users\\neko\\AppData\\Local\\Temp\\opencode\\CodeStable-main",
+      "sourceType": "local",
+      "computedHash": "85cb77788cbadc3c29cc01ee2b11227bd74cd2ea892e14c03ddab74e667c60f1"
+    },
+    "cs-code-review": {
+      "source": "C:\\Users\\neko\\AppData\\Local\\Temp\\opencode\\CodeStable-main",
+      "sourceType": "local",
+      "computedHash": "ecce6a2ce8b9683ab8407883ab16c7815b9cfddc21bd5191a352d7e951bd1e68"
+    },
+    "cs-doc-api": {
+      "source": "C:\\Users\\neko\\AppData\\Local\\Temp\\opencode\\CodeStable-main",
+      "sourceType": "local",
+      "computedHash": "c25f34045c347fab1724a7e28291ae7296c949c730bbd5b5bac5052733949dd2"
+    },
+    "cs-doc-tutorial": {
+      "source": "C:\\Users\\neko\\AppData\\Local\\Temp\\opencode\\CodeStable-main",
+      "sourceType": "local",
+      "computedHash": "cae564fdf3be0fa8962151b02d97ff3dd09ae0cee43e49bcb6004449600e0718"
+    },
+    "cs-docs": {
+      "source": "C:\\Users\\neko\\AppData\\Local\\Temp\\opencode\\CodeStable-main",
+      "sourceType": "local",
+      "computedHash": "98be87ebd4fac69155786ace341f0da7d315b64ab75312c14ad8f6f6168e33db"
+    },
+    "cs-docs-neat": {
+      "source": "C:\\Users\\neko\\AppData\\Local\\Temp\\opencode\\CodeStable-main",
+      "sourceType": "local",
+      "computedHash": "d87abdbedfeb4a807368992ab48cb882c296b33eaa10a0ff245be74b859d0d23"
+    },
+    "cs-domain": {
+      "source": "C:\\Users\\neko\\AppData\\Local\\Temp\\opencode\\CodeStable-main",
+      "sourceType": "local",
+      "computedHash": "efca5dcb50a883721e8dbcf9116184f2e697ad2bbfbe45df47739c11c79642d0"
+    },
+    "cs-epic": {
+      "source": "C:\\Users\\neko\\AppData\\Local\\Temp\\opencode\\CodeStable-main",
+      "sourceType": "local",
+      "computedHash": "747e7f7af20e5b0f017d9898eb8ef70961a9978a0eec841d740e218de49a7b53"
+    },
+    "cs-feat": {
+      "source": "C:\\Users\\neko\\AppData\\Local\\Temp\\opencode\\CodeStable-main",
+      "sourceType": "local",
+      "computedHash": "4f62104b181a759ff34cb108dfeb0d0b60a8ba28afaff62dca9b14030a5f1850"
+    },
+    "cs-feat-accept": {
+      "source": "C:\\Users\\neko\\AppData\\Local\\Temp\\opencode\\CodeStable-main",
+      "sourceType": "local",
+      "computedHash": "cccb5c8b5565bdf4437a2ea6185e8db60685b23ed6e52685eac58b6ffda6fe55"
+    },
+    "cs-feat-design": {
+      "source": "C:\\Users\\neko\\AppData\\Local\\Temp\\opencode\\CodeStable-main",
+      "sourceType": "local",
+      "computedHash": "4c554f66572e34eae88dc750c2463bbd9688d638d5fc81901aed0f70fa6ae3ff"
+    },
+    "cs-feat-design-review": {
+      "source": "C:\\Users\\neko\\AppData\\Local\\Temp\\opencode\\CodeStable-main",
+      "sourceType": "local",
+      "computedHash": "14b1140a0992ff078efb226bbd09b6666ab6dace55f61efc4eba59792f8def63"
+    },
+    "cs-feat-ff": {
+      "source": "C:\\Users\\neko\\AppData\\Local\\Temp\\opencode\\CodeStable-main",
+      "sourceType": "local",
+      "computedHash": "476b684bee0c290880dcaaaafea18f6b90733d015843f9024353ce27e760dc53"
+    },
+    "cs-feat-impl": {
+      "source": "C:\\Users\\neko\\AppData\\Local\\Temp\\opencode\\CodeStable-main",
+      "sourceType": "local",
+      "computedHash": "bae0f92cc3ff9d72f1a797d7d3d1e7a5a6ef0c2c7267cab3e42239534a28b978"
+    },
+    "cs-feat-qa": {
+      "source": "C:\\Users\\neko\\AppData\\Local\\Temp\\opencode\\CodeStable-main",
+      "sourceType": "local",
+      "computedHash": "afde6a377411ffd9fd3697c142d14da888b8647183268303fa26ca40e4213c4c"
+    },
+    "cs-feedback": {
+      "source": "C:\\Users\\neko\\AppData\\Local\\Temp\\opencode\\CodeStable-main",
+      "sourceType": "local",
+      "computedHash": "4cdafeb8b7d805cff7392cea576b8662ad39055e76019b3072e3341ba4185f13"
+    },
+    "cs-goal": {
+      "source": "C:\\Users\\neko\\AppData\\Local\\Temp\\opencode\\CodeStable-main",
+      "sourceType": "local",
+      "computedHash": "be450a75d5799523502cf0610147a60e0ccdddcd0abfe4d01cbf0509ce107c5e"
+    },
+    "cs-issue": {
+      "source": "C:\\Users\\neko\\AppData\\Local\\Temp\\opencode\\CodeStable-main",
+      "sourceType": "local",
+      "computedHash": "cb2365a360d74f582137bd1b20b9ec253d7c9545024e57b1fa30e7f8b6439720"
+    },
+    "cs-issue-analyze": {
+      "source": "C:\\Users\\neko\\AppData\\Local\\Temp\\opencode\\CodeStable-main",
+      "sourceType": "local",
+      "computedHash": "e5d42e6bd83c9a2b6f8fc3acd3ef57a354a111dedc51ba4ba0f6a43a6c8cdccf"
+    },
+    "cs-issue-fix": {
+      "source": "C:\\Users\\neko\\AppData\\Local\\Temp\\opencode\\CodeStable-main",
+      "sourceType": "local",
+      "computedHash": "caea2cc5e883cabd8edffc58bedd6fbb33ae578c8accae420226a1617f55aa65"
+    },
+    "cs-issue-report": {
+      "source": "C:\\Users\\neko\\AppData\\Local\\Temp\\opencode\\CodeStable-main",
+      "sourceType": "local",
+      "computedHash": "0c53817bcd608049fb965d3923828df5ca7866af202aa33fcc92f0c781a8cbd9"
+    },
+    "cs-keep": {
+      "source": "C:\\Users\\neko\\AppData\\Local\\Temp\\opencode\\CodeStable-main",
+      "sourceType": "local",
+      "computedHash": "c3d338f03a786ae97cc33feb41a8cc084d03df77a408b52744ab28f2071c8c77"
+    },
+    "cs-note": {
+      "source": "C:\\Users\\neko\\AppData\\Local\\Temp\\opencode\\CodeStable-main",
+      "sourceType": "local",
+      "computedHash": "c3fd5453cf1f7cc5ae9951a3be2a3a1818a6db2dcaed81a348bbad73cb29086a"
+    },
+    "cs-onboard": {
+      "source": "C:\\Users\\neko\\AppData\\Local\\Temp\\opencode\\CodeStable-main",
+      "sourceType": "local",
+      "computedHash": "ef5b106de22fe428b4708bd7a284b7c29c91a65fac8a284a7714f2833173f5e1"
+    },
+    "cs-refactor": {
+      "source": "C:\\Users\\neko\\AppData\\Local\\Temp\\opencode\\CodeStable-main",
+      "sourceType": "local",
+      "computedHash": "4f6fac560854e0694d3cd8c22baa80834eac3a6a1c2d349271b48eb688c2b39e"
+    },
+    "cs-refactor-ff": {
+      "source": "C:\\Users\\neko\\AppData\\Local\\Temp\\opencode\\CodeStable-main",
+      "sourceType": "local",
+      "computedHash": "30d2b3ac65d19712e715f76e8bb316efb14cc2c86c9d8f9fa0804b6061ac9556"
+    },
+    "cs-req": {
+      "source": "C:\\Users\\neko\\AppData\\Local\\Temp\\opencode\\CodeStable-main",
+      "sourceType": "local",
+      "computedHash": "623ce536a4a6aa1f78f63b7a97d9dbaccb29be53620a9b32c2461af31cd5fc0d"
+    },
+    "cs-roadmap": {
+      "source": "C:\\Users\\neko\\AppData\\Local\\Temp\\opencode\\CodeStable-main",
+      "sourceType": "local",
+      "computedHash": "b78e30a4d8fb4f74c210bb45ccb8b7b64eb2ff1de6684ed37751e6be5573a6ac"
+    },
+    "cs-roadmap-impl-goal": {
+      "source": "C:\\Users\\neko\\AppData\\Local\\Temp\\opencode\\CodeStable-main",
+      "sourceType": "local",
+      "computedHash": "6e134ed1638bd3fb57bb92c2ff50e238aad5f98c17c7b86edd6886e27313b43c"
+    },
+    "cs-roadmap-review": {
+      "source": "C:\\Users\\neko\\AppData\\Local\\Temp\\opencode\\CodeStable-main",
+      "sourceType": "local",
+      "computedHash": "bd0d067de5836538fa0aecbbc12af630876d5db947d6ca3c44a6e7861b4c132f"
+    },
+    "eval-cs-skill": {
+      "source": "C:\\Users\\neko\\AppData\\Local\\Temp\\opencode\\CodeStable-main",
+      "sourceType": "local",
+      "computedHash": "1d44babe8acd36ae08308d8bf8b852e8cabc9007d8013f38b84f6cd05ccd4823"
+    }
+  }
+}
