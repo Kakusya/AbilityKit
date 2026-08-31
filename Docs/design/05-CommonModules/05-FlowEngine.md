@@ -13,12 +13,15 @@
   - [3. 总体结构](#3-总体结构)
   - [4. 节点生命周期](#4-节点生命周期)
   - [5. Runner、Session 与 Host](#5-runnersession-与-host)
+    - [5.1 同步执行](#51-同步执行)
+    - [5.2 池化与所有权](#52-池化与所有权)
   - [6. FlowContext 与作用域数据](#6-flowcontext-与作用域数据)
   - [7. 控制结构与组合节点](#7-控制结构与组合节点)
   - [8. 阶段贡献模型](#8-阶段贡献模型)
   - [9. 唤醒、泵循环与诊断](#9-唤醒泵循环与诊断)
+    - [9.1 HFSM 适配边界](#91-hfsm-适配边界)
   - [10. 和 Pipeline、Triggering、Demo Flow 的边界](#10-和-pipelinetriggeringdemo-flow-的边界)
-  - [11. 扩展边界](#11-扩展边界)
+  - [11. 扩展边界与验证](#11-扩展边界与验证)
   - [12. 和其他文档的关系](#12-和其他文档的关系)
 
 ---
@@ -36,6 +39,15 @@ Flow 解决的是“一个可被外部 Tick 或事件唤醒推进的流程，如
 
 设计上，Flow 的核心不是“状态机”，而是“可组合流程树”。每个节点只需要实现四段生命周期，组合节点负责把多个子节点编排成控制流。
 
+| 层级 | 应负责 | 不应由该层统一规定 |
+|------|--------|--------------------|
+| Flow 包 | 节点生命周期、Runner/Session、组合节点、唤醒和 pump 限制 | 登录、选角、技能、结算等项目阶段目录 |
+| Host / World 接入 | 驱动时机、session 所有权、停止/销毁和诊断出口 | 替项目选择流程树或失败恢复策略 |
+| 项目应用层 | 组装业务节点、上下文数据、外部事件订阅和补偿逻辑 | 将项目流程名称下沉为通用节点 |
+| Samples / Starter | 给出 Sequence、Race、等待和启动示例 | 作为统一 Battle Flow 应用运行时 |
+
+Flow 的开箱即用价值来自控制结构和生命周期契约，而不是来自一套固定战斗流程。项目专用编排可以大量复用节点机制，同时继续拥有自己的阶段、上下文和失败策略。
+
 ---
 
 ## 2. 源码入口
@@ -44,15 +56,20 @@ Flow 解决的是“一个可被外部 Tick 或事件唤醒推进的流程，如
 |------|------|------|
 | `IFlowNode` | [IFlowNode.cs](../../../Unity/Packages/com.abilitykit.flow/Runtime/Flow/IFlowNode.cs) | 节点四段生命周期接口 |
 | `FlowRunner` | [FlowRunner.cs](../../../Unity/Packages/com.abilitykit.flow/Runtime/Flow/FlowRunner.cs) | 单次流程运行器，维护根节点、状态、上下文、唤醒和诊断 |
+| `FlowExecutionOptions` | [FlowExecutionOptions.cs](../../../Unity/Packages/com.abilitykit.flow/Runtime/Flow/FlowExecutionOptions.cs) | 同步执行的步长、步数上限、异常重抛和诊断选项 |
+| `FlowNodeExtensions` | [FlowNodeExtensions.cs](../../../Unity/Packages/com.abilitykit.flow/Runtime/Flow/FlowNodeExtensions.cs) | 提供池化 runner 驱动的同步 `Execute` 入口 |
 | `FlowSession` | [FlowSession.cs](../../../Unity/Packages/com.abilitykit.flow/Runtime/Flow/FlowSession.cs) | 对外会话包装，复用 runner 并暴露 Started/Finished 事件 |
 | `FlowHost<TArgs>` | [FlowHost.cs](../../../Unity/Packages/com.abilitykit.flow/Runtime/Flow/FlowHost.cs) | 将参数化 root provider 和 session 组合成可启动宿主 |
+| `FlowPools` | [FlowPools.cs](../../../Unity/Packages/com.abilitykit.flow/Runtime/Flow/Pooling/FlowPools.cs) | 管理 Context、Runner、Session、Host、scope map 和完成对象的租借与释放 |
 | `FlowContext` | [FlowContext.cs](../../../Unity/Packages/com.abilitykit.flow/Runtime/Flow/FlowContext.cs) | 按类型存取运行时对象，支持作用域栈 |
 | `FlowWakeUp` | [FlowWakeUp.cs](../../../Unity/Packages/com.abilitykit.flow/Runtime/Flow/FlowWakeUp.cs) | 事件回调唤醒 runner 的轻量句柄 |
-| `FlowDiagnostics` | [FlowDiagnostics.cs](../../../Unity/Packages/com.abilitykit.flow/Runtime/Flow/FlowDiagnostics.cs) | 包装 Enter/Tick/Exit/Interrupt 并记录观察事件 |
-| `ParallelAllNode` | [ParallelAllNode.cs](../../../Unity/Packages/com.abilitykit.flow/Runtime/Flow/Blocks/ParallelAllNode.cs) | 所有子节点完成才结束，任一失败则整体失败 |
-| `RaceNode` | [RaceNode.cs](../../../Unity/Packages/com.abilitykit.flow/Runtime/Flow/Blocks/RaceNode.cs) | 任一子节点完成后结束，并中断其他仍在运行的子节点 |
-| `TimeoutNode` | [TimeoutNode.cs](../../../Unity/Packages/com.abilitykit.flow/Runtime/Flow/Blocks/TimeoutNode.cs) | 子节点超过时间后中断并失败 |
+| `FlowDiagnostics` | [FlowExecutionOptions.cs](../../../Unity/Packages/com.abilitykit.flow/Runtime/Flow/FlowExecutionOptions.cs) | 包装 Enter/Tick/Exit/Interrupt 并记录观察事件 |
+| `ParallelAllNode` | [ParallelAllNode.cs](../../../Unity/Packages/com.abilitykit.flow/Runtime/Flow/Blocks/ParallelAllNode.cs) | 等待全部子节点终态，再把任一非成功折叠为失败 |
+| `RaceNode` | [RaceNode.cs](../../../Unity/Packages/com.abilitykit.flow/Runtime/Flow/Blocks/RaceNode.cs) | 按数组推进，第一个终态子节点决定结果并中断其余节点 |
+| `FinallyNode` | [FinallyNode.cs](../../../Unity/Packages/com.abilitykit.flow/Runtime/Flow/Blocks/FinallyNode.cs) | 执行 finally 节点，但保留 try 节点的最终状态 |
+| `UsingResourceNode<T>` | [UsingResourceNode.cs](../../../Unity/Packages/com.abilitykit.flow/Runtime/Flow/Blocks/UsingResourceNode.cs) | 将资源放入 Context，并在退出或中断时移除和释放 |
 | `OrderedStagedFlowRootProvider<TArgs>` | [OrderedStagedFlowRootProvider.cs](../../../Unity/Packages/com.abilitykit.flow/Runtime/Flow/Stages/OrderedStagedFlowRootProvider.cs) | 将阶段、贡献者和核心 provider 编译成根节点 |
+| `HfsmFlowRunner` | [HfsmFlowRunner.cs](../../../Unity/Packages/com.abilitykit.flow/Runtime/Flow/HfsmFlowRunner.cs) | 用事件队列驱动 HFSM 的独立适配器 |
 
 ---
 
@@ -140,7 +157,26 @@ sequenceDiagram
     Runner->>Session: Finished(status)
 ```
 
-`FlowSession` 和 `FlowHost<TArgs>` 都是 thin wrapper。它们的价值在于把外部 API 稳定下来：调用方只需要订阅 Started、StatusChanged、Finished、UnhandledException，再选择显式 `Step` 或由事件唤醒推进。
+`FlowSession` 和 `FlowHost<TArgs>` 都是 thin wrapper。它们的价值在于把外部 API 稳定下来：调用方只需要订阅 Started、StatusChanged、Finished、UnhandledException，再选择显式 `Step` 或由事件唤醒推进。`FlowHost<TArgs>.Step` 当前是程序集内入口，外部程序集不能把 Host 当作任意公开 Tick 接口；跨程序集宿主应通过已提供的接入层推进，或显式持有公开的 runner/session API。
+
+### 5.1 同步执行
+
+`IFlowNode.Execute(options)` 适合工具、样例和测试中的有限流程。实现会从 `FlowPools` 租借 runner，启动后用固定 `DeltaTime` 循环 `Step`，并在 `finally` 中归还 runner。默认 `MaxSteps` 为 1024，默认 `DeltaTime` 为 0。
+
+| 结果路径 | 返回状态 | 异常位置 |
+|----------|----------|----------|
+| 节点正常完成 | 节点终态 | `Exception` 为空 |
+| 节点生命周期抛异常 | `Failed` | runner 捕获到的异常进入执行结果 |
+| 达到 `MaxSteps` | `Canceled` | 执行结果包含步数上限异常 |
+| `RethrowExceptions = true` | 不返回结果 | 捕获异常在释放 runner 前后按实现边界重新抛出 |
+
+步数上限不是业务失败状态。实现先创建 `InvalidOperationException`，再调用 `runner.Stop()`，所以结果组合是 `Canceled + captured exception`。调用方不能只检查 `Status == Failed`，应同时检查结果中的异常。
+
+### 5.2 池化与所有权
+
+默认构造函数形成递归所有权：`FlowHost<TArgs>` 租借 `FlowSession`，Session 再租借 `FlowRunner`；Host 的 `Dispose` 释放 Session，Session 的 `Dispose` 释放 Runner。归还时会清理 Context、事件订阅、observer、trace recorder 和异常回调，调用方不得在释放后继续持有这些运行态引用。
+
+`FlowPools` 默认覆盖 Context、Runner、Session、scope map、stage node list 和 Completion。泛型 Host 与泛型事件队列按闭合泛型类型分别维护；使用 `RentHost<TArgs>` 前，应为实际 `TArgs` 配置对应的 `PoolHost<TArgs>`，不能把一个参数类型的池配置视为所有 Host 的全局配置。
 
 ---
 
@@ -178,11 +214,14 @@ Flow 的 block 节点把常见控制结构做成可复用节点，而不是让�
 
 | 节点 | 控制语义 | 关键行为 |
 |------|----------|----------|
-| `SequenceNode` | 顺序执行 | 当前子节点成功后进入下一个，失败则整体失败 |
-| `ParallelAllNode` | 全部完成 | 所有子节点结束才完成，任一非成功状态使整体失败 |
-| `RaceNode` | 竞速 | 第一个完成的子节点决定整体状态，其余运行中子节点被中断 |
+| `SequenceNode` | 顺序执行 | 当前子节点成功后进入下一个，非成功终态停止后续节点 |
+| `ParallelAllNode` | 全部完成 | 不是 fail-fast；继续等待全部子节点终态，再将任一非成功折叠为 `Failed` |
+| `RaceNode` | 竞速 | 按数组顺序 Tick，本轮第一个终态子节点决定整体状态，其余运行中节点被中断 |
 | `TimeoutNode` | 超时保护 | 超过指定秒数后中断子节点并返回失败 |
-| `FinallyNode` | 清理保障 | try 节点结束后执行 finally 节点 |
+| `FinallyNode` | 清理保障 | try 结束后运行 finally；finally 的 `Succeeded`、`Failed` 或 `Canceled` 不覆盖 try 状态 |
+| `IfNode` | 二选一 | 只在 `Enter` 时计算条件并固定分支；没有 else 时直接成功 |
+| `SwitchNode` | 多分支 | 只在 `Enter` 时确定 key 和分支；没有 default 时直接成功 |
+| `UsingResourceNode<T>` | 资源作用域 | 创建资源后按类型写入 Context，正常退出或中断时移除并释放 |
 | `RepeatUntilNode` | 条件重复 | 适合轮询等待或脚本化重试 |
 | `AwaitCallbackNode` | 回调等待 | 外部回调通过 wake handle 推进流程 |
 | `WaitSecondsNode` / `WaitUntilNode` | 时间和条件等待 | 每帧 Tick 或被唤醒时检查完成条件 |
@@ -201,6 +240,8 @@ flowchart LR
 ```
 
 这些结构让 Flow 更像“流程控制语法树”，而不是单个长方法。节点的进入、中断和退出都经过 `FlowDiagnostics`，所以组合后仍能保持一致的 trace 和 observer 语义。
+
+两个终态边界需要显式测试。第一，`FinallyNode` 只保留 try 状态，因此不能用 finally 节点的返回状态表达清理失败；需要让清理代码抛异常或把失败写入显式业务上下文。第二，`UsingResourceNode<T>` 只有在资源创建完成并标记为已创建后，才会在自身退出路径释放资源；创建委托在交付资源前抛异常时，委托内部已分配的部分资源仍由委托负责回收。
 
 ---
 
@@ -265,6 +306,20 @@ sequenceDiagram
 
 诊断由 `FlowRuntimeDiagnostics`、`IFlowObserver` 和 `IFlowTraceRecorder` 组成。Runner 在 run started、status changed、node enter/tick/exit/interrupt、pump limit exceeded 等关键点记录事件。这样 Flow 可以用于测试和工具，不只是运行时业务流程。
 
+节点生命周期抛出的异常由 runner 捕获：先通知 `ExceptionHandler` 和 `UnhandledException`，再以 `Failed` 中止根流程；异常回调自身抛出的二次异常会被吞掉，避免遮蔽原始中止流程。外部 `Stop` 则按 `Canceled` 中断当前根节点。泵循环超过默认 128 次时记录 `PumpLimitExceeded`，构造异常并按失败路径中止。
+
+Runner 对“推进时失败”和“主动停止时失败”的处理强度并不相同。`Step/Pump` 中的生命周期异常会进入统一失败与中断路径；`Stop()` 调用根节点 `Interrupt` 时，异常会在 `finally` 清除 runner 运行状态后继续向外传播。再次 `Start()` 会先 Stop 旧流程，因此旧 root 的 Interrupt 抛错会阻止新 root 启动。
+
+`Dispose()` 不是 best-effort 清理器：它先调用 `Stop()`，只有 Stop 正常返回后才清 callback、context 并写 `_disposed=true`。Interrupt 抛错时 runner 虽已停止，但 Dispose 后半段不会执行；`FlowSession.Dispose()` 经 `FlowPools.ReleaseRunner` 归还 runner 时也会继承这一风险。宿主应把 Stop/Dispose 放在自己的异常隔离边界内，并把节点 `Interrupt` 设计为幂等、无异常的资源回收路径。
+
+组合节点同样存在局部提交点。`FinallyNode` 会保存 try 分支终态再执行 finally；`UsingResourceNode` 若资源创建委托已经产生外部副作用、随后抛异常，则节点拿不到完整资源引用，无法自动补偿。Flow 能统一“已取得所有权的节点资源”退出流程，但不能替业务撤销创建委托内部的半完成副作用。
+
+Flow 不提供跨线程同步。`FlowWakeUp` 和 `AwaitCallbackNode` 的回调唤醒必须与 runner 的使用线程协调；若外部异步 API 在工作线程回调，应先投递回宿主线程，再调用 wake，不能把 wake 视为线程安全调度器。
+
+### 9.1 HFSM 适配边界
+
+`HfsmFlowRunner<TOwnId,TStateId,TEvent>` 复用了 Flow 的事件队列和启动/停止外观，但不是流程树 runner。`Start` 调用状态机 `OnEnter`；`Step` 先耗尽 `FlowEventQueue<TEvent>` 并逐个 `Trigger`，再调用一次 `OnLogic`；`Stop` 调用 `OnExit` 并清空队列。当前 `Step(deltaTime)` 不消费 `deltaTime`，时间语义由 HFSM 或外部状态自行提供。
+
 ---
 
 ## 10. 和 Pipeline、Triggering、Demo Flow 的边界
@@ -280,7 +335,7 @@ Flow 可以被业务层使用，但它本身不规定“技能阶段”或“触
 
 ---
 
-## 11. 扩展边界
+## 11. 扩展边界与验证
 
 - 新增基础流程能力时，优先实现新的 `IFlowNode`，保持节点只关心自身生命周期。
 - 需要组合多个节点时，优先做 block 节点，不要把大量子节点状态散落在业务 service 中。
@@ -289,6 +344,29 @@ Flow 可以被业务层使用，但它本身不规定“技能阶段”或“触
 - 长时间运行节点要明确中断语义，避免 `RaceNode`、`TimeoutNode` 或外部 `Stop` 后遗留回调。
 - 放入 `FlowContext` 的对象应是语义化类型，避免同类型对象互相覆盖。
 - 对可能同步连锁唤醒的节点，应保留 runner 的 pump iteration 限制，并让诊断输出足够定位是哪类节点反复 wake。
+
+| 证据 | 入口 | 能证明什么 | 不能证明什么 |
+|------|------|------------|--------------|
+| .NET 编译 | `dotnet build src/AbilityKit.Flow/AbilityKit.Flow.csproj -c Release` | package runtime 可在 `net10.0` 镜像中编译，并能解析 Core/HFSM 依赖 | 不覆盖 Unity player 生命周期或线程行为 |
+| 纯逻辑样例 | `src/AbilityKit.Samples.Logic/Samples/Flow` | Sequence、Race、等待和技能计时等组合可被真实调用 | 不是完整契约测试套件 |
+| package sample | `Unity/Packages/com.abilitykit.flow/Samples~/FlowExamples` | Unity package 的接入形态与典型节点组合 | 不等于自动回归门禁 |
+| Starter 调用 | `Unity/Assets/Scripts/Starter/StarterFlowManager.cs` | Unity 宿主存在生产式启动入口 | 不覆盖所有异常和池化分支 |
+| 专项测试 | `src/AbilityKit.Flow.Tests/` | 2026-08-17 扩至 **236/236**（Runner/Session/Host/Context 作用域/全部节点与块/pump 上限/池化往返/诊断/Stages/HfsmFlowRunner/Execute 扩展），连续多轮全绿，接入 `foundation-units` 门禁 | 不覆盖 Unity player 生命周期、线程行为与 Editor 场景 |
+
+### 2026-08-17 缺陷修复记录（236 项测试扩容时定位并修复）
+
+| 缺陷 | 修复 |
+|------|------|
+| `FlowPools.RentHost` 把 provider 放进池 onGet 闭包，Core 池只登记首次 options，**第一个 provider 被永久固化**（新 provider 永不生效） | Get 之后显式绑定当次 provider |
+| Runner 根节点 `Exit` 抛异常时收尾被跳过（onFinished 不触发、ctx/rootScope 不清理） | Exit 异常按二级通道上报，终态不变、收尾照常完成 |
+| `Step` 无重入守卫：Enter 内同步 Wake 重入 Pump→Step，对未完成 Enter 的节点树嵌套 Tick/重复 Enter（假 NRE、同步完成丢失卡 Running） | `_stepping` 守卫 + 步进结束后统一推进积压唤醒 |
+| `ParallelAllNode` 终态只看最后一轮 Tick 的局部失败标记，**早先轮次的失败被遗忘**（末子成功时整体误报 Succeeded） | 终态改为遍历全部子节点最终状态 |
+| 空 `RaceNode` 永远 Running（与空 Sequence/ParallelAll 不一致，只能靠 MaxSteps 兜底） | 空组立即 Succeeded |
+| `FlowContext` 存入的 null 对引用类型槽不可见（`is T` 对 null 恒 false；scope 内 Set(null) 不遮蔽外层） | null 视为"存在但为 null"，TryGet 命中返回 null |
+| `CreateResourceNode._created` 跨运行存留，同实例第二次运行不重写资源 | Enter 每次运行重新创建写入 |
+| `FlowSession.Started` 在 `runner.Start` 之后触发，立即完成流程的 Finished 早于 Started（时序倒置） | Started 先触发 |
+
+保留的已知语义（测试钉住、未改）：`FinallyNode` 在 try 被 Interrupt 时不执行 finally 分支（Interrupt 协议为同步 void，无法多帧推进，属设计边界）；finally 自身 Failed 状态被 tryStatus 覆盖（与 C# try/finally 语义一致）；`TimeoutNode` 用 `>`（保护 dt=0 预热步）而 `WaitSecondsNode` 用 `>=`（到点即完成）的边界差异；`FlowContext` scope 句柄 Dispose 恒弹栈顶（不绑定自己创建的 scope）；`FlowSession.Dispose` 不触发 Finished；`FlowRunner.Status` Dispose 后仍可读。
 
 ---
 
@@ -300,3 +378,9 @@ Flow 可以被业务层使用，但它本身不规定“技能阶段”或“触
 | [技能系统架构](../08-GameplayModules/01-SkillSystemArchitecture.md) | 该文解释技能 Pipeline，本文说明 Flow 与 Pipeline 的边界 |
 | [触发器系统](../08-GameplayModules/02-TriggeringSystem.md) | Triggering 负责事件条件动作，Flow 负责流程树和等待控制 |
 | [Console Demo 解析](../09-ImplementationExamples/01-ConsoleDemoAnalysis.md) | Console `BattleFlow` 是示例阶段流，不等于通用 Flow 引擎 |
+
+---
+
+文档类型：Canonical 设计 | 事实基线：2026-08-17 | 证据等级：E0 源码、E1 .NET 构建、E2 Samples/Starter、E3 契约测试（`AbilityKit.Flow.Tests` 236 项 + `foundation-units` 门禁）；未达到 E4/E5
+
+*文档版本：v3.3 | 最后更新：2026-08-17*

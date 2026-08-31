@@ -1,0 +1,22 @@
+{
+  "triggers": [
+    {
+      "id": 10060000,
+      "name": "嬴政-王者审判-被动入口",
+      "event": "",
+      "enabled": true,
+      "allowExternal": false,
+      "phase": "immediate",
+      "priority": 50,
+      "conditions": [],
+      "actions": [
+        {
+          "type": "debug_log",
+          "message": "嬴政被动王者审判：普攻穿透与法术伤害语义由通用普攻/投射物链承接，本预配置不新增英雄专用逻辑",
+          "dump_args": false
+        }
+      ],
+      "scope": "owner"
+    }
+  ]
+}

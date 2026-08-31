@@ -44,6 +44,11 @@ namespace AbilityKit.Game.Flow
         private readonly ILogSink _log;
 
         private IBattleSessionFeature _battleSessionFeature;
+        private Action _sessionStartedHandler;
+        private Action _worldReadyHandler;
+        private Action _firstFrameReceivedHandler;
+        private Action<Exception> _sessionFailedHandler;
+        private Action _assetsLoadCompletedHandler;
 
         internal BattleScopeManager(
             Callbacks callbacks,
@@ -62,11 +67,19 @@ namespace AbilityKit.Game.Flow
         public void EnterBattle(IBattleBootstrapper bootstrapper)
         {
             _callbacks.SetBattleRequested(true);
-            // per-battle bootstrapper 在建 scope 时播种，生命周期由 flow 管理，scope 不接管释放。
-            // bootstrapper 可为 null：null 局不播种，后续 TryResolve 落空并传 null。
+            // Per-battle inputs are seeded before the root transition is evaluated.
+            // A bootstrapper may override the module's local/default gate policy by implementing
+            // IFlowGateProvider; seeded services remain caller-owned.
             if (bootstrapper != null)
             {
-                _battleWorldScope.BeginBattle(s => s.Seed<IBattleBootstrapper>(bootstrapper));
+                _battleWorldScope.BeginBattle(seeder =>
+                {
+                    seeder.Seed<IBattleBootstrapper>(bootstrapper);
+                    if (bootstrapper is IFlowGateProvider gates)
+                    {
+                        seeder.Seed<IFlowGateProvider>(gates);
+                    }
+                });
             }
             else
             {
@@ -79,20 +92,34 @@ namespace AbilityKit.Game.Flow
         {
             _callbacks.SetBattleRequested(false);
             _callbacks.ClearGatewayConnectionFactory();
-            _battleWorldScope.EndBattle();
             _callbacks.EnqueueRootEvent(MobaRootEvent.ReturnLobby);
+        }
+
+        internal void EndBattleScope()
+        {
+            _battleWorldScope.EndBattle();
         }
 
         // --- BattleSessionFeature 工厂 ---
 
         internal IBattleSessionFeature CreateBattleSessionFeature()
         {
+            ClearBattleSessionEvents();
+
             // bootstrapper 从 per-battle scope 取回；取不到则传 null，与迁移前 _pendingBootstrapper 为 null 行为等价。
             _battleWorldScope.TryResolve<IBattleBootstrapper>(out var bootstrapper);
+            var generation = _battleWorldScope.ScopeGeneration;
             _battleSessionFeature = _callbacks.CreateBattleSessionFeature(bootstrapper, _callbacks.GetGatewayConnectionFactory());
-            _battleSessionFeature.SessionStarted += OnBattleSessionStarted;
-            _battleSessionFeature.FirstFrameReceived += OnBattleFirstFrameReceived;
-            _battleSessionFeature.SessionFailed += OnBattleSessionFailed;
+            _sessionStartedHandler = () => OnBattleSessionStarted(generation);
+            _worldReadyHandler = () => OnBattleWorldReady(generation);
+            _firstFrameReceivedHandler = () => OnBattleFirstFrameReceived(generation);
+            _sessionFailedHandler = ex => OnBattleSessionFailed(generation, ex);
+            _assetsLoadCompletedHandler = () => OnBattleAssetsLoadCompleted(generation);
+            _battleSessionFeature.SessionStarted += _sessionStartedHandler;
+            _battleSessionFeature.WorldReady += _worldReadyHandler;
+            _battleSessionFeature.FirstFrameReceived += _firstFrameReceivedHandler;
+            _battleSessionFeature.SessionFailed += _sessionFailedHandler;
+            _battleSessionFeature.AssetsLoadCompleted += _assetsLoadCompletedHandler;
             return _battleSessionFeature;
         }
 
@@ -100,26 +127,70 @@ namespace AbilityKit.Game.Flow
         {
             if (_battleSessionFeature != null)
             {
-                _battleSessionFeature.SessionStarted -= OnBattleSessionStarted;
-                _battleSessionFeature.FirstFrameReceived -= OnBattleFirstFrameReceived;
-                _battleSessionFeature.SessionFailed -= OnBattleSessionFailed;
-                _battleSessionFeature = null;
+                if (_sessionStartedHandler != null)
+                    _battleSessionFeature.SessionStarted -= _sessionStartedHandler;
+                if (_worldReadyHandler != null)
+                    _battleSessionFeature.WorldReady -= _worldReadyHandler;
+                if (_firstFrameReceivedHandler != null)
+                    _battleSessionFeature.FirstFrameReceived -= _firstFrameReceivedHandler;
+                if (_sessionFailedHandler != null)
+                    _battleSessionFeature.SessionFailed -= _sessionFailedHandler;
+                if (_assetsLoadCompletedHandler != null)
+                    _battleSessionFeature.AssetsLoadCompleted -= _assetsLoadCompletedHandler;
             }
+
+            _battleSessionFeature = null;
+            _sessionStartedHandler = null;
+            _worldReadyHandler = null;
+            _firstFrameReceivedHandler = null;
+            _sessionFailedHandler = null;
+            _assetsLoadCompletedHandler = null;
         }
 
         // --- Session 事件处理 ---
 
         internal void OnBattleSessionStarted()
         {
+            OnBattleSessionStarted(_battleWorldScope.ScopeGeneration);
+        }
+
+        private void OnBattleSessionStarted(int generation)
+        {
+            if (!IsCurrentBattleGeneration(generation, nameof(IBattleSessionFeature.SessionStarted))) return;
+
             _battleWorldScope.Resolve<IBattleRuntimeState>().SessionStarted = true;
             _log.Info($"[BattleScopeManager] SessionStarted, activeBattle={_callbacks.GetActiveBattle()}");
             var next = _advanceDecider.OnSessionStarted(_callbacks.GetActiveBattle());
             if (next.HasValue) _callbacks.TriggerBattleFsm(next.Value);
         }
 
+        internal void OnBattleWorldReady()
+        {
+            OnBattleWorldReady(_battleWorldScope.ScopeGeneration);
+        }
+
+        private void OnBattleWorldReady(int generation)
+        {
+            if (!IsCurrentBattleGeneration(generation, nameof(IBattleSessionFeature.WorldReady))) return;
+
+            _battleWorldScope.Resolve<IBattleRuntimeState>().WorldReady = true;
+            _log.Info($"[BattleScopeManager] WorldReady, activeBattle={_callbacks.GetActiveBattle()}");
+            var next = _advanceDecider.OnWorldReady(_callbacks.GetActiveBattle());
+            if (next.HasValue) _callbacks.TriggerBattleFsm(next.Value);
+        }
+
         internal void OnBattleFirstFrameReceived()
         {
-            _battleWorldScope.Resolve<IBattleRuntimeState>().FirstFrameReceived = true;
+            OnBattleFirstFrameReceived(_battleWorldScope.ScopeGeneration);
+        }
+
+        private void OnBattleFirstFrameReceived(int generation)
+        {
+            if (!IsCurrentBattleGeneration(generation, nameof(IBattleSessionFeature.FirstFrameReceived))) return;
+
+            var state = _battleWorldScope.Resolve<IBattleRuntimeState>();
+            state.WorldReady = true;
+            state.FirstFrameReceived = true;
             _log.Info($"[BattleScopeManager] FirstFrameReceived, activeBattle={_callbacks.GetActiveBattle()}");
             var next = _advanceDecider.OnFirstFrameReceived(_callbacks.GetActiveBattle());
             if (next.HasValue) _callbacks.TriggerBattleFsm(next.Value);
@@ -127,11 +198,46 @@ namespace AbilityKit.Game.Flow
 
         internal void OnBattleSessionFailed(Exception ex)
         {
-            // runtime state only tracks session start / first frame in current contract
+            OnBattleSessionFailed(_battleWorldScope.ScopeGeneration, ex);
+        }
 
+        private void OnBattleSessionFailed(int generation, Exception ex)
+        {
+            if (!IsCurrentBattleGeneration(generation, nameof(IBattleSessionFeature.SessionFailed))) return;
+
+            // 当前契约中 runtime state 仅跟踪 session start / first frame
             _log.Error($"[BattleScopeManager] Battle session failed: {ex}");
             var next = _advanceDecider.OnSessionFailed(_callbacks.GetActiveBattle());
             if (next.HasValue) _callbacks.TriggerBattleFsm(next.Value);
+        }
+
+        /// <summary>
+        /// 阶段 7a：真实资源加载完成（manifest barrier）。
+        /// 由 BattleSessionFeature.AssetsLoadCompleted 事件或 <see cref="NotifyAssetsLoadCompleted"/> 触发，
+        /// 仅在 LoadAssets 状态推进为 AssetsLoadCompleted。
+        /// </summary>
+        internal void OnBattleAssetsLoadCompleted()
+        {
+            OnBattleAssetsLoadCompleted(_battleWorldScope.ScopeGeneration);
+        }
+
+        private void OnBattleAssetsLoadCompleted(int generation)
+        {
+            if (!IsCurrentBattleGeneration(generation, nameof(IBattleSessionFeature.AssetsLoadCompleted))) return;
+
+            _battleWorldScope.Resolve<IBattleRuntimeState>().AssetsLoadCompleted = true;
+            _log.Info($"[BattleScopeManager] AssetsLoadCompleted, activeBattle={_callbacks.GetActiveBattle()}");
+            var next = _advanceDecider.OnAssetsLoadCompleted(_callbacks.GetActiveBattle());
+            if (next.HasValue) _callbacks.TriggerBattleFsm(next.Value);
+        }
+
+        /// <summary>
+        /// 阶段 7a：供外部（资源加载协调器）在 manifest barrier 通过后调用，
+        /// 推进 LoadAssets → InMatch。首帧不再代表资源加载完成。
+        /// </summary>
+        internal void NotifyAssetsLoadCompleted()
+        {
+            OnBattleAssetsLoadCompleted();
         }
 
         // --- 抽取的推进判断 ---
@@ -139,21 +245,34 @@ namespace AbilityKit.Game.Flow
         internal void TryAdvanceOnConnectEnter()
         {
             var state = _battleWorldScope.Resolve<IBattleRuntimeState>();
-            var next = _advanceDecider.OnStateEntered(MobaBattleState.Connect, state.SessionStarted, state.FirstFrameReceived);
+            var next = _advanceDecider.OnStateEntered(
+                MobaBattleState.Connect,
+                state.SessionStarted,
+                state.WorldReady,
+                state.FirstFrameReceived);
             if (next.HasValue) _callbacks.TriggerBattleFsm(next.Value);
         }
 
         internal void TryAdvanceOnCreateOrJoinWorldEnter()
         {
             var state = _battleWorldScope.Resolve<IBattleRuntimeState>();
-            var next = _advanceDecider.OnStateEntered(MobaBattleState.CreateOrJoinWorld, state.SessionStarted, state.FirstFrameReceived);
+            var next = _advanceDecider.OnStateEntered(
+                MobaBattleState.CreateOrJoinWorld,
+                state.SessionStarted,
+                state.WorldReady,
+                state.FirstFrameReceived);
             if (next.HasValue) _callbacks.TriggerBattleFsm(next.Value);
         }
 
         internal void TryAdvanceOnLoadAssetsEnter()
         {
             var state = _battleWorldScope.Resolve<IBattleRuntimeState>();
-            var next = _advanceDecider.OnStateEntered(MobaBattleState.LoadAssets, state.SessionStarted, state.FirstFrameReceived);
+            var next = _advanceDecider.OnStateEntered(
+                MobaBattleState.LoadAssets,
+                state.SessionStarted,
+                state.WorldReady,
+                state.FirstFrameReceived,
+                state.AssetsLoadCompleted);
             if (next.HasValue) _callbacks.TriggerBattleFsm(next.Value);
         }
 
@@ -167,6 +286,21 @@ namespace AbilityKit.Game.Flow
             _callbacks.SetBattleRequested(false);
             _callbacks.ClearGatewayConnectionFactory();
             _callbacks.EnqueueRootEvent(MobaRootEvent.ReturnLobby);
+        }
+
+        private bool IsCurrentBattleGeneration(int generation, string eventName)
+        {
+            if (_battleWorldScope.HasActiveScope &&
+                _battleWorldScope.ScopeGeneration == generation)
+            {
+                return true;
+            }
+
+            _log.Info(
+                $"[BattleScopeManager] Ignored stale {eventName}: " +
+                $"eventGeneration={generation}, currentGeneration={_battleWorldScope.ScopeGeneration}, " +
+                $"hasActiveScope={_battleWorldScope.HasActiveScope}");
+            return false;
         }
     }
 }

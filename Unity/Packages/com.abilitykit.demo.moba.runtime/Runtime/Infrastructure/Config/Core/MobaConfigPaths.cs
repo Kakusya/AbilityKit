@@ -25,6 +25,8 @@
 
         public const string SummonsFile = "summons";
 
+        public const string SummonAttrInheritsFile = "summon_attr_inherits";
+
         public const string ComponentTemplatesFile = "component_templates";
 
         public const string SkillButtonTemplatesFile = "skill_button_templates";
@@ -37,6 +39,8 @@
         public const string SpawnSummonActionTemplatesFile = "spawn_summon_action_templates";
 
         public const string PresentationTemplatesFile = "presentation_templates";
+
+        public const string BattleMapsFile = "battle_maps";
 
         public const string GameplaysFile = "gameplays";
 

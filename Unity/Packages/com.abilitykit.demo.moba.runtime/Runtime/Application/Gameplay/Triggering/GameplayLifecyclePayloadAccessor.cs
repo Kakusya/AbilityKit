@@ -12,6 +12,14 @@ namespace AbilityKit.Demo.Moba.Gameplay.Triggering
         private static readonly int DeltaSecondsId = StableStringId.Get("payload:" + GameplayTriggerEvents.DeltaSecondsField);
         private static readonly int WinTeamIdId = StableStringId.Get("payload:" + GameplayTriggerEvents.WinTeamIdField);
 
+        public static bool SupportsField(int fieldId)
+        {
+            return fieldId == FrameIndexId
+                || fieldId == ElapsedSecondsId
+                || fieldId == DeltaSecondsId
+                || fieldId == WinTeamIdId;
+        }
+
         public bool TryGet(in GameplayLifecycleEventArgs args, int fieldId, out int value)
         {
             if (fieldId == FrameIndexId)

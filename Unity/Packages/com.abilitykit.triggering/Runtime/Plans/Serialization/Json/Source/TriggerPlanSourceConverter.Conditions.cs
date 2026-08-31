@@ -127,6 +127,18 @@ namespace AbilityKit.Triggering.Runtime.Plan.Json
                     WriteHasBuffNode(writer, cond);
                     break;
 
+                case "owner_matches_payload_source":
+                    WriteOwnerMatchesPayloadNode(writer, "predicate:owner_matches_payload_source");
+                    break;
+
+                case "owner_matches_payload_target":
+                    WriteOwnerMatchesPayloadNode(writer, "predicate:owner_matches_payload_target");
+                    break;
+
+                case "target_is_flying_projectile":
+                    WriteOwnerMatchesPayloadNode(writer, "predicate:target_is_flying_projectile");
+                    break;
+
                 default:
                     throw new InvalidOperationException($"Unsupported condition type: {type}");
             }
@@ -224,18 +236,36 @@ namespace AbilityKit.Triggering.Runtime.Plan.Json
             }
 
             var checkStack = ReadInt(cond, 0, "check_stack", "checkStack");
+            var targetMode = ReadInt(cond, 0, "target_mode", "targetMode");
+            var functionKey = targetMode == 1 ? "predicate:has_buff_owner" : "predicate:has_buff";
 
             writer.WriteStartObject();
             writer.WritePropertyName("Kind");
             writer.WriteValue("Function");
             writer.WritePropertyName("FunctionId");
-            writer.WriteValue(StableStringId.Get("predicate:has_buff"));
+            writer.WriteValue(StableStringId.Get(functionKey));
             writer.WritePropertyName("FunctionArity");
             writer.WriteValue(2);
             writer.WritePropertyName("Left");
             WriteConstValue(writer, buffId);
             writer.WritePropertyName("Right");
             WriteConstValue(writer, checkStack > 0 ? 1d : 0d);
+            writer.WriteEndObject();
+        }
+
+        private static void WriteOwnerMatchesPayloadNode(JsonTextWriter writer, string functionKey)
+        {
+            writer.WriteStartObject();
+            writer.WritePropertyName("Kind");
+            writer.WriteValue("Function");
+            writer.WritePropertyName("FunctionId");
+            writer.WriteValue(StableStringId.Get(functionKey));
+            writer.WritePropertyName("FunctionArity");
+            writer.WriteValue(2);
+            writer.WritePropertyName("Left");
+            WriteConstValue(writer, 0d);
+            writer.WritePropertyName("Right");
+            WriteConstValue(writer, 0d);
             writer.WriteEndObject();
         }
 

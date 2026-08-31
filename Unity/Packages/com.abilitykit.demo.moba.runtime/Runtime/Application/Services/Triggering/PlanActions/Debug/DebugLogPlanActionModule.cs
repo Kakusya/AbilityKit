@@ -3,6 +3,7 @@ using AbilityKit.Triggering.Registry;
 using AbilityKit.Triggering.Runtime;
 using AbilityKit.Triggering.Runtime.Plan;
 using AbilityKit.Triggering.Runtime.Plan.Json;
+using AbilityKit.Demo.Moba.Services;
 using AbilityKit.Demo.Moba.Systems;
 
 
@@ -18,6 +19,11 @@ namespace AbilityKit.Demo.Moba.Services.Triggering.PlanActions
 
         protected override void Execute(object triggerArgs, DebugLogArgs args, ExecCtx<IWorldResolver> ctx)
         {
+            if (!MobaRuntimeLog.IsEnabled(MobaRuntimeLogLevel.Info, MobaRuntimeLogPurpose.ConfiguredActionDebug))
+            {
+                return;
+            }
+
             var msg = string.Empty;
 
             if (args.MsgId > 0 && ctx.Context != null && ctx.Context.TryResolve<TriggerPlanJsonDatabase>(out var db) && db != null)
@@ -25,13 +31,13 @@ namespace AbilityKit.Demo.Moba.Services.Triggering.PlanActions
                 db.TryGetString(args.MsgId, out msg);
             }
 
-            LogInvestigation(ctx, $"debug_log: {msg}");
+            LogConfiguredActionDebug(ctx, $"debug_log: {msg}");
 
             if (args.Dump)
             {
                 var argsType = triggerArgs != null ? triggerArgs.GetType().Name : "<null>";
                 var ctxType = ctx.Context != null ? ctx.Context.GetType().Name : "<null>";
-                LogInvestigation(ctx, $"debug_log dump. argsType={argsType}, ctxType={ctxType}");
+                LogConfiguredActionDebug(ctx, $"debug_log dump. argsType={argsType}, ctxType={ctxType}");
             }
         }
     }

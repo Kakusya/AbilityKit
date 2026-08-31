@@ -13,6 +13,8 @@ namespace AbilityKit.Demo.Shooter.View
                     return ShooterSnapshotApplyResult.IgnoredStaleSnapshot;
                 case ShooterPureStateSnapshotApplyResult.NeedsFullBaselineResync:
                     return ShooterSnapshotApplyResult.PureStateBaselineResyncNeeded;
+                case ShooterPureStateSnapshotApplyResult.UnsupportedVersion:
+                    return ShooterSnapshotApplyResult.UnsupportedVersion;
                 case ShooterPureStateSnapshotApplyResult.Ignored:
                 default:
                     return ShooterSnapshotApplyResult.Ignored;
@@ -27,6 +29,7 @@ namespace AbilityKit.Demo.Shooter.View
         AppliedPackedSnapshot = 2,
         ImportFailed = 3,
         IgnoredStaleSnapshot = 4,
-        PureStateBaselineResyncNeeded = 5
+        PureStateBaselineResyncNeeded = 5,
+        UnsupportedVersion = 6
     }
 }

@@ -7,6 +7,7 @@ using AbilityKit.Ability.World.DI;
 using AbilityKit.Demo.Moba.Services;
 using AbilityKit.Demo.Moba.Triggering;
 using AbilityKit.Triggering.Runtime.Plan.Json;
+using AbilityKit.Triggering.Blackboard;
 using AbilityKit.Demo.Moba.Systems.Bootstrap;
 using AbilityKit.Demo.Moba.Systems.Bootstrap.Flow;
 
@@ -77,11 +78,13 @@ namespace AbilityKit.Demo.Moba.Systems.Bootstrap.Flow.Stages
             var directoryLoader = new TriggerPlanDirectoryLoader(fsAdapter);
             var profile = resolver.Resolve<MobaTriggerPlanLoadProfile>() ?? MobaTriggerPlanLoadProfile.Default;
 
-            LoadEntries(db, fsAdapter, directoryLoader, profile.Entries, db.CueFactory);
+            LoadEntries(db, fsAdapter, directoryLoader, profile.Entries, db.CueFactory, profile.FailFastOnDirectoryLoad);
+            db.InitializeBlackboards(resolver.Resolve<IBlackboardResolver>(), replaceExisting: true);
+            db.ConfigureOwnerBlackboards(resolver.Resolve<IOwnerBlackboardStore>(), releaseExisting: true);
             return db;
         }
 
-        private static void LoadEntries(TriggerPlanJsonDatabase db, EtFileSystemAdapter fsAdapter, TriggerPlanDirectoryLoader directoryLoader, TriggerPlanLoadEntry[] entries, TriggerPlanJsonDatabase.ICueFactory cueFactory)
+        private static void LoadEntries(TriggerPlanJsonDatabase db, EtFileSystemAdapter fsAdapter, TriggerPlanDirectoryLoader directoryLoader, TriggerPlanLoadEntry[] entries, TriggerPlanJsonDatabase.ICueFactory cueFactory, bool failFastOnDirectoryLoad)
         {
             if (entries == null) return;
 
@@ -92,7 +95,7 @@ namespace AbilityKit.Demo.Moba.Systems.Bootstrap.Flow.Stages
 
                 if (entry.IsDirectory)
                 {
-                    LoadDirectory(db, directoryLoader, entry, cueFactory);
+                    LoadDirectory(db, directoryLoader, entry, cueFactory, failFastOnDirectoryLoad);
                 }
                 else
                 {
@@ -118,13 +121,17 @@ namespace AbilityKit.Demo.Moba.Systems.Bootstrap.Flow.Stages
             }
         }
 
-        private static void LoadDirectory(TriggerPlanJsonDatabase db, TriggerPlanDirectoryLoader directoryLoader, TriggerPlanLoadEntry entry, TriggerPlanJsonDatabase.ICueFactory cueFactory)
+        private static void LoadDirectory(TriggerPlanJsonDatabase db, TriggerPlanDirectoryLoader directoryLoader, TriggerPlanLoadEntry entry, TriggerPlanJsonDatabase.ICueFactory cueFactory, bool failFastOnDirectoryLoad)
         {
             var pattern = string.IsNullOrEmpty(entry.Pattern) ? "**/*.json" : entry.Pattern;
             MobaRuntimeLog.Info(MobaRuntimeLogModule.Bootstrap, MobaRuntimeLogPurpose.Configuration, nameof(MobaTriggerPlanDatabaseFactory), $"Loading {entry.Name} from {entry.Path} directory");
             try
             {
-                var options = new TriggerPlanDirectoryLoadOptions { CueFactory = cueFactory };
+                var options = new TriggerPlanDirectoryLoadOptions
+                {
+                    CueFactory = cueFactory,
+                    ThrowOnFileParseError = failFastOnDirectoryLoad
+                };
                 var loadedDb = directoryLoader.LoadDirectory(entry.Path, pattern, options);
                 if (loadedDb != null && loadedDb.Records != null)
                 {

@@ -196,3 +196,79 @@ Unity battle features should resolve network channels through `IAbilityKitConnec
 - `AbilityKitConnectionRole.BattleReliable` is reserved for reliable low-frequency battle RPCs when the battle flow needs a separate TCP channel.
 
 This keeps the demo business flow reusable while allowing production Unity projects to standardize channel creation and lifetime around GameFramework. It also leaves room for TCP and KCP to coexist: the composition layer registers providers or concrete `IConnection` instances by role, and battle code asks for the role it needs without knowing whether the underlying transport is GameFramework TCP, fallback TCP, or a future KCP channel.
+
+## 正式多人模式启动流程
+
+正式多人模式启动流程用分阶段协议取代旧的直接 `StartBattle`：Lobby 准备、加载屏障、幂等 Battle commit 与状态推送。这确保所有成员在权威战斗世界创建前完成资源加载。
+
+### 端到端流程
+
+```mermaid
+flowchart TB
+    Login[GuestLogin / AccountLogin] --> Room[CreateRoom or JoinRoom]
+    Room --> Pick[PickHero]
+    Pick --> Ready[SetReady]
+    Ready --> WaitReady[等待所有成员 Ready]
+    WaitReady --> Begin[owner: BeginLoading]
+    Begin --> Freeze[服务端冻结 roster, LaunchGeneration++]
+    Freeze --> Manifest[客户端 BattleAssetLoadService 加载 manifest]
+    Manifest --> Report[每个成员: ReportAssetsLoaded]
+    Report --> Barrier{所有成员 loaded?}
+    Barrier -->|否| Manifest
+    Barrier -->|是| Commit[服务端 Tick 自动 commit]
+    Commit --> Init[InitializeBattleAsync idempotent]
+    Init --> InBattle[phase=InBattle]
+    InBattle --> Subscribe[SubscribeStateSync]
+    Subscribe --> InMatch[InMatch]
+```
+
+### 关键不变量
+
+| 不变量 | 强制方式 |
+|--------|----------|
+| LaunchGeneration 单调 | 只增不减。携带不匹配 generation 的过期 `ReportAssetsLoaded` 被幂等忽略 |
+| Loading 期间 roster 冻结 | `BeginLoading` 后不允许 Join/Leave 改变参战名单 |
+| 单次 Battle commit | `CommitId`（`roomId:LaunchGeneration`）+ `InitSpecHash` 保证 `InitializeBattleAsync` 幂等；重复调用返回 `AlreadyInitialized` |
+| Revision 单调推送 | `RoomStateChanged` 携带单调递增的 `Revision`；`ClientRoomStore` 拒绝旧 revision |
+| EventSequence 缺口检测 | 客户端检测 `LastEventSequence` 缺口并触发 `GetSnapshot` 补拉 |
+| 战斗前资源屏障 | `BattleAssetManifest` 屏障必须在 `ReportAssetsLoaded` 前完成；首帧不再代表资源加载完成 |
+| owner 迁移稳定性 | 新 owner 由在线成员中 `JoinOrdinal` 最小者担任 |
+
+### 已废弃入口
+
+| 已废弃 | 替代方案 | 行为 |
+|--------|----------|------|
+| `StartBattle`（opCode 106） | `BeginLoading` + `ReportAssetsLoaded` | `StartRoomBattleHandler` 返回 `Conflict`，提示 "StartBattle is deprecated" |
+| `FirstFrameReceived` 作为加载完成信号 | `BattleAssetManifest` 屏障 + `AssetsLoadCompleted` 信号 | 首帧不再驱动 `LoadingDone`；只有 manifest 屏障完成才允许 `ReportAssetsLoaded` |
+
+### 测试矩阵参考
+
+正式流程由阶段 8 测试套件验证：
+
+| 测试套件 | 源码 | 覆盖范围 |
+|----------|------|----------|
+| 状态机单元测试 | `Server/Orleans/src/AbilityKit.Orleans.Grains.Tests/Rooms/RoomStateMachineTests.cs` | BeginLoading/ReportAssetsLoaded/CancelLoading/PrepareCommit/CommitBattleStarted/RollbackBattleCommit 转换 |
+| 端到端流程测试 | `Server/Orleans/src/AbilityKit.Orleans.Grains.Tests/Rooms/RoomMultiplayerE2EFlowTests.cs` | 双玩家完整流程、超时回滚、owner 迁移 |
+| 故障矩阵测试 | `Server/Orleans/src/AbilityKit.Orleans.Grains.Tests/Rooms/RoomFaultMatrixTests.cs` | 重复上报幂等、双重 BeginLoading、非法阶段、取消 generation |
+| 协议兼容性 | `Server/Orleans/src/AbilityKit.Orleans.Gateway.Tests/RoomProtocolCompatibilityTests.cs` | opcode 稳定性、wire DTO 往返 |
+| 加载 Handler 测试 | `Server/Orleans/src/AbilityKit.Orleans.Gateway.Tests/RoomLoadingHandlersTests.cs` | BeginLoading/ReportAssetsLoaded/CancelLoading/GetSnapshot handler 验证 |
+| 客户端 Room 仓库测试 | `Unity/Packages/com.abilitykit.demo.moba.view.runtime/Runtime/Game/Test/UnitTest/ClientRoomStoreTests.cs` | revision 单调性、缺口检测、幂等应用 |
+| 客户端加载测试 | `Unity/Packages/com.abilitykit.demo.moba.view.runtime/Runtime/Game/Test/UnitTest/GatewayRoomClientLoadingTests.cs` | GatewayRoomClient 分阶段 API |
+| 资源加载测试 | `Unity/Packages/com.abilitykit.demo.moba.view.runtime/Runtime/Game/Test/UnitTest/BattleAssetLoadServiceTests.cs` | manifest 屏障语义 |
+
+### 源码索引
+
+| 组件 | 源码 |
+|------|------|
+| 房间状态机 | `Server/Orleans/src/AbilityKit.Orleans.Grains/Rooms/RoomStateMachine.cs` |
+| 房间 Grain | `Server/Orleans/src/AbilityKit.Orleans.Grains/Rooms/RoomGrain.cs` |
+| InitSpec 哈希 | `Server/Orleans/src/AbilityKit.Orleans.Grains/Rooms/RoomBattleInitSpecHasher.cs` |
+| 状态推送构建器 | `Server/Orleans/src/AbilityKit.Orleans.Grains/Rooms/RoomStatePushBuilder.cs` |
+| 房间模型 | `Server/Orleans/src/AbilityKit.Orleans.Contracts/Rooms/RoomModels.cs` |
+| 加载模型 | `Server/Orleans/src/AbilityKit.Orleans.Contracts/Rooms/RoomLoadingModels.cs` |
+| Gateway 房间客户端 | `Unity/Packages/com.abilitykit.demo.moba.view.runtime/Runtime/Game/Battle/Client/Gateway/GatewayRoomClient.cs` |
+| 客户端 Room 仓库 | `Unity/Packages/com.abilitykit.demo.moba.view.runtime/Runtime/Game/Battle/Client/Gateway/Room/ClientRoomStore.cs` |
+| 战斗资源清单 | `Unity/Packages/com.abilitykit.demo.moba.view.runtime/Runtime/Game/Battle/Shared/Assets/BattleAssetManifest.cs` |
+| 战斗资源加载服务 | `Unity/Packages/com.abilitykit.demo.moba.view.runtime/Runtime/Game/Battle/Shared/Assets/BattleAssetLoadService.cs` |
+| 多人房间流程控制器 | `Unity/Packages/com.abilitykit.demo.moba.view.runtime/Runtime/Game/App/Flow/Core/Multiplayer/MultiplayerRoomFlowController.cs` |
+| 正式大厅 Feature | `Unity/Packages/com.abilitykit.demo.moba.view.runtime/Runtime/Game/App/Flow/Boot/FormalLobbyFeature.cs` |

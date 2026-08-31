@@ -25,7 +25,7 @@ namespace AbilityKit.Core.Mathematics
         public static Vec3 Back => new Vec3(0f, 0f, -1f);
 
         public float SqrMagnitude => X * X + Y * Y + Z * Z;
-        public float Magnitude => (float)System.Math.Sqrt(SqrMagnitude);
+        public float Magnitude => MathUtil.Sqrt(SqrMagnitude);
 
         public Vec3 Normalized
         {
@@ -75,7 +75,7 @@ namespace AbilityKit.Core.Mathematics
         public static Vec3 FromNumerics(in System.Numerics.Vector3 v) => new Vec3(v.X, v.Y, v.Z);
 
         public bool Equals(Vec3 other) => X.Equals(other.X) && Y.Equals(other.Y) && Z.Equals(other.Z);
-        public override bool Equals(object obj) => obj is Vec3 other && Equals(other);
+        public override bool Equals(object? obj) => obj is Vec3 other && Equals(other);
         public override int GetHashCode() => HashCode.Combine(X, Y, Z);
         public override string ToString() => $"({X}, {Y}, {Z})";
     }

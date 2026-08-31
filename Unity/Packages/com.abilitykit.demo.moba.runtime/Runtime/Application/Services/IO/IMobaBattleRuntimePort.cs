@@ -4,6 +4,7 @@ using AbilityKit.Ability.FrameSync;
 using AbilityKit.Ability.Host;
 using AbilityKit.Ability.Host.Extensions.Moba.Runtime;
 using AbilityKit.Ability.World.Services;
+using AbilityKit.Game.Battle;
 using AbilityKit.Ability.World.Services.Attributes;
 using AbilityKit.Protocol.Moba;
 
@@ -11,7 +12,7 @@ namespace AbilityKit.Demo.Moba.Services
 {
     [WorldService(typeof(IMobaBattleRuntimePort))]
     [WorldService(typeof(MobaBattleRuntimePort))]
-    public sealed class MobaBattleRuntimePort : IService, IMobaBattleRuntimePort
+    public sealed class MobaBattleRuntimePort : IService, IMobaBattleRuntimePort, IBattleRuntimeStatusProvider
     {
         private readonly IMobaGameStartPort _gameStart;
         private readonly IMobaBattleInputPort _input;
@@ -31,6 +32,24 @@ namespace AbilityKit.Demo.Moba.Services
         }
 
         public MobaBattleRuntimeStatus Status => BuildStatus();
+
+        public BattleRuntimeStatus BattleStatus
+        {
+            get
+            {
+                var status = BuildStatus();
+                var capabilities = BattleRuntimeCapability.None;
+                if (status.Has(MobaBattleRuntimeCapability.GameStart)) capabilities |= BattleRuntimeCapability.GameStart;
+                if (status.Has(MobaBattleRuntimeCapability.Input)) capabilities |= BattleRuntimeCapability.Input;
+                if (status.Has(MobaBattleRuntimeCapability.SnapshotOutput)) capabilities |= BattleRuntimeCapability.SnapshotOutput;
+                if (status.Has(MobaBattleRuntimeCapability.StateReadModel)) capabilities |= BattleRuntimeCapability.StateReadModel;
+
+                var state = status.IsReadyForBattleLoop
+                    ? BattleRuntimeState.Ready
+                    : BattleRuntimeState.Created;
+                return new BattleRuntimeStatus(capabilities, state, status.MissingServices);
+            }
+        }
 
         public MobaGameStartResult TryStartGame(in MobaGameStartSpec spec)
         {
@@ -62,6 +81,7 @@ namespace AbilityKit.Demo.Moba.Services
                 throw new InvalidOperationException("MobaBattleRuntimePort requires IMobaBattleOutputPort for snapshot output.");
             }
 
+            ValidateSnapshotFrame(frame);
             return _output.TryGetSnapshot(frame, out snapshot);
         }
 
@@ -75,12 +95,27 @@ namespace AbilityKit.Demo.Moba.Services
                 throw new InvalidOperationException("MobaBattleRuntimePort requires IMobaBattleOutputPort for snapshot output.");
             }
 
+            ValidateSnapshotFrame(frame);
+
             if (snapshots == null)
             {
                 throw new ArgumentNullException(nameof(snapshots));
             }
 
+            if (maxSnapshots <= 0)
+            {
+                throw new ArgumentOutOfRangeException(nameof(maxSnapshots), maxSnapshots, "maxSnapshots must be positive.");
+            }
+
             return _output.CollectSnapshots(frame, snapshots, maxSnapshots);
+        }
+
+        private static void ValidateSnapshotFrame(FrameIndex frame)
+        {
+            if (frame.Value < 0)
+            {
+                throw new ArgumentOutOfRangeException(nameof(frame), frame.Value, "frame must be non-negative.");
+            }
         }
 
         /// <summary>

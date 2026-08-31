@@ -4,6 +4,7 @@
     <TargetFramework>net10.0</TargetFramework>
     <ImplicitUsings>enable</ImplicitUsings>
     <Nullable>enable</Nullable>
+    <AbilityKitStable>true</AbilityKitStable>
     <RootNamespace>AbilityKit</RootNamespace>
     <AssemblyName>AbilityKit.Combat.Collision.Abstractions</AssemblyName>
     <LangVersion>latest</LangVersion>
@@ -17,6 +18,7 @@
   <ItemGroup>
     <ProjectReference Include="../../src/AbilityKit.Core/AbilityKit.Core.csproj" />
     <ProjectReference Include="../../src/AbilityKit.World.DI/AbilityKit.World.DI.csproj" />
+    <ProjectReference Include="../../src/AbilityKit.Deterministic/AbilityKit.Deterministic.csproj" />
   </ItemGroup>
 
 </Project>

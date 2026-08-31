@@ -14,12 +14,14 @@ namespace AbilityKit.Demo.Shooter.View
     /// <summary>
     /// 先通过共享网络中间件管线处理 Shooter 的权威快照推送，然后再分发给客户端同步控制器。
     /// </summary>
-    public sealed class ShooterCarrierNetworkLink
+    public sealed class ShooterCarrierNetworkLink : IDisposable
     {
         private readonly IShooterClientSyncController _controller;
         private readonly NetworkConditioningMiddleware _conditioning;
         private readonly NetworkPipeline _pipeline;
         private readonly LoopbackSessionContext _context = new LoopbackSessionContext();
+        private readonly ReusableMemoryPackSerializationBuffer _pureStatePayloadBuffer = new ReusableMemoryPackSerializationBuffer();
+        private readonly ReusableMemoryPackSerializationBuffer _wirePayloadBuffer = new ReusableMemoryPackSerializationBuffer();
 
         private uint _sequence;
         private long _clockMs;
@@ -63,7 +65,7 @@ namespace AbilityKit.Demo.Shooter.View
             var payloadOpCode = isDelta
                 ? ShooterOpCodes.Snapshot.PureStateDelta
                 : ShooterOpCodes.Snapshot.PureState;
-            var payload = ShooterPureStateSyncCodec.Serialize(in snapshot);
+            var payload = ShooterPureStateSyncCodec.SerializeTransientSegment(in snapshot, _pureStatePayloadBuffer);
             PublishPayload(
                 snapshot.WorldId,
                 snapshot.Frame,
@@ -83,6 +85,25 @@ namespace AbilityKit.Demo.Shooter.View
             int payloadOpCode,
             byte[] payload)
         {
+            PublishPayload(
+                worldId,
+                frame,
+                serverTick,
+                timestamp,
+                isDelta,
+                payloadOpCode,
+                new ArraySegment<byte>(payload));
+        }
+
+        private void PublishPayload(
+            ulong worldId,
+            int frame,
+            long serverTick,
+            double timestamp,
+            bool isDelta,
+            int payloadOpCode,
+            ArraySegment<byte> payload)
+        {
             var pushOpCode = isDelta
                 ? RoomGatewayOpCodes.DeltaSnapshotPushed
                 : RoomGatewayOpCodes.SnapshotPushed;
@@ -95,11 +116,10 @@ namespace AbilityKit.Demo.Shooter.View
                 IsFullSnapshot = !isDelta,
                 Actors = null,
                 PayloadOpCode = payloadOpCode,
-                Payload = payload,
                 ServerTicks = serverTick
             };
 
-            var pushPayload = WireRoomGatewayBinary.Serialize(in wire);
+            var pushPayload = WireRoomGatewayBinary.SerializeTransient(in wire, payload, _wirePayloadBuffer);
             var header = new NetworkPacketHeader(
                 NetworkPacketFlags.None,
                 pushOpCode,
@@ -113,6 +133,11 @@ namespace AbilityKit.Demo.Shooter.View
         {
             _clockMs = clockMs;
             _conditioning.Advance(clockMs);
+        }
+
+        public void Dispose()
+        {
+            _conditioning.ClearPending();
         }
 
         private void DeliverToController(NetworkPacketHeader header, ArraySegment<byte> payload)

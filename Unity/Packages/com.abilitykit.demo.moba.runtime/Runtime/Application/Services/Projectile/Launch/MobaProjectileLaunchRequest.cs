@@ -13,6 +13,7 @@ namespace AbilityKit.Demo.Moba.Services.Projectile.Launch
             float fanAngleDeg,
             int durationMs,
             int continuousProcessId,
+            bool trackTarget,
             in Vec3 spawnPosition,
             in Vec3 direction,
             in ProjectileSourceContext sourceContext)
@@ -24,6 +25,7 @@ namespace AbilityKit.Demo.Moba.Services.Projectile.Launch
             FanAngleDeg = fanAngleDeg;
             DurationMs = durationMs;
             ContinuousProcessId = continuousProcessId;
+            TrackTarget = trackTarget;
             SpawnPosition = spawnPosition;
             Direction = direction;
             SourceContext = sourceContext;
@@ -36,6 +38,7 @@ namespace AbilityKit.Demo.Moba.Services.Projectile.Launch
         public float FanAngleDeg { get; }
         public int DurationMs { get; }
         public int ContinuousProcessId { get; }
+        public bool TrackTarget { get; }
         public Vec3 SpawnPosition { get; }
         public Vec3 Direction { get; }
         public ProjectileSourceContext SourceContext { get; }

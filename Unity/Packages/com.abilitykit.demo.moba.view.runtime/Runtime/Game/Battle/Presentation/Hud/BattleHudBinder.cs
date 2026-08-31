@@ -1,3 +1,4 @@
+using AbilityKit.Game.Flow.Battle.Hud;
 using AbilityKit.Protocol.Moba.StateSync;
 using UnityEngine;
 using EC = AbilityKit.World.ECS;
@@ -10,12 +11,13 @@ namespace AbilityKit.Game.Flow
         private readonly BattleHudHpBarController _hpBars;
         private readonly BattleHudFloatingTextController _floatingTexts;
         private readonly BattleHudDamageEventPresenter _damageEvents;
+        private readonly BattleHudBuffBarController _buffBars;
 
         public BattleHudBinder(
             BattleHudConfig cfg,
             RectTransform root,
             Camera camera,
-            BattleContext ctx,
+            IBattleEntityContext ctx,
             BattleHudBinderControllerFactory controllers = null)
         {
             controllers ??= new BattleHudBinderControllerFactory();
@@ -27,6 +29,7 @@ namespace AbilityKit.Game.Flow
             _hpBars = controllers.CreateHpBars(cfg, root, projector, this, fallbackUi);
             _floatingTexts = controllers.CreateFloatingTexts(cfg, root, projector, this, fallbackUi);
             _damageEvents = controllers.CreateDamageEvents(_hpBars, _floatingTexts);
+            _buffBars = controllers.CreateBuffBars(cfg, root, projector, this);
         }
 
         public void OnDamageEvents(MobaDamageEventSnapshotEntry[] entries)
@@ -34,10 +37,17 @@ namespace AbilityKit.Game.Flow
             _damageEvents.Present(entries);
         }
 
+        public void OnPresentationCues(MobaPresentationCueSnapshotEntry[] entries)
+        {
+            if (entries == null || entries.Length == 0) return;
+            _buffBars.HandleCues(entries);
+        }
+
         public void Tick(float deltaTime)
         {
             _hpBars.Tick();
             _floatingTexts.Tick(deltaTime);
+            _buffBars.Tick(deltaTime);
         }
 
         public void OnEntityDestroyed(EC.IEntityId id)
@@ -46,12 +56,14 @@ namespace AbilityKit.Game.Flow
 
             _hpBars.RemoveActor(actorId);
             _floatingTexts.RemoveActor(actorId);
+            _buffBars.RemoveActor(actorId);
         }
 
         public void Clear()
         {
             _hpBars.Clear();
             _floatingTexts.Clear();
+            _buffBars.Clear();
         }
 
         public bool TryGetActorWorldPos(int actorId, out Vector3 pos)
@@ -62,7 +74,7 @@ namespace AbilityKit.Game.Flow
 
     internal sealed class BattleHudBinderControllerFactory
     {
-        public BattleHudActorResolver CreateActors(BattleContext ctx)
+        public BattleHudActorResolver CreateActors(IBattleEntityContext ctx)
         {
             return new BattleHudActorResolver(ctx);
         }
@@ -112,6 +124,15 @@ namespace AbilityKit.Game.Flow
             BattleHudFloatingTextController floatingTexts)
         {
             return new BattleHudDamageEventPresenter(hpBars, floatingTexts);
+        }
+
+        public BattleHudBuffBarController CreateBuffBars(
+            BattleHudConfig cfg,
+            RectTransform root,
+            BattleHudCanvasProjector projector,
+            IBattleHudActorPositionResolver actors)
+        {
+            return new BattleHudBuffBarController(cfg, root, projector, actors);
         }
     }
 }

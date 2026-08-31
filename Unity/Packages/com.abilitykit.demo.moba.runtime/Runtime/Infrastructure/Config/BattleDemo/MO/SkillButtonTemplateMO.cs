@@ -14,10 +14,20 @@ namespace AbilityKit.Demo.Moba.Config.BattleDemo.MO
 
         public int AimMode { get; }
         public float AimMaxRadius { get; }
+        public int IndicatorShape { get; }
+        public float IndicatorWorldWidth { get; }
 
         public int UsePointMode { get; }
         public float SelectRange { get; }
         public bool FaceToAim { get; }
+
+        public float SectorAngleDegrees { get; }
+        public float DashDistance { get; }
+        public int LockOnDurationMs { get; }
+        public float FanRadius { get; }
+        public float FanAngleDegrees { get; }
+        public float SelfRadius { get; }
+        public float LockProjectileRadius { get; }
 
         public SkillButtonTemplateMO(SkillButtonTemplateDTO dto)
         {
@@ -31,10 +41,20 @@ namespace AbilityKit.Demo.Moba.Config.BattleDemo.MO
 
             AimMode = dto.AimMode;
             AimMaxRadius = dto.AimMaxRadius;
+            IndicatorShape = dto.IndicatorShape;
+            IndicatorWorldWidth = dto.IndicatorWorldWidth;
 
             UsePointMode = dto.UsePointMode;
             SelectRange = dto.SelectRange;
             FaceToAim = dto.FaceToAim;
+
+            SectorAngleDegrees = dto.SectorAngleDegrees;
+            DashDistance = dto.DashDistance;
+            LockOnDurationMs = dto.LockOnDurationMs;
+            FanRadius = dto.FanRadius;
+            FanAngleDegrees = dto.FanAngleDegrees;
+            SelfRadius = dto.SelfRadius;
+            LockProjectileRadius = dto.LockProjectileRadius;
         }
     }
 }

@@ -126,7 +126,7 @@ namespace AbilityKit.Demo.Moba.Services
                 {
                     totalNodes += stats.TotalNodes;
                     endedNodes += stats.EndedNodes;
-                    if (stats.ActiveNodes == 0)
+                    if (stats.ActiveNodes == 0 && stats.EndedNodes > 1)
                     {
                         retainedEndedRoots++;
                     }

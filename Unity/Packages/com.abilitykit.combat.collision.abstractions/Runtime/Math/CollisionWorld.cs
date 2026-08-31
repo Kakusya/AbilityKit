@@ -16,6 +16,10 @@ namespace AbilityKit.Core.Mathematics
         public override bool Equals(object obj) => obj is ColliderId other && Equals(other);
         public override int GetHashCode() => Value;
         public override string ToString() => Value.ToString();
+
+        public static ColliderId Invalid => default;
+        public static bool operator ==(ColliderId lhs, ColliderId rhs) => lhs.Value == rhs.Value;
+        public static bool operator !=(ColliderId lhs, ColliderId rhs) => lhs.Value != rhs.Value;
     }
 
     public readonly struct RaycastHit
@@ -32,58 +36,191 @@ namespace AbilityKit.Core.Mathematics
             Point = point;
             Normal = normal;
         }
+
+        public static RaycastHit Invalid => default;
     }
 
+    /// <summary>
+    /// 碰撞世界接口
+    ///
+    /// 核心职责：
+    /// - 管理碰撞体生命周期（Add/Remove/Update）
+    /// - 提供碰撞查询（Raycast/Overlap/Sweep）
+    /// - 层过滤和层关系判断
+    ///
+    /// 层系统说明：
+    /// - 每个碰撞体有一个层 ID（0-63）
+    /// - LayerFilter 控制哪些层可以被检测
+    /// - CollisionLayerMatrix 定义层之间的碰撞关系
+    /// </summary>
     public interface ICollisionWorld
     {
-        ColliderId Add(in Transform3 transform, in ColliderShape localShape, int layerMask = -1);
+        // ============ 实体管理 ============
+
+        /// <summary>
+        /// 添加碰撞体
+        /// </summary>
+        /// <param name="transform">世界变换</param>
+        /// <param name="localShape">局部形状</param>
+        /// <param name="layerId">层 ID（0-63）</param>
+        /// <returns>碰撞体 ID</returns>
+        ColliderId Add(in Transform3 transform, in ColliderShape localShape, int layerId);
+
+        /// <summary>
+        /// 移除碰撞体
+        /// </summary>
         bool Remove(ColliderId id);
 
+        /// <summary>
+        /// 更新碰撞体变换
+        /// </summary>
         bool UpdateTransform(ColliderId id, in Transform3 transform);
+
+        /// <summary>
+        /// 更新碰撞体形状
+        /// </summary>
         bool UpdateShape(ColliderId id, in ColliderShape localShape);
-        bool UpdateLayer(ColliderId id, int layerMask);
+
+        /// <summary>
+        /// 更新碰撞体层
+        /// </summary>
+        bool UpdateLayer(ColliderId id, int layerId);
+
+        /// <summary>
+        /// 更新碰撞体变换和形状
+        /// </summary>
         bool Update(ColliderId id, in Transform3 transform, in ColliderShape localShape);
 
-        bool Raycast(in Ray3 ray, float maxDistance, int layerMask, out RaycastHit hit);
-        int OverlapSphere(in Sphere sphere, int layerMask, List<ColliderId> results);
+        // ============ 查询 ============
+
+        /// <summary>
+        /// 射线检测
+        /// </summary>
+        /// <param name="ray">射线</param>
+        /// <param name="maxDistance">最大距离</param>
+        /// <param name="filter">层过滤器</param>
+        /// <param name="hit">命中结果</param>
+        /// <returns>是否命中</returns>
+        bool Raycast(in Ray3 ray, float maxDistance, in Combat.Collision.LayerFilter filter, out RaycastHit hit);
+
+        /// <summary>
+        /// 球体重叠检测
+        /// </summary>
+        /// <param name="sphere">球体</param>
+        /// <param name="filter">层过滤器</param>
+        /// <param name="results">结果列表</param>
+        /// <returns>命中数量</returns>
+        int OverlapSphere(in Sphere sphere, in Combat.Collision.LayerFilter filter, List<ColliderId> results);
+
+        // ============ 层关系 ============
+
+        /// <summary>
+        /// 检查两个层之间是否应该检测碰撞
+        /// 使用 CollisionLayerMatrix 进行层关系判断
+        /// </summary>
+        /// <param name="layerA">层 A</param>
+        /// <param name="layerB">层 B</param>
+        /// <returns>是否应该检测碰撞</returns>
+        bool ShouldCollide(int layerA, int layerB);
+
+        /// <summary>
+        /// 获取碰撞体所在的层
+        /// </summary>
+        /// <param name="id">碰撞体 ID</param>
+        /// <param name="layerId">层 ID（输出）</param>
+        /// <returns>是否成功获取</returns>
+        bool GetLayer(ColliderId id, out int layerId);
     }
 
-    public readonly struct CollisionWorldDebugShape
+    public readonly struct OrientedBoxSweep
     {
-        public readonly ColliderId Id;
-        public readonly ColliderShape WorldShape;
-        public readonly int LayerMask;
+        public readonly Vec3 Center;
+        public readonly Vec3 Right;
+        public readonly Vec3 Up;
+        public readonly Vec3 Forward;
+        public readonly Vec3 HalfExtents;
 
-        public CollisionWorldDebugShape(ColliderId id, in ColliderShape worldShape, int layerMask)
+        public OrientedBoxSweep(in Vec3 center, in Vec3 right, in Vec3 up, in Vec3 forward, in Vec3 halfExtents)
         {
-            Id = id;
-            WorldShape = worldShape;
-            LayerMask = layerMask;
+            Center = center;
+            Right = DeterministicMathBridge.Normalize(in right);
+            Up = DeterministicMathBridge.Normalize(in up);
+            Forward = DeterministicMathBridge.Normalize(in forward);
+            HalfExtents = new Vec3(
+                MathUtil.Max(0f, halfExtents.X),
+                MathUtil.Max(0f, halfExtents.Y),
+                MathUtil.Max(0f, halfExtents.Z));
         }
     }
 
-    public interface ICollisionWorldDebugView
+    public interface IOrientedBoxSweepCollisionWorld
     {
-        int CopyWorldShapes(List<CollisionWorldDebugShape> results);
+        bool SweepOrientedBox(
+            in OrientedBoxSweep box,
+            in Vec3 direction,
+            float maxDistance,
+            in Combat.Collision.LayerFilter filter,
+            out RaycastHit hit);
     }
 
-    public sealed class NaiveCollisionWorld : ICollisionWorld, ICollisionWorldDebugView
+    /// <summary>
+    /// 支持球形移动体扫掠的碰撞世界。把"半径 r 的球沿方向扫掠是否命中"归约为
+    /// "球心射线对每个障碍按 r 做 Minkowski 膨胀后做射线检测"——对 OBB/AABB/球精确
+    /// （OBB 保留旋转），胶囊沿用既有近似。供 MOBA 圆形移动体使用。
+    /// </summary>
+    public interface ISphereSweepCollisionWorld
+    {
+        bool SweepSphere(
+            in Vec3 start,
+            in Vec3 direction,
+            float maxDistance,
+            float radius,
+            in Combat.Collision.LayerFilter filter,
+            out RaycastHit hit);
+    }
+
+    public sealed class NaiveCollisionWorld : ICollisionWorld, IOrientedBoxSweepCollisionWorld, ISphereSweepCollisionWorld, Combat.Collision.ICollisionLayerRelation
     {
         private struct Entry
         {
             public Transform3 Transform;
             public ColliderShape LocalShape;
-            public int LayerMask;
+            public int LayerId;
             public bool Alive;
         }
 
         private readonly List<Entry> _entries = new List<Entry>(64);
         private int _nextId = 1;
+        private readonly Combat.Collision.CollisionLayerMatrix _layerMatrix;
 
-        public ColliderId Add(in Transform3 transform, in ColliderShape localShape, int layerMask = -1)
+        public NaiveCollisionWorld()
+        {
+            _layerMatrix = new Combat.Collision.CollisionLayerMatrix();
+        }
+
+        // ============ ICollisionLayerRelation 实现 ============
+
+        public void SetRelation(int layerA, int layerB, CollisionResponse response)
+        {
+            _layerMatrix.SetRelation(layerA, layerB, response);
+        }
+
+        public CollisionResponse GetRelation(int layerA, int layerB)
+        {
+            return _layerMatrix.GetRelation(layerA, layerB);
+        }
+
+        public bool ShouldDetect(int layerA, int layerB)
+        {
+            return _layerMatrix.ShouldDetect(layerA, layerB);
+        }
+
+        // ============ ICollisionWorld 实现 ============
+
+        public ColliderId Add(in Transform3 transform, in ColliderShape localShape, int layerId)
         {
             var id = new ColliderId(_nextId++);
-            _entries.Add(new Entry { Transform = transform, LocalShape = localShape, LayerMask = layerMask, Alive = true });
+            _entries.Add(new Entry { Transform = transform, LocalShape = localShape, LayerId = layerId, Alive = true });
             return id;
         }
 
@@ -120,13 +257,13 @@ namespace AbilityKit.Core.Mathematics
             return true;
         }
 
-        public bool UpdateLayer(ColliderId id, int layerMask)
+        public bool UpdateLayer(ColliderId id, int layerId)
         {
             var idx = id.Value - 1;
             if (idx < 0 || idx >= _entries.Count) return false;
             var e = _entries[idx];
             if (!e.Alive) return false;
-            e.LayerMask = layerMask;
+            e.LayerId = layerId;
             _entries[idx] = e;
             return true;
         }
@@ -143,7 +280,23 @@ namespace AbilityKit.Core.Mathematics
             return true;
         }
 
-        public bool Raycast(in Ray3 ray, float maxDistance, int layerMask, out RaycastHit hit)
+        public bool GetLayer(ColliderId id, out int layerId)
+        {
+            layerId = 0;
+            var idx = id.Value - 1;
+            if (idx < 0 || idx >= _entries.Count) return false;
+            var e = _entries[idx];
+            if (!e.Alive) return false;
+            layerId = e.LayerId;
+            return true;
+        }
+
+        public bool ShouldCollide(int layerA, int layerB)
+        {
+            return _layerMatrix.ShouldDetect(layerA, layerB);
+        }
+
+        public bool Raycast(in Ray3 ray, float maxDistance, in Combat.Collision.LayerFilter filter, out RaycastHit hit)
         {
             var best = float.PositiveInfinity;
             var bestId = default(ColliderId);
@@ -153,7 +306,8 @@ namespace AbilityKit.Core.Mathematics
             {
                 var e = _entries[i];
                 if (!e.Alive) continue;
-                if ((e.LayerMask & layerMask) == 0) continue;
+                if (!filter.IsLayerIncluded(e.LayerId)) continue;
+                if (filter.ShouldIgnore(i + 1)) continue;
 
                 var worldShape = ToWorldShape(in e.Transform, in e.LocalShape);
                 if (!CollisionQueries.Raycast(ray, worldShape, out var d, out var n)) continue;
@@ -169,8 +323,7 @@ namespace AbilityKit.Core.Mathematics
 
             if (best < float.PositiveInfinity)
             {
-                var p = ray.GetPoint(best);
-                hit = new RaycastHit(bestId, best, p, bestNormal);
+                hit = new RaycastHit(bestId, best, ray.GetPoint(best), bestNormal);
                 return true;
             }
 
@@ -178,7 +331,86 @@ namespace AbilityKit.Core.Mathematics
             return false;
         }
 
-        public int OverlapSphere(in Sphere sphere, int layerMask, List<ColliderId> results)
+        public bool SweepOrientedBox(in OrientedBoxSweep box, in Vec3 direction, float maxDistance, in Combat.Collision.LayerFilter filter, out RaycastHit hit)
+        {
+            var dir = DeterministicMathBridge.Normalize(in direction);
+            if (dir.SqrMagnitude <= 0f || maxDistance < 0f)
+            {
+                hit = default;
+                return false;
+            }
+
+            var best = float.PositiveInfinity;
+            var bestId = default(ColliderId);
+            var bestNormal = Vec3.Zero;
+            var localRay = new Ray3(Vec3.Zero, OrientedBoxSweepQueries.ToBoxLocal(dir, in box));
+
+            for (var i = 0; i < _entries.Count; i++)
+            {
+                var e = _entries[i];
+                if (!e.Alive) continue;
+                if (!filter.IsLayerIncluded(e.LayerId)) continue;
+                if (filter.ShouldIgnore(i + 1)) continue;
+
+                var worldShape = ToWorldShape(in e.Transform, in e.LocalShape);
+                if (!OrientedBoxSweepQueries.SweepVsShape(in box, in localRay, maxDistance, in worldShape, out var distance, out var candidateNormal)) continue;
+                if (distance >= best) continue;
+
+                best = distance;
+                bestId = new ColliderId(i + 1);
+                bestNormal = candidateNormal;
+            }
+
+            if (best < float.PositiveInfinity)
+            {
+                hit = new RaycastHit(bestId, best, box.Center + dir * best, bestNormal);
+                return true;
+            }
+
+            hit = default;
+            return false;
+        }
+
+        public bool SweepSphere(in Vec3 start, in Vec3 direction, float maxDistance, float radius, in Combat.Collision.LayerFilter filter, out RaycastHit hit)
+        {
+            var dir = DeterministicMathBridge.Normalize(in direction);
+            if (dir.SqrMagnitude <= 0f || maxDistance < 0f)
+            {
+                hit = default;
+                return false;
+            }
+
+            var best = float.PositiveInfinity;
+            var bestId = default(ColliderId);
+            var bestNormal = Vec3.Zero;
+
+            for (var i = 0; i < _entries.Count; i++)
+            {
+                var e = _entries[i];
+                if (!e.Alive) continue;
+                if (!filter.IsLayerIncluded(e.LayerId)) continue;
+                if (filter.ShouldIgnore(i + 1)) continue;
+
+                var worldShape = ToWorldShape(in e.Transform, in e.LocalShape);
+                if (!SphereSweepQueries.SweepVsShape(in start, in dir, maxDistance, radius, in worldShape, out var d, out var n)) continue;
+                if (d >= best) continue;
+
+                best = d;
+                bestId = new ColliderId(i + 1);
+                bestNormal = n;
+            }
+
+            if (best < float.PositiveInfinity)
+            {
+                hit = new RaycastHit(bestId, best, start + dir * best, bestNormal);
+                return true;
+            }
+
+            hit = default;
+            return false;
+        }
+
+        public int OverlapSphere(in Sphere sphere, in Combat.Collision.LayerFilter filter, List<ColliderId> results)
         {
             if (results == null) throw new ArgumentNullException(nameof(results));
 
@@ -187,7 +419,8 @@ namespace AbilityKit.Core.Mathematics
             {
                 var e = _entries[i];
                 if (!e.Alive) continue;
-                if ((e.LayerMask & layerMask) == 0) continue;
+                if (!filter.IsLayerIncluded(e.LayerId)) continue;
+                if (filter.ShouldIgnore(i + 1)) continue;
 
                 var worldShape = ToWorldShape(in e.Transform, in e.LocalShape);
                 if (!CollisionQueries.Overlap(sphere, worldShape)) continue;
@@ -198,22 +431,6 @@ namespace AbilityKit.Core.Mathematics
             return count;
         }
 
-        public int CopyWorldShapes(List<CollisionWorldDebugShape> results)
-        {
-            if (results == null) throw new ArgumentNullException(nameof(results));
-            results.Clear();
-
-            for (var i = 0; i < _entries.Count; i++)
-            {
-                var e = _entries[i];
-                if (!e.Alive) continue;
-                var worldShape = ToWorldShape(in e.Transform, in e.LocalShape);
-                results.Add(new CollisionWorldDebugShape(new ColliderId(i + 1), in worldShape, e.LayerMask));
-            }
-
-            return results.Count;
-        }
-
         private static ColliderShape ToWorldShape(in Transform3 t, in ColliderShape local)
         {
             switch (local.Type)
@@ -222,20 +439,26 @@ namespace AbilityKit.Core.Mathematics
                 {
                     var c = t.TransformPoint(local.Sphere.Center);
                     var r = local.Sphere.Radius * MaxAbsComponent(t.Scale);
-                    return ColliderShape.CreateSphere(new Sphere(c, r));
+                    return ColliderShape.CreateSphere(c, r);
                 }
                 case ColliderShapeType.Capsule:
                 {
                     var a = t.TransformPoint(local.Capsule.A);
                     var b = t.TransformPoint(local.Capsule.B);
                     var r = local.Capsule.Radius * MaxAbsComponent(t.Scale);
-                    return ColliderShape.CreateCapsule(new Capsule(a, b, r));
+                    return ColliderShape.CreateCapsule(a, b, r);
                 }
                 case ColliderShapeType.Aabb:
                 {
-                    // 如果存在旋转，则按 OBB 处理并保守转换为世界 AABB。
                     var aabb = ToWorldAabbConservative(in t, in local.Aabb);
-                    return ColliderShape.CreateAabb(aabb);
+                    return ColliderShape.CreateAabb(aabb.Min, aabb.Max);
+                }
+                case ColliderShapeType.OBB:
+                {
+                    var c = t.TransformPoint(local.Obb.Center);
+                    var rot = t.Rotation * local.Obb.Rotation;
+                    var ext = local.Obb.HalfExtents * MaxAbsComponent(t.Scale);
+                    return ColliderShape.CreateObb(c, rot, ext);
                 }
                 default:
                     return local;
@@ -252,7 +475,6 @@ namespace AbilityKit.Core.Mathematics
 
         private static Aabb ToWorldAabbConservative(in Transform3 t, in Aabb local)
         {
-            // 变换 8 个角点后取 min/max。
             var min = local.Min;
             var max = local.Max;
 

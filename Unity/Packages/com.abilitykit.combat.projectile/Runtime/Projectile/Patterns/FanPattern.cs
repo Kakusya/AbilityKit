@@ -21,7 +21,7 @@ namespace AbilityKit.Combat.Projectile
 
             if (_count <= 1 || MathUtil.IsZero(_totalAngleDeg))
             {
-                results.Add(baseSpawn);
+                results.Add(baseSpawn.WithPatternSlot(0, 1));
                 return;
             }
 
@@ -35,7 +35,7 @@ namespace AbilityKit.Combat.Projectile
                 var rot = Quat.FromAxisAngle(Vec3.Up, angleRad);
                 var dir = rot.Rotate(baseSpawn.Direction).Normalized;
 
-                results.Add(baseSpawn.WithDirection(in dir));
+                results.Add(baseSpawn.WithDirection(in dir).WithPatternSlot(i, _count));
             }
         }
     }

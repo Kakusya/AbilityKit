@@ -1,5 +1,6 @@
 using System;
 using System.Collections.Generic;
+using AbilityKit.Combat.Collision;
 using AbilityKit.Combat.MotionSystem.Collision;
 using AbilityKit.Core.Mathematics;
 
@@ -132,6 +133,33 @@ namespace AbilityKit.Demo.Moba.Services.Motion
 
     public sealed class MobaMotionCollisionWorldAdapter : IMotionCollisionWorld
     {
+        private const int ProjectionDirectionCount = 64;
+        private const int ProjectionBinarySearchSteps = 16;
+        private const float ProjectionSearchStep = 0.25f;
+        private const float ProjectionMaxDistance = 64f;
+
+        /// <summary>
+        /// 碰撞挤出方向基向量表：静态初始化时经定点 CORDIC 生成一次，
+        /// 保证跨运行时位一致（原 System.Math.Cos/Sin 的 double libm 可能差 1 ulp，
+        /// 挤出落点会漂移进状态哈希）。
+        /// </summary>
+        private static readonly Vec3[] ProjectionDirections = BuildProjectionDirections();
+
+        private static Vec3[] BuildProjectionDirections()
+        {
+            var directions = new Vec3[ProjectionDirectionCount];
+            for (var i = 0; i < ProjectionDirectionCount; i++)
+            {
+                var angle = (float)(Math.PI * 2.0 * i / ProjectionDirectionCount);
+                directions[i] = new Vec3(
+                    Core.Mathematics.DeterministicMathBridge.Cos(angle),
+                    0f,
+                    Core.Mathematics.DeterministicMathBridge.Sin(angle));
+            }
+
+            return directions;
+        }
+
         private readonly ICollisionWorld _world;
         private readonly MobaActorRegistry _actors;
         private readonly List<ColliderId> _candidates = new List<ColliderId>(16);
@@ -154,23 +182,79 @@ namespace AbilityKit.Demo.Moba.Services.Motion
             out Vec3 appliedDelta)
         {
             appliedDelta = desiredDelta;
-            var distance = desiredDelta.Magnitude;
+            var distance = DeterministicMathBridge.Magnitude(in desiredDelta);
             if (distance <= MathUtil.Epsilon)
             {
                 hit = MotionHit.None;
                 return false;
             }
 
-            var layerMask = ResolveMask(obstacleMask);
+            var ignoredCollider = ResolveIgnoredCollider(moverId);
+            var ignoredColliders = ignoredCollider.Value > 0
+                ? new[] { ignoredCollider.Value }
+                : null;
+            var layerFilter = new LayerFilter(ResolveMask(obstacleMask), ignoredColliders);
             var sweepRadius = MathUtil.Max(radius, 0.01f);
             var direction = desiredDelta / distance;
+
+            // 球形移动体扫掠：把移动体当作半径 sweepRadius 的球，球心射线对障碍按半径做
+            // Minkowski 膨胀后检测——对 OBB 精确（保留旋转）。MOBA 角色为圆形，优先走此路径。
+            if (_world is ISphereSweepCollisionWorld sphereWorld)
+            {
+                if (sphereWorld.SweepSphere(in start, in direction, distance, sweepRadius, in layerFilter, out var sphereHit)
+                    && !ShouldIgnore(sphereHit.Collider, ignoredCollider, ignoreMask))
+                {
+                    var appliedDistance = MathUtil.Clamp(sphereHit.Distance, 0f, distance);
+                    var normal = sphereHit.Normal.SqrMagnitude > MathUtil.Epsilon ? sphereHit.Normal : -direction;
+                    appliedDelta = direction * appliedDistance;
+                    hit = new MotionHit(true, sphereHit.Collider.Value, normal, distance > MathUtil.Epsilon ? MathUtil.Clamp01(appliedDistance / distance) : 0f);
+                    return true;
+                }
+
+                hit = MotionHit.None;
+                return false;
+            }
+
+            if (_world is IOrientedBoxSweepCollisionWorld sweepWorld)
+            {
+                var halfExtents = new Vec3(sweepRadius, sweepRadius, sweepRadius);
+                var box = new OrientedBoxSweep(
+                    start,
+                    new Vec3(1f, 0f, 0f),
+                    new Vec3(0f, 1f, 0f),
+                    new Vec3(0f, 0f, 1f),
+                    halfExtents);
+
+                if (sweepWorld.SweepOrientedBox(
+                        in box,
+                        in direction,
+                        distance,
+                        in layerFilter,
+                        out var sweepHit) &&
+                    !ShouldIgnore(sweepHit.Collider, ignoredCollider, ignoreMask))
+                {
+                    var appliedDistance = MathUtil.Clamp(sweepHit.Distance, 0f, distance);
+                    var time01 = distance > MathUtil.Epsilon
+                        ? MathUtil.Clamp01(appliedDistance / distance)
+                        : 0f;
+                    var normal = sweepHit.Normal.SqrMagnitude > MathUtil.Epsilon
+                        ? sweepHit.Normal
+                        : -direction;
+                    appliedDelta = direction * appliedDistance;
+                    hit = new MotionHit(true, sweepHit.Collider.Value, normal, time01);
+                    return true;
+                }
+
+                hit = MotionHit.None;
+                return false;
+            }
+
             var center = start + desiredDelta * 0.5f;
             var queryRadius = distance * 0.5f + sweepRadius;
 
             _candidates.Clear();
-            _world.OverlapSphere(new Sphere(center, queryRadius), layerMask, _candidates);
+            _world.OverlapSphere(new Sphere(center, queryRadius), in layerFilter, _candidates);
 
-            var ignoredCollider = ResolveIgnoredCollider(moverId);
             var bestTime = float.PositiveInfinity;
             var bestCollider = default(ColliderId);
             var bestNormal = Vec3.Zero;
@@ -180,7 +264,7 @@ namespace AbilityKit.Demo.Moba.Services.Motion
                 var collider = _candidates[i];
                 if (ShouldIgnore(collider, ignoredCollider, ignoreMask)) continue;
 
-                if (!TryResolveHitTime(start, direction, distance, sweepRadius, collider, layerMask, out var time01, out var normal)) continue;
+                if (!TryResolveHitTime(start, direction, distance, sweepRadius, collider, in layerFilter, out var time01, out var normal)) continue;
                 if (time01 < bestTime)
                 {
                     bestTime = time01;
@@ -198,17 +282,18 @@ namespace AbilityKit.Demo.Moba.Services.Motion
             }
 
             var clampedTime = MathUtil.Clamp01(bestTime);
+            appliedDelta = desiredDelta * clampedTime;
             hit = new MotionHit(true, bestCollider.Value, bestNormal, clampedTime);
             return true;
         }
 
         public bool Overlap(int moverId, in Vec3 position, float radius, int obstacleMask, int ignoreMask)
         {
-            var layerMask = ResolveMask(obstacleMask);
+            var layerFilter = new LayerFilter(ResolveMask(obstacleMask));
             var ignoredCollider = ResolveIgnoredCollider(moverId);
 
             _sampleOverlaps.Clear();
-            _world.OverlapSphere(new Sphere(position, MathUtil.Max(radius, 0.01f)), layerMask, _sampleOverlaps);
+            _world.OverlapSphere(new Sphere(position, MathUtil.Max(radius, 0.01f)), in layerFilter, _sampleOverlaps);
 
             for (var i = 0; i < _sampleOverlaps.Count; i++)
             {
@@ -226,7 +311,126 @@ namespace AbilityKit.Demo.Moba.Services.Motion
         public bool TryProjectToFree(int moverId, in Vec3 position, float radius, int obstacleMask, int ignoreMask, out Vec3 projectedPosition)
         {
             projectedPosition = position;
-            return !Overlap(moverId, in position, radius, obstacleMask, ignoreMask);
+            if (!Overlap(moverId, in position, radius, obstacleMask, ignoreMask))
+            {
+                return true;
+            }
+
+            var found = false;
+            var bestDistance = float.PositiveInfinity;
+            for (var i = 0; i < ProjectionDirectionCount; i++)
+            {
+                var direction = ProjectionDirections[i];
+                if (!TryFindFreeAlongDirection(
+                        moverId,
+                        in position,
+                        in direction,
+                        radius,
+                        obstacleMask,
+                        ignoreMask,
+                        out var candidate,
+                        out var distance))
+                {
+                    continue;
+                }
+
+                if (found && distance >= bestDistance) continue;
+                found = true;
+                bestDistance = distance;
+                projectedPosition = candidate;
+            }
+
+            return found;
+        }
+
+        public bool TryProjectToFreeDirectional(int moverId, in Vec3 from, in Vec3 to, float radius, int obstacleMask, int ignoreMask, out Vec3 projectedPosition)
+        {
+            // 终点本就空闲：无需投影。
+            if (!Overlap(moverId, in to, radius, obstacleMask, ignoreMask))
+            {
+                projectedPosition = to;
+                return true;
+            }
+
+            // 起点必须在墙外，作为出墙方向锚点；否则无法沿方向投影。
+            if (Overlap(moverId, in from, radius, obstacleMask, ignoreMask))
+            {
+                projectedPosition = to;
+                return false;
+            }
+
+            // 沿 to→from 二分（固定 16 步，确定性），找最近出墙点。lo=墙内侧(to)、hi=墙外侧(from)。
+            const int steps = 16;
+            var lo = 0f;
+            var hi = 1f;
+            for (var i = 0; i < steps; i++)
+            {
+                var mid = (lo + hi) * 0.5f;
+                var p = new Vec3(
+                    to.X + (from.X - to.X) * mid,
+                    to.Y + (from.Y - to.Y) * mid,
+                    to.Z + (from.Z - to.Z) * mid);
+                if (Overlap(moverId, in p, radius, obstacleMask, ignoreMask))
+                {
+                    lo = mid;
+                }
+                else
+                {
+                    hi = mid;
+                }
+            }
+
+            projectedPosition = new Vec3(
+                to.X + (from.X - to.X) * hi,
+                to.Y + (from.Y - to.Y) * hi,
+                to.Z + (from.Z - to.Z) * hi);
+            return true;
+        }
+
+        private bool TryFindFreeAlongDirection(
+            int moverId,
+            in Vec3 origin,
+            in Vec3 direction,
+            float radius,
+            int obstacleMask,
+            int ignoreMask,
+            out Vec3 projectedPosition,
+            out float projectedDistance)
+        {
+            projectedPosition = origin;
+            projectedDistance = 0f;
+
+            var insideDistance = 0f;
+            var outsideDistance = ProjectionSearchStep;
+            while (outsideDistance <= ProjectionMaxDistance)
+            {
+                var sample = origin + direction * outsideDistance;
+                if (!Overlap(moverId, in sample, radius, obstacleMask, ignoreMask))
+                {
+                    for (var i = 0; i < ProjectionBinarySearchSteps; i++)
+                    {
+                        var middleDistance = (insideDistance + outsideDistance) * 0.5f;
+                        var middle = origin + direction * middleDistance;
+                        if (Overlap(moverId, in middle, radius, obstacleMask, ignoreMask))
+                        {
+                            insideDistance = middleDistance;
+                        }
+                        else
+                        {
+                            outsideDistance = middleDistance;
+                        }
+                    }
+
+                    projectedDistance = outsideDistance;
+                    projectedPosition = origin + direction * outsideDistance;
+                    return true;
+                }
+
+                insideDistance = outsideDistance;
+                outsideDistance += ProjectionSearchStep;
+            }
+
+            return false;
         }
 
         private bool TryResolveHitTime(
@@ -235,7 +439,7 @@ namespace AbilityKit.Demo.Moba.Services.Motion
             float distance,
             float moverRadius,
             ColliderId collider,
-            int layerMask,
+            in LayerFilter layerFilter,
             out float time01,
             out Vec3 normal)
         {
@@ -248,7 +452,7 @@ namespace AbilityKit.Demo.Moba.Services.Motion
                 var t = i / (float)samples;
                 var point = start + direction * (distance * t);
                 _sampleOverlaps.Clear();
-                _world.OverlapSphere(new Sphere(point, moverRadius), layerMask, _sampleOverlaps);
+                _world.OverlapSphere(new Sphere(point, moverRadius), in layerFilter, _sampleOverlaps);
 
                 for (var j = 0; j < _sampleOverlaps.Count; j++)
                 {
@@ -262,7 +466,7 @@ namespace AbilityKit.Demo.Moba.Services.Motion
             }
 
             var ray = new Ray3(start, direction);
-            if (_world.Raycast(ray, distance + moverRadius, layerMask, out var rayHit) && rayHit.Collider.Equals(collider))
+            if (_world.Raycast(ray, distance + moverRadius, in layerFilter, out var rayHit) && rayHit.Collider.Equals(collider))
             {
                 time01 = distance > MathUtil.Epsilon ? MathUtil.Clamp01(rayHit.Distance / distance) : 0f;
                 normal = rayHit.Normal.SqrMagnitude > MathUtil.Epsilon ? rayHit.Normal : -direction;

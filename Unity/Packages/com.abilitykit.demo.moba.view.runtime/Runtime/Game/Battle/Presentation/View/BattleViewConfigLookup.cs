@@ -8,21 +8,70 @@ namespace AbilityKit.Game.Flow
     {
         private readonly BattleViewCharacterConfigResolver _characters;
         private readonly BattleViewProjectileConfigResolver _projectiles;
+        private readonly BattleViewSummonConfigResolver _summons;
+        private readonly BattleViewTurretConfigResolver _turrets;
+        private readonly BattleViewMonsterConfigResolver _monsters;
+        private readonly BattleViewBuildingConfigResolver _buildings;
         private readonly BattleViewAoeConfigResolver _aoes;
 
         public BattleViewConfigLookup(
             BattleViewCharacterConfigResolver characters = null,
             BattleViewProjectileConfigResolver projectiles = null,
+            BattleViewSummonConfigResolver summons = null,
+            BattleViewTurretConfigResolver turrets = null,
+            BattleViewMonsterConfigResolver monsters = null,
+            BattleViewBuildingConfigResolver buildings = null,
             BattleViewAoeConfigResolver aoes = null)
         {
             _characters = characters ?? new BattleViewCharacterConfigResolver();
             _projectiles = projectiles ?? new BattleViewProjectileConfigResolver();
+            _summons = summons ?? new BattleViewSummonConfigResolver();
+            _turrets = turrets ?? new BattleViewTurretConfigResolver();
+            _monsters = monsters ?? new BattleViewMonsterConfigResolver();
+            _buildings = buildings ?? new BattleViewBuildingConfigResolver();
             _aoes = aoes ?? new BattleViewAoeConfigResolver();
         }
 
+        /// <summary>
+        /// Resolves the modelId for any entity kind that uses a shared shell GameObject.
+        /// Dispatches to the appropriate kind-specific resolver.
+        /// </summary>
         public int ResolveModelId(MobaConfigDatabase configs, BattleEntityMetaComponent meta)
         {
-            return _characters.ResolveModelId(configs, meta);
+            if (meta == null) return 0;
+
+            switch (meta.Kind)
+            {
+                case BattleEntityKind.Character:  return _characters.ResolveModelId(configs, meta);
+                case BattleEntityKind.Summon:     return _summons.ResolveModelId(configs, meta);
+                case BattleEntityKind.Turret:     return _turrets.ResolveModelId(configs, meta);
+                case BattleEntityKind.Monster:    return _monsters.ResolveModelId(configs, meta);
+                case BattleEntityKind.Building:   return _buildings.ResolveModelId(configs, meta);
+                case BattleEntityKind.Clone:       return _summons.ResolveModelId(configs, meta); // Clone shares Summon resolution
+                default:                           return 0;
+            }
+        }
+
+        /// <summary>
+        /// Checks if the given kind uses the main shell binding path (Actor shell + AttachedVfx).
+        /// </summary>
+        public static bool UsesShellBinding(BattleEntityKind kind)
+        {
+            switch (kind)
+            {
+                case BattleEntityKind.Character:
+                case BattleEntityKind.Summon:
+                case BattleEntityKind.Clone:
+                case BattleEntityKind.Turret:
+                case BattleEntityKind.Monster:
+                case BattleEntityKind.Building:
+                    return true;
+                case BattleEntityKind.Projectile:
+                case BattleEntityKind.AreaEffect:
+                case BattleEntityKind.Unknown:
+                default:
+                    return false;
+            }
         }
 
         public int ResolveProjectileVfxId(MobaConfigDatabase configs, BattleEntityMetaComponent meta)

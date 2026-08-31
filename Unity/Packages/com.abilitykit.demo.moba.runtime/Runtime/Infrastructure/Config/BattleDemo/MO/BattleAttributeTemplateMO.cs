@@ -7,6 +7,7 @@ namespace AbilityKit.Demo.Moba.Config.BattleDemo.MO
     public sealed class BattleAttributeTemplateMO
     {
         public int Id { get; }
+        public int BasicAttackSkillId { get; }
         public IReadOnlyList<int> ActiveSkills { get; }
         public IReadOnlyList<int> PassiveSkills { get; }
         public int Hp { get; }
@@ -25,7 +26,7 @@ namespace AbilityKit.Demo.Moba.Config.BattleDemo.MO
         public int CooldownReduceR { get; }
         public int PhysicsPenetrationR { get; }
         public int MagicPenetrationR { get; }
-        public int MoveSpeed { get; }
+        public float MoveSpeed { get; }
         public int PhysicsBloodsuckingR { get; }
         public int MagicBloodsuckingR { get; }
         public int AttackRange { get; }
@@ -37,6 +38,7 @@ namespace AbilityKit.Demo.Moba.Config.BattleDemo.MO
         {
             if (dto == null) throw new ArgumentNullException(nameof(dto));
             Id = dto.Id;
+            BasicAttackSkillId = dto.BasicAttackSkillId;
             ActiveSkills = dto.ActiveSkills ?? Array.Empty<int>();
             PassiveSkills = dto.PassiveSkills ?? Array.Empty<int>();
             Hp = dto.Hp;

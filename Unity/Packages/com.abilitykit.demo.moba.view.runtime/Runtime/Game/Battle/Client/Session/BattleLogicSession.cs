@@ -15,7 +15,7 @@ namespace AbilityKit.Game.Battle
         private readonly BattleLogicSessionOptions _options;
         private readonly IBattleLogicClient _client;
         private readonly IBattleLogicTransport _transport;
-        private readonly RemoteFrameStreamHub _remoteFrameStreams = new RemoteFrameStreamHub();
+        private readonly IRemoteFrameStreams _remoteFrameStreams;
         private readonly IBattleLogicRuntimeFactory _runtimeFactory;
         private readonly BattleLogicSessionRuntime _runtime;
 
@@ -39,10 +39,21 @@ namespace AbilityKit.Game.Battle
             IBattleLogicTransport remoteTransport,
             IBattleRollbackRegistryFactory rollbackRegistryFactory,
             IBattleLogicRuntimeFactory runtimeFactory)
+            : this(options, remoteTransport, rollbackRegistryFactory, runtimeFactory, null)
+        {
+        }
+
+        internal BattleLogicSession(
+            BattleLogicSessionOptions options,
+            IBattleLogicTransport remoteTransport,
+            IBattleRollbackRegistryFactory rollbackRegistryFactory,
+            IBattleLogicRuntimeFactory runtimeFactory,
+            IRemoteFrameStreams remoteFrameStreams)
         {
             _options = options ?? throw new ArgumentNullException(nameof(options));
             if (rollbackRegistryFactory == null) throw new ArgumentNullException(nameof(rollbackRegistryFactory));
             _runtimeFactory = runtimeFactory ?? throw new ArgumentNullException(nameof(runtimeFactory));
+            _remoteFrameStreams = remoteFrameStreams ?? RemoteFrameStreamsFactory.Create();
             _runtime = _runtimeFactory.CreateRuntime(_options, rollbackRegistryFactory);
 
             if (_options.Mode == BattleLogicMode.Remote)
@@ -80,13 +91,35 @@ namespace AbilityKit.Game.Battle
             }
 
             _client.FrameReceived += OnFrameReceivedForStreams;
+            _client.FrameReceived += BroadcastFrameReceived;
         }
+
+        private event Action<FramePacket>? _frameReceivedBroadcast;
 
         public event Action<FramePacket> FrameReceived
         {
-            add => _client.FrameReceived += value;
-            remove => _client.FrameReceived -= value;
+            add => _frameReceivedBroadcast += value;
+            remove => _frameReceivedBroadcast -= value;
         }
+
+        private void BroadcastFrameReceived(FramePacket packet)
+        {
+            _frameReceivedBroadcast?.Invoke(packet);
+        }
+
+        /// <summary>
+        /// 重连补帧注入：把服务端 CatchUp 历史帧按与在线帧完全相同的管道喂回
+        /// （远端流 + FrameReceived 订阅者），使抖动缓冲/预测/调和无差别消费。
+        /// </summary>
+        public void InjectRemoteFrame(FramePacket packet)
+        {
+            OnFrameReceivedForStreams(packet);
+            BroadcastFrameReceived(packet);
+        }
+
+        /// <summary>底层网络传输（帧同步重连恢复用：鉴权状态/原始请求/推送订阅）。非 NetworkTransport 为 null。</summary>
+        public AbilityKit.Network.Battle.NetworkTransport? NetworkTransport =>
+            _transport as AbilityKit.Network.Battle.NetworkTransport;
 
         public IRemoteFrameSource<RemoteInputFrame> RemoteInputFrames => _remoteFrameStreams.InputFrames;
 
@@ -144,6 +177,7 @@ namespace AbilityKit.Game.Battle
         public void Dispose()
         {
             _client.FrameReceived -= OnFrameReceivedForStreams;
+            _client.FrameReceived -= BroadcastFrameReceived;
             _client?.Dispose();
             (_transport as IDisposable)?.Dispose();
             _runtime?.Dispose();

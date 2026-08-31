@@ -146,6 +146,16 @@ namespace AbilityKit.Demo.Moba.Services.Triggering.PlanActions
             }
 
             var explicitTargetActorId = ResolveContextTargetActorId(in request, in effectInput);
+
+            if (RequiresExplicitTarget(request.SourceCode) && explicitTargetActorId <= 0)
+            {
+                MobaPlanActionDiagnostics.Rejected(
+                    ctx.Context,
+                    actionName,
+                    $"target query missing explicit target. targetSource={request.SourceCode}");
+                return false;
+            }
+
             var aimPosition = coreInput.AimPosition;
             if (request.UsesTemplate)
             {
@@ -173,6 +183,12 @@ namespace AbilityKit.Demo.Moba.Services.Triggering.PlanActions
             return string.Join(",", targets);
         }
 
+        private static bool RequiresExplicitTarget(MobaActionTargetSourceCode sourceCode)
+        {
+            return sourceCode == MobaActionTargetSourceCode.ContextTarget
+                || sourceCode == MobaActionTargetSourceCode.ExplicitActor;
+        }
+
         private static bool RequiresCaster(MobaActionTargetSourceCode sourceCode)
         {
             switch (sourceCode)
@@ -198,7 +214,7 @@ namespace AbilityKit.Demo.Moba.Services.Triggering.PlanActions
         {
             var provider = new SearchTargetProviderConfig(0, (int)request.SourceCode, request.SourceParam);
             var rules = BuildRules(in request);
-            var scorer = BuildScorer(in request);
+            var scorers = new[] { BuildScorer(in request) };
             var selector = new SearchTargetSelectorConfig(0, (int)request.SelectCode);
             var explicitTargetPolicy = request.TargetPayloadActorId > 0 || request.TargetActorId > 0 || request.SourceCode == MobaActionTargetSourceCode.ExplicitActor
                 ? SearchQueryExplicitTargetPolicy.PreferExplicitTarget
@@ -211,7 +227,7 @@ namespace AbilityKit.Demo.Moba.Services.Triggering.PlanActions
                 explicitTargetPolicy: (int)explicitTargetPolicy,
                 provider: provider,
                 rules: rules,
-                scorer: scorer,
+                scorers: scorers,
                 selector: selector);
         }
 

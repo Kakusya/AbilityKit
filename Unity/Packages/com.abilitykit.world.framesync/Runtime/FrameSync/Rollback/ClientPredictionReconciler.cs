@@ -2,6 +2,12 @@ using System;
 
 namespace AbilityKit.Ability.FrameSync.Rollback
 {
+    /// <summary>
+    /// world.framesync 自带的 hash 对账协调器。由
+    /// <c>ClientPredictionDriverModule</c>、Shooter demo
+    /// (<c>ShooterClientFrameSyncController</c>) 和 MOBA test harness
+    /// (<c>ClientPredictionTestHarness</c>) 使用。
+    /// </summary>
     public sealed class ClientPredictionReconciler
     {
         public Action<FrameIndex> OnRollbackRequested;

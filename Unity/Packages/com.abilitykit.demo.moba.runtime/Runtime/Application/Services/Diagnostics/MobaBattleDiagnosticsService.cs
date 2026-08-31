@@ -9,6 +9,7 @@ using AbilityKit.Ability.World.Services;
 using AbilityKit.Ability.World.Services.Attributes;
 using AbilityKit.Demo.Moba.Config.BattleDemo;
 using AbilityKit.Demo.Moba.Config.Core;
+using AbilityKit.Demo.Moba.Diagnostics;
 using AbilityKit.Demo.Moba.Services.EntityManager;
 using AbilityKit.Diagnostics;
 
@@ -213,6 +214,9 @@ namespace AbilityKit.Demo.Moba.Services
         public const string SkillRuntimePendingChildren = "moba.skill.runtime.pending.children";
         public const string TriggerRegistered = "moba.trigger.registered";
         public const string TriggerUnregistered = "moba.trigger.unregistered";
+        public const string TriggerDispatchScope = "moba.trigger.dispatch";
+        public const string TriggerEvaluateScope = "moba.trigger.evaluate";
+        public const string TriggerExecuteScope = "moba.trigger.execute";
         public const string TriggerDispatchStarted = "moba.trigger.dispatch.started";
         public const string TriggerDispatchCompleted = "moba.trigger.dispatch.completed";
         public const string TriggerDispatchDuration = "moba.trigger.dispatch.durationMs";
@@ -225,8 +229,15 @@ namespace AbilityKit.Demo.Moba.Services
         public const string TriggerExecuted = "moba.trigger.executed";
         public const string TriggerExecuteDuration = "moba.trigger.execute.durationMs";
         public const string TriggerShortCircuit = "moba.trigger.shortCircuit";
+        public const string EffectActionInvoked = "moba.effect.action.invoked";
+        public const string EffectActionSucceeded = "moba.effect.action.succeeded";
+        public const string EffectActionFailed = "moba.effect.action.failed";
+        public const string EffectActionDuration = "moba.effect.action.durationMs";
+        public const string EffectActionAllocatedBytes = "moba.effect.action.allocatedBytes";
         public const string TriggerActionInterrupted = "moba.trigger.action.interrupted";
         public const string TriggerActionFailed = "moba.trigger.action.failed";
+        public const string EffectExecuteScope = "moba.effect.execute";
+        public const string EffectActionScope = "moba.effect.action";
         public const string PipelineTraceEvent = "moba.pipeline.trace.event";
         public const string PipelineRunStarted = "moba.pipeline.run.started";
         public const string PipelineRunEnded = "moba.pipeline.run.ended";
@@ -361,6 +372,8 @@ namespace AbilityKit.Demo.Moba.Services
         private readonly List<MobaBattleDiagnosticWarningRecord> _warnings = new List<MobaBattleDiagnosticWarningRecord>(32);
         private readonly List<MobaBattleDiagnosticExceptionRecord> _exceptions = new List<MobaBattleDiagnosticExceptionRecord>(32);
         private readonly MobaTemporaryEntityLifecycleHealth[] _lifecycleHealth = new MobaTemporaryEntityLifecycleHealth[3];
+        [WorldInject(required: false)] private IMobaBattleDiagnosticEventSink _eventCollector = null;
+        [WorldInject(required: false)] private IMobaBattleDiagnosticCapturePolicy _capturePolicy = null;
         private long _inputAcceptedBatches;
         private long _inputAcceptedCommands;
         private long _inputHandledCommands;
@@ -375,6 +388,7 @@ namespace AbilityKit.Demo.Moba.Services
 
         public bool IsEnabled(string channel)
         {
+            if (!CapturesMetrics) return false;
             if (string.IsNullOrEmpty(channel)) return true;
             return !_channelEnabled.TryGetValue(channel, out var enabled) || enabled;
         }
@@ -407,13 +421,13 @@ namespace AbilityKit.Demo.Moba.Services
 
         public MobaBattleDiagnosticScope Measure(string metricName, double warnThresholdMs = 0d, string context = null)
         {
-            if (string.IsNullOrEmpty(metricName)) return default;
+            if (!CapturesMetrics || string.IsNullOrEmpty(metricName)) return default;
             return new MobaBattleDiagnosticScope(this, metricName, GetTimestamp(), warnThresholdMs, context);
         }
 
         public void RecordDuration(string metricName, long startTimestamp, double warnThresholdMs = 0d, string context = null)
         {
-            if (string.IsNullOrEmpty(metricName) || startTimestamp == 0L) return;
+            if (!CapturesMetrics || string.IsNullOrEmpty(metricName) || startTimestamp == 0L) return;
 
             var elapsedTicks = Stopwatch.GetTimestamp() - startTimestamp;
             if (elapsedTicks < 0L) return;
@@ -438,20 +452,20 @@ namespace AbilityKit.Demo.Moba.Services
 
         public void Counter(string counterName, long value = 1L)
         {
-            if (string.IsNullOrEmpty(counterName) || value == 0L) return;
+            if (!CapturesMetrics || string.IsNullOrEmpty(counterName) || value == 0L) return;
             if (value == 1L) ProfilerHub.Increment(counterName);
             else ProfilerHub.Add(counterName, value);
         }
 
         public void Gauge(string gaugeName, long value)
         {
-            if (string.IsNullOrEmpty(gaugeName)) return;
+            if (!CapturesMetrics || string.IsNullOrEmpty(gaugeName)) return;
             ProfilerHub.SetGauge(gaugeName, value);
         }
 
         public void Sample(string sampleName, double value)
         {
-            if (string.IsNullOrEmpty(sampleName)) return;
+            if (!CapturesMetrics || string.IsNullOrEmpty(sampleName)) return;
             ProfilerHub.Sample(sampleName, value);
         }
 
@@ -467,11 +481,13 @@ namespace AbilityKit.Demo.Moba.Services
 
             var finalMessage = AppendContext(message, in context);
             RecordWarningSnapshot(key, finalMessage, count, suppressedAtLimit, in context);
+            CollectWarningEvent(in context, finalMessage);
             AbilityKit.Core.Logging.Log.Warning(finalMessage);
             if (suppressedAtLimit)
             {
                 var suppressionMessage = $"[MobaDiagnostics] Further diagnostics suppressed for key={key}.";
                 RecordWarningSnapshot(key, suppressionMessage, count, true, in context);
+                CollectWarningEvent(in context, suppressionMessage);
                 AbilityKit.Core.Logging.Log.Warning(suppressionMessage);
             }
         }
@@ -491,11 +507,13 @@ namespace AbilityKit.Demo.Moba.Services
 
             var finalMessage = AppendContext(message, in context);
             RecordWarningSnapshot(key, finalMessage, count, suppressedAtLimit, in context);
+            CollectWarningEvent(in context, finalMessage);
             AbilityKit.Core.Logging.Log.Warning(finalMessage);
             if (suppressedAtLimit)
             {
                 var suppressionMessage = $"[MobaDiagnostics] Further diagnostics suppressed for key={key}.";
                 RecordWarningSnapshot(key, suppressionMessage, count, true, in context);
+                CollectWarningEvent(in context, suppressionMessage);
                 AbilityKit.Core.Logging.Log.Warning(suppressionMessage);
             }
         }
@@ -513,10 +531,46 @@ namespace AbilityKit.Demo.Moba.Services
             var message = string.IsNullOrEmpty(context) ? exception.Message : context;
             var finalMessage = AppendContext(message, in diagnosticContext);
             RecordExceptionSnapshot(key, exception.GetType().FullName, finalMessage, count, suppressedAtLimit, in diagnosticContext);
+            CollectExceptionEvent(in diagnosticContext, exception, finalMessage);
             AbilityKit.Core.Logging.Log.Exception(exception, $"[MobaDiagnostics] {finalMessage}");
             if (suppressedAtLimit)
             {
                 AbilityKit.Core.Logging.Log.Warning($"[MobaDiagnostics] Further exceptions suppressed for key={key}.");
+            }
+        }
+
+        private void CollectWarningEvent(in MobaBattleDiagnosticContext context, string message)
+        {
+            var collector = _eventCollector;
+            if (!collector.IsEnabled(BattleDiagnosticEventChannel.WarningAndException)) return;
+
+            try
+            {
+                var draft = MobaExceptionDiagnosticProducer.CreateWarningDraft(in context, message);
+                collector.TryCollect(in draft);
+            }
+            catch (Exception ex)
+            {
+                AbilityKit.Core.Logging.Log.Exception(ex, "[MobaDiagnostics] diagnostic collect failed (Warning)");
+            }
+        }
+
+        private void CollectExceptionEvent(
+            in MobaBattleDiagnosticContext context,
+            Exception exception,
+            string message)
+        {
+            var collector = _eventCollector;
+            if (!collector.IsEnabled(BattleDiagnosticEventChannel.WarningAndException)) return;
+
+            try
+            {
+                var draft = MobaExceptionDiagnosticProducer.CreateExceptionDraft(in context, exception, message);
+                collector.TryCollect(in draft);
+            }
+            catch (Exception ex)
+            {
+                AbilityKit.Core.Logging.Log.Exception(ex, "[MobaDiagnostics] diagnostic collect failed (Exception)");
             }
         }
 
@@ -608,6 +662,11 @@ namespace AbilityKit.Demo.Moba.Services
             if (channel == MobaBattleDiagnosticChannel.TriggerHook || channel == MobaBattleDiagnosticChannel.PipelineHook) return MobaBattleDiagnosticsDefaults.DefaultHotPathSampleInterval;
             return 1;
         }
+
+        private bool CapturesMetrics =>
+            _capturePolicy == null ||
+            _capturePolicy.CaptureMode == BattleDiagnosticCaptureMode.Metrics ||
+            _capturePolicy.CaptureMode == BattleDiagnosticCaptureMode.Full;
 
         private bool ShouldLog(string key, int maxCount, out int count, out bool suppressedAtLimit)
         {

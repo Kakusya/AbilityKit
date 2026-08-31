@@ -13,12 +13,20 @@
     <ProjectReference Include="..\AbilityKit.Demo.Shooter.AI\AbilityKit.Demo.Shooter.AI.csproj" />
     <ProjectReference Include="..\AbilityKit.Demo.Shooter.Runtime\AbilityKit.Demo.Shooter.Runtime.csproj" />
     <ProjectReference Include="..\AbilityKit.Demo.Shooter.View.Runtime\AbilityKit.Demo.Shooter.View.Runtime.csproj" />
+    <Compile Include="../../Unity/Packages/com.abilitykit.demo.common/Runtime/Rooms/DemoRoomGatewayAccountClient.cs" />
     <ProjectReference Include="..\AbilityKit.Network.Runtime\AbilityKit.Network.Runtime.csproj" />
+    <ProjectReference Include="../AbilityKit.Demo.Common/AbilityKit.Demo.Common.csproj" />
+    <ProjectReference Include="..\AbilityKit.Network.Room\AbilityKit.Network.Room.csproj" />
     <ProjectReference Include="..\AbilityKit.GameFramework\AbilityKit.GameFramework.csproj" />
     <ProjectReference Include="..\AbilityKit.GameFramework.Network\AbilityKit.GameFramework.Network.csproj" />
     <ProjectReference Include="..\AbilityKit.Host.Extension\AbilityKit.Host.Extension.csproj" />
     <ProjectReference Include="..\AbilityKit.World.FrameSync\AbilityKit.World.FrameSync.csproj" />
     <ProjectReference Include="..\AbilityKit.World.StateSync\AbilityKit.World.StateSync.csproj" />
+  </ItemGroup>
+
+  <ItemGroup>
+    <Compile Include="../../Unity/Packages/com.abilitykit.host.extension/Runtime/Client/StateSync/RemoteClientInputSubmitQueue.cs" Link="Client/StateSync/RemoteClientInputSubmitQueue.cs" />
+    <Compile Include="../../Unity/Packages/com.abilitykit.demo.shooter.view.runtime/Runtime/Unity/PlayMode/ShooterRemoteInputSubmitStrategy.cs" Link="Client/PlayMode/ShooterRemoteInputSubmitStrategy.cs" />
   </ItemGroup>
 
   <ItemGroup>
@@ -28,6 +36,10 @@
       <PrivateAssets>all</PrivateAssets>
       <IncludeAssets>runtime; build; native; contentfiles; analyzers; buildtransitive</IncludeAssets>
     </PackageReference>
+  </ItemGroup>
+
+  <ItemGroup>
+    <None Include="Fixtures\StateSync\*.base64" CopyToOutputDirectory="PreserveNewest" />
   </ItemGroup>
 
 </Project>

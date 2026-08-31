@@ -1,41 +1,34 @@
 using System;
 using System.Collections.Generic;
 using AbilityKit.Ability.StateSync.Snapshot;
+using AbilityKit.Core.Buffers;
 
 namespace AbilityKit.Ability.StateSync.Buffer
 {
-    public sealed class SnapshotBuffer
+    public sealed class SnapshotBuffer : IBufferCapacityControl
     {
-        private readonly Dictionary<int, WorldStateSnapshot> _snapshots = new Dictionary<int, WorldStateSnapshot>();
-        private readonly List<int> _capturedFrames = new List<int>();
-        private readonly int _maxBufferSize;
+        private readonly IFrameIndexedBuffer<WorldStateSnapshot> _storage;
         private readonly object _lock = new object();
 
-        public int Count => _capturedFrames.Count;
-        public int MaxBufferSize => _maxBufferSize;
+        public int Count => _storage.Count;
+        public int MaxBufferSize => _storage.Capacity;
+        public int Capacity => _storage.Capacity;
 
         public SnapshotBuffer(int maxBufferSize = 128)
+            : this(new SparseFrameIndexedBuffer<WorldStateSnapshot>(maxBufferSize))
         {
-            if (maxBufferSize <= 0) throw new ArgumentOutOfRangeException(nameof(maxBufferSize));
-            _maxBufferSize = maxBufferSize;
+        }
+
+        public SnapshotBuffer(IFrameIndexedBuffer<WorldStateSnapshot> storage)
+        {
+            _storage = storage ?? throw new ArgumentNullException(nameof(storage));
         }
 
         public void Store(int frame, WorldStateSnapshot snapshot)
         {
             lock (_lock)
             {
-                if (_snapshots.ContainsKey(frame))
-                {
-                    _snapshots[frame] = snapshot.Clone();
-                }
-                else
-                {
-                    _snapshots[frame] = snapshot.Clone();
-                    _capturedFrames.Add(frame);
-                    _capturedFrames.Sort();
-
-                    TrimBuffer();
-                }
+                _storage.Store(frame, snapshot.Clone());
             }
         }
 
@@ -43,7 +36,7 @@ namespace AbilityKit.Ability.StateSync.Buffer
         {
             lock (_lock)
             {
-                if (_snapshots.TryGetValue(frame, out var s))
+                if (_storage.TryGet(frame, out var s))
                 {
                     snapshot = s.Clone();
                     return true;
@@ -63,7 +56,7 @@ namespace AbilityKit.Ability.StateSync.Buffer
         {
             lock (_lock)
             {
-                return _snapshots.ContainsKey(frame);
+                return _storage.Contains(frame);
             }
         }
 
@@ -71,7 +64,12 @@ namespace AbilityKit.Ability.StateSync.Buffer
         {
             lock (_lock)
             {
-                return _capturedFrames.ToArray();
+                var result = new int[_storage.Count];
+                for (var index = 0; index < result.Length; index++)
+                {
+                    result[index] = _storage.GetFrameAt(index);
+                }
+                return result;
             }
         }
 
@@ -79,7 +77,7 @@ namespace AbilityKit.Ability.StateSync.Buffer
         {
             lock (_lock)
             {
-                return _capturedFrames.Count > 0 ? _capturedFrames[_capturedFrames.Count - 1] : -1;
+                return _storage.Count > 0 ? _storage.GetFrameAt(_storage.Count - 1) : -1;
             }
         }
 
@@ -87,7 +85,7 @@ namespace AbilityKit.Ability.StateSync.Buffer
         {
             lock (_lock)
             {
-                return _capturedFrames.Count > 0 ? _capturedFrames[0] : -1;
+                return _storage.Count > 0 ? _storage.GetFrameAt(0) : -1;
             }
         }
 
@@ -95,8 +93,7 @@ namespace AbilityKit.Ability.StateSync.Buffer
         {
             lock (_lock)
             {
-                _snapshots.Clear();
-                _capturedFrames.Clear();
+                _storage.Clear();
             }
         }
 
@@ -104,12 +101,7 @@ namespace AbilityKit.Ability.StateSync.Buffer
         {
             lock (_lock)
             {
-                if (_snapshots.Remove(frame))
-                {
-                    _capturedFrames.Remove(frame);
-                    return true;
-                }
-                return false;
+                return _storage.Remove(frame);
             }
         }
 
@@ -117,17 +109,7 @@ namespace AbilityKit.Ability.StateSync.Buffer
         {
             lock (_lock)
             {
-                var framesToRemove = new List<int>();
-                foreach (var f in _capturedFrames)
-                {
-                    if (f < frame) framesToRemove.Add(f);
-                }
-
-                foreach (var f in framesToRemove)
-                {
-                    _snapshots.Remove(f);
-                    _capturedFrames.Remove(f);
-                }
+                _storage.RemoveBefore(frame);
             }
         }
 
@@ -135,27 +117,31 @@ namespace AbilityKit.Ability.StateSync.Buffer
         {
             lock (_lock)
             {
-                var framesToRemove = new List<int>();
-                foreach (var f in _capturedFrames)
-                {
-                    if (f > frame) framesToRemove.Add(f);
-                }
-
-                foreach (var f in framesToRemove)
-                {
-                    _snapshots.Remove(f);
-                    _capturedFrames.Remove(f);
-                }
+                _storage.RemoveAfter(frame);
             }
         }
 
-        private void TrimBuffer()
+        public bool TrySetCapacity(int capacity)
         {
-            while (_capturedFrames.Count > _maxBufferSize)
+            if (capacity <= 0) return false;
+
+            lock (_lock)
             {
-                int earliestFrame = _capturedFrames[0];
-                _snapshots.Remove(earliestFrame);
-                _capturedFrames.RemoveAt(0);
+                return _storage.TrySetCapacity(capacity);
+            }
+        }
+
+        internal void CopyCapturedFrames(List<int> destination)
+        {
+            if (destination == null) throw new ArgumentNullException(nameof(destination));
+
+            lock (_lock)
+            {
+                destination.Clear();
+                for (var index = 0; index < _storage.Count; index++)
+                {
+                    destination.Add(_storage.GetFrameAt(index));
+                }
             }
         }
     }

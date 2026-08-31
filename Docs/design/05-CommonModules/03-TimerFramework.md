@@ -6,6 +6,10 @@
 
 ## 1. 能力定位
 
+> **定位裁定（2026-08-17）**：timer 定位为**统一调度器**——逻辑层的根驱动：时间驱动的持续/周期行为统一收编到 scheduler，避免各包各自 Tick 不受管理。现已基本落地：①补 asmdef ②`TimerSchedulerModule`（host.extension）把 `IScheduler` 注册为每世界服务并由 Host PostTick 驱动（逻辑层统一时间驱动入口）③周期 duration 语义重设计（总时长截止）。消费者按需 `Resolve<IScheduler>()` 挂载，非强制迁移。
+>
+> **时间基裁定（2026-08-17，已落地）**：与其他核心战斗包一致——**对外 float 无感、内部 Fixed64 定点**。三个任务（Delay/Periodic/Continuous）内部用 `Fixed64` raw 累加（经 `DeterministicMathBridge.ToFixed/ToSingle` 单次边界换算，非 dyadic 值向零截断），公开 API（`Tick(float)`/`ElapsedTime`/`Duration`）保持 float 不变。已接线 deterministic 依赖（asmdef/package.json/csproj 三件套）。
+
 定时器框架解决的是“在 Tick 推进中按时间执行任务”的问题。
 
 它适合：
@@ -21,6 +25,17 @@
 - 网络帧同步的权威帧推进。帧同步应由 FrameSync/Host 驱动。
 - 复杂技能生命周期编排。技能、Buff、持续行为应由 Triggering/Ability/Gameplay 模块表达。
 - 多线程调度。`DefaultScheduler.Tick(deltaTime)` 是同步遍历任务列表。
+
+责任边界如下：
+
+| 层级 | 应负责 | 不应由该层统一规定 |
+|------|--------|--------------------|
+| Timer 包 | 计时、任务状态和同步 Tick 调度的最小机制 | 世界自动安装、技能语义、网络权威时间和业务失败补偿 |
+| Host / World 接入 | scheduler 所有权、Tick 来源、暂停/销毁顺序和逻辑时间选择 | 默认把真实时间注入确定性战斗 |
+| 项目应用层 | period/duration 校验、回调异常策略、任务句柄管理和业务终止协议 | 假设任务有稳定执行顺序或自动随世界运行 |
+| 示例 | 说明 API 形态和典型回调 | 作为已验证的生产调度方案 |
+
+因此 Timer 是可直接组装的底层时间工具，而不是开包即自动运行的应用套件。游戏可按自身确定性、暂停和生命周期要求接入，无需让框架固定战斗时间模型。
 
 源码入口：
 
@@ -38,6 +53,7 @@
 | `Unity/Packages/com.abilitykit.timer/Runtime/Core/Tasks/ContinuousTask.cs` | 持续任务 |
 | `Unity/Packages/com.abilitykit.world.di/Runtime/World/Services/IWorldClock.cs` | 世界时间服务接口，记录 `DeltaTime` 和累计 `Time` |
 | `Unity/Packages/com.abilitykit.host/Runtime/Host/Framework/HostRuntime.cs` | Host Tick 入口，驱动世界 Tick |
+| `src/AbilityKit.Timer/AbilityKit.Timer.csproj` | `.NET` 工程直接编译 package Runtime 源码，是无 Unity 构建入口 |
 
 ---
 
@@ -104,6 +120,8 @@ if (timer > 0.5f)
 ```
 
 `SystemTimer` 测量真实系统时间，不属于世界逻辑帧时间。帧同步、回放、确定性模拟不应依赖真实时间决定逻辑结果。
+
+`SystemTimer` 虽然是 struct，但内部字段是引用类型 `Stopwatch`。首次 `Reset()` 会创建该对象；复制一个已启动的 `SystemTimer` 会让两个 struct 副本共享同一个 `Stopwatch`，任一副本再次 `Reset()` 都会影响另一副本观察到的时间。不要把它当作复制后相互独立的值计时器。
 
 ---
 
@@ -172,8 +190,10 @@ public interface IScheduler
 | API | 任务类型 | 行为 |
 |-----|----------|------|
 | `ScheduleDelay` | `DelayTask` | 累计时间达到 delay 后执行一次回调并完成 |
-| `SchedulePeriodic` | `PeriodicTask` | 每累计一个 period 执行一次，可受 duration 或 maxExecutions 限制 |
+| `SchedulePeriodic` | `PeriodicTask` | 每累计一个 period 执行一次；`maxExecutions` 可限制次数，`duration` 为总时长截止（-1 无限） |
 | `ScheduleContinuous` | `ContinuousTask` | 每次 Tick 调用 `onTick(deltaTime)`，可由 duration 或外部 `Complete()` 结束 |
+
+接口注释中的“Tick 返回值不分配”只说明 `Tick` 没有返回集合，并不等于调度体系整体零分配：每次 Schedule 都会创建任务对象，`TaskList` 超过当前容量时还会分配两倍容量的新数组并复制。接口也没有按名称查询或枚举任务的公开 API，不能把注释中的“任务检索能力”当作已实现契约。
 
 ---
 
@@ -218,17 +238,15 @@ flowchart LR
 
 ```mermaid
 stateDiagram-v2
-    [*] --> Running: task added and Tick begins
+    [*] --> Running: task added
     Running --> Running: Update(deltaTime)
-    Running --> Completed: Complete()
-    Running --> Completed: delay/duration/count reached
+    Running --> Completed: Complete or internal condition
     Running --> Canceled: RequestCancel(reason)
-    Running --> TimedOut: State returns TimedOut
-    Completed --> Removed: scheduler Tick removes
-    Canceled --> Removed: scheduler Tick removes
+    Completed --> Removed: scheduler Tick observes state
+    Canceled --> Removed: scheduler Tick observes state
 ```
 
-`TaskState` 定义了 `Pending`、`Running`、`Completed`、`Canceled`、`TimedOut`。当前三个内置任务主要返回 `Running`、`Completed`、`Canceled`，`TimedOut` 是接口层预留状态。
+`TaskState` 定义了 `Pending`、`Running`、`Completed`、`Canceled`、`TimedOut`。当前三个内置任务只产生 `Running`、`Completed`、`Canceled`；`Pending` 和 `TimedOut` 是枚举预留值，没有内置状态路径。Schedule 后任务已报告 `Running`，取消和外部完成只是写标记，通常要到 scheduler 的遍历检查才从列表移除。
 
 `ScheduledTaskBase` 保存公共字段：
 
@@ -299,6 +317,10 @@ flowchart TB
 
 - 好处：低帧率下不会永久丢失周期次数。
 - 风险：单帧可能集中执行多次回调，回调应保持轻量，并注意玩法上是否允许补帧。
+- `periodSeconds <= 0` 自 2026-08-17 起在 `PeriodicTask` 构造与 `SchedulePeriodic` 入口被拒绝（`ArgumentOutOfRangeException`），不再可能进入不终止的 while 循环；该行为由 `AbilityKit.Timer.Tests` 契约测试钉住。
+- 2026-08-17 起 duration 语义已重设计：`_elapsedRaw` 只增不减（总耗时），另设 `_nextFireRaw`（下次触发绝对时刻）；触发时刻 = period 的整数倍且 ≤ duration，到 duration 后完成。旧实现"周期余量共用 `_elapsed`"导致 duration 不可靠的缺陷已消除。
+
+需要有限周期任务时用正 `durationSeconds`（总时长截止）或正 `maxExecutions`，两者可叠加。
 
 ---
 
@@ -324,7 +346,7 @@ flowchart TB
 - 在固定持续时间内执行某个采样或检查。
 - 由外部调用 `Complete()` 主动结束。
 
-示例：
+`onComplete` 只在 `ContinuousTask.Update()` 检测到 duration 到期时调用。继承自基类的外部 `Complete()` 只写完成标记，取消也只写取消标记，两条路径都不会调用 `onComplete`。因此清理工作不能只放在 completion callback 中；若提前完成也需要收尾，调用方应先显式收尾，再调用 `Complete()`。
 
 ```csharp
 var task = scheduler.ScheduleContinuous(
@@ -332,7 +354,8 @@ var task = scheduler.ScheduleContinuous(
     onComplete: () => FinishChanneling(),
     durationSeconds: 3f);
 
-// 外部条件提前结束
+// 提前结束时，Complete() 本身不会调用 onComplete。
+FinishChanneling();
 task.Complete();
 ```
 
@@ -366,7 +389,7 @@ sequenceDiagram
     Scheduler->>Scheduler: RemoveAt(i)
 ```
 
-`CancelByName` 只为任务写入取消标记。真正从 `TaskList` 移除发生在下一次或当前 Tick 遍历检查时。
+`CancelByName` 只为任务写入取消标记。真正从 `TaskList` 移除发生在下一次或当前 Tick 遍历检查时。`CancelAll` 具有相同语义；两者都没有取消回调，也不会清空任务对象持有的委托。
 
 ---
 
@@ -400,31 +423,92 @@ sequenceDiagram
 
 ---
 
-## 13. 边界判断
+## 13. 参数、异常与分配边界
 
-### 13.1 把 ITimer 当成调度器
+### 13.1 参数由调用方保证
 
-`ITimer` 只有 `Elapsed` 和 `Reset()`，不创建任务。需要延迟、周期、持续回调时使用 `IScheduler`。
+当前构造和 Schedule 入口不校验 callback、delay、duration、maxExecutions 或 `Tick(deltaTime)`（period 除外，见下表）。实际边界包括：
 
-### 13.2 以为任务会自动随世界 Tick
+| 输入 | 当前结果 |
+|------|----------|
+| null callback | 任务仍可推进并完成，只是不执行回调 |
+| `delaySeconds <= 0` | 2026-08-17 起 `DelayTask.Update` 的守卫改为只检查“已触发完成/已取消”，零或负延迟任务会在首次 Update 触发一次 callback 后完成（此前 callback 会被吞掉） |
+| `periodSeconds <= 0` | 2026-08-17 起构造即抛 `ArgumentOutOfRangeException`，不再进入不终止的 while 循环 |
+| 负 `deltaTime` | elapsed 会倒退，没有异常或诊断 |
+| 非正 duration | 被解释为无限期，而不是立即完成 |
+| 非正 maxExecutions | 被解释为无限次数 |
 
-`DefaultScheduler` 不会自己运行。必须有外部调用 `Tick(deltaTime)`。
+框架边界当前偏向低开销工具，而不是防御式公共 API。配置和外部输入必须在调用 scheduler 前验证。
 
-### 13.3 在帧同步逻辑里使用真实时间
+### 13.2 回调异常直接传播
 
-`SystemTimer` 基于 `Stopwatch`，不同机器和回放环境下真实时间不可作为权威逻辑输入。帧同步逻辑应使用框架传入的逻辑 delta 或帧号。
+任务回调、持续回调和完成回调都没有异常隔离，异常会直接穿透 `DefaultScheduler.Tick()`：
 
-### 13.4 依赖任务执行顺序
+1. 当前 Tick 立即中断，尚未遍历到的低索引任务不会更新。
+2. `DelayTask` 在 callback 前已把 elapsed 推到 delay；即使 `_completed` 尚未写入，`IsCompleted` 仍由 elapsed 判定为 true。下一 Tick 会直接移除，不会重试 callback。
+3. `PeriodicTask` 在 callback 前先扣除一个 period、返回后才增加执行次数；异常时 elapsed 已消费但次数少记，后续是否再次调用取决于剩余 elapsed 与新 delta。
+4. `ContinuousTask.onTick` 抛错时 elapsed 已推进；若已经达到 duration，下一 Tick 会直接移除且不会执行 `onComplete`。`onComplete` 自身抛错时也不会重试，因为 elapsed 已满足完成条件。
 
-`TaskList.RemoveAt` 会用尾元素覆盖删除位置，任务列表不是稳定顺序容器。玩法顺序应由系统设计或计划执行器表达。
+若回调来自不可信插件或业务模块，调用方应在回调边界自行捕获、记录并决定取消；当前 scheduler 不提供“单任务失败不影响其他任务”的保证。
 
-### 13.5 忽略大 delta 下的周期补执行
+三种任务都可能在回调返回后才写一部分显式状态，但 `State/IsCompleted` 还会读取 elapsed、duration 和 executionCount，不能只观察 `_completed` 推断重试。业务回调若不是幂等操作，应在回调内部建立提交门禁；上层捕获异常后可明确 `RequestCancel()`，不能依赖 scheduler 自动把异常任务置为 Failed，也不能假设完成通知一定补发。
 
-`PeriodicTask` 会在一个 Tick 内用 `while` 补足多个周期。周期回调要能承受一次 Tick 多次调用。
+### 13.3 取消与调度器所有权
+
+`RequestCancel()` 和 `CancelAll()` 只把任务状态标为 Canceled；任务对象要到下一次 `Tick()` 扫描时才从 `TaskList` 移除。`DefaultScheduler` 没有 `Dispose`、`Clear` 或立即压缩入口，宿主停止 Tick 后调用 `CancelAll()`，内部列表仍会保留这些任务及其回调引用。世界/场景关闭时应先取消，再至少推进一次受控清理 Tick，或者直接释放整个 scheduler 引用；若闭包捕获大对象，不能把“已取消”误认为引用已释放。
+
+### 13.4 分配模型
+
+scheduler 初始化时创建容量 16 的数组。Schedule 创建新的 class 任务；容量满时 `TaskList` 创建两倍容量数组并复制。Tick 的正常遍历和尾部覆盖删除不主动创建集合，但委托闭包、任务创建、扩容及业务回调仍可能产生 GC。高频玩法热路径应先做 profile，再决定复用回调、预留更大容量或引入池化，而不是依据接口注释声明零 GC。
 
 ---
 
-## 14. 源码阅读路径
+## 14. 接入与成熟度证据
+
+证据等级采用 E0–E5：E0 为源码可读，E1 为构建/静态检查，E2 为真实消费者，E3 为自动契约测试，E4 为真实运行验收，E5 为持续阻断门禁。下表只声明当前实际具备的等级。
+
+| 证据面 | 当前事实 | 结论 |
+|--------|----------|------|
+| 包源码 | 有完整的 timer、scheduler 和三种任务实现 | 可作为基础工具审阅和接入 |
+| `.NET` 编译 | 2026-08-16 执行 `dotnet build src/AbilityKit.Timer/AbilityKit.Timer.csproj -c Release --no-restore` 为 0 错误、52 个既有可空性/XML 注释警告 | 证明 `net10.0` 编译闭合，不证明任务时序和失败语义正确 |
+| 自动 Host/World 接入 | 未发现默认模块自动 Tick scheduler | 所有权和 Tick 时机由接入方负责 |
+| 生产调用 | 当前仓库搜索未发现 `DefaultScheduler` 的生产运行时调用 | 尚不能声明为生产验证能力 |
+| 自动测试 | 2026-08-17 新增 `src/AbilityKit.Timer.Tests`（46 项，Delay/Periodic/Continuous/SystemTimer/DefaultScheduler 契约），已接入 `foundation-units` 门禁与 `AbilityKit.sln` | 调度语义、参数拒绝、取消/移除时机与 swap-remove 遍历安全有回归保护；回调异常传播路径仍无专项测试 |
+| 示例 | package 注释和 Samples 中有示例字符串 | 只说明预期用法，不等于可执行验收 |
+
+剩余优先项：三类回调异常后的 elapsed/count/完成通知、扩容分配测试。周期 duration 语义已于 2026-08-17 重设计为总时长截止。
+
+---
+
+## 15. 边界判断
+
+### 15.1 把 ITimer 当成调度器
+
+`ITimer` 只有 `Elapsed` 和 `Reset()`，不创建任务。需要延迟、周期、持续回调时使用 `IScheduler`。
+
+### 15.2 以为任务会自动随世界 Tick
+
+`DefaultScheduler` 不会自己运行。必须有外部调用 `Tick(deltaTime)`。
+
+### 15.3 在帧同步逻辑里使用真实时间
+
+`SystemTimer` 基于 `Stopwatch`，不同机器和回放环境下真实时间不可作为权威逻辑输入。帧同步逻辑应使用框架传入的逻辑 delta 或帧号。
+
+### 15.4 依赖任务执行顺序
+
+`TaskList.RemoveAt` 会用尾元素覆盖删除位置，任务列表不是稳定顺序容器。玩法顺序应由系统设计或计划执行器表达。
+
+### 15.5 忽略大 delta 和非法 period
+
+`PeriodicTask` 会在一个 Tick 内用 `while` 补足多个周期。周期回调要能承受一次 Tick 多次调用，period 必须在入口保证大于零。
+
+### 15.6 把 Complete 当作完成事件
+
+外部 `Complete()` 只是状态写入，不调用 `ContinuousTask.onComplete`。需要统一完成通知时，应在 scheduler 之上定义自己的终止协议。
+
+---
+
+## 16. 源码阅读路径
 
 1. `ITimer.cs` 与 `SystemTimer.cs`：计时器只测量经过时间。
 2. `IScheduler.cs`：调度器公开能力。
@@ -435,7 +519,7 @@ sequenceDiagram
 
 ---
 
-## 15. 和其他文档的关系
+## 17. 和其他文档的关系
 
 - [事件系统](./01-EventSystem.md)：事件派发是同步通知；跨时间推进的逻辑应放到 scheduler 或世界系统中。
 - [对象池](./02-ObjectPool.md)：当前任务对象由调度器直接创建；如果未来高频创建任务，可考虑接入池化。
@@ -445,4 +529,6 @@ sequenceDiagram
 
 ---
 
-*文档版本：v2.0 | 最后更新：2026-07-03*
+文档类型：Canonical 设计 | 事实基线：2026-08-17 | 定位：统一调度器（逻辑层根驱动，已落地） | 时间基：对外 float、内部 Fixed64 定点（已落地） | 证据等级：E0 实现、E1 .NET 构建、E3 契约测试（`AbilityKit.Timer.Tests` 52 项 + `AbilityKit.Host.Extension.Tests` 2 项，`foundation-units`/`core-stability` 门禁）；未发现 E2 生产消费者或 E4–E5 证据
+
+*文档版本：v3.3 | 最后更新：2026-08-17*

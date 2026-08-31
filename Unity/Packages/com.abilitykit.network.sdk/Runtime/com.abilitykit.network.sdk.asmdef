@@ -1,0 +1,17 @@
+{
+  "name": "AbilityKit.Network.Sdk",
+  "rootNamespace": "AbilityKit.Network.Sdk",
+  "references": [
+    "AbilityKit.Network.Runtime",
+    "AbilityKit.Protocol"
+  ],
+  "includePlatforms": [],
+  "excludePlatforms": [],
+  "allowUnsafeCode": false,
+  "overrideReferences": false,
+  "precompiledReferences": [],
+  "autoReferenced": true,
+  "defineConstraints": [],
+  "versionDefines": [],
+  "noEngineReferences": true
+}

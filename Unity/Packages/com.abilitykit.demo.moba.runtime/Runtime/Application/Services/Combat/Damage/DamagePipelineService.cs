@@ -1,5 +1,4 @@
 using System;
-using System.Collections.Generic;
 using AbilityKit.Demo.Moba;
 using AbilityKit.Ability.World.Services;
 using AbilityKit.Ability.World.Services.Attributes;
@@ -7,6 +6,7 @@ using AbilityKit.Ability.World.DI;
 using AbilityKit.Core.Eventing;
 using AbilityKit.Core.Logging;
 using AbilityKit.Trace;
+using AbilityKit.Demo.Moba.Diagnostics;
 
 namespace AbilityKit.Demo.Moba.Services
 {
@@ -15,12 +15,14 @@ namespace AbilityKit.Demo.Moba.Services
     {
         private readonly MobaActorLookupService _actors;
         private readonly MobaDamageService _damage;
+        private readonly MobaShieldService _shields;
         private readonly AbilityKit.Triggering.Eventing.IEventBus _eventBus;
-        private readonly List<IMobaDamagePipelineStage> _standardStages;
+        private readonly IMobaDamageStageProvider _stageProvider;
         [WorldInject(required: false)] private MobaTraceRegistry _trace = null;
         [WorldInject(required: false)] private MobaCombatActivityService _combatActivity = null;
  
         private readonly IMobaBattleDiagnosticsService _diagnostics;
+        private readonly IMobaBattleDiagnosticEventSink _eventCollector;
 
         public DamagePipelineService(
             MobaActorLookupService actors,
@@ -28,19 +30,17 @@ namespace AbilityKit.Demo.Moba.Services
             AbilityKit.Triggering.Eventing.IEventBus eventBus,
             MobaDamageMitigationService mitigation = null,
             MobaShieldService shields = null,
-            IMobaBattleDiagnosticsService diagnostics = null)
+            IMobaBattleDiagnosticsService diagnostics = null,
+            IMobaBattleDiagnosticEventSink eventCollector = null,
+            IMobaDamageStageProvider stageProvider = null)
         {
             _actors = actors ?? throw new ArgumentNullException(nameof(actors));
             _damage = damage ?? throw new ArgumentNullException(nameof(damage));
+            _shields = shields;
             _eventBus = eventBus;
             _diagnostics = diagnostics;
-            _standardStages = new List<IMobaDamagePipelineStage>(4)
-            {
-                new MobaBaseDamagePipelineStage(),
-                new MobaDamageMitigationPipelineStage(mitigation),
-                new MobaShieldAbsorbPipelineStage(shields),
-                new MobaFinalDamagePipelineStage(),
-            };
+            _eventCollector = eventCollector;
+            _stageProvider = stageProvider ?? new MobaDamageStageRegistry(mitigation, shields);
         }
 
         public DamageResult Execute(AttackInfo attack)
@@ -70,18 +70,33 @@ namespace AbilityKit.Demo.Moba.Services
 
                 Publish(DamagePipelineEvents.BeforeApply, calc);
 
-                var targetAttrs = target.GetMobaAttrs();
-                var oldHp = targetAttrs.Hp;
-                var maxHp = targetAttrs.MaxHp;
+                var shieldCommitted = calc.ShieldPlan == null || _shields == null || _shields.CommitAbsorb(calc.ShieldPlan);
+                if (!shieldCommitted)
+                {
+                    diagnostics?.Counter("moba.damage.shieldCommitConflict");
+                    return null;
+                }
 
-                var applied = _damage.ApplyDamage(
-                    attackerActorId: attack.AttackerActorId,
-                    targetActorId: attack.TargetActorId,
-                    damageType: (int)attack.DamageType,
-                    value: calc.HpDamage.Value,
-                    reasonKind: (int)attack.ReasonKind,
-                    reasonParam: attack.ReasonParam);
+                attack.TryGetOrigin(out var attackOrigin);
+                var hpDamage = calc.HpDamage.FixedValue;
+                var committed = hpDamage > AbilityKit.Deterministic.Fixed64.Zero
+                    ? _damage.CommitDamage(
+                        attackerActorId: attack.AttackerActorId,
+                        targetActorId: attack.TargetActorId,
+                        damageType: (int)attack.DamageType,
+                        value: hpDamage,
+                        reasonKind: (int)attack.ReasonKind,
+                        reasonParam: attack.ReasonParam,
+                        origin: attackOrigin)
+                    : default;
+                if (hpDamage > AbilityKit.Deterministic.Fixed64.Zero && !committed.Succeeded)
+                {
+                    _shields?.RollbackAbsorb(calc.ShieldPlan);
+                    diagnostics?.Counter("moba.damage.healthCommitRejected");
+                    return null;
+                }
 
+                var targetAttributes = target.GetMobaAttrs();
                 var result = new DamageResult
                 {
                     AttackerActorId = attack.AttackerActorId,
@@ -91,10 +106,12 @@ namespace AbilityKit.Demo.Moba.Services
                     CritType = attack.CritType,
                     ReasonKind = attack.ReasonKind,
                     ReasonParam = attack.ReasonParam,
-                    Value = applied,
-                    TargetHp = Clamp(oldHp - applied, 0f, maxHp),
-                    TargetMaxHp = maxHp,
+                    Value = committed.AppliedValue,
+                    TargetHp = committed.Succeeded ? committed.TargetHp : targetAttributes.Hp,
+                    TargetMaxHp = committed.Succeeded ? committed.TargetMaxHp : targetAttributes.MaxHp,
                 };
+
+                _shields?.FinalizeAbsorb(calc.ShieldPlan);
 
                 if (attack.TryGetOrigin(out var origin))
                 {
@@ -104,8 +121,9 @@ namespace AbilityKit.Demo.Moba.Services
 
                 RecordCombatActivity(result);
                 Publish(DamagePipelineEvents.AfterApply, result);
+                TryCollectDamage(result);
                 diagnostics?.Counter("moba.damage.applied");
-                diagnostics?.Sample("moba.damage.value", applied);
+                diagnostics?.Sample("moba.damage.value", result.Value);
                 return result;
             }
             finally
@@ -129,19 +147,25 @@ namespace AbilityKit.Demo.Moba.Services
             {
                 case DamageFormulaKind.Standard:
                 default:
-                    RunStages(calc, _standardStages);
+                    var validation = _stageProvider.Validate();
+                    if (!validation.Succeeded)
+                    {
+                        throw new InvalidOperationException("Invalid damage stage configuration: " + string.Join("; ", validation.Errors));
+                    }
+
+                    RunStages(calc, _stageProvider.GetStages());
                     break;
             }
         }
 
-        private void RunStages(AttackCalcInfo calc, List<IMobaDamagePipelineStage> stages)
+        private void RunStages(AttackCalcInfo calc, System.Collections.Generic.IReadOnlyList<MobaDamageStageDescriptor> stages)
         {
             if (calc == null || stages == null) return;
 
             var diagnostics = _diagnostics;
             for (var i = 0; i < stages.Count; i++)
             {
-                var stage = stages[i];
+                var stage = stages[i].Stage;
                 if (stage == null) continue;
 
                 var start = diagnostics != null ? diagnostics.GetTimestamp() : 0L;
@@ -185,7 +209,8 @@ namespace AbilityKit.Demo.Moba.Services
             }
             else if (payload is DamageResult dr2)
             {
-                eventBus.Publish(new EventKey<DamageResult>(eid), in dr2);
+                var typedKey = new EventKey<DamageResult>(eid);
+                eventBus.Publish(typedKey, in dr2);
                 if (publishObject)
                 {
                     object boxed = dr2;
@@ -196,6 +221,52 @@ namespace AbilityKit.Demo.Moba.Services
             {
                 object boxed = payload;
                 eventBus.Publish(objectKey, in boxed);
+            }
+        }
+
+        public static MobaBattleDiagnosticEventDraft CreateDiagnosticDraft(DamageResult result)
+        {
+            if (result == null) throw new ArgumentNullException(nameof(result));
+
+            var origin = result.TryGetOrigin(out var resolvedOrigin)
+                ? resolvedOrigin
+                : default;
+            var handle = origin.SkillRuntimeHandle;
+            var runtime = handle.IsValid
+                ? new BattleDiagnosticRuntimeHandle(handle.RuntimeId, handle.Generation)
+                : default;
+            var configId = result.ReasonParam != 0
+                ? result.ReasonParam
+                : origin.ImmediateConfigId;
+            var contextId = origin.ImmediateContextId != 0L
+                ? origin.ImmediateContextId
+                : origin.EffectiveParentContextId;
+
+            return new MobaBattleDiagnosticEventDraft(
+                BattleDiagnosticEventKind.Damage,
+                BattleDiagnosticEventChannel.DamageAndHeal,
+                BattleDiagnosticEventOutcome.Succeeded,
+                result.AttackerActorId,
+                result.TargetActorId,
+                configId,
+                origin.EffectiveRootContextId,
+                contextId,
+                runtime,
+                summary: $"damage={result.Value:0.###}, targetHp={result.TargetHp:0.###}");
+        }
+
+        private void TryCollectDamage(DamageResult result)
+        {
+            try
+            {
+                var collector = _eventCollector;
+                if (collector == null || result == null) return;
+
+                var draft = CreateDiagnosticDraft(result);
+                collector.TryCollect(in draft);
+            }
+            catch
+            {
             }
         }
 
@@ -232,13 +303,6 @@ namespace AbilityKit.Demo.Moba.Services
             {
                 trace.EndContext(contextId, TraceLifecycleReason.Completed);
             }
-        }
-
-        private static float Clamp(float v, float min, float max)
-        {
-            if (v < min) return min;
-            if (v > max) return max;
-            return v;
         }
 
         public void Dispose()

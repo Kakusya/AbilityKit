@@ -2,6 +2,7 @@ using System;
 using System.Collections.Generic;
 using AbilityKit.Ability.World.Services;
 using AbilityKit.Ability.World.Services.Attributes;
+using AbilityKit.Deterministic;
 using AbilityKit.Demo.Moba.Components;
 
 namespace AbilityKit.Demo.Moba.Services
@@ -9,7 +10,7 @@ namespace AbilityKit.Demo.Moba.Services
     [WorldService(typeof(MobaShieldService))]
     public sealed class MobaShieldService : IService
     {
-        private readonly Dictionary<int, ShieldContainer> _containers = new Dictionary<int, ShieldContainer>();
+        private Dictionary<int, ShieldContainer> _containers = new Dictionary<int, ShieldContainer>();
         private readonly List<int> _cleanupActorIds = new List<int>(32);
 
         public int AddShield(int targetActorId, ShieldLayer layer)
@@ -42,46 +43,118 @@ namespace AbilityKit.Demo.Moba.Services
             return instanceId;
         }
 
-        public float Absorb(AttackInfo attack, float incomingDamage)
+        public Fixed64 Absorb(AttackInfo attack, Fixed64 incomingDamage)
         {
-            if (attack == null) return 0f;
-            if (incomingDamage <= 0f) return 0f;
-            if (!_containers.TryGetValue(attack.TargetActorId, out var container) || container == null) return 0f;
-            if (container.Layers == null || container.Layers.Count == 0) return 0f;
+            var plan = PreviewAbsorb(attack, incomingDamage);
+            if (!CommitAbsorb(plan)) return Fixed64.Zero;
+            FinalizeAbsorb(plan);
+            return plan.Absorbed;
+        }
 
-            SortLayers(container.Layers);
+        public ShieldAbsorbPlan PreviewAbsorb(AttackInfo attack, Fixed64 incomingDamage)
+        {
+            var plan = new ShieldAbsorbPlan(attack != null ? attack.TargetActorId : 0);
+            if (attack == null || incomingDamage <= Fixed64.Zero) return plan;
+            if (!_containers.TryGetValue(attack.TargetActorId, out var container) || container == null) return plan;
+            if (container.Layers == null || container.Layers.Count == 0) return plan;
 
+            var ordered = new List<ShieldLayer>(container.Layers);
+            SortLayers(ordered);
             var remainingDamage = incomingDamage;
-            var absorbed = 0f;
-
-            for (var i = 0; i < container.Layers.Count && remainingDamage > 0f; i++)
+            for (var i = 0; i < ordered.Count && remainingDamage > Fixed64.Zero; i++)
             {
-                var layer = container.Layers[i];
+                var layer = ordered[i];
                 if (!CanAbsorb(layer, attack.DamageType)) continue;
 
-                var ratio = layer.AbsorbRatio <= 0f ? 1f : Math.Min(1f, layer.AbsorbRatio);
-                var wanted = remainingDamage * ratio;
-                var take = Math.Min(layer.CurrentValue, wanted);
-                if (take <= 0f) continue;
+                var ratio = layer.AbsorbRatio <= Fixed64.Zero ? Fixed64.One : DeterministicMath.Min(Fixed64.One, layer.AbsorbRatio);
+                var take = DeterministicMath.Min(layer.CurrentValue, remainingDamage * ratio);
+                if (take <= Fixed64.Zero) continue;
 
-                layer.CurrentValue -= take;
+                plan.Add(layer.InstanceId, layer.CurrentValue, take);
                 remainingDamage -= take;
-                absorbed += take;
             }
+            return plan;
+        }
+
+        public bool CommitAbsorb(ShieldAbsorbPlan plan)
+        {
+            if (plan == null || plan.Absorbed <= Fixed64.Zero) return plan != null;
+            if (!_containers.TryGetValue(plan.TargetActorId, out var container) || container == null) return false;
+            if (container.Layers == null) return false;
+
+            for (var i = 0; i < plan.Entries.Count; i++)
+            {
+                var entry = plan.Entries[i];
+                var layer = FindLayer(container, entry.InstanceId);
+                if (layer == null || layer.CurrentValue != entry.OldValue) return false;
+            }
+
+            for (var i = 0; i < plan.Entries.Count; i++)
+            {
+                var entry = plan.Entries[i];
+                FindLayer(container, entry.InstanceId).CurrentValue = entry.OldValue - entry.ConsumedValue;
+            }
+            Recalculate(container);
+            return true;
+        }
+
+        public void RollbackAbsorb(ShieldAbsorbPlan plan)
+        {
+            if (plan == null || plan.Absorbed <= Fixed64.Zero) return;
+            if (!_containers.TryGetValue(plan.TargetActorId, out var container) || container == null) return;
+            if (container.Layers == null) return;
+
+            for (var i = 0; i < plan.Entries.Count; i++)
+            {
+                var entry = plan.Entries[i];
+                var layer = FindLayer(container, entry.InstanceId);
+                if (layer != null) layer.CurrentValue = entry.OldValue;
+            }
+            Recalculate(container);
+        }
+
+        public void FinalizeAbsorb(ShieldAbsorbPlan plan)
+        {
+            if (plan == null || plan.Absorbed <= Fixed64.Zero) return;
+            if (!_containers.TryGetValue(plan.TargetActorId, out var container) || container == null) return;
 
             RemoveDepleted(container);
             Recalculate(container);
-            return absorbed;
+        }
+
+        public Fixed64 GetTotalRemainingFixed(int targetActorId)
+        {
+            return _containers.TryGetValue(targetActorId, out var container) && container != null ? container.TotalRemaining : Fixed64.Zero;
         }
 
         public float GetTotalRemaining(int targetActorId)
         {
-            return _containers.TryGetValue(targetActorId, out var container) && container != null ? container.TotalRemaining : 0f;
+            return MobaResourceFixedConvert.ToSingle(GetTotalRemainingFixed(targetActorId));
         }
 
         public bool TryGetContainer(int targetActorId, out ShieldContainer container)
         {
             return _containers.TryGetValue(targetActorId, out container) && container != null;
+        }
+
+        public bool RemoveActor(int actorId)
+        {
+            return actorId > 0 && _containers.Remove(actorId);
+        }
+
+        internal void RestoreContainers(Dictionary<int, ShieldContainer> containers)
+        {
+            if (containers == null) throw new ArgumentNullException(nameof(containers));
+
+            foreach (var pair in containers)
+            {
+                if (pair.Key <= 0 || pair.Value == null)
+                {
+                    throw new ArgumentException("Shield restore state contains an invalid container.", nameof(containers));
+                }
+            }
+
+            _containers = containers;
         }
 
         public bool RemoveShield(int targetActorId, int instanceId)
@@ -137,7 +210,7 @@ namespace AbilityKit.Demo.Moba.Services
                 if (container.Layers == null || container.Layers.Count == 0) continue;
 
                 var before = container.Layers.Count;
-                container.Layers.RemoveAll(x => x == null || IsExpired(x, currentFrame) || (x.RemoveWhenDepleted && x.CurrentValue <= 0f));
+                container.Layers.RemoveAll(x => x == null || IsExpired(x, currentFrame) || (x.RemoveWhenDepleted && x.CurrentValue <= Fixed64.Zero));
                 var delta = before - container.Layers.Count;
                 if (delta <= 0) continue;
 
@@ -156,7 +229,7 @@ namespace AbilityKit.Demo.Moba.Services
             {
                 Layers = new List<ShieldLayer>(),
                 NextInstanceId = 0,
-                TotalRemaining = 0f,
+                TotalRemaining = Fixed64.Zero,
                 Dirty = false,
             };
             _containers[targetActorId] = container;
@@ -166,10 +239,10 @@ namespace AbilityKit.Demo.Moba.Services
         private static void NormalizeLayer(int targetActorId, ShieldLayer layer)
         {
             layer.TargetActorId = targetActorId;
-            layer.CurrentValue = Math.Max(0f, layer.CurrentValue > 0f ? layer.CurrentValue : layer.InitialValue);
-            layer.MaxValue = Math.Max(layer.MaxValue, layer.CurrentValue);
-            layer.InitialValue = Math.Max(layer.InitialValue, layer.CurrentValue);
-            layer.AbsorbRatio = layer.AbsorbRatio <= 0f ? 1f : Math.Min(1f, layer.AbsorbRatio);
+            layer.CurrentValue = DeterministicMath.Max(Fixed64.Zero, layer.CurrentValue > Fixed64.Zero ? layer.CurrentValue : layer.InitialValue);
+            layer.MaxValue = DeterministicMath.Max(layer.MaxValue, layer.CurrentValue);
+            layer.InitialValue = DeterministicMath.Max(layer.InitialValue, layer.CurrentValue);
+            layer.AbsorbRatio = layer.AbsorbRatio <= Fixed64.Zero ? Fixed64.One : DeterministicMath.Min(Fixed64.One, layer.AbsorbRatio);
             layer.RemoveWhenDepleted = true;
         }
 
@@ -213,10 +286,21 @@ namespace AbilityKit.Demo.Moba.Services
             existing.ConsumePolicy = incoming.ConsumePolicy;
         }
 
+        private static ShieldLayer FindLayer(ShieldContainer container, int instanceId)
+        {
+            if (container == null || container.Layers == null) return null;
+            for (var i = 0; i < container.Layers.Count; i++)
+            {
+                var layer = container.Layers[i];
+                if (layer != null && layer.InstanceId == instanceId) return layer;
+            }
+            return null;
+        }
+
         private static bool CanAbsorb(ShieldLayer layer, DamageType damageType)
         {
             if (layer == null) return false;
-            if (layer.CurrentValue <= 0f) return false;
+            if (layer.CurrentValue <= Fixed64.Zero) return false;
             if (layer.DamageTypeMask == 0) return true;
             return (layer.DamageTypeMask & (int)damageType) != 0;
         }
@@ -259,19 +343,19 @@ namespace AbilityKit.Demo.Moba.Services
         private static void RemoveDepleted(ShieldContainer container)
         {
             if (container == null || container.Layers == null) return;
-            container.Layers.RemoveAll(x => x == null || (x.RemoveWhenDepleted && x.CurrentValue <= 0f));
+            container.Layers.RemoveAll(x => x == null || (x.RemoveWhenDepleted && x.CurrentValue <= Fixed64.Zero));
         }
 
         private static void Recalculate(ShieldContainer container)
         {
             if (container == null) return;
-            var total = 0f;
+            var total = Fixed64.Zero;
             if (container.Layers != null)
             {
                 for (var i = 0; i < container.Layers.Count; i++)
                 {
                     var layer = container.Layers[i];
-                    if (layer != null && layer.CurrentValue > 0f) total += layer.CurrentValue;
+                    if (layer != null && layer.CurrentValue > Fixed64.Zero) total += layer.CurrentValue;
                 }
             }
 
@@ -284,5 +368,39 @@ namespace AbilityKit.Demo.Moba.Services
             _containers.Clear();
             _cleanupActorIds.Clear();
         }
+    }
+
+    public sealed class ShieldAbsorbPlan
+    {
+        private readonly List<ShieldAbsorbEntry> _entries = new List<ShieldAbsorbEntry>();
+
+        internal ShieldAbsorbPlan(int targetActorId)
+        {
+            TargetActorId = targetActorId;
+        }
+
+        public int TargetActorId { get; }
+        public Fixed64 Absorbed { get; private set; }
+        internal IReadOnlyList<ShieldAbsorbEntry> Entries => _entries;
+
+        internal void Add(int instanceId, Fixed64 oldValue, Fixed64 consumedValue)
+        {
+            _entries.Add(new ShieldAbsorbEntry(instanceId, oldValue, consumedValue));
+            Absorbed += consumedValue;
+        }
+    }
+
+    internal readonly struct ShieldAbsorbEntry
+    {
+        public ShieldAbsorbEntry(int instanceId, Fixed64 oldValue, Fixed64 consumedValue)
+        {
+            InstanceId = instanceId;
+            OldValue = oldValue;
+            ConsumedValue = consumedValue;
+        }
+
+        public int InstanceId { get; }
+        public Fixed64 OldValue { get; }
+        public Fixed64 ConsumedValue { get; }
     }
 }

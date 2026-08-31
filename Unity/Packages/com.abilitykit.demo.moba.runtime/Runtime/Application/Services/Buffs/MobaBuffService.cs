@@ -9,6 +9,7 @@ using AbilityKit.Demo.Moba.Components;
 using AbilityKit.Demo.Moba.Config.BattleDemo.MO;
 using AbilityKit.Demo.Moba.Config.Core;
 using AbilityKit.Trace;
+using AbilityKit.Demo.Moba.Diagnostics;
 
 using AbilityKit.Demo.Moba.Services;
 using AbilityKit.Demo.Moba.Services.Buffs.Core;
@@ -52,6 +53,8 @@ namespace AbilityKit.Demo.Moba.Services.Buffs {
         private BuffLifecycleExecutor _lifecycle;
         private long _nextCommandSeq;
         private readonly List<BuffCommand> _pending = new List<BuffCommand>(32);
+        private readonly HashSet<long> _awaitedCommandSeqs = new HashSet<long>();
+        private readonly Dictionary<long, bool> _commandResults = new Dictionary<long, bool>();
         private int _draining;
 
         public void OnInit(IWorldResolver services)
@@ -84,25 +87,24 @@ namespace AbilityKit.Demo.Moba.Services.Buffs {
         /// </summary>
         public bool ApplyBuffImmediate(int targetActorId, int buffId, int sourceActorId, int durationOverrideMs, in BuffOriginContext origin)
         {
+            if (_draining > 0) return false;
             if (!EnqueueApply(targetActorId, buffId, sourceActorId, durationOverrideMs, origin, sourceContextId: 0L, forceNewInstance: false))
             {
                 return false;
             }
 
-            DrainPending(maxCommands: 256);
-            return true;
+            return DrainImmediateCommand(_nextCommandSeq, maxCommands: 256);
         }
 
         public bool ApplyBuffInstanceImmediate(int targetActorId, int buffId, int sourceActorId, int durationOverrideMs, long sourceContextId, in BuffOriginContext origin)
         {
-            if (sourceContextId == 0L) return false;
+            if (sourceContextId == 0L || _draining > 0) return false;
             if (!EnqueueApply(targetActorId, buffId, sourceActorId, durationOverrideMs, origin, sourceContextId, forceNewInstance: true))
             {
                 return false;
             }
 
-            DrainPending(maxCommands: 256);
-            return true;
+            return DrainImmediateCommand(_nextCommandSeq, maxCommands: 256);
         }
 
         public bool RemoveBuffImmediate(global::ActorEntity target, int buffId, int sourceActorId, TraceLifecycleReason reason)
@@ -113,30 +115,29 @@ namespace AbilityKit.Demo.Moba.Services.Buffs {
 
         public bool RemoveBuffImmediate(int targetActorId, int buffId, int sourceActorId, TraceLifecycleReason reason)
         {
+            if (_draining > 0) return false;
             if (!EnqueueRemove(targetActorId, buffId, sourceActorId, sourceContextId: 0L, reason: reason))
             {
                 return false;
             }
 
-            DrainPending(maxCommands: 256);
-            return true;
+            return DrainImmediateCommand(_nextCommandSeq, maxCommands: 256);
         }
 
         public bool RemoveBuffInstanceImmediate(int targetActorId, int buffId, int sourceActorId, long sourceContextId, TraceLifecycleReason reason)
         {
-            if (sourceContextId == 0L) return false;
+            if (sourceContextId == 0L || _draining > 0) return false;
             if (!EnqueueRemove(targetActorId, buffId, sourceActorId, sourceContextId, reason))
             {
                 return false;
             }
 
-            DrainPending(maxCommands: 256);
-            return true;
+            return DrainImmediateCommand(_nextCommandSeq, maxCommands: 256);
         }
 
         public int RemoveBuffsImmediate(int targetActorId, int buffId, int sourceActorId, bool removeAll, TraceLifecycleReason reason)
         {
-            if (targetActorId <= 0) return 0;
+            if (targetActorId <= 0 || _draining > 0) return 0;
 
             var target = TryGetActorEntity(targetActorId);
             if (target == null || !target.hasBuffs || target.buffs.Active == null || target.buffs.Active.Count == 0)
@@ -145,7 +146,7 @@ namespace AbilityKit.Demo.Moba.Services.Buffs {
             }
 
             var active = target.buffs.Active;
-            var queued = 0;
+            var commandSeqs = new List<long>();
             for (var i = active.Count - 1; i >= 0; i--)
             {
                 var runtime = active[i];
@@ -156,16 +157,87 @@ namespace AbilityKit.Demo.Moba.Services.Buffs {
                 var removeSourceId = sourceActorId > 0 ? sourceActorId : runtime.SourceId;
                 if (!EnqueueRemove(targetActorId, runtime.BuffId, removeSourceId, runtime.SourceContextId, reason)) continue;
 
-                queued++;
+                commandSeqs.Add(_nextCommandSeq);
                 if (!removeAll) break;
             }
 
-            if (queued > 0)
+            return DrainImmediateCommands(commandSeqs, Math.Max(256, commandSeqs.Count + 32));
+        }
+
+        public int RemoveBuffsWithTagImmediate(int targetActorId, string tagName, int sourceActorId, bool removeAll, TraceLifecycleReason reason)
+        {
+            return RemoveBuffsWithTagImmediate(targetActorId, tagName, dispelCategory: 0, sourceActorId, removeAll, reason);
+        }
+
+        public int RemoveBuffsWithTagImmediate(int targetActorId, string tagName, int dispelCategory, int sourceActorId, bool removeAll, TraceLifecycleReason reason)
+        {
+            if (targetActorId <= 0 || dispelCategory < 0 || _draining > 0 || !MobaGameplayTagCatalog.TryResolve(tagName, out var tag)) return 0;
+
+            var target = TryGetActorEntity(targetActorId);
+            if (target == null || !target.hasBuffs || target.buffs.Active == null || target.buffs.Active.Count == 0 || _configs == null)
             {
-                DrainPending(maxCommands: Math.Max(256, queued + 32));
+                return 0;
             }
 
-            return queued;
+            var active = target.buffs.Active;
+            var commandSeqs = new List<long>();
+            for (var i = active.Count - 1; i >= 0; i--)
+            {
+                var runtime = active[i];
+                if (runtime == null || (sourceActorId > 0 && runtime.SourceId != sourceActorId)) continue;
+                if (!_configs.TryGetBuff(runtime.BuffId, out var buff) || buff?.Tags == null || !buff.Tags.HasTag(tag)) continue;
+                if (!CanDispel(targetActorId, runtime, buff, dispelCategory)) continue;
+
+                var removeSourceId = sourceActorId > 0 ? sourceActorId : runtime.SourceId;
+                if (!EnqueueRemove(targetActorId, runtime.BuffId, removeSourceId, runtime.SourceContextId, reason)) continue;
+
+                commandSeqs.Add(_nextCommandSeq);
+                if (!removeAll) break;
+            }
+
+            return DrainImmediateCommands(commandSeqs, Math.Max(256, commandSeqs.Count + 32));
+        }
+
+        private bool CanDispel(int targetActorId, BuffRuntime runtime, BuffMO buff, int dispelCategory)
+        {
+            if (buff.DispelPolicy == BuffDispelPolicy.Undispellable)
+            {
+                ReportDispelRejected("buff.dispel.undispellable", targetActorId, runtime, buff, dispelCategory);
+                return false;
+            }
+
+            if (dispelCategory > 0 && buff.DispelCategory > 0 && buff.DispelCategory != dispelCategory)
+            {
+                ReportDispelRejected("buff.dispel.categoryMismatch", targetActorId, runtime, buff, dispelCategory);
+                return false;
+            }
+
+            if (buff.DispelBlockedByTags == null || buff.DispelBlockedByTags.Count == 0) return true;
+            if (_tags == null)
+            {
+                ReportDispelRejected("buff.dispel.tagQueryUnavailable", targetActorId, runtime, buff, dispelCategory);
+                return false;
+            }
+
+            var effectiveTags = _tags.GetEffectiveTags(targetActorId);
+            if (!MobaGameplayTagCatalog.HasAny(effectiveTags, buff.DispelBlockedByTags)) return true;
+
+            ReportDispelRejected("buff.dispel.immunityBlocked", targetActorId, runtime, buff, dispelCategory);
+            return false;
+        }
+
+        private void ReportDispelRejected(string code, int targetActorId, BuffRuntime runtime, BuffMO buff, int dispelCategory)
+        {
+            var sourceActorId = runtime != null ? runtime.SourceId : 0;
+            var buffId = buff != null ? buff.Id : runtime != null ? runtime.BuffId : 0;
+            var buffCategory = buff != null ? buff.DispelCategory : 0;
+            var policy = buff != null ? buff.DispelPolicy.ToString() : "unknown";
+            ReportRejected(
+                code,
+                () => $"Dispel rejected. rejectCode={code} target={targetActorId} buffId={buffId} source={sourceActorId} requestedCategory={dispelCategory} buffCategory={buffCategory} policy={policy}",
+                targetActorId,
+                buffId,
+                sourceActorId);
         }
 
         /// <summary>
@@ -241,7 +313,7 @@ namespace AbilityKit.Demo.Moba.Services.Buffs {
         {
             if (maxCommands <= 0) return;
 
-            // 防止执行 Buff 效果时再次调用 ApplyBuffImmediate 导致重入递归；新命令留到下一轮 drain。
+            // 防止 Immediate API 在效果回调中递归 drain；普通命令追加到尾部，并在本轮预算允许时继续消费。
             if (_draining > 0) return;
 
             var diagnostics = _diagnostics;
@@ -271,16 +343,17 @@ namespace AbilityKit.Demo.Moba.Services.Buffs {
                     }
 
                     var cmd = _pending[cursor++];
+                    var succeeded = false;
 
                     try
                     {
                         switch (cmd.Kind)
                         {
                             case BuffCommandKind.Apply:
-                                ExecuteApply(cmd.ApplyRequest);
+                                succeeded = ExecuteApply(cmd.ApplyRequest);
                                 break;
                             case BuffCommandKind.Remove:
-                                ExecuteRemove(cmd.RemoveRequest);
+                                succeeded = ExecuteRemove(cmd.RemoveRequest);
                                 break;
                         }
                     }
@@ -312,6 +385,11 @@ namespace AbilityKit.Demo.Moba.Services.Buffs {
                         }
                     }
 
+                    if (_awaitedCommandSeqs.Remove(cmd.Seq))
+                    {
+                        _commandResults[cmd.Seq] = succeeded;
+                    }
+
                     executed++;
                 }
 
@@ -333,6 +411,57 @@ namespace AbilityKit.Demo.Moba.Services.Buffs {
                         start,
                         MobaBattleDiagnosticsDefaults.BuffDrainWarnMs);
                 }
+            }
+        }
+
+        private bool DrainImmediateCommand(long commandSeq, int maxCommands)
+        {
+            _awaitedCommandSeqs.Add(commandSeq);
+            DrainPending(maxCommands);
+            var hasResult = _commandResults.TryGetValue(commandSeq, out var succeeded);
+            _awaitedCommandSeqs.Remove(commandSeq);
+            _commandResults.Remove(commandSeq);
+            if (!hasResult) RemovePendingCommand(commandSeq);
+            return hasResult && succeeded;
+        }
+
+        private int DrainImmediateCommands(List<long> commandSeqs, int maxCommands)
+        {
+            if (commandSeqs == null || commandSeqs.Count == 0) return 0;
+
+            for (var i = 0; i < commandSeqs.Count; i++)
+            {
+                _awaitedCommandSeqs.Add(commandSeqs[i]);
+            }
+
+            DrainPending(maxCommands);
+            var succeededCount = 0;
+            for (var i = 0; i < commandSeqs.Count; i++)
+            {
+                var commandSeq = commandSeqs[i];
+                if (_commandResults.TryGetValue(commandSeq, out var succeeded) && succeeded)
+                {
+                    succeededCount++;
+                }
+                else if (!_commandResults.ContainsKey(commandSeq))
+                {
+                    RemovePendingCommand(commandSeq);
+                }
+
+                _awaitedCommandSeqs.Remove(commandSeq);
+                _commandResults.Remove(commandSeq);
+            }
+
+            return succeededCount;
+        }
+
+        private void RemovePendingCommand(long commandSeq)
+        {
+            for (var i = _pending.Count - 1; i >= 0; i--)
+            {
+                if (_pending[i].Seq != commandSeq) continue;
+                _pending.RemoveAt(i);
+                return;
             }
         }
 
@@ -457,6 +586,55 @@ namespace AbilityKit.Demo.Moba.Services.Buffs {
             return new string(chars);
         }
 
+        internal static MobaBattleDiagnosticEventDraft CreateBuffAddedDraft(in BuffApplyRequest request)
+        {
+            var origin = request.Origin;
+            origin.TryGetOrigin(out var resolvedOrigin);
+            var handle = request.SkillRuntimeHandle;
+            var runtime = handle.IsValid
+                ? new BattleDiagnosticRuntimeHandle(handle.RuntimeId, handle.Generation)
+                : default;
+            var rootContextId = resolvedOrigin.EffectiveRootContextId != 0L
+                ? resolvedOrigin.EffectiveRootContextId
+                : request.SourceContextId;
+            var contextId = request.SourceContextId != 0L
+                ? request.SourceContextId
+                : resolvedOrigin.ImmediateContextId;
+            var summary = request.DurationOverrideMs > 0
+                ? $"buffId={request.BuffId}, durationMs={request.DurationOverrideMs}, forceNew={request.ForceNewInstance}"
+                : $"buffId={request.BuffId}, forceNew={request.ForceNewInstance}";
+
+            return new MobaBattleDiagnosticEventDraft(
+                BattleDiagnosticEventKind.BuffAdded,
+                BattleDiagnosticEventChannel.Buff,
+                BattleDiagnosticEventOutcome.Succeeded,
+                request.SourceActorId,
+                request.TargetActorId,
+                request.BuffId,
+                rootContextId,
+                contextId,
+                runtime,
+                summary: summary);
+        }
+
+        internal static MobaBattleDiagnosticEventDraft CreateBuffRemovedDraft(in BuffRemoveRequest request)
+        {
+            var contextId = request.SourceContextId;
+            var summary = $"buffId={request.BuffId}, reason={request.Reason}";
+
+            return new MobaBattleDiagnosticEventDraft(
+                BattleDiagnosticEventKind.BuffRemoved,
+                BattleDiagnosticEventChannel.Buff,
+                BattleDiagnosticEventOutcome.Succeeded,
+                request.SourceActorId,
+                request.TargetActorId,
+                request.BuffId,
+                rootContextId: 0L,
+                contextId,
+                skillRuntime: default,
+                summary: summary);
+        }
+
         private void ReportRejected(string key, Func<string> messageFactory, int targetActorId, int buffId, int sourceActorId)
         {
             var diagnostics = _diagnostics;
@@ -477,6 +655,8 @@ namespace AbilityKit.Demo.Moba.Services.Buffs {
         public void Dispose()
         {
             _pending.Clear();
+            _awaitedCommandSeqs.Clear();
+            _commandResults.Clear();
         }
     }
 }

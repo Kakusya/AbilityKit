@@ -4,7 +4,7 @@
             "id": 101,
             "name": "Buff101-添加时日志",
             "event": "on_buff_added",
-            "enabled": true,
+            "enabled": false,
             "allowExternal": false,
             "phase": "immediate",
             "priority": 50,

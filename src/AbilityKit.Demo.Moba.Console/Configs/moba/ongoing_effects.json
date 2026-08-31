@@ -34,5 +34,23 @@
     "OnApplyEffectId": 0,
     "OnTickEffectId": 10020311,
     "OnRemoveEffectId": 0
+  },
+  {
+    "Id": 20050301,
+    "Name": "妲己-女王崇拜-周期狐火",
+    "DurationMs": 1600,
+    "PeriodMs": 400,
+    "OnApplyEffectId": 0,
+    "OnTickEffectId": 10050311,
+    "OnRemoveEffectId": 0
+  },
+  {
+    "Id": 20060301,
+    "Name": "嬴政-至尊王权-周期飞剑",
+    "DurationMs": 2500,
+    "PeriodMs": 250,
+    "OnApplyEffectId": 0,
+    "OnTickEffectId": 10060311,
+    "OnRemoveEffectId": 0
   }
 ]

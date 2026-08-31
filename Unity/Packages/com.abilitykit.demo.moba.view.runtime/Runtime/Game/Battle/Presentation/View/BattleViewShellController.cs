@@ -1,3 +1,5 @@
+using AbilityKit.Game.Battle.Entity;
+
 namespace AbilityKit.Game.Flow
 {
     internal sealed class BattleViewShellController
@@ -19,11 +21,17 @@ namespace AbilityKit.Game.Flow
 
         public void Recreate(BattleViewHandle handle, int actorId, int modelId)
         {
+            Recreate(handle, actorId, modelId, BattleEntityKind.Unknown);
+        }
+
+        public void Recreate(BattleViewHandle handle, int actorId, int modelId, BattleEntityKind kind)
+        {
             Destroy(handle, immediate: false);
 
             handle.ModelId = modelId;
+            handle.Kind = kind;
 
-            var go = _loader != null ? _loader.CreateShellGameObject(actorId, modelId) : null;
+            var go = _loader?.CreateShellGameObject(actorId, modelId, kind);
             handle.GameObject = go;
 
             if (go == null) return;

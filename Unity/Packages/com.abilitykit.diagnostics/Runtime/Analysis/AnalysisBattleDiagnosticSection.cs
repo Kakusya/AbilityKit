@@ -1,0 +1,394 @@
+using System.Collections.Generic;
+
+namespace AbilityKit.Diagnostics.Analysis
+{
+    public static class AnalysisBattleDiagnosticSchema
+    {
+        public const string Version = "abilitykit-battle-diagnostics.v1";
+    }
+
+    public sealed class AnalysisBattleDiagnosticSection
+    {
+        public string SchemaVersion { get; set; } = AnalysisBattleDiagnosticSchema.Version;
+        public long CapturedAtTimestamp { get; set; }
+        public AnalysisBattleDiagnosticSession Session { get; set; } = new AnalysisBattleDiagnosticSession();
+        public AnalysisBattleDiagnosticEventTrack Events { get; set; } = new AnalysisBattleDiagnosticEventTrack();
+        public AnalysisBattleDiagnosticStateTrack State { get; set; } = new AnalysisBattleDiagnosticStateTrack();
+        public AnalysisBattleDiagnosticTraceTrack Trace { get; set; } = new AnalysisBattleDiagnosticTraceTrack();
+        public AnalysisBattleDiagnosticAttributeTrack Attributes { get; set; } = new AnalysisBattleDiagnosticAttributeTrack();
+        public AnalysisBattleDiagnosticBuffTrack Buffs { get; set; } = new AnalysisBattleDiagnosticBuffTrack();
+        public AnalysisBattleDiagnosticTagTrack Tags { get; set; } = new AnalysisBattleDiagnosticTagTrack();
+        public AnalysisBattleDiagnosticEffectTrack Effects { get; set; } = new AnalysisBattleDiagnosticEffectTrack();
+        public AnalysisBattleDiagnosticObjectTrack Objects { get; set; } = new AnalysisBattleDiagnosticObjectTrack();
+        public AnalysisBattleDiagnosticMetricTrack FrameMetrics { get; set; } = new AnalysisBattleDiagnosticMetricTrack();
+        public AnalysisBattleDiagnosticMetricProfile FrameMetricProfile { get; set; }
+    }
+
+    public sealed class AnalysisBattleDiagnosticMetricProfile
+    {
+        public string Name { get; set; } = string.Empty;
+        public string Project { get; set; } = string.Empty;
+        public string GameMode { get; set; } = string.Empty;
+        public string NetworkMode { get; set; } = string.Empty;
+        public string DeviceTier { get; set; } = string.Empty;
+        public List<AnalysisBattleDiagnosticMetricThreshold> Thresholds { get; set; } =
+            new List<AnalysisBattleDiagnosticMetricThreshold>();
+    }
+
+    public sealed class AnalysisBattleDiagnosticMetricThreshold
+    {
+        public string Metric { get; set; } = string.Empty;
+        public double? WarningThreshold { get; set; }
+        public double? CriticalThreshold { get; set; }
+        public double? SuggestedMinimum { get; set; }
+        public double? SuggestedMaximum { get; set; }
+    }
+
+    public sealed class AnalysisBattleDiagnosticSession
+    {
+        public string SessionId { get; set; } = string.Empty;
+        public string WorldId { get; set; } = string.Empty;
+        public long WorldEpoch { get; set; }
+        public string DisplayName { get; set; } = string.Empty;
+        public string BuildId { get; set; } = string.Empty;
+        public int SchemaVersion { get; set; }
+        public long MonotonicTimestampFrequency { get; set; }
+        public long Capabilities { get; set; }
+        public int ConnectionState { get; set; }
+        public int CaptureState { get; set; }
+    }
+
+    public sealed class AnalysisBattleDiagnosticEventTrack
+    {
+        public long Revision { get; set; }
+        public AnalysisBattleDiagnosticStoreMetrics Metrics { get; set; } = new AnalysisBattleDiagnosticStoreMetrics();
+        public List<AnalysisBattleDiagnosticEvent> Items { get; set; } = new List<AnalysisBattleDiagnosticEvent>();
+    }
+
+    public sealed class AnalysisBattleDiagnosticStoreMetrics
+    {
+        public int Capacity { get; set; }
+        public int Count { get; set; }
+        public long Revision { get; set; }
+        public long AcceptedCount { get; set; }
+        public long EvictedCount { get; set; }
+        public long RejectedCount { get; set; }
+        public bool IsFrozen { get; set; }
+    }
+
+    public sealed class AnalysisBattleDiagnosticEvent
+    {
+        public int Frame { get; set; }
+        public long Sequence { get; set; }
+        public long MonotonicTimestamp { get; set; }
+        public int Kind { get; set; }
+        public int Channel { get; set; }
+        public int Outcome { get; set; }
+        public long SourceActorId { get; set; }
+        public long TargetActorId { get; set; }
+        public int SourceActorGeneration { get; set; }
+        public int TargetActorGeneration { get; set; }
+        public int SubjectObjectKind { get; set; }
+        public long SubjectRuntimeId { get; set; }
+        public int SubjectGeneration { get; set; }
+        public int ConfigId { get; set; }
+        public int DefinitionKind { get; set; }
+        public long RootContextId { get; set; }
+        public long ContextId { get; set; }
+        public long SkillRuntimeId { get; set; }
+        public int SkillRuntimeGeneration { get; set; }
+        public long AttackId { get; set; }
+        public int PayloadVersion { get; set; }
+        public string Summary { get; set; } = string.Empty;
+        public AnalysisBattleDiagnosticEventPayload Payload { get; set; }
+    }
+
+    public sealed class AnalysisBattleDiagnosticEventPayload
+    {
+        public int Kind { get; set; }
+        public int SchemaVersion { get; set; }
+        public int AuthoritativeFrame { get; set; }
+        public uint StateHash { get; set; }
+        public int TriggerId { get; set; }
+        public int TriggerContextKind { get; set; }
+        public int TriggerOriginKind { get; set; }
+        public int TriggerStage { get; set; }
+        public int TriggerResult { get; set; }
+        public int TriggerDetailCode { get; set; }
+        public int TriggerCurrentDepth { get; set; }
+        public int TriggerCurrentFrameCount { get; set; }
+        public int TriggerCurrentRootCount { get; set; }
+        public int TriggerCurrentSameTriggerCount { get; set; }
+        public string TriggerFailureKey { get; set; } = string.Empty;
+        public string TriggerReason { get; set; } = string.Empty;
+        public int SkillFailureSlot { get; set; }
+        public string SkillFailureSource { get; set; } = string.Empty;
+        public int BuffLifecycleStage { get; set; }
+        public int BuffLifecycleStackCount { get; set; }
+        public int BuffLifecyclePreviousStackCount { get; set; }
+        public int BuffLifecycleDurationMilliseconds { get; set; }
+        public int BuffLifecycleRemainingMilliseconds { get; set; }
+        public int BuffLifecycleIntervalRemainingMilliseconds { get; set; }
+        public int BuffLifecycleMaxStacks { get; set; }
+        public int BuffLifecycleModifierBindingCount { get; set; }
+        public int BuffLifecycleModifierSourceId { get; set; }
+        public int BuffLifecycleRemoveReason { get; set; }
+        public string SkillFailureStage { get; set; } = string.Empty;
+        public string SkillFailureCode { get; set; } = string.Empty;
+        public string SkillFailureMessage { get; set; } = string.Empty;
+    }
+
+    public sealed class AnalysisBattleDiagnosticStateTrack
+    {
+        public long Revision { get; set; }
+        public int Frame { get; set; } = -1;
+        public AnalysisBattleDiagnosticWorld World { get; set; }
+        public List<AnalysisBattleDiagnosticActor> Actors { get; set; } = new List<AnalysisBattleDiagnosticActor>();
+    }
+
+    public sealed class AnalysisBattleDiagnosticWorld
+    {
+        public int Frame { get; set; }
+        public long MonotonicTimestamp { get; set; }
+        public int ActorCount { get; set; }
+        public int ActiveSkillRuntimeCount { get; set; }
+        public int ActiveTraceRootCount { get; set; }
+        public string StateHash { get; set; } = string.Empty;
+    }
+
+    public sealed class AnalysisBattleDiagnosticActor
+    {
+        public int Frame { get; set; }
+        public long ActorId { get; set; }
+        public int Kind { get; set; }
+        public int ConfigId { get; set; }
+        public int TeamId { get; set; }
+        public float PositionX { get; set; }
+        public float PositionY { get; set; }
+        public float PositionZ { get; set; }
+        public float Health { get; set; }
+        public float MaximumHealth { get; set; }
+        public bool IsAlive { get; set; }
+        public string DisplayName { get; set; } = string.Empty;
+    }
+
+    public sealed class AnalysisBattleDiagnosticTraceTrack
+    {
+        public long Revision { get; set; }
+        public bool Truncated { get; set; }
+        public bool IsStable { get; set; }
+        public List<AnalysisBattleDiagnosticTraceNode> Nodes { get; set; } = new List<AnalysisBattleDiagnosticTraceNode>();
+    }
+
+    public sealed class AnalysisBattleDiagnosticTraceNode
+    {
+        public long RootContextId { get; set; }
+        public long ContextId { get; set; }
+        public long ParentContextId { get; set; }
+        public int StartFrame { get; set; }
+        public int EndFrame { get; set; } = -1;
+        public int State { get; set; }
+        public long ActorId { get; set; }
+        public int ConfigId { get; set; }
+        public string Kind { get; set; } = string.Empty;
+        public string EndReason { get; set; } = string.Empty;
+        public int SkillId { get; set; }
+        public int CastFlowId { get; set; }
+        public string PhaseId { get; set; } = string.Empty;
+    }
+
+    public sealed class AnalysisBattleDiagnosticAttributeTrack
+    {
+        public long Revision { get; set; }
+        public int Frame { get; set; } = -1;
+        public List<AnalysisBattleDiagnosticAttribute> Items { get; set; } = new List<AnalysisBattleDiagnosticAttribute>();
+        public List<AnalysisBattleDiagnosticAttributeModifier> Modifiers { get; set; } = new List<AnalysisBattleDiagnosticAttributeModifier>();
+    }
+
+    public sealed class AnalysisBattleDiagnosticAttribute
+    {
+        public int Frame { get; set; }
+        public long ActorId { get; set; }
+        public int AttributeId { get; set; }
+        public float BaseValue { get; set; }
+        public float FinalValue { get; set; }
+        public int ModifierCount { get; set; }
+        public string Name { get; set; } = string.Empty;
+    }
+
+    public sealed class AnalysisBattleDiagnosticAttributeModifier
+    {
+        public int Frame { get; set; }
+        public long ActorId { get; set; }
+        public int AttributeId { get; set; }
+        public int Operation { get; set; }
+        public float Magnitude { get; set; }
+        public int Priority { get; set; }
+        public int SourceId { get; set; }
+        public int MagnitudeType { get; set; }
+        public float DeclaredValue { get; set; }
+        public float StackedValue { get; set; }
+        public float ProjectedValue { get; set; }
+        public float CurrentValue { get; set; }
+        public bool HasCurrentValue { get; set; }
+        public float CapturedValue { get; set; }
+        public bool HasCapturedValue { get; set; }
+        public int EvaluationPolicy { get; set; }
+        public int StackCount { get; set; } = 1;
+        public string CaptureMode { get; set; } = string.Empty;
+        public string Explanation { get; set; } = string.Empty;
+    }
+
+    public sealed class AnalysisBattleDiagnosticBuffTrack
+    {
+        public long Revision { get; set; }
+        public int Frame { get; set; } = -1;
+        public List<AnalysisBattleDiagnosticBuff> Items { get; set; } = new List<AnalysisBattleDiagnosticBuff>();
+    }
+
+    public sealed class AnalysisBattleDiagnosticBuff
+    {
+        public int Frame { get; set; }
+        public long ActorId { get; set; }
+        public int BuffId { get; set; }
+        public long SourceActorId { get; set; }
+        public int StackCount { get; set; }
+        public float RemainingSeconds { get; set; }
+        public float IntervalRemainingSeconds { get; set; }
+        public long SourceContextId { get; set; }
+        public long RuntimeContextId { get; set; }
+        public long RuntimeContextVersion { get; set; }
+        public long SkillRuntimeId { get; set; }
+        public int SkillRuntimeGeneration { get; set; }
+        public long RootContextId { get; set; }
+        public int ModifierBindingCount { get; set; }
+        public int MaxStacks { get; set; }
+        public string Name { get; set; } = string.Empty;
+        public int ModifierSourceId { get; set; }
+    }
+
+    public sealed class AnalysisBattleDiagnosticTagTrack
+    {
+        public long Revision { get; set; }
+        public int Frame { get; set; } = -1;
+        public List<AnalysisBattleDiagnosticTag> Items { get; set; } = new List<AnalysisBattleDiagnosticTag>();
+    }
+
+    public sealed class AnalysisBattleDiagnosticTag
+    {
+        public int Frame { get; set; }
+        public long ActorId { get; set; }
+        public int TagId { get; set; }
+        public string Name { get; set; } = string.Empty;
+    }
+
+    public sealed class AnalysisBattleDiagnosticEffectTrack
+    {
+        public long Revision { get; set; }
+        public int Frame { get; set; } = -1;
+        public List<AnalysisBattleDiagnosticEffect> Items { get; set; } = new List<AnalysisBattleDiagnosticEffect>();
+    }
+
+    public sealed class AnalysisBattleDiagnosticEffect
+    {
+        public int Frame { get; set; }
+        public long ActorId { get; set; }
+        public int InstanceId { get; set; }
+        public int DurationPolicy { get; set; }
+        public int StackCount { get; set; }
+        public float ElapsedSeconds { get; set; }
+        public float RemainingSeconds { get; set; }
+        public bool HasRemainingTime { get; set; }
+        public float NextTickInSeconds { get; set; }
+        public bool HasPeriodicTick { get; set; }
+        public float DurationSeconds { get; set; }
+        public float PeriodSeconds { get; set; }
+        public int ComponentCount { get; set; }
+        public bool ExecutePeriodicOnApply { get; set; }
+    }
+
+    public sealed class AnalysisBattleDiagnosticMetricTrack
+    {
+        public long Revision { get; set; }
+        public AnalysisBattleDiagnosticStoreMetrics Metrics { get; set; } = new AnalysisBattleDiagnosticStoreMetrics();
+        public List<AnalysisBattleDiagnosticMetricSample> Items { get; set; } = new List<AnalysisBattleDiagnosticMetricSample>();
+    }
+
+    public sealed class AnalysisBattleDiagnosticMetricSample
+    {
+        public long Sequence { get; set; }
+        public int Frame { get; set; }
+        public long MonotonicTimestamp { get; set; }
+        public int Category { get; set; }
+        public int ValueKind { get; set; }
+        public string Metric { get; set; } = string.Empty;
+        public double Value { get; set; }
+        public string Dimension { get; set; } = string.Empty;
+    }
+
+    public sealed class AnalysisBattleDiagnosticObjectTrack
+    {
+        public long Revision { get; set; }
+        public bool Truncated { get; set; }
+        public int Completeness { get; set; }
+        public long BackfillAttemptCount { get; set; }
+        public long BackfillFailureCount { get; set; }
+        public int LastBackfillFrame { get; set; } = -1;
+        public AnalysisBattleDiagnosticObjectSummary Summary { get; set; } =
+            new AnalysisBattleDiagnosticObjectSummary();
+        public AnalysisBattleDiagnosticObjectEventCoverage EventCoverage { get; set; } =
+            new AnalysisBattleDiagnosticObjectEventCoverage();
+        public List<AnalysisBattleDiagnosticRuntimeObject> Items { get; set; } = new List<AnalysisBattleDiagnosticRuntimeObject>();
+    }
+
+    public sealed class AnalysisBattleDiagnosticObjectSummary
+    {
+        public int TotalCount { get; set; }
+        public int CompleteCount { get; set; }
+        public int PartialCount { get; set; }
+        public int UnreliableCount { get; set; }
+        public int ActiveCount { get; set; }
+        public int EndedCount { get; set; }
+        public int Completeness { get; set; }
+        public bool Truncated { get; set; }
+        public long BackfillAttemptCount { get; set; }
+        public long BackfillFailureCount { get; set; }
+        public int LastBackfillFrame { get; set; } = -1;
+    }
+
+    public sealed class AnalysisBattleDiagnosticObjectEventCoverage
+    {
+        public int EventCount { get; set; }
+        public int ReferencedEventCount { get; set; }
+        public int CompleteEventCount { get; set; }
+        public int PartialEventCount { get; set; }
+        public int UnreliableEventCount { get; set; }
+        public int TotalReferenceCount { get; set; }
+        public int ResolvedReferenceCount { get; set; }
+        public int UnresolvedReferenceCount { get; set; }
+        public float ResolvedReferenceRatio { get; set; }
+    }
+
+    public sealed class AnalysisBattleDiagnosticRuntimeObject
+    {
+        public int Kind { get; set; }
+        public long RuntimeId { get; set; }
+        public int Generation { get; set; }
+        public int DefinitionKind { get; set; }
+        public int DefinitionId { get; set; }
+        public long RelatedActorId { get; set; }
+        public long OwnerActorId { get; set; }
+        public long SourceActorId { get; set; }
+        public long TargetActorId { get; set; }
+        public int CreatedFrame { get; set; } = -1;
+        public int DestroyedFrame { get; set; } = -1;
+        public long RootContextId { get; set; }
+        public long ContextId { get; set; }
+        public int State { get; set; }
+        public int EndReason { get; set; }
+        public string DisplayName { get; set; } = string.Empty;
+        public int DiscoveryKind { get; set; }
+        public int BackfilledFrame { get; set; } = -1;
+        public int Completeness { get; set; }
+    }
+}

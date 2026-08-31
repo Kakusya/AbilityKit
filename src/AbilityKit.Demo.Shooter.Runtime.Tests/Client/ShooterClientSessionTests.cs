@@ -1,6 +1,7 @@
 using System.Threading.Tasks;
 using AbilityKit.Demo.Shooter.Runtime;
 using AbilityKit.Demo.Shooter.View;
+using AbilityKit.Network.Sdk;
 using AbilityKit.Network.Runtime;
 using AbilityKit.Network.Runtime.Sync;
 using AbilityKit.Protocol.Room;
@@ -54,13 +55,23 @@ public sealed class ShooterClientSessionTests
     }
 
     [Fact]
-    public void ClientSessionReportsPredictRollbackSyncModel()
+    public void ClientSessionDefaultsToAuthoritativeInterpolationSyncModel()
     {
         var runtime = new ShooterBattleRuntimePort();
         var presentation = new ShooterPresentationFacade();
         var session = new ShooterClientSession(runtime, presentation, tickRate: 30);
 
-        Assert.Equal(NetworkSyncModel.PredictRollback, session.SyncModel);
+        // Shooter 正式默认同步模型为服务器权威插值；PredictRollback 需显式指定。
+        Assert.Equal(NetworkSyncModel.AuthoritativeInterpolation, session.SyncModel);
+    }
+
+    [Fact]
+    public void ClientSyncControllerBaseContractDoesNotRequireOptionalCapabilities()
+    {
+        Assert.Null(typeof(IShooterClientSyncController).GetProperty("FrameSync"));
+        Assert.Null(typeof(IShooterClientSyncController).GetProperty("InputCoordinator"));
+        Assert.NotNull(typeof(IShooterClientFrameSyncCapability).GetProperty("FrameSync"));
+        Assert.NotNull(typeof(IShooterClientInputCapability).GetProperty("InputCoordinator"));
     }
 
     [Fact]
@@ -78,8 +89,17 @@ public sealed class ShooterClientSessionTests
 
         Assert.IsType<ShooterClientPredictRollbackSyncController>(session.SyncController);
         Assert.Equal(NetworkSyncModel.PredictRollback, session.SyncController.SyncModel);
-        Assert.Same(session.SyncController.FrameSync, session.FrameSync);
-        Assert.Same(session.SyncController.InputCoordinator, session.InputCoordinator);
+        Assert.True(session.SyncController.TryGetCapability<IShooterClientFrameSyncCapability>(out var frameCapability));
+        Assert.True(session.SyncController.TryGetCapability<IShooterClientInputCapability>(out var inputCapability));
+        Assert.NotNull(frameCapability);
+        Assert.NotNull(inputCapability);
+        Assert.Same(frameCapability!.FrameSync, session.FrameSync);
+        Assert.Same(inputCapability!.InputCoordinator, session.InputCoordinator);
+
+        Assert.True(session.TryGetFrameSync(out var frameSync));
+        Assert.True(session.TryGetInputCoordinator(out var inputCoordinator));
+        Assert.Same(session.FrameSync, frameSync);
+        Assert.Same(session.InputCoordinator, inputCoordinator);
     }
 
     [Fact]
@@ -88,13 +108,17 @@ public sealed class ShooterClientSessionTests
         var runtime = new ShooterBattleRuntimePort();
         var presentation = new ShooterPresentationFacade();
 
-        Assert.Throws<System.NotSupportedException>(() => new ShooterClientSession(
+        var exception = Assert.Throws<NetworkSyncSessionBuildException>(() => new ShooterClientSession(
             runtime,
             ShooterPresentationSessionContext.CreateFromFacade(presentation),
             tickRate: 30,
             decoder: null,
             gateway: null,
             syncModel: NetworkSyncModel.Lockstep));
+
+        Assert.Equal(
+            NetworkSyncSessionBuildFailureReason.MissingControllerRegistration,
+            exception.Reason);
     }
 
     [Fact]
@@ -112,6 +136,8 @@ public sealed class ShooterClientSessionTests
 
         Assert.IsType<ShooterClientAuthoritativeInterpolationSyncController>(session.SyncController);
         Assert.Equal(NetworkSyncModel.AuthoritativeInterpolation, session.SyncModel);
+        Assert.True(session.SyncController.TryGetFrameSync(out _));
+        Assert.True(session.SyncController.TryGetInputCoordinator(out _));
     }
 
     [Fact]
@@ -181,7 +207,13 @@ public sealed class ShooterClientSessionTests
     {
         var runtime = new ShooterBattleRuntimePort();
         var presentation = new ShooterPresentationFacade();
-        var session = new ShooterClientSession(runtime, presentation, tickRate: 30);
+        var session = new ShooterClientSession(
+            runtime,
+            ShooterPresentationSessionContext.CreateFromFacade(presentation),
+            tickRate: 30,
+            decoder: null,
+            gateway: null,
+            syncModel: NetworkSyncModel.PredictRollback);
 
         Assert.False(session.TryGetInterpolationDiagnostics(out var diagnostics));
         Assert.Equal(default, diagnostics);
@@ -219,8 +251,11 @@ public sealed class ShooterClientSessionTests
         var command = new ShooterPlayerCommand(11, 1f, 0f, 0f, 1f, true);
 
         var result = await session.SubmitLocalInputToGatewayAsync(context, command);
+        var firstHealthView = session.LastFastReconnectHealthEvents;
+        var secondHealthView = session.LastFastReconnectHealthEvents;
 
         Assert.True(session.HasGateway);
+        Assert.Same(firstHealthView, secondHealthView);
         Assert.Equal(1, result.Local.AcceptedInputs);
         Assert.Equal(3, result.Local.RequestedFrame);
         Assert.True(result.Remote.Success);
@@ -230,8 +265,8 @@ public sealed class ShooterClientSessionTests
         Assert.Equal("Accepted", result.Remote.Status);
         Assert.False(result.Remote.ShouldResync);
         Assert.Equal(123456789L, result.Remote.ServerTicks);
-        Assert.Contains(session.LastFastReconnectHealthEvents, e => e.Kind == SyncHealthEventKind.InputAccepted && e.Frame == 7);
-        Assert.Contains(session.LastFastReconnectHealthEvents, e => e.Kind == SyncHealthEventKind.LagCompensatedValidationAccepted && e.Frame == 7);
+        Assert.Contains(firstHealthView, e => e.Kind == SyncHealthEventKind.InputAccepted && e.Frame == 7);
+        Assert.Contains(firstHealthView, e => e.Kind == SyncHealthEventKind.LagCompensatedValidationAccepted && e.Frame == 7);
         Assert.Equal(RoomGatewayOpCodes.SubmitBattleInput, transport.LastOpCode);
         Assert.True(transport.LastPayload.Count > 0);
         var wire = WireRoomGatewayBinary.Deserialize<WireSubmitBattleInputReq>(transport.LastPayload);
@@ -293,6 +328,9 @@ public sealed class ShooterClientSessionTests
         Assert.True(session.NeedsFullSnapshotResync);
         Assert.Equal(ShooterClientRecoveryState.AwaitingFullSnapshot, session.RecoveryState);
         Assert.Equal(ShooterClientResyncReason.ClientHashRejectedByServer, session.LastResyncReason);
+        Assert.Equal(NetworkSessionRecoveryAction.RequestFullSnapshot, session.RecoveryDecision.Action);
+        Assert.Equal(NetworkSessionRecoverySignalKind.SnapshotResyncRequired,
+            session.RecoveryDecision.Signal.Kind);
     }
 
     [Fact]
@@ -329,5 +367,150 @@ public sealed class ShooterClientSessionTests
         Assert.Equal(request.AuthoritativeStateHash, roomClient.LastFullStateSyncRequest.AuthoritativeStateHash);
         Assert.Equal(request.Reason, roomClient.LastFullStateSyncRequest.Reason);
         Assert.Contains("request-full-state:room-1:battle-1:AuthoritativeHashMismatch", roomClient.Calls);
+    }
+
+    [Fact]
+    public async Task ClientSessionForwardsCheckpointLifecycleTriggerAndDiagnostics()
+    {
+        var flushCount = 0;
+        var store = new DelegatingReliableEventCheckpointStore(
+            _ => null,
+            _ => { },
+            _ => false,
+            _ =>
+            {
+                flushCount++;
+                return flushCount == 1
+                    ? Task.FromException(new InvalidOperationException("transient flush failure"))
+                    : Task.CompletedTask;
+            });
+        var assemblyOptions = ShooterClientSyncAssemblyOptions.Default
+            .WithReliableEventCheckpointStore(store)
+            .WithReliableEventCheckpointLifecycleOptions(
+                new ReliableEventCheckpointLifecycleOptions
+                {
+                    RetryPolicy = new ReliableEventCheckpointExponentialBackoffRetryPolicy(
+                        maxRetryCount: 1,
+                        initialDelay: TimeSpan.Zero,
+                        maximumDelay: TimeSpan.Zero)
+                });
+        var session = new ShooterClientSession(
+            new ShooterBattleRuntimePort(),
+            ShooterPresentationSessionContext.CreateFromFacade(new ShooterPresentationFacade()),
+            tickRate: 30,
+            in assemblyOptions,
+            gateway: null);
+
+        var result = await session.FlushReliableEventCheckpointsAsync(
+            ReliableEventCheckpointFlushTrigger.Disconnect);
+        var diagnostics = session.ReliableEventCheckpointLifecycleDiagnostics;
+
+        Assert.True(result.Succeeded);
+        Assert.Equal(2, flushCount);
+        Assert.Equal(2, result.StoreAttemptCount);
+        Assert.Equal(1, result.RetryCount);
+        Assert.Equal(ReliableEventCheckpointFlushTrigger.Disconnect, result.Trigger);
+        Assert.Equal(ReliableEventCheckpointFlushTrigger.Disconnect, diagnostics.LastTrigger);
+        Assert.Equal(ReliableEventCheckpointFlushStatus.Succeeded, diagnostics.LastStatus);
+        Assert.Equal(1, diagnostics.RetryCount);
+    }
+
+    [Fact]
+    public void ClientSessionMapsReliableEventGapToFrameworkRecoveryDecision()
+    {
+        var session = new ShooterClientSession(
+            new ShooterBattleRuntimePort(),
+            new ShooterPresentationFacade(),
+            tickRate: 30);
+        var gap = new WireReliableBattleEventPush
+        {
+            BattleId = "battle-recovery",
+            Epoch = "epoch-1",
+            FirstAvailableSequence = 8,
+            Watermark = 9,
+            RetentionGap = true,
+            Events = new List<WireReliableBattleEvent>()
+        };
+        var payload = WireRoomGatewayBinary.Serialize(in gap);
+
+        session.ApplyGatewayPush(
+            RoomGatewayOpCodes.ReliableBattleEventsPushed,
+            payload);
+
+        Assert.True(session.NeedsReliableEventResync);
+        Assert.Equal(
+            NetworkSessionRecoveryAction.RestoreReliableEventBaseline,
+            session.RecoveryDecision.Action);
+        Assert.Equal(
+            NetworkSessionRecoverySignalKind.ReliableEventResyncRequired,
+            session.RecoveryDecision.Signal.Kind);
+    }
+
+    [Fact]
+    public void ClientSessionUsesProjectRecoveryPolicyFromAssemblyOptions()
+    {
+        var recoveryOptions = new NetworkSessionRecoveryOptions
+        {
+            Policy = new NetworkSessionRecoveryRulePolicy().SetRule(
+                NetworkSessionRecoverySignalKind.SnapshotResyncRequired,
+                new NetworkSessionRecoveryDirective(
+                    NetworkSessionRecoveryAction.ReturnToLobby,
+                    priority: 90,
+                    terminatesCurrentSession: true,
+                    reason: "示例项目要求直接返回大厅。"))
+        };
+        var assemblyOptions = ShooterClientSyncAssemblyOptions.Default
+            .WithSessionRecoveryOptions(recoveryOptions);
+        var session = new ShooterClientSession(
+            new ShooterBattleRuntimePort(),
+            ShooterPresentationSessionContext.CreateFromFacade(new ShooterPresentationFacade()),
+            tickRate: 30,
+            in assemblyOptions,
+            gateway: null);
+        var signal = new NetworkSessionRecoverySignal(
+            NetworkSessionRecoverySignalKind.SnapshotResyncRequired,
+            SyncHealthSeverity.Error);
+
+        Assert.True(session.TryReportRecoverySignal(in signal, out var decision));
+
+        Assert.Equal(NetworkSessionRecoveryAction.ReturnToLobby, decision.Action);
+        Assert.True(decision.TerminatesCurrentSession);
+    }
+
+    [Fact]
+    public async Task ClientSessionMapsCheckpointCircuitToSessionRebuildDecision()
+    {
+        var store = new DelegatingReliableEventCheckpointStore(
+            _ => null,
+            _ => { },
+            _ => false,
+            _ => Task.FromException(new InvalidOperationException("persistent failure")));
+        var assemblyOptions = ShooterClientSyncAssemblyOptions.Default
+            .WithReliableEventCheckpointStore(store)
+            .WithReliableEventCheckpointLifecycleOptions(
+                new ReliableEventCheckpointLifecycleOptions
+                {
+                    CircuitBreaker = new ReliableEventCheckpointCircuitBreakerOptions
+                    {
+                        FailureThreshold = 1,
+                        BreakDuration = TimeSpan.FromMinutes(1)
+                    }
+                });
+        var session = new ShooterClientSession(
+            new ShooterBattleRuntimePort(),
+            ShooterPresentationSessionContext.CreateFromFacade(new ShooterPresentationFacade()),
+            tickRate: 30,
+            in assemblyOptions,
+            gateway: null);
+
+        var result = await session.FlushReliableEventCheckpointsAsync(
+            ReliableEventCheckpointFlushTrigger.Disconnect);
+
+        Assert.Equal(ReliableEventCheckpointFlushStatus.Failed, result.Status);
+        Assert.Equal(ReliableEventCheckpointCircuitState.Open,
+            session.ReliableEventCheckpointLifecycleDiagnostics.CircuitState);
+        Assert.Equal(NetworkSessionRecoveryAction.RebuildSession, session.RecoveryDecision.Action);
+        Assert.Equal(NetworkSessionRecoverySignalKind.CheckpointCircuitOpen,
+            session.RecoveryDecision.Signal.Kind);
     }
 }

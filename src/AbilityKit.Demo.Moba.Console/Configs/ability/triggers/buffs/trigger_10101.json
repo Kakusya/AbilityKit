@@ -16,7 +16,7 @@
                     "type": "debug_log"
                 },
                 {
-                    "damageType": 1,
+                    "damageType": "physical",
                     "value": 10,
                     "scale": 0,
                     "formulaType": "fixed",

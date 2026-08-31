@@ -1,15 +1,9 @@
-using AbilityKit.Protocol.Serialization;
 using MemoryPack;
 
 namespace AbilityKit.Protocol.Moba.StateSync
 {
-    [MemoryPackable]
     public partial struct MobaStateHashSnapshotPayload
     {
-        [MemoryPackOrder(0)] public int Version;
-        [MemoryPackOrder(1)] public int Frame;
-        [MemoryPackOrder(2)] public uint Hash;
-
         public MobaStateHashSnapshotPayload(int version, int frame, uint hash)
         {
             Version = version;
@@ -30,7 +24,7 @@ namespace AbilityKit.Protocol.Moba.StateSync
                 Frame = frame,
                 Hash = hash
             };
-            return WireSerializer.Serialize(in payload);
+            return MemoryPackSerializer.Serialize(payload);
         }
 
         public static MobaStateHashSnapshotPayload Deserialize(byte[] payload)
@@ -38,7 +32,7 @@ namespace AbilityKit.Protocol.Moba.StateSync
             if (payload == null || payload.Length == 0)
                 return default;
 
-            return WireSerializer.Deserialize<MobaStateHashSnapshotPayload>(payload);
+            return MemoryPackSerializer.Deserialize<MobaStateHashSnapshotPayload>(payload);
         }
     }
 }

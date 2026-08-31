@@ -58,8 +58,6 @@ namespace AbilityKit.Demo.Moba.Systems.Bootstrap.Flow.Stages
                 throw new InvalidOperationException($"WorldInitStage create-world init payload is invalid. error={deserializeError}");
             }
 
-            initPayload = SanitizeInitPayload(in initPayload);
-
             var validation = MobaProtocolValidation.ValidateCreateWorldSpecEnvelope(initPayload.LocalPlayerId, in initPayload.Spec);
             if (!validation.IsValid)
             {
@@ -90,74 +88,6 @@ namespace AbilityKit.Demo.Moba.Systems.Bootstrap.Flow.Stages
             Log.Info($"[WorldInitStage] Seed world random success (seed={initPayload.Spec.RandomSeed})");
         }
 
-        private static MobaCreateWorldInitPayload SanitizeInitPayload(in MobaCreateWorldInitPayload payload)
-        {
-            var spec = payload.Spec;
-            var players = spec.Players;
-            if (players == null || players.Length == 0)
-            {
-                return payload;
-            }
-
-            MobaPlayerLoadout[] sanitized = null;
-            for (int i = 0; i < players.Length; i++)
-            {
-                var p = players[i];
-                Log.Info($"[WorldInitStage] decoded player[{i}] playerId={p.PlayerId.Value}, heroId={p.HeroId}, attr={p.AttributeTemplateId}, level={p.Level}, basicAttack={p.BasicAttackSkillId}, skillCount={(p.SkillIds != null ? p.SkillIds.Length : 0)}, spawnIndex={p.SpawnIndex}");
-
-                var basicAttackSkillId = p.BasicAttackSkillId;
-                if (basicAttackSkillId > 0)
-                {
-                    continue;
-                }
-
-                sanitized ??= CopyPlayers(players);
-                basicAttackSkillId = ResolveFallbackBasicAttackSkillId(p.HeroId);
-                sanitized[i] = new MobaPlayerLoadout(
-                    playerId: p.PlayerId,
-                    teamId: p.TeamId,
-                    heroId: p.HeroId,
-                    attributeTemplateId: p.AttributeTemplateId,
-                    level: p.Level,
-                    basicAttackSkillId: basicAttackSkillId,
-                    skillIds: p.SkillIds,
-                    spawnIndex: p.SpawnIndex,
-                    unitSubType: p.UnitSubType,
-                    mainType: p.MainType,
-                    hasSpawnPosition: p.HasSpawnPosition,
-                    spawnX: p.SpawnX,
-                    spawnY: p.SpawnY,
-                    spawnZ: p.SpawnZ);
-                Log.Warning($"[WorldInitStage] repaired invalid BasicAttackSkillId for player[{i}]. heroId={p.HeroId}, repaired={basicAttackSkillId}");
-            }
-
-            if (sanitized == null)
-            {
-                return payload;
-            }
-
-            var sanitizedSpec = new MobaCreateWorldSpec(
-                matchId: spec.MatchId,
-                mapId: spec.MapId,
-                randomSeed: spec.RandomSeed,
-                tickRate: spec.TickRate,
-                inputDelayFrames: spec.InputDelayFrames,
-                players: sanitized,
-                gameplayId: spec.GameplayId);
-            return new MobaCreateWorldInitPayload(payload.LocalPlayerId, in sanitizedSpec, payload.OpCode, payload.Payload);
-        }
-
-        private static MobaPlayerLoadout[] CopyPlayers(MobaPlayerLoadout[] players)
-        {
-            var copy = new MobaPlayerLoadout[players.Length];
-            Array.Copy(players, copy, players.Length);
-            return copy;
-        }
-
-        private static int ResolveFallbackBasicAttackSkillId(int heroId)
-        {
-            return 1;
-        }
     }
 }
 

@@ -15,6 +15,7 @@ param(
     [switch]$NoBuild,
     [switch]$NoCleanup,
     [switch]$CleanAll,
+    [switch]$HiddenWindows,
     [int]$SiloGatewayWaitSeconds = 120
 )
 
@@ -38,19 +39,19 @@ function Get-RoleLogicalGroups([string]$role, [string[]]$overrideGroups) {
     }
 }
 
-function Add-ConfigArg([System.Collections.Generic.List[string]]$args, [string]$key, [object]$value) {
-    $args.Add($key)
-    $args.Add([string]$value)
+function Add-ConfigArg([System.Collections.Generic.List[string]]$configArguments, [string]$key, [object]$value) {
+    $configArguments.Add($key)
+    $configArguments.Add([string]$value)
 }
 
-function Add-ConfigArrayArgs([System.Collections.Generic.List[string]]$args, [string]$key, [string[]]$values) {
+function Add-ConfigArrayArgs([System.Collections.Generic.List[string]]$configArguments, [string]$key, [string[]]$values) {
     for ($i = 0; $i -lt $values.Count; $i++) {
-        Add-ConfigArg $args "$key`:$i" $values[$i]
+        Add-ConfigArg -configArguments $configArguments -key "$key`:$i" -value $values[$i]
     }
 }
 
-function ConvertTo-CommandLine([string[]]$args) {
-    ($args | ForEach-Object {
+function ConvertTo-CommandLine([string[]]$commandArguments) {
+    ($commandArguments | ForEach-Object {
         if ($_ -match '[\s"]') {
             '"' + ($_ -replace '"', '\"') + '"'
         }
@@ -67,6 +68,7 @@ if (-not $PSBoundParameters.ContainsKey('PrimarySiloPort') -or $PrimarySiloPort 
 $root = Resolve-Path (Join-Path $PSScriptRoot '..')
 $src = Join-Path $root 'src'
 $hostProj = Join-Path $src 'AbilityKit.Orleans.Host\AbilityKit.Orleans.Host.csproj'
+$hostWorkingDirectory = Split-Path -Parent $hostProj
 $instanceLogs = Join-Path $root (Join-Path 'logs' $InstanceName)
 $logicalGroupsValue = Get-RoleLogicalGroups $Role $LogicalGroups
 $preferredAffinity = if ($Role -eq 'Shared') { @('Session', 'Room', 'Battle') } else { @($Role) }
@@ -122,7 +124,8 @@ Add-ConfigArg $configArgs '--AbilityKit:Deployment:RuntimeProfile:MaxBattles' $M
 Add-ConfigArg $configArgs '--AbilityKit:Deployment:RuntimeProfile:MaxSessions' $MaxSessions
 Add-ConfigArg $configArgs '--AbilityKit:Deployment:RuntimeProfile:Notes' "Local expandable $Role silo."
 
-$configLine = ConvertTo-CommandLine $configArgs.ToArray()
+$configArgArray = $configArgs.ToArray()
+$configLine = ConvertTo-CommandLine -commandArguments $configArgArray
 $noBuildArg = '--no-build'
 $hostLog = Join-Path $instanceLogs "host-$Role-$SiloPort.log"
 $hostCommand = "`$Host.UI.RawUI.WindowTitle = 'AbilityKit $InstanceName $Role Silo'; dotnet run --project `"$hostProj`" -c $Configuration $noBuildArg -- $configLine 2>&1 | Tee-Object -FilePath `"$hostLog`" -Append"
@@ -138,7 +141,8 @@ Write-Host "  Silo:             127.0.0.1:$SiloPort" -ForegroundColor Gray
 Write-Host "  Orleans Gateway:  127.0.0.1:$SiloGatewayPort" -ForegroundColor Gray
 Write-Host "  Log:              $hostLog" -ForegroundColor Gray
 
-$hostWindow = Start-Process powershell -ArgumentList $hostArgs -PassThru -WindowStyle Normal
+$hostWindowStyle = if ($HiddenWindows) { 'Hidden' } else { 'Normal' }
+$hostWindow = Start-Process powershell -ArgumentList $hostArgs -WorkingDirectory $hostWorkingDirectory -PassThru -WindowStyle $hostWindowStyle
 Write-Host "  Host window PID: $($hostWindow.Id)" -ForegroundColor Gray
 
 Write-Host "Waiting for Orleans Silo Gateway TCP endpoint 127.0.0.1:$SiloGatewayPort ..." -ForegroundColor Cyan

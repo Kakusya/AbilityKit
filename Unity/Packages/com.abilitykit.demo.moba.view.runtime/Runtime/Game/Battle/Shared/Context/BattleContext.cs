@@ -3,7 +3,7 @@ using AbilityKit.Core.Pooling;
 
 namespace AbilityKit.Game.Flow
 {
-    public sealed partial class BattleContext : IPoolable, IBattleHudInputSink, IBattleRuntimeContext, IBattleEntityContext, IBattleInputContext, IBattleSnapshotRoutingContext
+    public sealed partial class BattleContext : IPoolable, IBattleHudInputSink, IBattleRuntimeContext, IBattleEntityContext, IBattleInputContext, IBattleSnapshotRoutingContext, IBattleInputSessionIdentityPort
     {
         private static readonly ObjectPool<BattleContext> Pool = Pools.GetPool(
             key: "BattleContext",
@@ -28,61 +28,35 @@ namespace AbilityKit.Game.Flow
 
         void IPoolable.OnPoolRelease()
         {
-            Reset(disposeOwnedResources: true, destroyCollections: false);
+            Reset(destroyCollections: false);
         }
 
         void IPoolable.OnPoolDestroy()
         {
-            Reset(disposeOwnedResources: true, destroyCollections: true);
+            Reset(destroyCollections: true);
         }
 
-        private void Reset(bool disposeOwnedResources, bool destroyCollections)
+        private void Reset(bool destroyCollections)
         {
             Session = null;
+            RuntimeWorld = null;
             Plan = default;
             LastFrame = 0;
             LogicTimeSeconds = 0d;
 
             LocalActorId = 0;
             LocalControlPlayerId = null;
+            CanSubmitGameplayInput = true;
+            ClearRuntimePlayerLoadouts();
 
             Hooks = null;
 
             ClearSnapshotRouting();
+            ResetInputRuntime();
+            ResetPredictionRuntime();
 
-            if (disposeOwnedResources)
-            {
-                InputRecordWriter?.Dispose();
-                LocalInputQueue?.Dispose();
-            }
-
-            InputRecordWriter = null;
-            LocalInputQueue = null;
-
-            PredictionStats = null;
-            PredictionReconcileTarget = null;
-            PredictionReconcileControl = null;
-            PredictionTuningControl = null;
-
-            RuntimeWorldId = default;
-            HasRuntimeWorldId = false;
-
-            EntityNode = default;
-            EntityWorld = null;
-            EntityLookup = null;
-            EntityFactory = null;
-            EntityQuery = null;
-
-            if (destroyCollections)
-            {
-                DirtyEntities = null;
-            }
-            else
-            {
-                DirtyEntities?.Clear();
-            }
-
-            ResetHudInput();
+            _entities.Reset(destroyCollections);
+            _presentation.Reset();
         }
     }
 }

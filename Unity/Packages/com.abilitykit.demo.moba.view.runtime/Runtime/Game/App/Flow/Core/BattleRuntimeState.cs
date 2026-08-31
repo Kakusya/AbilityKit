@@ -17,8 +17,13 @@ namespace AbilityKit.Game.Flow
         /// <summary>会话是否已开始（对应原 <c>_battleSessionStarted</c>）。</summary>
         bool SessionStarted { get; set; }
 
+        /// <summary>同步模式所需的战斗世界资源是否已建立。</summary>
+        bool WorldReady { get; set; }
+
         /// <summary>是否已收到首帧（对应原 <c>_battleFirstFrameReceived</c>）。</summary>
         bool FirstFrameReceived { get; set; }
+
+        bool AssetsLoadCompleted { get; set; }
 
         /// <summary>把运行态清零。新 scope 实例本就为 false，此方法用于 Prepare-enter 的显式重置语义。</summary>
         void Reset();
@@ -28,12 +33,18 @@ namespace AbilityKit.Game.Flow
     {
         public bool SessionStarted { get; set; }
 
+        public bool WorldReady { get; set; }
+
         public bool FirstFrameReceived { get; set; }
+
+        public bool AssetsLoadCompleted { get; set; }
 
         public void Reset()
         {
             SessionStarted = false;
+            WorldReady = false;
             FirstFrameReceived = false;
+            AssetsLoadCompleted = false;
         }
     }
 }

@@ -60,6 +60,7 @@ namespace AbilityKit.Demo.Moba.Systems.Motion
                 var output = m.Output;
 
                 var result = m.Pipeline.Tick(e.actorId.Value, ref state, dt, ref output);
+
                 var hitTriggerRuntime = m.HitTriggerRuntime;
                 if (_hitTriggers != null && hitTriggerRuntime.IsValid && result.Hit.Hit)
                 {

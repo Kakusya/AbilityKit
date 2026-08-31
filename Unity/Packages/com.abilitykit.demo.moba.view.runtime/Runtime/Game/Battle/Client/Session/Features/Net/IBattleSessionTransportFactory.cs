@@ -1,10 +1,12 @@
 using AbilityKit.Ability.Host;
 using AbilityKit.Ability.World.Abstractions;
 using AbilityKit.Game.Battle;
-using AbilityKit.Game.Battle.Transport;
+using AbilityKit.Network.Battle;
 using AbilityKit.Network.Abstractions;
 using AbilityKit.Network.Protocol;
 using AbilityKit.Network.Runtime;
+using AbilityKit.Network.Sdk.Observability;
+using AbilityKit.Protocol.Moba;
 
 namespace AbilityKit.Game.Flow
 {
@@ -37,7 +39,24 @@ namespace AbilityKit.Game.Flow
                 worldIdToUlong: wid => ulong.TryParse(wid.Value, out var n) ? n : roomId,
                 worldIdFromUlong: n => new WorldId(n.ToString()),
                 roomId: roomId,
-                sessionToken: gateway.SessionToken);
+                sessionToken: gateway.SessionToken,
+                battleId: gateway.BattleId,
+                publicRoomId: gateway.JoinRoomId,
+                useFrameSyncInput: SessionSimRuntimeTuning.ShouldUseFrameSyncInput(plan.Sync.SyncMode));
+
+#if UNITY_EDITOR || DEVELOPMENT_BUILD
+            MobaProtocolDecoderModule.Register(NetworkTrafficMonitor.Default.Decoders);
+            gatewayOptions.TrafficObserver = NetworkTrafficMonitor.Default;
+            gatewayOptions.ConfigureTrafficCapture = options =>
+            {
+                options.ConnectionId = "moba-battle-primary";
+                options.Role = "battle";
+                options.CatalogId = "abilitykit.moba.battle";
+                options.TransportName = "tcp";
+                options.MaximumPayloadPreviewBytes = 65536;
+                options.FilterFactory = NetworkTrafficMonitor.Default.CreateSamplingFilter;
+            };
+#endif
 
             return new NetworkTransport(gatewayOptions, callbackDispatcher, ioDispatcher);
         }

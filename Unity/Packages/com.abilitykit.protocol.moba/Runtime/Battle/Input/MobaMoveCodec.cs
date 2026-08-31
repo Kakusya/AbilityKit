@@ -1,28 +1,14 @@
 using System;
-using AbilityKit.Protocol.Serialization;
 using MemoryPack;
 
 namespace AbilityKit.Protocol.Moba.StateSync
 {
-    [MemoryPackable]
-    public partial struct MobaMovePayload
-    {
-        [MemoryPackOrder(0)] public float X;
-        [MemoryPackOrder(1)] public float Z;
-
-        public MobaMovePayload(float x, float z)
-        {
-            X = x;
-            Z = z;
-        }
-    }
-
     public static class MobaMoveCodec
     {
         public static byte[] Serialize(float x, float z)
         {
             var payload = new MobaMovePayload { X = x, Z = z };
-            return WireSerializer.Serialize(in payload);
+            return MemoryPackSerializer.Serialize(payload);
         }
 
         public static void Deserialize(byte[] payload, out float x, out float z)
@@ -34,7 +20,7 @@ namespace AbilityKit.Protocol.Moba.StateSync
                 return;
             }
 
-            var p = WireSerializer.Deserialize<MobaMovePayload>(payload);
+            var p = MemoryPackSerializer.Deserialize<MobaMovePayload>(payload);
             x = p.X;
             z = p.Z;
         }
@@ -53,7 +39,7 @@ namespace AbilityKit.Protocol.Moba.StateSync
 
             try
             {
-                var p = WireSerializer.Deserialize<MobaMovePayload>(payload);
+                var p = MemoryPackSerializer.Deserialize<MobaMovePayload>(payload);
                 x = p.X;
                 z = p.Z;
                 return true;

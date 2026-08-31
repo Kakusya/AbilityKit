@@ -156,6 +156,8 @@ namespace UnityHFSM
 
 		public TStateId ActiveStateName => ActiveState.name;
 
+		public bool IsActive => activeState != null;
+
 		public TStateId PendingStateName => pendingTransition.targetState;
 		public StateBase<TStateId> PendingState => GetState(PendingStateName);
 		public bool HasPendingTransition => pendingTransition.isPending;
@@ -163,6 +165,12 @@ namespace UnityHFSM
 		public IStateTimingManager ParentFsm => fsm;
 
 		public bool IsRootFsm => fsm == null;
+
+		/// <summary>
+		/// Controls whether a root state machine is exposed to the Unity editor live inspector.
+		/// Disable this for high-volume pooled runtime machines that are not useful to inspect individually.
+		/// </summary>
+		public bool RegisterForInspection { get; set; } = true;
 
 		/// <summary>
 		/// Initialises a new instance of the StateMachine class.
@@ -416,7 +424,7 @@ namespace UnityHFSM
 		public override void OnEnter()
 		{
 			#if UNITY_EDITOR
-			if (IsRootFsm)
+			if (IsRootFsm && RegisterForInspection)
 			{
 				HfsmLiveRegistry.AutoRegister(this);
 			}
@@ -468,7 +476,7 @@ namespace UnityHFSM
 		public override void OnExit()
 		{
 			#if UNITY_EDITOR
-			if (IsRootFsm)
+			if (IsRootFsm && RegisterForInspection)
 			{
 				HfsmLiveRegistry.Unregister(this);
 			}
@@ -482,6 +490,9 @@ namespace UnityHFSM
 				startState = (activeState.name, true);
 			}
 
+			// Exiting cancels delayed transitions. An interrupted composite may report cancellation
+			// from OnExit and must not be allowed to enter another state while the machine is stopping.
+			pendingTransition.Clear();
 			activeState.OnExit();
 			// By setting the activeState to null, the state's onExit method won't be called
 			// a second time when the state machine enters again (and changes to the start state).
@@ -501,6 +512,47 @@ namespace UnityHFSM
 		public void SetStartState(TStateId name)
 		{
 			startState = (name, true);
+		}
+
+		/// <summary>
+		/// Restores the machine's structural runtime state without invoking lifecycle callbacks.
+		/// Intended for deterministic rollback systems that restore child state separately.
+		/// </summary>
+		public void RestoreRuntimeState(bool hasActiveState, TStateId activeStateName, TStateId rememberedStartStateName)
+		{
+			StateBundle rememberedBundle;
+			if (!stateBundlesByName.TryGetValue(rememberedStartStateName, out rememberedBundle)
+				|| rememberedBundle.state == null)
+			{
+				throw UnityHFSM.Exceptions.Common.StateNotFound(
+					this,
+					rememberedStartStateName?.ToString(),
+					context: "Restoring the remembered start state");
+			}
+
+			startState = (rememberedStartStateName, true);
+			pendingTransition.Clear();
+
+			if (!hasActiveState)
+			{
+				activeState = null;
+				activeTransitions = noTransitions;
+				activeTriggerTransitions = noTriggerTransitions;
+				return;
+			}
+
+			StateBundle activeBundle;
+			if (!stateBundlesByName.TryGetValue(activeStateName, out activeBundle) || activeBundle.state == null)
+			{
+				throw UnityHFSM.Exceptions.Common.StateNotFound(
+					this,
+					activeStateName?.ToString(),
+					context: "Restoring the active state");
+			}
+
+			activeState = activeBundle.state;
+			activeTransitions = activeBundle.transitions ?? noTransitions;
+			activeTriggerTransitions = activeBundle.triggerToTransitions ?? noTriggerTransitions;
 		}
 
 		/// <summary>

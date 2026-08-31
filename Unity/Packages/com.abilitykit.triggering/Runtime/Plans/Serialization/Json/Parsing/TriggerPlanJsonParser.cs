@@ -32,19 +32,20 @@ namespace AbilityKit.Triggering.Runtime.Plan.Json
 
             try
             {
-                var root = JObject.Parse(json);
+                var normalizedJson = NormalizeRootJson(json, sourceName, diagnostics);
+                var root = JObject.Parse(normalizedJson);
                 var format = DetectFormat(root, options, sourceName, diagnostics);
 
                 if (format == TriggerPlanJsonFormat.Source)
                 {
-                    var runtimeJson = _sourceConverter.ConvertSourceToRuntimeJson(json);
+                    var runtimeJson = _sourceConverter.ConvertSourceToRuntimeJson(normalizedJson);
                     var dto = JsonConvert.DeserializeObject<TriggerPlanJsonDatabase.TriggerPlanDatabaseDto>(runtimeJson);
                     return BuildResult(format, dto, diagnostics, options);
                 }
 
                 if (format == TriggerPlanJsonFormat.Runtime)
                 {
-                    var dto = JsonConvert.DeserializeObject<TriggerPlanJsonDatabase.TriggerPlanDatabaseDto>(json);
+                    var dto = JsonConvert.DeserializeObject<TriggerPlanJsonDatabase.TriggerPlanDatabaseDto>(normalizedJson);
                     return BuildResult(format, dto, diagnostics, options);
                 }
 
@@ -61,7 +62,30 @@ namespace AbilityKit.Triggering.Runtime.Plan.Json
         public TriggerPlanJsonFormat DetectFormat(string json, TriggerPlanJsonParseOptions options = null)
         {
             if (string.IsNullOrEmpty(json)) return TriggerPlanJsonFormat.Unknown;
-            return DetectFormat(JObject.Parse(json), options ?? TriggerPlanJsonParseOptions.Default, null, null);
+            var diagnostics = new List<TriggerPlanJsonDiagnostic>();
+            var normalizedJson = NormalizeRootJson(json, null, diagnostics);
+            return DetectFormat(JObject.Parse(normalizedJson), options ?? TriggerPlanJsonParseOptions.Default, null, diagnostics);
+        }
+
+        private static string NormalizeRootJson(string json, string sourceName, List<TriggerPlanJsonDiagnostic> diagnostics)
+        {
+            var token = JToken.Parse(json);
+            if (token is JObject)
+            {
+                return json;
+            }
+
+            if (token is JArray)
+            {
+                diagnostics?.Add(Warning("Source trigger list detected by array root", sourceName));
+                var root = new JObject
+                {
+                    ["triggers"] = token
+                };
+                return root.ToString(Formatting.None);
+            }
+
+            return json;
         }
 
         private static TriggerPlanJsonParseResult BuildResult(

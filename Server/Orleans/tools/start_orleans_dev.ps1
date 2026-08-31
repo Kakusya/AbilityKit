@@ -13,6 +13,7 @@ param(
     [switch]$NoCleanup,
     [switch]$CleanAll,
     [switch]$ForceStartGateway,
+    [switch]$HiddenWindows,
     [int]$SiloGatewayWaitSeconds = 120
 )
 
@@ -36,13 +37,13 @@ function ConvertTo-StringArray($value) {
     return @($value | ForEach-Object { [string]$_ })
 }
 
-function Add-ConfigArg([System.Collections.Generic.List[string]]$args, [string]$key, [object]$value) {
-    $args.Add($key)
-    $args.Add([string]$value)
+function Add-ConfigArg([System.Collections.Generic.List[string]]$configArguments, [string]$key, [object]$value) {
+    $configArguments.Add($key)
+    $configArguments.Add([string]$value)
 }
 
-function ConvertTo-CommandLine([string[]]$args) {
-    ($args | ForEach-Object {
+function ConvertTo-CommandLine([string[]]$commandArguments) {
+    ($commandArguments | ForEach-Object {
         if ($_ -match '[\s"]') {
             '"' + ($_ -replace '"', '\"') + '"'
         }
@@ -57,6 +58,7 @@ $src = Join-Path $root 'src'
 
 $hostProj = Join-Path $src 'AbilityKit.Orleans.Host\AbilityKit.Orleans.Host.csproj'
 $gatewayProj = Join-Path $src 'AbilityKit.Orleans.Gateway\AbilityKit.Orleans.Gateway.csproj'
+$gatewayWorkingDirectory = Split-Path -Parent $gatewayProj
 $siloScript = Join-Path $PSScriptRoot 'start_orleans_silo.ps1'
 $healthUri = "http://localhost:$GatewayPort/health/ready"
 $healthLiveUri = "http://localhost:$GatewayPort/health/live"
@@ -176,6 +178,9 @@ foreach ($silo in $siloSpecs) {
     if ($silo.IsExclusive) {
         $siloParams.IsExclusive = $true
     }
+    if ($HiddenWindows) {
+        $siloParams.HiddenWindows = $true
+    }
 
     & $siloScript @siloParams
 }
@@ -223,34 +228,51 @@ Add-ConfigArg $gatewayConfigArgs '--AbilityKit:Deployment:SiloRole:Role' 'Gatewa
 Add-ConfigArg $gatewayConfigArgs '--AbilityKit:Deployment:SiloRole:IsGateway' 'true'
 Add-ConfigArg $gatewayConfigArgs '--AbilityKit:Deployment:RuntimeProfile:Role' 'Gateway'
 Add-ConfigArg $gatewayConfigArgs '--AbilityKit:Deployment:RuntimeProfile:IsGateway' 'true'
-$gatewayConfigLine = ConvertTo-CommandLine $gatewayConfigArgs.ToArray()
+$gatewayConfigArgArray = $gatewayConfigArgs.ToArray()
+$gatewayConfigLine = ConvertTo-CommandLine -commandArguments $gatewayConfigArgArray
 
 Write-Host 'Starting Orleans Gateway...' -ForegroundColor Cyan
 $gatewayLog = Join-Path $instanceLogs 'gateway.log'
 $gatewayCommand = "`$Host.UI.RawUI.WindowTitle = 'AbilityKit $InstanceName Gateway'; dotnet run --project `"$gatewayProj`" -c $Configuration $noBuildArg -- $gatewayConfigLine 2>&1 | Tee-Object -FilePath `"$gatewayLog`" -Append"
 $gatewayArgs = @('-NoExit', '-NoProfile', '-Command', $gatewayCommand)
-$gatewayWindow = Start-Process powershell -ArgumentList $gatewayArgs -PassThru -WindowStyle Normal
+$gatewayWindowStyle = if ($HiddenWindows) { 'Hidden' } else { 'Normal' }
+$gatewayWindow = Start-Process powershell -ArgumentList $gatewayArgs -WorkingDirectory $gatewayWorkingDirectory -PassThru -WindowStyle $gatewayWindowStyle
 Write-Host "  Gateway window PID: $($gatewayWindow.Id)" -ForegroundColor Gray
 
 $gatewayHealthStopwatch = [System.Diagnostics.Stopwatch]::StartNew()
-if (Wait-AbilityKitHttpEndpoint -Uri $healthUri -TimeoutSeconds 30) {
-    $gatewayHealthStopwatch.Stop()
-    Write-Host ("Gateway Health: OK after {0:n1}s ($healthUri)" -f $gatewayHealthStopwatch.Elapsed.TotalSeconds) -ForegroundColor Green
+$httpReady = Wait-AbilityKitHttpEndpoint -Uri $healthUri -TimeoutSeconds 30
+if (-not $httpReady) {
+    $httpReady = Wait-AbilityKitHttpEndpoint -Uri $healthLiveUri -TimeoutSeconds 5
 }
-elseif (Wait-AbilityKitHttpEndpoint -Uri $healthLiveUri -TimeoutSeconds 5) {
-    $gatewayHealthStopwatch.Stop()
-    Write-Host "Gateway Health: live but not ready ($healthLiveUri)" -ForegroundColor Yellow
+
+$tcpReady = $false
+$tcpDeadline = (Get-Date).AddSeconds(30)
+while ((Get-Date) -lt $tcpDeadline) {
+    if (Test-AbilityKitTcpPort -HostName '127.0.0.1' -Port $TcpPort -TimeoutMilliseconds 1000) {
+        $tcpReady = $true
+        break
+    }
+
+    Start-Sleep -Milliseconds 500
+}
+
+$gatewayHealthStopwatch.Stop()
+if ($httpReady -and $tcpReady) {
+    Write-Host ("Gateway HTTP and TCP: OK after {0:n1}s ($healthUri; 127.0.0.1:$TcpPort)" -f $gatewayHealthStopwatch.Elapsed.TotalSeconds) -ForegroundColor Green
 }
 else {
-    $gatewayHealthStopwatch.Stop()
-    Write-Host ("Gateway Health: not ready after {0:n1}s ($healthUri)" -f $gatewayHealthStopwatch.Elapsed.TotalSeconds) -ForegroundColor Yellow
+    Write-Host ("Gateway startup incomplete after {0:n1}s." -f $gatewayHealthStopwatch.Elapsed.TotalSeconds) -ForegroundColor Yellow
+    if (-not $httpReady) {
+        Write-Host "  HTTP health endpoint is not reachable: $healthUri" -ForegroundColor Yellow
+    }
+    if (-not $tcpReady) {
+        Write-Host "  Game TCP gateway is not reachable: 127.0.0.1:$TcpPort" -ForegroundColor Yellow
+    }
     if (-not (Test-AbilityKitTcpPort -HostName '127.0.0.1' -Port $clientGatewayPort -TimeoutMilliseconds 1000)) {
         Write-Host "  Orleans client gateway is not reachable: 127.0.0.1:$clientGatewayPort" -ForegroundColor Yellow
     }
-    if (-not (Test-AbilityKitTcpPort -HostName '127.0.0.1' -Port $GatewayPort -TimeoutMilliseconds 1000)) {
-        Write-Host "  HTTP Gateway port is not reachable: 127.0.0.1:$GatewayPort" -ForegroundColor Yellow
-    }
     Write-Host "  Please inspect logs under: $instanceLogs" -ForegroundColor Yellow
+    exit 1
 }
 
 $startupStopwatch.Stop()

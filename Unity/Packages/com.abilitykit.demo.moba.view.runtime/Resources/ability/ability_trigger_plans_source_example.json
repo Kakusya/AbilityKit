@@ -121,46 +121,6 @@
       ]
     }
   },
-  "conditionGroups": {
-    "skill_ready": {
-      "conditions": [
-        { "type": "arg_gt", "arg_name": "skill_level", "value": 0 },
-        { "type": "arg_eq", "arg_name": "can_cast", "value": 1 }
-      ]
-    },
-    "burn_stack_ready": {
-      "conditions": [
-        { "ref": "skill_ready" },
-        { "type": "arg_eq", "arg_name": "buff_id", "value": 2001 },
-        { "type": "arg_gt", "arg_name": "stack", "value": 3 }
-      ]
-    }
-  },
-  "actionGroups": {
-    "log_skill_hit": {
-      "actions": [
-        { "type": "debug_log", "message": "技能命中，执行复用动作组", "dump_args": true }
-      ]
-    },
-    "apply_burn_buff": {
-      "actions": [
-        { "ref": "log_skill_hit" },
-        { "type": "add_buff", "target": "$target", "buff_id": 3001, "duration": 5.0 }
-      ]
-    }
-  },
-  "behaviors": {
-    "log_then_apply_burn": {
-      "displayName": "记录并施加灼烧",
-      "root": {
-        "type": "sequence",
-        "children": [
-          { "type": "action", "action": { "type": "debug_log", "message": "行为引用节点执行" } },
-          { "type": "action", "action": { "type": "add_buff", "target": "$target", "buff_id": 3001, "duration": 5.0 } }
-        ]
-      }
-    }
-  },
   "triggers": [
     {
       "id": 10001,
@@ -233,53 +193,6 @@
           "buff_id": 3001,
           "duration": 5.0
         }
-      ]
-    },
-    {
-      "id": 10004,
-      "name": "复合节点内复用条件和动作组",
-      "event": "skill.cast.complete",
-      "priority": 60,
-      "phase": "immediate",
-      "enabled": true,
-      "conditions": [
-        {
-          "type": "all",
-          "conditionRefs": ["burn_stack_ready"],
-          "items": [
-            { "type": "arg_eq", "arg_name": "target_alive", "value": 1 }
-          ]
-        }
-      ],
-      "actions": [
-        {
-          "type": "seq",
-          "actionRefs": ["apply_burn_buff"],
-          "items": [
-            { "type": "debug_log", "message": "复合动作节点内联动作仍可与复用动作组混合" }
-          ]
-        }
-      ]
-    },
-    {
-      "id": 10005,
-      "name": "复合行为节点内复用行为和内嵌行为",
-      "event": "skill.cast.complete",
-      "priority": 55,
-      "phase": "immediate",
-      "enabled": true,
-      "conditions": [
-        { "type": "arg_gt", "arg_name": "skill_level", "value": 0 }
-      ],
-      "behavior": {
-        "type": "sequence",
-        "behaviorRefs": ["log_then_apply_burn"],
-        "children": [
-          { "type": "action", "action": { "type": "debug_log", "message": "复合行为节点内联行为" } }
-        ]
-      },
-      "actions": [
-        { "type": "debug_log", "message": "保留根动作列表用于兼容旧执行路径" }
       ]
     }
   ]

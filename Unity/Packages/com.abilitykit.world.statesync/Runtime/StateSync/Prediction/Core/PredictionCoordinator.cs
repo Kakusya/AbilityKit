@@ -1,5 +1,6 @@
 using System;
 using System.Collections.Generic;
+using AbilityKit.Core.Buffers;
 
 namespace AbilityKit.Ability.StateSync.Prediction
 {
@@ -14,8 +15,10 @@ public sealed class PredictionCoordinator : IPredictionCoordinator, IDisposable
 {
     private readonly int _localPlayerId;
     private readonly List<IPredictionHandler> _handlers = new List<IPredictionHandler>();
+    private readonly PredictionCoordinatorBufferOptions _bufferOptions;
     private readonly ISnapshotStore _snapshotStore;
-    private readonly InputHistory _inputHistory;
+    private readonly IInputHistory _inputHistory;
+    private readonly bool _enableRollbackReplay;
     private readonly StateSlots _currentSlots;
 
     private Frame _currentFrame;
@@ -27,6 +30,13 @@ public sealed class PredictionCoordinator : IPredictionCoordinator, IDisposable
     public Frame CurrentFrame => _currentFrame;
     public Frame ConfirmedFrame => _confirmedFrame;
     public bool HasUnconfirmedPrediction => _currentFrame > _confirmedFrame;
+    public PredictionCoordinatorBufferOptions BufferOptions => _bufferOptions;
+    public IBufferCapacityControl PredictedStateHistoryCapacityControl =>
+        _snapshotStore as IBufferCapacityControl;
+    public IBufferCapacityControl InputHistoryCapacityControl =>
+        _inputHistory as IBufferCapacityControl;
+    public bool RollbackReplayEnabled =>
+        _enableRollbackReplay && _snapshotStore != null && _inputHistory != null;
 
     // IPredictionCoordinator 接口属性
     int IPredictionCoordinator.LocalPlayerId => _localPlayerId;
@@ -39,12 +49,18 @@ public sealed class PredictionCoordinator : IPredictionCoordinator, IDisposable
     public event Action<Frame, StateSlots> OnServerStateApplied;
     public event Action<Frame, ConflictLevel> OnRollbackExecuted;
 
-    public PredictionCoordinator(int localPlayerId)
+    public PredictionCoordinator(
+        int localPlayerId,
+        IStateSlotValueCloner slotValueCloner = null,
+        PredictionCoordinatorBufferOptions bufferOptions = null,
+        bool enableRollbackReplay = true)
     {
         _localPlayerId = localPlayerId;
-        _snapshotStore = new DictionarySnapshotStore(30);
-        _inputHistory = new InputHistory(30);
-        _currentSlots = new StateSlots();
+        _bufferOptions = bufferOptions ?? PredictionCoordinatorBufferOptions.Default;
+        _snapshotStore = _bufferOptions.CreateSnapshotStore();
+        _inputHistory = _bufferOptions.CreateInputHistory();
+        _enableRollbackReplay = enableRollbackReplay;
+        _currentSlots = new StateSlots(slotValueCloner);
         _currentFrame = Frame.Zero;
         _confirmedFrame = Frame.Invalid;
     }
@@ -76,45 +92,52 @@ public sealed class PredictionCoordinator : IPredictionCoordinator, IDisposable
     /// </summary>
     public void ProcessInput(IInputCommand input)
     {
-        _currentFrame = _currentFrame + 1;
-        _inputHistory.Record(_currentFrame, input);
+        if (input == null) throw new ArgumentNullException(nameof(input));
 
+        _currentFrame = _currentFrame + 1;
+        RecordAndPredict(_currentFrame, input);
+        CompletePredictedFrame();
+    }
+
+    /// <summary>
+    /// Processes all commands in one prediction frame and captures one resulting snapshot.
+    /// </summary>
+    public void ProcessInputs(IReadOnlyList<IInputCommand> inputs)
+    {
+        if (inputs == null) throw new ArgumentNullException(nameof(inputs));
+        for (var i = 0; i < inputs.Count; i++)
+        {
+            if (inputs[i] == null)
+                throw new ArgumentException("Prediction input batches cannot contain null commands.", nameof(inputs));
+        }
+
+        _currentFrame = _currentFrame + 1;
+        for (var i = 0; i < inputs.Count; i++)
+            RecordAndPredict(_currentFrame, inputs[i]);
+        CompletePredictedFrame();
+    }
+
+    private void RecordAndPredict(Frame frame, IInputCommand input)
+    {
+        _inputHistory?.Record(frame, input);
         foreach (var handler in _handlers)
         {
             if (handler.Strategy != PredictionStrategy.None)
-            {
-                handler.Predict(input, _currentSlots, _currentFrame);
-            }
+                handler.Predict(input, _currentSlots, frame);
         }
+    }
 
-        _snapshotStore.Record(_currentFrame, _currentSlots);
+    private void CompletePredictedFrame()
+    {
+        _snapshotStore?.Record(_currentFrame, _currentSlots);
 
         var handlerAdvanced = OnFramesAdvanced;
         if (handlerAdvanced != null)
             handlerAdvanced(_currentFrame, _confirmedFrame);
+        var handlerPredictionApplied = OnPredictionApplied;
+        if (handlerPredictionApplied != null)
+            handlerPredictionApplied(_currentFrame, _currentSlots);
         NotifyListeners(l => l.OnPredictionApplied(_currentFrame, _currentSlots));
-    }
-
-    /// <summary>
-    /// IPredictionCoordinator 接口实现
-    /// </summary>
-    void IPredictionCoordinator.RecordInput(int frame, IInputCommand input)
-    {
-        if (frame > _currentFrame.Value)
-        {
-            _currentFrame = new Frame(frame);
-        }
-        _inputHistory.Record(new Frame(frame), input);
-    }
-
-    void IPredictionCoordinator.AdvancePrediction()
-    {
-        _currentFrame = _currentFrame + 1;
-    }
-
-    void IPredictionCoordinator.ExecuteRollback()
-    {
-        // 由 ApplyServerSnapshot 自动处理
     }
 
     /// <summary>
@@ -123,10 +146,16 @@ public sealed class PredictionCoordinator : IPredictionCoordinator, IDisposable
     public void ApplyServerSnapshot(int serverFrame, int objectId, StateSlots serverSlots)
     {
         if (objectId != _localPlayerId) return;
+        if (serverSlots == null) throw new ArgumentNullException(nameof(serverSlots));
 
         var serverFrameObj = new Frame(serverFrame);
 
-        var predictedSlots = _snapshotStore.Get(serverFrameObj);
+        // Ignore confirmations that cannot advance the acknowledged timeline.
+        // A late packet must not roll the client back over a newer confirmation.
+        if (_confirmedFrame != Frame.Invalid && serverFrameObj <= _confirmedFrame)
+            return;
+
+        var predictedSlots = _snapshotStore?.Get(serverFrameObj);
         if (predictedSlots == null)
             predictedSlots = _currentSlots;
 
@@ -138,6 +167,15 @@ public sealed class PredictionCoordinator : IPredictionCoordinator, IDisposable
         }
         else
         {
+            if (!RollbackReplayEnabled)
+            {
+                ApplyAuthoritativeCorrection(serverFrameObj, serverSlots);
+                PublishServerStateApplied(serverFrameObj);
+                return;
+            }
+
+            var predictedFrame = _currentFrame;
+            var replayFrames = _inputHistory.GetFrameBatches(serverFrameObj, predictedFrame);
             var handlerRollback = OnRollbackExecuted;
             if (handlerRollback != null)
                 handlerRollback(_currentFrame, conflictLevel);
@@ -145,18 +183,42 @@ public sealed class PredictionCoordinator : IPredictionCoordinator, IDisposable
 
             _currentFrame = serverFrameObj;
             _currentSlots.OverwriteFrom(serverSlots);
+            foreach (var handler in _handlers)
+            {
+                if (handler.Strategy != PredictionStrategy.None)
+                    handler.ApplyServerState(serverSlots, _currentSlots);
+            }
             _confirmedFrame = serverFrameObj;
 
             _snapshotStore.PruneBefore(serverFrameObj);
             _inputHistory.Clear();
 
-            ReplayInputs(serverFrameObj);
+            ReplayInputFrames(replayFrames);
         }
 
+        PublishServerStateApplied(serverFrameObj);
+    }
+
+    private void ApplyAuthoritativeCorrection(Frame serverFrame, StateSlots serverSlots)
+    {
+        _currentSlots.OverwriteFrom(serverSlots);
+        foreach (var handler in _handlers)
+        {
+            if (handler.Strategy != PredictionStrategy.None)
+                handler.ApplyServerState(serverSlots, _currentSlots);
+        }
+
+        _confirmedFrame = serverFrame;
+        _snapshotStore?.PruneBefore(serverFrame);
+        _inputHistory?.Clear();
+    }
+
+    private void PublishServerStateApplied(Frame serverFrame)
+    {
         var handlerServerApplied = OnServerStateApplied;
         if (handlerServerApplied != null)
-            handlerServerApplied(serverFrameObj, _currentSlots);
-        NotifyListeners(l => l.OnServerStateApplied(serverFrameObj, _currentSlots));
+            handlerServerApplied(serverFrame, _currentSlots);
+        NotifyListeners(l => l.OnServerStateApplied(serverFrame, _currentSlots));
     }
 
     /// <summary>
@@ -183,18 +245,14 @@ public sealed class PredictionCoordinator : IPredictionCoordinator, IDisposable
     /// <summary>
     /// 重演输入
     /// </summary>
-    private void ReplayInputs(Frame fromFrame)
+    private void ReplayInputFrames(IReadOnlyList<InputFrameBatch> frames)
     {
-        var inputs = _inputHistory.GetInputs(fromFrame, _currentFrame);
-        foreach (var input in inputs)
+        foreach (var frame in frames)
         {
-            foreach (var handler in _handlers)
-            {
-                if (handler.Strategy != PredictionStrategy.None)
-                {
-                    handler.Predict(input, _currentSlots, _currentFrame);
-                }
-            }
+            _currentFrame = frame.Frame;
+            for (var i = 0; i < frame.Inputs.Count; i++)
+                RecordAndPredict(_currentFrame, frame.Inputs[i]);
+            _snapshotStore?.Record(_currentFrame, _currentSlots);
         }
     }
 
@@ -205,8 +263,9 @@ public sealed class PredictionCoordinator : IPredictionCoordinator, IDisposable
     {
         _currentFrame = Frame.Zero;
         _confirmedFrame = Frame.Invalid;
-        _snapshotStore.PruneBefore(Frame.Invalid);
-        _inputHistory.Clear();
+        _snapshotStore?.Clear();
+        _inputHistory?.Clear();
+        _currentSlots.Clear();
     }
 
     private void NotifyListeners(Action<IPredictionListener> action)
@@ -226,8 +285,15 @@ public sealed class PredictionCoordinator : IPredictionCoordinator, IDisposable
 
     public void Dispose()
     {
+        _snapshotStore?.Clear();
+        _inputHistory?.Clear();
+        _currentSlots.Clear();
         _listeners.Clear();
         _handlers.Clear();
+        OnFramesAdvanced = null;
+        OnPredictionApplied = null;
+        OnServerStateApplied = null;
+        OnRollbackExecuted = null;
     }
 }
 

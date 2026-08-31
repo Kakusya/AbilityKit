@@ -13,6 +13,47 @@ using AbilityKit.Triggering.Runtime.Plan;
 
 namespace AbilityKit.Demo.Moba.Predicates
 {
+    public enum CombatPredicateTargetMode
+    {
+        Target = 0,
+        Source = 1
+    }
+
+    public enum HealthPercentCompareType
+    {
+        LessThan = 0,
+        GreaterThan = 1
+    }
+
+    public static class CombatPredicateContracts
+    {
+        public static class Type
+        {
+            public const string HasBuff = "has_buff";
+            public const string HealthPercent = "health_percent";
+        }
+
+        public static class Argument
+        {
+            public const string BuffId = "buff_id";
+            public const string CheckStack = "check_stack";
+            public const string TargetMode = "target_mode";
+            public const string Threshold = "threshold";
+            public const string CompareType = "compare_type";
+            public const string FirstPosition = "0";
+            public const string SecondPosition = "1";
+        }
+
+        public static class Function
+        {
+            public const string HasBuff = "predicate:has_buff";
+            public const string HasBuffOwner = "predicate:has_buff_owner";
+            public const string OwnerMatchesPayloadSource = "predicate:owner_matches_payload_source";
+            public const string OwnerMatchesPayloadTarget = "predicate:owner_matches_payload_target";
+            public const string TargetIsFlyingProjectile = "predicate:target_is_flying_projectile";
+        }
+    }
+
     /// <summary>
     /// 检查目标是否有指定 BUFF 的条件
     /// </summary>
@@ -28,7 +69,9 @@ namespace AbilityKit.Demo.Moba.Predicates
         /// </summary>
         public bool CheckStack { get; private set; }
 
-        protected override string PredicateType => "has_buff";
+        public CombatPredicateTargetMode TargetMode { get; private set; }
+
+        protected override string PredicateType => CombatPredicateContracts.Type.HasBuff;
         protected override int Order => 10;
 
         private IWorldResolver _services;
@@ -38,8 +81,13 @@ namespace AbilityKit.Demo.Moba.Predicates
 
         public override void ParseFrom(Dictionary<string, ActionArgValue> namedArgs, ExecCtx<IWorldResolver> ctx)
         {
-            BuffId = AutoPredicateExtensions.ResolveInt(this, namedArgs, "buff_id", 0);
-            CheckStack = AutoPredicateExtensions.ResolveInt(this, namedArgs, "check_stack", 0) > 0;
+            BuffId = AutoPredicateExtensions.ResolveInt(this, namedArgs, CombatPredicateContracts.Argument.BuffId, 0);
+            CheckStack = AutoPredicateExtensions.ResolveInt(this, namedArgs, CombatPredicateContracts.Argument.CheckStack, 0) > 0;
+            TargetMode = (CombatPredicateTargetMode)AutoPredicateExtensions.ResolveInt(
+                this,
+                namedArgs,
+                CombatPredicateContracts.Argument.TargetMode,
+                (int)CombatPredicateTargetMode.Target);
             _services = ctx.Context;
             CombatPredicateRuntime.TryResolve(_services, out _actors);
         }
@@ -52,13 +100,30 @@ namespace AbilityKit.Demo.Moba.Predicates
                 return false;
             }
 
-            if (!CombatPredicateRuntime.TryResolveTargetActorId(context?.Args, _services, out var targetActorId)
-                || !CombatPredicateRuntime.TryGetActor(_services, ref _actors, targetActorId, out var actor))
+            int targetActorId;
+            if (TargetMode == CombatPredicateTargetMode.Source)
+            {
+                if (!CombatPredicateRuntime.TryResolveSourceActorId(context?.Args, _services, out targetActorId)
+                    || !CombatPredicateRuntime.TryGetActor(_services, ref _actors, targetActorId, out var actor))
+                {
+                    CombatPredicateRuntime.LogOnce(ref _missingTargetLogged, $"[HasBuffPredicate] Cannot resolve source actor. buffId={BuffId}, checkStack={CheckStack}, argsType={CombatPredicateRuntime.FormatArgsType(context?.Args)}");
+                    return false;
+                }
+                return HasBuffInternal(actor);
+            }
+
+            if (!CombatPredicateRuntime.TryResolveTargetActorId(context?.Args, _services, out targetActorId)
+                || !CombatPredicateRuntime.TryGetActor(_services, ref _actors, targetActorId, out var targetActor))
             {
                 CombatPredicateRuntime.LogOnce(ref _missingTargetLogged, $"[HasBuffPredicate] Cannot resolve target actor. buffId={BuffId}, checkStack={CheckStack}, argsType={CombatPredicateRuntime.FormatArgsType(context?.Args)}");
                 return false;
             }
+            return HasBuffInternal(targetActor);
+        }
 
+        private bool HasBuffInternal(global::ActorEntity actor)
+        {
+            if (actor == null) return false;
             if (!actor.hasBuffs || actor.buffs.Active == null) return false;
 
             var active = actor.buffs.Active;
@@ -83,12 +148,9 @@ namespace AbilityKit.Demo.Moba.Predicates
         /// </summary>
         public float Threshold { get; private set; }
 
-        /// <summary>
-        /// 比较类型: 0=小于, 1=大于
-        /// </summary>
-        public int CompareType { get; private set; }
+        public HealthPercentCompareType CompareType { get; private set; }
 
-        protected override string PredicateType => "health_percent";
+        protected override string PredicateType => CombatPredicateContracts.Type.HealthPercent;
         protected override int Order => 10;
 
         private IWorldResolver _services;
@@ -99,8 +161,12 @@ namespace AbilityKit.Demo.Moba.Predicates
 
         public override void ParseFrom(Dictionary<string, ActionArgValue> namedArgs, ExecCtx<IWorldResolver> ctx)
         {
-            Threshold = AutoPredicateExtensions.ResolveFloat(this, namedArgs, "threshold", 50f);
-            CompareType = AutoPredicateExtensions.ResolveInt(this, namedArgs, "compare_type", 0);
+            Threshold = AutoPredicateExtensions.ResolveFloat(this, namedArgs, CombatPredicateContracts.Argument.Threshold, 50f);
+            CompareType = (HealthPercentCompareType)AutoPredicateExtensions.ResolveInt(
+                this,
+                namedArgs,
+                CombatPredicateContracts.Argument.CompareType,
+                (int)HealthPercentCompareType.LessThan);
             _services = ctx.Context;
             CombatPredicateRuntime.TryResolve(_services, out _payloads);
             CombatPredicateRuntime.TryResolve(_services, out _actors);
@@ -117,8 +183,8 @@ namespace AbilityKit.Demo.Moba.Predicates
             var percent = hp / maxHp * 100f;
             switch (CompareType)
             {
-                case 0: return percent < Threshold;
-                case 1: return percent > Threshold;
+                case HealthPercentCompareType.LessThan: return percent < Threshold;
+                case HealthPercentCompareType.GreaterThan: return percent > Threshold;
                 default:
                     CombatPredicateRuntime.LogOnce(ref _invalidCompareLogged, $"[HealthPercentPredicate] Unsupported compare_type. compareType={CompareType}, threshold={Threshold}");
                     return false;
@@ -129,6 +195,7 @@ namespace AbilityKit.Demo.Moba.Predicates
     internal static class CombatPredicateRuntime
     {
         private static readonly int BattleTargetActorIdId = MobaBattlePayloadFields.FieldId(MobaBattlePayloadFields.TargetActorId);
+        private static readonly int BattleAttackerActorIdId = MobaBattlePayloadFields.FieldId(MobaBattlePayloadFields.AttackerActorId);
         private static readonly int BattleTargetHpId = MobaBattlePayloadFields.FieldId(MobaBattlePayloadFields.TargetHp);
         private static readonly int BattleTargetMaxHpId = MobaBattlePayloadFields.FieldId(MobaBattlePayloadFields.TargetMaxHp);
         private static readonly int SkillTargetActorIdId = SkillRulePayloadFields.FieldId(SkillRulePayloadFields.TargetActorId);
@@ -137,6 +204,37 @@ namespace AbilityKit.Demo.Moba.Predicates
         {
             service = null;
             return services != null && services.TryResolve(out service) && service != null;
+        }
+
+        public static bool TryResolveSourceActorId(object args, IWorldResolver services, out int actorId)
+        {
+            actorId = 0;
+            if (args == null) return false;
+
+            if (args is MobaTriggerConditionContext conditionContext)
+            {
+                actorId = conditionContext.SourceActorId;
+                if (actorId > 0) return true;
+            }
+
+            if (args is IMobaActorContextProvider actorContext && actorContext.TryGetSourceActorId(out actorId) && actorId > 0)
+            {
+                return true;
+            }
+
+            if (args is SkillPipelineContext skillContext)
+            {
+                actorId = skillContext.CasterActorId;
+                if (actorId > 0) return true;
+            }
+
+            if (TryResolve(services, out IPayloadAccessorRegistry payloads))
+            {
+                object payload = args;
+                if (payloads.TryGetInt(in payload, BattleAttackerActorIdId, out actorId) && actorId > 0) return true;
+            }
+
+            return false;
         }
 
         public static bool TryGetActor(IWorldResolver services, ref MobaActorLookupService actors, int actorId, out global::ActorEntity actor)

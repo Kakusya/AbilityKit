@@ -3,7 +3,7 @@ using System;
 using System.Collections.Generic;
 using System.IO;
 using System.Linq;
-using AbilityKit.Ability.Editor.Utilities;
+using AbilityKit.Triggering.Runtime.Plan.Json;
 using Newtonsoft.Json;
 using UnityEngine;
 using UnityEditor;
@@ -24,14 +24,15 @@ namespace AbilityKit.Ability.Editor.Utilities
         private const string TriggersDirName = "triggers";
         private const string SingleFileName = "ability_trigger_plans.json";
         private const string ReadableSingleFileName = "ability_trigger_plans_readable.json";
+        private const string PackageAbilityResourcesPath = "Packages/com.abilitykit.demo.moba.view.runtime/Resources/ability";
 
         /// <summary>
         /// 将单个 JSON 文件拆分为多个文件
         /// </summary>
-        [MenuItem("AbilityKit/Ability/Split Trigger Plan JSON")]
+        [MenuItem("Tools/AbilityKit/Framework/Ability/格式转换/Split Trigger Plan JSON")]
         public static void Split()
         {
-            var outputDir = Path.Combine(Application.dataPath, "Resources", "ability");
+            var outputDir = GetAbilityResourcesDirectory();
             var inputPath = Path.Combine(outputDir, SingleFileName);
 
             if (!File.Exists(inputPath))
@@ -77,10 +78,10 @@ namespace AbilityKit.Ability.Editor.Utilities
         /// <summary>
         /// 将多个文件合并为单个 JSON 文件
         /// </summary>
-        [MenuItem("AbilityKit/Ability/Merge Trigger Plan JSON")]
+        [MenuItem("Tools/AbilityKit/Framework/Ability/格式转换/Merge Trigger Plan JSON")]
         public static void Merge()
         {
-            var inputDir = Path.Combine(Application.dataPath, "Resources", "ability", TriggersDirName);
+            var inputDir = Path.Combine(GetAbilityResourcesDirectory(), TriggersDirName);
 
             if (!Directory.Exists(inputDir))
             {
@@ -92,8 +93,11 @@ namespace AbilityKit.Ability.Editor.Utilities
 
             try
             {
-                var jsonFiles = Directory.GetFiles(inputDir, "*.json")
-                    .OrderBy(f => f)
+                var jsonFiles = Directory.GetFiles(
+                        inputDir,
+                        "*.json",
+                        SearchOption.AllDirectories)
+                    .OrderBy(file => file, StringComparer.Ordinal)
                     .ToList();
 
                 if (jsonFiles.Count == 0)
@@ -102,28 +106,14 @@ namespace AbilityKit.Ability.Editor.Utilities
                     return;
                 }
 
-                var triggers = new List<TriggerPlanDto>();
-                var allStrings = new Dictionary<int, string>();
-
-                foreach (var file in jsonFiles)
-                {
-                    var json = File.ReadAllText(file);
-                    var trigger = JsonConvert.DeserializeObject<TriggerPlanDto>(json);
-                    if (trigger != null)
-                    {
-                        triggers.Add(trigger);
-                    }
-                }
-
-                var dto = new TriggerPlanDatabaseDto();
-                dto.Triggers.Clear();
-                dto.Triggers.AddRange(triggers);
-
-                // 合并字符串表
-                var mergedJson = JsonConvert.SerializeObject(dto, Formatting.Indented);
+                var documents = jsonFiles.Select(file =>
+                    new TriggerPlanAggregateCompiler.SourceDocument(
+                        MakeRelativePath(inputDir, file),
+                        File.ReadAllText(file)));
+                var mergedJson = TriggerPlanAggregateCompiler.Compile(documents);
                 File.WriteAllText(outputPath, mergedJson);
 
-                Debug.Log($"[TriggerPlanSplitter] 已合并 {triggers.Count} 个 Trigger 到:\n{outputPath}");
+                Debug.Log($"[TriggerPlanSplitter] 已从 {jsonFiles.Count} 个 split 文件生成 aggregate:\n{outputPath}");
                 AssetDatabase.Refresh();
             }
             catch (Exception ex)
@@ -135,10 +125,10 @@ namespace AbilityKit.Ability.Editor.Utilities
         /// <summary>
         /// 导出可读格式到拆分目录
         /// </summary>
-        [MenuItem("AbilityKit/Ability/Export Readable Split")]
+        [MenuItem("Tools/AbilityKit/Framework/Ability/导出/Readable Split")]
         public static void ExportReadableSplit()
         {
-            var outputDir = Path.Combine(Application.dataPath, "Resources", "ability");
+            var outputDir = GetAbilityResourcesDirectory();
             var inputPath = Path.Combine(outputDir, SingleFileName);
 
             if (!File.Exists(inputPath))
@@ -204,10 +194,10 @@ namespace AbilityKit.Ability.Editor.Utilities
         /// <summary>
         /// 从拆分目录导入可读格式
         /// </summary>
-        [MenuItem("AbilityKit/Ability/Import Readable Split")]
+        [MenuItem("Tools/AbilityKit/Framework/Ability/导入/Readable Split")]
         public static void ImportReadableSplit()
         {
-            var inputDir = Path.Combine(Application.dataPath, "Resources", "ability", TriggersDirName + "_readable");
+            var inputDir = Path.Combine(GetAbilityResourcesDirectory(), TriggersDirName + "_readable");
 
             if (!Directory.Exists(inputDir))
             {
@@ -293,6 +283,22 @@ namespace AbilityKit.Ability.Editor.Utilities
             }
         }
 
+        private static string GetAbilityResourcesDirectory()
+        {
+            return Path.GetFullPath(Path.Combine(Application.dataPath, "..", PackageAbilityResourcesPath));
+        }
+
+        private static string MakeRelativePath(string rootDirectory, string filePath)
+        {
+            var root = Path.GetFullPath(rootDirectory)
+                .TrimEnd(Path.DirectorySeparatorChar, Path.AltDirectorySeparatorChar)
+                + Path.DirectorySeparatorChar;
+            var rootUri = new Uri(root);
+            var fileUri = new Uri(Path.GetFullPath(filePath));
+            return Uri.UnescapeDataString(rootUri.MakeRelativeUri(fileUri).ToString())
+                .Replace('\\', '/');
+        }
+
         private static ReadableTriggerPlan ToReadableTrigger(TriggerPlanDto trigger)
         {
             return new ReadableTriggerPlan
@@ -346,7 +352,9 @@ namespace AbilityKit.Ability.Editor.Utilities
                 FieldId = dto.FieldId,
                 DomainId = dto.DomainId,
                 Key = dto.Key,
-                ExprText = dto.ExprText
+                ExprText = dto.ExprText,
+                KeyType = dto.KeyType,
+                Scope = dto.Scope
             };
         }
 
@@ -382,6 +390,19 @@ namespace AbilityKit.Ability.Editor.Utilities
                     return dto.ConstValue;
                 case "Board":
                     return new { Kind = "Board", BoardId = dto.BoardId, KeyId = dto.KeyId };
+                case "BlackboardTarget":
+                    return new
+                    {
+                        Kind = "BlackboardTarget",
+                        BoardId = dto.BoardId,
+                        KeyId = dto.KeyId,
+                        KeyType = dto.KeyType,
+                        Scope = dto.Scope
+                    };
+                case "Bool":
+                    return new { Kind = "Bool", BoolValue = dto.BoolValue };
+                case "String":
+                    return new { Kind = "String", StringValue = dto.StringValue ?? string.Empty };
                 case "Field":
                     return new { Kind = "Field", FieldId = dto.FieldId, KeyId = dto.KeyId };
                 case "Domain":

@@ -1,18 +1,20 @@
-﻿{
-    "conditions":  [
-
-                   ],
-    "id":  22001,
-    "enabled":  true,
-    "phase":  "immediate",
-    "event":  "",
-    "name":  "Trigger_22001",
-    "allowExternal":  false,
-    "actions":  [
-                    {
-                        "emitterId":  400001,
-                        "type":  "emit"
-                    }
-                ],
-    "priority":  50
+{
+    "triggers": [
+        {
+            "id": 22001,
+            "name": "Trigger_22001",
+            "event": "",
+            "enabled": true,
+            "allowExternal": false,
+            "phase": "immediate",
+            "priority": 50,
+            "conditions": [],
+            "actions": [
+                {
+                    "emitterId": 400001,
+                    "type": "emit"
+                }
+            ]
+        }
+    ]
 }

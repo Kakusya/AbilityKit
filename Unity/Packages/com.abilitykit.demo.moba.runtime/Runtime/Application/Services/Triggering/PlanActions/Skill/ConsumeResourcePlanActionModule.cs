@@ -29,7 +29,15 @@ namespace AbilityKit.Demo.Moba.Services.Triggering.PlanActions
                 return;
             }
 
-            var input = MobaPlanActionInputResolver.ResolveEffect(triggerArgs, ctx);
+            if (!MobaPlanActionInputResolver.TryResolveEffect(
+                    triggerArgs,
+                    ctx,
+                    out var input))
+            {
+                LogRejected(ctx, "requires combat execution context.");
+                return;
+            }
+
             if (!input.HasCasterActor)
             {
                 LogRejected(ctx, "caster actor not found");
@@ -66,13 +74,13 @@ namespace AbilityKit.Demo.Moba.Services.Triggering.PlanActions
                 throw new InvalidOperationException($"[Plan] consume_resource failed: resource state not found. actorId={casterActorId}, type={args.ResourceType}, amount={args.Amount}");
             }
 
-            if (state.Current < args.Amount)
+            if (state.Current < MobaResourceFixedConvert.ToFixed(args.Amount))
             {
-                throw new InvalidOperationException($"[Plan] consume_resource failed: {args.FailMessageKey}. actorId={casterActorId}, type={args.ResourceType}, amount={args.Amount}, current={state.Current}");
+                throw new InvalidOperationException($"[Plan] consume_resource failed: {args.FailMessageKey}. actorId={casterActorId}, type={args.ResourceType}, amount={args.Amount}, current={MobaResourceFixedConvert.ToSingle(state.Current)}");
             }
 
-            state.Current -= args.Amount;
-            LogApplied(ctx, $"actorId={casterActorId}, type={args.ResourceType}, amount={args.Amount}, remaining={state.Current}");
+            state.Current -= MobaResourceFixedConvert.ToFixed(args.Amount);
+            LogApplied(ctx, $"actorId={casterActorId}, type={args.ResourceType}, amount={args.Amount}, remaining={MobaResourceFixedConvert.ToSingle(state.Current)}");
         }
     }
 }

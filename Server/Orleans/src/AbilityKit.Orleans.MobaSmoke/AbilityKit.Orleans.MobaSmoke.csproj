@@ -1,0 +1,31 @@
+<Project Sdk="Microsoft.NET.Sdk">
+  <PropertyGroup>
+    <OutputType>Exe</OutputType>
+    <TargetFramework>net10.0</TargetFramework>
+    <Nullable>enable</Nullable>
+    <ImplicitUsings>enable</ImplicitUsings>
+  </PropertyGroup>
+  <ItemGroup>
+    <ProjectReference Include="..\AbilityKit.Orleans.Contracts\AbilityKit.Orleans.Contracts.csproj" />
+    <ProjectReference Include="..\AbilityKit.Orleans.Grains\AbilityKit.Orleans.Grains.csproj" />
+    <ProjectReference Include="..\AbilityKit.Orleans.Gateway\AbilityKit.Orleans.Gateway.csproj" Aliases="Gateway" />
+    <ProjectReference Include="..\AbilityKit.Orleans.Hosting\AbilityKit.Orleans.Hosting.csproj" />
+    <ProjectReference Include="..\..\..\..\src\AbilityKit.GameFramework\AbilityKit.GameFramework.csproj" />
+    <ProjectReference Include="..\..\..\..\src\AbilityKit.GameFramework.Network\AbilityKit.GameFramework.Network.csproj" />
+    <ProjectReference Include="..\..\..\..\src\AbilityKit.Network.Runtime\AbilityKit.Network.Runtime.csproj" />
+    <ProjectReference Include="..\..\..\..\src\AbilityKit.Protocol.Moba\AbilityKit.Protocol.Moba.csproj" />
+    <ProjectReference Include="..\..\..\..\src\AbilityKit.Protocol.Room\AbilityKit.Protocol.Room.csproj" />
+  </ItemGroup>
+  <ItemGroup>
+    <PackageReference Include="Microsoft.Extensions.Hosting" Version="8.0.0" />
+    <PackageReference Include="Microsoft.Extensions.Options" Version="8.0.0" />
+    <PackageReference Include="Microsoft.Orleans.Server" Version="8.0.0" />
+  </ItemGroup>
+  <ItemGroup>
+    <Compile Include="..\AbilityKit.Orleans.ShooterSmoke\Networking\SmokeTcpGameFrameworkNetworkChannel.cs" Link="Networking\SmokeTcpGameFrameworkNetworkChannel.cs" />
+    <Compile Include="..\AbilityKit.Orleans.ShooterSmoke\Hosting\ShooterSmokeGatewayServiceCollectionExtensions.cs" Link="Hosting\SmokeGatewayServiceCollectionExtensions.cs" />
+  </ItemGroup>
+  <ItemGroup>
+    <None Update="appsettings.json" CopyToOutputDirectory="PreserveNewest" />
+  </ItemGroup>
+</Project>

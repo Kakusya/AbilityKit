@@ -1,28 +1,27 @@
 using AbilityKit.Ability.Host;
-using AbilityKit.Ability.Host.Extensions.FrameSync;
 using AbilityKit.Ability.World.Abstractions;
-using AbilityKit.Game.Battle.Requests;
 
 namespace AbilityKit.Game.Flow
 {
     internal readonly struct BattleInputSubmitter
     {
-        private readonly BattleContext _ctx;
+        private readonly IBattleInputSubmissionPort _input;
         private readonly PlayerId _playerId;
         private readonly WorldId _worldId;
 
-        public BattleInputSubmitter(BattleContext ctx, PlayerId playerId, WorldId worldId)
+        public BattleInputSubmitter(
+            IBattleInputSubmissionPort input,
+            PlayerId playerId,
+            WorldId worldId)
         {
-            _ctx = ctx;
+            _input = input;
             _playerId = playerId;
             _worldId = worldId;
         }
 
-        public void Submit(in PlayerInputCommand cmd)
+        public bool Submit(in PlayerInputCommand command)
         {
-            _ctx.InputRecordWriter?.Append(in cmd);
-            _ctx.Session.SubmitInput(new SubmitInputRequest(_worldId, cmd));
-            _ctx.LocalInputQueue.Enqueue(new LocalPlayerInputEvent(_playerId, cmd.OpCode, cmd.Payload));
+            return _input != null && _input.Submit(in command, _playerId, _worldId);
         }
     }
 }

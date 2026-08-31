@@ -3,7 +3,9 @@ using System.Collections.Generic;
 using AbilityKit.Demo.Moba.Config.BattleDemo.MO;
 using AbilityKit.Demo.Moba.Config.Core;
 using AbilityKit.Demo.Moba.Share.Config;
+using AbilityKit.Demo.Moba.Systems;
 using AbilityKit.Triggering.Runtime.Config.Plans;
+using AbilityKit.Triggering.Runtime.Plan;
 using AbilityKit.Triggering.Runtime.Plan.Json;
 
 namespace AbilityKit.Demo.Moba.Services
@@ -11,6 +13,8 @@ namespace AbilityKit.Demo.Moba.Services
     public sealed class MobaBattleConfigReferenceValidator : IMobaRuntimeValidator
     {
         private const string Source = "battle.config.references";
+        private const int DefaultSkillReleaseTriggerId = 900101011;
+        private const int DefaultSkillCommitTriggerId = 900101012;
 
         public string Name => Source;
 
@@ -28,6 +32,7 @@ namespace AbilityKit.Demo.Moba.Services
 
             ValidateBattleAttributeTemplates(config, report);
             ValidateSkills(config, triggers, report);
+            ValidateSkillButtonTemplates(config, report);
             ValidatePassiveSkills(config, triggers, report);
             ValidateBuffs(config, triggers, report);
             ValidateContinuousProcesses(config, triggers, report);
@@ -36,6 +41,10 @@ namespace AbilityKit.Demo.Moba.Services
             ValidateProjectileLaunchers(config, report);
             ValidateSummons(config, report);
             ValidateAreas(config, triggers, report);
+            ValidateSpawnAreaEffectiveTimings(
+                triggers,
+                id => config.TryGetAoe(id, out var area) ? area : null,
+                report);
             ValidateGameplay(config, triggers, report);
             ValidateTagTemplates(config, report);
             ValidateContinuousTagTemplates(config, report);
@@ -63,9 +72,48 @@ namespace AbilityKit.Demo.Moba.Services
                     report.Warning(Source, path + ".hp", "battle attribute template hp exceeds max hp.", template.Id.ToString());
                 }
 
+                RequiredRef(Ref<SkillMO>(config.TryGetSkill), template.BasicAttackSkillId, report, path + ".basicAttackSkillId", "basic attack skill", template.Id);
+                if (template.BasicAttackSkillId > 0 &&
+                    config.TryGetSkill(template.BasicAttackSkillId, out var basicAttack) &&
+                    basicAttack != null &&
+                    basicAttack.SkillType != SkillType.NormalAttack)
+                {
+                    report.Error(Source, path + ".basicAttackSkillId", "configured basic attack skill is not a normal attack.", template.BasicAttackSkillId.ToString());
+                }
+
                 ValidateRefs(Ref<SkillMO>(config.TryGetSkill), template.ActiveSkills, report, path + ".activeSkills", "skill", template.Id);
                 ValidateRefs(Ref<PassiveSkillMO>(config.TryGetPassiveSkill), template.PassiveSkills, report, path + ".passiveSkills", "passive skill", template.Id);
+
+                if (template.MaxMana <= 0 && HasPositiveSkillCost(config, template.ActiveSkills))
+                {
+                    report.Error(
+                        Source,
+                        path + ".maxMana",
+                        "battle attribute template has positive-cost active skills but no mana capacity.",
+                        template.Id.ToString(),
+                        code: "moba.skill.contract.attribute_template_missing_mana",
+                        category: MobaRuntimeValidationCategory.Config,
+                        businessNumericId: template.Id);
+                }
             }
+        }
+
+        private static bool HasPositiveSkillCost(MobaConfigDatabase config, IReadOnlyList<int> skillIds)
+        {
+            if (config == null || skillIds == null || skillIds.Count == 0) return false;
+
+            for (var i = 0; i < skillIds.Count; i++)
+            {
+                if (!config.TryGetSkill(skillIds[i], out var skill) || skill == null || skill.LevelTableId <= 0) continue;
+                if (!config.TryGetSkillLevelTable(skill.LevelTableId, out var table) || table?.Levels == null) continue;
+
+                for (var levelIndex = 0; levelIndex < table.Levels.Count; levelIndex++)
+                {
+                    if (table.Levels[levelIndex]?.Cost > 0) return true;
+                }
+            }
+
+            return false;
         }
 
         private static void ValidateCharacters(MobaConfigDatabase config, MobaRuntimeValidationReport report)
@@ -96,8 +144,18 @@ namespace AbilityKit.Demo.Moba.Services
 
                 if (skill.CooldownMs < 0)
                 {
-                    report.Warning(Source, path + ".cooldownMs", "skill cooldown is negative.", skill.Id.ToString());
+                    report.Error(
+                        Source,
+                        path + ".cooldownMs",
+                        "skill cooldown is negative.",
+                        skill.Id.ToString(),
+                        code: "moba.skill.configuration.negative_cooldown",
+                        category: MobaRuntimeValidationCategory.Config,
+                        businessNumericId: skill.Id);
                 }
+
+                var hasPositiveCost = ValidateSkillLevelConfiguration(config, skill, report, path);
+                ValidateSkillResourceContract(config, skill, hasPositiveCost, report, path);
 
                 if (skill.Range < 0)
                 {
@@ -113,6 +171,200 @@ namespace AbilityKit.Demo.Moba.Services
                 {
                     ValidateSkillFlow(config, triggers, report, preCastFlow, $"skill.{skill.Id}.preCastFlow.{skill.PreCastFlowId}", skill.Id);
                 }
+            }
+        }
+
+        private static bool ValidateSkillLevelConfiguration(
+            MobaConfigDatabase config,
+            SkillMO skill,
+            MobaRuntimeValidationReport report,
+            string path)
+        {
+            if (skill.LevelTableId <= 0) return false;
+            if (!config.TryGetSkillLevelTable(skill.LevelTableId, out var table) || table == null) return false;
+
+            var levels = table.Levels;
+            if (levels == null || levels.Count == 0)
+            {
+                report.Error(
+                    Source,
+                    path + ".levelTable.levels",
+                    "skill level table has no levels.",
+                    skill.Id.ToString(),
+                    code: "moba.skill.configuration.empty_level_table",
+                    category: MobaRuntimeValidationCategory.Config,
+                    businessNumericId: skill.Id);
+                return false;
+            }
+
+            var hasPositiveCost = false;
+            for (var i = 0; i < levels.Count; i++)
+            {
+                var level = levels[i];
+                var levelPath = $"{path}.levelTable.levels[{i}]";
+                if (level == null)
+                {
+                    report.Error(
+                        Source,
+                        levelPath,
+                        "skill level entry is null.",
+                        skill.Id.ToString(),
+                        code: "moba.skill.configuration.null_level",
+                        category: MobaRuntimeValidationCategory.Config,
+                        businessNumericId: skill.Id);
+                    continue;
+                }
+
+                if (level.Cost < 0)
+                {
+                    report.Error(
+                        Source,
+                        levelPath + ".cost",
+                        "skill level cost is negative.",
+                        skill.Id.ToString(),
+                        code: "moba.skill.configuration.negative_cost",
+                        category: MobaRuntimeValidationCategory.Config,
+                        businessNumericId: skill.Id);
+                }
+                else if (level.Cost > 0)
+                {
+                    hasPositiveCost = true;
+                }
+
+                if (level.CooldownMs < 0)
+                {
+                    report.Error(
+                        Source,
+                        levelPath + ".cooldownMs",
+                        "skill level cooldown is negative.",
+                        skill.Id.ToString(),
+                        code: "moba.skill.configuration.negative_level_cooldown",
+                        category: MobaRuntimeValidationCategory.Config,
+                        businessNumericId: skill.Id);
+                }
+            }
+
+            return hasPositiveCost;
+        }
+
+        private static void ValidateSkillResourceContract(
+            MobaConfigDatabase config,
+            SkillMO skill,
+            bool hasPositiveCost,
+            MobaRuntimeValidationReport report,
+            string path)
+        {
+            if (!hasPositiveCost) return;
+
+            if (skill.SkillType == SkillType.NormalAttack)
+            {
+                report.Error(
+                    Source,
+                    path + ".levelTable.levels",
+                    "normal attack skill must have zero resource cost.",
+                    skill.Id.ToString(),
+                    code: "moba.skill.contract.normal_attack_has_cost",
+                    category: MobaRuntimeValidationCategory.Config,
+                    businessNumericId: skill.Id);
+                return;
+            }
+
+            if (skill.CastFlowId <= 0 ||
+                !config.TryGetSkillFlow(skill.CastFlowId, out var flow) ||
+                flow == null)
+            {
+                return;
+            }
+
+            var hasRelease = ContainsSkillRulePlanTrigger(flow.Phases, DefaultSkillReleaseTriggerId);
+            var hasCommit = ContainsSkillRulePlanTrigger(flow.Phases, DefaultSkillCommitTriggerId);
+            if (hasRelease && hasCommit) return;
+
+            report.Error(
+                Source,
+                path + $".castFlow.{skill.CastFlowId}.phases",
+                $"nonzero-cost active skill requires paired default release and commit RulePlan phases. release={hasRelease}, commit={hasCommit}.",
+                skill.Id.ToString(),
+                code: "moba.skill.contract.release_commit_required",
+                category: MobaRuntimeValidationCategory.Config,
+                businessNumericId: skill.Id);
+        }
+
+        private static bool ContainsSkillRulePlanTrigger(IReadOnlyList<SkillPhaseDTO> phases, int triggerId)
+        {
+            if (phases == null || phases.Count == 0) return false;
+            for (var i = 0; i < phases.Count; i++)
+            {
+                if (ContainsSkillRulePlanTrigger(phases[i], triggerId)) return true;
+            }
+
+            return false;
+        }
+
+        private static bool ContainsSkillRulePlanTrigger(SkillPhaseDTO phase, int triggerId)
+        {
+            if (phase == null) return false;
+            if ((SkillPhaseType)phase.Type == SkillPhaseType.RulePlan &&
+                phase.RulePlan?.TriggerIds != null)
+            {
+                for (var i = 0; i < phase.RulePlan.TriggerIds.Length; i++)
+                {
+                    if (phase.RulePlan.TriggerIds[i] == triggerId) return true;
+                }
+            }
+
+            if (ContainsSkillRulePlanTrigger(phase.Children, triggerId)) return true;
+            return phase.Repeat?.Phase != null &&
+                   ContainsSkillRulePlanTrigger(phase.Repeat.Phase, triggerId);
+        }
+
+        private static void ValidateSkillButtonTemplates(MobaConfigDatabase config, MobaRuntimeValidationReport report)
+        {
+            foreach (var template in All<SkillButtonTemplateMO>(config))
+            {
+                if (template == null) continue;
+                var path = $"skillButtonTemplate.{template.Id}";
+
+                WarnIfOutsideRange(report, path + ".aimMode", template.AimMode, 0, 1, "skill aim mode", template.Id);
+                WarnIfOutsideRange(report, path + ".indicatorShape", template.IndicatorShape, 0, 8, "skill aim indicator shape", template.Id);
+                WarnIfOutsideRange(report, path + ".usePointMode", template.UsePointMode, 0, 2, "skill use point mode", template.Id);
+
+                WarnIfNegative(report, path + ".longPressSeconds", template.LongPressSeconds, "skill button long press duration", template.Id);
+                WarnIfNegative(report, path + ".dragThreshold", template.DragThreshold, "skill button drag threshold", template.Id);
+                WarnIfNegative(report, path + ".aimMaxRadius", template.AimMaxRadius, "skill aim max radius", template.Id);
+                WarnIfNegative(report, path + ".indicatorWorldWidth", template.IndicatorWorldWidth, "skill aim indicator world width", template.Id);
+                WarnIfNegative(report, path + ".selectRange", template.SelectRange, "skill target select range", template.Id);
+                WarnIfNegative(report, path + ".sectorAngleDegrees", template.SectorAngleDegrees, "skill sector angle", template.Id);
+                WarnIfNegative(report, path + ".dashDistance", template.DashDistance, "skill dash distance", template.Id);
+                WarnIfNegative(report, path + ".lockOnDurationMs", template.LockOnDurationMs, "skill lock-on duration", template.Id);
+                WarnIfNegative(report, path + ".fanRadius", template.FanRadius, "skill fan radius", template.Id);
+                WarnIfNegative(report, path + ".fanAngleDegrees", template.FanAngleDegrees, "skill fan angle", template.Id);
+                WarnIfNegative(report, path + ".selfRadius", template.SelfRadius, "skill self radius", template.Id);
+                WarnIfNegative(report, path + ".lockProjectileRadius", template.LockProjectileRadius, "skill lock projectile radius", template.Id);
+            }
+        }
+
+        private static void WarnIfNegative(MobaRuntimeValidationReport report, string path, float value, string label, int businessId)
+        {
+            if (value < 0f)
+            {
+                report.Warning(Source, path, label + " is negative.", businessId.ToString());
+            }
+        }
+
+        private static void WarnIfNegative(MobaRuntimeValidationReport report, string path, int value, string label, int businessId)
+        {
+            if (value < 0)
+            {
+                report.Warning(Source, path, label + " is negative.", businessId.ToString());
+            }
+        }
+
+        private static void WarnIfOutsideRange(MobaRuntimeValidationReport report, string path, int value, int minimum, int maximum, string label, int businessId)
+        {
+            if (value < minimum || value > maximum)
+            {
+                report.Warning(Source, path, label + $" value {value} is outside supported range [{minimum}, {maximum}].", businessId.ToString());
             }
         }
 
@@ -161,6 +413,56 @@ namespace AbilityKit.Demo.Moba.Services
                 if (buff.StackingPolicy == BuffStackingPolicy.IgnoreIfExists && buff.MaxStacks > 1)
                 {
                     report.Warning(Source, path + ".stackingPolicy", "ignore-if-exists buff should not rely on multi-stack semantics.", buff.Id.ToString());
+                }
+
+                if (!Enum.IsDefined(typeof(BuffDispelPolicy), buff.DispelPolicy))
+                {
+                    report.Error(
+                        Source,
+                        path + ".dispelPolicy",
+                        $"buff dispel policy value {(int)buff.DispelPolicy} is not supported.",
+                        buff.Id.ToString(),
+                        code: "moba.buff.dispel.invalid_policy",
+                        category: MobaRuntimeValidationCategory.Config,
+                        businessNumericId: buff.Id);
+                }
+
+                if (buff.DispelCategory < 0)
+                {
+                    report.Error(
+                        Source,
+                        path + ".dispelCategory",
+                        "buff dispel category cannot be negative.",
+                        buff.Id.ToString(),
+                        code: "moba.buff.dispel.negative_category",
+                        category: MobaRuntimeValidationCategory.Config,
+                        businessNumericId: buff.Id);
+                }
+
+                if (buff.DispelPolicy == BuffDispelPolicy.Undispellable && buff.DispelCategory > 0)
+                {
+                    report.Warning(
+                        Source,
+                        path + ".dispelCategory",
+                        "undispellable buff ignores its configured dispel category.",
+                        buff.Id.ToString(),
+                        code: "moba.buff.dispel.redundant_category",
+                        category: MobaRuntimeValidationCategory.Config,
+                        businessNumericId: buff.Id);
+                }
+
+                if (buff.DispelPolicy == BuffDispelPolicy.Undispellable &&
+                    buff.DispelBlockedByTags != null &&
+                    buff.DispelBlockedByTags.Count > 0)
+                {
+                    report.Warning(
+                        Source,
+                        path + ".dispelBlockedByTags",
+                        "undispellable buff ignores its configured dispel-blocking tags.",
+                        buff.Id.ToString(),
+                        code: "moba.buff.dispel.redundant_blocked_tags",
+                        category: MobaRuntimeValidationCategory.Config,
+                        businessNumericId: buff.Id);
                 }
 
                 ValidateTriggerRefs(triggers, buff.OnAddEffects, report, path + ".onAddEffects", buff.Id);
@@ -240,7 +542,11 @@ namespace AbilityKit.Demo.Moba.Services
 
                 if (modifier.TargetKind == MobaContinuousModifierTargetKind.Attribute)
                 {
-                    RequiredRef(Ref<AttrTypeMO>(config.TryGetAttrType), modifier.TargetId, report, itemPath + ".targetId", "attribute type", businessId);
+                    if (!Enum.IsDefined(typeof(BattleAttributeType), modifier.TargetId) ||
+                        modifier.TargetId == (int)BattleAttributeType.None)
+                    {
+                        report.Error(Source, itemPath + ".targetId", "battle attribute type id is invalid.", businessId.ToString());
+                    }
                 }
                 else if (modifier.TargetKind == MobaContinuousModifierTargetKind.SkillParameter)
                 {
@@ -405,6 +711,154 @@ namespace AbilityKit.Demo.Moba.Services
             }
         }
 
+        public static void ValidateSpawnAreaEffectiveTimings(
+            TriggerPlanJsonDatabase triggers,
+            Func<int, AoeMO> resolveArea,
+            MobaRuntimeValidationReport report)
+        {
+            if (triggers == null || resolveArea == null || report == null) return;
+
+            var records = triggers.Records;
+            if (records == null) return;
+
+            var spawnAreaId = TriggeringConstants.SpawnAreaId;
+            for (var recordIndex = 0; recordIndex < records.Count; recordIndex++)
+            {
+                var record = records[recordIndex];
+                var actions = record.Plan.Actions;
+                if (actions == null) continue;
+
+                for (var actionIndex = 0; actionIndex < actions.Length; actionIndex++)
+                {
+                    var action = actions[actionIndex];
+                    if (!action.Id.Equals(spawnAreaId)) continue;
+
+                    ValidateSpawnAreaEffectiveTiming(
+                        in action,
+                        record.TriggerId,
+                        actionIndex,
+                        resolveArea,
+                        report);
+                }
+            }
+        }
+
+        private static void ValidateSpawnAreaEffectiveTiming(
+            in ActionCallPlan action,
+            int triggerId,
+            int actionIndex,
+            Func<int, AoeMO> resolveArea,
+            MobaRuntimeValidationReport report)
+        {
+            if (!TryFindActionArg(
+                    in action,
+                    out var areaIdArg,
+                    "area_id", "areaid", "aoe_id", "aoeid", "id")
+                || !TryReadConstantInt(in areaIdArg, out var areaId)
+                || areaId <= 0)
+            {
+                return;
+            }
+
+            var area = resolveArea(areaId);
+            if (area == null
+                || area.DelayMs <= 0
+                || area.OnDelayTriggerIds == null
+                || area.OnDelayTriggerIds.Length == 0)
+            {
+                return;
+            }
+
+            if (TryFindActionArg(
+                    in action,
+                    out var durationFramesArg,
+                    "duration_frames", "durationframes", "lifetime_frames", "lifetimeframes"))
+            {
+                if (!TryReadConstantInt(in durationFramesArg, out var durationFrames)
+                    || durationFrames > 0)
+                {
+                    return;
+                }
+            }
+
+            var hasDurationOverride = TryFindActionArg(
+                in action,
+                out var durationMsArg,
+                "duration_ms", "durationms", "lifetime_ms", "lifetimems");
+            var durationOverrideMs = 0;
+            if (hasDurationOverride
+                && !TryReadConstantInt(in durationMsArg, out durationOverrideMs))
+            {
+                return;
+            }
+
+            var effectiveDurationMs = hasDurationOverride && durationOverrideMs > 0
+                ? durationOverrideMs
+                : area.DurationMs;
+            if (effectiveDurationMs >= area.DelayMs) return;
+
+            var path = $"trigger.{triggerId}.plan.actions[{actionIndex}].args.duration_ms";
+            report.Error(
+                Source,
+                path,
+                "spawn_area effective duration expires before its delayed trigger can execute. "
+                + $"triggerId={triggerId}, actionIndex={actionIndex}, areaId={areaId}, "
+                + $"configDurationMs={area.DurationMs}, "
+                + $"overrideDurationMs={(hasDurationOverride ? durationOverrideMs : 0)}, "
+                + $"effectiveDurationMs={effectiveDurationMs}, delayMs={area.DelayMs}",
+                triggerId.ToString(),
+                code: "moba.trigger.plan.spawn_area_effective_duration_before_delay",
+                category: MobaRuntimeValidationCategory.Config,
+                businessNumericId: triggerId);
+        }
+
+        private static bool TryFindActionArg(
+            in ActionCallPlan action,
+            out ActionArgValue value,
+            params string[] aliases)
+        {
+            value = default;
+            if (action.Args == null || action.Args.Count == 0) return false;
+
+            foreach (var pair in action.Args)
+            {
+                for (var aliasIndex = 0; aliasIndex < aliases.Length; aliasIndex++)
+                {
+                    if (!string.Equals(
+                            pair.Key,
+                            aliases[aliasIndex],
+                            StringComparison.OrdinalIgnoreCase))
+                    {
+                        continue;
+                    }
+
+                    value = pair.Value;
+                    return true;
+                }
+            }
+
+            return false;
+        }
+
+        private static bool TryReadConstantInt(
+            in ActionArgValue value,
+            out int result)
+        {
+            result = 0;
+            if (value.Ref.Kind != ENumericValueRefKind.Const
+                || double.IsNaN(value.Ref.ConstValue)
+                || double.IsInfinity(value.Ref.ConstValue))
+            {
+                return false;
+            }
+
+            var rounded = Math.Round(value.Ref.ConstValue);
+            if (rounded < int.MinValue || rounded > int.MaxValue) return false;
+
+            result = (int)rounded;
+            return true;
+        }
+
         private static void ValidateGameplay(MobaConfigDatabase config, TriggerPlanJsonDatabase triggers, MobaRuntimeValidationReport report)
         {
             foreach (var gameplay in All<GameplayMO>(config))
@@ -530,8 +984,11 @@ namespace AbilityKit.Demo.Moba.Services
                 return;
             }
 
-            if (string.IsNullOrEmpty(wait.Condition)) report.Error(Source, path + ".condition", "waitUntil condition is empty.", businessId.ToString());
             if (wait.TimeoutMs < 0) report.Error(Source, path + ".timeoutMs", "waitUntil timeout is negative.", businessId.ToString());
+            if (!SkillWaitConditionCatalog.TryValidate(wait, out var error))
+            {
+                report.Error(Source, path + ".condition", error, businessId.ToString());
+            }
         }
 
         private static void ValidateTimelinePhase(TriggerPlanJsonDatabase triggers, MobaRuntimeValidationReport report, SkillTimelinePhaseDTO timeline, string path, int businessId)

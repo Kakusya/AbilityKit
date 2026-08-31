@@ -6,6 +6,7 @@ using AbilityKit.Ability.World.Abstractions;
 using AbilityKit.Ability.World.DI;
 using AbilityKit.Ability.World.Management;
 using AbilityKit.Ability.World.Services;
+using AbilityKit.Combat.Collision;
 using AbilityKit.Core.Mathematics;
 using AbilityKit.Demo.Moba.Worlds.Blueprints;
 
@@ -76,7 +77,7 @@ namespace AbilityKit.Game.Battle
         {
             if (builder == null) throw new ArgumentNullException(nameof(builder));
 
-            builder.Register<ICollisionService>(WorldLifetime.Singleton, _ => new CollisionService());
+            builder.Register<ICollisionService>(WorldLifetime.Singleton, _ => new CollisionService(new CollisionWorldOptions { BroadphaseType = BroadphaseType.Grid, GridCellSize = 4f }));
         }
 
         private static IWorldManager CreateWorldManager()

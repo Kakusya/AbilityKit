@@ -1,8 +1,7 @@
 using System.Buffers.Binary;
 using System.Collections.Concurrent;
-using AbilityKit.Orleans.Contracts.Rooms;
 using AbilityKit.Orleans.Gateway.Abstractions;
-using Orleans;
+using Microsoft.Extensions.Logging;
 
 namespace AbilityKit.Orleans.Gateway.Core;
 
@@ -13,21 +12,33 @@ public sealed class GatewayTransportHandler : IGatewayTransportEvents
 {
     private readonly IGatewaySessionRegistry _sessionRegistry;
     private readonly IGatewayRequestRouter _router;
-    private readonly IClusterClient _clusterClient;
-    private readonly ConcurrentDictionary<long, IGatewayTransportSession> _sessions = new();
+    private readonly GatewayRoomMembershipService _roomMembership;
+    private readonly GatewayFrameSyncSubscriptionManager _frameSyncSubscriptions;
+    private readonly GatewayStateSyncPushSubscriptionManager _stateSyncPushSubscriptions;
+    private readonly GatewayRoomStatePushSubscriptionManager? _roomStatePushSubscriptions;
+    private readonly ConcurrentDictionary<long, ConnectionState> _sessions = new();
 
     private readonly GatewayBackgroundTaskQueue _backgroundTasks;
+    private readonly ILogger<GatewayTransportHandler> _logger;
 
     public GatewayTransportHandler(
         IGatewaySessionRegistry sessionRegistry,
         IGatewayRequestRouter router,
-        IClusterClient clusterClient,
-        GatewayBackgroundTaskQueue backgroundTasks)
+        GatewayRoomMembershipService roomMembership,
+        GatewayBackgroundTaskQueue backgroundTasks,
+        GatewayFrameSyncSubscriptionManager frameSyncSubscriptions,
+        GatewayStateSyncPushSubscriptionManager stateSyncPushSubscriptions,
+        ILogger<GatewayTransportHandler> logger,
+        GatewayRoomStatePushSubscriptionManager? roomStatePushSubscriptions = null)
     {
         _sessionRegistry = sessionRegistry;
         _router = router;
-        _clusterClient = clusterClient;
+        _roomMembership = roomMembership;
         _backgroundTasks = backgroundTasks;
+        _frameSyncSubscriptions = frameSyncSubscriptions;
+        _stateSyncPushSubscriptions = stateSyncPushSubscriptions;
+        _roomStatePushSubscriptions = roomStatePushSubscriptions;
+        _logger = logger;
     }
 
     public void OnConnected(IGatewayTransportSession session)
@@ -37,15 +48,54 @@ public sealed class GatewayTransportHandler : IGatewayTransportEvents
 
     public void OnRequest(long connectionId, uint opCode, uint seq, byte[] payload)
     {
-        if (!_sessions.TryGetValue(connectionId, out var session))
+        if (!_sessions.TryGetValue(connectionId, out var connection))
             return;
 
-        _backgroundTasks.TryQueue(async cancellationToken =>
+        connection.Enqueue(cancellationToken =>
+            ProcessRequestAsync(
+                connection.Session,
+                opCode,
+                seq,
+                payload,
+                cancellationToken));
+    }
+
+    private async Task ProcessRequestAsync(
+        IGatewayTransportSession session,
+        uint opCode,
+        uint seq,
+        byte[] payload,
+        CancellationToken cancellationToken)
+    {
+        try
         {
-            var response = await _router.RouteAsync(session.Context, opCode, seq, payload, cancellationToken);
+            var response = await _router.RouteAsync(
+                session.Context,
+                opCode,
+                seq,
+                payload,
+                cancellationToken);
             var responsePayload = BuildResponsePayload(response);
-            await session.SendResponseAsync(opCode, response.Seq, responsePayload, cancellationToken);
-        });
+            await session.SendResponseAsync(
+                opCode,
+                response.Seq,
+                responsePayload,
+                cancellationToken);
+        }
+        catch (OperationCanceledException)
+            when (cancellationToken.IsCancellationRequested)
+        {
+        }
+        catch (Exception exception)
+        {
+            _logger.LogError(
+                exception,
+                "Gateway request processing failed. OpCode={OpCode}, Seq={Seq}, ConnectionId={ConnectionId}, PayloadLength={PayloadLength}",
+                opCode,
+                seq,
+                session.ConnectionId,
+                payload.Length);
+        }
     }
 
     private static byte[] BuildResponsePayload(GatewayResponse response)
@@ -59,15 +109,19 @@ public sealed class GatewayTransportHandler : IGatewayTransportEvents
 
     public void OnClosed(long connectionId)
     {
-        if (_sessions.TryRemove(connectionId, out var session))
+        if (_sessions.TryRemove(connectionId, out var connection))
         {
-            MarkRoomMemberOffline(session.Context);
+            connection.Cancel();
+            CleanupRoomMembership(connection.Session.Context, connectionId);
         }
 
         _sessionRegistry.Unregister(connectionId);
+        _frameSyncSubscriptions.OnConnectionClosed(connectionId);
+        _stateSyncPushSubscriptions.OnConnectionClosed(connectionId);
+        _roomStatePushSubscriptions?.OnConnectionClosed(connectionId);
     }
 
-    private void MarkRoomMemberOffline(GatewaySessionContext context)
+    private void CleanupRoomMembership(GatewaySessionContext context, long connectionId)
     {
         var accountId = context.AccountId;
         var roomId = context.RoomId;
@@ -76,16 +130,84 @@ public sealed class GatewayTransportHandler : IGatewayTransportEvents
             return;
         }
 
-        _backgroundTasks.TryQueue(async _ =>
+        if (_sessionRegistry.TryGetConnectionIdByAccount(accountId, out var currentConnectionId) &&
+            currentConnectionId != connectionId)
         {
-            var room = _clusterClient.GetGrain<IRoomGrain>(roomId);
-            await room.MarkOfflineAsync(accountId);
+            return;
+        }
+
+        _backgroundTasks.TryQueue(async cancellationToken =>
+        {
+            if (_sessionRegistry.TryGetConnectionIdByAccount(accountId, out var reboundConnectionId) &&
+                reboundConnectionId != connectionId)
+            {
+                return;
+            }
+
+            await _roomMembership.CleanupDisconnectedSessionAsync(
+                accountId,
+                roomId,
+                cancellationToken);
         });
     }
 
     internal void RegisterSession(IGatewayTransportSession session)
     {
-        _sessions[session.ConnectionId] = session;
+        var connection = new ConnectionState(session);
+        if (_sessions.TryGetValue(session.ConnectionId, out var previous))
+        {
+            previous.Cancel();
+        }
+
+        _sessions[session.ConnectionId] = connection;
         _sessionRegistry.Register(session.ConnectionId, session);
+    }
+
+    private sealed class ConnectionState
+    {
+        private readonly object _sync = new();
+        private readonly CancellationTokenSource _cancellation = new();
+        private Task _requestTail = Task.CompletedTask;
+
+        public ConnectionState(IGatewayTransportSession session)
+        {
+            Session = session;
+        }
+
+        public IGatewayTransportSession Session { get; }
+
+        public void Enqueue(Func<CancellationToken, Task> request)
+        {
+            lock (_sync)
+            {
+                if (_cancellation.IsCancellationRequested)
+                {
+                    return;
+                }
+
+                _requestTail = RunAfterAsync(
+                    _requestTail,
+                    request,
+                    _cancellation.Token);
+            }
+        }
+
+        public void Cancel()
+        {
+            lock (_sync)
+            {
+                _cancellation.Cancel();
+            }
+        }
+
+        private static async Task RunAfterAsync(
+            Task previous,
+            Func<CancellationToken, Task> request,
+            CancellationToken cancellationToken)
+        {
+            await previous.ConfigureAwait(false);
+            cancellationToken.ThrowIfCancellationRequested();
+            await request(cancellationToken).ConfigureAwait(false);
+        }
     }
 }

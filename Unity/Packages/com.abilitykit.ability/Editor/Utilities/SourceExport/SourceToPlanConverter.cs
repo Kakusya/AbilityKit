@@ -796,10 +796,15 @@ namespace AbilityKit.Ability.Editor.Utilities
                 case "shoot_projectile":
                     // Support both source-style entity args and Unity-authored runtime-style ids.
                     MapEntityArg(args, "launcher", "launcher_id", plan);
-                    MapEntityArg(args, "target", "target_id", plan);
+                    MapEntityArg(args, "target", "target_actor_id", plan);
                     MapIntArgAlias(args, plan, "launcher_id", "launcher_id", "launcherId", "launcher");
-                    MapIntArgAlias(args, plan, "target_id", "target_id", "targetId", "target");
+                    MapIntArgAlias(args, plan, "target_actor_id", "target_actor_id", "targetActorId", "target_id", "targetId", "target");
                     MapIntArgAlias(args, plan, "projectile_id", "projectile_id", "projectileId", "projectile");
+                    MapIntArgAlias(args, plan, "continuous_process_id", "continuous_process_id", "continuousProcessId", "continuous_id", "continuousId");
+                    MapIntArgAlias(args, plan, "target_query_id", "target_query_id", "targetQueryId", "query_template_id", "queryTemplateId");
+                    MapIntArgAlias(args, plan, "target_max_count", "target_max_count", "targetMaxCount", "max_count", "maxCount");
+                    MapIntArgAlias(args, plan, "target_source", "target_source", "targetSource");
+                    MapBoolArgAlias(args, plan, "track_target", "track_target", "trackTarget", "tracking", "homing");
                     MapFloatArgAlias(args, plan, "speed", "speed");
                     break;
 
@@ -820,7 +825,17 @@ namespace AbilityKit.Ability.Editor.Utilities
                     MapIntArgAlias(args, plan, "target_actor_id", "target_actor_id", "targetActorId", "target_id", "targetId", "target");
                     MapBoolArgAlias(args, plan, "target_self", "target_self", "targetSelf", "self");
                     MapIntListArgAliases(args, plan, new[] { "buff_id", "buffIds" }, "buffids", "buff_ids", "buffid", "buff_id", "id", "ids");
-                    MapFloatArg(args, "duration", plan);
+                    break;
+
+                case "remove_buff":
+                    MapEntityArg(args, "target", "target_actor_id", plan);
+                    MapIntArgAlias(args, plan, "target_actor_id", "target_actor_id", "targetActorId", "target_id", "targetId", "target");
+                    MapBoolArgAlias(args, plan, "target_self", "target_self", "targetSelf", "self");
+                    MapIntArgAlias(args, plan, "buff_id", "buff_id", "buffId", "buffid", "id");
+                    MapIntArgAlias(args, plan, "source_actor_id", "source_actor_id", "sourceActorId", "source_id", "sourceId");
+                    MapBoolArgAlias(args, plan, "remove_all", "remove_all", "removeAll", "all", "clear");
+                    MapBoolArgAlias(args, plan, "remove_slow", "remove_slow", "removeSlow");
+                    MapIntArgAlias(args, plan, "reason", "reason", "remove_reason", "removeReason");
                     break;
 
                 case "heal":

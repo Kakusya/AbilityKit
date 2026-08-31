@@ -68,7 +68,14 @@ public sealed partial class RequestFullStateSyncHandler : GatewayRequestHandlerB
                 req.LastAuthoritativeFrame,
                 req.Reason);
 
-            await battleGrain.RequestFullSnapshotAsync(observerGrain);
+            await battleGrain.RequestFullSnapshotAsync(
+                observerGrain,
+                new StateSyncObserverInfo
+                {
+                    ObserverKey = observerKey,
+                    AccountId = accountId,
+                    RoomId = req.RoomId
+                });
 
             var wire = new WireRequestFullStateSyncRes
             {

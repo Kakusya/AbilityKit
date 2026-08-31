@@ -3,6 +3,8 @@ namespace AbilityKit.Orleans.Contracts.Shooter;
 public static class ShooterServerProtocol
 {
     public const string RoomType = "shooter";
+    public const int DefaultEnemyBudget = 512;
+    public const int MaxEnemyBudget = 8192;
     public const string DefaultRegion = "dev";
     public const string DefaultServerId = "default";
     public const string DefaultSandboxId = DefaultServerId;
@@ -17,6 +19,7 @@ public static class ShooterServerProtocol
     public const string AuthoritativeInterpolationPresentationTemplate = "authoritative-interpolation-presentation";
     public const string BatchStateLowFrequencyTemplate = "batch-state-low-frequency";
     public const string MassBattleLodAoiTemplate = "mass-battle-lod-aoi";
+    public const string MassBattleLodAoiSampleBlockTemplate = "mass-battle-lod-aoi-sample-block";
     public const string HybridHeroPredictionTemplate = "hybrid-hero-prediction";
     public const string RuntimeSnapshotInterpolationTemplate = "runtime-snapshot-interpolation";
     public const string StateSyncAuthorityTemplate = "state-sync-authority";
@@ -30,6 +33,7 @@ public static class ShooterServerProtocol
             AuthoritativeInterpolationPresentationTemplate,
             BatchStateLowFrequencyTemplate,
             MassBattleLodAoiTemplate,
+            MassBattleLodAoiSampleBlockTemplate,
             HybridHeroPredictionTemplate,
             RuntimeSnapshotInterpolationTemplate,
             StateSyncAuthorityTemplate,
@@ -40,10 +44,14 @@ public static class ShooterServerProtocol
 
 public static class ShooterRoomTagKeys
 {
+    public const string MinPlayers = "minPlayers";
     public const string TickRate = "tickRate";
     public const string MapId = "mapId";
     public const string RandomSeed = "randomSeed";
     public const string DurationFrames = "durationFrames";
+    public const string EnemyBudget = "enemyBudget";
+    public const string VictoryTargetDefeats = "victoryTargetDefeats";
+    public const string ContinueAfterAllPlayersDefeated = "continueAfterAllPlayersDefeated";
     public const string SyncTemplateId = "syncTemplateId";
     public const string SyncModel = "syncModel";
     public const string NetworkEnvironmentId = "networkEnvironmentId";

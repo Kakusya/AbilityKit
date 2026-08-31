@@ -31,6 +31,12 @@ namespace AbilityKit.Ability.World.DI
             ThrowIfDisposed();
             if (serviceType == null) throw new ArgumentNullException(nameof(serviceType));
 
+            // 直接调用核心逻辑，循环检测由 WorldContainer.ResolveScoped 统一处理
+            return ResolveCore(serviceType);
+        }
+
+        private object ResolveCore(Type serviceType)
+        {
             if (serviceType == typeof(IWorldServiceContainer)) return _root;
             if (serviceType == typeof(IWorldResolver)) return this;
             if (serviceType == typeof(IWorldScope)) return this;
@@ -116,6 +122,21 @@ namespace AbilityKit.Ability.World.DI
             {
                 instance = null;
                 return false;
+            }
+            catch (InvalidOperationException ex)
+            {
+                // 循环依赖等业务异常不应该被吞掉，应该传播出去让调用者知道真正的问题。
+                // 只有"服务未注册"这种可恢复的异常才返回 false。
+                // 检查是否是"服务未注册"异常（消息格式：Service not registered: xxx）
+                if (ex.Message.StartsWith("Service not registered:"))
+                {
+                    Log.Warning($"[WorldScope] TryResolve failed (not registered). serviceType={serviceType}");
+                    instance = null;
+                    return false;
+                }
+
+                // 其他 InvalidOperationException（如循环依赖）重新抛出
+                throw;
             }
             catch (Exception ex)
             {

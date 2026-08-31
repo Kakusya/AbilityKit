@@ -450,7 +450,15 @@ internal sealed record AdminSkillAcceptanceRunResponse(
     [property: Id(5)] string TracePath,
     [property: Id(6)] AdminSkillAcceptanceBatchHttpResponse Batch,
     [property: Id(7)] string[] Warnings,
-    [property: Id(8)] long ServerNowTicks);
+    [property: Id(8)] long ServerNowTicks,
+    [property: Id(9)] string ScenarioId,
+    [property: Id(10)] string ExecutionStatus,
+    [property: Id(11)] int ExitCode,
+    [property: Id(12)] string LogPath,
+    [property: Id(13)] string ExecutionResultPath,
+    [property: Id(14)] string StartedAtUtc,
+    [property: Id(15)] string EndedAtUtc,
+    [property: Id(16)] int DurationMs);
 
 [GenerateSerializer]
 internal sealed record AdminSkillAcceptanceTemplateHttpResponse(

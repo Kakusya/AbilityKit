@@ -4,6 +4,7 @@ using AbilityKit.Ability.Host.WorldBlueprints;
 using AbilityKit.Ability.World.Abstractions;
 using AbilityKit.Ability.World.DI;
 using AbilityKit.Ability.World.Management;
+using AbilityKit.Game.Battle;
 using AbilityKit.Demo.Shooter;
 using AbilityKit.Demo.Shooter.Runtime;
 using AbilityKit.Protocol.Shooter;
@@ -106,6 +107,70 @@ public sealed class ShooterWorldModuleTests
         Assert.Equal(1, fireEvent.SourcePlayerId);
         Assert.Equal(0, fireEvent.TargetPlayerId);
         Assert.Equal(projectile.BulletId, fireEvent.BulletId);
+    }
+
+    [Fact]
+    public void RuntimeSpawnsPrimaryProjectileForEveryConsecutiveFireCommand()
+    {
+        var container = new WorldContainerBuilder()
+            .AddModule(new ShooterWorldModule())
+            .Build();
+        var runtime = container.Resolve<IShooterBattleRuntimePort>();
+        var entities = container.Resolve<IShooterEntityManager>();
+        var start = new ShooterStartGamePayload(
+            "primary-fire-rapid",
+            30,
+            1,
+            new[] { new ShooterStartPlayer(1, "P1", 0f, 0f) });
+
+        Assert.True(runtime.StartGame(in start));
+        const int fireCommandCount = 6;
+        for (var frame = 0; frame < fireCommandCount; frame++)
+        {
+            Assert.Equal(1, runtime.SubmitInput(
+                runtime.CurrentFrame,
+                new[] { new ShooterPlayerCommand(1, 0f, 0f, 1f, 0f, true) }));
+            Assert.True(runtime.Tick(0f));
+            var fireEvent = Assert.Single(runtime.GetSnapshot().Events);
+            Assert.Equal((int)ShooterEventType.Fire, fireEvent.EventType);
+        }
+
+        Assert.Equal(fireCommandCount, entities.ProjectileCount);
+    }
+
+    [Theory]
+    [InlineData(ShooterPlayerAttackSlots.Spread, 3)]
+    [InlineData(ShooterPlayerAttackSlots.Twin, 2)]
+    public void RuntimeSpawnsSpecialProjectilesForEveryConsecutiveFireCommand(
+        int attackSlot,
+        int projectilesPerCommand)
+    {
+        var container = new WorldContainerBuilder()
+            .AddModule(new ShooterWorldModule())
+            .Build();
+        var runtime = container.Resolve<IShooterBattleRuntimePort>();
+        var entities = container.Resolve<IShooterEntityManager>();
+        var start = new ShooterStartGamePayload(
+            "special-fire-rapid",
+            30,
+            1,
+            new[] { new ShooterStartPlayer(1, "P1", 0f, 0f) });
+
+        Assert.True(runtime.StartGame(in start));
+        const int fireCommandCount = 4;
+        for (var frame = 0; frame < fireCommandCount; frame++)
+        {
+            Assert.Equal(1, runtime.SubmitInput(
+                runtime.CurrentFrame,
+                new[] { new ShooterPlayerCommand(1, 0f, 0f, 1f, 0f, true, attackSlot) }));
+            Assert.True(runtime.Tick(0f));
+            var events = runtime.GetSnapshot().Events;
+            Assert.Equal(projectilesPerCommand, events.Length);
+            Assert.All(events, static evt => Assert.Equal((int)ShooterEventType.Fire, evt.EventType));
+        }
+
+        var expectedProjectileCount = fireCommandCount * projectilesPerCommand;
+        Assert.Equal(expectedProjectileCount, entities.ProjectileCount);
     }
 
     [Fact]
@@ -445,6 +510,7 @@ public sealed class ShooterWorldModuleTests
             .Build();
 
         var runtime = container.Resolve<IShooterBattleRuntimePort>();
+        var statusProvider = Assert.IsAssignableFrom<IBattleRuntimeStatusProvider>(runtime);
         var state = container.Resolve<ShooterBattleState>();
         var start = new ShooterStartGamePayload(
             "victory-result",
@@ -452,8 +518,22 @@ public sealed class ShooterWorldModuleTests
             1,
             new[] { new ShooterStartPlayer(1, "P1", 0f, 0f) });
 
+        var readyStatus = statusProvider.BattleStatus;
+        Assert.Equal(BattleRuntimeState.Ready, readyStatus.State);
+        Assert.True(readyStatus.Has(
+            BattleRuntimeCapability.GameStart |
+            BattleRuntimeCapability.Input |
+            BattleRuntimeCapability.Simulation |
+            BattleRuntimeCapability.SnapshotOutput |
+            BattleRuntimeCapability.SnapshotInput |
+            BattleRuntimeCapability.StateReadModel |
+            BattleRuntimeCapability.StateHash |
+            BattleRuntimeCapability.BotControl));
+
         Assert.True(runtime.StartGame(in start));
         Assert.Equal(ShooterBattleMatchState.Running, runtime.MatchState);
+        Assert.Equal(BattleRuntimeState.Running, statusProvider.BattleStatus.State);
+        Assert.True(statusProvider.BattleStatus.Meets(BattleReadinessRequirement.BattleLoop));
 
         state.VictoryTargetDefeats = 1;
         state.DefeatedEnemies = 1;
@@ -461,6 +541,8 @@ public sealed class ShooterWorldModuleTests
         Assert.False(runtime.Tick(1f / 30f));
         Assert.Equal(ShooterBattleMatchState.Victory, runtime.MatchState);
         Assert.False(runtime.IsStarted);
+        Assert.Equal(BattleRuntimeState.Completed, statusProvider.BattleStatus.State);
+        Assert.False(statusProvider.BattleStatus.Meets(BattleReadinessRequirement.BattleLoop));
 
         var result = runtime.MatchResult;
         Assert.True(result.IsFinal);
@@ -633,8 +715,25 @@ public sealed class ShooterWorldModuleTests
     [Fact]
     public void RuntimeSpawnsWaveEnemiesAndEnemiesAttackPlayers()
     {
+        var waves = new ShooterSveltoGameplayWaveConfig[8];
+        for (var i = 0; i < waves.Length; i++)
+        {
+            waves[i] = new ShooterSveltoGameplayWaveConfig(i + 1, 0, 1, 1, 3, 1f);
+        }
+
+        var flow = new ShooterSveltoGameplayBattleFlowConfig(
+            durationFrames: 120,
+            victoryTargetDefeats: 99,
+            maxActiveEnemies: waves.Length,
+            waves,
+            enemyLoadoutId: ShooterSveltoGameplayBattleFlowConfig.DefaultEnemyLoadoutId,
+            enemyAttackIntervalFrames: 1,
+            enemyAttackDamage: 1,
+            enemyProjectileSpeedScale: ShooterSveltoGameplayBattleFlowConfig.DefaultEnemyProjectileSpeedScale,
+            enemyProjectilesPerShot: ShooterSveltoGameplayBattleFlowConfig.DefaultEnemyProjectilesPerShot,
+            enemySpreadDegrees: ShooterSveltoGameplayBattleFlowConfig.DefaultEnemySpreadDegrees);
         var container = new WorldContainerBuilder()
-            .RegisterInstance(ShooterEnemyWaveOptions.EnabledOption)
+            .RegisterInstance(new ShooterEnemyWaveOptions(enabled: true, flow))
             .AddModule(new ShooterWorldModule())
             .Build();
 
@@ -644,23 +743,18 @@ public sealed class ShooterWorldModuleTests
         var start = new ShooterStartGamePayload(
             "wave-enemies",
             30,
-            4,
-            new[]
-            {
-                new ShooterStartPlayer(1, "P1", 0f, 0f),
-                new ShooterStartPlayer(2, "P2", 2f, 0f),
-                new ShooterStartPlayer(3, "P3", 4f, 0f),
-                new ShooterStartPlayer(4, "P4", 6f, 0f)
-            });
+            1,
+            new[] { new ShooterStartPlayer(1, "P1", 0f, 0f) });
 
         Assert.True(runtime.StartGame(in start));
-        for (int frame = 0; frame < 12; frame++)
-        {
-            Assert.True(runtime.Tick(1f / 30f));
-        }
+        Assert.True(runtime.Tick(0f));
 
-        Assert.True(svelto.EntitiesDB.Count<ShooterSveltoHealthComponent>(ShooterSveltoGroups.GameplayTargets) > 0);
+        Assert.Equal(waves.Length, svelto.EntitiesDB.Count<ShooterSveltoHealthComponent>(ShooterSveltoGroups.GameplayTargets));
         Assert.True(AnyPlayerDamaged(entities));
+        Assert.True(entities.TryGetPlayer(1, out var player));
+        Assert.Equal(
+            ShooterGameplay.DefaultPlayerHp - ShooterEnemyWaveOptions.DefaultMaxEnemyAttackersPerPlayer,
+            player.Hp);
 
         var snapshot = runtime.GetSnapshot();
         Assert.Contains(snapshot.Events, static evt => evt.EventType == (int)ShooterEventType.Hit && evt.SourcePlayerId < 0);
@@ -675,6 +769,42 @@ public sealed class ShooterWorldModuleTests
         Assert.True(enemyLifecycleChunk.Value.Count > 0);
         Assert.Equal(enemyLifecycleChunk.Value.Count, enemyTransformChunk.Value.Count);
         Assert.Equal(enemyLifecycleChunk.Value.Count, enemyHealthChunk.Value.Count);
+    }
+
+    [Fact]
+    public void RuntimeDoesNotApplyEnemyDamageOutsideAttackRange()
+    {
+        var flow = new ShooterSveltoGameplayBattleFlowConfig(
+            durationFrames: 120,
+            victoryTargetDefeats: 99,
+            maxActiveEnemies: 1,
+            new[] { new ShooterSveltoGameplayWaveConfig(1, 0, 1, 1, 3, 4f) },
+            enemyLoadoutId: ShooterSveltoGameplayBattleFlowConfig.DefaultEnemyLoadoutId,
+            enemyAttackIntervalFrames: 1,
+            enemyAttackDamage: 5,
+            enemyProjectileSpeedScale: ShooterSveltoGameplayBattleFlowConfig.DefaultEnemyProjectileSpeedScale,
+            enemyProjectilesPerShot: ShooterSveltoGameplayBattleFlowConfig.DefaultEnemyProjectilesPerShot,
+            enemySpreadDegrees: ShooterSveltoGameplayBattleFlowConfig.DefaultEnemySpreadDegrees);
+        var container = new WorldContainerBuilder()
+            .RegisterInstance(new ShooterEnemyWaveOptions(enabled: true, flow))
+            .AddModule(new ShooterWorldModule())
+            .Build();
+        var runtime = container.Resolve<IShooterBattleRuntimePort>();
+        var entities = container.Resolve<IShooterEntityManager>();
+        var start = new ShooterStartGamePayload(
+            "enemy-attack-range",
+            30,
+            1,
+            new[] { new ShooterStartPlayer(1, "P1", 0f, 0f) });
+
+        Assert.True(runtime.StartGame(in start));
+        Assert.True(runtime.Tick(0f));
+
+        Assert.Equal(1, entities.EnemyCount);
+        Assert.True(entities.TryGetPlayer(1, out var player));
+        Assert.Equal(ShooterGameplay.DefaultPlayerHp, player.Hp);
+        Assert.DoesNotContain(runtime.GetSnapshot().Events, static evt =>
+            evt.EventType == (int)ShooterEventType.Hit && evt.SourcePlayerId < 0);
     }
 
     [Fact]
@@ -793,6 +923,192 @@ public sealed class ShooterWorldModuleTests
         Assert.True(entities.TryGetEnemy(enemyId, out var after, out _));
         var afterDistanceSquared = after.X * after.X + after.Y * after.Y;
         Assert.True(afterDistanceSquared < beforeDistanceSquared);
+    }
+
+    [Fact]
+    public void RuntimeMovesEnemyTowardNearestOfTwoPlayers()
+    {
+        var flow = new ShooterSveltoGameplayBattleFlowConfig(
+            durationFrames: 120,
+            victoryTargetDefeats: 99,
+            maxActiveEnemies: 1,
+            new[] { new ShooterSveltoGameplayWaveConfig(1, 100, 1, 1, 3, 4f) },
+            enemyLoadoutId: ShooterSveltoGameplayBattleFlowConfig.DefaultEnemyLoadoutId,
+            enemyAttackIntervalFrames: 120,
+            enemyAttackDamage: 1,
+            enemyProjectileSpeedScale: ShooterSveltoGameplayBattleFlowConfig.DefaultEnemyProjectileSpeedScale,
+            enemyProjectilesPerShot: ShooterSveltoGameplayBattleFlowConfig.DefaultEnemyProjectilesPerShot,
+            enemySpreadDegrees: ShooterSveltoGameplayBattleFlowConfig.DefaultEnemySpreadDegrees);
+        var container = new WorldContainerBuilder()
+            .RegisterInstance(new ShooterEnemyWaveOptions(enabled: true, flow))
+            .RegisterInstance(new ShooterRvoOptions(ShooterRvoExecutionMode.Disabled))
+            .AddModule(new ShooterWorldModule())
+            .Build();
+        var runtime = container.Resolve<IShooterBattleRuntimePort>();
+        var entities = container.Resolve<IShooterEntityManager>();
+        var start = new ShooterStartGamePayload(
+            "two-player-nearest-target",
+            30,
+            1,
+            new[]
+            {
+                new ShooterStartPlayer(1, "P1", -10f, 0f),
+                new ShooterStartPlayer(2, "P2", 10f, 0f)
+            });
+
+        Assert.True(runtime.StartGame(in start));
+        Assert.True(runtime.Tick(0f));
+        var transform = new ShooterSveltoTransformComponent { X = 8f, Y = 0f, DirectionX = 1f };
+        var health = new ShooterSveltoHealthComponent { Current = 3, Max = 3, Alive = 1 };
+        entities.AddEnemy(9001, in transform, in health);
+
+        Assert.True(runtime.Tick(1f / 30f));
+        Assert.True(entities.TryGetEnemy(9001, out var moved, out _));
+        Assert.True(moved.X > transform.X);
+        Assert.True(MathF.Abs(10f - moved.X) < MathF.Abs(10f - transform.X));
+    }
+
+    [Theory]
+    [InlineData(ShooterRvoExecutionMode.Managed, true)]
+    [InlineData(ShooterRvoExecutionMode.Disabled, false)]
+    public void RuntimeRvoSeparatesExactlyOverlappingEnemiesAndSupportsDisabledFallback(
+        ShooterRvoExecutionMode mode,
+        bool expectSeparation)
+    {
+        var flow = new ShooterSveltoGameplayBattleFlowConfig(
+            durationFrames: 120,
+            victoryTargetDefeats: 99,
+            maxActiveEnemies: 2,
+            new[] { new ShooterSveltoGameplayWaveConfig(1, 100, 1, 1, 3, 4f) },
+            enemyLoadoutId: ShooterSveltoGameplayBattleFlowConfig.DefaultEnemyLoadoutId,
+            enemyAttackIntervalFrames: 120,
+            enemyAttackDamage: 1,
+            enemyProjectileSpeedScale: ShooterSveltoGameplayBattleFlowConfig.DefaultEnemyProjectileSpeedScale,
+            enemyProjectilesPerShot: ShooterSveltoGameplayBattleFlowConfig.DefaultEnemyProjectilesPerShot,
+            enemySpreadDegrees: ShooterSveltoGameplayBattleFlowConfig.DefaultEnemySpreadDegrees);
+        var container = new WorldContainerBuilder()
+            .RegisterInstance(new ShooterEnemyWaveOptions(enabled: true, flow))
+            .RegisterInstance(new ShooterRvoOptions(mode, maxAcceleration: 100f))
+            .AddModule(new ShooterWorldModule())
+            .Build();
+        var runtime = container.Resolve<IShooterBattleRuntimePort>();
+        var entities = container.Resolve<IShooterEntityManager>();
+        var start = new ShooterStartGamePayload(
+            "overlapping-enemy-rvo",
+            30,
+            1,
+            new[] { new ShooterStartPlayer(1, "P1", 0f, 0f) });
+
+        Assert.True(runtime.StartGame(in start));
+        Assert.True(runtime.Tick(0f));
+        var transform = new ShooterSveltoTransformComponent { X = 4f, Y = 0f, DirectionX = -1f };
+        var health = new ShooterSveltoHealthComponent { Current = 3, Max = 3, Alive = 1 };
+        entities.BeginStructuralChanges();
+        try
+        {
+            entities.AddEnemy(9001, in transform, in health);
+            entities.AddEnemy(9002, in transform, in health);
+        }
+        finally
+        {
+            entities.EndStructuralChanges();
+        }
+
+        Assert.True(runtime.Tick(1f / 30f));
+        Assert.True(entities.TryGetEnemy(9001, out var first, out _));
+        Assert.True(entities.TryGetEnemy(9002, out var second, out _));
+        Assert.True(float.IsFinite(first.X) && float.IsFinite(first.Y));
+        Assert.True(float.IsFinite(second.X) && float.IsFinite(second.Y));
+        Assert.Equal(expectSeparation, first.X != second.X || first.Y != second.Y);
+
+        if (!expectSeparation)
+        {
+            Assert.True(first.X < transform.X);
+            Assert.True(second.X < transform.X);
+            return;
+        }
+
+        for (var i = 0; i < 30; i++)
+        {
+            Assert.True(runtime.Tick(1f / 30f));
+        }
+
+        Assert.True(entities.TryGetEnemy(9001, out first, out _));
+        Assert.True(entities.TryGetEnemy(9002, out second, out _));
+        var centerX = (first.X + second.X) * 0.5f;
+        Assert.True(
+            centerX < transform.X,
+            $"Expected the separated pair center to advance toward the player, but reached center X {centerX} from {transform.X}.");
+    }
+
+    [Fact]
+    public void RuntimeRvoCrowdSimulationIsDeterministicAcrossIndependentWorlds()
+    {
+        var flow = new ShooterSveltoGameplayBattleFlowConfig(
+            durationFrames: 180,
+            victoryTargetDefeats: 99,
+            maxActiveEnemies: 4,
+            new[] { new ShooterSveltoGameplayWaveConfig(1, 200, 1, 1, 3, 4f) },
+            enemyLoadoutId: ShooterSveltoGameplayBattleFlowConfig.DefaultEnemyLoadoutId,
+            enemyAttackIntervalFrames: 180,
+            enemyAttackDamage: 1,
+            enemyProjectileSpeedScale: ShooterSveltoGameplayBattleFlowConfig.DefaultEnemyProjectileSpeedScale,
+            enemyProjectilesPerShot: ShooterSveltoGameplayBattleFlowConfig.DefaultEnemyProjectilesPerShot,
+            enemySpreadDegrees: ShooterSveltoGameplayBattleFlowConfig.DefaultEnemySpreadDegrees);
+        var firstContainer = new WorldContainerBuilder()
+            .RegisterInstance(new ShooterEnemyWaveOptions(enabled: true, flow))
+            .RegisterInstance(new ShooterRvoOptions(ShooterRvoExecutionMode.Managed))
+            .AddModule(new ShooterWorldModule())
+            .Build();
+        var secondContainer = new WorldContainerBuilder()
+            .RegisterInstance(new ShooterEnemyWaveOptions(enabled: true, flow))
+            .RegisterInstance(new ShooterRvoOptions(ShooterRvoExecutionMode.Managed))
+            .AddModule(new ShooterWorldModule())
+            .Build();
+        var firstRuntime = firstContainer.Resolve<IShooterBattleRuntimePort>();
+        var secondRuntime = secondContainer.Resolve<IShooterBattleRuntimePort>();
+        var firstEntities = firstContainer.Resolve<IShooterEntityManager>();
+        var secondEntities = secondContainer.Resolve<IShooterEntityManager>();
+        var start = new ShooterStartGamePayload(
+            "deterministic-rvo-crowd",
+            30,
+            12345,
+            new[] { new ShooterStartPlayer(1, "P1", 0f, 0f) });
+
+        Assert.True(firstRuntime.StartGame(in start));
+        Assert.True(secondRuntime.StartGame(in start));
+        Assert.True(firstRuntime.Tick(0f));
+        Assert.True(secondRuntime.Tick(0f));
+        var transform = new ShooterSveltoTransformComponent { X = 4f, Y = 0f, DirectionX = -1f };
+        var health = new ShooterSveltoHealthComponent { Current = 3, Max = 3, Alive = 1 };
+        for (var enemyId = 9001; enemyId <= 9004; enemyId++)
+        {
+            firstEntities.AddEnemy(enemyId, in transform, in health);
+            secondEntities.AddEnemy(enemyId, in transform, in health);
+        }
+
+        for (var frame = 0; frame < 60; frame++)
+        {
+            Assert.True(firstRuntime.Tick(1f / 30f));
+            Assert.True(secondRuntime.Tick(1f / 30f));
+        }
+
+        Assert.Equal(firstRuntime.ComputeStateHash(), secondRuntime.ComputeStateHash());
+        Assert.True(firstEntities.SveltoContext.EntitiesDB.TryQueryMappedEntities<ShooterSveltoNavigationComponent>(
+            ShooterSveltoGroups.GameplayTargets,
+            out var firstNavigation));
+        Assert.True(secondEntities.SveltoContext.EntitiesDB.TryQueryMappedEntities<ShooterSveltoNavigationComponent>(
+            ShooterSveltoGroups.GameplayTargets,
+            out var secondNavigation));
+        for (var enemyId = 9001; enemyId <= 9004; enemyId++)
+        {
+            Assert.True(firstEntities.TryGetEnemy(enemyId, out var firstTransform, out _));
+            Assert.True(secondEntities.TryGetEnemy(enemyId, out var secondTransform, out _));
+            Assert.Equal(firstTransform.X, secondTransform.X);
+            Assert.Equal(firstTransform.Y, secondTransform.Y);
+            Assert.Equal(firstNavigation.Entity((uint)enemyId).VelocityX, secondNavigation.Entity((uint)enemyId).VelocityX);
+            Assert.Equal(firstNavigation.Entity((uint)enemyId).VelocityY, secondNavigation.Entity((uint)enemyId).VelocityY);
+        }
     }
 
     [Fact]

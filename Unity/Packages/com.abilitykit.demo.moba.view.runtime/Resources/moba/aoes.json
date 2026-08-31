@@ -10,6 +10,7 @@
         "OffsetZ":  0,
         "Radius":  5.0,
         "DelayMs":  0,
+        "DurationMs":  1000,
         "CollisionLayerMask":  1,
         "MaxTargets":  10,
         "OnDelayTriggerIds":  [
@@ -129,7 +130,7 @@
         "Id":  40030201,
         "Name":  "赵云-破云之龙-四段枪刺区域",
         "ModelId":  90000102,
-        "VfxId":  0,
+        "VfxId":  90003002,
         "AttachMode":  1,
         "OffsetX":  0,
         "OffsetY":  0,
@@ -150,7 +151,7 @@
         "Id":  40030202,
         "Name":  "赵云-破云之龙-二档增强区域",
         "ModelId":  90000102,
-        "VfxId":  0,
+        "VfxId":  90003002,
         "AttachMode":  1,
         "OffsetX":  0,
         "OffsetY":  0,
@@ -168,7 +169,7 @@
         "Id":  40030203,
         "Name":  "赵云-破云之龙-三档增强区域",
         "ModelId":  90000102,
-        "VfxId":  0,
+        "VfxId":  90003002,
         "AttachMode":  1,
         "OffsetX":  0,
         "OffsetY":  0,
@@ -186,14 +187,14 @@
         "Id":  40030301,
         "Name":  "赵云-天翔之龙-跳跃落地区域",
         "ModelId":  90000101,
-        "VfxId":  0,
+        "VfxId":  90003003,
         "AttachMode":  0,
         "OffsetX":  0,
         "OffsetY":  0,
         "OffsetZ":  0,
         "Radius":  4.5,
         "DelayMs":  600,
-        "DurationMs":  500,
+        "DurationMs":  700,
         "CollisionLayerMask":  1,
         "MaxTargets":  10,
         "OnDelayTriggerIds":  [
@@ -207,7 +208,7 @@
         "Id":  40030302,
         "Name":  "赵云-天翔之龙-三档增强落地区域",
         "ModelId":  90000101,
-        "VfxId":  0,
+        "VfxId":  90003003,
         "AttachMode":  0,
         "OffsetX":  0,
         "OffsetY":  0,
@@ -218,35 +219,39 @@
         "CollisionLayerMask":  1,
         "MaxTargets":  10,
         "OnDelayTriggerIds":  [
-                                  10030313
-                              ],
+                                   10030311
+                               ],
         "OnEnterTriggerIds":  [
                                   10030321
                               ]
     },
     {
-        "Id":  40040201,
-        "Name":  "墨子-机关重炮-命中爆炸区域",
-        "ModelId":  90000101,
-        "VfxId":  0,
-        "AttachMode":  0,
-        "OffsetX":  0,
-        "OffsetY":  0,
-        "OffsetZ":  0,
-        "Radius":  3.5,
-        "DelayMs":  0,
-        "DurationMs":  300,
-        "CollisionLayerMask":  1,
-        "MaxTargets":  10,
-        "OnDelayTriggerIds":  [
-                                  10040212
-                              ]
+        "Id": 40040201,
+        "Name": "墨子-机关重炮-弹坑持续伤害区域",
+        "ModelId": 90000101,
+        "VfxId": 90004004,
+        "AttachMode": 0,
+        "OffsetX": 0,
+        "OffsetY": 0,
+        "OffsetZ": 0,
+        "Radius": 3.5,
+        "DelayMs": 0,
+        "DurationMs": 2000,
+        "CollisionLayerMask": 1,
+        "MaxTargets": 10,
+        "OnDelayTriggerIds": [
+            10040212
+        ],
+        "OnIntervalTriggerIds": [
+            10040212
+        ],
+        "IntervalMs": 500
     },
     {
         "Id":  40040301,
         "Name":  "墨子-墨守成规-机关屏障区域",
         "ModelId":  90000101,
-        "VfxId":  0,
+        "VfxId":  90004003,
         "AttachMode":  1,
         "OffsetX":  0,
         "OffsetY":  0,
@@ -254,13 +259,72 @@
         "Radius":  5,
         "DelayMs":  0,
         "DurationMs":  3500,
-        "CollisionLayerMask":  1,
+        "CollisionLayerMask":  3,
         "MaxTargets":  10,
         "OnDelayTriggerIds":  [
 
                               ],
         "OnEnterTriggerIds":  [
-                                  10040321
+                                  10040321,
+                                  10040322
+                              ]
+    },
+    {
+        "Id":  40050201,
+        "Name":  "妲己-偶像魅力-目标点魅惑区域",
+        "ModelId":  90000101,
+        "VfxId":  90005002,
+        "AttachMode":  0,
+        "OffsetX":  0,
+        "OffsetY":  0,
+        "OffsetZ":  0,
+        "Radius":  3.0,
+        "DelayMs":  150,
+        "DurationMs":  600,
+        "CollisionLayerMask":  1,
+        "MaxTargets":  1,
+        "OnDelayTriggerIds":  [
+                                  10050211
+                              ]
+    },
+    {
+        "Id":  40060101,
+        "Name":  "嬴政-王者惩戒-目标点剑阵区域",
+        "ModelId":  90000101,
+        "VfxId":  90006001,
+        "AttachMode":  0,
+        "OffsetX":  0,
+        "OffsetY":  0,
+        "OffsetZ":  0,
+        "Radius":  4.0,
+        "DelayMs":  250,
+        "DurationMs":  1400,
+        "CollisionLayerMask":  1,
+        "MaxTargets":  10,
+        "OnDelayTriggerIds":  [
+                                  10060111
+                              ],
+        "OnIntervalTriggerIds":  [
+                                     10060111
+                                 ],
+        "IntervalMs":  500
+    },
+    {
+        "Id":  40060201,
+        "Name":  "嬴政-王者守御-自身清场区域",
+        "ModelId":  90000101,
+        "VfxId":  90006002,
+        "AttachMode":  1,
+        "OffsetX":  0,
+        "OffsetY":  0,
+        "OffsetZ":  0,
+        "Radius":  4.0,
+        "DelayMs":  0,
+        "DurationMs":  300,
+        "CollisionLayerMask":  1,
+        "MaxTargets":  10,
+        "OnDelayTriggerIds":  [
+                                  10060211
                               ]
     }
 ]

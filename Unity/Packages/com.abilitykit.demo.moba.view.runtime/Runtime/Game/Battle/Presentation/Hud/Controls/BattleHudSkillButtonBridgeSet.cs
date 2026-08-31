@@ -1,4 +1,5 @@
 using System;
+using System.Collections.Generic;
 using AbilityKit.Game.Battle.View.Lib.Skill;
 using UnityEngine;
 
@@ -6,21 +7,17 @@ namespace AbilityKit.Game.Battle.View
 {
     internal sealed class BattleHudSkillButtonBridgeSet
     {
-        private readonly BattleHudSkillButtonEventBridge[] _bridges;
+        private readonly BattleHudSkillButtonBridgeSetFactory _factory;
+        private readonly List<BattleHudSkillButtonEventBridge> _bridges;
 
         public BattleHudSkillButtonBridgeSet(BattleHudSkillButtonBridgeSetFactory factory = null)
         {
-            factory ??= new BattleHudSkillButtonBridgeSetFactory();
-            _bridges = factory.CreateBridges();
+            _factory = factory ?? new BattleHudSkillButtonBridgeSetFactory();
+            _bridges = new List<BattleHudSkillButtonEventBridge>(_factory.CreateBridges());
 
-            for (int i = 0; i < _bridges.Length; i++)
+            for (int i = 0; i < _bridges.Count; i++)
             {
-                var bridge = _bridges[i];
-                bridge.Click += OnClick;
-                bridge.LongPress += OnLongPress;
-                bridge.AimStart += OnAimStart;
-                bridge.AimUpdate += OnAimUpdate;
-                bridge.AimEnd += OnAimEnd;
+                HookBridge(_bridges[i]);
             }
         }
 
@@ -29,20 +26,53 @@ namespace AbilityKit.Game.Battle.View
         public event Action<int, Vector2> AimStart;
         public event Action<int, Vector2> AimUpdate;
         public event Action<int, Vector2> AimEnd;
+        public event Action AimCancel;
+
+        public void Bind(IReadOnlyList<SkillButtonView> skills)
+        {
+            var count = skills != null ? skills.Count : 0;
+            EnsureBridgeCount(count);
+
+            for (int i = 0; i < _bridges.Count; i++)
+            {
+                var view = i < count ? skills[i] : null;
+                _bridges[i].Bind(view, i + 1);
+            }
+        }
 
         public void Bind(SkillButtonView skill1, SkillButtonView skill2, SkillButtonView skill3)
         {
-            _bridges[0].Bind(skill1, 1);
-            _bridges[1].Bind(skill2, 2);
-            _bridges[2].Bind(skill3, 3);
+            Bind(new[] { skill1, skill2, skill3 });
         }
 
         public void Unbind()
         {
-            for (int i = 0; i < _bridges.Length; i++)
+            for (int i = 0; i < _bridges.Count; i++)
             {
                 _bridges[i].Unbind();
             }
+        }
+
+        private void EnsureBridgeCount(int count)
+        {
+            while (_bridges.Count < count)
+            {
+                var bridge = _factory.CreateBridge();
+                HookBridge(bridge);
+                _bridges.Add(bridge);
+            }
+        }
+
+        private void HookBridge(BattleHudSkillButtonEventBridge bridge)
+        {
+            if (bridge == null) return;
+
+            bridge.Click += OnClick;
+            bridge.LongPress += OnLongPress;
+            bridge.AimStart += OnAimStart;
+            bridge.AimUpdate += OnAimUpdate;
+            bridge.AimEnd += OnAimEnd;
+            bridge.AimCancel += OnAimCancel;
         }
 
         private void OnClick(int slot)
@@ -69,17 +99,27 @@ namespace AbilityKit.Game.Battle.View
         {
             AimEnd?.Invoke(slot, aim);
         }
+
+        private void OnAimCancel()
+        {
+            AimCancel?.Invoke();
+        }
     }
 
     internal sealed class BattleHudSkillButtonBridgeSetFactory
     {
+        public BattleHudSkillButtonEventBridge CreateBridge()
+        {
+            return new BattleHudSkillButtonEventBridge();
+        }
+
         public BattleHudSkillButtonEventBridge[] CreateBridges()
         {
             return new[]
             {
-                new BattleHudSkillButtonEventBridge(),
-                new BattleHudSkillButtonEventBridge(),
-                new BattleHudSkillButtonEventBridge(),
+                CreateBridge(),
+                CreateBridge(),
+                CreateBridge(),
             };
         }
     }

@@ -1,1 +1,26 @@
-[]
+[
+  {
+    "Id": 10000001,
+    "Name": "控制位移-霸体免疫阻断模板",
+    "ActivationRequiredTags": [],
+    "ActivationBlockedTags": ["State.ControlImmune", "State.SuperArmor"],
+    "ApplicationTags": [],
+    "RemovalRequiredTags": [],
+    "RemovalBlockedTags": [],
+    "OngoingRequiredTags": [],
+    "OngoingBlockedTags": ["State.ControlImmune", "State.SuperArmor"],
+    "RemovalTags": []
+  },
+  {
+    "Id": 10010001,
+    "Name": "廉颇-释放期间霸体标签模板",
+    "ActivationRequiredTags": [],
+    "ActivationBlockedTags": [],
+    "ApplicationTags": ["State.SuperArmor"],
+    "RemovalRequiredTags": [],
+    "RemovalBlockedTags": [],
+    "OngoingRequiredTags": [],
+    "OngoingBlockedTags": [],
+    "RemovalTags": []
+  }
+]

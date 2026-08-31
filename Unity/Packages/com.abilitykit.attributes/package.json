@@ -1,6 +1,6 @@
 {
     "name":  "com.abilitykit.attributes",
-    "version":  "0.0.1",
+    "version":  "0.1.0",
     "displayName":  "AbilityKit Attributes",
     "unity":  "2022.3",
     "description":  "Attribute system for AbilityKit. Provides attribute registration, modification, formula evaluation and constraint management.",
@@ -8,6 +8,7 @@
                    "name":  "AbilityKit"
                },
     "dependencies":  {
-                         "com.abilitykit.core":  "0.0.1"
+                         "com.abilitykit.core":  "0.1.0",
+                         "com.abilitykit.modifiers":  "0.1.0"
                      }
 }

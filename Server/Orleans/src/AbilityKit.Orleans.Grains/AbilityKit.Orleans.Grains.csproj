@@ -10,6 +10,7 @@
     <ProjectReference Include="..\AbilityKit.Orleans.Contracts\AbilityKit.Orleans.Contracts.csproj" />
     <ProjectReference Include="..\..\..\..\src\AbilityKit.Demo.Moba.Core\AbilityKit.Demo.Moba.Core.csproj" />
     <ProjectReference Include="..\..\..\..\src\AbilityKit.Host.Extension\AbilityKit.Host.Extension.csproj" />
+    <ProjectReference Include="../../../../src/AbilityKit.Demo.Moba.Host/AbilityKit.Demo.Moba.Host.csproj" />
     <ProjectReference Include="..\..\..\..\src\AbilityKit.Coordinator\AbilityKit.Coordinator.csproj" />
     <ProjectReference Include="..\..\..\..\src\AbilityKit.Demo.Shooter.Runtime\AbilityKit.Demo.Shooter.Runtime.csproj" />
     <ProjectReference Include="..\..\..\..\src\AbilityKit.Demo.Shooter.Share\AbilityKit.Demo.Shooter.Share.csproj" />
@@ -17,7 +18,9 @@
     <ProjectReference Include="..\..\..\..\src\AbilityKit.Protocol.Room\AbilityKit.Protocol.Room.csproj" />
     <ProjectReference Include="..\..\..\..\src\AbilityKit.Protocol.Shooter\AbilityKit.Protocol.Shooter.csproj" />
     <ProjectReference Include="..\..\..\..\src\AbilityKit.Network.Runtime\AbilityKit.Network.Runtime.csproj" />
+    <ProjectReference Include="..\..\..\..\src\AbilityKit.Network.Battle\AbilityKit.Network.Battle.csproj" />
     <ProjectReference Include="..\..\..\..\src\AbilityKit.World.StateSync\AbilityKit.World.StateSync.csproj" />
+    <ProjectReference Include="..\..\..\..\src\AbilityKit.World.Entitas\AbilityKit.World.Entitas.csproj" />
   </ItemGroup>
 
   <ItemGroup>

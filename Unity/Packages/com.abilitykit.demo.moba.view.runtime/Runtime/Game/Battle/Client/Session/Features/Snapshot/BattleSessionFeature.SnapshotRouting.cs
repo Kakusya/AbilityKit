@@ -4,28 +4,22 @@ namespace AbilityKit.Game.Flow
     {
         private void EnsureSnapshotRoutingBuilt()
         {
-            _snapshotRouting.Build(
+            _runtime.SnapshotRouting.Build(
                 _plan,
-                _handles,
                 _ctx,
                 _session,
-                (INetAdapterContextHost)this,
+                _netAdapterContextHost,
                 OnSessionFrameReceived);
         }
 
         private void DisposeSnapshotRoutingIfAny()
         {
-            DisposeSnapshotRouting();
-        }
-
-        private void DisposeSnapshotRouting()
-        {
-            _snapshotRouting.Dispose(_handles, _ctx, _session, OnSessionFrameReceived);
+            _runtime.SnapshotRouting.Dispose();
         }
 
         private void OnSessionFrameReceived(AbilityKit.Ability.Host.FramePacket packet)
         {
-            _snapshotRouting.Feed(_handles, packet);
+            _runtime.SnapshotRouting.Feed(packet);
         }
     }
 }

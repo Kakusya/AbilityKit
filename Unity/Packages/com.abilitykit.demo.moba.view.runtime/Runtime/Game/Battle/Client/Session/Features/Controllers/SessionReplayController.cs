@@ -1,99 +1,48 @@
 using System;
 using System.IO;
 using AbilityKit.Ability.Host;
-using AbilityKit.Core.Logging;
 using AbilityKit.Core.Recording.FrameRecord;
 using AbilityKit.Game.Battle.Component;
 using AbilityKit.Game.Flow.Battle.Replay;
-using AbilityKit.World.ECS;
 
 namespace AbilityKit.Game.Flow
 {
-    internal interface ISessionReplayHost
-    {
-        void StartSession();
-        void StopSession();
-        void ApplyAutoPlanActions();
-
-        float GetFixedDeltaSeconds();
-    }
-
-    internal interface IBattleReplayDriverProvider
-    {
-        bool TryCreate(in BattleStartPlan plan, out FrameReplayDriver driver);
-    }
-
-    internal sealed partial class SessionReplayController
+    internal sealed class SessionReplayController
     {
         private const int StateHashRecordIntervalFrames = 10;
-        private const int ReplaySeekChunkFrames = 300;
-        private const int RollbackSeekProbeFrames = 120;
 
-        public void PreTick(BattleStartPlan plan, BattleSessionState state, BattleSessionHandles handles, BattleContext ctx, ISessionReplayHost host)
+        public void SetupReplayOrRecord(
+            BattleStartPlan plan,
+            BattleContext ctx,
+            BattleReplayRuntime replayResources)
         {
-            if (state == null || handles == null || ctx == null || host == null) return;
-
-#if UNITY_EDITOR || DEVELOPMENT_BUILD
-            HandleReplayDebugInput(plan, state, handles, ctx, host);
-#endif
-        }
-
-        public void SetupReplayOrRecord(IBattleReplayDriverProvider provider, BattleStartPlan plan, BattleSessionHandles handles, BattleContext ctx)
-        {
-            if (handles == null) return;
+            if (plan.RunModeOptions.RunMode != BattleRunMode.Record) return;
+            if (replayResources == null) throw new ArgumentNullException(nameof(replayResources));
 
             BattleRecordCodecBootstrap.TryInstallMemoryPack();
-
-            var runMode = plan.RunModeOptions.RunMode;
-            if (runMode == BattleStartConfig.BattleRunMode.Replay)
-            {
-                SetupReplayDriver(provider, plan, handles);
-            }
-
-            if (runMode == BattleStartConfig.BattleRunMode.Record)
-            {
-                SetupRecordWriter(plan, ctx);
-            }
+            SetupRecordWriter(plan, ctx, replayResources);
         }
 
-        public void OnFrameReceived(BattleStartPlan plan, BattleSessionState state, BattleSessionHandles handles, BattleContext ctx, FramePacket packet)
+        public void OnFrameReceived(BattleStartPlan plan, BattleSessionState state, BattleContext ctx, FramePacket packet)
         {
-            if (state == null || handles == null || ctx == null) return;
+            if (state == null || ctx == null) return;
 
-            ValidateReplayStateHash(handles, ctx);
             RecordFrameIfNeeded(plan, state, ctx, packet);
         }
 
-        private static void SetupReplayDriver(IBattleReplayDriverProvider provider, BattleStartPlan plan, BattleSessionHandles handles)
-        {
-            provider ??= new DefaultBattleReplayDriverProvider();
-            if (provider.TryCreate(in plan, out var injected) && injected != null)
-            {
-                handles.Replay.Driver = injected;
-                return;
-            }
-
-            var runMode = plan.RunModeOptions;
-            if (string.IsNullOrEmpty(runMode.InputReplayPath))
-            {
-                Log.Error("[BattleReplay] Replay startup failed: InputReplayPath is empty. Select a replay file in RunMode settings.");
-                return;
-            }
-
-            Log.Error($"[BattleReplay] Replay startup failed: unable to create replay driver, path={runMode.InputReplayPath}");
-        }
-
-        private static void SetupRecordWriter(BattleStartPlan plan, BattleContext ctx)
+        private static void SetupRecordWriter(
+            BattleStartPlan plan,
+            BattleContext ctx,
+            BattleReplayRuntime replayResources)
         {
             if (ctx == null) return;
-
-            ctx.InputRecordWriter?.Dispose();
 
             var outPath = plan.RunModeOptions.InputRecordOutputPath;
             EnsureOutputDirectory(outPath);
 
             var meta = CreateRecordMeta(plan);
-            ctx.InputRecordWriter = FrameRecordCodecs.Current.CreateWriter(outPath, meta);
+            var writer = FrameRecordCodecs.Current.CreateWriter(outPath, meta);
+            replayResources.BindRecordWriter(ctx, writer);
         }
 
         private static void EnsureOutputDirectory(string outPath)
@@ -120,21 +69,6 @@ namespace AbilityKit.Game.Flow
         {
             var tickRate = plan.World.TickRate;
             return tickRate > 0 ? tickRate : 30;
-        }
-
-        private static void ValidateReplayStateHash(BattleSessionHandles handles, BattleContext ctx)
-        {
-            var replay = handles.Replay.Driver;
-            if (replay == null) return;
-
-            if (ctx.EntityNode.IsValid && ctx.EntityNode.TryGetRef(out BattleStateHashSnapshotComponent hs) && hs != null)
-            {
-                if (!replay.TryValidateStateHashOnce(hs.Frame, hs.Version, hs.Hash, out var expected))
-                {
-                    Log.Error($"[BattleReplay] State hash mismatch at frame={hs.Frame}, expected(version={expected.Version}, hash={expected.Hash}), actual(version={hs.Version}, hash={hs.Hash})");
-                    replay.Pause();
-                }
-            }
         }
 
         private static void RecordFrameIfNeeded(BattleStartPlan plan, BattleSessionState state, BattleContext ctx, FramePacket packet)

@@ -2,8 +2,9 @@
   <PropertyGroup>
     <TargetFramework>net10.0</TargetFramework>
     <ImplicitUsings>enable</ImplicitUsings>
+    <AbilityKitStable>true</AbilityKitStable>
     <Nullable>enable</Nullable>
-    <RootNamespace>AbilityKit.Behavior</RootNamespace>
+    <RootNamespace>AbilityKit.Ability.Behavior</RootNamespace>
     <AssemblyName>AbilityKit.Behavior</AssemblyName>
     <GenerateDocumentationFile>true</GenerateDocumentationFile>
   </PropertyGroup>
@@ -16,6 +17,8 @@
   <!-- Reference Core and Pipeline -->
   <ItemGroup>
     <ProjectReference Include="..\AbilityKit.Core\AbilityKit.Core.csproj" />
+    <ProjectReference Include="..\AbilityKit.Deterministic\AbilityKit.Deterministic.csproj" />
+    <ProjectReference Include="..\AbilityKit.Continuous\AbilityKit.Continuous.csproj" />
     <ProjectReference Include="..\AbilityKit.Pipeline\AbilityKit.Pipeline.csproj" />
   </ItemGroup>
 </Project>

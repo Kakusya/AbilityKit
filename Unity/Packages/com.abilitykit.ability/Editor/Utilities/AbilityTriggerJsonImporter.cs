@@ -14,15 +14,16 @@ namespace AbilityKit.Ability.Editor.Utilities
     {
         private const string ResourcesDir = "ability";
         private const string FileWithoutExt = "ability_triggers";
+        private const string PackageAbilityResourcesPath = "Packages/com.abilitykit.demo.moba.view.runtime/Resources/ability";
         private const string DefaultAbilityConfigFolder = "Assets/Configs/Ability";
 
         private const string GeneratedModuleDir = "Assets/Configs/Ability/Generated";
         private const string GeneratedModuleName = "ability_triggers.generated";
 
-        [MenuItem("AbilityKit/Ability/Import Trigger Json -> Generated Module")]
+        [MenuItem("Tools/AbilityKit/Framework/Ability/导入/Trigger Json -> Generated Module")]
         public static void ImportFromDefaultJson()
         {
-            var jsonPath = Path.Combine(Application.dataPath, "Resources", ResourcesDir, FileWithoutExt + ".json");
+            var jsonPath = Path.Combine(GetAbilityResourcesDirectory(), FileWithoutExt + ".json");
             ImportFromFile(jsonPath);
         }
 
@@ -147,7 +148,7 @@ namespace AbilityKit.Ability.Editor.Utilities
         {
             if (dto == null || string.IsNullOrEmpty(dto.Type)) return null;
 
-            // Prefer strong editor configs so parameters become real fields (not just Json Args).
+            // 优先使用强类型编辑器配置，使参数成为真正的字段（而不只是 JSON 参数）。
             if (string.Equals(dto.Type, TriggerActionTypes.Seq, StringComparison.Ordinal))
             {
                 var seq = new SequenceActionEditorConfig();
@@ -265,6 +266,11 @@ namespace AbilityKit.Ability.Editor.Utilities
             {
                 return false;
             }
+        }
+
+        private static string GetAbilityResourcesDirectory()
+        {
+            return Path.GetFullPath(Path.Combine(Application.dataPath, "..", PackageAbilityResourcesPath));
         }
 
         private static string ToAbsoluteAssetPath(string assetPath)

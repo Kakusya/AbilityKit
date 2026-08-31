@@ -13,26 +13,30 @@ namespace AbilityKit.Trace
         public readonly long RootId;
         public readonly long ParentId;
         public readonly int Kind;
+        public readonly int CreatedFrame;
         public readonly int EndedFrame;
         public readonly int EndReason;
+        public readonly bool IsEnded;
 
         public TraceContextRecord(
             long contextId,
             long rootId,
             long parentId,
             int kind,
+            int createdFrame,
             int endedFrame,
-            int endReason)
+            int endReason,
+            bool isEnded)
         {
             ContextId = contextId;
             RootId = rootId;
             ParentId = parentId;
             Kind = kind;
+            CreatedFrame = createdFrame;
             EndedFrame = endedFrame;
             EndReason = endReason;
+            IsEnded = isEnded;
         }
-
-        public bool IsEnded => EndedFrame != 0;
     }
 
     /// <summary>
@@ -72,6 +76,7 @@ namespace AbilityKit.Trace
         internal readonly ITraceLeafDataStore _leafDataStore;
         internal readonly ITraceContextSource _contextSource;
         internal long _nextId;
+        private long _revision;
 
         private static readonly List<long> EmptyChildrenList = new List<long>();
 
@@ -124,6 +129,11 @@ namespace AbilityKit.Trace
         /// 获取总节点数量
         /// </summary>
         public int TotalNodeCount => _contexts.Count;
+
+        /// <summary>
+        /// 获取查询可见 Trace 数据的单调版本。
+        /// </summary>
+        public long Revision => _revision;
 
         /// <summary>
         /// 获取根节点 ID 列表
@@ -269,15 +279,17 @@ namespace AbilityKit.Trace
             if (!_contexts.TryGetValue(contextId, out var record) || record.IsEnded)
                 return false;
 
+            var frame = GetCurrentFrame();
             _contexts[contextId] = new TraceContextRecord(
                 contextId: record.ContextId,
                 rootId: record.RootId,
                 parentId: record.ParentId,
                 kind: record.Kind,
-                endedFrame: GetCurrentFrame(),
-                endReason: reason);
+                createdFrame: record.CreatedFrame,
+                endedFrame: frame,
+                endReason: reason,
+                isEnded: true);
 
-            var frame = GetCurrentFrame();
             if (_roots.TryGetValue(record.RootId, out var rootRec))
                 _roots[record.RootId] = rootRec.WithActiveCount(rootRec.ActiveCount - 1)
                     .WithLastTouchedFrame(frame);
@@ -311,6 +323,7 @@ namespace AbilityKit.Trace
 
         protected void Publish(in TraceRegistryEvent registryEvent)
         {
+            _revision++;
             RegistryEvent?.Invoke(registryEvent);
         }
 
@@ -327,10 +340,12 @@ namespace AbilityKit.Trace
                 rootId: record.RootId,
                 parentId: record.ParentId,
                 kind: record.Kind,
+                createdFrame: record.CreatedFrame,
                 endedFrame: record.EndedFrame,
                 endReason: record.EndReason,
                 childCount: childCount,
-                metadata: GetMetadataObject(record.ContextId));
+                metadata: GetMetadataObject(record.ContextId),
+                isEnded: record.IsEnded);
         }
     }
 
@@ -378,23 +393,26 @@ namespace AbilityKit.Trace
             var (originId, originDisplay) = ExtractOrigin(originSource);
             var (targetId, targetDisplay) = ExtractOrigin(originTarget);
 
+            var createdFrame = Frame;
             var record = new TraceContextRecord(
                 contextId: contextId,
                 rootId: contextId,
                 parentId: 0,
                 kind: kind,
+                createdFrame: createdFrame,
                 endedFrame: 0,
-                endReason: 0);
+                endReason: 0,
+                isEnded: false);
 
             _contexts[contextId] = record;
-            _roots[contextId] = new TraceRootRecord(1, 0, Frame);
+            _roots[contextId] = new TraceRootRecord(1, 0, createdFrame);
             _childrenByParent[contextId] = new List<long>();
 
             var metadata = CreateMetadata(
                 contextId, kind, sourceActorId, targetActorId,
                 originId, originDisplay, targetId, targetDisplay, configId);
             _metadataStore.SetMetadata(contextId, metadata);
-            Publish(new TraceRegistryEvent(TraceRegistryEventKind.RootCreated, contextId, contextId, 0, kind, Frame));
+            Publish(new TraceRegistryEvent(TraceRegistryEventKind.RootCreated, contextId, contextId, 0, kind, createdFrame));
 
             return contextId;
         }
@@ -449,13 +467,16 @@ namespace AbilityKit.Trace
             if (targetActorId == 0 && _metadataStore.TryGetMetadata(rootId, out var m4))
                 targetActorId = GetTargetActorId(m4);
 
+            var createdFrame = Frame;
             var record = new TraceContextRecord(
                 contextId: contextId,
                 rootId: rootId,
                 parentId: parentContextId,
                 kind: kind,
+                createdFrame: createdFrame,
                 endedFrame: 0,
-                endReason: 0);
+                endReason: 0,
+                isEnded: false);
 
             _contexts[contextId] = record;
             _childrenByParent[contextId] = new List<long>();
@@ -482,10 +503,10 @@ namespace AbilityKit.Trace
             if (_roots.TryGetValue(rootId, out var rootRec))
             {
                 _roots[rootId] = rootRec.WithActiveCount(rootRec.ActiveCount + 1)
-                    .WithLastTouchedFrame(Frame);
+                    .WithLastTouchedFrame(createdFrame);
             }
  
-            Publish(new TraceRegistryEvent(TraceRegistryEventKind.ChildCreated, contextId, rootId, parentContextId, kind, Frame));
+            Publish(new TraceRegistryEvent(TraceRegistryEventKind.ChildCreated, contextId, rootId, parentContextId, kind, createdFrame));
             return contextId;
         }
 
@@ -744,10 +765,12 @@ namespace AbilityKit.Trace
                 rootId: record.RootId,
                 parentId: record.ParentId,
                 kind: record.Kind,
+                createdFrame: record.CreatedFrame,
                 endedFrame: record.EndedFrame,
                 endReason: record.EndReason,
                 childCount: childCount,
-                metadata: metadata);
+                metadata: metadata,
+                isEnded: record.IsEnded);
         }
 
         private (long id, string display) ExtractOrigin(object origin)

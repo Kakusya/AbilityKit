@@ -24,6 +24,9 @@ namespace AbilityKit.Demo.Moba.Services.Triggering.PlanActions
         public const int DebugLog = 0;
         public const int SetGameplayVar = 0;
         public const int AddGameplayVar = 0;
+        public const int SetNumericBlackboard = 0;
+        public const int AddNumericBlackboard = 0;
+        public const int SetBlackboardVariable = 0;
         public const int AdvanceGameplayCounter = 0;
         public const int EndGame = 0;
 
@@ -52,8 +55,10 @@ namespace AbilityKit.Demo.Moba.Services.Triggering.PlanActions
         public const int SpawnArea = 24;
         public const int SpawnSummon = 30;
         public const int RemoveSummon = 31;
+        public const int RemoveProjectile = 31;
         public const int RemoveArea = 32;
 
         public const int PlayPresentation = 40;
+        public const int Emit = 40;
     }
 }

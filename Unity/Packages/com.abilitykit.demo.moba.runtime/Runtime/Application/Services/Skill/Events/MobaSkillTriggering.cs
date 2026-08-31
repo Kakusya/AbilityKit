@@ -1,5 +1,6 @@
 using AbilityKit.Core.Logging;
 using AbilityKit.Core.Eventing;
+using AbilityKit.Demo.Moba.Diagnostics;
 
 namespace AbilityKit.Demo.Moba.Services
 {
@@ -38,8 +39,16 @@ namespace AbilityKit.Demo.Moba.Services
 
             ResolveLogger(ctx).LogTriggerEvent(ctx.CasterActorId, ctx.SkillId, ctx.SourceContextId, eventId);
 
+            var oldFailReason = ctx.FailReason;
             try
             {
+                if (!string.IsNullOrEmpty(failReason))
+                {
+                    ctx.FailReason = failReason;
+                }
+
+                TryCollect(eventId, ctx);
+
                 var services = ctx.WorldServices;
                 if (services == null)
                 {
@@ -53,12 +62,6 @@ namespace AbilityKit.Demo.Moba.Services
                     return;
                 }
 
-                var oldFailReason = ctx.FailReason;
-                if (!string.IsNullOrEmpty(failReason))
-                {
-                    ctx.FailReason = failReason;
-                }
-
                 var eid = TriggeringIdUtil.GetEventEid(eventId);
                 var typedKey = new EventKey<SkillCastContext>(eid);
                 var objectKey = new EventKey<object>(eid);
@@ -69,12 +72,105 @@ namespace AbilityKit.Demo.Moba.Services
                     object boxed = ctx;
                     planBus.Publish(objectKey, in boxed);
                 }
-
-                ctx.FailReason = oldFailReason;
             }
             catch (System.Exception ex)
             {
                 Log.Exception(ex, $"[MobaSkillTriggering] Forward to plan eventBus failed. eventId={eventId}");
+            }
+            finally
+            {
+                ctx.FailReason = oldFailReason;
+            }
+        }
+
+        public static bool TryCreateDiagnosticDraft(
+            string eventId,
+            SkillCastContext ctx,
+            out MobaBattleDiagnosticEventDraft draft)
+        {
+            draft = default;
+            if (ctx == null || !TryMapLifecycle(eventId, out var kind, out var outcome))
+            {
+                return false;
+            }
+
+            var handle = ctx.RuntimeHandle;
+            var runtime = handle.IsValid
+                ? new BattleDiagnosticRuntimeHandle(handle.RuntimeId, handle.Generation)
+                : default;
+            var rootContextId = handle.RootTraceContextId != 0L
+                ? handle.RootTraceContextId
+                : ctx.SourceContextId;
+            var summary = string.IsNullOrEmpty(ctx.FailReason)
+                ? eventId
+                : eventId + ": " + ctx.FailReason;
+
+            draft = new MobaBattleDiagnosticEventDraft(
+                kind,
+                BattleDiagnosticEventChannel.Skill,
+                outcome,
+                ctx.CasterActorId,
+                ctx.TargetActorId,
+                ctx.SkillId,
+                rootContextId,
+                ctx.SourceContextId,
+                runtime,
+                summary: summary);
+            return true;
+        }
+
+        private static void TryCollect(string eventId, SkillCastContext ctx)
+        {
+            try
+            {
+                var services = ctx.WorldServices;
+                if (services == null ||
+                    !services.TryResolve<IMobaBattleDiagnosticEventSink>(out var collector) ||
+                    collector == null ||
+                    !collector.IsEnabled(BattleDiagnosticEventChannel.Skill) ||
+                    !TryCreateDiagnosticDraft(eventId, ctx, out var draft))
+                {
+                    return;
+                }
+
+                collector.TryCollect(in draft);
+            }
+            catch
+            {
+            }
+        }
+
+        private static bool TryMapLifecycle(
+            string eventId,
+            out BattleDiagnosticEventKind kind,
+            out BattleDiagnosticEventOutcome outcome)
+        {
+            switch (eventId)
+            {
+                case Events.PreCastStart:
+                case Events.CastStart:
+                    kind = BattleDiagnosticEventKind.SkillRuntimeStarted;
+                    outcome = BattleDiagnosticEventOutcome.None;
+                    return true;
+                case Events.PreCastComplete:
+                case Events.CastComplete:
+                    kind = BattleDiagnosticEventKind.SkillRuntimeEnded;
+                    outcome = BattleDiagnosticEventOutcome.Succeeded;
+                    return true;
+                case Events.PreCastFail:
+                case Events.CastFail:
+                    kind = BattleDiagnosticEventKind.SkillRuntimeEnded;
+                    outcome = BattleDiagnosticEventOutcome.Failed;
+                    return true;
+                case Events.PreCastInterrupt:
+                case Events.CastInterrupt:
+                    kind = BattleDiagnosticEventKind.SkillRuntimeEnded;
+                    outcome = BattleDiagnosticEventOutcome.Interrupted;
+                    return true;
+                default:
+                    kind = BattleDiagnosticEventKind.Unknown;
+                    outcome = BattleDiagnosticEventOutcome.None;
+                    return false;
             }
         }
 

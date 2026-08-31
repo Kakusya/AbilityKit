@@ -1,9 +1,9 @@
 param(
     [Parameter(Mandatory = $false)]
-    [string]$SourceRoot = "src\AbilityKit.Demo.Moba.Console\Configs",
+    [string]$AuthoritativeResourcesRoot = "Unity\Packages\com.abilitykit.demo.moba.view.runtime\Resources",
 
     [Parameter(Mandatory = $false)]
-    [string]$UnityResourcesRoot = "Unity\Assets\Resources",
+    [string]$ConsoleReplicaRoot = "src\AbilityKit.Demo.Moba.Console\Configs",
 
     [Parameter(Mandatory = $false)]
     [string[]]$ConfigDirs = @("moba", "ability"),
@@ -15,14 +15,49 @@ param(
     [switch]$DryRun,
 
     [Parameter(Mandatory = $false)]
+    [switch]$Apply,
+
+    [Parameter(Mandatory = $false)]
     [switch]$DeleteExtra
 )
 
 $ErrorActionPreference = "Stop"
 
+$selectedModes = @($Check, $DryRun, $Apply) | Where-Object { $_ }
+if ($selectedModes.Count -gt 1) {
+    throw "Check, DryRun, and Apply are mutually exclusive."
+}
+
+# A no-argument invocation is an audit. Publishing package-owned authoritative
+# JSON into filesystem replicas always requires explicit consent.
+$isCheckMode = $Check -or (!$DryRun -and !$Apply)
+
 $repoRoot = Split-Path -Parent $PSScriptRoot
-$absSourceRoot = [System.IO.Path]::GetFullPath((Join-Path $repoRoot $SourceRoot))
-$absUnityResourcesRoot = [System.IO.Path]::GetFullPath((Join-Path $repoRoot $UnityResourcesRoot))
+$packageResourcesRoot = [System.IO.Path]::GetFullPath((Join-Path $repoRoot "Unity\Packages\com.abilitykit.demo.moba.view.runtime\Resources"))
+$absSourceRoot = [System.IO.Path]::GetFullPath((Join-Path $repoRoot $AuthoritativeResourcesRoot))
+$absTargetRoot = [System.IO.Path]::GetFullPath((Join-Path $repoRoot $ConsoleReplicaRoot))
+$unityRoot = [System.IO.Path]::GetFullPath((Join-Path $repoRoot "Unity"))
+$unityPrefix = $unityRoot.TrimEnd([System.IO.Path]::DirectorySeparatorChar, [System.IO.Path]::AltDirectorySeparatorChar) + [System.IO.Path]::DirectorySeparatorChar
+
+if (!$absSourceRoot.Equals($packageResourcesRoot, [System.StringComparison]::OrdinalIgnoreCase)) {
+    throw "AuthoritativeResourcesRoot must be Unity\Packages\com.abilitykit.demo.moba.view.runtime\Resources. Production MOBA JSON has one authoritative source."
+}
+
+if ($absTargetRoot.Equals($unityRoot, [System.StringComparison]::OrdinalIgnoreCase) -or
+    $absTargetRoot.StartsWith($unityPrefix, [System.StringComparison]::OrdinalIgnoreCase)) {
+    throw "ConsoleReplicaRoot must not target Unity. Package-owned resources are authoritative and cannot be a publication target."
+}
+
+if ($ConfigDirs.Count -eq 0) {
+    throw "ConfigDirs must include at least one owned publication directory."
+}
+
+$allowedConfigDirs = @("moba", "ability")
+foreach ($dir in $ConfigDirs) {
+    if ([string]::IsNullOrWhiteSpace($dir) -or $allowedConfigDirs -notcontains $dir) {
+        throw "ConfigDirs may only contain the owned publication directories: moba, ability."
+    }
+}
 
 function Write-Info {
     param([string]$Message)
@@ -72,7 +107,7 @@ function Ensure-Directory {
     param([string]$Path)
 
     if (!(Test-Path $Path)) {
-        if ($DryRun -or $Check) {
+        if ($DryRun -or $isCheckMode) {
             Write-Info "Would create directory: $Path"
         }
         else {
@@ -82,14 +117,14 @@ function Ensure-Directory {
 }
 
 if (!(Test-Path $absSourceRoot)) {
-    Write-Error "Source config root not found: $absSourceRoot"
+    Write-Error "Authoritative resource root not found: $absSourceRoot"
     exit 1
 }
 
-Write-Info "SourceRoot: $absSourceRoot"
-Write-Info "UnityResourcesRoot: $absUnityResourcesRoot"
-Write-Info "ConfigDirs: $($ConfigDirs -join ', ')"
-Write-Info "Mode: $(if ($Check) { 'Check' } elseif ($DryRun) { 'DryRun' } else { 'Sync' })"
+Write-Info "AuthoritativeResourcesRoot: $absSourceRoot"
+Write-Info "ConsoleReplicaRoot: $absTargetRoot"
+Write-Info "Owned ConfigDirs: $($ConfigDirs -join ', ')"
+Write-Info "Mode: $(if ($isCheckMode) { 'Check' } elseif ($DryRun) { 'DryRun' } else { 'Apply' })"
 Write-Info "DeleteExtra: $DeleteExtra"
 
 $totalCopied = 0
@@ -104,7 +139,7 @@ foreach ($dir in $ConfigDirs) {
     }
 
     $sourceDir = Join-Path $absSourceRoot $dir
-    $targetDir = Join-Path $absUnityResourcesRoot $dir
+    $targetDir = Join-Path $absTargetRoot $dir
 
     if (!(Test-Path $sourceDir)) {
         Write-Info "Skip missing source dir: $sourceDir"
@@ -132,7 +167,7 @@ foreach ($dir in $ConfigDirs) {
         if (!(Test-Path $targetFile)) {
             Write-Info "Missing target: $dir\$relative"
             $totalMissing++
-            if (!$Check) {
+            if (!$isCheckMode) {
                 Ensure-Directory $targetFileDir
                 if ($DryRun) {
                     Write-Info "Would copy: $($sourceFile.FullName) -> $targetFile"
@@ -158,7 +193,7 @@ foreach ($dir in $ConfigDirs) {
         if (!$equal) {
             Write-Info "Changed target: $dir\$relative"
             $totalChanged++
-            if (!$Check) {
+            if (!$isCheckMode) {
                 if ($DryRun) {
                     Write-Info "Would copy: $($sourceFile.FullName) -> $targetFile"
                 }
@@ -170,7 +205,7 @@ foreach ($dir in $ConfigDirs) {
         }
     }
 
-    if ($DeleteExtra -or $Check) {
+    if ($DeleteExtra -or $isCheckMode) {
         if (Test-Path $targetDir) {
             $targetFiles = Get-ChildItem -Path $targetDir -Filter "*.json" -File -Recurse | Sort-Object FullName
             foreach ($targetFile in $targetFiles) {
@@ -179,7 +214,7 @@ foreach ($dir in $ConfigDirs) {
                 if (!(Test-Path $sourceFile)) {
                     Write-Info "Extra target: $dir\$relative"
                     $totalExtra++
-                    if ($DeleteExtra -and !$Check) {
+                    if ($DeleteExtra -and !$isCheckMode) {
                         if ($DryRun) {
                             Write-Info "Would delete: $($targetFile.FullName)"
                         }
@@ -195,8 +230,8 @@ foreach ($dir in $ConfigDirs) {
 
 Write-Info "Summary: copied=$totalCopied, changed=$totalChanged, missing=$totalMissing, extra=$totalExtra, invalid=$totalInvalid"
 
-if ($Check -and ($totalChanged -gt 0 -or $totalMissing -gt 0 -or $totalExtra -gt 0 -or $totalInvalid -gt 0)) {
-    Write-Info "Check failed. Run tools\sync_moba_json_configs.ps1 to sync Unity Resources from Console JSON configs."
+if ($isCheckMode -and ($totalChanged -gt 0 -or $totalMissing -gt 0 -or $totalExtra -gt 0 -or $totalInvalid -gt 0)) {
+    Write-Info "Check failed. Package-owned authoritative JSON and Console replicas have drifted. Review with -DryRun, then publish with -Apply."
     exit 2
 }
 

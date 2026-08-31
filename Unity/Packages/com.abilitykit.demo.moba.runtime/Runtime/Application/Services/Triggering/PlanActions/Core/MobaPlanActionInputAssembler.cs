@@ -1,6 +1,5 @@
 using AbilityKit.Ability.World.DI;
 using AbilityKit.Core.Mathematics;
-using AbilityKit.Core.Serialization;
 using AbilityKit.Demo.Moba.Services;
 using AbilityKit.Demo.Moba.Services.Projectile;
 using AbilityKit.Pipeline;
@@ -24,6 +23,12 @@ namespace AbilityKit.Demo.Moba.Services.Triggering.PlanActions
 
             var casterActorId = executionContext.SourceActorId;
             var targetActorId = executionContext.TargetActorId;
+            if (TryResolvePayloadTargetActorId(triggerArgs, out var payloadTargetActorId)
+                || TryResolvePayloadTargetActorId(executionContext.Payload, out payloadTargetActorId))
+            {
+                targetActorId = payloadTargetActorId;
+            }
+
             var aimPosition = Vec3.Zero;
             var aimDirection = Vec3.Zero;
             var hasAimPosition = false;
@@ -53,6 +58,14 @@ namespace AbilityKit.Demo.Moba.Services.Triggering.PlanActions
                 aimDirection,
                 hasAimPosition,
                 hasAimDirection);
+        }
+
+        private static bool TryResolvePayloadTargetActorId(object payload, out int actorId)
+        {
+            actorId = 0;
+            return payload is IMobaActorContextProvider actorContext
+                   && actorContext.TryGetTargetActorId(out actorId)
+                   && actorId > 0;
         }
 
         private static bool TryResolveAim(object payload, out Vec3 aimPosition, out Vec3 aimDirection)
@@ -86,6 +99,13 @@ namespace AbilityKit.Demo.Moba.Services.Triggering.PlanActions
                 var hasAimDirection = abilityContext.TryGetData(AbilityContextKeys.AimDir.ToKeyString(), out aimDirection)
                                       && aimDirection.SqrMagnitude > 0f;
                 return hasAimPosition || hasAimDirection;
+            }
+
+            if (payload is ProjectileEventArgs projectileEvent)
+            {
+                aimPosition = projectileEvent.Position;
+                aimDirection = projectileEvent.Direction;
+                return HasAim(in aimPosition, in aimDirection);
             }
 
             if (payload is AreaEventArgs areaEvent)

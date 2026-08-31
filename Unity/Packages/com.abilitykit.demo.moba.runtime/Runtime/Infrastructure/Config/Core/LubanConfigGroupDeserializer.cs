@@ -34,7 +34,11 @@ namespace AbilityKit.Demo.Moba.Config.Core
             try
             {
                 var token = JToken.Parse(text);
-                if (token is not JArray array) return Array.CreateInstance(dtoType, 0);
+                if (token is not JArray array)
+                {
+                    throw new InvalidOperationException(
+                        $"Expected a JSON array root for DTO type '{dtoType.FullName}', but found '{token.Type}'.");
+                }
 
                 var list = new List<object>();
                 foreach (var item in array)
@@ -80,6 +84,7 @@ namespace AbilityKit.Demo.Moba.Config.Core
             if (dtoType == typeof(AoeDTO)) return DeserializeAoe(obj);
             if (dtoType == typeof(EmitterDTO)) return DeserializeEmitter(obj);
             if (dtoType == typeof(SummonDTO)) return DeserializeSummon(obj);
+            if (dtoType == typeof(SummonAttrInheritDTO)) return DeserializeSummonAttrInherit(obj);
             if (dtoType == typeof(SkillFlowDTO)) return DeserializeSkillFlow(obj);
             if (dtoType == typeof(SkillLevelTableDTO)) return DeserializeSkillLevelTable(obj);
             if (dtoType == typeof(ComponentTemplateDTO)) return DeserializeComponentTemplate(obj);
@@ -112,7 +117,8 @@ namespace AbilityKit.Demo.Moba.Config.Core
             // 没有 Name 字段。
             var dto = new BattleAttributeTemplateDTO
             {
-                Id = obj["Code"]?.Value<int>() ?? 0,
+                Id = obj["Code"]?.Value<int>() ?? obj["Id"]?.Value<int>() ?? 0,
+                BasicAttackSkillId = obj["BasicAttackSkillId"]?.Value<int>() ?? 0,
                 ActiveSkills = obj["ActiveSkills"]?.ToObject<int[]>() ?? Array.Empty<int>(),
                 PassiveSkills = obj["PassiveSkills"]?.ToObject<int[]>() ?? Array.Empty<int>(),
                 Hp = obj["Hp"]?.Value<int>() ?? 0,
@@ -131,7 +137,7 @@ namespace AbilityKit.Demo.Moba.Config.Core
                 CooldownReduceR = obj["CooldownReduceR"]?.Value<int>() ?? 0,
                 PhysicsPenetrationR = obj["PhysicsPenetrationR"]?.Value<int>() ?? 0,
                 MagicPenetrationR = obj["MagicPenetrationR"]?.Value<int>() ?? 0,
-                MoveSpeed = obj["MoveSpeed"]?.Value<int>() ?? 0,
+                MoveSpeed = obj["MoveSpeed"]?.Value<float>() ?? 0f,
                 PhysicsBloodsuckingR = obj["PhysicsBloodsuckingR"]?.Value<int>() ?? 0,
                 MagicBloodsuckingR = obj["MagicBloodsuckingR"]?.Value<int>() ?? 0,
                 AttackRange = obj["AttackRange"]?.Value<int>() ?? 0,
@@ -155,6 +161,7 @@ namespace AbilityKit.Demo.Moba.Config.Core
                 SkillType = obj["SkillType"]?.Value<int>() ?? 0,
                 Tags = obj["Tags"]?.ToObject<int[]>() ?? Array.Empty<int>(),
                 SkillButtonTemplateId = obj["SkillButtonTemplateId"]?.Value<int>() ?? 0,
+                RequiredTargetQueryId = obj["RequiredTargetQueryId"]?.Value<int>() ?? 0,
                 LevelTableId = obj["LevelTableId"]?.Value<int>() ?? 0,
                 PreCastFlowId = obj["PreCastFlowId"]?.Value<int>() ?? 0,
                 CastFlowId = obj["CastFlowId"]?.Value<int>() ?? 0
@@ -186,6 +193,8 @@ namespace AbilityKit.Demo.Moba.Config.Core
                 EnableAim = obj["EnableAim"]?.Value<bool>() ?? false,
                 AimMode = obj["AimMode"]?.Value<int>() ?? 0,
                 AimMaxRadius = obj["AimMaxRadius"]?.Value<float>() ?? 0,
+                IndicatorShape = obj["IndicatorShape"]?.Value<int>() ?? 0,
+                IndicatorWorldWidth = obj["IndicatorWorldWidth"]?.Value<float>() ?? 0,
                 UsePointMode = obj["UsePointMode"]?.Value<int>() ?? 0,
                 SelectRange = obj["SelectRange"]?.Value<float>() ?? 0,
                 FaceToAim = obj["FaceToAim"]?.Value<bool>() ?? false
@@ -253,7 +262,7 @@ namespace AbilityKit.Demo.Moba.Config.Core
                 ExplicitTargetPolicy = obj["ExplicitTargetPolicy"]?.Value<int>() ?? 0,
                 Provider = DeserializeSearchTargetProvider(obj["Provider"]),
                 Rules = DeserializeSearchTargetRules(obj["Rules"]),
-                Scorer = DeserializeSearchTargetScorer(obj["Scorer"]),
+                Scorers = DeserializeSearchTargetScorers(obj["Scorers"]),
                 Selector = DeserializeSearchTargetSelector(obj["Selector"])
             };
             return dto;
@@ -289,6 +298,10 @@ namespace AbilityKit.Demo.Moba.Config.Core
                     Forward = obj["Forward"]?.Value<int>() ?? 0,
                     Radius = obj["Radius"]?.Value<float>() ?? 0,
                     HalfAngleDeg = obj["HalfAngleDeg"]?.Value<float>() ?? 0,
+                    LocalOffsetForward = obj["LocalOffsetForward"]?.Value<float>() ?? 0,
+                    LocalOffsetRight = obj["LocalOffsetRight"]?.Value<float>() ?? 0,
+                    Width = obj["Width"]?.Value<float>() ?? 0,
+                    Length = obj["Length"]?.Value<float>() ?? 0,
                     ActorIds = obj["ActorIds"]?.ToObject<int[]>() ?? Array.Empty<int>()
                 });
             }
@@ -305,8 +318,21 @@ namespace AbilityKit.Demo.Moba.Config.Core
                 Id = obj["Id"]?.Value<int>() ?? 0,
                 Kind = obj["Kind"]?.Value<int>() ?? 0,
                 Source = obj["Source"]?.Value<int>() ?? 0,
-                RandomSeed = obj["RandomSeed"]?.Value<int>() ?? 0
+                RandomSeed = obj["RandomSeed"]?.Value<int>() ?? 0,
+                Direction = obj["Direction"]?.Value<int>() ?? 0
             };
+        }
+
+        private static SearchTargetScorerDTO[] DeserializeSearchTargetScorers(JToken token)
+        {
+            if (token == null || token.Type != JTokenType.Array) return Array.Empty<SearchTargetScorerDTO>();
+            var scorers = new List<SearchTargetScorerDTO>();
+            foreach (var item in token)
+            {
+                var scorer = DeserializeSearchTargetScorer(item);
+                if (scorer != null) scorers.Add(scorer);
+            }
+            return scorers.ToArray();
         }
 
         private static SearchTargetSelectorDTO DeserializeSearchTargetSelector(JToken token)
@@ -338,7 +364,10 @@ namespace AbilityKit.Demo.Moba.Config.Core
                 MaxStacks = obj["MaxStacks"]?.Value<int>() ?? 1,
                 TriggerIds = obj["TriggerIds"]?.ToObject<int[]>() ?? Array.Empty<int>(),
                 ContinuousTagTemplateId = obj["ContinuousTagTemplateId"]?.Value<int>() ?? 0,
-                Modifiers = DeserializeContinuousModifiers(obj["Modifiers"])
+                Modifiers = DeserializeContinuousModifiers(obj["Modifiers"]),
+                DispelPolicy = obj["DispelPolicy"]?.Value<int>() ?? 0,
+                DispelCategory = obj["DispelCategory"]?.Value<int>() ?? 0,
+                DispelBlockedByTagNames = ReadTagNames(obj["DispelBlockedByTags"])
             };
             dto.TagNames = ReadTagNames(obj["Tags"]);
             return dto;
@@ -426,6 +455,9 @@ namespace AbilityKit.Demo.Moba.Config.Core
                 Speed = obj["Speed"]?.Value<float>() ?? 0,
                 LifetimeMs = obj["LifetimeMs"]?.Value<int>() ?? 0,
                 MaxDistance = obj["MaxDistance"]?.Value<float>() ?? 0,
+                CollisionWidth = obj["CollisionWidth"]?.Value<float>() ?? 0,
+                CollisionHeight = obj["CollisionHeight"]?.Value<float>() ?? 0,
+                CollisionLength = obj["CollisionLength"]?.Value<float>() ?? 0,
                 HitPolicyKind = obj["HitPolicyKind"]?.Value<int>() ?? 0,
                 HitsRemaining = obj["HitsRemaining"]?.Value<int>() ?? 0,
                 HitCooldownMs = obj["HitCooldownMs"]?.Value<int>() ?? 0,
@@ -440,7 +472,11 @@ namespace AbilityKit.Demo.Moba.Config.Core
                 OnExpireVfxId = obj["OnExpireVfxId"]?.Value<int>() ?? 0,
                 ReturnAfterMs = obj["ReturnAfterMs"]?.Value<int>() ?? 0,
                 ReturnSpeed = obj["ReturnSpeed"]?.Value<float>() ?? 0,
-                ReturnStopDistance = obj["ReturnStopDistance"]?.Value<float>() ?? 0
+                ReturnStopDistance = obj["ReturnStopDistance"]?.Value<float>() ?? 0,
+                StateMachineProfileId = obj["StateMachineProfileId"]?.Value<string>() ?? string.Empty,
+                SpawnRandomOffsetX = obj["SpawnRandomOffsetX"]?.Value<float>() ?? 0,
+                SpawnRandomOffsetY = obj["SpawnRandomOffsetY"]?.Value<float>() ?? 0,
+                SpawnRandomOffsetZ = obj["SpawnRandomOffsetZ"]?.Value<float>() ?? 0
             };
             return dto;
         }
@@ -513,10 +549,22 @@ namespace AbilityKit.Demo.Moba.Config.Core
                 AttrScales = DeserializeSummonAttrScales(obj["AttrScales"]),
                 SkillIds = obj["SkillIds"]?.ToObject<int[]>() ?? Array.Empty<int>(),
                 PassiveSkillIds = obj["PassiveSkillIds"]?.ToObject<int[]>() ?? Array.Empty<int>(),
+                BrainId = obj["BrainId"]?.Value<int>() ?? 0,
+                InheritAttributeConfigId = obj["InheritAttributeConfigId"]?.Value<int>() ?? 0,
                 DefaultComponentTemplateIds = obj["DefaultComponentTemplateIds"]?.ToObject<int[]>() ?? Array.Empty<int>(),
                 Tags = obj["Tags"]?.ToObject<int[]>() ?? Array.Empty<int>()
             };
             return dto;
+        }
+
+        private static SummonAttrInheritDTO DeserializeSummonAttrInherit(JObject obj)
+        {
+            return new SummonAttrInheritDTO
+            {
+                Id = obj["Id"]?.Value<int>() ?? obj["Code"]?.Value<int>() ?? 0,
+                Name = obj["Name"]?.Value<string>() ?? string.Empty,
+                Scales = DeserializeSummonAttrScales(obj["Scales"])
+            };
         }
 
         private static SummonAttrScaleDTO[] DeserializeSummonAttrScales(JToken token)
@@ -618,8 +666,28 @@ namespace AbilityKit.Demo.Moba.Config.Core
                 Condition = obj["Condition"]?.Value<string>() ?? string.Empty,
                 TimeoutMs = obj["TimeoutMs"]?.Value<int>() ?? 0,
                 CompleteOnTimeout = obj["CompleteOnTimeout"]?.Value<bool>() ?? true,
-                ObservedSlots = obj["ObservedSlots"]?.ToObject<int[]>() ?? Array.Empty<int>()
+                ObservedSlots = obj["ObservedSlots"]?.ToObject<int[]>() ?? Array.Empty<int>(),
+                Arguments = DeserializeSkillWaitConditionArguments(obj["Arguments"])
             };
+        }
+
+        private static SkillWaitConditionArgumentDTO[] DeserializeSkillWaitConditionArguments(JToken token)
+        {
+            if (token == null || token.Type != JTokenType.Array) return Array.Empty<SkillWaitConditionArgumentDTO>();
+
+            var result = new List<SkillWaitConditionArgumentDTO>();
+            foreach (var item in (JArray)token)
+            {
+                if (!(item is JObject obj)) continue;
+
+                result.Add(new SkillWaitConditionArgumentDTO
+                {
+                    Name = obj["Name"]?.Value<string>() ?? string.Empty,
+                    Value = obj["Value"]?.Value<string>() ?? string.Empty
+                });
+            }
+
+            return result.ToArray();
         }
 
         private static SkillPhaseDTO DeserializeSkillPhase(JToken token)

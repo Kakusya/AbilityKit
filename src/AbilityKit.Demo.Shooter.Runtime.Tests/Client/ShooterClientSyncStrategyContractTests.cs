@@ -28,6 +28,13 @@ public sealed class ShooterClientSyncStrategyContractTests
             });
     }
 
+    private static ShooterStartGamePayload SinglePlayerStart() =>
+        new ShooterStartGamePayload(
+            "authoritative-interpolation-contract",
+            30,
+            9001,
+            new[] { new ShooterStartPlayer(1, "P1", 0f, 0f) });
+
     [Fact]
     public void PredictRollbackControllerIsReachableThroughFrameworkContract()
     {
@@ -74,9 +81,39 @@ public sealed class ShooterClientSyncStrategyContractTests
         Assert.Equal(2, controller.BufferedRemoteSnapshotCount);
         Assert.Equal(1100L, controller.EstimatedServerTicks);
 
-        // Interpolation never reconciles the local sim, so the framework report stays empty.
+        // Remote-only interpolation does not reconcile the local simulation.
         var report = strategy.GetReconciliationReport();
         Assert.Equal(SyncReconciliationReason.None, report.Reason);
         Assert.False(report.DidReconcile);
+    }
+
+    [Fact]
+    public void InterpolationControllerReportsActualLocalAuthorityCorrection()
+    {
+        var runtime = new ShooterBattleRuntimePort();
+        var presentation = new ShooterPresentationFacade { ControlledPlayerId = 1 };
+        var controller = new ShooterClientAuthoritativeInterpolationSyncController(
+            runtime, presentation, tickRate: 30, decoder: null, gateway: null);
+        var start = SinglePlayerStart();
+        Assert.True(controller.StartGame(in start));
+
+        controller.BufferRemoteSnapshot(new ShooterGatewaySnapshot(
+            worldId: 9001ul,
+            frame: 1,
+            timestamp: 0d,
+            serverTicks: 1000L,
+            isFullSnapshot: true,
+            actors: new[]
+            {
+                new ShooterGatewayActorSnapshot(
+                    actorId: 1, x: 2f, y: 0f, rotation: 0f,
+                    velocityX: 0f, velocityY: 0f, hp: 100f, hpMax: 100f, teamId: 1)
+            }));
+
+        IClientSyncStrategy<ShooterPlayerCommand, ShooterRemoteSnapshotSample> strategy = controller;
+        var report = strategy.GetReconciliationReport();
+        Assert.Equal(SyncReconciliationReason.LocalAuthorityCorrection, report.Reason);
+        Assert.True(report.DidReconcile);
+        Assert.Equal(1, report.AuthoritativeFrame);
     }
 }

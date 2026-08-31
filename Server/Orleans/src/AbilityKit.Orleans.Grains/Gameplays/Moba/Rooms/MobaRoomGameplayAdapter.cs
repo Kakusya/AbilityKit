@@ -1,11 +1,13 @@
 using System;
 using System.Collections.Generic;
 using System.Linq;
+using System.Text.Json;
 using AbilityKit.Ability.Host;
 using AbilityKit.Ability.Host.Extensions.Moba.Room;
 using AbilityKit.Ability.Host.Extensions.Moba.Struct;
 using AbilityKit.Orleans.Contracts.Battle;
 using AbilityKit.Orleans.Contracts.Rooms;
+using AbilityKit.Orleans.Grains.Persistence;
 using AbilityKit.Orleans.Grains.Rooms;
 using AbilityKit.Orleans.Grains.Rooms.Gameplay;
 
@@ -16,6 +18,8 @@ internal sealed class MobaRoomGameplayAdapter : IRoomGameplayAdapter
     public const string DefaultRoomType = GameplayRoomTypes.Moba;
 
     private static readonly DefaultMobaRoomGameStartSpecBuilder StartSpecBuilder = new();
+
+    private const string PersistentFormat = "moba.room.v1";
 
     public string RoomType => DefaultRoomType;
 
@@ -29,6 +33,26 @@ internal sealed class MobaRoomGameplayAdapter : IRoomGameplayAdapter
             ReadIntTag(summary, "inputDelayFrames", 0));
         roomState.Configure(ReadIntTag(summary, "minPlayers", 1), summary.MaxPlayers);
         return roomState;
+    }
+
+    public RoomGameplayPersistentState ExportPersistentState(object state)
+    {
+        var snapshot = RequireMobaState(state).ExportPersistentState();
+        return new RoomGameplayPersistentState(PersistentFormat, 1, JsonSerializer.SerializeToUtf8Bytes(snapshot));
+    }
+
+    public object RestorePersistentState(RoomSummary summary, RoomGameplayPersistentState persistentState)
+    {
+        if (persistentState is null ||
+            persistentState.Version != 1 ||
+            !string.Equals(persistentState.Format, PersistentFormat, StringComparison.Ordinal))
+        {
+            throw new InvalidOperationException("Unsupported MOBA room persistent state format.");
+        }
+
+        var snapshot = JsonSerializer.Deserialize<MobaRoomPersistentSnapshot>(persistentState.Payload)
+            ?? throw new InvalidOperationException("MOBA room persistent state payload is empty.");
+        return MobaRoomState.RestorePersistentState(snapshot);
     }
 
     public void Join(object state, RoomSummary summary, IReadOnlyCollection<string> members, string accountId)
@@ -49,34 +73,124 @@ internal sealed class MobaRoomGameplayAdapter : IRoomGameplayAdapter
         roomState.TrySetReady(new PlayerId(request.AccountId), request.Ready);
     }
 
-    public void SubmitCommand(object state, RoomGameplayCommandRequest request)
+    public RoomGameplayCommandResult SubmitCommand(object state, RoomGameplayCommandRequest request)
     {
         if (!string.Equals(request.CommandName, RoomGameplayCommandNames.ConfigureMobaLoadout, StringComparison.Ordinal))
         {
-            throw new InvalidOperationException($"Unsupported MOBA room gameplay command. CommandName={request.CommandName}");
+            return RoomGameplayCommandResult.Rejected(
+                RoomOperationErrorCode.InvalidGameplayCommand,
+                $"Unsupported MOBA room gameplay command. CommandName={request.CommandName}");
         }
 
         var roomState = RequireMobaState(state);
-        var fields = request.Fields ?? throw new InvalidOperationException("MOBA loadout command fields are required.");
+        var fields = request.Fields;
+        if (fields == null)
+        {
+            return RoomGameplayCommandResult.Rejected(
+                RoomOperationErrorCode.InvalidGameplayCommand,
+                "MOBA loadout command fields are required.");
+        }
+
         var playerId = new PlayerId(request.AccountId);
-        roomState.TrySetTeam(playerId, ReadIntField(fields, "teamId", 0));
-        roomState.TrySetSpawnPoint(playerId, ReadIntField(fields, "spawnPointId", 0));
+        if (!roomState.Players.ContainsKey(playerId.Value))
+        {
+            return RoomGameplayCommandResult.Rejected(
+                RoomOperationErrorCode.NotMember,
+                "Account is not in the MOBA room roster.");
+        }
+
+        var teamId = ReadIntField(fields, "teamId", 0);
+        var heroId = ReadIntField(fields, "heroId", 0);
+        var spawnPointId = ReadIntField(fields, "spawnPointId", 0);
+        var attributeTemplateId = ReadIntField(fields, "attributeTemplateId", 0);
+        var level = ReadIntField(fields, "level", 1);
+        var basicAttackSkillId = ReadIntField(fields, "basicAttackSkillId", 0);
+        var skillIds = ReadIntArrayField(fields, "skillIds");
+        if (teamId <= 0 ||
+            heroId <= 0 ||
+            attributeTemplateId <= 0 ||
+            level <= 0 ||
+            basicAttackSkillId <= 0 ||
+            skillIds is not { Length: > 0 } ||
+            skillIds.Any(skillId => skillId <= 0))
+        {
+            return RoomGameplayCommandResult.Rejected(
+                RoomOperationErrorCode.InvalidGameplayCommand,
+                "MOBA loadout requires positive team, hero, attribute, level, basic attack, and skill ids.");
+        }
+
+        foreach (var entry in roomState.Players)
+        {
+            if (!string.Equals(entry.Key, playerId.Value, StringComparison.Ordinal) &&
+                entry.Value.TeamId == teamId &&
+                entry.Value.HeroId == heroId)
+            {
+                return RoomGameplayCommandResult.Rejected(
+                    RoomOperationErrorCode.HeroConflict,
+                    $"Hero {heroId} is already selected by another player on team {teamId}.");
+            }
+        }
+
+        roomState.TrySetTeam(playerId, teamId);
+        roomState.TrySetSpawnPoint(playerId, spawnPointId);
         var ok = roomState.TryPickHero(
             playerId,
-            ReadIntField(fields, "heroId", 0),
-            ReadIntField(fields, "attributeTemplateId", 0),
-            ReadIntField(fields, "level", 1),
-            ReadIntField(fields, "basicAttackSkillId", 0),
-            ReadIntArrayField(fields, "skillIds"));
+            heroId,
+            attributeTemplateId,
+            level,
+            basicAttackSkillId,
+            skillIds);
         if (!ok)
         {
-            throw new InvalidOperationException("Invalid MOBA room loadout command. Full player loadout fields are required.");
+            return RoomGameplayCommandResult.Rejected(
+                RoomOperationErrorCode.InvalidGameplayCommand,
+                "Invalid MOBA room loadout command. Full player loadout fields are required.");
         }
+
+        return RoomGameplayCommandResult.Accepted();
     }
 
     public bool CanStart(object state)
     {
         return RequireMobaState(state).CanStart();
+    }
+
+    public bool ValidateBeginLoading(object state)
+    {
+        // MOBA: 复用 CanStart 作为玩法级可加载校验（人数满足 + 完整 loadout）。
+        return RequireMobaState(state).CanStart();
+    }
+
+    public RoomLaunchManifest BuildLaunchManifest(object state, RoomSummary summary)
+    {
+        var roomState = RequireMobaState(state);
+        var references = new List<string>();
+
+        var mapId = ReadIntTag(summary, "mapId", 1);
+        references.Add($"map:{mapId}");
+
+        foreach (var kv in roomState.Players)
+        {
+            var slot = kv.Value;
+            references.Add($"hero:{slot.HeroId}");
+            references.Add($"attr:{slot.AttributeTemplateId}");
+            references.Add($"basic:{slot.BasicAttackSkillId}");
+            if (slot.SkillIds is { Length: > 0 })
+            {
+                foreach (var skillId in slot.SkillIds)
+                {
+                    references.Add($"skill:{skillId}");
+                }
+            }
+        }
+
+        var metadata = new Dictionary<string, string>
+        {
+            ["mapId"] = mapId.ToString(),
+            ["players"] = roomState.Players.Count.ToString()
+        };
+
+        return RoomLaunchManifestBuilder.Build(RoomLaunchManifestBuilder.CurrentManifestVersion, references, metadata);
     }
 
     public List<RoomPlayerSnapshot> BuildPlayerSnapshots(object state)

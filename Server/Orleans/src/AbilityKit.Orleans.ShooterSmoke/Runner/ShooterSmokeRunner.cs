@@ -23,7 +23,7 @@ internal static class ShooterSmokeRunner
 
         var primaryAccountId = $"shooter-smoke-account-{Guid.NewGuid():N}";
         var login = await LoginAccountAsync(connection, primaryAccountId, kickExisting: true);
-        var presentationContext = ShooterSmokeScenarioBase.CreatePresentationContext();
+        using var presentationContext = ShooterSmokeScenarioBase.CreatePresentationContext();
         var runtime = presentationContext.Runtime;
         var presentation = presentationContext.Presentation;
         var projectedRecorder = presentationContext.Recorder;
@@ -265,6 +265,7 @@ internal static class ShooterSmokeRunner
 
         var moved = false;
         var fired = false;
+        ulong commandSequence = 0;
         var deadline = DateTime.UtcNow + timeout;
         BattleSnapshot? finalSnapshot = initialSnapshot;
 
@@ -280,7 +281,8 @@ internal static class ShooterSmokeRunner
                 {
                     PlayerId = 1,
                     OpCode = ShooterOpCodes.Input.PlayerCommand,
-                    Payload = inputPayload
+                    Payload = inputPayload,
+                    CommandSequence = ++commandSequence
                 });
 
             if (!submit.Accepted)
@@ -538,7 +540,7 @@ internal static class ShooterSmokeRunner
         connection.Tick(0f);
 
         var login = await LoginGuestAsync(connection);
-        var presentationContext = ShooterSmokeScenarioBase.CreatePresentationContext();
+        using var presentationContext = ShooterSmokeScenarioBase.CreatePresentationContext();
         var runtime = presentationContext.Runtime;
         var presentation = presentationContext.Presentation;
         var projectedRecorder = presentationContext.Recorder;
@@ -614,7 +616,7 @@ internal static class ShooterSmokeRunner
         connection.Open(host, port);
         connection.Tick(0f);
 
-        var presentationContext = ShooterSmokeScenarioBase.CreatePresentationContext();
+        using var presentationContext = ShooterSmokeScenarioBase.CreatePresentationContext();
         var runtime = presentationContext.Runtime;
         var presentation = presentationContext.Presentation;
         var projectedRecorder = presentationContext.Recorder;

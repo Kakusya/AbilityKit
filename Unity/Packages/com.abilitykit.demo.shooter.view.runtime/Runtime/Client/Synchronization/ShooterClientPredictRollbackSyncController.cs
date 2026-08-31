@@ -14,10 +14,10 @@ namespace AbilityKit.Demo.Shooter.View
     /// <summary>
     /// <see cref="NetworkSyncModel.PredictRollback"/> 客户端控制器。
     /// 将现有本地预测、权威快照、回滚与重放链路
-    /// （<see cref="ShooterClientFrameSyncCoordinator"/> + <see cref="ShooterClientInputCoordinator"/>）
+    /// （<see cref="ShooterClientFrameSyncController"/> + <see cref="ShooterClientInputCoordinator"/>）
     /// 包装到通用 <see cref="IShooterClientSyncController"/> 接缝之后，让会话无需了解当前同步模型即可委托执行。
     /// </summary>
-    public sealed class ShooterClientPredictRollbackSyncController : IShooterClientSyncController
+    public sealed class ShooterClientPredictRollbackSyncController : IShooterClientSyncController, IShooterClientFrameSyncCapability, IShooterClientInputCapability
     {
         private readonly ShooterClientSyncCore _core;
 
@@ -26,9 +26,10 @@ namespace AbilityKit.Demo.Shooter.View
             ShooterPresentationFacade presentation,
             int tickRate,
             ShooterGatewaySnapshotDecoder? decoder,
-            IShooterRoomGatewayClient? gateway)
+            IShooterRoomGatewayClient? gateway,
+            ShooterClientPredictionBufferOptions? predictionBufferOptions = null)
         {
-            _core = new ShooterClientSyncCore(runtime, presentation, tickRate, decoder, gateway);
+            _core = new ShooterClientSyncCore(runtime, presentation, tickRate, decoder, gateway, predictionBufferOptions);
         }
 
         public NetworkSyncModel SyncModel => NetworkSyncModel.PredictRollback;
@@ -36,6 +37,8 @@ namespace AbilityKit.Demo.Shooter.View
         public bool IsStarted => _core.IsStarted;
 
         public int CurrentFrame => _core.CurrentFrame;
+
+        public int GatewayInputFrame => CurrentFrame;
 
         public ShooterClientFrameSyncController FrameSync => _core.FrameSync;
 
@@ -116,6 +119,11 @@ namespace AbilityKit.Demo.Shooter.View
         public ShooterSnapshotApplyResult ApplyGatewayPush(uint opCode, ArraySegment<byte> payload)
         {
             return _core.ApplyGatewayPush(opCode, payload);
+        }
+
+        public ShooterSnapshotApplyResult ApplyGatewaySnapshot(in ShooterGatewaySnapshot snapshot)
+        {
+            return _core.ApplyGatewaySnapshot(in snapshot);
         }
 
         // --- IClientSyncStrategy<ShooterPlayerCommand, ShooterRemoteSnapshotSample> ---

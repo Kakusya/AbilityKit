@@ -23,7 +23,7 @@ namespace AbilityKit.Game.Flow
 
         public void OnGUI(in GamePhaseContext ctx)
         {
-#if UNITY_EDITOR
+#if UNITY_EDITOR || DEVELOPMENT_BUILD
             if (!ctx.Entry.DebugEnabled) return;
 
             var sink = ctx.Entry.Get<IFlowCommandSink>();

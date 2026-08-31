@@ -26,20 +26,27 @@ namespace AbilityKit.Demo.Moba.Services.Snapshot
                 return false;
             }
 
-            if (frame.Value == _lastFrame.Value)
+            if (UseFrameGuard && frame.Value == _lastFrame.Value)
             {
                 snapshot = default;
                 return false;
             }
 
+            if (!TryBuildSnapshot(frame, out snapshot))
+            {
+                return false;
+            }
+
             _lastFrame = frame;
-            return TryBuildSnapshot(frame, out snapshot);
+            return true;
         }
 
         protected virtual bool CanEmit(FrameIndex frame)
         {
             return true;
         }
+
+        protected virtual bool UseFrameGuard => true;
 
         protected abstract bool TryBuildSnapshot(FrameIndex frame, out WorldStateSnapshot snapshot);
 
@@ -66,6 +73,8 @@ namespace AbilityKit.Demo.Moba.Services.Snapshot
 
         protected int Count => _buffer.Count;
 
+        protected override bool UseFrameGuard => false;
+
         protected void Add(TEntry entry)
         {
             _buffer.Add(entry);
@@ -76,9 +85,14 @@ namespace AbilityKit.Demo.Moba.Services.Snapshot
             _buffer.Clear();
         }
 
+        protected int PeekTo(IList<TEntry> destination)
+        {
+            return _buffer.PeekTo(destination);
+        }
+
         protected int CopyTo(IList<TEntry> destination)
         {
-            return _buffer.CopyTo(destination);
+            return PeekTo(destination);
         }
 
         protected int DrainTo(IList<TEntry> destination)

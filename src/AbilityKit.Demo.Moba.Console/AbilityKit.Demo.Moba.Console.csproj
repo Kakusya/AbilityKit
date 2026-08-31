@@ -21,15 +21,21 @@
     <ProjectReference Include="..\AbilityKit.Demo.Moba.Core\AbilityKit.Demo.Moba.Core.csproj" />
     <ProjectReference Include="..\AbilityKit.Demo.Moba.Infrastructure\AbilityKit.Demo.Moba.Infrastructure.csproj" />
     <ProjectReference Include="..\AbilityKit.World.ECS\AbilityKit.World.ECS.csproj" />
-    <ProjectReference Include="..\AbilityKit.Game.Battle.Transport.Runtime\AbilityKit.Game.Battle.Transport.Runtime.csproj" />
     <ProjectReference Include="..\AbilityKit.World.StateSync\AbilityKit.World.StateSync.csproj" />
     <ProjectReference Include="..\AbilityKit.World.Snapshot\AbilityKit.World.Snapshot.csproj" />
     <ProjectReference Include="..\AbilityKit.Protocol.Moba\AbilityKit.Protocol.Moba.csproj" />
     <ProjectReference Include="..\AbilityKit.Host\AbilityKit.Host.csproj" />
     <ProjectReference Include="..\AbilityKit.Host.Extension\AbilityKit.Host.Extension.csproj" />
+    <ProjectReference Include="..\AbilityKit.Host.Network\AbilityKit.Host.Network.csproj" />
+    <ProjectReference Include="..\AbilityKit.Network.Host\AbilityKit.Network.Host.csproj" />
+    <ProjectReference Include="../AbilityKit.Demo.Moba.Host/AbilityKit.Demo.Moba.Host.csproj" />
     <ProjectReference Include="..\AbilityKit.Triggering\AbilityKit.Triggering.csproj" />
+    <ProjectReference Include="..\AbilityKit.Network.Room\AbilityKit.Network.Room.csproj" />
+    <ProjectReference Include="..\AbilityKit.Network.Client\AbilityKit.Network.Client.csproj" />
+    <ProjectReference Include="..\AbilityKit.Network.Battle.Config\AbilityKit.Network.Battle.Config.csproj" />
     <ProjectReference Include="..\AbilityKit.HFSM.Core\AbilityKit.HFSM.Core.csproj" />
     <ProjectReference Include="..\AbilityKit.Flow\AbilityKit.Flow.csproj" />
+    <ProjectReference Include="..\AbilityKit.Combat.Collision.Abstractions\AbilityKit.Combat.Collision.Abstractions.csproj" />
   </ItemGroup>
 
   <!-- NuGet Dependencies -->

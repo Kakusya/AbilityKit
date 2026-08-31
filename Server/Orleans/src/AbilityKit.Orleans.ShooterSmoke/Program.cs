@@ -16,7 +16,11 @@ var tcpGatewayHost = options.Host;
 
 if (!options.ClientMode)
 {
-    Environment.SetEnvironmentVariable(ShooterStateSyncPayloadModeEnvironmentVariable, options.StateSyncPayloadMode);
+    Environment.SetEnvironmentVariable(
+        ShooterStateSyncPayloadModeEnvironmentVariable,
+        string.Equals(options.StateSyncPayloadMode, "template", StringComparison.OrdinalIgnoreCase)
+            ? null
+            : options.StateSyncPayloadMode);
 }
 
 if (options.ClientMode)
@@ -39,6 +43,8 @@ if (options.ClientMode)
 
 var builder = Host.CreateApplicationBuilder(args);
 builder.Services.AddAbilityKitServerOptions(builder.Configuration);
+builder.Services.AddStateSyncObserverOptions(builder.Configuration);
+builder.Services.AddBattleInputSecurityOptions(builder.Configuration);
 builder.Logging.AddAbilityKitServerLogging(builder.Configuration, "AbilityKit.Orleans.ShooterSmoke");
 
 var storageOptions = builder.Configuration.GetAbilityKitStorageOptions();
@@ -56,10 +62,18 @@ builder.UseAbilityKitLocalOrleansSilo();
 using var host = builder.Build();
 await host.StartAsync();
 
-using var transportCts = new CancellationTokenSource();
 var transportServer = host.Services.GetRequiredService<GatewayNetworking.TcpTransportServer>();
-var transportTask = transportServer.StartAsync(transportCts.Token);
-await ShooterSmokeScenarioBase.WaitForTcpAsync(tcpGatewayHost, options.TcpGatewayPort, TimeSpan.FromSeconds(5));
+var clusterClient = host.Services.GetRequiredService<IClusterClient>();
+await using var transportController = new ShooterSmokeTransportFaultController(
+    transportServer,
+    clusterClient,
+    tcpGatewayHost,
+    options.TcpGatewayPort);
+await transportController.StartAsync();
+using var faultControlCancellation = new CancellationTokenSource();
+var faultControlTask = string.IsNullOrWhiteSpace(options.FaultControlPath)
+    ? Task.CompletedTask
+    : transportController.RunFileControlAsync(options.FaultControlPath, faultControlCancellation.Token);
 
 try
 {
@@ -71,16 +85,22 @@ try
     }
     else
     {
-        var clusterClient = host.Services.GetRequiredService<IClusterClient>();
         var result = await ShooterSmokeRunner.RunAsync(clusterClient, tcpGatewayHost, options.TcpGatewayPort, options.InputLogicReplayOutputPath);
         Console.WriteLine(ShooterSmokeResultFormatter.FormatPassed(result));
     }
 }
 finally
 {
-    transportCts.Cancel();
-    await transportServer.StopAsync();
-    await AwaitTransportShutdownAsync(transportTask);
+    faultControlCancellation.Cancel();
+    try
+    {
+        await faultControlTask;
+    }
+    catch (OperationCanceledException)
+    {
+    }
+
+    await transportController.StopAsync();
     await host.StopAsync();
 }
 
@@ -97,17 +117,6 @@ static Task WaitForShutdownAsync()
     return completion.Task;
 }
 
-static async Task AwaitTransportShutdownAsync(Task transportTask)
-{
-    try
-    {
-        await transportTask;
-    }
-    catch (OperationCanceledException)
-    {
-    }
-}
-
 readonly record struct ShooterSmokeProgramOptions(
     bool ServerMode,
     bool ClientMode,
@@ -117,16 +126,32 @@ readonly record struct ShooterSmokeProgramOptions(
     string RoomId,
     uint PlayerId,
     string ClientId,
+    int RoomMaxPlayers,
+    int BattleDurationFrames,
+    int BattleVictoryTargetDefeats,
+    bool ContinueAfterAllPlayersDefeated,
     int InputCount,
     int Seed,
     TimeSpan Timeout,
     bool WaitForMatchEnd,
-    bool ReconnectOnce,
+    int ReconnectCount,
     int ReconnectDelayMs,
+    int RecoverableFailureCount,
+    int RetryBackoffMaxMs,
     SmokeNetworkConditionOptions NetworkCondition,
     string StateSyncPayloadMode,
     string InputStateReplayOutputPath,
-    string InputLogicReplayOutputPath)
+    string InputLogicReplayOutputPath,
+    string RunId,
+    string CorrelationId,
+    string RunRootPath,
+    string DiagnosticOutputPath,
+    string FaultControlPath,
+    string ReconnectReleasePath,
+    string CompletionReleasePath,
+    string NetworkControlPath,
+    string MetricsOutputPath,
+    int MetricsSampleIntervalMs)
 {
     public ShooterSmokeClientProcessOptions ToClientProcessOptions()
     {
@@ -137,15 +162,30 @@ readonly record struct ShooterSmokeProgramOptions(
             RoomId,
             PlayerId,
             ClientId,
+            RoomMaxPlayers,
+            BattleDurationFrames,
+            BattleVictoryTargetDefeats,
+            ContinueAfterAllPlayersDefeated,
             InputCount,
             Seed,
             Timeout,
             WaitForMatchEnd,
-            ReconnectOnce,
+            ReconnectCount,
             ReconnectDelayMs,
+            RecoverableFailureCount,
+            RetryBackoffMaxMs,
             NetworkCondition,
             StateSyncPayloadMode,
-            InputStateReplayOutputPath);
+            InputStateReplayOutputPath,
+            RunId,
+            CorrelationId,
+            RunRootPath,
+            DiagnosticOutputPath,
+            ReconnectReleasePath,
+            CompletionReleasePath,
+            NetworkControlPath,
+            MetricsOutputPath,
+            MetricsSampleIntervalMs);
     }
 
     public static ShooterSmokeProgramOptions Parse(string[] args)
@@ -158,19 +198,36 @@ readonly record struct ShooterSmokeProgramOptions(
         var roomId = string.Empty;
         uint playerId = 1;
         var clientId = $"shooter-mp-{Environment.ProcessId}";
+        var roomMaxPlayers = 0;
+        var battleDurationFrames = 0;
+        var battleVictoryTargetDefeats = 0;
+        var continueAfterAllPlayersDefeated = false;
         var inputCount = 3;
         var seed = 20260610;
         var timeout = TimeSpan.FromSeconds(15);
         var waitForMatchEnd = false;
-        var reconnectOnce = false;
+        var reconnectCount = 0;
         var reconnectDelayMs = 500;
+        var recoverableFailureCount = 0;
+        var retryBackoffMaxMs = 2000;
         var conditionLatencyMs = 0;
         var conditionJitterMs = 0;
         var conditionPacketLossRate = 0d;
+        var conditionBandwidthBytesPerSecond = 0;
         var conditionSeed = 20260610;
         var inputStateReplayOutputPath = string.Empty;
         var inputLogicReplayOutputPath = string.Empty;
-        var stateSyncPayloadMode = "packed";
+        var stateSyncPayloadMode = "template";
+        var runId = string.Empty;
+        var correlationId = string.Empty;
+        var runRootPath = string.Empty;
+        var diagnosticOutputPath = string.Empty;
+        var faultControlPath = string.Empty;
+        var reconnectReleasePath = string.Empty;
+        var completionReleasePath = string.Empty;
+        var networkControlPath = string.Empty;
+        var metricsOutputPath = string.Empty;
+        var metricsSampleIntervalMs = 1000;
 
         for (var i = 0; i < args.Length; i++)
         {
@@ -229,6 +286,31 @@ readonly record struct ShooterSmokeProgramOptions(
                     clientId = value;
                 }
             }
+            else if (string.Equals(arg, "--room-max-players", StringComparison.OrdinalIgnoreCase) && i + 1 < args.Length)
+            {
+                if (int.TryParse(args[++i], out var parsedRoomMaxPlayers) && parsedRoomMaxPlayers > 0)
+                {
+                    roomMaxPlayers = parsedRoomMaxPlayers;
+                }
+            }
+            else if (string.Equals(arg, "--battle-duration-frames", StringComparison.OrdinalIgnoreCase) && i + 1 < args.Length)
+            {
+                if (int.TryParse(args[++i], out var parsedBattleDurationFrames) && parsedBattleDurationFrames > 0)
+                {
+                    battleDurationFrames = parsedBattleDurationFrames;
+                }
+            }
+            else if (string.Equals(arg, "--battle-victory-target-defeats", StringComparison.OrdinalIgnoreCase) && i + 1 < args.Length)
+            {
+                if (int.TryParse(args[++i], out var parsedBattleVictoryTargetDefeats) && parsedBattleVictoryTargetDefeats > 0)
+                {
+                    battleVictoryTargetDefeats = parsedBattleVictoryTargetDefeats;
+                }
+            }
+            else if (string.Equals(arg, "--continue-after-all-players-defeated", StringComparison.OrdinalIgnoreCase))
+            {
+                continueAfterAllPlayersDefeated = true;
+            }
             else if (string.Equals(arg, "--inputs", StringComparison.OrdinalIgnoreCase) && i + 1 < args.Length)
             {
                 if (int.TryParse(args[++i], out var parsedInputs) && parsedInputs >= 0)
@@ -249,7 +331,28 @@ readonly record struct ShooterSmokeProgramOptions(
             }
             else if (string.Equals(arg, "--reconnect-once", StringComparison.OrdinalIgnoreCase))
             {
-                reconnectOnce = true;
+                reconnectCount = Math.Max(reconnectCount, 1);
+            }
+            else if (string.Equals(arg, "--reconnect-count", StringComparison.OrdinalIgnoreCase) && i + 1 < args.Length)
+            {
+                if (int.TryParse(args[++i], out var parsedReconnectCount) && parsedReconnectCount >= 0)
+                {
+                    reconnectCount = parsedReconnectCount;
+                }
+            }
+            else if (string.Equals(arg, "--recoverable-failure-count", StringComparison.OrdinalIgnoreCase) && i + 1 < args.Length)
+            {
+                if (int.TryParse(args[++i], out var parsedFailureCount) && parsedFailureCount >= 0)
+                {
+                    recoverableFailureCount = parsedFailureCount;
+                }
+            }
+            else if (string.Equals(arg, "--retry-backoff-max-ms", StringComparison.OrdinalIgnoreCase) && i + 1 < args.Length)
+            {
+                if (int.TryParse(args[++i], out var parsedBackoffMaxMs) && parsedBackoffMaxMs >= 0)
+                {
+                    retryBackoffMaxMs = parsedBackoffMaxMs;
+                }
             }
             else if (string.Equals(arg, "--reconnect-delay-ms", StringComparison.OrdinalIgnoreCase) && i + 1 < args.Length)
             {
@@ -277,6 +380,13 @@ readonly record struct ShooterSmokeProgramOptions(
                 if (double.TryParse(args[++i], System.Globalization.NumberStyles.Float, System.Globalization.CultureInfo.InvariantCulture, out var parsedLossRate))
                 {
                     conditionPacketLossRate = parsedLossRate;
+                }
+            }
+            else if (string.Equals(arg, "--condition-bandwidth-bytes-per-second", StringComparison.OrdinalIgnoreCase) && i + 1 < args.Length)
+            {
+                if (int.TryParse(args[++i], out var parsedBandwidth) && parsedBandwidth >= 0)
+                {
+                    conditionBandwidthBytesPerSecond = parsedBandwidth;
                 }
             }
             else if (string.Equals(arg, "--condition-seed", StringComparison.OrdinalIgnoreCase) && i + 1 < args.Length)
@@ -316,6 +426,54 @@ readonly record struct ShooterSmokeProgramOptions(
             {
                 inputLogicReplayOutputPath = args[++i];
             }
+            else if (string.Equals(arg, "--run-id", StringComparison.OrdinalIgnoreCase) && i + 1 < args.Length)
+            {
+                runId = args[++i];
+            }
+            else if (string.Equals(arg, "--correlation-id", StringComparison.OrdinalIgnoreCase) && i + 1 < args.Length)
+            {
+                correlationId = args[++i];
+            }
+            else if (string.Equals(arg, "--run-root", StringComparison.OrdinalIgnoreCase) && i + 1 < args.Length)
+            {
+                runRootPath = args[++i];
+            }
+            else if (string.Equals(arg, "--diagnostic-output", StringComparison.OrdinalIgnoreCase) && i + 1 < args.Length)
+            {
+                diagnosticOutputPath = args[++i];
+            }
+            else if (string.Equals(arg, "--fault-control-path", StringComparison.OrdinalIgnoreCase) && i + 1 < args.Length)
+            {
+                faultControlPath = args[++i];
+            }
+            else if (string.Equals(arg, "--reconnect-release-path", StringComparison.OrdinalIgnoreCase) && i + 1 < args.Length)
+            {
+                reconnectReleasePath = args[++i];
+            }
+            else if (string.Equals(arg, "--completion-release-path", StringComparison.OrdinalIgnoreCase) && i + 1 < args.Length)
+            {
+                completionReleasePath = args[++i];
+            }
+            else if (string.Equals(arg, "--network-control-path", StringComparison.OrdinalIgnoreCase) && i + 1 < args.Length)
+            {
+                networkControlPath = args[++i];
+            }
+            else if (string.Equals(arg, "--metrics-output", StringComparison.OrdinalIgnoreCase) && i + 1 < args.Length)
+            {
+                metricsOutputPath = args[++i];
+            }
+            else if (string.Equals(arg, "--metrics-sample-interval-ms", StringComparison.OrdinalIgnoreCase) && i + 1 < args.Length)
+            {
+                if (int.TryParse(args[++i], out var parsedSampleIntervalMs) && parsedSampleIntervalMs >= 100)
+                {
+                    metricsSampleIntervalMs = parsedSampleIntervalMs;
+                }
+            }
+        }
+
+        if (string.IsNullOrWhiteSpace(correlationId))
+        {
+            correlationId = $"{Environment.ProcessId}:{clientId}";
         }
 
         return new ShooterSmokeProgramOptions(
@@ -327,24 +485,47 @@ readonly record struct ShooterSmokeProgramOptions(
             roomId,
             playerId,
             clientId,
+            roomMaxPlayers,
+            battleDurationFrames,
+            battleVictoryTargetDefeats,
+            continueAfterAllPlayersDefeated,
             inputCount,
             seed,
             timeout,
             waitForMatchEnd,
-            reconnectOnce,
+            reconnectCount,
             reconnectDelayMs,
+            recoverableFailureCount,
+            retryBackoffMaxMs,
             new SmokeNetworkConditionOptions(
                 conditionLatencyMs,
                 conditionJitterMs,
                 conditionPacketLossRate,
-                conditionSeed).Normalize(),
+                conditionSeed,
+                conditionBandwidthBytesPerSecond).Normalize(),
             stateSyncPayloadMode,
             inputStateReplayOutputPath,
-            inputLogicReplayOutputPath);
+            inputLogicReplayOutputPath,
+            runId,
+            correlationId,
+            runRootPath,
+            diagnosticOutputPath,
+            faultControlPath,
+            reconnectReleasePath,
+            completionReleasePath,
+            networkControlPath,
+            metricsOutputPath,
+            metricsSampleIntervalMs);
     }
 
     private static string NormalizeStateSyncPayloadMode(string? value)
     {
+        if (string.IsNullOrWhiteSpace(value)
+            || string.Equals(value, "template", StringComparison.OrdinalIgnoreCase))
+        {
+            return "template";
+        }
+
         if (string.Equals(value, "pure-state", StringComparison.OrdinalIgnoreCase)
             || string.Equals(value, "purestate", StringComparison.OrdinalIgnoreCase)
             || string.Equals(value, "pure_state", StringComparison.OrdinalIgnoreCase))
@@ -352,8 +533,7 @@ readonly record struct ShooterSmokeProgramOptions(
             return "pure-state";
         }
 
-        if (string.IsNullOrWhiteSpace(value)
-            || string.Equals(value, "packed", StringComparison.OrdinalIgnoreCase))
+        if (string.Equals(value, "packed", StringComparison.OrdinalIgnoreCase))
         {
             return "packed";
         }

@@ -4,17 +4,8 @@ using MemoryPack;
 
 namespace AbilityKit.Protocol.Shooter
 {
-    [MemoryPackable]
     public partial struct ShooterPlayerCommand
     {
-        [MemoryPackOrder(0)] public int PlayerId;
-        [MemoryPackOrder(1)] public float MoveX;
-        [MemoryPackOrder(2)] public float MoveY;
-        [MemoryPackOrder(3)] public float AimX;
-        [MemoryPackOrder(4)] public float AimY;
-        [MemoryPackOrder(5)] public bool Fire;
-        [MemoryPackOrder(6)] public int AttackSlot;
-
         public ShooterPlayerCommand(int playerId, float moveX, float moveY, float aimX, float aimY, bool fire)
             : this(playerId, moveX, moveY, aimX, aimY, fire, ShooterPlayerAttackSlots.Primary)
         {
@@ -49,11 +40,8 @@ namespace AbilityKit.Protocol.Shooter
         }
     }
 
-    [MemoryPackable]
     public partial struct ShooterInputPayload
     {
-        [MemoryPackOrder(0)] public ShooterPlayerCommand[] Commands;
-
         [MemoryPackConstructor]
         public ShooterInputPayload(ShooterPlayerCommand[] commands)
         {
@@ -67,7 +55,7 @@ namespace AbilityKit.Protocol.Shooter
         {
             commands ??= Array.Empty<ShooterPlayerCommand>();
             var payload = new ShooterInputPayload(commands);
-            return WireSerializer.Serialize(in payload);
+            return MemoryPackSerializer.Serialize(payload);
         }
 
         public static ShooterPlayerCommand[] Deserialize(byte[] payload)
@@ -77,7 +65,7 @@ namespace AbilityKit.Protocol.Shooter
                 return Array.Empty<ShooterPlayerCommand>();
             }
 
-            var value = WireSerializer.Deserialize<ShooterInputPayload>(payload);
+            var value = MemoryPackSerializer.Deserialize<ShooterInputPayload>(payload);
             return value.Commands ?? Array.Empty<ShooterPlayerCommand>();
         }
     }

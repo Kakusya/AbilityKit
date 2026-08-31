@@ -2,7 +2,7 @@ using System.Collections.Generic;
 using AbilityKit.Ability.World.DI;
 using AbilityKit.Ability.World.Services;
 using AbilityKit.Ability.World.Services.Attributes;
-using AbilityKit.Core.Continuous;
+using AbilityKit.Continuous;
 using AbilityKit.GameplayTags;
 
 namespace AbilityKit.Demo.Moba.Services
@@ -13,6 +13,7 @@ namespace AbilityKit.Demo.Moba.Services
         bool CanActivate(int ownerActorId, ContinuousTagRequirements requirements);
         bool ShouldRemove(int ownerActorId, ContinuousTagRequirements requirements);
         void MarkDirty(int ownerActorId);
+        bool RemoveActor(int ownerActorId);
     }
 
     [WorldService(typeof(IMobaEffectiveTagQueryService))]
@@ -96,6 +97,11 @@ namespace AbilityKit.Demo.Moba.Services
 
             var cache = GetOrCreateCache(ownerActorId);
             cache.Dirty = true;
+        }
+
+        public bool RemoveActor(int ownerActorId)
+        {
+            return ownerActorId > 0 && _ownerCaches.Remove(ownerActorId);
         }
 
         public void OnRegistered(IContinuous continuous, IContinuousManager manager)

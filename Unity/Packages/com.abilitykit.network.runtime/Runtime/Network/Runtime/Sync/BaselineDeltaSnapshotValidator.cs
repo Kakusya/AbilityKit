@@ -78,6 +78,7 @@ namespace AbilityKit.Network.Runtime.Sync
     public sealed class BaselineDeltaSnapshotValidator
     {
         private bool _hasAppliedSnapshot;
+        private bool _hasBaseline;
 
         public int LastAppliedFrame { get; private set; }
 
@@ -110,7 +111,7 @@ namespace AbilityKit.Network.Runtime.Sync
                 return CreateResult(BaselineDeltaSnapshotValidationStatus.AcceptedFullBaseline, BaselineDeltaSnapshotResyncReason.None, in snapshot);
             }
 
-            if (!_hasAppliedSnapshot || LastBaselineFrame <= 0)
+            if (!_hasAppliedSnapshot || !_hasBaseline)
             {
                 MarkResync(BaselineDeltaSnapshotResyncReason.MissingBaseline, in snapshot);
                 return CreateResult(BaselineDeltaSnapshotValidationStatus.MissingBaseline, LastResyncReason, in snapshot);
@@ -131,6 +132,7 @@ namespace AbilityKit.Network.Runtime.Sync
             LastAppliedStateHash = snapshot.StateHash;
             if (snapshot.IsFullBaseline)
             {
+                _hasBaseline = true;
                 LastBaselineFrame = snapshot.BaselineFrame;
                 LastBaselineHash = snapshot.BaselineHash;
                 NeedsFullBaselineResync = false;
@@ -145,6 +147,7 @@ namespace AbilityKit.Network.Runtime.Sync
         public void Reset()
         {
             _hasAppliedSnapshot = false;
+            _hasBaseline = false;
             LastAppliedFrame = 0;
             LastAppliedStateHash = 0u;
             LastBaselineFrame = 0;

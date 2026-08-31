@@ -1,0 +1,773 @@
+using System;
+using System.Threading;
+using System.Threading.Tasks;
+using AbilityKit.Ability.Host;
+using AbilityKit.Core.Logging;
+using AbilityKit.Game.Battle;
+using AbilityKit.Game.Battle.Requests;
+using AbilityKit.Network.Abstractions;
+using AbilityKit.Network.Protocol;
+using AbilityKit.Network.Runtime;
+using AbilityKit.Network.Sdk;
+
+namespace AbilityKit.Network.Battle
+{
+    public sealed class NetworkTransport : IBattleLogicTransport, IDisposable
+    {
+        private bool _fullStateSyncRequestInFlight;
+        private bool _disposed;
+        private readonly NetworkTransportOptions _options;
+        private readonly object _authenticationGate = new object();
+        private TaskCompletionSource<bool> _authenticationCompletion;
+        private int _authenticationGeneration;
+        private bool _connectionAttemptPending;
+        private bool _authenticationStarted;
+
+        public NetworkTransportOptions Options => _options;
+
+        private readonly NetworkSdkClient _sdkClient;
+        private readonly bool _ownsSdkClient;
+
+        public NetworkTransport(NetworkTransportOptions options, IDispatcher dispatcher = null)
+            : this(options, dispatcher, dispatcher)
+        {
+        }
+
+        public NetworkTransport(NetworkTransportOptions options, IDispatcher callbackDispatcher, IDispatcher ioDispatcher)
+        {
+            _options = options ?? throw new ArgumentNullException(nameof(options));
+            ValidateClientSource(_options);
+            var effectiveCallbackDispatcher = callbackDispatcher ?? InlineDispatcher.Instance;
+            var effectiveIoDispatcher = ioDispatcher ?? effectiveCallbackDispatcher;
+            _sdkClient = CreateSdkClient(
+                _options,
+                effectiveCallbackDispatcher,
+                effectiveIoDispatcher,
+                out _ownsSdkClient);
+            try
+            {
+                AttachSdkClient();
+            }
+            catch
+            {
+                DetachSdkClient();
+                if (_ownsSdkClient) _sdkClient.Dispose();
+                throw;
+            }
+        }
+
+        public event Action<FramePacket> FramePushed;
+        public event Action<object> StateSyncSnapshotPushed;
+        public event Action<object> ReliableEventsPushed;
+        /// <summary>TCP 连接建立（含重连）时触发，早于鉴权/重订阅。</summary>
+        public event Action ConnectionEstablished;
+        /// <summary>TCP 连接断开（含异常断线）时触发。</summary>
+        public event Action ConnectionClosed;
+        /// <summary>
+        /// 原始服务端推送透传 (opCode, payload)，在引擎类型化解码<b>之前</b>触发。需要自己解码/路由的
+        /// 消费者（如复用既有 raw (opCode,payload) apply 管线的服务端权威 statesync 客户端）订阅这个，
+        /// 不要再订上面的 FramePushed/StateSyncSnapshotPushed/ReliableEventsPushed（二选一，避免重复处理）。
+        /// </summary>
+        public event Action<uint, ArraySegment<byte>> RawServerPushReceived;
+        /// <summary>
+        /// 连接后的鉴权/订阅握手（RenewSession→PostAuthentication）失败时触发。引擎不再只记日志 —
+        /// 订阅方应把它当作"推送流未建立"处理（如触发重登或整体重连）。
+        /// </summary>
+        public event Action<Exception> AuthenticationFailed;
+        /// <summary>当前 TCP 连接代际完成 RenewSession/PostAuthentication 后触发。</summary>
+        public event Action ConnectionAuthenticated;
+        public bool IsAuthenticated
+        {
+            get
+            {
+                lock (_authenticationGate)
+                {
+                    return _authenticationCompletion != null &&
+                        _authenticationCompletion.Task.Status == TaskStatus.RanToCompletion;
+                }
+            }
+        }
+        /// <summary>
+        /// 输入提交收到的最终权威响应。成功和最终业务拒绝都会触发；
+        /// stale-frame 重试的中间响应不会触发。
+        /// </summary>
+        public event Action<NetworkSubmitInputResponse> SubmitInputCompleted;
+        /// <summary>
+        /// 输入提交的异常出口（网络错误/序列化失败等，不含服务端业务拒绝 —— 拒绝走
+        /// <see cref="NetworkSubmitInputResponse"/>）。两条提交路径异常时都会触发；
+        /// awaitable 路径同时返回带有 <c>TransportError</c> 状态的失败响应（主动取消除外，取消会继续抛出）。
+        /// </summary>
+        public event Action<Exception> SubmitInputFailed;
+
+        public void Connect()
+        {
+            ThrowIfDisposed();
+            lock (_authenticationGate)
+            {
+                if (_authenticationCompletion == null ||
+                    _authenticationCompletion.Task.IsCompleted ||
+                    _connectionAttemptPending ||
+                    _authenticationStarted)
+                {
+                    BeginAuthenticationGenerationLocked();
+                }
+
+                _connectionAttemptPending = true;
+            }
+
+            Log.Info($"[NetworkTransport] Connect -> {_options.Host}:{_options.Port}");
+            _sdkClient.Open(_options.Host, _options.Port);
+        }
+
+        public void Disconnect()
+        {
+            _sdkClient.Close();
+        }
+
+        /// <summary>
+        /// 协议无关的原始请求通道：重连恢复流程（如帧同步 CatchUp）用它发送类型化封装之外的
+        /// 请求并取回响应负载；推送类回复仍走 <see cref="RawServerPushReceived"/>。
+        /// </summary>
+        public async System.Threading.Tasks.Task<byte[]> SendBattleRecoveryRequestAsync(
+            uint opCode,
+            byte[] payload,
+            TimeSpan timeout)
+        {
+            ThrowIfDisposed();
+            if (opCode == 0)
+            {
+                throw new ArgumentException("An opcode is required.", nameof(opCode));
+            }
+
+            var response = await _sdkClient.SendRawRequestAsync(
+                opCode,
+                payload ?? Array.Empty<byte>(),
+                timeout).ConfigureAwait(false);
+            return response.Count == 0 ? Array.Empty<byte>() : response.ToArray();
+        }
+
+        /// <summary>
+        /// Pumps the underlying SDK client (heartbeat / reconnect middleware). For single-threaded hosts
+        /// that drive the transport via a main-thread tick loop (alongside a queued callback dispatcher);
+        /// dispatcher-driven hosts (dedicated IO + main-thread-callback) do not need to call this.
+        /// </summary>
+        public void Tick(float deltaTime)
+        {
+            _sdkClient.Tick(deltaTime);
+        }
+
+        public void SendCreateWorld(CreateWorldRequest request)
+        {
+            if (_options.SerializeCreateWorld == null) throw new InvalidOperationException("SerializeCreateWorld is not configured.");
+            var payload = _options.SerializeCreateWorld.Invoke(request);
+            _sdkClient.SendPacket(_options.OpCreateWorld, payload, flags: (ushort)NetworkPacketFlags.Request);
+        }
+
+        public void SendJoin(JoinWorldRequest request)
+        {
+            if (_options.SerializeJoin == null) throw new InvalidOperationException("SerializeJoin is not configured.");
+            var payload = _options.SerializeJoin.Invoke(request);
+            _sdkClient.SendPacket(_options.OpJoin, payload, flags: (ushort)NetworkPacketFlags.Request);
+        }
+
+        public void SendLeave(LeaveWorldRequest request)
+        {
+            if (_options.SerializeLeave == null) throw new InvalidOperationException("SerializeLeave is not configured.");
+            var payload = _options.SerializeLeave.Invoke(request);
+            _sdkClient.SendPacket(_options.OpLeave, payload, flags: (ushort)NetworkPacketFlags.Request);
+        }
+
+        public void SendInput(SubmitInputRequest request)
+        {
+            if (_options.SerializeSubmitInput == null) throw new InvalidOperationException("SerializeSubmitInput is not configured.");
+            if (_options.DeserializeSubmitInputResponse == null)
+            {
+                _ = SendInputWithoutResponseAsync(request);
+                return;
+            }
+
+            _ = SendInputWithResponseAsync(request, null, default(CancellationToken));
+        }
+
+        private async Task SendInputWithoutResponseAsync(SubmitInputRequest request)
+        {
+            try
+            {
+                await WaitForAuthenticationAsync();
+                var prepared = _options.PrepareSubmitInput?.Invoke(request) ?? request;
+                var payload = _options.SerializeSubmitInput.Invoke(prepared);
+                _sdkClient.SendPacket(_options.OpSubmitInput, payload, flags: (ushort)NetworkPacketFlags.Request);
+            }
+            catch (Exception ex)
+            {
+                Log.Exception(ex, "[NetworkTransport] Input submission failed.");
+                SubmitInputFailed?.Invoke(ex);
+            }
+        }
+
+        /// <summary>
+        /// Submits input and awaits the authoritative response (request/response + authoritative-frame retry),
+        /// surfacing the full <see cref="NetworkSubmitInputResponse"/>. Use this when the consumer needs
+        /// per-submit server results (e.g. server-authoritative statesync clients that validate
+        /// AcceptedFrame/ServerTicks/ShouldResync) — the fire-and-forget <see cref="SendInput"/> cannot.
+        /// Requires <see cref="NetworkTransportOptions.DeserializeSubmitInputResponse"/> to be configured.
+        /// </summary>
+        public System.Threading.Tasks.Task<NetworkSubmitInputResponse> SendInputAsync(SubmitInputRequest request)
+        {
+            return SendInputAsync(request, null, default(CancellationToken));
+        }
+
+        /// <summary>
+        /// Submits input with a caller-owned timeout/cancellation budget. The original overload
+        /// keeps the five-second transport default for existing callers.
+        /// </summary>
+        public System.Threading.Tasks.Task<NetworkSubmitInputResponse> SendInputAsync(
+            SubmitInputRequest request,
+            TimeSpan? timeout,
+            CancellationToken cancellationToken = default(CancellationToken))
+        {
+            if (_options.SerializeSubmitInput == null) throw new InvalidOperationException("SerializeSubmitInput is not configured.");
+            if (_options.DeserializeSubmitInputResponse == null)
+            {
+                throw new InvalidOperationException("DeserializeSubmitInputResponse is not configured; use SendInput for fire-and-forget.");
+            }
+
+            return SendInputWithResponseAsync(request, timeout, cancellationToken);
+        }
+
+        private async System.Threading.Tasks.Task<NetworkSubmitInputResponse> SendInputWithResponseAsync(
+            SubmitInputRequest request,
+            TimeSpan? timeout,
+            CancellationToken cancellationToken)
+        {
+            if (timeout.HasValue && timeout.Value <= TimeSpan.Zero)
+            {
+                throw new ArgumentOutOfRangeException(nameof(timeout));
+            }
+
+            object current = _options.PrepareSubmitInput?.Invoke(request) ?? request;
+            NetworkSubmitInputResponse response = default;
+            CancellationTokenSource timeoutCancellation = null;
+            var effectiveCancellationToken = cancellationToken;
+            if (timeout.HasValue)
+            {
+                timeoutCancellation = CancellationTokenSource.CreateLinkedTokenSource(cancellationToken);
+                timeoutCancellation.CancelAfter(timeout.Value);
+                effectiveCancellationToken = timeoutCancellation.Token;
+            }
+
+            try
+            {
+                await WaitForAuthenticationAsync(effectiveCancellationToken);
+                for (var attempt = 0; attempt < 2; attempt++)
+                {
+                    var payload = _options.SerializeSubmitInput.Invoke(current);
+                    var responsePayload = await _sdkClient.SendRawRequestAsync(
+                        _options.OpSubmitInput,
+                        payload,
+                        timeout ?? TimeSpan.FromSeconds(5),
+                        effectiveCancellationToken);
+                    response = _options.DeserializeSubmitInputResponse.Invoke(responsePayload);
+                    if (response.Accepted)
+                    {
+                        _options.OnSubmitInputAck?.Invoke(response.ServerFrame);
+                        SubmitInputCompleted?.Invoke(response);
+                        return response;
+                    }
+
+                    if (!response.RetryAtAuthoritativeFrame ||
+                        attempt > 0 ||
+                        _options.RewriteSubmitInputFrame == null)
+                    {
+                        Log.Warning(
+                            $"[NetworkTransport] Input rejected. serverFrame={response.ServerFrame} " +
+                            $"reasonCode={response.ReasonCode} status={response.Status} message={response.Message}");
+                        SubmitInputCompleted?.Invoke(response);
+                        return response;
+                    }
+
+                    var retryFrame = response.ServerFrame + Math.Max(1, _options.SubmitInputRetryFrameLead);
+                    current = _options.RewriteSubmitInputFrame.Invoke(current, retryFrame);
+                    Log.Warning(
+                        $"[NetworkTransport] Retrying stale input. retryFrame={retryFrame} " +
+                        $"serverFrame={response.ServerFrame}");
+                }
+            }
+            catch (OperationCanceledException) when (cancellationToken.IsCancellationRequested)
+            {
+                SubmitInputFailed?.Invoke(new OperationCanceledException("Shooter input submission was cancelled.", cancellationToken));
+                throw;
+            }
+            catch (OperationCanceledException ex) when (timeoutCancellation != null && timeoutCancellation.IsCancellationRequested)
+            {
+                Log.Exception(ex, "[NetworkTransport] Input submission timed out.");
+                SubmitInputFailed?.Invoke(ex);
+                response = CreateTransportFailureResponse(in response, "TransportTimeout", "Input submission timed out.");
+            }
+            catch (TimeoutException ex)
+            {
+                Log.Exception(ex, "[NetworkTransport] Input submission timed out.");
+                SubmitInputFailed?.Invoke(ex);
+                response = CreateTransportFailureResponse(in response, "TransportTimeout", ex.Message);
+            }
+            catch (Exception ex)
+            {
+                Log.Exception(ex, "[NetworkTransport] Input submission failed.");
+                SubmitInputFailed?.Invoke(ex);
+                response = CreateTransportFailureResponse(in response, "TransportError", ex.Message);
+            }
+            finally
+            {
+                timeoutCancellation?.Dispose();
+            }
+
+            return response;
+        }
+
+        private static NetworkSubmitInputResponse CreateTransportFailureResponse(
+            in NetworkSubmitInputResponse response,
+            string status,
+            string message)
+        {
+            return new NetworkSubmitInputResponse(
+                accepted: false,
+                serverFrame: response.ServerFrame,
+                reasonCode: -1,
+                retryAtAuthoritativeFrame: false,
+                status: status,
+                message: message,
+                acceptedFrame: response.AcceptedFrame,
+                serverTicks: response.ServerTicks,
+                shouldResync: false);
+        }
+
+        public async System.Threading.Tasks.Task<long> AcknowledgeReliableEventsAsync(
+            string epoch,
+            long sequence)
+        {
+            if (_options.OpAcknowledgeReliableEvents == 0 ||
+                _options.SerializeAcknowledgeReliableEvents == null ||
+                _options.DeserializeAcknowledgeReliableEventsResponse == null)
+            {
+                Log.Warning("[NetworkTransport] Reliable event acknowledgement is not configured.");
+                return -1;
+            }
+
+            try
+            {
+                var payload = _options.SerializeAcknowledgeReliableEvents.Invoke(
+                    epoch ?? string.Empty,
+                    sequence);
+                var responsePayload = await _sdkClient.SendRawRequestAsync(
+                    _options.OpAcknowledgeReliableEvents,
+                    payload,
+                    TimeSpan.FromSeconds(5));
+                return _options.DeserializeAcknowledgeReliableEventsResponse.Invoke(
+                    responsePayload);
+            }
+            catch (Exception ex)
+            {
+                Log.Exception(ex, "[NetworkTransport] Reliable event acknowledgement failed.");
+                return -1;
+            }
+        }
+
+        public async System.Threading.Tasks.Task<bool> RequestFullStateSyncAsync(
+            string reason,
+            int lastAuthoritativeFrame)
+        {
+            if (_fullStateSyncRequestInFlight) return false;
+            if (_options.OpRequestFullStateSync == 0 ||
+                _options.SerializeRequestFullStateSync == null ||
+                _options.DeserializeRequestFullStateSyncResponse == null)
+            {
+                Log.Warning("[NetworkTransport] Full state sync request is not configured.");
+                return false;
+            }
+
+            _fullStateSyncRequestInFlight = true;
+            try
+            {
+                var payload = _options.SerializeRequestFullStateSync.Invoke(
+                    reason ?? string.Empty,
+                    lastAuthoritativeFrame);
+                var responsePayload = await _sdkClient.SendRawRequestAsync(
+                    _options.OpRequestFullStateSync,
+                    payload,
+                    TimeSpan.FromSeconds(5));
+                return _options.DeserializeRequestFullStateSyncResponse.Invoke(
+                    responsePayload);
+            }
+            catch (Exception ex)
+            {
+                Log.Exception(ex, "[NetworkTransport] Full state sync request failed.");
+                return false;
+            }
+            finally
+            {
+                _fullStateSyncRequestInFlight = false;
+            }
+        }
+
+        public void Dispose()
+        {
+            if (_disposed) return;
+            _disposed = true;
+            FailAuthenticationGeneration(new ObjectDisposedException(nameof(NetworkTransport)));
+
+            DetachSdkClient();
+
+            if (_ownsSdkClient)
+            {
+                _sdkClient.Dispose();
+            }
+        }
+
+        private void AttachSdkClient()
+        {
+            _sdkClient.PacketReceived += OnPacketReceived;
+            _sdkClient.ServerPushReceived += OnServerPushReceived;
+            _sdkClient.Connected += OnConnected;
+            _sdkClient.Disconnected += OnDisconnected;
+            _sdkClient.Error += OnError;
+        }
+
+        private void DetachSdkClient()
+        {
+            _sdkClient.PacketReceived -= OnPacketReceived;
+            _sdkClient.ServerPushReceived -= OnServerPushReceived;
+            _sdkClient.Connected -= OnConnected;
+            _sdkClient.Disconnected -= OnDisconnected;
+            _sdkClient.Error -= OnError;
+        }
+
+        private static void ValidateClientSource(NetworkTransportOptions options)
+        {
+            if (options.SdkClient != null && options.SdkClientFactory != null)
+            {
+                throw new ArgumentException(
+                    "Configure either SdkClient or SdkClientFactory, not both.",
+                    nameof(options));
+            }
+
+            if (options.TrafficObserver != null &&
+                (options.ConnectionFactory != null || options.HasSdkClientSource))
+            {
+                throw new ArgumentException(
+                    "Traffic observation requires TransportFactory when NetworkTransport owns composition. " +
+                    "Configure observation on the injected SDK client or connection instead.",
+                    nameof(options));
+            }
+
+            if (options.SdkClientOwnership != NetworkSdkClientOwnership.Borrowed &&
+                options.SdkClientOwnership != NetworkSdkClientOwnership.Owned)
+            {
+                throw new ArgumentOutOfRangeException(
+                    nameof(options),
+                    "SdkClientOwnership is invalid.");
+            }
+
+            if (!options.HasSdkClientSource &&
+                options.ConnectionFactory == null &&
+                options.TransportFactory == null)
+            {
+                throw new ArgumentException(
+                    "SdkClient, SdkClientFactory, TransportFactory, or ConnectionFactory is required.",
+                    nameof(options));
+            }
+
+            if (!options.HasSdkClientSource &&
+                options.ConnectionFactory == null &&
+                options.Port <= 0)
+            {
+                throw new ArgumentException(
+                    "Port must be set when using TransportFactory.",
+                    nameof(options));
+            }
+        }
+
+        private static NetworkSdkClient CreateSdkClient(
+            NetworkTransportOptions options,
+            IDispatcher callbackDispatcher,
+            IDispatcher ioDispatcher,
+            out bool ownsSdkClient)
+        {
+            if (options.SdkClient != null)
+            {
+                ownsSdkClient = options.SdkClientOwnership == NetworkSdkClientOwnership.Owned;
+                return options.SdkClient;
+            }
+
+            if (options.SdkClientFactory != null)
+            {
+                ownsSdkClient = true;
+                return options.SdkClientFactory.Invoke()
+                    ?? throw new InvalidOperationException("SDK client factory returned null.");
+            }
+
+            var builder = new NetworkSdkBuilder();
+            if (options.ConnectionFactory != null)
+            {
+                builder.UseConnectionFactory(options.ConnectionFactory);
+            }
+            else
+            {
+                builder.UseTransportFactory(options.TransportFactory);
+            }
+
+            builder.ConfigureConnection(connectionOptions =>
+            {
+                connectionOptions.FrameCodec = options.FrameCodec;
+                options.ConfigureConnection?.Invoke(connectionOptions);
+            });
+
+            if (options.TrafficObserver != null)
+            {
+                builder.ObserveTraffic(
+                    options.TrafficObserver,
+                    options.ConfigureTrafficCapture);
+            }
+
+            ownsSdkClient = true;
+            return builder
+                .UseDispatchers(callbackDispatcher, ioDispatcher)
+                .Build();
+        }
+
+        private void OnConnected()
+        {
+            int generation;
+            TaskCompletionSource<bool> completion;
+            lock (_authenticationGate)
+            {
+                if (!_connectionAttemptPending)
+                {
+                    BeginAuthenticationGenerationLocked();
+                }
+
+                _connectionAttemptPending = false;
+                _authenticationStarted = true;
+                generation = _authenticationGeneration;
+                completion = _authenticationCompletion;
+            }
+
+            Log.Info($"[NetworkTransport] Connected: {_options.Host}:{_options.Port}");
+            ConnectionEstablished?.Invoke();
+            _ = AuthenticateConnectionAsync(generation, completion);
+        }
+
+        private async System.Threading.Tasks.Task AuthenticateConnectionAsync(
+            int generation,
+            TaskCompletionSource<bool> completion)
+        {
+            try
+            {
+                if (_options.OpRenewSession != 0 && !string.IsNullOrWhiteSpace(_options.SessionToken))
+                {
+                    if (_options.SerializeRenewSession == null)
+                        throw new InvalidOperationException("SerializeRenewSession is not configured.");
+
+                    var renewPayload = _options.SerializeRenewSession.Invoke(_options.SessionToken);
+                    await _sdkClient.SendRawRequestAsync(_options.OpRenewSession, renewPayload);
+                    if (!IsCurrentAuthenticationGeneration(generation, completion)) return;
+                    Log.Info("[NetworkTransport] RenewSession ok (bound token/account to this connection).");
+                }
+
+                if (!IsCurrentAuthenticationGeneration(generation, completion)) return;
+                if (_options.OpPostAuthentication != 0)
+                {
+                    ArraySegment<byte> subscribePayload;
+                    if (_options.SerializePostAuthenticationWithReliableEventCursor != null)
+                    {
+                        var epoch = _options.GetReliableEventEpoch?.Invoke() ?? string.Empty;
+                        var lastAck = Math.Max(
+                            0L,
+                            _options.GetReliableEventLastAcknowledgedSequence?.Invoke() ?? 0L);
+                        subscribePayload = _options.SerializePostAuthenticationWithReliableEventCursor.Invoke(
+                            epoch,
+                            lastAck);
+                    }
+                    else
+                    {
+                        if (_options.SerializePostAuthentication == null)
+                            throw new InvalidOperationException("SerializePostAuthentication is not configured.");
+
+                        subscribePayload = _options.SerializePostAuthentication.Invoke();
+                    }
+
+                    await _sdkClient.SendRawRequestAsync(_options.OpPostAuthentication, subscribePayload);
+                    if (!IsCurrentAuthenticationGeneration(generation, completion)) return;
+                    Log.Info("[NetworkTransport] Post-authentication request ok (authoritative frame subscription active).");
+                }
+
+                if (!TryCompleteAuthentication(generation, completion)) return;
+                ConnectionAuthenticated?.Invoke();
+            }
+            catch (Exception ex)
+            {
+                if (!TryFailAuthentication(generation, completion, ex)) return;
+                Log.Exception(ex, "[NetworkTransport] Connection authentication failed");
+                AuthenticationFailed?.Invoke(ex);
+            }
+        }
+
+        private void OnDisconnected()
+        {
+            FailAuthenticationGeneration(new InvalidOperationException("Connection closed before input submission."));
+            Log.Warning($"[NetworkTransport] Disconnected: {_options.Host}:{_options.Port}");
+            ConnectionClosed?.Invoke();
+        }
+
+        private Task WaitForAuthenticationAsync()
+        {
+            lock (_authenticationGate)
+            {
+                ThrowIfDisposed();
+                if (_authenticationCompletion == null)
+                {
+                    BeginAuthenticationGenerationLocked();
+                }
+
+                return _authenticationCompletion.Task;
+            }
+        }
+
+        private Task WaitForAuthenticationAsync(CancellationToken cancellationToken)
+        {
+            var authentication = WaitForAuthenticationAsync();
+            if (!cancellationToken.CanBeCanceled || authentication.IsCompleted)
+            {
+                return authentication;
+            }
+
+            return AwaitWithCancellationAsync(authentication, cancellationToken);
+        }
+
+        private static async Task AwaitWithCancellationAsync(Task task, CancellationToken cancellationToken)
+        {
+            if (!cancellationToken.CanBeCanceled)
+            {
+                await task;
+                return;
+            }
+
+            var cancellation = new TaskCompletionSource<bool>(TaskCreationOptions.RunContinuationsAsynchronously);
+            using (cancellationToken.Register(() => cancellation.TrySetCanceled()))
+            {
+                var completed = await Task.WhenAny(task, cancellation.Task);
+                await completed;
+            }
+        }
+
+        private void BeginAuthenticationGenerationLocked()
+        {
+            _authenticationCompletion?.TrySetCanceled();
+            _authenticationGeneration++;
+            _authenticationStarted = false;
+            _authenticationCompletion = new TaskCompletionSource<bool>(
+                TaskCreationOptions.RunContinuationsAsynchronously);
+        }
+
+        private bool IsCurrentAuthenticationGeneration(
+            int generation,
+            TaskCompletionSource<bool> completion)
+        {
+            lock (_authenticationGate)
+            {
+                return !_disposed &&
+                    generation == _authenticationGeneration &&
+                    ReferenceEquals(completion, _authenticationCompletion) &&
+                    !completion.Task.IsCompleted;
+            }
+        }
+
+        private bool TryCompleteAuthentication(int generation, TaskCompletionSource<bool> completion)
+        {
+            lock (_authenticationGate)
+            {
+                if (_disposed || generation != _authenticationGeneration ||
+                    !ReferenceEquals(completion, _authenticationCompletion)) return false;
+                return completion.TrySetResult(true);
+            }
+        }
+
+        private bool TryFailAuthentication(
+            int generation,
+            TaskCompletionSource<bool> completion,
+            Exception exception)
+        {
+            lock (_authenticationGate)
+            {
+                if (generation != _authenticationGeneration ||
+                    !ReferenceEquals(completion, _authenticationCompletion)) return false;
+                return completion.TrySetException(exception);
+            }
+        }
+
+        private void FailAuthenticationGeneration(Exception exception)
+        {
+            lock (_authenticationGate)
+            {
+                _connectionAttemptPending = false;
+                _authenticationStarted = false;
+                _authenticationCompletion?.TrySetException(exception);
+            }
+        }
+
+        private void ThrowIfDisposed()
+        {
+            if (_disposed) throw new ObjectDisposedException(nameof(NetworkTransport));
+        }
+
+        private void OnError(Exception ex)
+        {
+            Log.Exception(ex, $"[NetworkTransport] Error: {_options.Host}:{_options.Port}");
+        }
+
+        private void OnPacketReceived(uint opCode, uint seq, ArraySegment<byte> payload)
+        {
+            if (TryHandleFramePushed(opCode, payload)) return;
+            if (TryHandleSnapshotPushed(opCode, payload)) return;
+            TryHandleReliableEventsPushed(opCode, payload);
+        }
+
+        private void OnServerPushReceived(uint opCode, ArraySegment<byte> payload)
+        {
+            RawServerPushReceived?.Invoke(opCode, payload);
+            if (TryHandleFramePushed(opCode, payload)) return;
+            if (TryHandleSnapshotPushed(opCode, payload)) return;
+            TryHandleReliableEventsPushed(opCode, payload);
+        }
+
+        private bool TryHandleFramePushed(uint opCode, ArraySegment<byte> payload)
+        {
+            if (opCode != _options.OpFramePushed || _options.DeserializeFramePushed == null) return false;
+            var packet = _options.DeserializeFramePushed.Invoke(payload);
+            FramePushed?.Invoke(packet);
+            return true;
+        }
+
+        private bool TryHandleSnapshotPushed(uint opCode, ArraySegment<byte> payload)
+        {
+            if ((opCode != _options.OpSnapshotPushed && opCode != _options.OpDeltaSnapshotPushed) || opCode == 0 || _options.DeserializeSnapshotPushed == null) return false;
+            var snapshot = _options.DeserializeSnapshotPushed.Invoke(payload);
+            StateSyncSnapshotPushed?.Invoke(snapshot);
+            return true;
+        }
+
+        private bool TryHandleReliableEventsPushed(uint opCode, ArraySegment<byte> payload)
+        {
+            if (opCode == 0 ||
+                opCode != _options.OpReliableEventsPushed ||
+                _options.DeserializeReliableEventsPushed == null)
+            {
+                return false;
+            }
+
+            var events = _options.DeserializeReliableEventsPushed.Invoke(payload);
+            ReliableEventsPushed?.Invoke(events);
+            return true;
+        }
+
+    }
+}

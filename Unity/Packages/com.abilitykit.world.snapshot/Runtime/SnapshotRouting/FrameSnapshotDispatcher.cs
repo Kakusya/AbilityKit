@@ -1,6 +1,7 @@
 using System;
 using System.Collections.Generic;
 using AbilityKit.Ability.Host;
+using AbilityKit.Core.Lifetime;
 
 namespace AbilityKit.Core.Snapshots.Routing
 {
@@ -17,6 +18,8 @@ namespace AbilityKit.Core.Snapshots.Routing
 
         public event Action<ISnapshotEnvelope> FrameReceived;
         public event Action<ISnapshotEnvelope, WorldStateSnapshot> SnapshotReceived;
+        /// <summary>当收到未注册路由的 OpCode 快照时触发（用于诊断 OpCode 漂移）。</summary>
+        public event Action<int> NoRouteForOpCode;
 
         public delegate bool TryDecode<T>(in WorldStateSnapshot snap, out T value);
 
@@ -59,7 +62,9 @@ namespace AbilityKit.Core.Snapshots.Routing
             }
 
             route.Add(handler);
-            return new Subscription(() => route.Remove(handler));
+            return DisposableRegistration.Create(
+                new HandlerRegistration<T>(route, handler),
+                static registration => registration.Route.Remove(registration.Handler));
         }
 
         public void Dispose()
@@ -85,6 +90,10 @@ namespace AbilityKit.Core.Snapshots.Routing
             if (_routes.TryGetValue(snap.OpCode, out var route) && route != null)
             {
                 route.Dispatch(envelope, in snap);
+            }
+            else
+            {
+                NoRouteForOpCode?.Invoke(snap.OpCode);
             }
         }
 
@@ -138,21 +147,15 @@ namespace AbilityKit.Core.Snapshots.Routing
             }
         }
 
-        private sealed class Subscription : IDisposable
+        private readonly struct HandlerRegistration<T>
         {
-            private Action _dispose;
+            public readonly Route<T> Route;
+            public readonly Action<ISnapshotEnvelope, T> Handler;
 
-            public Subscription(Action dispose)
+            public HandlerRegistration(Route<T> route, Action<ISnapshotEnvelope, T> handler)
             {
-                _dispose = dispose;
-            }
-
-            public void Dispose()
-            {
-                var d = _dispose;
-                if (d == null) return;
-                _dispose = null;
-                d();
+                Route = route;
+                Handler = handler;
             }
         }
     }

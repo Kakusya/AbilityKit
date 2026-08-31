@@ -141,7 +141,7 @@ namespace AbilityKit.Ability.StateSync.Diff
                 if (current[i] != (previous != null ? previous[i] : 0))
                 {
                     writer.Write((byte)1);
-                    writer.Write((byte)i);
+                    writer.Write(i);
                     writer.Write(current[i]);
                 }
                 else
@@ -150,9 +150,10 @@ namespace AbilityKit.Ability.StateSync.Diff
                 }
             }
 
-            if (current.Length > minLength)
+            var extraLength = current.Length - minLength;
+            writer.Write(extraLength);
+            if (extraLength > 0)
             {
-                writer.Write(current.Length - minLength);
                 for (int i = minLength; i < current.Length; i++)
                 {
                     writer.Write(current[i]);
@@ -169,6 +170,12 @@ namespace AbilityKit.Ability.StateSync.Diff
 
             int currentLength = reader.ReadInt32();
             int previousLength = reader.ReadInt32();
+            if (currentLength < 0 || previousLength < 0)
+                throw new InvalidDataException("State diff contains a negative payload length.");
+            if (baseData != null && baseData.Length != previousLength)
+                throw new InvalidDataException(
+                    $"State diff base length mismatch. Expected {previousLength}, got {baseData.Length}.");
+
             var result = new byte[currentLength];
 
             if (baseData != null && baseData.Length > 0)
@@ -177,30 +184,51 @@ namespace AbilityKit.Ability.StateSync.Diff
             }
 
             int minLength = reader.ReadInt32();
+            if (minLength < 0 || minLength > currentLength || minLength > previousLength)
+                throw new InvalidDataException("State diff contains an invalid shared payload length.");
+
             for (int i = 0; i < minLength; i++)
             {
                 byte hasChange = reader.ReadByte();
                 if (hasChange == 1)
                 {
-                    byte index = reader.ReadByte();
+                    int index = reader.ReadInt32();
                     byte value = reader.ReadByte();
-                    if (index < result.Length)
-                        result[index] = value;
+                    if (index != i)
+                        throw new InvalidDataException($"State diff index mismatch. Expected {i}, got {index}.");
+                    result[index] = value;
+                }
+                else if (hasChange != 0)
+                {
+                    throw new InvalidDataException($"State diff contains an invalid change marker: {hasChange}.");
                 }
             }
 
             int extraLength = reader.ReadInt32();
+            if (extraLength != currentLength - minLength)
+                throw new InvalidDataException("State diff contains an invalid trailing payload length.");
+
             for (int i = 0; i < extraLength; i++)
             {
-                if (minLength + i < result.Length)
-                    result[minLength + i] = reader.ReadByte();
+                result[minLength + i] = reader.ReadByte();
             }
+
+            if (stream.Position != stream.Length)
+                throw new InvalidDataException("State diff contains trailing data.");
 
             return result;
         }
 
+        /// <summary>
+        /// 通用反射序列化兜底（仅 public 实例<strong>字段</strong>；property 不参与，刻意不扩展以
+        /// 保持线格式稳定）。当前无生产消费者（WorldStateSnapshot 走 <c>ToBytes</c> 快路径），
+        /// 仅作通用 TState 的兜底。反射元数据按类型静态缓存，避免每个对象节点重复 GetFields。
+        /// </summary>
         private class BinarySerializerImpl
         {
+            private static readonly System.Collections.Concurrent.ConcurrentDictionary<Type, System.Reflection.FieldInfo[]> SerializableFieldsCache =
+                new System.Collections.Concurrent.ConcurrentDictionary<Type, System.Reflection.FieldInfo[]>();
+
             private readonly BinaryReader _reader;
             private readonly BinaryWriter _writer;
 
@@ -208,6 +236,13 @@ namespace AbilityKit.Ability.StateSync.Diff
             {
                 _reader = new BinaryReader(stream);
                 _writer = new BinaryWriter(stream);
+            }
+
+            private static System.Reflection.FieldInfo[] GetSerializableFields(Type type)
+            {
+                return SerializableFieldsCache.GetOrAdd(
+                    type,
+                    static t => t.GetFields(System.Reflection.BindingFlags.Public | System.Reflection.BindingFlags.Instance));
             }
 
             public void Serialize(object value)
@@ -238,7 +273,7 @@ namespace AbilityKit.Ability.StateSync.Diff
                     return;
                 }
 
-                var fields = type.GetFields(System.Reflection.BindingFlags.Public | System.Reflection.BindingFlags.Instance);
+                var fields = GetSerializableFields(type);
                 _writer.Write(fields.Length);
                 foreach (var f in fields) SerializeObject(f.GetValue(value), depth + 1);
             }
@@ -260,7 +295,7 @@ namespace AbilityKit.Ability.StateSync.Diff
                 }
 
                 var obj = Activator.CreateInstance(type);
-                var fields = type.GetFields(System.Reflection.BindingFlags.Public | System.Reflection.BindingFlags.Instance);
+                var fields = GetSerializableFields(type);
                 var count = _reader.ReadInt32();
                 for (int i = 0; i < count && i < fields.Length; i++)
                     fields[i].SetValue(obj, DeserializeObject(fields[i].FieldType, depth + 1));

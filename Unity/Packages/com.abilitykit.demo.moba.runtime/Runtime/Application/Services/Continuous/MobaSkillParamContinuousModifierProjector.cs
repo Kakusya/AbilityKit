@@ -1,6 +1,6 @@
 using System.Collections.Generic;
 using AbilityKit.Ability.World.DI;
-using AbilityKit.Core.Continuous;
+using AbilityKit.Continuous;
 using AbilityKit.Modifiers;
 
 namespace AbilityKit.Demo.Moba.Services
@@ -71,6 +71,8 @@ namespace AbilityKit.Demo.Moba.Services
                 case 3: return MobaSkillParamModifierKeys.Projectile.CountPerShot;
                 case 4: return MobaSkillParamModifierKeys.Projectile.FanAngleDeg;
                 case 5: return MobaSkillParamModifierKeys.Projectile.DurationMs;
+                case 6: return MobaSkillParamModifierKeys.Skill.SkillId;
+                case 7: return MobaSkillParamModifierKeys.Summon.SummonId;
                 default: return ModifierKey.Create(ModifierKey.Categories.Projectile, ToByte(targetId));
             }
         }

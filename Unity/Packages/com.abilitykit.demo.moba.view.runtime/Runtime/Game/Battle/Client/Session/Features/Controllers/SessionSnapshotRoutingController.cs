@@ -1,78 +1,130 @@
 using System;
 using System.Collections.Generic;
+using System.Runtime.CompilerServices;
 using AbilityKit.Ability.Host;
+using AbilityKit.Core.Logging;
 using AbilityKit.Core.Snapshots.Routing;
 using AbilityKit.Game.Battle;
 
 namespace AbilityKit.Game.Flow
 {
-    internal sealed class SessionSnapshotRoutingController
+    internal sealed class BattleSnapshotRoutingRuntime : IDisposable
     {
+        private readonly BattleSessionHandles _handles;
+        private readonly BattleSessionDiagnostics _diagnostics;
+        private BattleContext _context;
+        private BattleLogicSession _session;
+        private Action<FramePacket> _frameReceivedHandler;
+        private FrameSnapshotDispatcher _snapshots;
+        private SnapshotPipeline _pipeline;
+        private SnapshotCmdHandler _cmdHandler;
+        private SnapshotRoutingInstance _routing;
+        private IBattleSessionNetAdapterContext _netContext;
+        private BattleSessionNetAdapter _netAdapter;
+        private bool _frameReceivedSubscribed;
+        private long _contextBindingGeneration;
+
+        internal BattleSnapshotRoutingRuntime(
+            BattleSessionHandles handles,
+            BattleSessionDiagnostics diagnostics)
+        {
+            _handles = handles ?? throw new ArgumentNullException(nameof(handles));
+            _diagnostics = diagnostics ?? throw new ArgumentNullException(nameof(diagnostics));
+        }
+
+        internal bool IsBuilt => _routing != null;
+
         public void Build(
             BattleStartPlan plan,
-            BattleSessionHandles handles,
             BattleContext ctx,
             BattleLogicSession session,
             INetAdapterContextHost netAdapterHost,
             Action<FramePacket> frameReceivedHandler)
         {
-            if (handles == null) return;
+            Dispose();
 
-            Dispose(handles, ctx, session, frameReceivedHandler);
+            _context = ctx;
+            _session = session;
+            _frameReceivedHandler = frameReceivedHandler;
 
-            var catalog = CreateCatalog();
-            var enabledRegistryIds = CreateEnabledRegistrySet(plan);
-
-            handles.Snapshot.Snapshots = new FrameSnapshotDispatcher();
-            if (session != null && frameReceivedHandler != null)
+            try
             {
-                session.FrameReceived += frameReceivedHandler;
+                var catalog = CreateCatalog();
+                var enabledRegistryIds = CreateEnabledRegistrySet(plan);
+
+                _snapshots = new FrameSnapshotDispatcher();
+                _routing = enabledRegistryIds == null
+                    ? SnapshotRoutingBuilder.Build(ctx, _snapshots, catalog.Registries)
+                    : SnapshotRoutingBuilder.Build(ctx, _snapshots, catalog.Registries, enabledRegistryIds);
+                _pipeline = _routing.Pipeline;
+                _cmdHandler = _routing.CmdHandler;
+
+                if (netAdapterHost != null)
+                {
+                    _netContext = new BattleSessionNetAdapterContext(netAdapterHost);
+                    _netAdapter = new BattleSessionNetAdapter(_netContext, _diagnostics);
+                }
+
+                PublishHandles();
+                _contextBindingGeneration = BindContext(
+                    ctx,
+                    _snapshots,
+                    _pipeline,
+                    _cmdHandler);
+
+                if (session != null && frameReceivedHandler != null)
+                {
+                    session.FrameReceived += frameReceivedHandler;
+                    _frameReceivedSubscribed = true;
+                }
+
+                Log.Info(
+                    $"[BattleSnapshotRoutingRuntime] Built. dispatcher={RuntimeHelpers.GetHashCode(_snapshots)}, routing={RuntimeHelpers.GetHashCode(_routing)}, enabled={(enabledRegistryIds == null ? "all" : string.Join(",", enabledRegistryIds))}");
             }
-
-            handles.Snapshot.Routing = enabledRegistryIds == null
-                ? SnapshotRoutingBuilder.Build(ctx, handles.Snapshot.Snapshots, catalog.Registries)
-                : SnapshotRoutingBuilder.Build(ctx, handles.Snapshot.Snapshots, catalog.Registries, enabledRegistryIds);
-
-            handles.Snapshot.Pipeline = handles.Snapshot.Routing.Pipeline;
-            handles.Snapshot.CmdHandler = handles.Snapshot.Routing.CmdHandler;
-
-            if (netAdapterHost != null)
+            catch
             {
-                handles.Net.Ctx = new BattleSessionNetAdapterContext(netAdapterHost);
-                handles.Net.Adapter = new BattleSessionNetAdapter(handles.Net.Ctx);
+                Dispose();
+                throw;
             }
-
-            BindContext(ctx, handles);
         }
 
-        public void Dispose(
-            BattleSessionHandles handles,
-            BattleContext ctx,
-            BattleLogicSession session,
-            Action<FramePacket> frameReceivedHandler)
+        public void Dispose()
         {
-            if (handles == null) return;
-
-            if (session != null && frameReceivedHandler != null)
+            if (_frameReceivedSubscribed && _session != null && _frameReceivedHandler != null)
             {
-                session.FrameReceived -= frameReceivedHandler;
+                _session.FrameReceived -= _frameReceivedHandler;
+            }
+            _frameReceivedSubscribed = false;
+
+            if (_routing != null || _snapshots != null)
+            {
+                Log.Info(
+                    $"[BattleSnapshotRoutingRuntime] Disposing. dispatcher={(_snapshots == null ? "null" : RuntimeHelpers.GetHashCode(_snapshots).ToString())}, routing={(_routing == null ? "null" : RuntimeHelpers.GetHashCode(_routing).ToString())}");
             }
 
-            handles.Snapshot.Routing?.Dispose();
-            handles.Snapshot.Routing = null;
+            _context?.ClearSnapshotRouting(
+                _contextBindingGeneration,
+                _snapshots);
 
-            ClearContext(ctx);
+            _routing?.Dispose();
+            ClearPublishedHandles();
 
-            handles.Net.Adapter = null;
-            handles.Net.Ctx = null;
-            handles.Snapshot.CmdHandler = null;
-            handles.Snapshot.Pipeline = null;
-            handles.Snapshot.Snapshots = null;
+            _context = null;
+            _contextBindingGeneration = 0;
+            _session = null;
+            _frameReceivedHandler = null;
+            _snapshots = null;
+            _pipeline = null;
+            _cmdHandler = null;
+            _routing = null;
+            _netContext = null;
+            _netAdapter = null;
+            _diagnostics.ClearJitterBuffer();
         }
 
-        public void Feed(BattleSessionHandles handles, FramePacket packet)
+        public void Feed(FramePacket packet)
         {
-            handles?.Snapshot.Snapshots?.Feed(packet);
+            _snapshots?.Feed(packet);
         }
 
         private static SnapshotRegistryCatalog CreateCatalog()
@@ -90,21 +142,33 @@ namespace AbilityKit.Game.Flow
                 : null;
         }
 
-        private static void BindContext(BattleContext ctx, BattleSessionHandles handles)
+        private void PublishHandles()
         {
-            if (ctx == null) return;
-
-            ctx.BindSnapshotRouting(
-                handles.Snapshot.Snapshots,
-                handles.Snapshot.Pipeline,
-                handles.Snapshot.CmdHandler);
+            _handles.Snapshot.Snapshots = _snapshots;
+            _handles.Snapshot.Pipeline = _pipeline;
+            _handles.Snapshot.CmdHandler = _cmdHandler;
+            _handles.Snapshot.Routing = _routing;
+            _handles.Net.Ctx = _netContext;
+            _handles.Net.Adapter = _netAdapter;
         }
 
-        private static void ClearContext(BattleContext ctx)
+        private void ClearPublishedHandles()
         {
-            if (ctx == null) return;
+            if (ReferenceEquals(_handles.Snapshot.Routing, _routing)) _handles.Snapshot.Routing = null;
+            if (ReferenceEquals(_handles.Snapshot.CmdHandler, _cmdHandler)) _handles.Snapshot.CmdHandler = null;
+            if (ReferenceEquals(_handles.Snapshot.Pipeline, _pipeline)) _handles.Snapshot.Pipeline = null;
+            if (ReferenceEquals(_handles.Snapshot.Snapshots, _snapshots)) _handles.Snapshot.Snapshots = null;
+            if (ReferenceEquals(_handles.Net.Adapter, _netAdapter)) _handles.Net.Adapter = null;
+            if (ReferenceEquals(_handles.Net.Ctx, _netContext)) _handles.Net.Ctx = null;
+        }
 
-            ctx.ClearSnapshotRouting();
+        private static long BindContext(
+            BattleContext ctx,
+            FrameSnapshotDispatcher snapshots,
+            SnapshotPipeline pipeline,
+            SnapshotCmdHandler cmdHandler)
+        {
+            return ctx?.BindSnapshotRouting(snapshots, pipeline, cmdHandler) ?? 0;
         }
     }
 }

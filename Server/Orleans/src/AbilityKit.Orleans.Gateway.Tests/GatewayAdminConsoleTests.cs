@@ -152,7 +152,7 @@ public sealed class GatewayAdminConsoleTests
         Assert.Contains("roomType: 'shooter'", store);
         Assert.Contains("gameplayId: 2", store);
         Assert.Contains("worldType: 'shooter_battle'", store);
-        Assert.Contains("syncTemplateId: 'predict-rollback-authority'", store);
+        Assert.Contains("syncTemplateId: 'state-sync-authority'", store);
         Assert.Contains("startShooterRoomQuick", store);
         Assert.Contains("roomRobots", store);
         Assert.Contains("addRoomRobots", store);
@@ -164,7 +164,7 @@ public sealed class GatewayAdminConsoleTests
     {
         var shooter = Assert.Single(GatewayGameplayCatalog.All, gameplay => gameplay.RoomType == "shooter");
 
-        Assert.Equal(ShooterServerProtocol.PredictRollbackAuthorityTemplate, shooter.DefaultSyncTemplateId);
+        Assert.Equal(ShooterServerProtocol.StateSyncAuthorityTemplate, shooter.DefaultSyncTemplateId);
         Assert.Equal(ShooterServerProtocol.CreateStateSyncTemplateIds(), shooter.SupportedSyncTemplateIds);
         Assert.Contains(ShooterServerProtocol.BatchStateLowFrequencyTemplate, shooter.SupportedSyncTemplateIds);
         Assert.Contains(ShooterServerProtocol.MassBattleLodAoiTemplate, shooter.SupportedSyncTemplateIds);
@@ -410,14 +410,16 @@ public sealed class GatewayAdminConsoleTests
         Assert.Contains("Run(AdminSkillAcceptanceRunRequest request)", artifacts);
         Assert.Contains("Delete(AdminSkillAcceptanceDeleteRequest request)", artifacts);
         Assert.Contains("DeleteArtifactFile", artifacts);
-        Assert.Contains("BuildTemplate", artifacts);
-        Assert.Contains("BuildGeneratedSummary", artifacts);
-        Assert.Contains("BuildGeneratedTraceRecords", artifacts);
-        Assert.Contains("TraceRecord(", artifacts);
-        Assert.Contains("WriteOrUpdateGeneratedBatch", artifacts);
-        Assert.Contains("Artifact browsing and controlled built-in export are available now.", artifacts);
-        Assert.Contains("controlled built-in export", artifacts);
+        Assert.Contains("ScenarioCatalog", artifacts);
+        Assert.Contains("BuildScenarioTemplate", artifacts);
+        Assert.Contains("ExecuteScenario", artifacts);
+        Assert.Contains("ReadExecutionResult", artifacts);
+        Assert.Contains("tools", artifacts);
+        Assert.Contains("run_moba_skill_analysis.ps1", artifacts);
+        Assert.Contains("unity-dsl-allow-list", artifacts);
         Assert.Contains("server-side allow-list", artifacts);
+        Assert.Contains("execution-result.json", artifacts);
+        Assert.Contains("WriteOrUpdateGeneratedBatch", artifacts);
         Assert.Contains("BuildAllowedScripts", artifacts);
         Assert.Contains("BuildExecutionStrategies", artifacts);
         Assert.Contains("ResolveArtifactDirectory", artifacts);

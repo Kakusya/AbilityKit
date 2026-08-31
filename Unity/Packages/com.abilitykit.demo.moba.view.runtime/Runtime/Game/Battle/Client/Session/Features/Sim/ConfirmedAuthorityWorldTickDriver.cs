@@ -1,5 +1,6 @@
 using System;
 using AbilityKit.Ability.World.Abstractions;
+using AbilityKit.Core.Snapshots.Routing;
 
 namespace AbilityKit.Game.Flow
 {
@@ -7,7 +8,9 @@ namespace AbilityKit.Game.Flow
     {
         public readonly BattleStartPlan Plan;
         public readonly BattleContext Context;
-        public readonly BattleSessionHandles.ConfirmedHandles Handles;
+        public readonly BattleSessionConfirmedWorldRuntime Handles;
+        public readonly BattleSessionDiagnostics Diagnostics;
+        public readonly FrameSnapshotDispatcher PresentationSnapshots;
         public readonly SessionWorldCatchUpController WorldCatchUp;
         public readonly int LastTickedFrame;
         public readonly float FixedDeltaSeconds;
@@ -16,7 +19,9 @@ namespace AbilityKit.Game.Flow
         public ConfirmedAuthorityWorldTickOptions(
             BattleStartPlan plan,
             BattleContext context,
-            BattleSessionHandles.ConfirmedHandles handles,
+            BattleSessionConfirmedWorldRuntime handles,
+            BattleSessionDiagnostics diagnostics,
+            FrameSnapshotDispatcher presentationSnapshots,
             SessionWorldCatchUpController worldCatchUp,
             int lastTickedFrame,
             float fixedDeltaSeconds,
@@ -25,6 +30,8 @@ namespace AbilityKit.Game.Flow
             Plan = plan;
             Context = context;
             Handles = handles;
+            Diagnostics = diagnostics;
+            PresentationSnapshots = presentationSnapshots;
             WorldCatchUp = worldCatchUp;
             LastTickedFrame = lastTickedFrame;
             FixedDeltaSeconds = fixedDeltaSeconds;
@@ -51,6 +58,7 @@ namespace AbilityKit.Game.Flow
             var nextTickedFrame = options.WorldCatchUp.CatchUpAndFeedSnapshots(
                 runtime: handles.Runtime,
                 world: handles.World,
+                snapshotProvider: handles.Capabilities.SnapshotProvider,
                 lastTickedFrame: lastTickedFrame,
                 driveTargetFrame: frameState.DriveTargetFrame,
                 fixedDelta: options.FixedDeltaSeconds,
@@ -58,12 +66,15 @@ namespace AbilityKit.Game.Flow
                 feed: packet =>
                 {
                     handles.Snapshots?.Feed(packet);
-                    handles.ViewSnapshotRuntime?.Snapshots?.Feed(packet);
+                    options.PresentationSnapshots?.Feed(packet);
                 });
 
-            inputSource.TrimBefore(nextTickedFrame - SessionSimRuntimeTuning.RetainedInputFrames);
+            inputSource.TrimBefore(SessionSimRuntimeTuning.ResolveInputTrimBeforeFrame(
+                nextTickedFrame,
+                handles.Consumable.LastConsumedFrame));
 
             ConfirmedAuthorityDebugStatsPublisher.Update(
+                options.Diagnostics,
                 frameState.ConfirmedFrame,
                 frameState.PredictedFrame,
                 inputTargetFrame,

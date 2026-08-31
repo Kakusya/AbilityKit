@@ -2,6 +2,7 @@ using System;
 using System.Collections.Generic;
 using AbilityKit.Demo.Moba.Systems;
 using AbilityKit.Triggering.Eventing;
+using AbilityKit.Triggering.Payload;
 using AbilityKit.Triggering.Runtime;
 using AbilityKit.Triggering.Runtime.Config.Plans;
 using AbilityKit.Triggering.Runtime.Plan;
@@ -26,16 +27,21 @@ namespace AbilityKit.Demo.Moba.Services
             }
 
             context.TryResolve<MobaEventSubscriptionRegistry>(out var eventRegistry);
-            ValidateDatabase(database, eventRegistry, report);
+            context.TryResolve<IPayloadAccessorRegistry>(out var payloadRegistry);
+            ValidateDatabase(database, eventRegistry, payloadRegistry, report);
         }
 
-        public static void ValidateDatabase(TriggerPlanJsonDatabase database, MobaEventSubscriptionRegistry eventRegistry, MobaRuntimeValidationReport report)
+        public static void ValidateDatabase(
+            TriggerPlanJsonDatabase database,
+            MobaEventSubscriptionRegistry eventRegistry,
+            IPayloadAccessorRegistry payloadRegistry,
+            MobaRuntimeValidationReport report)
         {
             if (report == null) return;
             var records = database?.Records;
             if (records == null || records.Count == 0)
             {
-                report.Warning(SourceName, "trigger.database.records", "TriggerPlanJsonDatabase has no records; battle effects will not execute configured trigger plans.", nameof(TriggerPlanJsonDatabase), code: "moba.trigger.plan.empty", category: MobaRuntimeValidationCategory.Config);
+                report.Error(SourceName, "trigger.database.records", "TriggerPlanJsonDatabase has no records; configured trigger plans cannot execute during battle bootstrap.", nameof(TriggerPlanJsonDatabase), code: "moba.trigger.plan.empty", category: MobaRuntimeValidationCategory.Config);
                 return;
             }
 
@@ -44,13 +50,14 @@ namespace AbilityKit.Demo.Moba.Services
             {
                 var record = records[i];
                 var path = $"trigger.records[{i}].{record.TriggerId}";
-                ValidateRecord(database, eventRegistry, record, path, ids, report);
+                ValidateRecord(database, eventRegistry, payloadRegistry, record, path, ids, report);
             }
         }
 
         private static void ValidateRecord(
             TriggerPlanJsonDatabase database,
             MobaEventSubscriptionRegistry eventRegistry,
+            IPayloadAccessorRegistry payloadRegistry,
             TriggerPlanJsonDatabase.Record record,
             string path,
             HashSet<int> ids,
@@ -79,7 +86,8 @@ namespace AbilityKit.Demo.Moba.Services
             }
 
             ValidateScopeAndEvent(record, eventRegistry, path, businessId, report);
-            ValidatePlan(record.Plan, path + ".plan", businessId, report);
+            var argsType = ResolveEventArgsType(record, eventRegistry);
+            ValidatePlan(record.Plan, argsType, payloadRegistry, path + ".plan", businessId, report);
         }
 
         private static void ValidateScopeAndEvent(TriggerPlanJsonDatabase.Record record, MobaEventSubscriptionRegistry eventRegistry, string path, string businessId, MobaRuntimeValidationReport report)
@@ -89,40 +97,67 @@ namespace AbilityKit.Demo.Moba.Services
                 report.Error(SourceName, path + ".scope", $"trigger plan scope is not recognized. scope={record.Scope}", businessId, code: "moba.trigger.plan.invalid_scope", category: MobaRuntimeValidationCategory.Config, businessNumericId: record.TriggerId);
             }
 
-            if (record.Scope == TriggerPlanScope.OwnerBound || record.Scope == TriggerPlanScope.Global)
+            var hasEventName = !string.IsNullOrWhiteSpace(record.EventName);
+            var hasEventId = record.EventId != 0;
+            if (!hasEventName && !hasEventId)
             {
-                if (string.IsNullOrWhiteSpace(record.EventName))
-                {
-                    report.Error(SourceName, path + ".eventName", $"{record.Scope} trigger plan must declare event name.", businessId, code: "moba.trigger.plan.event_name_missing", category: MobaRuntimeValidationCategory.Config, businessNumericId: record.TriggerId);
-                }
+                // Eventless records are explicit plans resolved and executed by trigger id.
+                return;
+            }
 
-                if (record.EventId == 0)
-                {
-                    report.Error(SourceName, path + ".eventId", $"{record.Scope} trigger plan must declare non-zero event id.", businessId, code: "moba.trigger.plan.event_id_missing", category: MobaRuntimeValidationCategory.Config, businessNumericId: record.TriggerId);
-                }
+            if (!hasEventName)
+            {
+                report.Error(SourceName, path + ".eventName", $"{record.Scope} trigger plan with an event id must declare event name.", businessId, code: "moba.trigger.plan.event_name_missing", category: MobaRuntimeValidationCategory.Config, businessNumericId: record.TriggerId);
+                return;
+            }
 
-                if (eventRegistry == null)
-                {
-                    report.Warning(SourceName, path + ".eventRegistry", "MobaEventSubscriptionRegistry is not resolved; event args type cannot be checked.", businessId, code: "moba.trigger.plan.event_registry_missing", category: MobaRuntimeValidationCategory.Config, businessNumericId: record.TriggerId);
-                    return;
-                }
+            if (!hasEventId)
+            {
+                report.Error(SourceName, path + ".eventId", $"{record.Scope} trigger plan with an event name must declare non-zero event id.", businessId, code: "moba.trigger.plan.event_id_missing", category: MobaRuntimeValidationCategory.Config, businessNumericId: record.TriggerId);
+                return;
+            }
 
-                if (!string.IsNullOrWhiteSpace(record.EventName) && (!eventRegistry.TryGetArgsType(record.EventName, out var argsType) || argsType == null))
-                {
-                    report.Error(SourceName, path + ".eventName", $"trigger event is not registered. eventName={record.EventName}", businessId, code: "moba.trigger.plan.event_unregistered", category: MobaRuntimeValidationCategory.Config, businessNumericId: record.TriggerId);
-                }
+            if (eventRegistry == null)
+            {
+                report.Warning(SourceName, path + ".eventRegistry", "MobaEventSubscriptionRegistry is not resolved; event args type cannot be checked.", businessId, code: "moba.trigger.plan.event_registry_missing", category: MobaRuntimeValidationCategory.Config, businessNumericId: record.TriggerId);
+                return;
+            }
+
+            if (!eventRegistry.TryGetArgsType(record.EventName, out var argsType) || argsType == null)
+            {
+                report.Error(SourceName, path + ".eventName", $"trigger event is not registered. eventName={record.EventName}", businessId, code: "moba.trigger.plan.event_unregistered", category: MobaRuntimeValidationCategory.Config, businessNumericId: record.TriggerId);
             }
         }
 
-        private static void ValidatePlan(TriggerPlan<object> plan, string path, string businessId, MobaRuntimeValidationReport report)
+        private static Type ResolveEventArgsType(
+            TriggerPlanJsonDatabase.Record record,
+            MobaEventSubscriptionRegistry eventRegistry)
         {
-            ValidateNumericRef(plan.PredicateArg0, path + ".predicate.arg0", businessId, report);
-            ValidateNumericRef(plan.PredicateArg1, path + ".predicate.arg1", businessId, report);
-            ValidatePredicateExpr(plan.PredicateExpr, path + ".predicateExpr", businessId, report);
-            ValidateActions(plan.Actions, path + ".actions", businessId, report);
+            if (eventRegistry == null || string.IsNullOrWhiteSpace(record.EventName)) return null;
+            return eventRegistry.TryGetArgsType(record.EventName, out var argsType) ? argsType : null;
         }
 
-        private static void ValidatePredicateExpr(PredicateExprPlan expr, string path, string businessId, MobaRuntimeValidationReport report)
+        private static void ValidatePlan(
+            TriggerPlan<object> plan,
+            Type argsType,
+            IPayloadAccessorRegistry payloadRegistry,
+            string path,
+            string businessId,
+            MobaRuntimeValidationReport report)
+        {
+            ValidateNumericRef(plan.PredicateArg0, argsType, payloadRegistry, path + ".predicate.arg0", businessId, report);
+            ValidateNumericRef(plan.PredicateArg1, argsType, payloadRegistry, path + ".predicate.arg1", businessId, report);
+            ValidatePredicateExpr(plan.PredicateExpr, argsType, payloadRegistry, path + ".predicateExpr", businessId, report);
+            ValidateActions(plan.Actions, argsType, payloadRegistry, path + ".actions", businessId, report);
+        }
+
+        private static void ValidatePredicateExpr(
+            PredicateExprPlan expr,
+            Type argsType,
+            IPayloadAccessorRegistry payloadRegistry,
+            string path,
+            string businessId,
+            MobaRuntimeValidationReport report)
         {
             var nodes = expr.Nodes;
             if (nodes == null) return;
@@ -130,12 +165,18 @@ namespace AbilityKit.Demo.Moba.Services
             for (int i = 0; i < nodes.Length; i++)
             {
                 var node = nodes[i];
-                ValidateNumericRef(node.Left, $"{path}.nodes[{i}].left", businessId, report);
-                ValidateNumericRef(node.Right, $"{path}.nodes[{i}].right", businessId, report);
+                ValidateNumericRef(node.Left, argsType, payloadRegistry, $"{path}.nodes[{i}].left", businessId, report);
+                ValidateNumericRef(node.Right, argsType, payloadRegistry, $"{path}.nodes[{i}].right", businessId, report);
             }
         }
 
-        private static void ValidateActions(ActionCallPlan[] actions, string path, string businessId, MobaRuntimeValidationReport report)
+        private static void ValidateActions(
+            ActionCallPlan[] actions,
+            Type argsType,
+            IPayloadAccessorRegistry payloadRegistry,
+            string path,
+            string businessId,
+            MobaRuntimeValidationReport report)
         {
             if (actions == null || actions.Length == 0)
             {
@@ -154,7 +195,7 @@ namespace AbilityKit.Demo.Moba.Services
                 }
 
                 ValidateActionSchedule(action, actionPath, businessId, report);
-                ValidateActionArgs(action, actionPath, businessId, report);
+                ValidateActionArgs(action, argsType, payloadRegistry, actionPath, businessId, report);
             }
         }
 
@@ -171,7 +212,13 @@ namespace AbilityKit.Demo.Moba.Services
             }
         }
 
-        private static void ValidateActionArgs(ActionCallPlan action, string path, string businessId, MobaRuntimeValidationReport report)
+        private static void ValidateActionArgs(
+            ActionCallPlan action,
+            Type argsType,
+            IPayloadAccessorRegistry payloadRegistry,
+            string path,
+            string businessId,
+            MobaRuntimeValidationReport report)
         {
             if (!ActionSchemaRegistry.TryGet(action.Id, out var schema) || schema == null)
             {
@@ -188,7 +235,7 @@ namespace AbilityKit.Demo.Moba.Services
 
             for (int i = 0; i < args.Length; i++)
             {
-                ValidateNumericRef(args[i].Value.Ref, path + ".args." + args[i].Key, businessId, report);
+                ValidateNumericRef(args[i].Value.Ref, argsType, payloadRegistry, path + ".args." + args[i].Key, businessId, report);
             }
         }
 
@@ -221,7 +268,13 @@ namespace AbilityKit.Demo.Moba.Services
             return positional.ToArray();
         }
 
-        private static void ValidateNumericRef(NumericValueRef valueRef, string path, string businessId, MobaRuntimeValidationReport report)
+        private static void ValidateNumericRef(
+            NumericValueRef valueRef,
+            Type argsType,
+            IPayloadAccessorRegistry payloadRegistry,
+            string path,
+            string businessId,
+            MobaRuntimeValidationReport report)
         {
             switch (valueRef.Kind)
             {
@@ -229,6 +282,19 @@ namespace AbilityKit.Demo.Moba.Services
                     if (valueRef.FieldId == 0)
                     {
                         report.Error(SourceName, path, "payload field ref must declare non-zero field id.", businessId, code: "moba.trigger.plan.payload_field_missing", category: MobaRuntimeValidationCategory.Config);
+                    }
+                    else if (argsType != null
+                             && payloadRegistry != null
+                             && payloadRegistry.TryIsFieldSupported(argsType, valueRef.FieldId, out var supported)
+                             && !supported)
+                    {
+                        report.Error(
+                            SourceName,
+                            path,
+                            $"payload field is not supported by trigger event args. argsType={argsType.Name}, fieldId={valueRef.FieldId}",
+                            businessId,
+                            code: "moba.trigger.plan.payload_field_incompatible",
+                            category: MobaRuntimeValidationCategory.Config);
                     }
                     break;
                 case ENumericValueRefKind.Blackboard:

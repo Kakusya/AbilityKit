@@ -13,6 +13,7 @@ namespace AbilityKit.Game.Flow
         private Action<EnterMobaGameRes> _enterGameReceived;
         private Action<MobaDamageEventSnapshotEntry[]> _damageEventsReceived;
         private Action<MobaSkillStateSnapshotEntry[]> _skillStatesReceived;
+        private Action<MobaPresentationCueSnapshotEntry[]> _presentationCuesReceived;
 
         public BattleHudSnapshotController(BattleHudSnapshotControllerFactory factory = null)
         {
@@ -26,13 +27,15 @@ namespace AbilityKit.Game.Flow
             BattleContext ctx,
             Action<EnterMobaGameRes> enterGameReceived,
             Action<MobaDamageEventSnapshotEntry[]> damageEventsReceived,
-            Action<MobaSkillStateSnapshotEntry[]> skillStatesReceived)
+            Action<MobaSkillStateSnapshotEntry[]> skillStatesReceived,
+            Action<MobaPresentationCueSnapshotEntry[]> presentationCuesReceived = null)
         {
             ClearSubscriptions();
 
             _enterGameReceived = enterGameReceived;
             _damageEventsReceived = damageEventsReceived;
             _skillStatesReceived = skillStatesReceived;
+            _presentationCuesReceived = presentationCuesReceived;
 
             if (ctx == null) return false;
             if (!ctx.TryGetFrameSnapshots(out var snapshots)) return false;
@@ -42,7 +45,8 @@ namespace AbilityKit.Game.Flow
                 snapshots,
                 OnEnterGameSnapshot,
                 OnDamageEventSnapshot,
-                OnSkillStateSnapshot);
+                OnSkillStateSnapshot,
+                _presentationCuesReceived != null ? OnPresentationCueSnapshot : (Action<ISnapshotEnvelope, MobaPresentationCueSnapshotEntry[]>)null);
             IsBound = true;
             return true;
         }
@@ -58,6 +62,7 @@ namespace AbilityKit.Game.Flow
             _enterGameReceived = null;
             _damageEventsReceived = null;
             _skillStatesReceived = null;
+            _presentationCuesReceived = null;
         }
 
         private void ClearSubscriptions()
@@ -80,13 +85,18 @@ namespace AbilityKit.Game.Flow
         {
             _skillStatesReceived?.Invoke(entries);
         }
+
+        private void OnPresentationCueSnapshot(ISnapshotEnvelope packet, MobaPresentationCueSnapshotEntry[] entries)
+        {
+            _presentationCuesReceived?.Invoke(entries);
+        }
     }
 
     internal sealed class BattleHudSnapshotControllerFactory
     {
         public BattleSubscriptionGroup CreateSubscriptions()
         {
-            return new BattleSubscriptionGroup(3);
+            return new BattleSubscriptionGroup(4);
         }
 
         public void BindSnapshots(
@@ -94,7 +104,8 @@ namespace AbilityKit.Game.Flow
             AbilityKit.Core.Snapshots.Routing.FrameSnapshotDispatcher snapshots,
             Action<ISnapshotEnvelope, EnterMobaGameRes> enterGameReceived,
             Action<ISnapshotEnvelope, MobaDamageEventSnapshotEntry[]> damageEventsReceived,
-            Action<ISnapshotEnvelope, MobaSkillStateSnapshotEntry[]> skillStatesReceived)
+            Action<ISnapshotEnvelope, MobaSkillStateSnapshotEntry[]> skillStatesReceived,
+            Action<ISnapshotEnvelope, MobaPresentationCueSnapshotEntry[]> presentationCuesReceived = null)
         {
             if (subscriptions == null) return;
             if (snapshots == null) return;
@@ -108,6 +119,12 @@ namespace AbilityKit.Game.Flow
             subscriptions.Add(snapshots.Subscribe<MobaSkillStateSnapshotEntry[]>(
                 MobaOpCodes.Snapshot.SkillState,
                 skillStatesReceived));
+            if (presentationCuesReceived != null)
+            {
+                subscriptions.Add(snapshots.Subscribe<MobaPresentationCueSnapshotEntry[]>(
+                    MobaOpCodes.Snapshot.PresentationCue,
+                    presentationCuesReceived));
+            }
         }
     }
 }

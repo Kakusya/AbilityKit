@@ -38,6 +38,7 @@ namespace AbilityKit.Demo.Moba.Systems
             public const string AddShield = "add_shield";
             public const string RemoveShield = "remove_shield";
             public const string RemoveSummon = "remove_summon";
+            public const string RemoveProjectile = "remove_projectile";
             public const string RemoveArea = "remove_area";
             public const string SpawnArea = "spawn_area";
             public const string PlayEffect = "play_effect";
@@ -46,6 +47,7 @@ namespace AbilityKit.Demo.Moba.Systems
             public const string Summon = "summon";
             public const string SpawnSummon = "spawn_summon";
             public const string PlayPresentation = "play_presentation";
+            public const string Emit = "emit";
             public const string EndGame = "end_game";
             public const string SetGameplayVar = "set_gameplay_var";
             public const string AddGameplayVar = "add_gameplay_var";
@@ -145,10 +147,12 @@ namespace AbilityKit.Demo.Moba.Systems
         public static ActionId AddShieldId => GetActionId(Actions.AddShield);
         public static ActionId RemoveShieldId => GetActionId(Actions.RemoveShield);
         public static ActionId RemoveSummonId => GetActionId(Actions.RemoveSummon);
+        public static ActionId RemoveProjectileId => GetActionId(Actions.RemoveProjectile);
         public static ActionId RemoveAreaId => GetActionId(Actions.RemoveArea);
         public static ActionId SpawnAreaId => GetActionId(Actions.SpawnArea);
         public static ActionId SpawnSummonId => GetActionId(Actions.SpawnSummon);
         public static ActionId PlayPresentationId => GetActionId(Actions.PlayPresentation);
+        public static ActionId EmitId => GetActionId(Actions.Emit);
         public static ActionId EndGameId => GetActionId(Actions.EndGame);
         public static ActionId SetGameplayVarId => GetActionId(Actions.SetGameplayVar);
         public static ActionId AddGameplayVarId => GetActionId(Actions.AddGameplayVar);

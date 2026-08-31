@@ -27,6 +27,9 @@ namespace AbilityKit.Demo.Moba.Share.Config
         public float Speed;
         public int LifetimeMs;
         public float MaxDistance;
+        public float CollisionWidth;
+        public float CollisionHeight;
+        public float CollisionLength;
 
         public int HitPolicyKind;
         public int HitsRemaining;
@@ -45,6 +48,11 @@ namespace AbilityKit.Demo.Moba.Share.Config
         public int ReturnAfterMs;
         public float ReturnSpeed;
         public float ReturnStopDistance;
+
+        public string StateMachineProfileId;
+        public float SpawnRandomOffsetX;
+        public float SpawnRandomOffsetY;
+        public float SpawnRandomOffsetZ;
     }
 
     [Serializable]
@@ -118,6 +126,11 @@ namespace AbilityKit.Demo.Moba.Share.Config
 
         public int[] SkillIds;
         public int[] PassiveSkillIds;
+
+        public int BrainId;
+
+        /// <summary>继承属性配置 id：指向属性继承表（summon_attr_inherits）获取继承属性占比。0 = 不继承。</summary>
+        public int InheritAttributeConfigId;
 
         public int[] DefaultComponentTemplateIds;
 
@@ -197,5 +210,17 @@ namespace AbilityKit.Demo.Moba.Share.Config
         public int AttrId;
         public float Ratio;
         public float Add;
+    }
+
+    /// <summary>
+    /// 召唤物继承属性配置表条目：
+    /// 召唤物生成时按 施法者属性 × Ratio + Add 写入自身属性基础值。
+    /// </summary>
+    [Serializable]
+    public sealed class SummonAttrInheritDTO
+    {
+        public int Id;
+        public string Name;
+        public SummonAttrScaleDTO[] Scales;
     }
 }

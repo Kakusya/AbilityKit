@@ -25,6 +25,7 @@ namespace AbilityKit.Demo.Moba.Services
         Summon = 5,
         Periodic = 6,
         Presentation = 7,
+        ProjectileLauncher = 8,
     }
 
     public enum MobaSkillRuntimeLifecycleEventKind
@@ -155,6 +156,46 @@ namespace AbilityKit.Demo.Moba.Services
         public int BlackboardEntryCount { get; }
         public IReadOnlyList<MobaSkillRuntimeChildRef> Children { get; }
         public bool IsWaitingChildren => PipelineEnded && !IsEnded && PendingChildren > 0;
+    }
+
+    public readonly struct MobaSkillRuntimeBlackboardEntryDiagnostics
+    {
+        public MobaSkillRuntimeBlackboardEntryDiagnostics(
+            in MobaSkillRuntimeBlackboardKey key,
+            in MobaSkillRuntimeValue value,
+            int collectionCount)
+        {
+            Key = key;
+            Value = value;
+            CollectionCount = collectionCount;
+        }
+
+        public MobaSkillRuntimeBlackboardKey Key { get; }
+        public MobaSkillRuntimeValue Value { get; }
+        public int CollectionCount { get; }
+        public bool IsCollection =>
+            Key.ValueKind == MobaSkillRuntimeValueKind.ActorIdSet ||
+            Key.ValueKind == MobaSkillRuntimeValueKind.ContextIdSet;
+    }
+
+    public readonly struct MobaSkillRuntimeDetailDiagnostics
+    {
+        public MobaSkillRuntimeDetailDiagnostics(
+            in MobaSkillRuntimeDiagnostics runtime,
+            in Vec3 aimPos,
+            in Vec3 aimDir,
+            MobaSkillRuntimeBlackboardEntryDiagnostics[] blackboardEntries)
+        {
+            Runtime = runtime;
+            AimPos = aimPos;
+            AimDir = aimDir;
+            BlackboardEntries = blackboardEntries ?? Array.Empty<MobaSkillRuntimeBlackboardEntryDiagnostics>();
+        }
+
+        public MobaSkillRuntimeDiagnostics Runtime { get; }
+        public Vec3 AimPos { get; }
+        public Vec3 AimDir { get; }
+        public IReadOnlyList<MobaSkillRuntimeBlackboardEntryDiagnostics> BlackboardEntries { get; }
     }
 
     public readonly struct MobaSkillRuntimeScanResult
@@ -457,6 +498,35 @@ namespace AbilityKit.Demo.Moba.Services
             _contextIdSets.Clear();
         }
 
+        public int CopyDiagnosticsTo(List<MobaSkillRuntimeBlackboardEntryDiagnostics> results)
+        {
+            if (results == null) return 0;
+
+            var start = results.Count;
+            foreach (var pair in _keys)
+            {
+                var key = pair.Value;
+                if (_values.TryGetValue(key.Id, out var value))
+                {
+                    results.Add(new MobaSkillRuntimeBlackboardEntryDiagnostics(key, value, 0));
+                    continue;
+                }
+
+                if (_actorIdSets.TryGetValue(key.Id, out var actors))
+                {
+                    results.Add(new MobaSkillRuntimeBlackboardEntryDiagnostics(key, default, actors.Count));
+                    continue;
+                }
+
+                if (_contextIdSets.TryGetValue(key.Id, out var contexts))
+                {
+                    results.Add(new MobaSkillRuntimeBlackboardEntryDiagnostics(key, default, contexts.Count));
+                }
+            }
+
+            return results.Count - start;
+        }
+
         private bool RegisterSetKey(in MobaSkillRuntimeBlackboardKey key, MobaSkillRuntimeValueKind expectedKind)
         {
             return key.ValueKind == expectedKind && Register(in key);
@@ -548,9 +618,9 @@ namespace AbilityKit.Demo.Moba.Services
         public MobaSkillRuntimeChildRef Child { get; }
         public bool IsValid => RetainId != 0L && Runtime.IsValid && Child.IsValid;
 
-        public bool Equals(MobaSkillRuntimeRetainHandle other) => RetainId == other.RetainId && Runtime.Equals(other.Runtime);
+        public bool Equals(MobaSkillRuntimeRetainHandle other) => RetainId == other.RetainId && Runtime.Equals(other.Runtime) && Child.Equals(other.Child);
         public override bool Equals(object obj) => obj is MobaSkillRuntimeRetainHandle other && Equals(other);
-        public override int GetHashCode() => (RetainId.GetHashCode() * 397) ^ Runtime.GetHashCode();
+        public override int GetHashCode() => (((RetainId.GetHashCode() * 397) ^ Runtime.GetHashCode()) * 397) ^ Child.GetHashCode();
         public override string ToString() => IsValid ? RetainId + "->" + Runtime + "/" + Child : "Invalid";
     }
 
@@ -660,6 +730,19 @@ namespace AbilityKit.Demo.Moba.Services
                 _children.Count,
                 Blackboard.Count,
                 children);
+        }
+
+        public MobaSkillRuntimeDetailDiagnostics CreateDetailDiagnosticsSnapshot()
+        {
+            var entries = new List<MobaSkillRuntimeBlackboardEntryDiagnostics>(Blackboard.Count);
+            Blackboard.CopyDiagnosticsTo(entries);
+            return new MobaSkillRuntimeDetailDiagnostics(
+                CreateDiagnosticsSnapshot(),
+                AimPos,
+                AimDir,
+                entries.Count == 0
+                    ? Array.Empty<MobaSkillRuntimeBlackboardEntryDiagnostics>()
+                    : entries.ToArray());
         }
 
         public int CopyChildrenTo(List<MobaSkillRuntimeChildRef> results, MobaSkillRuntimeChildKind kind = MobaSkillRuntimeChildKind.Unknown)

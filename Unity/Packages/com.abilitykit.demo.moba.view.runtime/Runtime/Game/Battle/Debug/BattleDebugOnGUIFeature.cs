@@ -1,45 +1,36 @@
-using System;
-using AbilityKit.Ability.Host;
-using AbilityKit.Core.Mathematics;
 using AbilityKit.Demo.Moba;
-using AbilityKit.Demo.Moba.Services;
-using AbilityKit.Demo.Moba.Services.EntityConstruction;
-using AbilityKit.Protocol.Moba;
 using UnityEngine;
 
 namespace AbilityKit.Game.Flow
 {
     public sealed class BattleDebugOnGUIFeature : IGamePhaseFeature, IOnGUIFeature
     {
-        private BattleContext _ctx;
-        private BattleLocalDebugController _localDebug;
-        private string _localDebugMessage;
+        private const int PauseControlWindowId = 0xB0BA;
+
+        private readonly BattleDebugPublicationOwner _publication = new BattleDebugPublicationOwner();
 
         public void OnAttach(in GamePhaseContext ctx)
         {
-            ctx.Features.TryGet(out _ctx);
-            ctx.Features.TryGet(out BattleHudFeature hud);
-            _localDebug = new BattleLocalDebugController(_ctx, () => hud);
-            BattleFlowDebugProvider.Current = _ctx;
+            _publication.Refresh(in ctx);
         }
 
         public void OnDetach(in GamePhaseContext ctx)
         {
-            if (ReferenceEquals(BattleFlowDebugProvider.Current, _ctx))
-            {
-                BattleFlowDebugProvider.Current = null;
-            }
-            _localDebug = null;
-            _ctx = null;
+            _publication.Dispose();
         }
 
         public void Tick(in GamePhaseContext ctx, float deltaTime)
         {
+            // 恢复推进由 BattleSessionFeature 的正式生命周期负责；Debug feature 仅展示控制与诊断。
         }
 
         public void OnGUI(in GamePhaseContext ctx)
         {
-#if UNITY_EDITOR
+            // 断线演示入口：多人战斗期间恒显（与 DebugEnabled 无关），镜像 shooter 的
+            // Battle Control (Sync Demo) 窗口。本地模式没有房间流控制器，不画。
+            DrawPauseControlWindow(ctx);
+#if UNITY_EDITOR || DEVELOPMENT_BUILD
+            _publication.Refresh(in ctx);
             if (!ctx.Entry.DebugEnabled) return;
 
             var sink = ctx.Entry.Get<IFlowCommandSink>();
@@ -63,339 +54,79 @@ namespace AbilityKit.Game.Flow
                 }
             }
             GUILayout.EndArea();
-
-            DrawLocalDebugPanel();
 #endif
         }
 
-        private void DrawLocalDebugPanel()
+        private static void DrawPauseControlWindow(in GamePhaseContext ctx)
         {
-#if UNITY_EDITOR
-            if (_localDebug == null || !_localDebug.IsAvailable) return;
-
-            var width = 240f;
-            GUILayout.BeginArea(new Rect(Screen.width - width - 10f, 10f, width, 185f), "Local Debug", GUI.skin.window);
-            GUILayout.Label($"Player: {_localDebug.CurrentPlayerId}");
-            GUILayout.Label($"Actor: {_localDebug.CurrentActorId}");
-
-            if (GUILayout.Button("Switch Control", GUILayout.Height(28)))
+            var sink = ctx.Entry.Get<IFlowCommandSink>();
+            if (sink == null || sink.CurrentRootPhase != MobaRootState.Battle)
             {
-                RunLocalDebugAction(_localDebug.TrySwitchControl);
+                return;
             }
 
-            if (GUILayout.Button("Reset Cooldowns", GUILayout.Height(28)))
+            // 仅多人（GatewayRemote）战斗：本地模式同样会进 Battle 根状态，但没有房间流。
+            if (!ctx.Entry.TryGet(out MultiplayerRoomFlowController controller) || controller == null)
             {
-                RunLocalDebugAction(_localDebug.TryResetCooldowns);
+                return;
             }
 
-            GUILayout.BeginHorizontal();
-            if (GUILayout.Button("Spawn Ally", GUILayout.Height(28)))
-            {
-                RunLocalDebugAction(_localDebug.TrySpawnAlly);
-            }
-
-            if (GUILayout.Button("Spawn Enemy", GUILayout.Height(28)))
-            {
-                RunLocalDebugAction(_localDebug.TrySpawnEnemy);
-            }
-            GUILayout.EndHorizontal();
-
-            if (!string.IsNullOrEmpty(_localDebugMessage))
-            {
-                GUILayout.Label(_localDebugMessage);
-            }
-            GUILayout.EndArea();
-#endif
+            var isPaused = MobaBattlePauseController.IsPaused;
+            var hasRecoveryError = !string.IsNullOrEmpty(MobaBattlePauseController.RecoveryError);
+            var width = 248f;
+            // IMGUI Window 的标题栏和内边距也占高度。暂停态比运行态多一行帧号，
+            // 错误态还会多一行诊断；为当前状态只绘制一个主操作按钮，并保留足够高度，
+            // 避免 Resume 按钮落到窗口裁剪区域之外。
+            var height = isPaused ? (hasRecoveryError ? 190f : 166f) : 138f;
+            var rect = new Rect(Screen.width - width - 12f, 12f, width, height);
+            var context = ctx;
+            GUILayout.Window(PauseControlWindowId, rect, id => DrawPauseControlWindowContent(id, controller, context), "Battle Control (FrameSync Demo)");
         }
 
-        private void RunLocalDebugAction(LocalDebugAction action)
+        private static void DrawPauseControlWindowContent(int windowId, MultiplayerRoomFlowController controller, in GamePhaseContext ctx)
         {
-            if (action == null) return;
-            action(out _localDebugMessage);
-        }
-
-        private delegate bool LocalDebugAction(out string message);
-    }
-
-    internal sealed class BattleLocalDebugController
-    {
-        private const float SpawnForwardOffset = 2f;
-        private const float SpawnSideOffset = 1.25f;
-
-        private readonly BattleContext _ctx;
-        private readonly Func<BattleHudFeature> _hudResolver;
-
-        public BattleLocalDebugController(BattleContext ctx, Func<BattleHudFeature> hudResolver)
-        {
-            _ctx = ctx;
-            _hudResolver = hudResolver;
-        }
-
-        public bool IsAvailable => _ctx != null && _ctx.Session != null && _ctx.Plan.HostMode == BattleStartConfig.BattleHostMode.Local;
-
-        public string CurrentPlayerId => _ctx != null ? _ctx.ResolveLocalControlPlayerId() : string.Empty;
-
-        public int CurrentActorId => _ctx != null ? _ctx.LocalActorId : 0;
-
-        public bool TrySwitchControl(out string message)
-        {
-            message = string.Empty;
-            if (!IsAvailable)
+            var isPaused = MobaBattlePauseController.IsPaused;
+            var isRecovering = MobaBattlePauseController.IsRecovering;
+            GUILayout.Label($"State: {(isRecovering ? "Reconnecting…" : isPaused ? "Paused (disconnected)" : "Running")}");
+            GUILayout.Label($"Room: {controller.CurrentRoomId}");
+            if (isPaused)
             {
-                message = "local battle unavailable";
-                return false;
+                GUILayout.Label($"Paused at confirmed frame: {MobaBattlePauseController.PausedAtConfirmedFrame}");
             }
 
-            var players = _ctx.Plan.LaunchSpec.Players;
-            if (players == null || players.Length <= 1)
+            var recoveryError = MobaBattlePauseController.RecoveryError;
+            if (!string.IsNullOrEmpty(recoveryError))
             {
-                message = "need at least 2 players";
-                return false;
+                GUILayout.Label($"Error: {recoveryError}");
             }
 
-            var current = CurrentPlayerId;
-            var currentIndex = 0;
-            for (var i = 0; i < players.Length; i++)
+            ctx.Entry.TryGet(out BattleContext battleContext);
+
+            // 暂停 = 断开战斗连接模拟断线：帧停推→服务器战斗继续。
+            // 恢复 = 同一会话重连 + CatchUp 补帧历史注入 + 追上后重开输入（帧同步语义）。
+            // 只绘制当前状态可执行的主操作，避免两个按钮纵向堆叠导致恢复按钮被窗口裁剪。
+            if (isPaused)
             {
-                if (string.Equals(players[i].PlayerId.Value, current, StringComparison.OrdinalIgnoreCase))
+                GUI.enabled = !isRecovering && battleContext != null && battleContext.Session != null;
+                if (GUILayout.Button(
+                        isRecovering ? "Resuming…" : "Resume & Catch Up",
+                        GUILayout.Height(34f)))
                 {
-                    currentIndex = i;
-                    break;
+                    MobaBattlePauseController.Resume(battleContext);
+                }
+            }
+            else
+            {
+                GUI.enabled = !isRecovering && battleContext != null && battleContext.Session != null;
+                if (GUILayout.Button("Pause Client", GUILayout.Height(34f)))
+                {
+                    MobaBattlePauseController.Pause(battleContext);
                 }
             }
 
-            for (var step = 1; step <= players.Length; step++)
-            {
-                var next = players[(currentIndex + step) % players.Length];
-                if (TrySetControlPlayer(next.PlayerId, out message))
-                {
-                    return true;
-                }
-            }
-
-            if (string.IsNullOrEmpty(message)) message = "no controllable player found";
-            return false;
+            GUI.enabled = true;
+            GUI.DragWindow();
         }
 
-        public bool TrySetControlPlayer(PlayerId playerId, out string message)
-        {
-            message = string.Empty;
-            if (!IsAvailable)
-            {
-                message = "local battle unavailable";
-                return false;
-            }
-
-            if (string.IsNullOrEmpty(playerId.Value))
-            {
-                message = "player id is empty";
-                return false;
-            }
-
-            if (!TryResolveWorldService<MobaPlayerActorMapService>(out var playerActors) || playerActors == null)
-            {
-                message = "player actor map missing";
-                return false;
-            }
-
-            if (!playerActors.TryGetActorId(playerId, out var actorId) || actorId <= 0)
-            {
-                message = $"actor not found for {playerId.Value}";
-                return false;
-            }
-
-            _ctx.LocalControlPlayerId = playerId.Value;
-            _ctx.LocalActorId = actorId;
-            _hudResolver?.Invoke()?.RefreshLocalControlSkillTemplates();
-            message = $"control {playerId.Value} actor={actorId}";
-            return true;
-        }
-
-        public bool TryResetCooldowns(out string message)
-        {
-            message = string.Empty;
-            if (!TryResolveCurrentActor(out var actor, out message)) return false;
-            if (!actor.hasSkillLoadout || actor.skillLoadout.ActiveSkills == null)
-            {
-                message = "active skills missing";
-                return false;
-            }
-
-            var count = 0;
-            var skills = actor.skillLoadout.ActiveSkills;
-            for (var i = 0; i < skills.Length; i++)
-            {
-                var skill = skills[i];
-                if (skill == null) continue;
-                skill.CooldownEndTimeMs = 0L;
-                skill.CooldownDurationMs = 0;
-                count++;
-            }
-
-            message = $"reset cd count={count}";
-            return count > 0;
-        }
-
-        public bool TrySpawnAlly(out string message)
-        {
-            return TrySpawnUnit(enemy: false, out message);
-        }
-
-        public bool TrySpawnEnemy(out string message)
-        {
-            return TrySpawnUnit(enemy: true, out message);
-        }
-
-        private bool TrySpawnUnit(bool enemy, out string message)
-        {
-            message = string.Empty;
-            if (!TryResolveCurrentActor(out var controlledActor, out message)) return false;
-            if (!TryFindSpawnTemplate(enemy, controlledActor, out var template, out message)) return false;
-            if (!TryResolveWorldService<IMobaActorSpawnService>(out var spawn) || spawn == null)
-            {
-                message = "spawn service missing";
-                return false;
-            }
-
-            var basePos = controlledActor.hasTransform ? controlledActor.transform.Value.Position : Vec3.Zero;
-            var offset = enemy ? new Vec3(SpawnSideOffset, 0f, SpawnForwardOffset) : new Vec3(-SpawnSideOffset, 0f, SpawnForwardOffset);
-            var spawnPos = basePos + offset;
-            var playerId = new PlayerId($"debug_{(enemy ? "enemy" : "ally")}_{DateTime.UtcNow.Ticks}");
-            var loadout = new MobaPlayerLoadout(
-                playerId,
-                template.TeamId,
-                template.HeroId,
-                template.AttributeTemplateId,
-                template.Level,
-                template.BasicAttackSkillId,
-                template.SkillIds,
-                template.SpawnIndex,
-                (int)UnitSubType.Minion,
-                (int)EntityMainType.Unit,
-                hasSpawnPosition: 1,
-                spawnX: spawnPos.X,
-                spawnY: spawnPos.Y,
-                spawnZ: spawnPos.Z);
-
-            var info = new MobaEntityInfo(
-                actorId: 0,
-                kind: MobaEntityKind.Minion,
-                transform: new Transform3(spawnPos, Quat.Identity, Vec3.One),
-                team: (Team)loadout.TeamId,
-                mainType: EntityMainType.Unit,
-                unitSubType: UnitSubType.Minion,
-                ownerPlayer: playerId,
-                templateId: loadout.AttributeTemplateId);
-            var spec = new MobaActorBuildSpec(in info, MobaActorBuildSourceKind.PlayerLoadout, loadout.HeroId, ownerActorId: 0);
-            var request = MobaActorSpawnRequest.FromSpec(in spec);
-            request.AllocateActorIdIfMissing = true;
-            request.Initializer = (entity, _) =>
-            {
-                if (TryResolveWorldService<ActorEntityInitPipeline>(out var init) && init != null)
-                {
-                    init.InitializeFromLoadout(entity, in loadout);
-                }
-            };
-
-            if (!spawn.TrySpawn(in request, out var result) || !result.Success)
-            {
-                message = string.IsNullOrEmpty(result.Error) ? "spawn failed" : result.Error;
-                return false;
-            }
-
-            message = $"spawn {(enemy ? "enemy" : "ally")} actor={result.ActorId}";
-            return true;
-        }
-
-        private bool TryFindSpawnTemplate(bool enemy, global::ActorEntity controlledActor, out MobaPlayerLoadout template, out string message)
-        {
-            template = default;
-            message = string.Empty;
-            var players = _ctx.Plan.LaunchSpec.Players;
-            if (players == null || players.Length == 0)
-            {
-                message = "launch players missing";
-                return false;
-            }
-
-            var controlledTeam = controlledActor != null && controlledActor.hasTeam ? (int)controlledActor.team.Value : 0;
-            for (var i = 0; i < players.Length; i++)
-            {
-                var candidate = players[i];
-                var isEnemy = controlledTeam > 0 && candidate.TeamId > 0 && candidate.TeamId != controlledTeam;
-                if (enemy == isEnemy)
-                {
-                    template = candidate;
-                    return true;
-                }
-            }
-
-            template = players[0];
-            if (enemy && controlledTeam > 0)
-            {
-                var fallbackTeam = controlledTeam == (int)Team.Team1 ? (int)Team.Team2 : (int)Team.Team1;
-                template = new MobaPlayerLoadout(
-                    template.PlayerId,
-                    fallbackTeam,
-                    template.HeroId,
-                    template.AttributeTemplateId,
-                    template.Level,
-                    template.BasicAttackSkillId,
-                    template.SkillIds,
-                    template.SpawnIndex,
-                    template.UnitSubType,
-                    template.MainType,
-                    template.HasSpawnPosition,
-                    template.SpawnX,
-                    template.SpawnY,
-                    template.SpawnZ);
-            }
-
-            return true;
-        }
-
-        private bool TryResolveCurrentActor(out global::ActorEntity actor, out string message)
-        {
-            actor = null;
-            message = string.Empty;
-            if (!IsAvailable)
-            {
-                message = "local battle unavailable";
-                return false;
-            }
-
-            if (_ctx.LocalActorId <= 0)
-            {
-                if (!TryRefreshCurrentActorId(out message)) return false;
-            }
-
-            if (!TryResolveWorldService<MobaActorLookupService>(out var actors) || actors == null)
-            {
-                message = "actor lookup missing";
-                return false;
-            }
-
-            if (!actors.TryGetActorEntity(_ctx.LocalActorId, out actor) || actor == null)
-            {
-                message = $"actor missing id={_ctx.LocalActorId}";
-                return false;
-            }
-
-            return true;
-        }
-
-        private bool TryRefreshCurrentActorId(out string message)
-        {
-            var playerId = new PlayerId(CurrentPlayerId);
-            return TrySetControlPlayer(playerId, out message);
-        }
-
-        private bool TryResolveWorldService<T>(out T service) where T : class
-        {
-            service = null;
-            if (_ctx?.Session == null) return false;
-            if (!_ctx.Session.TryGetWorld(out var world) || world?.Services == null) return false;
-            return world.Services.TryResolve(out service) && service != null;
-        }
     }
 }

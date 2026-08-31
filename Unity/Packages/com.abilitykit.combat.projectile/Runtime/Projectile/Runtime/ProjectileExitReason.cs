@@ -9,5 +9,6 @@ namespace AbilityKit.Combat.Projectile
         Manual = 4,
         ReturnArrived = 5,
         ReturnTargetLost = 6,
+        TrackingTargetLost = 7,
     }
 }

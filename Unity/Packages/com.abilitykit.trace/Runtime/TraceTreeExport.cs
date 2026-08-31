@@ -48,16 +48,45 @@ namespace AbilityKit.Trace
             int endReason,
             int childCount,
             object metadata)
+            : this(
+                contextId,
+                rootId,
+                parentId,
+                kind,
+                kindName,
+                0,
+                endedFrame,
+                endReason,
+                childCount,
+                metadata,
+                endedFrame != 0)
+        {
+        }
+
+        public TraceNodeExportDto(
+            long contextId,
+            long rootId,
+            long parentId,
+            int kind,
+            string kindName,
+            int createdFrame,
+            int endedFrame,
+            int endReason,
+            int childCount,
+            object metadata,
+            bool isEnded)
         {
             ContextId = contextId;
             RootId = rootId;
             ParentId = parentId;
             Kind = kind;
             KindName = kindName;
+            CreatedFrame = createdFrame;
             EndedFrame = endedFrame;
             EndReason = endReason;
             ChildCount = childCount;
             Metadata = metadata;
+            IsEnded = isEnded;
         }
 
         public long ContextId { get; }
@@ -65,11 +94,12 @@ namespace AbilityKit.Trace
         public long ParentId { get; }
         public int Kind { get; }
         public string KindName { get; }
+        public int CreatedFrame { get; }
         public int EndedFrame { get; }
         public int EndReason { get; }
         public int ChildCount { get; }
         public object Metadata { get; }
-        public bool IsEnded => EndedFrame != 0;
+        public bool IsEnded { get; }
         public bool IsRoot => ContextId == RootId;
     }
 
@@ -235,10 +265,12 @@ namespace AbilityKit.Trace
                 snapshot.ParentId,
                 snapshot.Kind,
                 registry.GetKindName(snapshot.Kind),
+                snapshot.CreatedFrame,
                 snapshot.EndedFrame,
                 snapshot.EndReason,
                 snapshot.ChildCount,
-                includeMetadata ? snapshot.Metadata : null);
+                includeMetadata ? snapshot.Metadata : null,
+                snapshot.IsEnded);
         }
     }
 }

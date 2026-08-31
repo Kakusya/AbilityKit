@@ -1,3 +1,4 @@
+using AbilityKit.Game.Battle.Hierarchy;
 using AbilityKit.Game.Flow.Battle.Modules;
 using AbilityKit.Game.Flow.Modules;
 using UnityEngine;
@@ -6,9 +7,41 @@ namespace AbilityKit.Game.Flow
 {
     public sealed partial class ConfirmedBattleViewFeature
     {
+        /// <summary>Hierarchy root that owns all categorized view sub-roots.</summary>
+        private BattleViewHierarchyRoot _hierarchyRoot;
+
         public void OnAttach(in GamePhaseContext ctx)
         {
             BindPresentationSession(ctx);
+
+            // Acquire the shared battle-scene hierarchy root. Predicted and confirmed
+            // view features release independent leases during teardown.
+            var hierarchyName = "[Battle:" +
+                                (_confirmedCtx != null ? _confirmedCtx.RuntimeWorldId.ToString() : "unknown") +
+                                ":Confirmed]";
+            _hierarchyRoot = BattleViewHierarchyRoot.Acquire(hierarchyName);
+            var hierarchy = _hierarchyRoot.Manager;
+
+            var resources = PresentationResources;
+            // Make the hierarchy available to the resource provider so newly created
+            // shells are parented under the matching active category root.
+            resources?.SetHierarchyManager(hierarchy);
+            // Expose the hierarchy to sub-features (VFX, binders, etc.).
+            IViewFeatureRuntime runtime = this;
+            runtime.Hierarchy = hierarchy;
+
+            ShellPool = new BattleViewShellPool(
+                factory: modelId => resources?.CreateShellGameObject(actorId: 0, modelId) ?? CreateFallbackShell(modelId),
+                defaultCapacity: 8,
+                maxSize: 16,
+                hierarchy: hierarchy);
+
+            AreaVfxPool = BattleAreaVfxPool.UsingFactory(
+                (templateId, kind) => BattleAreaPoolObjectFactory.Create(resources, templateId, kind),
+                hierarchy: hierarchy,
+                capacityPerKindPerTemplate: 8);
+            CameraController = new BattleViewCameraController(BattleCameraConfig.Default);
+
             EnsureSubFeaturesCreated();
             _subFeatureHost?.Attach(new FeatureModuleContext<ConfirmedBattleViewFeature>(ctx, this));
             OnAllSubFeaturesAttached(ctx);
@@ -18,19 +51,65 @@ namespace AbilityKit.Game.Flow
         {
             if (_confirmedCtx == null) return;
             var worldId = _confirmedCtx.RuntimeWorldId;
-            _confirmedCtx?.Hooks?.ViewBinderReady.Invoke(new ViewBinderReadyEvent(isConfirmed: true, worldId: worldId));
+            _confirmedCtx.Hooks?.ViewBinderReady.Invoke(new ViewBinderReadyEvent(isConfirmed: true, worldId: worldId));
+
+            CameraController?.SetCamera(null);
+        }
+
+        private static GameObject CreateFallbackShell(int modelId)
+        {
+            return new BattleViewPrimitiveFactory().CreateActorFallback(actorId: 0, modelId);
         }
 
         public void OnDetach(in GamePhaseContext ctx)
         {
             _subFeatureHost?.Detach(new FeatureModuleContext<ConfirmedBattleViewFeature>(ctx, this));
+
+            ShellPool?.Clear();
+            ShellPool = null;
+
+            AreaVfxPool?.Clear();
+            AreaVfxPool = null;
+
+            CameraController?.Reset();
+            CameraController = null;
+
+            // Clear the stats overlay's provider list before releasing the hierarchy root.
+            if (_hierarchyRoot != null)
+            {
+                var overlay = _hierarchyRoot.GetComponent<BattleViewPoolStatsOverlay>();
+                overlay?.ClearAllProviders();
+            }
+
+            // Release this feature's lease. The shared root survives until the last
+            // predicted/confirmed view feature has detached.
+            _hierarchyRoot?.Release();
+            _hierarchyRoot = null;
+
             ClearPresentationSession(ctx);
         }
 
         public void Tick(in GamePhaseContext ctx, float deltaTime)
         {
             if (_confirmedCtx?.EntityWorld == null) return;
+
+            // Tick sub-features first so that:
+            //   1. ViewBindingSubFeature.Tick() applies the authoritative snapshot to
+            //      shell GameObjects (interpolation + smoothing).
+            //   2. Camera then reads the same authoritative snapshot position
+            //      (BattleTransformComponent.Position) that the HUD aim preview uses,
+            //      eliminating the one-frame visual pop that occurs when a skill is
+            //      cast while the player is moving.
             _subFeatureHost?.Tick(new FeatureModuleContext<ConfirmedBattleViewFeature>(ctx, this), deltaTime);
+
+            if (CameraController != null &&
+                _confirmedCtx.TryResolveLocalActorId(out var localActorId) &&
+                CameraController.TrackedActorId != localActorId)
+            {
+                CameraController.TrackActor(localActorId);
+            }
+
+            CameraController?.Tick(_confirmedCtx.EntityQuery, deltaTime);
         }
 
         public void RebindAll()

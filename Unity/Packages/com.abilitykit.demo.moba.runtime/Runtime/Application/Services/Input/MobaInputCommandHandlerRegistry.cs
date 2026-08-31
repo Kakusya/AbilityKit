@@ -57,8 +57,35 @@ namespace AbilityKit.Demo.Moba.Services
         public static MobaInputCommandHandlerRegistry CreateScanned()
         {
             MobaInputCommandHandlerRegistry registry = new MobaInputCommandHandlerRegistry();
-            MarkerScanner<MobaInputCommandHandlerAttribute>.ScanAll(registry);
+            if (RegisterGeneratedAndExternalHandlers(registry) == 0)
+            {
+                if (AppContext.TryGetSwitch(
+                        "AbilityKit.Moba.DisableInputCommandHandlerReflectionFallback",
+                        out var reflectionFallbackDisabled) && reflectionFallbackDisabled)
+                {
+                    throw new InvalidOperationException(
+                        "The generated MOBA input command handler manifest is empty and reflection fallback is disabled.");
+                }
+
+                MarkerScanner<MobaInputCommandHandlerAttribute>.Scan(
+                    new[] { typeof(MobaInputCommandHandlerRegistry).Assembly },
+                    registry);
+            }
+
             return registry;
+        }
+
+        private static int RegisterGeneratedAndExternalHandlers(MobaInputCommandHandlerRegistry registry)
+        {
+            var runtimeAssembly = typeof(MobaInputCommandHandlerRegistry).Assembly;
+            var generatedCount = MobaGeneratedInputCommandHandlerManifest.Register(registry);
+            var assemblies = MobaRegistryAssemblyDiscovery.GetExternalAssemblies(runtimeAssembly);
+            for (int i = 0; i < assemblies.Length; i++)
+            {
+                MarkerScanner<MobaInputCommandHandlerAttribute>.Scan(new[] { assemblies[i] }, registry);
+            }
+
+            return generatedCount;
         }
 
         /// <summary>
@@ -66,13 +93,25 @@ namespace AbilityKit.Demo.Moba.Services
         /// </summary>
         public void Register(int opCode, Type implType)
         {
-            if (!TryRegister(key: opCode, implType)) return;
+            RegisterCore(opCode, implType);
+        }
+
+        internal bool TryRegisterGenerated(int opCode, Type implType)
+        {
+            return RegisterCore(opCode, implType);
+        }
+
+        private bool RegisterCore(int opCode, Type implType)
+        {
+            if (!TryRegisterUniqueKey(key: opCode, implType)) return false;
 
             _descriptors[opCode] = new MobaInputCommandHandlerDescriptor(opCode, implType);
             if (_services != null)
             {
                 TryBindHandler(opCode, implType, allowFallback: true);
             }
+
+            return true;
         }
 
         public void BindHandlers(IWorldResolver services)

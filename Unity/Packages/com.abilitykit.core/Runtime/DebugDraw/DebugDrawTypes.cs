@@ -3,6 +3,7 @@ using AbilityKit.Core.Mathematics;
 
 namespace AbilityKit.Core.Debugging
 {
+    [Obsolete("Debug draw belongs to AbilityKit.Diagnostics; migrate before the next major version.")]
     public readonly struct DebugDrawMask : IEquatable<DebugDrawMask>
     {
         public readonly int Value;
@@ -13,7 +14,7 @@ namespace AbilityKit.Core.Debugging
         }
 
         public bool Equals(DebugDrawMask other) => Value == other.Value;
-        public override bool Equals(object obj) => obj is DebugDrawMask other && Equals(other);
+        public override bool Equals(object? obj) => obj is DebugDrawMask other && Equals(other);
         public override int GetHashCode() => Value;
         public override string ToString() => Value.ToString();
 
@@ -21,6 +22,7 @@ namespace AbilityKit.Core.Debugging
         public static DebugDrawMask All => new DebugDrawMask(~0);
     }
 
+    [Obsolete("Debug draw belongs to AbilityKit.Diagnostics; migrate before the next major version.")]
     public readonly struct DebugDrawColor
     {
         public readonly byte R;
@@ -43,6 +45,7 @@ namespace AbilityKit.Core.Debugging
         public static DebugDrawColor White => new DebugDrawColor(255, 255, 255, 255);
     }
 
+    [Obsolete("Debug draw belongs to AbilityKit.Diagnostics; migrate before the next major version.")]
     public readonly struct DebugDrawStyle
     {
         public readonly DebugDrawColor Color;
@@ -55,6 +58,7 @@ namespace AbilityKit.Core.Debugging
         public static DebugDrawStyle Default => new DebugDrawStyle(DebugDrawColor.Green);
     }
 
+    [Obsolete("Debug draw belongs to AbilityKit.Diagnostics; migrate before the next major version.")]
     public readonly struct DebugDrawContext
     {
         public readonly DebugDrawMask EnabledMask;
@@ -65,6 +69,7 @@ namespace AbilityKit.Core.Debugging
         }
     }
 
+    [Obsolete("Debug draw belongs to AbilityKit.Diagnostics; migrate before the next major version.")]
     public interface IDebugDraw
     {
         void DrawWireSphere(in Vec3 center, float radius, in DebugDrawStyle style);
@@ -73,6 +78,7 @@ namespace AbilityKit.Core.Debugging
         void DrawLine(in Vec3 a, in Vec3 b, in DebugDrawStyle style);
     }
 
+    [Obsolete("Debug draw belongs to AbilityKit.Diagnostics; migrate before the next major version.")]
     public interface IDebugDrawContributor
     {
         DebugDrawMask Mask { get; }

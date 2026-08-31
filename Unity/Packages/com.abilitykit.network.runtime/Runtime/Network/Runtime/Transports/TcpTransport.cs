@@ -1,14 +1,20 @@
 using System;
+using System.Buffers;
 using System.Net.Sockets;
 using System.Threading;
 using System.Threading.Tasks;
+using AbilityKit.Core.Buffers;
 using AbilityKit.Network.Abstractions;
 
 namespace AbilityKit.Network.Runtime
 {
     public sealed class TcpTransport : ITransport
     {
+        private const int ReceiveBufferSize = 64 * 1024;
+        private const int PoolRentalThreshold = 256; // below this, Gen0 is cheaper than pool overhead
+
         private readonly object _gate = new object();
+        private readonly object _sendGate = new object();
 
         private TcpClient _client;
         private NetworkStream _stream;
@@ -20,8 +26,13 @@ namespace AbilityKit.Network.Runtime
         {
             get
             {
+                // TcpClient.Connected 在 ConnectAsync 完成的那一刻就为 true，但 Send 用的
+                // _stream 要等 GetStream() 之后才赋值——若这里只看 _client.Connected，会有一个
+                // "IsConnected==true 但 Send 抛 Not connected" 的竞态窗口。要求 stream 已就绪，
+                // 使 IsConnected 与"可发送"严格一致（恢复流程靠它判断连接是否真正建立）。
                 var c = _client;
-                return c != null && c.Connected;
+                var s = _stream;
+                return c != null && s != null && c.Connected;
             }
         }
 
@@ -64,58 +75,35 @@ namespace AbilityKit.Network.Runtime
                 _receiveLoop = null;
             }
 
-            try
-            {
-                cts?.Cancel();
-            }
-            catch
-            {
-            }
-
-            try
-            {
-                client?.Close();
-            }
-            catch
-            {
-            }
-
-            try
-            {
-                client?.Dispose();
-            }
-            catch
-            {
-            }
+            try { cts?.Cancel(); } catch { }
+            try { client?.Close(); } catch { }
+            try { client?.Dispose(); } catch { }
         }
 
         public void Send(ArraySegment<byte> bytes)
         {
             if (bytes.Array == null || bytes.Count <= 0) return;
 
-            NetworkStream stream;
-            lock (_gate)
+            lock (_sendGate)
             {
-                stream = _stream;
-            }
+                NetworkStream stream;
+                lock (_gate) { stream = _stream; }
+                if (stream == null) throw new InvalidOperationException("Not connected.");
 
-            if (stream == null) throw new InvalidOperationException("Not connected.");
-
-            try
-            {
-                stream.Write(bytes.Array, bytes.Offset, bytes.Count);
-            }
-            catch (Exception ex)
-            {
-                Error?.Invoke(ex);
-                Close();
+                try
+                {
+                    stream.Write(bytes.Array, bytes.Offset, bytes.Count);
+                }
+                catch (Exception ex)
+                {
+                    Error?.Invoke(ex);
+                    Close();
+                    throw;
+                }
             }
         }
 
-        public void Dispose()
-        {
-            Close();
-        }
+        public void Dispose() => Close();
 
         private async Task RunAsync(string host, int port, CancellationToken ct)
         {
@@ -125,32 +113,45 @@ namespace AbilityKit.Network.Runtime
                 if (ct.IsCancellationRequested) return;
 
                 var stream = _client.GetStream();
-                lock (_gate)
-                {
-                    _stream = stream;
-                }
+                lock (_gate) { _stream = stream; }
 
                 Connected?.Invoke();
 
-                var buffer = new byte[64 * 1024];
+                using var receiveOwner = PooledBufferOwner<byte>.Rent(ReceiveBufferSize);
+                var receiveSegment = receiveOwner.Segment;
+                var receiveBuffer = receiveSegment.Array!;
+
                 while (!ct.IsCancellationRequested)
                 {
-                    var n = await stream.ReadAsync(buffer, 0, buffer.Length, ct);
+                    var n = await stream.ReadAsync(receiveBuffer, 0, receiveSegment.Count, ct);
                     if (n <= 0) break;
 
-                    var bytes = new byte[n];
-                    Buffer.BlockCopy(buffer, 0, bytes, 0, n);
-                    BytesReceived?.Invoke(new ArraySegment<byte>(bytes));
+                    if (n >= PoolRentalThreshold)
+                    {
+                        // Rent from ArrayPool for larger packets → avoid Gen0 allocation
+                        var rented = ArrayPool<byte>.Shared.Rent(n);
+                        try
+                        {
+                            Buffer.BlockCopy(receiveBuffer, 0, rented, 0, n);
+                            BytesReceived?.Invoke(new ArraySegment<byte>(rented, 0, n));
+                        }
+                        finally
+                        {
+                            ArrayPool<byte>.Shared.Return(rented);
+                        }
+                    }
+                    else
+                    {
+                        // Small packets: inline new is cheaper than pool overhead (Gen0 handles it)
+                        var bytes = new byte[n];
+                        Buffer.BlockCopy(receiveBuffer, 0, bytes, 0, n);
+                        BytesReceived?.Invoke(new ArraySegment<byte>(bytes));
+                    }
                 }
 
-                if (!ct.IsCancellationRequested)
-                {
-                    Disconnected?.Invoke();
-                }
+                if (!ct.IsCancellationRequested) Disconnected?.Invoke();
             }
-            catch (OperationCanceledException)
-            {
-            }
+            catch (OperationCanceledException) { }
             catch (Exception ex)
             {
                 Error?.Invoke(ex);

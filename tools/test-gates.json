@@ -1,5 +1,5 @@
 {
-  "schemaVersion": 4,
+  "schemaVersion": 6,
   "owner": "AbilityKit Engineering",
   "defaultGate": "precheck",
   "documentation": "Docs/AbilityKit测试门禁与批量回归规范.md",
@@ -63,6 +63,51 @@
       ]
     },
     {
+      "name": "moba-codegen",
+      "level": "P1",
+      "owner": "MOBA Runtime/Compile Time",
+      "description": "Build the framework and MOBA Roslyn components, enforce package ownership, and run generator/analyzer contract tests.",
+      "scope": [
+        "moba-codegen",
+        "source-generators",
+        "analyzers",
+        "unity-package-ownership"
+      ],
+      "requiredBefore": [
+        "merge-moba-codegen-or-analyzer-change",
+        "change-generated-moba-runtime-manifest"
+      ],
+      "failurePolicy": "Block the change until all Roslyn projects build, ownership remains isolated, and compile-time contracts pass.",
+      "ciPolicy": {
+        "runOnPullRequest": true,
+        "runOnPush": true,
+        "runOnSchedule": false,
+        "artifactRequired": true
+      },
+      "steps": [
+        {
+          "name": "Build framework analyzers",
+          "kind": "dotnet-build",
+          "project": "Unity/Packages/com.abilitykit.analyzer/DotNet~/AbilityKit.Analyzer/AbilityKit.Analyzer.csproj"
+        },
+        {
+          "name": "Build MOBA source generators and analyzers",
+          "kind": "dotnet-build",
+          "project": "Unity/Packages/com.abilitykit.demo.moba.codegen/DotNet~/AbilityKit.Demo.Moba.CodeGen/AbilityKit.Demo.Moba.CodeGen.csproj"
+        },
+        {
+          "name": "Validate MOBA CodeGen package ownership",
+          "kind": "powershell-script",
+          "script": "tools/validate_moba_codegen_ownership.ps1"
+        },
+        {
+          "name": "Analyzer configuration semantics tests",
+          "kind": "dotnet-test",
+          "project": "src/AbilityKit.Analyzer.Configuration.Tests/AbilityKit.Analyzer.Configuration.Tests.csproj"
+        }
+      ]
+    },
+    {
       "name": "moba-console-smoke",
       "level": "P0",
       "owner": "MOBA Runtime/Presentation",
@@ -102,7 +147,8 @@
       "scope": [
         "network-runtime",
         "world-di",
-        "game-view-runtime-contracts"
+        "game-view-runtime-contracts",
+        "moba-view-runtime-contracts"
       ],
       "requiredBefore": [
         "merge-runtime-contract-change",
@@ -122,6 +168,11 @@
           "project": "src/AbilityKit.Network.Runtime.Tests/AbilityKit.Network.Runtime.Tests.csproj"
         },
         {
+          "name": "Demo common harness tests",
+          "kind": "dotnet-test",
+          "project": "src/AbilityKit.Demo.Common.Tests/AbilityKit.Demo.Common.Tests.csproj"
+        },
+        {
           "name": "World DI tests",
           "kind": "dotnet-test",
           "project": "src/AbilityKit.World.DI.Tests/AbilityKit.World.DI.Tests.csproj"
@@ -130,6 +181,393 @@
           "name": "Game view runtime tests",
           "kind": "dotnet-test",
           "project": "src/AbilityKit.Game.View.Runtime.Tests/AbilityKit.Game.View.Runtime.Tests.csproj"
+        },
+        {
+          "name": "MOBA view runtime tests",
+          "kind": "dotnet-test",
+          "project": "src/AbilityKit.Demo.Moba.View.Runtime.Tests/AbilityKit.Demo.Moba.View.Runtime.Tests.csproj"
+        }
+      ]
+    },
+    {
+      "name": "moba-network-options",
+      "level": "P1",
+      "owner": "MOBA Multiplayer",
+      "description": "Fast MOBA battle data-plane option assembly contract: shared room-gateway preset, StateSync/FrameSync input serializers, retry semantics, snapshot/frame deserializers, and reliable-event cursor wiring.",
+      "scope": [
+        "moba",
+        "network-options",
+        "battle-data-plane",
+        "protocol-contract"
+      ],
+      "requiredBefore": [
+        "merge-moba-network-options-change",
+        "change-moba-battle-transport-preset"
+      ],
+      "failurePolicy": "Block MOBA network option or protocol preset changes until the focused dotnet contract passes.",
+      "ciPolicy": {
+        "runOnPullRequest": true,
+        "runOnPush": true,
+        "runOnSchedule": false,
+        "artifactRequired": true
+      },
+      "steps": [
+        {
+          "name": "MOBA battle network options contract",
+          "kind": "dotnet-test",
+          "project": "src/AbilityKit.Demo.Moba.View.Runtime.Tests/AbilityKit.Demo.Moba.View.Runtime.Tests.csproj",
+          "filter": "FullyQualifiedName~MobaBattleNetworkOptionsContractTests"
+        }
+      ]
+    },
+    {
+      "name": "moba-acceptance-dotnet",
+      "level": "P1",
+      "owner": "MOBA Acceptance/Testing",
+      "description": "Unity-free dotnet acceptance verdict: parse real expectations via System.Text.Json, run the harness-free verifier over trace sources, and emit canonical batch_summary.json. Seed of the dsl-regression gate.",
+      "scope": [
+        "acceptance-verdict",
+        "expectation-schema",
+        "dsl-regression-core"
+      ],
+      "requiredBefore": [
+        "merge-acceptance-verdict-or-expectation-change",
+        "continue-after-moba-acceptance-models-change"
+      ],
+      "failurePolicy": "Fix the verdict contract break or expectation schema drift before continuing. Behavioral coverage grows as trace fixtures are added (needs-trace cases do not fail this gate).",
+      "ciPolicy": {
+        "runOnPullRequest": true,
+        "runOnPush": true,
+        "runOnSchedule": false,
+        "artifactRequired": true
+      },
+      "steps": [
+        {
+          "name": "MOBA acceptance dotnet verdict gate",
+          "kind": "dotnet-test",
+          "project": "src/AbilityKit.Demo.Moba.Acceptance.Tests/AbilityKit.Demo.Moba.Acceptance.Tests.csproj",
+          "filter": "Gate=MobaAcceptanceDotnet"
+        }
+      ]
+    },
+    {
+      "name": "network-sdk",
+      "level": "P1",
+      "owner": "Network SDK Platform",
+      "description": "Network SDK layer contracts: control plane (sdk/room), transport-neutral host lifecycle and integration, battle data-plane engine + config builder, and transport implementations (InMemory/LiteNet/WebSocket) loopback.",
+      "scope": [
+        "network-runtime",
+        "network-sdk",
+        "network-host",
+        "network-battle",
+        "network-transports"
+      ],
+      "requiredBefore": [
+        "merge-network-sdk-or-transport-change"
+      ],
+      "failurePolicy": "Block the change until the network SDK, battle data-plane, and transport loopback contracts pass.",
+      "ciPolicy": {
+        "runOnPullRequest": true,
+        "runOnPush": true,
+        "runOnSchedule": true,
+        "artifactRequired": true
+      },
+      "steps": [
+        {
+          "name": "Network SDK tests",
+          "kind": "dotnet-test",
+          "project": "src/AbilityKit.Network.Sdk.Tests/AbilityKit.Network.Sdk.Tests.csproj"
+        },
+        {
+          "name": "Network Host tests",
+          "kind": "dotnet-test",
+          "project": "src/AbilityKit.Network.Host.Tests/AbilityKit.Network.Host.Tests.csproj"
+        },
+        {
+          "name": "Host network integration tests",
+          "kind": "dotnet-test",
+          "project": "src/AbilityKit.Host.Network.Tests/AbilityKit.Host.Network.Tests.csproj"
+        },
+        {
+          "name": "MOBA Host network adapter tests",
+          "kind": "dotnet-test",
+          "project": "src/AbilityKit.Demo.Moba.Host.Tests/AbilityKit.Demo.Moba.Host.Tests.csproj"
+        },
+        {
+          "name": "Shooter Host network adapter tests",
+          "kind": "dotnet-test",
+          "project": "src/AbilityKit.Demo.Shooter.Host.Tests/AbilityKit.Demo.Shooter.Host.Tests.csproj"
+        },
+        {
+          "name": "Network room tests",
+          "kind": "dotnet-test",
+          "project": "src/AbilityKit.Network.Room.Tests/AbilityKit.Network.Room.Tests.csproj"
+        },
+        {
+          "name": "Network battle engine tests",
+          "kind": "dotnet-test",
+          "project": "src/AbilityKit.Network.Battle.Tests/AbilityKit.Network.Battle.Tests.csproj"
+        },
+        {
+          "name": "InMemory transport loopback",
+          "kind": "dotnet-test",
+          "project": "src/AbilityKit.Network.Transport.InMemory.Tests/AbilityKit.Network.Transport.InMemory.Tests.csproj"
+        },
+        {
+          "name": "LiteNet transport loopback",
+          "kind": "dotnet-test",
+          "project": "src/AbilityKit.Network.Transport.LiteNet.Tests/AbilityKit.Network.Transport.LiteNet.Tests.csproj"
+        },
+        {
+          "name": "WebSocket transport loopback",
+          "kind": "dotnet-test",
+          "project": "src/AbilityKit.Network.Transport.WebSocket.Tests/AbilityKit.Network.Transport.WebSocket.Tests.csproj"
+        },
+        {
+          "name": "Network battle config tests",
+          "kind": "dotnet-test",
+          "project": "src/AbilityKit.Network.Battle.Config.Tests/AbilityKit.Network.Battle.Config.Tests.csproj"
+        },
+        {
+          "name": "Network client host tests",
+          "kind": "dotnet-test",
+          "project": "src/AbilityKit.Network.Client.Tests/AbilityKit.Network.Client.Tests.csproj"
+        }
+      ]
+    },
+    {
+      "name": "core-stability",
+      "level": "P1",
+      "owner": "Runtime Platform",
+      "description": "Core package correctness, stable-package warning baseline, namespace ownership, lifecycle, synchronization, allocation, and Unity direct-dependency contracts.",
+      "scope": [
+        "analyzer-configuration",
+        "stable-package-warnings",
+        "core-api",
+        "core-boundary",
+        "core-namespace-ownership",
+        "deterministic-math",
+        "record",
+        "state-sync",
+        "frame-sync",
+        "network-runtime",
+        "websocket-transport",
+        "host",
+        "triggering",
+        "context",
+        "attributes",
+        "modifiers",
+        "dataflow",
+        "hotreload",
+        "unity-package-dependencies",
+        "allocation-contracts"
+      ],
+      "requiredBefore": [
+        "merge-core-package-change",
+        "change-runtime-lifecycle-or-synchronization-contract",
+        "change-attributes-or-modifiers-hot-path"
+      ],
+      "failurePolicy": "Block the change until core package tests, the stable-package warning baseline, allocation contracts, and direct UPM dependency declarations pass.",
+      "ciPolicy": {
+        "runOnPullRequest": true,
+        "runOnPush": true,
+        "runOnSchedule": true,
+        "artifactRequired": true
+      },
+      "steps": [
+        {
+          "name": "Analyzer configuration semantics tests",
+          "kind": "dotnet-test",
+          "project": "src/AbilityKit.Analyzer.Configuration.Tests/AbilityKit.Analyzer.Configuration.Tests.csproj"
+        },
+        {
+          "name": "Core tests and Public API compatibility",
+          "kind": "dotnet-test",
+          "project": "src/AbilityKit.Core.Tests/AbilityKit.Core.Tests.csproj"
+        },
+        {
+          "name": "Deterministic math package tests",
+          "kind": "dotnet-test",
+          "project": "src/AbilityKit.Deterministic.Tests/AbilityKit.Deterministic.Tests.csproj"
+        },
+        {
+          "name": "Combat projectile deterministic kinematics tests",
+          "kind": "dotnet-test",
+          "project": "src/AbilityKit.Combat.Projectile.Tests/AbilityKit.Combat.Projectile.Tests.csproj"
+        },
+        {
+          "name": "Combat collision deterministic query tests",
+          "kind": "dotnet-test",
+          "project": "src/AbilityKit.Combat.Collision.Abstractions.Tests/AbilityKit.Combat.Collision.Abstractions.Tests.csproj"
+        },
+        {
+          "name": "Continuous package tests",
+          "kind": "dotnet-test",
+          "project": "src/AbilityKit.Continuous.Tests/AbilityKit.Continuous.Tests.csproj"
+        },
+        {
+          "name": "MOBA owner-package bootstrap infrastructure tests",
+          "kind": "dotnet-test",
+          "project": "src/AbilityKit.Demo.Moba.Tests/AbilityKit.Demo.Moba.Tests.csproj",
+          "filter": "FullyQualifiedName~MobaBootstrapInfrastructureTests"
+        },
+        {
+          "name": "MOBA View settings ownership tests",
+          "kind": "dotnet-test",
+          "project": "src/AbilityKit.Demo.Moba.View.Settings.Tests/AbilityKit.Demo.Moba.View.Settings.Tests.csproj"
+        },
+        {
+          "name": "Core assembly and platform boundary audit",
+          "kind": "powershell-script",
+          "script": "tools/audit_core_boundaries.ps1",
+          "timeoutSeconds": 120
+        },
+        {
+          "name": "Record tests",
+          "kind": "dotnet-test",
+          "project": "src/AbilityKit.Record.Tests/AbilityKit.Record.Tests.csproj"
+        },
+        {
+          "name": "World StateSync tests",
+          "kind": "dotnet-test",
+          "project": "src/AbilityKit.World.StateSync.Tests/AbilityKit.World.StateSync.Tests.csproj"
+        },
+        {
+          "name": "World FrameSync tests",
+          "kind": "dotnet-test",
+          "project": "src/AbilityKit.World.FrameSync.Tests/AbilityKit.World.FrameSync.Tests.csproj"
+        },
+        {
+          "name": "Network runtime buffer ownership tests",
+          "kind": "dotnet-test",
+          "project": "src/AbilityKit.Network.Runtime.Tests/AbilityKit.Network.Runtime.Tests.csproj"
+        },
+        {
+          "name": "Demo common harness tests",
+          "kind": "dotnet-test",
+          "project": "src/AbilityKit.Demo.Common.Tests/AbilityKit.Demo.Common.Tests.csproj"
+        },
+        {
+          "name": "WebSocket transport buffer ownership tests",
+          "kind": "dotnet-test",
+          "project": "src/AbilityKit.Network.Transport.WebSocket.Tests/AbilityKit.Network.Transport.WebSocket.Tests.csproj"
+        },
+        {
+          "name": "Host tests",
+          "kind": "dotnet-test",
+          "project": "src/AbilityKit.Host.Tests/AbilityKit.Host.Tests.csproj"
+        },
+        {
+          "name": "Host extension timer scheduler tests",
+          "kind": "dotnet-test",
+          "project": "src/AbilityKit.Host.Extension.Tests/AbilityKit.Host.Extension.Tests.csproj"
+        },
+        {
+          "name": "Dataflow pipeline tests",
+          "kind": "dotnet-test",
+          "project": "src/AbilityKit.Dataflow.Tests/AbilityKit.Dataflow.Tests.csproj"
+        },
+        {
+          "name": "HotReload runtime contract tests",
+          "kind": "dotnet-test",
+          "project": "src/AbilityKit.HotReload.Tests/AbilityKit.HotReload.Tests.csproj"
+        },
+        {
+          "name": "Triggering tests",
+          "kind": "dotnet-test",
+          "project": "src/AbilityKit.Triggering.Tests/AbilityKit.Triggering.Tests.csproj"
+        },
+        {
+          "name": "Context tests",
+          "kind": "dotnet-test",
+          "project": "src/AbilityKit.Context.Tests/AbilityKit.Context.Tests.csproj"
+        },
+        {
+          "name": "Modifiers tests",
+          "kind": "dotnet-test",
+          "project": "src/AbilityKit.Modifiers.Tests/AbilityKit.Modifiers.Tests.csproj"
+        },
+        {
+          "name": "BehaviorTree runtime and node library tests",
+          "kind": "dotnet-test",
+          "project": "src/AbilityKit.BehaviorTree.Tests/AbilityKit.BehaviorTree.Tests.csproj"
+        },
+        {
+          "name": "BehaviorTree Unity compile check (asmdef boundary mirror; skips if Unity absent)",
+          "kind": "powershell-script",
+          "script": "tools/run-unity-compile-check.ps1",
+          "timeoutSeconds": 300
+        },
+        {
+          "name": "HFSM deterministic runtime contract tests",
+          "kind": "dotnet-test",
+          "project": "src/AbilityKit.HFSM.Core.Tests/AbilityKit.HFSM.Core.Tests.csproj"
+        },
+        {
+          "name": "Attributes correctness and allocation tests",
+          "kind": "dotnet-test",
+          "project": "src/AbilityKit.Attributes.Tests/AbilityKit.Attributes.Tests.csproj"
+        },
+        {
+          "name": "Core UPM direct dependency audit",
+          "kind": "powershell-script",
+          "script": "tools/audit_unity_package_dependencies.ps1",
+          "arguments": [
+            "-PackageNames",
+            "com.abilitykit.continuous,com.abilitykit.behavior,com.abilitykit.record,com.abilitykit.world.statesync,com.abilitykit.world.framesync,com.abilitykit.network.runtime,com.abilitykit.network.transport.websocket,com.abilitykit.host,com.abilitykit.triggering,com.abilitykit.context,com.abilitykit.attributes,com.abilitykit.modifiers,com.abilitykit.demo.moba.runtime,com.abilitykit.demo.moba.editor,com.abilitykit.demo.moba.view.runtime"
+          ],
+          "timeoutSeconds": 120
+        }
+      ]
+    },
+    {
+      "name": "foundation-units",
+      "level": "P1",
+      "owner": "Runtime Platform",
+      "description": "Foundation leaf-package unit contracts: timer scheduling semantics, gameplay tag hierarchy/query/persistence, diagnostics profiler data, flow engine contracts, and protocol wire serialization.",
+      "scope": [
+        "timer",
+        "gameplaytags",
+        "diagnostics",
+        "flow",
+        "protocol"
+      ],
+      "requiredBefore": [
+        "merge-foundation-package-change",
+        "publish-foundation-leaf-package"
+      ],
+      "failurePolicy": "Block foundation package changes or leaf-package publication until the unit contracts pass.",
+      "ciPolicy": {
+        "runOnPullRequest": true,
+        "runOnPush": true,
+        "runOnSchedule": true,
+        "artifactRequired": true
+      },
+      "steps": [
+        {
+          "name": "Timer scheduling tests",
+          "kind": "dotnet-test",
+          "project": "src/AbilityKit.Timer.Tests/AbilityKit.Timer.Tests.csproj"
+        },
+        {
+          "name": "GameplayTags hierarchy and query tests",
+          "kind": "dotnet-test",
+          "project": "src/AbilityKit.GameplayTags.Tests/AbilityKit.GameplayTags.Tests.csproj"
+        },
+        {
+          "name": "Diagnostics profiler tests",
+          "kind": "dotnet-test",
+          "project": "src/AbilityKit.Diagnostics.Tests/AbilityKit.Diagnostics.Tests.csproj"
+        },
+        {
+          "name": "Flow engine tests",
+          "kind": "dotnet-test",
+          "project": "src/AbilityKit.Flow.Tests/AbilityKit.Flow.Tests.csproj"
+        },
+        {
+          "name": "Protocol wire serialization tests",
+          "kind": "dotnet-test",
+          "project": "src/AbilityKit.Protocol.Tests/AbilityKit.Protocol.Tests.csproj"
         }
       ]
     },
@@ -137,9 +575,10 @@
       "name": "regression",
       "level": "P2",
       "owner": "AbilityKit Engineering",
-      "description": "Batch regression gate for the main pure-C# test projects used before broad refactors or merges.",
+      "description": "Batch regression gate for core packages and the main pure-C# test projects used before broad refactors or merges.",
       "scope": [
         "batch-regression",
+        "core-stability",
         "moba-runtime",
         "moba-view-runtime",
         "shooter-runtime",
@@ -158,6 +597,26 @@
         "artifactRequired": true
       },
       "steps": [
+        {
+          "name": "Core package stability",
+          "kind": "gate",
+          "gate": "core-stability"
+        },
+        {
+          "name": "Foundation unit contracts",
+          "kind": "gate",
+          "gate": "foundation-units"
+        },
+        {
+          "name": "Network SDK layer",
+          "kind": "gate",
+          "gate": "network-sdk"
+        },
+        {
+          "name": "MOBA CodeGen contracts",
+          "kind": "gate",
+          "gate": "moba-codegen"
+        },
         {
           "name": "Moba console smoke gate",
           "kind": "dotnet-test",
@@ -178,6 +637,144 @@
           "name": "Runtime contracts",
           "kind": "gate",
           "gate": "runtime-contracts"
+        },
+        {
+          "name": "Zhao Yun Unity acceptance",
+          "kind": "gate",
+          "gate": "moba-zhaoyun-unity"
+        },
+        {
+          "name": "Mozi Unity acceptance",
+          "kind": "gate",
+          "gate": "moba-mozi-unity"
+        },
+        {
+          "name": "Daji Unity acceptance",
+          "kind": "gate",
+          "gate": "moba-daji-unity"
+        },
+        {
+          "name": "Ying Zheng Unity acceptance",
+          "kind": "gate",
+          "gate": "moba-yingzheng-unity"
+        }
+      ]
+    },
+    {
+      "name": "moba-content-contracts",
+      "level": "P1",
+      "owner": "MOBA Content Pipeline",
+      "description": "Run MOBA content contracts for package resource ownership, business ID governance, cross-table dependency integrity, trigger aggregate drift, configured presentation resources, and effective timing validation.",
+      "scope": [
+        "unity-editmode",
+        "moba-content-pipeline",
+        "resource-ownership",
+        "business-id-governance",
+        "dependency-graph",
+        "config-validation"
+      ],
+      "requiredBefore": [
+        "publish-moba-content",
+        "merge-moba-config-or-resource-changes"
+      ],
+      "failurePolicy": "Block MOBA content publication until resource ownership, business ID governance, static dependency integrity, aggregate drift, configured resources, and effective timing contracts pass.",
+      "ciPolicy": {
+        "runOnPullRequest": false,
+        "runOnPush": false,
+        "runOnSchedule": false,
+        "artifactRequired": true
+      },
+      "steps": [
+        {
+          "name": "MOBA hero acceptance coverage manifest",
+          "kind": "powershell-script",
+          "script": "tools/validate_moba_hero_acceptance_coverage.ps1"
+        },
+        {
+          "name": "MOBA business ID governance tests",
+          "kind": "powershell-script",
+          "script": "tools/moba_business_id.tests.ps1"
+        },
+        {
+          "name": "MOBA authoritative business IDs",
+          "kind": "powershell-script",
+          "script": "tools/moba_business_id.ps1",
+          "arguments": [
+            "-Mode",
+            "Validate"
+          ]
+        },
+        {
+          "name": "MOBA content dependency report tests",
+          "kind": "powershell-script",
+          "script": "tools/build_moba_content_report.tests.ps1"
+        },
+        {
+          "name": "MOBA content dependency report",
+          "kind": "powershell-script",
+          "script": "tools/build_moba_content_report.ps1",
+          "arguments": [
+            "-OutputPath",
+            "{GateOutputDirectory}/moba-content-dependency-report.json",
+            "-Validate"
+          ],
+          "timeoutSeconds": 60
+        },
+        {
+          "name": "MOBA portable content analysis data",
+          "kind": "powershell-script",
+          "script": "tools/export_moba_content_ir.ps1",
+          "arguments": [
+            "-ReportPath",
+            "{GateOutputDirectory}/moba-content-dependency-report.json",
+            "-GraphOutputPath",
+            "{GateOutputDirectory}/moba-content-graph.json",
+            "-DiagnosticsOutputPath",
+            "{GateOutputDirectory}/moba-content-diagnostics.json"
+          ]
+        },
+        {
+          "name": "MOBA content dependency graph",
+          "kind": "powershell-script",
+          "script": "tools/build_moba_content_graph.ps1",
+          "arguments": [
+            "-GraphPath",
+            "{GateOutputDirectory}/moba-content-graph.json",
+            "-DiagnosticsPath",
+            "{GateOutputDirectory}/moba-content-diagnostics.json",
+            "-HtmlOutputPath",
+            "{GateOutputDirectory}/moba-content-dependency-graph.html",
+            "-DotOutputPath",
+            "{GateOutputDirectory}/moba-content-dependency-graph.dot"
+          ]
+        },
+        {
+          "name": "MOBA package resource ownership",
+          "kind": "unity-editmode-test",
+          "projectPath": "Unity",
+          "testPlatform": "EditMode",
+          "testFilter": "AbilityKit.Game.Test.UnitTest.BattleTestScriptRunnerEditModeTests.MobaTriggerResources_AreOwnedByViewRuntimePackage"
+        },
+        {
+          "name": "MOBA canonical trigger aggregate",
+          "kind": "unity-editmode-test",
+          "projectPath": "Unity",
+          "testPlatform": "EditMode",
+          "testFilter": "MobaTriggerPlanAggregateTests"
+        },
+        {
+          "name": "MOBA configured presentation resources",
+          "kind": "unity-editmode-test",
+          "projectPath": "Unity",
+          "testPlatform": "EditMode",
+          "testFilter": "AbilityKit.Game.Test.UnitTest.MobaPresentationResourceTests"
+        },
+        {
+          "name": "MOBA effective spawn area timing",
+          "kind": "unity-editmode-test",
+          "projectPath": "Unity",
+          "testPlatform": "EditMode",
+          "testFilter": "AbilityKit.Game.Test.UnitTest.MobaSpawnAreaEffectiveTimingValidationTests"
         }
       ]
     },
@@ -197,7 +794,7 @@
       ],
       "failurePolicy": "Do not claim the latest Xiao Qiao Unity result until the executed Xiao Qiao EditMode batch has matching XML result files in the gate output directory.",
       "ciPolicy": {
-        "runOnPullRequest": false,
+        "runOnPullRequest": true,
         "runOnPush": false,
         "runOnSchedule": false,
         "artifactRequired": true
@@ -263,7 +860,7 @@
       ],
       "failurePolicy": "Do not claim the latest Lian Po Unity result until the executed scenario-test batch has matching XML result files in the gate output directory.",
       "ciPolicy": {
-        "runOnPullRequest": false,
+        "runOnPullRequest": true,
         "runOnPush": false,
         "runOnSchedule": false,
         "artifactRequired": true
@@ -274,14 +871,694 @@
           "kind": "unity-editmode-test",
           "projectPath": "Unity",
           "testPlatform": "EditMode",
-          "testFilter": "AbilityKit.Game.Test.UnitTest.MobaAcceptanceTests.Skill10010201_ScenarioExportsTraceAndConfirmsShieldAreaDamageAndSlow"
+          "testFilter": "AbilityKit.Game.Test.UnitTest.LianPoSkillAcceptanceTests.Skill10010201_ScenarioExportsTraceAndConfirmsShieldAreaDamageAndSlow"
         },
         {
           "name": "Lian Po Unity Skill10010301 authoritative",
           "kind": "unity-editmode-test",
           "projectPath": "Unity",
           "testPlatform": "EditMode",
-          "testFilter": "AbilityKit.Game.Test.UnitTest.MobaAcceptanceTests.Skill10010301_ScenarioExportsTraceAndConfirmsThirdStageKnockup"
+          "testFilter": "AbilityKit.Game.Test.UnitTest.LianPoSkillAcceptanceTests.Skill10010301_ScenarioExportsTraceAndConfirmsThirdStageKnockup"
+        }
+      ]
+    },
+    {
+      "name": "moba-zhaoyun-unity",
+      "level": "P2",
+      "owner": "MOBA Runtime/Unity Test",
+      "description": "Run the authoritative Zhao Yun Unity EditMode hero acceptance fixture as a scheduled regression baseline.",
+      "scope": [
+        "unity-editmode",
+        "moba-hero-acceptance",
+        "moba-zhaoyun",
+        "scene-contracts",
+        "authoritative-artifacts"
+      ],
+      "requiredBefore": [
+        "broad-moba-hero-refactor-completion",
+        "release-candidate",
+        "batch-merge"
+      ],
+      "failurePolicy": "Treat as a P2 release and batch-merge blocker. Preserve matching Unity command, log, and NUnit XML artifacts for triage.",
+      "ciPolicy": {
+        "runOnPullRequest": true,
+        "runOnPush": false,
+        "runOnSchedule": true,
+        "artifactRequired": true
+      },
+      "steps": [
+        {
+          "name": "Zhao Yun Unity acceptance fixture",
+          "kind": "unity-editmode-test",
+          "projectPath": "Unity",
+          "testPlatform": "EditMode",
+          "testFilter": "AbilityKit.Game.Test.UnitTest.ZhaoYunSkillAcceptanceTests"
+        }
+      ]
+    },
+    {
+      "name": "moba-mozi-unity",
+      "level": "P2",
+      "owner": "MOBA Runtime/Unity Test",
+      "description": "Run the authoritative Mozi Unity EditMode hero acceptance fixture as a scheduled regression baseline.",
+      "scope": [
+        "unity-editmode",
+        "moba-hero-acceptance",
+        "moba-mozi",
+        "scene-contracts",
+        "authoritative-artifacts"
+      ],
+      "requiredBefore": [
+        "broad-moba-hero-refactor-completion",
+        "release-candidate",
+        "batch-merge"
+      ],
+      "failurePolicy": "Treat as a P2 release and batch-merge blocker. Preserve matching Unity command, log, and NUnit XML artifacts for triage.",
+      "ciPolicy": {
+        "runOnPullRequest": true,
+        "runOnPush": false,
+        "runOnSchedule": true,
+        "artifactRequired": true
+      },
+      "steps": [
+        {
+          "name": "Mozi Unity acceptance fixture",
+          "kind": "unity-editmode-test",
+          "projectPath": "Unity",
+          "testPlatform": "EditMode",
+          "testFilter": "AbilityKit.Game.Test.UnitTest.MoziSkillAcceptanceTests"
+        }
+      ]
+    },
+    {
+      "name": "moba-daji-unity",
+      "level": "P2",
+      "owner": "MOBA Runtime/Unity Test",
+      "description": "Run the authoritative Daji Unity EditMode hero acceptance fixture as a scheduled regression baseline.",
+      "scope": [
+        "unity-editmode",
+        "moba-hero-acceptance",
+        "moba-daji",
+        "scene-contracts",
+        "authoritative-artifacts"
+      ],
+      "requiredBefore": [
+        "broad-moba-hero-refactor-completion",
+        "release-candidate",
+        "batch-merge"
+      ],
+      "failurePolicy": "Treat as a P2 release and batch-merge blocker. Preserve matching Unity command, log, and NUnit XML artifacts for triage.",
+      "ciPolicy": {
+        "runOnPullRequest": true,
+        "runOnPush": false,
+        "runOnSchedule": true,
+        "artifactRequired": true
+      },
+      "steps": [
+        {
+          "name": "Daji Unity acceptance fixture",
+          "kind": "unity-editmode-test",
+          "projectPath": "Unity",
+          "testPlatform": "EditMode",
+          "testFilter": "AbilityKit.Game.Test.UnitTest.DajiSkillAcceptanceTests"
+        }
+      ]
+    },
+    {
+      "name": "moba-yingzheng-unity",
+      "level": "P2",
+      "owner": "MOBA Runtime/Unity Test",
+      "description": "Run the authoritative Ying Zheng Unity EditMode hero acceptance fixture as a scheduled regression baseline.",
+      "scope": [
+        "unity-editmode",
+        "moba-hero-acceptance",
+        "moba-yingzheng",
+        "scene-contracts",
+        "authoritative-artifacts"
+      ],
+      "requiredBefore": [
+        "broad-moba-hero-refactor-completion",
+        "release-candidate",
+        "batch-merge"
+      ],
+      "failurePolicy": "Treat as a P2 release and batch-merge blocker. Preserve matching Unity command, log, and NUnit XML artifacts for triage.",
+      "ciPolicy": {
+        "runOnPullRequest": true,
+        "runOnPush": false,
+        "runOnSchedule": true,
+        "artifactRequired": true
+      },
+      "steps": [
+        {
+          "name": "Ying Zheng Unity acceptance fixture",
+          "kind": "unity-editmode-test",
+          "projectPath": "Unity",
+          "testPlatform": "EditMode",
+          "testFilter": "AbilityKit.Game.Test.UnitTest.YingZhengSkillAcceptanceTests"
+        }
+      ]
+    },
+    {
+      "name": "moba-config-sync",
+      "level": "P1",
+      "owner": "MOBA Runtime/Config Tooling",
+      "description": "Excel⇄SO⇄JSON 配置链的三方合并、删除传播与数组列编解码 EditMode 验证（Buff 表垂直切片，含 headless 流程所依赖的 excel-sync 核心）。",
+      "scope": [
+        "moba-config-sync",
+        "excel-sync",
+        "config-tooling"
+      ],
+      "requiredBefore": [
+        "change-excel-sync-core-or-codecs",
+        "change-moba-config-folder-sync",
+        "change-moba-config-headless-sync"
+      ],
+      "failurePolicy": "Block config tooling changes until the Buff Excel/SO/JSON round-trip, deletion propagation, and conflict abort tests pass.",
+      "ciPolicy": {
+        "runOnPullRequest": false,
+        "runOnPush": false,
+        "runOnSchedule": true,
+        "artifactRequired": true
+      },
+      "steps": [
+        {
+          "name": "Config sync Excel round-trip (Buff slice)",
+          "kind": "unity-editmode-test",
+          "projectPath": "Unity",
+          "testPlatform": "EditMode",
+          "testFilter": "AbilityKit.Demo.Moba.ConfigSync.Tests.BuffExcelRoundTripTests"
+        }
+      ]
+    },
+    {
+      "name": "shooter-fast",
+      "level": "P1",
+      "owner": "Shooter Multiplayer",
+      "description": "Minute-scale Shooter protocol, policy, runtime isolation, network, record, and benchmark contract tests.",
+      "scope": [
+        "shooter",
+        "unit",
+        "protocol",
+        "policy"
+      ],
+      "requiredBefore": [
+        "merge-shooter-sync-change"
+      ],
+      "failurePolicy": "Block the pull request until pure Shooter synchronization contracts pass.",
+      "ciPolicy": {
+        "runOnPullRequest": true,
+        "runOnPush": true,
+        "runOnSchedule": false,
+        "artifactRequired": true
+      },
+      "steps": [
+        {
+          "name": "Shooter runtime isolation tests",
+          "kind": "dotnet-test",
+          "project": "src/AbilityKit.Demo.Shooter.Runtime.Tests/AbilityKit.Demo.Shooter.Runtime.Tests.csproj"
+        },
+        {
+          "name": "Network runtime tests",
+          "kind": "dotnet-test",
+          "project": "src/AbilityKit.Network.Runtime.Tests/AbilityKit.Network.Runtime.Tests.csproj"
+        },
+        {
+          "name": "Demo common harness tests",
+          "kind": "dotnet-test",
+          "project": "src/AbilityKit.Demo.Common.Tests/AbilityKit.Demo.Common.Tests.csproj"
+        },
+        {
+          "name": "Record tests",
+          "kind": "dotnet-test",
+          "project": "src/AbilityKit.Record.Tests/AbilityKit.Record.Tests.csproj"
+        },
+        {
+          "name": "AOI LOD contract tests",
+          "kind": "dotnet-test",
+          "project": "src/AbilityKit.Demo.Shooter.AoiLodBenchmarks.Tests/AbilityKit.Demo.Shooter.AoiLodBenchmarks.Tests.csproj"
+        }
+      ]
+    },
+    {
+      "name": "shooter-integration",
+      "level": "P1",
+      "owner": "Shooter Multiplayer",
+      "description": "Gateway, Grains, Shooter client integration, smoke contracts, and wire compatibility.",
+      "scope": [
+        "shooter",
+        "gateway",
+        "grains",
+        "client-integration",
+        "protocol-compatibility"
+      ],
+      "requiredBefore": [
+        "merge-shooter-server-or-client-integration-change"
+      ],
+      "failurePolicy": "Block the pull request or main branch update until cross-boundary synchronization contracts pass.",
+      "ciPolicy": {
+        "runOnPullRequest": true,
+        "runOnPush": true,
+        "runOnSchedule": false,
+        "artifactRequired": true
+      },
+      "steps": [
+        {
+          "name": "Gateway integration and protocol compatibility",
+          "kind": "dotnet-test",
+          "project": "Server/Orleans/src/AbilityKit.Orleans.Gateway.Tests/AbilityKit.Orleans.Gateway.Tests.csproj"
+        },
+        {
+          "name": "Grains Shooter integration",
+          "kind": "dotnet-test",
+          "project": "Server/Orleans/src/AbilityKit.Orleans.Grains.Tests/AbilityKit.Orleans.Grains.Tests.csproj"
+        },
+        {
+          "name": "Shooter smoke contract integration",
+          "kind": "dotnet-test",
+          "project": "Server/Orleans/src/AbilityKit.Orleans.ShooterSmoke.Tests/AbilityKit.Orleans.ShooterSmoke.Tests.csproj"
+        }
+      ]
+    },
+    {
+      "name": "shooter-unity-playmode",
+      "level": "P1",
+      "owner": "Shooter Multiplayer",
+      "description": "Unity batch PlayMode smoke for Shooter client protocol and synchronization projection.",
+      "scope": [
+        "shooter",
+        "unity-playmode",
+        "client-integration"
+      ],
+      "requiredBefore": [
+        "merge-shooter-unity-client-sync-change"
+      ],
+      "failurePolicy": "Block integration until Unity PlayMode emits a non-empty passing NUnit result.",
+      "ciPolicy": {
+        "runOnPullRequest": true,
+        "runOnPush": true,
+        "runOnSchedule": false,
+        "artifactRequired": true
+      },
+      "steps": [
+        {
+          "name": "Shooter synchronization PlayMode smoke",
+          "kind": "unity-playmode-test",
+          "projectPath": "Unity",
+          "testPlatform": "PlayMode",
+          "testFilter": "AbilityKit.Demo.Shooter.PlayMode.Tests.ShooterSynchronizationPlayModeSmokeTests"
+        }
+      ]
+    },
+    {
+      "name": "shooter-multiprocess",
+      "level": "P1",
+      "owner": "Shooter Multiplayer",
+      "description": "TEST-01B minimal fault profile with isolated ports, bounded execution, cleanup, and complete diagnostics.",
+      "scope": [
+        "shooter",
+        "multiprocess",
+        "test-01b",
+        "fault-recovery"
+      ],
+      "requiredBefore": [
+        "release-shooter-multiplayer-sync"
+      ],
+      "failurePolicy": "Preserve the complete run root and block scheduled/manual promotion.",
+      "ciPolicy": {
+        "runOnPullRequest": false,
+        "runOnPush": true,
+        "runOnSchedule": true,
+        "artifactRequired": true
+      },
+      "steps": [
+        {
+          "name": "TEST-01B minimal profile",
+          "kind": "powershell-script",
+          "script": "Server/Orleans/tools/run_shooter_multiprocess_smoke.ps1",
+          "arguments": [
+            "-Configuration",
+            "Release",
+            "-Profile",
+            "minimal",
+            "-TcpPort",
+            "44101",
+            "-SiloPort",
+            "15111",
+            "-OrleansGatewayPort",
+            "34101",
+            "-ArtifactRoot",
+            "{GateOutputDirectory}\\test-01b",
+            "-GlobalTimeoutSeconds",
+            "240"
+          ],
+          "timeoutSeconds": 300
+        }
+      ]
+    },
+    {
+      "name": "shooter-multiprocess-compatibility",
+      "level": "P2",
+      "owner": "Shooter Multiplayer",
+      "description": "Scheduled orthogonal multiplayer matrix across Packed/PureState payloads, one/two join clients, fault recovery, reconnect cycles, observer reactivation, and deterministic latency/jitter.",
+      "scope": [
+        "shooter",
+        "multiprocess",
+        "compatibility",
+        "payload-modes",
+        "client-fanout",
+        "fault-recovery"
+      ],
+      "requiredBefore": [
+        "release-shooter-multiplayer-sync"
+      ],
+      "failurePolicy": "Preserve all matrix manifests and block release promotion until the failing compatibility case is triaged.",
+      "ciPolicy": {
+        "runOnPullRequest": false,
+        "runOnPush": false,
+        "runOnSchedule": true,
+        "artifactRequired": true
+      },
+      "steps": [
+        {
+          "name": "Shooter compatibility matrix",
+          "kind": "powershell-script",
+          "script": "Server/Orleans/tools/run_shooter_multiprocess_smoke.ps1",
+          "arguments": [
+            "-Configuration",
+            "Release",
+            "-Profile",
+            "compatibility",
+            "-TcpPort",
+            "44201",
+            "-SiloPort",
+            "15211",
+            "-OrleansGatewayPort",
+            "34201",
+            "-ArtifactRoot",
+            "{GateOutputDirectory}\\compatibility",
+            "-GlobalTimeoutSeconds",
+            "1200"
+          ],
+          "timeoutSeconds": 1320
+        }
+      ]
+    },
+    {
+      "name": "shooter-multiprocess-soak",
+      "level": "P0",
+      "owner": "Shooter Multiplayer",
+      "description": "Scheduled/manual 16 and 64 observer PureState soak with dynamic network phases, delivery telemetry, recovery percentiles, observer fairness, and process resource trends.",
+      "scope": [
+        "shooter",
+        "multiprocess",
+        "soak",
+        "pure-state",
+        "network-recovery",
+        "resource-trend"
+      ],
+      "requiredBefore": [
+        "release-shooter-multiplayer-sync"
+      ],
+      "failurePolicy": "Preserve all per-client telemetry, resource samples, summaries, and manifests; block release promotion on recovery, fairness, convergence, or memory-growth violations.",
+      "ciPolicy": {
+        "runOnPullRequest": false,
+        "runOnPush": false,
+        "runOnSchedule": true,
+        "artifactRequired": true
+      },
+      "steps": [
+        {
+          "name": "Shooter 16/64 observer soak matrix",
+          "kind": "powershell-script",
+          "script": "Server/Orleans/tools/run_shooter_multiprocess_smoke.ps1",
+          "arguments": [
+            "-Configuration",
+            "Release",
+            "-Profile",
+            "soak",
+            "-SoakDurationSeconds",
+            "1800",
+            "-TcpPort",
+            "44401",
+            "-SiloPort",
+            "15411",
+            "-OrleansGatewayPort",
+            "34401",
+            "-ArtifactRoot",
+            "{GateOutputDirectory}\\soak",
+            "-GlobalTimeoutSeconds",
+            "3900"
+          ],
+          "timeoutSeconds": 4200
+        }
+      ]
+    },
+    {
+      "name": "shooter-multiprocess-ownership-cleanup",
+      "level": "P1",
+      "owner": "Shooter Multiplayer",
+      "description": "TEST-01C dynamic matrix-timeout probe proving manifest-owned process cleanup, released ports, preserved timeout failure, and unrelated-process protection.",
+      "scope": [
+        "shooter",
+        "multiprocess",
+        "test-01c",
+        "process-ownership",
+        "timeout-cleanup"
+      ],
+      "requiredBefore": [
+        "release-shooter-multiplayer-sync"
+      ],
+      "failurePolicy": "Preserve the acceptance report and timeout manifests; block promotion when any owned process or port remains, identity evidence is incomplete, or an unrelated process is terminated.",
+      "ciPolicy": {
+        "runOnPullRequest": false,
+        "runOnPush": false,
+        "runOnSchedule": true,
+        "artifactRequired": true
+      },
+      "steps": [
+        {
+          "name": "TEST-01C ownership cleanup probe",
+          "kind": "powershell-script",
+          "script": "Server/Orleans/tools/test_shooter_multiprocess_ownership_cleanup.ps1",
+          "arguments": [
+            "-Configuration",
+            "Release",
+            "-TcpPort",
+            "44301",
+            "-SiloPort",
+            "15311",
+            "-OrleansGatewayPort",
+            "34301",
+            "-ArtifactRoot",
+            "{GateOutputDirectory}\\test-01c",
+            "-GlobalTimeoutSeconds",
+            "35"
+          ],
+          "timeoutSeconds": 600
+        }
+      ]
+    },
+    {
+      "name": "runtime-performance-measurement",
+      "level": "P2",
+      "owner": "Runtime Platform",
+      "description": "Informational package and capability performance measurement for Attributes, Modifiers, Record, Targeting, EventDispatcher, Pipeline, and Triggering with reusable benchmark contracts and JSON artifacts.",
+      "scope": [
+        "runtime-performance",
+        "attributes",
+        "modifiers",
+        "record",
+        "targeting",
+        "event-dispatcher",
+        "pipeline",
+        "triggering",
+        "benchmark-contracts"
+      ],
+      "requiredBefore": [
+        "approve-runtime-performance-budget",
+        "large-runtime-hot-path-refactor"
+      ],
+      "failurePolicy": "Block when benchmark contracts, functional validation, execution, or artifact production fail. Metric values remain informational until a reviewed budget is approved.",
+      "ciPolicy": {
+        "runOnPullRequest": false,
+        "runOnPush": false,
+        "runOnSchedule": true,
+        "artifactRequired": true
+      },
+      "steps": [
+        {
+          "name": "Runtime benchmark contracts",
+          "kind": "dotnet-test",
+          "project": "src/AbilityKit.Runtime.Benchmarks.Tests/AbilityKit.Runtime.Benchmarks.Tests.csproj"
+        },
+        {
+          "name": "Runtime package and capability benchmark smoke",
+          "kind": "powershell-script",
+          "script": "tools/run_runtime_benchmarks.ps1",
+          "arguments": [
+            "-Profile",
+            "smoke",
+            "-OutputPath",
+            "{GateOutputDirectory}\\runtime-benchmarks.json"
+          ],
+          "timeoutSeconds": 300
+        }
+      ]
+    },
+    {
+      "name": "shooter-performance",
+      "level": "P1",
+      "owner": "Shooter Multiplayer",
+      "description": "Threshold-enforced AOI/LOD smoke and full performance profiles with JSON reports.",
+      "scope": [
+        "shooter",
+        "performance",
+        "aoi",
+        "lod"
+      ],
+      "requiredBefore": [
+        "accept-shooter-aoi-lod-performance"
+      ],
+      "failurePolicy": "Block on benchmark threshold violations and archive the JSON report.",
+      "ciPolicy": {
+        "runOnPullRequest": true,
+        "runOnPush": true,
+        "runOnSchedule": true,
+        "artifactRequired": true
+      },
+      "steps": [
+        {
+          "name": "AOI LOD smoke",
+          "kind": "powershell-script",
+          "script": "tools/run_shooter_aoi_lod_gate.ps1",
+          "arguments": [
+            "-Profile",
+            "smoke",
+            "-OutputPath",
+            "{GateOutputDirectory}\\performance\\smoke.json"
+          ],
+          "timeoutSeconds": 300
+        },
+        {
+          "name": "AOI LOD full",
+          "kind": "powershell-script",
+          "script": "tools/run_shooter_aoi_lod_gate.ps1",
+          "arguments": [
+            "-Profile",
+            "full",
+            "-OutputPath",
+            "{GateOutputDirectory}\\performance\\full.json"
+          ],
+          "timeoutSeconds": 1800
+        }
+      ]
+    },
+    {
+      "name": "moba-complete-battle-journey",
+      "level": "P1",
+      "owner": "MOBA Runtime/Unity Test",
+      "description": "MOBA complete battle journey: formal World lifecycle plus Unity skill, projectile, buff, damage, death, respawn and settlement acceptance.",
+      "scope": [
+        "moba",
+        "complete-battle-journey",
+        "unit-lifecycle",
+        "unity-editmode"
+      ],
+      "requiredBefore": [
+        "merge-moba-combat-lifecycle-change",
+        "claim-moba-complete-battle-journey"
+      ],
+      "failurePolicy": "Block MOBA combat lifecycle promotion until both the Console World lifecycle smoke and Unity complete battle journey acceptance pass.",
+      "ciPolicy": {
+        "runOnPullRequest": true,
+        "runOnPush": true,
+        "runOnSchedule": true,
+        "artifactRequired": true
+      },
+      "steps": [
+        {
+          "name": "MOBA Console World lifecycle smoke",
+          "kind": "dotnet-test",
+          "project": "src/AbilityKit.Demo.Moba.Tests/AbilityKit.Demo.Moba.Tests.csproj",
+          "filter": "FullyQualifiedName~MobaCompleteBattleLifecycleSmokeTests"
+        },
+        {
+          "name": "MOBA Unity complete battle journey acceptance",
+          "kind": "unity-editmode-test",
+          "projectPath": "Unity",
+          "testPlatform": "EditMode",
+          "testFilter": "AbilityKit.Game.Test.UnitTest.MobaCompleteBattleJourneyAcceptanceTests.DajiBattleJourney_ShouldCoverCombatDeathRespawnAndSettlement"
+        }
+      ]
+    },
+    {
+      "name": "moba-smoke",
+      "level": "P1",
+      "owner": "MOBA Multiplayer",
+      "description": "MOBA two-client TCP Gateway smoke: login, create room, join, pick hero, ready, begin loading, start battle, submit inputs, validate aggregated authoritative frame with both player inputs.",
+      "scope": [
+        "moba",
+        "multiplayer",
+        "protocol",
+        "gateway"
+      ],
+      "requiredBefore": [
+        "merge-moba-multiplayer-or-gateway-change"
+      ],
+      "failurePolicy": "Block the pull request until the two-client MOBA smoke passes.",
+      "ciPolicy": {
+        "runOnPullRequest": true,
+        "runOnPush": true,
+        "runOnSchedule": true,
+        "artifactRequired": true
+      },
+      "steps": [
+        {
+          "name": "MOBA two-client smoke",
+          "kind": "powershell-script",
+          "script": "Server/Orleans/tools/run_moba_smoke.ps1",
+          "arguments": [
+            "-Configuration",
+            "Release",
+            "-TcpPort",
+            "44101"
+          ],
+          "timeoutSeconds": 300
+        }
+      ]
+    },
+    {
+      "name": "moba-multiprocess",
+      "level": "P2",
+      "owner": "MOBA Multiplayer",
+      "description": "MOBA host-only silo lifecycle + port isolation smoke. Currently runs the host-only silo as an independent process alongside the standard smoke to verify process isolation. Future expansion: true multi-client-per-process orchestration (requires MobaSmoke --client-only mode).",
+      "scope": [
+        "moba",
+        "multiprocess",
+        "process-isolation"
+      ],
+      "requiredBefore": [
+        "release-moba-multiplayer-sync"
+      ],
+      "failurePolicy": "Investigate process isolation or port conflict before release promotion.",
+      "ciPolicy": {
+        "runOnPullRequest": false,
+        "runOnPush": false,
+        "runOnSchedule": true,
+        "artifactRequired": true
+      },
+      "steps": [
+        {
+          "name": "MOBA multiprocess smoke",
+          "kind": "powershell-script",
+          "script": "Server/Orleans/tools/run_moba_multiprocess_smoke.ps1",
+          "arguments": [
+            "-Configuration",
+            "Release",
+            "-TcpPort",
+            "44201"
+          ],
+          "timeoutSeconds": 300
         }
       ]
     }

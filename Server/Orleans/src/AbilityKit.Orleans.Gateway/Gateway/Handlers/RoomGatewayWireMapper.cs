@@ -96,7 +96,28 @@ internal static class RoomGatewayWireMapper
             RoomId = roomId,
             NumericRoomId = RoomGatewayIds.CreateNumericRoomId(roomId),
             Snapshot = ToWireSnapshot(snapshot),
-            Message = message ?? string.Empty
+            Message = message ?? string.Empty,
+            ServerNowTicks = DateTime.UtcNow.Ticks,
+            Applied = true,
+            ErrorCode = (int)RoomOperationErrorCode.None
+        };
+    }
+
+    public static WireRoomSnapshotRes ToSnapshotRes(
+        RoomSnapshot snapshot,
+        RoomOperationResult result)
+    {
+        var roomId = snapshot.Summary?.RoomId ?? string.Empty;
+        return new WireRoomSnapshotRes
+        {
+            Success = result.Success,
+            RoomId = roomId,
+            NumericRoomId = RoomGatewayIds.CreateNumericRoomId(roomId),
+            Snapshot = ToWireSnapshot(snapshot),
+            Message = result.Message ?? string.Empty,
+            ServerNowTicks = DateTime.UtcNow.Ticks,
+            Applied = result.Applied,
+            ErrorCode = (int)result.ErrorCode
         };
     }
 
@@ -163,8 +184,106 @@ internal static class RoomGatewayWireMapper
             Players = ToWirePlayers(snapshot.Players),
             CanStart = snapshot.CanStart,
             BattleId = snapshot.BattleId ?? string.Empty,
-            WorldId = snapshot.WorldId
+            WorldId = snapshot.WorldId,
+            // 阶段 4 append-only 字段
+            WorldStartAnchor = ToWireAnchor(snapshot.WorldStartAnchor),
+            SchemaVersion = snapshot.SchemaVersion,
+            RoomRevision = snapshot.RoomRevision,
+            LastEventSequence = snapshot.LastEventSequence,
+            Phase = (int)snapshot.Phase,
+            PhaseReason = snapshot.PhaseReason ?? string.Empty,
+            LaunchGeneration = snapshot.LaunchGeneration,
+            LoadingDeadlineUnixMs = snapshot.LoadingDeadlineUnixMs,
+            LaunchManifestHash = snapshot.LaunchManifestHash ?? string.Empty,
+            LaunchManifestVersion = snapshot.LaunchManifestVersion,
+            LastStartFailureCode = snapshot.LastStartFailureCode ?? string.Empty,
+            SyncCapabilities = ToWireSyncCapabilities(snapshot.SyncCapabilities)
         };
+    }
+
+    /// <summary>将服务端最终同步能力映射为追加式 wire 元数据。</summary>
+    public static WireNetworkSyncCapabilities? ToWireSyncCapabilities(NetworkSyncCapabilityMetadata? capabilities)
+    {
+        if (capabilities is null)
+        {
+            return null;
+        }
+
+        return new WireNetworkSyncCapabilities
+        {
+            MetadataVersion = capabilities.MetadataVersion,
+            ProfileName = capabilities.ProfileName ?? string.Empty,
+            MinimumSchemaVersion = capabilities.MinimumSchemaVersion,
+            MaximumSchemaVersion = capabilities.MaximumSchemaVersion,
+            ClientPlayback = capabilities.ClientPlayback,
+            Input = capabilities.Input,
+            Snapshot = capabilities.Snapshot,
+            Interest = capabilities.Interest,
+            Recovery = capabilities.Recovery,
+            ServerValidation = capabilities.ServerValidation,
+            ReliableEvent = capabilities.ReliableEvent
+        };
+    }
+
+    /// <summary>
+    /// 将 RoomOperationResult + 操作后快照映射为 wire 响应。
+    /// </summary>
+    public static WireRoomOperationRes ToRoomOperationRes(RoomOperationResult result, RoomSnapshot? snapshot)
+    {
+        return new WireRoomOperationRes
+        {
+            Success = result.Success,
+            Applied = result.Applied,
+            ErrorCode = (int)result.ErrorCode,
+            Message = result.Message ?? string.Empty,
+            RoomRevision = result.RoomRevision,
+            Snapshot = snapshot == null ? default : ToWireSnapshot(snapshot)
+        };
+    }
+
+    /// <summary>
+    /// wire BeginLoading 请求 -> Grain BeginLoadingRequest。
+    /// </summary>
+    public static BeginLoadingRequest ToBeginLoadingReq(string accountId, WireBeginLoadingReq wire)
+    {
+        return new BeginLoadingRequest(
+            accountId,
+            wire.ExpectedRevision,
+            string.IsNullOrWhiteSpace(wire.CommandId) ? null : wire.CommandId);
+    }
+
+    /// <summary>
+    /// wire ReportAssetsLoaded 请求 -> Grain ReportAssetsLoadedRequest。
+    /// </summary>
+    public static ReportAssetsLoadedRequest ToReportAssetsLoadedReq(string accountId, WireReportAssetsLoadedReq wire)
+    {
+        return new ReportAssetsLoadedRequest(
+            accountId,
+            wire.LaunchGeneration,
+            wire.ManifestVersion,
+            string.IsNullOrWhiteSpace(wire.ManifestHash) ? null : wire.ManifestHash,
+            string.IsNullOrWhiteSpace(wire.CommandId) ? null : wire.CommandId);
+    }
+
+    public static ReportLoadingProgressRequest ToReportLoadingProgressReq(string accountId, WireReportLoadingProgressReq wire)
+    {
+        return new ReportLoadingProgressRequest(
+            accountId,
+            wire.LaunchGeneration,
+            wire.ManifestVersion,
+            string.IsNullOrWhiteSpace(wire.ManifestHash) ? null : wire.ManifestHash,
+            wire.Progress);
+    }
+
+    /// <summary>
+    /// wire CancelLoading 请求 -> Grain CancelLoadingRequest。
+    /// </summary>
+    public static CancelLoadingRequest ToCancelLoadingReq(string accountId, WireCancelLoadingReq wire)
+    {
+        return new CancelLoadingRequest(
+            accountId,
+            wire.ExpectedRevision,
+            string.IsNullOrWhiteSpace(wire.CommandId) ? null : wire.CommandId);
     }
 
     public static WireRoomJoinKind ToWireJoinKind(RoomJoinKind joinKind)
@@ -284,7 +403,17 @@ internal static class RoomGatewayWireMapper
                 AttributeTemplateId = player.AttributeTemplateId,
                 BasicAttackSkillId = player.BasicAttackSkillId,
                 SkillIds = player.SkillIds == null ? null : new List<int>(player.SkillIds),
-                PlayerId = player.PlayerId
+                PlayerId = player.PlayerId,
+                // 阶段 4 append-only 字段
+                LobbyReady = player.LobbyReady,
+                AssetsLoaded = player.AssetsLoaded,
+                LoadingProgress = player.LoadingProgress,
+                IsOnline = player.IsOnline,
+                JoinOrdinal = player.JoinOrdinal,
+                LoadedManifestVersion = player.LoadedManifestVersion,
+                LoadedManifestHash = player.LoadedManifestHash ?? string.Empty,
+                LastSeenTicks = player.LastSeenTicks,
+                OfflineSinceTicks = player.OfflineSinceTicks
             });
         }
 

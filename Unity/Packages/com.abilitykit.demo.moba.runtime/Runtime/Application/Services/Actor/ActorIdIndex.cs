@@ -40,7 +40,13 @@ namespace AbilityKit.Demo.Moba.Services
                 return false;
             }
 
-            return _map.TryGetValue(actorId, out entity) && entity != null;
+            if (_map.TryGetValue(actorId, out entity) && entity != null && entity.isEnabled)
+            {
+                return true;
+            }
+
+            entity = null;
+            return false;
         }
 
         private void OnEntityAdded(IGroup<global::ActorEntity> group, global::ActorEntity entity, int index, IComponent component)
@@ -55,7 +61,7 @@ namespace AbilityKit.Demo.Moba.Services
 
         private void Track(global::ActorEntity entity)
         {
-            if (entity == null || !entity.hasActorId) return;
+            if (entity == null || !entity.isEnabled || !entity.hasActorId) return;
 
             var actorId = entity.actorId.Value;
             if (actorId <= 0) return;
@@ -75,7 +81,8 @@ namespace AbilityKit.Demo.Moba.Services
 
                 if (newComponent is AbilityKit.Demo.Moba.Components.ActorIdComponent cur)
                 {
-                    if (cur.Value > 0) _map[cur.Value] = (global::ActorEntity)e;
+                    var actorEntity = (global::ActorEntity)e;
+                    if (cur.Value > 0 && actorEntity.isEnabled) _map[cur.Value] = actorEntity;
                 }
             };
 

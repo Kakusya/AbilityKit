@@ -24,7 +24,7 @@ namespace AbilityKit.Game.Flow
             _shells = factory.CreateShellSyncOperation(shells);
         }
 
-        public bool Sync(in BattleViewEntitySyncInput input, BattleContext ctx, out BattleViewHandle handle)
+        public bool Sync(in BattleViewEntitySyncInput input, IBattleRuntimeContext ctx, out BattleViewHandle handle)
         {
             if (!_handles.TryResolve(input.Entity.Id, out handle)) return false;
 
@@ -106,7 +106,7 @@ namespace AbilityKit.Game.Flow
             _transforms = transforms;
         }
 
-        public void Sample(in BattleViewEntitySyncInput input, BattleContext ctx)
+        public void Sample(in BattleViewEntitySyncInput input, IBattleRuntimeContext ctx)
         {
             var position = input.Transform.Position;
             _transforms.SampleEntity(input.Entity, in position, ctx);
@@ -115,15 +115,16 @@ namespace AbilityKit.Game.Flow
 
     internal readonly struct BattleViewModelSyncPlan
     {
-        public BattleViewModelSyncPlan(int desiredModelId, bool recreateShell)
+        public BattleViewModelSyncPlan(int desiredModelId, bool recreateShell, AbilityKit.Game.Battle.Entity.BattleEntityKind kind = AbilityKit.Game.Battle.Entity.BattleEntityKind.Unknown)
         {
             DesiredModelId = desiredModelId;
             RecreateShell = recreateShell;
+            Kind = kind;
         }
 
         public int DesiredModelId { get; }
-
         public bool RecreateShell { get; }
+        public AbilityKit.Game.Battle.Entity.BattleEntityKind Kind { get; }
     }
 
     internal sealed class BattleViewModelSyncPlanResolver
@@ -139,7 +140,8 @@ namespace AbilityKit.Game.Flow
         {
             var desiredModelId = _resources.ResolveModelId(meta);
             var recreateShell = desiredModelId > 0 && (handle.GameObject == null || handle.ModelId != desiredModelId);
-            return new BattleViewModelSyncPlan(desiredModelId, recreateShell);
+            var kind = meta != null ? meta.Kind : AbilityKit.Game.Battle.Entity.BattleEntityKind.Unknown;
+            return new BattleViewModelSyncPlan(desiredModelId, recreateShell, kind);
         }
     }
 
@@ -157,7 +159,7 @@ namespace AbilityKit.Game.Flow
             if (!plan.RecreateShell) return;
 
             handle.Version++;
-            _shells.Recreate(handle, actorId, plan.DesiredModelId);
+            _shells.Recreate(handle, actorId, plan.DesiredModelId, plan.Kind);
         }
     }
 }

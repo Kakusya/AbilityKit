@@ -9,6 +9,61 @@ namespace AbilityKit.Demo.Shooter.Runtime.Tests;
 public sealed class ShooterRoomGatewayRoomClientTests
 {
     [Fact]
+    public async Task RoomGatewayRoomClientCanCancelLoading()
+    {
+        var transport = new RecordingShooterRoomFlowTransport();
+        using var roomClient = new ShooterRoomGatewayRoomClient(transport);
+        transport.SetResponse(new WireRoomOperationRes
+        {
+            Success = true,
+            Applied = true,
+            RoomRevision = 12L,
+            Message = "cancelled"
+        });
+
+        var result = await roomClient.CancelLoadingAsync(
+            new ShooterGatewayCancelLoadingRequest("session-token", "room-1", 11L, "cancel-1"));
+
+        Assert.Equal(RoomGatewayOpCodes.CancelLoading, transport.LastOpCode);
+        var wire = WireRoomGatewayBinary.Deserialize<WireCancelLoadingReq>(transport.LastPayload);
+        Assert.Equal("session-token", wire.SessionToken);
+        Assert.Equal("room-1", wire.RoomId);
+        Assert.Equal(11L, wire.ExpectedRevision);
+        Assert.Equal("cancel-1", wire.CommandId);
+        Assert.True(result.Success);
+        Assert.True(result.Applied);
+        Assert.Equal(12L, result.RoomRevision);
+    }
+
+    [Fact]
+    public async Task RoomGatewayRoomClientCanLeaveAuthoritativeRoom()
+    {
+        var transport = new RecordingShooterRoomFlowTransport();
+        var roomClient = new ShooterRoomGatewayRoomClient(transport);
+        transport.SetResponse(new WireRoomOperationRes
+        {
+            Success = true,
+            Applied = true,
+            RoomRevision = 8L,
+            Message = "left"
+        });
+
+        var result = await roomClient.LeaveRoomAsync(
+            new ShooterGatewayLeaveRoomRequest("session-token", "room-1", 7L, "leave-1"));
+
+        Assert.Equal(RoomGatewayOpCodes.LeaveRoom, transport.LastOpCode);
+        var wire = WireRoomGatewayBinary.Deserialize<WireLeaveRoomReq>(transport.LastPayload);
+        Assert.Equal("session-token", wire.SessionToken);
+        Assert.Equal("room-1", wire.RoomId);
+        Assert.Equal(7L, wire.ExpectedRevision);
+        Assert.Equal("leave-1", wire.CommandId);
+        Assert.True(result.Success);
+        Assert.True(result.Applied);
+        Assert.Equal(8L, result.RoomRevision);
+        Assert.Equal("left", result.Message);
+    }
+
+    [Fact]
     public async Task RoomGatewayRoomClientUsesGenericRoomLifecycleProtocol()
     {
         var transport = new RecordingShooterRoomFlowTransport();
@@ -160,14 +215,40 @@ public sealed class ShooterRoomGatewayRoomClientTests
             Success = true,
             Message = "subscribed"
         });
-        var subscribe = await roomClient.SubscribeStateSyncAsync(new ShooterGatewayStateSyncSubscriptionRequest("session-token", "battle-1", "room-1"));
+        var subscribe = await roomClient.SubscribeStateSyncAsync(new ShooterGatewayStateSyncSubscriptionRequest(
+            "session-token",
+            "battle-1",
+            "room-1",
+            "epoch-7",
+            41L));
         Assert.Equal(RoomGatewayOpCodes.SubscribeStateSync, transport.LastOpCode);
         var subscribeWire = WireRoomGatewayBinary.Deserialize<WireSubscribeStateSyncReq>(transport.LastPayload);
         Assert.Equal("session-token", subscribeWire.SessionToken);
         Assert.Equal("battle-1", subscribeWire.BattleId);
         Assert.Equal("room-1", subscribeWire.RoomId);
+        Assert.Equal("epoch-7", subscribeWire.EventEpoch);
+        Assert.Equal(41L, subscribeWire.LastEventAck);
         Assert.True(subscribe.Success);
         Assert.Equal("subscribed", subscribe.Message);
+
+        transport.SetResponse(new WireAckReliableBattleEventsRes
+        {
+            Success = true,
+            AcceptedAckSequence = 42L,
+            Message = "acknowledged"
+        });
+        var ack = await roomClient.AcknowledgeReliableBattleEventsAsync(
+            new ShooterGatewayReliableBattleEventAckRequest("session-token", "battle-1", "room-1", "epoch-7", 42L));
+        Assert.Equal(RoomGatewayOpCodes.AckReliableBattleEvents, transport.LastOpCode);
+        var ackWire = WireRoomGatewayBinary.Deserialize<WireAckReliableBattleEventsReq>(transport.LastPayload);
+        Assert.Equal("session-token", ackWire.SessionToken);
+        Assert.Equal("battle-1", ackWire.BattleId);
+        Assert.Equal("room-1", ackWire.RoomId);
+        Assert.Equal("epoch-7", ackWire.Epoch);
+        Assert.Equal(42L, ackWire.AckSequence);
+        Assert.True(ack.Success);
+        Assert.Equal(42L, ack.AcceptedAckSequence);
+        Assert.Equal("acknowledged", ack.Message);
 
         transport.SetResponse(new WireRequestFullStateSyncRes
         {

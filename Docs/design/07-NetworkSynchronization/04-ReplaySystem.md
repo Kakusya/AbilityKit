@@ -1,5 +1,11 @@
 # 04-回放系统
 
+> **文档类型：Canonical 设计**
+>
+> **事实基线：2026-08-16**
+>
+> **规范范围：** 通用 Record、FrameRecord 与 Demo 回放的职责、兼容性和证据边界；三种格式不互相冒充。
+
 > 回放系统负责把已经发生过的战斗或模拟过程按帧固化下来，并在后续以可控速度、可寻址方式重新播放。AbilityKit 源码里同时存在三层实现：通用 `RecordContainer`/`RecordSession` 体系、按帧 `FrameRecordFile` 体系、以及 Console Demo 的 `.akrec` 二进制文件体系。三者都服务于问题复现和同步验证，但适用边界不同。
 
 ---
@@ -74,7 +80,10 @@ flowchart LR
 | 回放源 | `Unity/Packages/com.abilitykit.record/Runtime/Record/FrameRecord/FrameRecordReplaySource.cs` | 构造按帧字典，支持查询 |
 | JSON codec | `Unity/Packages/com.abilitykit.record/Runtime/Record/FrameRecord/FrameRecordJsonCodec.cs` | JSON 文件编解码 |
 | Binary codec | `Unity/Packages/com.abilitykit.record/Runtime/Record/FrameRecord/FrameRecordBinaryCodec.cs` | 二进制文件编解码 |
-| Optimized codec | `Unity/Packages/com.abilitykit.record/Runtime/Record/FrameRecord/FrameRecordOptimizedBinaryCodec.cs` | 优化二进制布局 |
+| Optimized codec facade | `Unity/Packages/com.abilitykit.record/Runtime/Record/FrameRecord/FrameRecordOptimizedBinaryCodec.cs` | 创建优化 writer/reader 并适配 `IFrameRecordCodec`，自身不承载完整布局逻辑 |
+| Optimized data codec | `Unity/Packages/com.abilitykit.record/Runtime/Record/FrameRecord/FrameRecordOptimizedBinaryDataCodec.cs` | 实际 writer/reader、版本检查、varint 布局和 payload 校验 |
+
+优化二进制当前由 writer v4 生成，reader 支持 v1-v4。v3 起帧号、opcode、player index 等字段采用 varint 布局；因此“当前 writer 版本”和“可读取的历史版本”必须分别记录，不能把兼容范围简化为仅 v3/v4。
 
 ### 2.3 Console Demo 回放
 
@@ -348,6 +357,18 @@ flowchart LR
 
 ---
 
+### 6.4 Optimized binary codec 的兼容边界
+
+`FrameRecordOptimizedBinaryCodec` 只是 `IFrameRecordCodec` 的 facade；真正的数据格式由 `FrameRecordOptimizedBinaryDataCodec` 中的 writer/reader 实现。当前 reader 会校验 magic、版本范围、track count、player index、payload length 和尾部数据，拒绝 future version、负 track count、截断 payload 以及未消费的 trailing data。
+
+仓库中的 `FrameRecordOptimizedBinaryCodecTests` 已覆盖 v4 state hash round-trip、压缩开关、v3 legacy layout compatibility、future version rejection、negative track count rejection 和 truncated payload rejection。这些测试只把 v3/v4 作为可回归兼容范围；源码 reader 的分支接受 v1-v4，但 v1/v2 尚没有同等级 legacy fixture。因而“实现可接受版本”和“E3 已锁定版本”必须分别声明，不能由 reader 条件外推为四代格式均已验证。
+
+当前 writer 只写 v4，reader 支持 v1-v4；v4 保存真实 state hash schema version。`RecordIdHash` 另有专项测试固定标识计算契约。兼容性的判断单位必须是“容器版本 + track schema/version + 领域 payload codec”，不能只看扩展名、magic 或“能完成反序列化”。
+
+所有现有 writer 都先在内存累积，在 `Dispose()` 时一次性创建目录并写完整文件；当前没有临时文件、flush journal 或原子 rename。进程崩溃、磁盘写满或最终写入中断时，不能把目标文件存在等同于一次完整提交。长期回归产物应在写后重新打开、校验并由 manifest 记录 hash/长度，协议层后续再补原子提交策略。
+
+---
+
 ## 7. Console akrec 回放
 
 Console Demo 的 `.akrec` 是独立格式，不等同于通用 `FrameRecordFile`。它定义在 `src/AbilityKit.Demo.Moba.Console/Replay/RecordTypes.cs`。
@@ -520,6 +541,14 @@ Console `.akrec` 使用 `AKRC` header 和 MemoryPack 命令/快照，目标是�
 
 ## 10. 风险与验收点
 
+### 10.1 Shooter replay smoke 与 CI 分层
+
+Shooter smoke 的 replay 记录范围当前包含 `input-state`、`input-logic`、snapshot、state hash 和 reconnect 事件；Smoke 会生成 minimized replay，并再次加载验证最小记录。该 artifact 可证明一次可复现链路，但不能替代 codec 专项测试或 CI gate。
+
+`tools/test-gates.json` 中，`shooter-fast`、`shooter-integration` 和 `shooter-unity-playmode` 是 PR/Push 阻断级 P1 gate，均要求 artifact；`shooter-multiprocess` 是 Push/Schedule 执行的 P1 minimal fault profile，不在普通 PR 运行；compatibility、soak 和 ownership cleanup 则是 Schedule/Manual 分层。文档引用 Smoke 时必须同时写清 artifact 是否存在、gate 运行频率以及是否阻断发布，不能把 Schedule gate 说成每次 PR 都执行。
+
+### 10.2 风险与验收点
+
 | 风险 | 表现 | 验收点 |
 |------|------|--------|
 | 文件格式混淆 | `.akrec` 被当成通用 `RecordSession` 文件加载 | 文档和工具明确格式来源 |
@@ -529,6 +558,15 @@ Console `.akrec` 使用 `AKRC` header 和 MemoryPack 命令/快照，目标是�
 | 一帧多输入丢失 | 同一帧只取第一条命令 | Console 有 `GetCommandsAtFrame`，消费端应按列表处理 |
 | 快照语义过弱 | Console `FrameSnapshot` 只存 actorCount/hash | 标明它是校验快照，不是完整世界快照 |
 | 时钟倍速异常 | `Speed` 过高导致一帧消费过多 | 回放 UI/测试要限制速度范围或分帧消费 |
+
+### 10.3 证据矩阵
+
+| 证据 | 当前事实 | 结论边界 |
+|------|----------|----------|
+| Record E3 | 本轮 `AbilityKit.Record.Tests` 23/23 | codec、diff、标识与局部回放契约 |
+| Shooter replay artifact E4 | 指定 Smoke 运行生成并回读的产物 | 仅代表该次配置和数据链 |
+| `shooter-fast` 等 E5 | 以 `tools/test-gates.json` 和 workflow 触发条件为准 | Schedule/Manual gate 不能写成每次 PR 均执行 |
+| Console `.akrec` | Demo 专用文件与回放控制器 | 不等于通用 FrameRecord 长期兼容协议 |
 
 ---
 
@@ -543,4 +581,4 @@ Console `.akrec` 使用 `AKRC` header 和 MemoryPack 命令/快照，目标是�
 
 ---
 
-*文档版本：v2.0 | 最后更新：2026-07-04*
+*文档版本：v3.2 | 最后更新：2026-08-16 | 文档类型：Canonical 设计*

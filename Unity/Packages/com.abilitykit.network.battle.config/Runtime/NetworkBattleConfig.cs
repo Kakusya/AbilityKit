@@ -1,0 +1,376 @@
+using System;
+using System.Threading;
+using AbilityKit.Game.Battle.Requests;
+using AbilityKit.Network.Abstractions;
+using AbilityKit.Network.Battle;
+using AbilityKit.Network.Protocol;
+using AbilityKit.Network.Runtime;
+using AbilityKit.Network.Runtime.Observability;
+using AbilityKit.Network.Sdk;
+using AbilityKit.Protocol.Room;
+
+namespace AbilityKit.Network.Battle.Config
+{
+    /// <summary>
+    /// Wraps a <see cref="SubmitInputRequest"/> with a command sequence for retry tracking.
+    /// Passed to <see cref="NetworkBattleConfig.WithInputSerializer"/> as the object the serialize lambda receives.
+    /// </summary>
+    public readonly struct SequencedInput
+    {
+        public readonly SubmitInputRequest Request;
+        public readonly ulong CommandSequence;
+        public SequencedInput(in SubmitInputRequest request, ulong commandSequence)
+        {
+            Request = request;
+            CommandSequence = commandSequence;
+        }
+    }
+
+    /// <summary>
+    /// High-level fluent builder that produces a <see cref="NetworkTransportOptions"/> with sensible defaults
+    /// and the standard room-gateway protocol preset (opcodes + auth + ack + resync). The game provides ONLY
+    /// its game-specific callbacks (input serialize/deserialize + snapshot deserialize). Everything else is
+    /// handled by the builder.
+    /// </summary>
+    public sealed class NetworkBattleConfig
+    {
+        private readonly NetworkTransportOptions _o = new()
+        {
+            FrameCodec = LengthPrefixedFrameCodec.Instance,
+            SubmitInputRetryFrameLead = 2,
+        };
+
+        private long _nextCommandSequence;
+        private bool _protocolPresetApplied;
+
+        // ============== Common ==============
+
+        /// <summary>Sets the gateway host + port.</summary>
+        public NetworkBattleConfig WithGateway(string host, int port)
+        {
+            _o.Host = host ?? throw new ArgumentNullException(nameof(host));
+            _o.Port = port;
+            return this;
+        }
+
+        /// <summary>Uses a fresh TcpTransport as the transport factory.</summary>
+        public NetworkBattleConfig WithTcpTransport()
+        {
+            _o.TransportFactory = () => new TcpTransport();
+            ClearConnectionAndSdkClientSources();
+            return this;
+        }
+
+        /// <summary>Uses a custom transport factory.</summary>
+        public NetworkBattleConfig WithTransportFactory(Func<ITransport> factory)
+        {
+            _o.TransportFactory = factory ?? throw new ArgumentNullException(nameof(factory));
+            ClearConnectionAndSdkClientSources();
+            return this;
+        }
+
+        /// <summary>Injects an existing IConnection (1-connection topology; TransportFactory is ignored).</summary>
+        public NetworkBattleConfig WithInjectedConnection(Func<IConnection> factory)
+        {
+            _o.ConnectionFactory = factory ?? throw new ArgumentNullException(nameof(factory));
+            _o.TransportFactory = null;
+            ClearSdkClientSources();
+            return this;
+        }
+
+        /// <summary>Uses a prebuilt SDK client with explicit ownership.</summary>
+        public NetworkBattleConfig WithSdkClient(
+            NetworkSdkClient client,
+            NetworkSdkClientOwnership ownership = NetworkSdkClientOwnership.Borrowed)
+        {
+            _o.SdkClient = client ?? throw new ArgumentNullException(nameof(client));
+            _o.SdkClientFactory = null;
+            _o.SdkClientOwnership = ownership;
+            _o.ConnectionFactory = null;
+            _o.TransportFactory = null;
+            return this;
+        }
+
+        /// <summary>Uses an SDK client factory whose returned client is owned by the battle transport.</summary>
+        public NetworkBattleConfig WithSdkClientFactory(Func<NetworkSdkClient> factory)
+        {
+            _o.SdkClientFactory = factory ?? throw new ArgumentNullException(nameof(factory));
+            _o.SdkClient = null;
+            _o.SdkClientOwnership = NetworkSdkClientOwnership.Borrowed;
+            _o.ConnectionFactory = null;
+            _o.TransportFactory = null;
+            return this;
+        }
+
+        /// <summary>Replaces the complete connection-runtime configuration applied by NetworkTransport.</summary>
+        public NetworkBattleConfig WithConnectionConfiguration(Action<ConnectionOptions> configure)
+        {
+            _o.ConfigureConnection = configure ?? throw new ArgumentNullException(nameof(configure));
+            return this;
+        }
+
+        /// <summary>Uses unmodified SDK connection defaults instead of the Battle reconnect preset.</summary>
+        public NetworkBattleConfig UseSdkConnectionDefaults()
+        {
+            _o.ConfigureConnection = null;
+            return this;
+        }
+
+        /// <summary>
+        /// Installs transport-level packet observation when this config owns a transport factory.
+        /// Injected connections and prebuilt SDK clients must install observation before injection.
+        /// </summary>
+        public NetworkBattleConfig ObserveTraffic(
+            INetworkTrafficObserver observer,
+            Action<NetworkTrafficCaptureOptions> configure = null)
+        {
+            _o.TrafficObserver = observer ?? throw new ArgumentNullException(nameof(observer));
+            _o.ConfigureTrafficCapture = configure;
+            return this;
+        }
+
+        /// <summary>Sets session identity (token + battle/room/world for routing).</summary>
+        public NetworkBattleConfig WithSession(string sessionToken, string battleId, string roomId = "", ulong worldId = 0)
+        {
+            _o.SessionToken = sessionToken ?? throw new ArgumentNullException(nameof(sessionToken));
+            _o.OpRenewSession = RoomGatewayOpCodes.RenewSession;
+            _o.SerializeRenewSession = token => WireRoomGatewayBinary.Serialize(
+                new WireRenewSessionReq { SessionToken = token, ExtendSeconds = 0, RotateToken = false });
+            return this;
+        }
+
+        // ============== Protocol Preset ==============
+
+        /// <summary>
+        /// Applies the standard room-gateway protocol: all opcodes + auth handshake (RenewSession→SubscribeStateSync)
+        /// + reliable-event ack + full-state-sync request + reliable-event push deserialize.
+        /// The game only needs to add input serialize/deserialize + snapshot deserialize.
+        /// </summary>
+        public NetworkBattleConfig UseRoomGatewayProtocol(string battleId, string roomId = "")
+        {
+            // Opcodes
+            _o.OpSubmitInput = RoomGatewayOpCodes.SubmitBattleInput;
+            _o.OpSnapshotPushed = RoomGatewayOpCodes.SnapshotPushed;
+            _o.OpDeltaSnapshotPushed = RoomGatewayOpCodes.DeltaSnapshotPushed;
+            _o.OpReliableEventsPushed = RoomGatewayOpCodes.ReliableBattleEventsPushed;
+            _o.OpAcknowledgeReliableEvents = RoomGatewayOpCodes.AckReliableBattleEvents;
+            _o.OpRequestFullStateSync = RoomGatewayOpCodes.RequestFullStateSync;
+            _o.OpRenewSession = RoomGatewayOpCodes.RenewSession;
+            _o.OpPostAuthentication = RoomGatewayOpCodes.SubscribeStateSync;
+
+            // Auth handshake (standard room-gateway)
+            _o.SerializeRenewSession = token => WireRoomGatewayBinary.Serialize(
+                new WireRenewSessionReq { SessionToken = token, ExtendSeconds = 0, RotateToken = false });
+            _o.SerializePostAuthenticationWithReliableEventCursor = (epoch, lastAck) => WireRoomGatewayBinary.Serialize(
+                new WireSubscribeStateSyncReq
+                {
+                    SessionToken = _o.SessionToken,
+                    BattleId = battleId,
+                    RoomId = roomId,
+                    EventEpoch = epoch ?? string.Empty,
+                    LastEventAck = Math.Max(0L, lastAck)
+                });
+
+            // Reliable-event ack (standard)
+            _o.SerializeAcknowledgeReliableEvents = (epoch, sequence) => WireRoomGatewayBinary.Serialize(
+                new WireAckReliableBattleEventsReq
+                {
+                    SessionToken = _o.SessionToken,
+                    BattleId = battleId,
+                    RoomId = roomId,
+                    Epoch = epoch ?? string.Empty,
+                    AckSequence = Math.Max(0L, sequence)
+                });
+            _o.DeserializeAcknowledgeReliableEventsResponse = payload =>
+            {
+                var wire = WireRoomGatewayBinary.Deserialize<WireAckReliableBattleEventsRes>(payload);
+                return wire.Success ? wire.AcceptedAckSequence : -1L;
+            };
+
+            // Reliable-event push deserialize (standard)
+            _o.DeserializeReliableEventsPushed = payload =>
+                WireRoomGatewayBinary.Deserialize<WireReliableBattleEventPush>(payload);
+
+            // Full-state-sync request (standard)
+            _o.SerializeRequestFullStateSync = (reason, lastAuthoritativeFrame) => WireRoomGatewayBinary.Serialize(
+                new WireRequestFullStateSyncReq
+                {
+                    SessionToken = _o.SessionToken,
+                    BattleId = battleId,
+                    RoomId = roomId,
+                    WorldId = 0,
+                    ClientFrame = lastAuthoritativeFrame,
+                    LastAuthoritativeFrame = lastAuthoritativeFrame,
+                    ClientStateHash = 0,
+                    AuthoritativeStateHash = 0,
+                    Reason = reason ?? string.Empty
+                });
+            _o.DeserializeRequestFullStateSyncResponse = payload =>
+            {
+                var wire = WireRoomGatewayBinary.Deserialize<WireRequestFullStateSyncRes>(payload);
+                return wire.Success && wire.Accepted;
+            };
+
+            // Command-sequence wrapping for input (standard)
+            _o.PrepareSubmitInput = requestObj =>
+            {
+                if (requestObj is not SubmitInputRequest req)
+                    throw new ArgumentException("Expected SubmitInputRequest.", nameof(requestObj));
+                return new SequencedInput(req, unchecked((ulong)Interlocked.Increment(ref _nextCommandSequence)));
+            };
+            _o.RewriteSubmitInputFrame = (requestObj, frame) =>
+            {
+                if (requestObj is not SequencedInput seq)
+                    throw new ArgumentException("Expected SequencedInput.", nameof(requestObj));
+                var r = seq.Request;
+                return new SequencedInput(
+                    new SubmitInputRequest(r.WorldId,
+                        new AbilityKit.Ability.Host.PlayerInputCommand(
+                            new AbilityKit.Ability.FrameSync.FrameIndex(frame),
+                            r.Input.Player, r.Input.OpCode, r.Input.Payload)),
+                    seq.CommandSequence);
+            };
+
+            _protocolPresetApplied = true;
+            return this;
+        }
+
+        // ============== Game-specific callbacks ==============
+
+        /// <summary>
+        /// Applies the standard room-gateway StateSync input uplink (<c>WireSubmitBattleInputReq/Res</c>
+        /// mapping incl. command-sequence) as the input serializer pair. The game provides ONLY the id
+        /// converters. Call after <see cref="WithSession"/> (the token is read lazily at invoke time).
+        /// <paramref name="retryAtAuthoritativeFrame"/> decides the engine-level retry policy from the
+        /// wire response; default null = never retry (engine retry off, e.g. the game retries itself).
+        /// </summary>
+        public NetworkBattleConfig UseRoomGatewayStateSyncInput(
+            string battleId,
+            Func<AbilityKit.Ability.Host.PlayerId, uint> playerIdToUInt,
+            Func<AbilityKit.Ability.World.Abstractions.WorldId, ulong> worldIdToUlong,
+            Func<WireSubmitBattleInputRes, bool> retryAtAuthoritativeFrame = null)
+        {
+            if (string.IsNullOrWhiteSpace(battleId)) throw new ArgumentException("Battle id is required.", nameof(battleId));
+            if (playerIdToUInt == null) throw new ArgumentNullException(nameof(playerIdToUInt));
+            if (worldIdToUlong == null) throw new ArgumentNullException(nameof(worldIdToUlong));
+
+            return WithInputSerializer(
+                serializeSubmitInput: requestObj =>
+                {
+                    if (requestObj is not SequencedInput sequenced) return default;
+                    var req = sequenced.Request;
+                    var wire = new WireSubmitBattleInputReq
+                    {
+                        SessionToken = _o.SessionToken,
+                        BattleId = battleId,
+                        WorldId = worldIdToUlong(req.WorldId),
+                        Frame = req.Input.Frame.Value,
+                        PlayerId = playerIdToUInt(req.Input.Player),
+                        InputOpCode = req.Input.OpCode,
+                        Payload = req.Input.Payload ?? Array.Empty<byte>(),
+                        CommandSequence = sequenced.CommandSequence
+                    };
+                    return WireRoomGatewayBinary.Serialize(in wire);
+                },
+                deserializeSubmitInputResponse: payload =>
+                {
+                    var wire = WireRoomGatewayBinary.Deserialize<WireSubmitBattleInputRes>(payload);
+                    return new NetworkSubmitInputResponse(
+                        wire.Success,
+                        wire.CurrentFrame,
+                        wire.Success ? 0 : 1,
+                        retryAtAuthoritativeFrame?.Invoke(wire) ?? false,
+                        wire.Status,
+                        wire.Message,
+                        acceptedFrame: wire.AcceptedFrame,
+                        serverTicks: wire.ServerTicks,
+                        shouldResync: wire.ShouldResync);
+                });
+        }
+
+        /// <summary>Sets the request opcode used by the configured input serializer.</summary>
+        public NetworkBattleConfig WithInputOpCode(uint opCode)
+        {
+            if (opCode == 0) throw new ArgumentOutOfRangeException(nameof(opCode));
+            _o.OpSubmitInput = opCode;
+            return this;
+        }
+
+        /// <summary>Sets the game-specific input serialize + response deserialize.</summary>
+        public NetworkBattleConfig WithInputSerializer(
+            Func<object, ArraySegment<byte>> serializeSubmitInput,
+            Func<ArraySegment<byte>, NetworkSubmitInputResponse> deserializeSubmitInputResponse)
+        {
+            _o.SerializeSubmitInput = serializeSubmitInput ?? throw new ArgumentNullException(nameof(serializeSubmitInput));
+            _o.DeserializeSubmitInputResponse = deserializeSubmitInputResponse
+                ?? throw new ArgumentNullException(nameof(deserializeSubmitInputResponse));
+            return this;
+        }
+
+        /// <summary>Sets the game-specific snapshot push deserializer (returns a decoded object for StateSyncSnapshotPushed).</summary>
+        public NetworkBattleConfig WithSnapshotDeserializer(Func<ArraySegment<byte>, object> deserializeSnapshotPushed)
+        {
+            _o.DeserializeSnapshotPushed = deserializeSnapshotPushed ?? throw new ArgumentNullException(nameof(deserializeSnapshotPushed));
+            return this;
+        }
+
+        /// <summary>Sets the frame push deserializer (for framesync mode; returns a FramePacket).</summary>
+        public NetworkBattleConfig WithFrameDeserializer(Func<ArraySegment<byte>, AbilityKit.Ability.Host.FramePacket> deserializeFramePushed)
+        {
+            _o.DeserializeFramePushed = deserializeFramePushed;
+            _o.OpFramePushed = _o.OpFramePushed == 0 ? 9001u : _o.OpFramePushed; // default if not set by preset
+            return this;
+        }
+
+        /// <summary>Sets the reliable-event cursor callbacks (for reconnect resubscribe).</summary>
+        public NetworkBattleConfig WithReliableEventCursor(Func<string> getEpoch, Func<long> getLastAck)
+        {
+            _o.GetReliableEventEpoch = getEpoch;
+            _o.GetReliableEventLastAcknowledgedSequence = getLastAck;
+            return this;
+        }
+
+        /// <summary>
+        /// Raw-downlink consumer mode: clears ALL typed push deserializers (frame/snapshot/reliable
+        /// events) so the engine's typed handlers short-circuit and every push flows through
+        /// <c>NetworkTransport.RawServerPushReceived</c> only. For clients that keep their own
+        /// raw (opCode, payload) apply pipeline.
+        /// </summary>
+        public NetworkBattleConfig WithRawDownlinkOnly()
+        {
+            _o.DeserializeFramePushed = null;
+            _o.DeserializeSnapshotPushed = null;
+            _o.DeserializeReliableEventsPushed = null;
+            return this;
+        }
+
+        // ============== Build ==============
+
+        /// <summary>Validates required fields and returns the assembled <see cref="NetworkTransportOptions"/>.</summary>
+        public NetworkTransportOptions Build()
+        {
+            if (!_o.HasSdkClientSource && _o.ConnectionFactory == null && _o.TransportFactory == null)
+                throw new InvalidOperationException("Set an SDK client, transport, or injected connection.");
+            if (string.IsNullOrWhiteSpace(_o.SessionToken))
+                throw new InvalidOperationException("Set session identity (WithSession).");
+            if (!_protocolPresetApplied)
+                throw new InvalidOperationException("Apply the protocol preset (UseRoomGatewayProtocol).");
+            if (_o.SerializeSubmitInput == null)
+                throw new InvalidOperationException("Set input serializer (WithInputSerializer).");
+            return _o;
+        }
+
+        private void ClearConnectionAndSdkClientSources()
+        {
+            _o.ConnectionFactory = null;
+            ClearSdkClientSources();
+        }
+
+        private void ClearSdkClientSources()
+        {
+            _o.SdkClient = null;
+            _o.SdkClientFactory = null;
+            _o.SdkClientOwnership = NetworkSdkClientOwnership.Borrowed;
+        }
+    }
+}

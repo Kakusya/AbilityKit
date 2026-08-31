@@ -35,6 +35,7 @@ namespace AbilityKit.Demo.Moba.Config.BattleDemo
             typeof(SpawnSummonActionTemplateDTO),
             typeof(ComponentTemplateDTO),
             typeof(PresentationTemplateDTO),
+            typeof(BattleMapDTO),
             typeof(GameplayDTO),
         };
 
@@ -48,7 +49,7 @@ namespace AbilityKit.Demo.Moba.Config.BattleDemo
             if (dtoType == null) throw new ArgumentNullException(nameof(dtoType));
             if (string.IsNullOrEmpty(text)) return Array.CreateInstance(dtoType, 0);
 
-            if (dtoType == typeof(SkillFlowDTO))
+            if (dtoType == typeof(SkillFlowDTO) || dtoType == typeof(BuffDTO))
             {
                 return LubanConfigGroupDeserializer.Instance.DeserializeFromText(text, dtoType);
             }

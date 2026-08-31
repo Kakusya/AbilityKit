@@ -1,5 +1,9 @@
 ﻿# 8.2 触发器系统
 
+> 文档类型：Canonical 设计（Triggering 跨模块边界）
+> 事实基线：2026-08-17
+> 文档版本：v3.1
+>
 > 本文从源码出发说明 AbilityKit 中 Triggering 的真实职责：它不是单一的“条件-动作脚本”，而是由 `TriggerPlan<TArgs>`、`TriggerRunner<TCtx>`、计划数据库、函数/动作注册表、MOBA 规则计划执行器和持续触发计划调和系统共同组成的可扩展玩法执行层。
 
 ---
@@ -9,6 +13,7 @@
 - [8.2 触发器系统](#82-触发器系统)
   - [目录](#目录)
   - [1. 能力定位](#1-能力定位)
+    - [1.1 职责归属与应用策略](#11-职责归属与应用策略)
   - [2. 源码入口](#2-源码入口)
   - [3. 设计总览](#3-设计总览)
   - [4. 核心数据模型](#4-核心数据模型)
@@ -34,7 +39,8 @@
   - [9. 扩展点与约束](#9-扩展点与约束)
     - [9.1 扩展点](#91-扩展点)
     - [9.2 关键约束](#92-关键约束)
-  - [10. 关联文档](#10-关联文档)
+  - [10. 证据与关联文档](#10-证据与关联文档)
+    - [10.1 证据状态与已知限制](#101-证据状态与已知限制)
 
 ---
 
@@ -51,6 +57,16 @@ Triggering 是 AbilityKit 的“玩法规则执行层”，负责把事件、条
 - 如何把规则计划接到 MOBA 的技能、Buff、投射物、表现和战斗原语上。
 
 Triggering 的核心对象是 `TriggerPlan<TArgs>`，核心运行器是 [`TriggerRunner<TCtx>`](../../../Unity/Packages/com.abilitykit.triggering/Runtime/Triggering/Runner/TriggerRunner.cs:19)，核心计划数据库是 [`TriggerPlanJsonDatabase`](../../../Unity/Packages/com.abilitykit.triggering/Runtime/Plans/Serialization/Json/Database/TriggerPlanJsonDatabase.cs:20)。
+
+### 1.1 职责归属与应用策略
+
+| 层级 | 拥有的职责 | 典型内容 |
+|------|------------|----------|
+| Triggering 框架 | 计划模型、Runner 顺序、注册表、Schema/参数承载、执行控制和持续执行器协议 | `TriggerPlan<TArgs>`、`TriggerRunner<TCtx>`、`FunctionRegistry`、`ActionRegistry` |
+| 项目应用层 | 事件 ID 与 payload 语义、条件/动作目录、世界解析、失败是否阻断、订阅与卸载时机 | 伤害、资源、阵营、技能阶段、项目诊断码和配置发布策略 |
+| MOBA 示例 | RulePlan 同步门禁、PlanActionModule 扫描、持续计划调和和 Effect/Trace 会话 | 一套可参考的领域接线，不是 Triggering 包的默认宿主 |
+
+框架保证的是“如何执行计划”，不是“项目应有哪些计划”。事件目录、动作副作用和失败策略必须由使用方版本化；把这些内容固定进框架会使通用包反向依赖具体战斗规则。
 
 ---
 
@@ -275,6 +291,10 @@ flowchart TD
     DB --> Strings[String Table]
 ```
 
+`TriggerPlanJsonDatabase.LoadFromDto()` 会在候选转换后重建 `Records`、按 triggerId 的执行根、`Strings` 与 `_byTriggerId`，但当前实现没有重建 `_recordsByTriggerId`。因此 `TryGetRecordByTriggerId()` 在 JSON 装载后可能仍返回空/旧值，而 `MobaTriggerPlanIntegrityValidator` 和 `MobaTriggerPlanReferenceValidator` 又依赖该查询为每个引用做校验。装载返回成功不能因此推出“引用完整性已校验”；应在发布前显式重建并校验所有派生索引。
+
+候选转换本身也不是纯函数：`CueFactory.Create` 可能在后续记录失败前产生外部副作用。重复 triggerId 会保留在 `Records`，字典只保留最后一个值，而 `RegisterAll` 仍会逐条注册；生产发布必须把重复 ID 当成错误，而不是依赖字典覆盖。
+
 ### 6.3 模块注册
 
 [`PlanActionModuleRegistry`](../../../Unity/Packages/com.abilitykit.demo.moba.runtime/Runtime/Application/Services/Triggering/PlanActions/Core/PlanActionModuleRegistry.cs:12) 会扫描当前程序集中的 `IPlanActionModule` 实现，并通过 `[PlanActionModule]` 排序生成可用模块列表。
@@ -284,6 +304,8 @@ flowchart TD
 - 计划动作是“发现式”注册。
 - 动作模块可以按 order 排序。
 - 动作模块实例能被导入到 `ActionRegistry` 驱动的执行链中。
+
+`RegisterAll` 会返回每次注册的 handle，但当前调用方不持有或集中 Dispose 这些 handle；重复装载/注册会累积监听。`TriggerRunner.Register` 先把 entry 放入事件列表，再调用 `lifecycle.OnRegistered`；若回调抛错，entry 仍留在列表且不会返回可撤销 handle。反向注销则先标记 disposed 并从列表移除，再调用 `OnUnregistered`；回调抛错时最后一个订阅的事件清理可能无法重试。注册和注销必须包在项目自己的补偿边界内。
 
 ---
 
@@ -455,14 +477,27 @@ flowchart LR
 6. **PlanAction 模块应避免把战斗原语写死成一层巨类**：应拆成小动作模块并按职责组合。
 7. **不要混淆事件触发与直接计划执行**：`TriggerRunner<TCtx>` 面向事件订阅和排序派发，`MobaTriggerPlanExecutor.ExecuteRulePlan` 面向同步规则门禁。
 8. **技能 RulePlan 失败语义必须显式配置**：需要阻断释放时应使用 `AbortOnFailure`，并提供可诊断的 `FailReason`。
+9. **Action observer 属于失败路径的一部分**：`ITriggerActionExecutionScopeObserver.EnterActionExecution` 当前在 action 的 `try/finally` 之外调用；Enter 抛错时 action 与 Exit 都不会执行。Exit 位于 `finally`，若 action 与 Exit 同时抛错，Exit 异常可能覆盖原始 action 异常。领域接入必须让 observer 幂等且不抛错，或在适配器内自行保留原始失败。
+10. **Live list 不是快照**：dispatch 遍历事件键下的实时列表；回调中注册/注销可能改变同一次 dispatch 的可见性和索引。需要隔离重入时，应用层应复制待执行项或禁止回调内修改注册表。
 
 ---
 
-## 10. 关联文档
+## 10. 证据与关联文档
+
+### 10.1 证据状态与已知限制
+
+- **E0 实现**：TriggerPlan、Runner、注册表、JSON 计划库和持续执行器均有源码入口。
+- **E1 示例**：MOBA 的 RulePlan、PlanActionModule 与持续计划配置给出高接入参考。
+- **E2 集成**：技能、Buff、被动、投射物和区域效果均通过 MOBA 应用层消费 Triggering。
+- **E3 契约**：2026-08-17 当次 `AbilityKit.Triggering.Tests` 为 `10/10`；覆盖稳定字符串 ID、Cue enum 默认值以及 Continuous executor registry 的参数、类型、异常传播和并发注册。该工程尚未覆盖 Runner 排序/重入、Plan JSON 派生索引、重复 triggerId、RegisterAll handle 回收、Schema 全矩阵、Action observer 双失败或副作用补偿。
+- **E4 场景**：Console/Unity 历史 artifact 对实际触发路径提供日期化证据，但不覆盖全部计划类型、热更、异常补偿或持续订阅组合；当前 MOBA 主工程 `279/305` 也不能作为当次完整触发链通过证明。
+- **E5 门禁**：尚无针对计划兼容性、配置迁移、全动作目录和性能预算的统一发布门禁。
+
+当前实现仍要求项目自行解决 payload 版本化、未知动作/函数的发布策略、配置批量替换的一致性、observer 的异常隔离，以及动作产生部分副作用后的补偿。Runner 的存在不使一组业务动作自动具备事务性。
 
 - [Buff 系统](03-BuffSystem.md) - Buff 生命周期。
 - [投射物系统](04-ProjectileSystem.md) - 投射物实现。
 
 ---
 
-*文档版本：v2.1 | 最后更新：2026-07-04*
+*文档类型：Canonical 设计（Triggering 跨模块边界） | 事实基线：2026-08-17 | 证据等级：公共包局部 E3；E4 仅限日期化历史 artifact | 文档版本：v3.1*

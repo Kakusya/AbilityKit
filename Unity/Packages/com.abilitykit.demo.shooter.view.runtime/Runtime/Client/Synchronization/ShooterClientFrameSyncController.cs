@@ -7,6 +7,7 @@ using AbilityKit.Ability.FrameSync.Rollback;
 using AbilityKit.Ability.Host.Extensions.Client.FrameSync;
 using AbilityKit.Demo.Shooter.Runtime;
 using AbilityKit.Network.Runtime.Sync;
+using AbilityKit.Protocol.Room;
 using AbilityKit.Protocol.Shooter;
 using FrameworkPlayerInputCommand = AbilityKit.Ability.Host.PlayerInputCommand;
 
@@ -18,12 +19,15 @@ namespace AbilityKit.Demo.Shooter.View
         private readonly ShooterPresentationFacade _presentation;
         private readonly ShooterClientSnapshotApplyCoordinator _snapshotApply;
         private readonly ClientPredictionReconciliationCoordinator<ShooterPlayerCommand> _predictionReconciliation = new ClientPredictionReconciliationCoordinator<ShooterPlayerCommand>();
-        private readonly RollbackCoordinator _rollback;
+        private readonly ShooterClientPredictionBufferOptions _predictionBufferOptions;
+        private readonly RollbackCoordinator? _rollback;
         private readonly ShooterClientPredictionRuntimeAdapter _predictionRuntimeAdapter;
-        private readonly InputHistoryRingBuffer _frameworkInputHistory;
-        private readonly ClientPredictionRunner _predictionRunner;
+        private readonly InputHistoryRingBuffer? _frameworkInputHistory;
+        private readonly WorldStateHashRingBuffer? _frameworkStateHashHistory;
         private readonly ShooterClientDriftRecoveryPolicy _recoveryPolicy;
         private readonly ShooterClientRecoveryCoordinator _recovery;
+        private static readonly SyncHealthEvent[] EmptyReconciliationHealthEvents = Array.Empty<SyncHealthEvent>();
+        private SyncHealthEvent[] _lastReconciliationHealthEvents = EmptyReconciliationHealthEvents;
         private readonly float _fixedDeltaTime;
         private float _accumulator;
 
@@ -50,24 +54,74 @@ namespace AbilityKit.Demo.Shooter.View
             ulong rollbackWorldId,
             int rollbackBufferFrames,
             ShooterClientDriftRecoveryPolicy recoveryPolicy)
+            : this(
+                runtime,
+                presentation,
+                tickRate,
+                decoder,
+                rollbackWorldId,
+                new ShooterClientPredictionBufferOptions(
+                    ShooterClientPredictionBufferFeatures.All,
+                    rollbackBufferFrames,
+                    rollbackBufferFrames,
+                    rollbackBufferFrames),
+                recoveryPolicy)
+        {
+        }
+
+        public ShooterClientFrameSyncController(
+            IShooterBattleRuntimePort runtime,
+            ShooterPresentationFacade presentation,
+            int tickRate,
+            ShooterGatewaySnapshotDecoder? decoder,
+            ulong rollbackWorldId,
+            ShooterClientPredictionBufferOptions predictionBufferOptions)
+            : this(
+                runtime,
+                presentation,
+                tickRate,
+                decoder,
+                rollbackWorldId,
+                predictionBufferOptions,
+                ShooterClientDriftRecoveryPolicy.Default)
+        {
+        }
+
+        public ShooterClientFrameSyncController(
+            IShooterBattleRuntimePort runtime,
+            ShooterPresentationFacade presentation,
+            int tickRate,
+            ShooterGatewaySnapshotDecoder? decoder,
+            ulong rollbackWorldId,
+            ShooterClientPredictionBufferOptions predictionBufferOptions,
+            ShooterClientDriftRecoveryPolicy recoveryPolicy)
         {
             if (tickRate <= 0) throw new ArgumentOutOfRangeException(nameof(tickRate));
-            if (rollbackBufferFrames <= 0) throw new ArgumentOutOfRangeException(nameof(rollbackBufferFrames));
 
             _runtime = runtime ?? throw new ArgumentNullException(nameof(runtime));
             _presentation = presentation ?? throw new ArgumentNullException(nameof(presentation));
+            _predictionBufferOptions = predictionBufferOptions ?? throw new ArgumentNullException(nameof(predictionBufferOptions));
             _snapshotApply = new ShooterClientSnapshotApplyCoordinator(_runtime, _presentation, decoder);
-            var registry = new RollbackRegistry();
-            registry.Register(new ShooterPackedSnapshotRollbackProvider(_runtime, rollbackWorldId));
-            _rollback = new RollbackCoordinator(registry, new RollbackSnapshotRingBuffer(rollbackBufferFrames));
             _predictionRuntimeAdapter = new ShooterClientPredictionRuntimeAdapter(_runtime);
-            _frameworkInputHistory = new InputHistoryRingBuffer(rollbackBufferFrames);
-            _predictionRunner = new ClientPredictionRunner(
-                _predictionRuntimeAdapter,
-                _predictionRuntimeAdapter,
-                _rollback,
-                _frameworkInputHistory,
-                new ClientPredictionReconciler(new WorldStateHashRingBuffer(rollbackBufferFrames)));
+            if (_predictionBufferOptions.Has(ShooterClientPredictionBufferFeatures.RollbackSnapshots))
+            {
+                var registry = new RollbackRegistry();
+                registry.Register(new ShooterPackedSnapshotRollbackProvider(_runtime, rollbackWorldId));
+                _rollback = new RollbackCoordinator(
+                    registry,
+                    new RollbackSnapshotRingBuffer(_predictionBufferOptions.RollbackSnapshotCapacity));
+            }
+
+            if (_predictionBufferOptions.Has(ShooterClientPredictionBufferFeatures.InputHistory))
+            {
+                _frameworkInputHistory = new InputHistoryRingBuffer(_predictionBufferOptions.InputHistoryCapacity);
+            }
+
+            if (_predictionBufferOptions.Has(ShooterClientPredictionBufferFeatures.StateHashHistory))
+            {
+                _frameworkStateHashHistory = new WorldStateHashRingBuffer(_predictionBufferOptions.StateHashHistoryCapacity);
+            }
+
             _recoveryPolicy = recoveryPolicy;
             _recovery = new ShooterClientRecoveryCoordinator(recoveryPolicy, () => _runtime.CurrentFrame);
             _fixedDeltaTime = 1f / tickRate;
@@ -76,14 +130,25 @@ namespace AbilityKit.Demo.Shooter.View
         public int CurrentFrame => _runtime.CurrentFrame;
         public float FixedDeltaTime => _fixedDeltaTime;
         public float AccumulatedTime => _accumulator;
+        public ShooterClientPredictionBufferOptions PredictionBufferOptions => _predictionBufferOptions;
+        public bool HasFrameworkInputHistory => _frameworkInputHistory != null;
+        public bool HasRollbackSnapshotHistory => _rollback != null;
+        public bool HasStateHashHistory => _frameworkStateHashHistory != null;
         public int PendingInputFrameCount => _predictionReconciliation.PendingInputFrameCount;
+        public bool PublishControlledPlayerPredictionOnly { get; set; }
+        public bool ComputeTickResultStateHash { get; set; } = true;
         public ShooterSnapshotApplyResult LastSnapshotApplyResult { get; private set; } = ShooterSnapshotApplyResult.Ignored;
         public ShooterFrameworkSnapshotPipelineDiagnostics FrameworkSnapshotPipelineDiagnostics => _snapshotApply.Diagnostics;
+        public ShooterClientImportedSnapshotEvidence LastImportedSnapshotEvidence { get; private set; } = ShooterClientImportedSnapshotEvidence.None;
+        public uint LastFreshImportedStateHash { get; private set; }
+        public byte[]? LastMismatchPackedPayload { get; private set; }
+        public byte[]? LastFreshExportedPackedPayload { get; private set; }
         public ShooterClientReconciliationResult LastReconciliationResult { get; private set; } = ShooterClientReconciliationResult.None;
         public bool NeedsFullSnapshotResync => _recovery.NeedsFullSnapshotResync;
         public ShooterClientRecoveryState RecoveryState => _recovery.State;
         public FastReconnectPhase FastReconnectPhase => _recovery.FastReconnectPhase;
         public IReadOnlyList<SyncHealthEvent> LastFastReconnectHealthEvents => _recovery.LastFastReconnectHealthEvents;
+        public IReadOnlyList<SyncHealthEvent> LastReconciliationHealthEvents => _lastReconciliationHealthEvents;
         public ShooterClientResyncReason LastResyncReason => _recovery.LastResyncReason;
         public int LastResyncClientFrame => _recovery.LastResyncClientFrame;
         public int LastResyncAuthoritativeFrame => _recovery.LastResyncAuthoritativeFrame;
@@ -92,7 +157,7 @@ namespace AbilityKit.Demo.Shooter.View
 
         public bool TryRestorePredictedSnapshot(int frame)
         {
-            if (!_rollback.TryRestore(new FrameIndex(frame)))
+            if (_rollback == null || !_rollback.TryRestore(new FrameIndex(frame)))
             {
                 return false;
             }
@@ -112,13 +177,13 @@ namespace AbilityKit.Demo.Shooter.View
 
             if (RecoveryState == ShooterClientRecoveryState.AwaitingFullSnapshot || RecoveryState == ShooterClientRecoveryState.ApplyingFullSnapshot)
             {
-                return new ShooterClientFrameTickResult(0, _runtime.CurrentFrame, _runtime.ComputeStateHash());
+                return new ShooterClientFrameTickResult(0, _runtime.CurrentFrame, GetTickResultStateHash());
             }
 
             if (targetFrame <= _runtime.CurrentFrame)
             {
                 _accumulator = 0f;
-                return new ShooterClientFrameTickResult(0, _runtime.CurrentFrame, _runtime.ComputeStateHash());
+                return new ShooterClientFrameTickResult(0, _runtime.CurrentFrame, GetTickResultStateHash());
             }
 
             var ticks = 0;
@@ -138,7 +203,7 @@ namespace AbilityKit.Demo.Shooter.View
                 PublishRuntimeSnapshot();
             }
 
-            return new ShooterClientFrameTickResult(ticks, _runtime.CurrentFrame, _runtime.ComputeStateHash());
+            return new ShooterClientFrameTickResult(ticks, _runtime.CurrentFrame, GetTickResultStateHash());
         }
 
         public int SubmitLocalInput(in ShooterPlayerCommand command)
@@ -163,7 +228,7 @@ namespace AbilityKit.Demo.Shooter.View
             if (accepted > 0)
             {
                 RecordPendingInput(frame, commands);
-                _frameworkInputHistory.Store(
+                _frameworkInputHistory?.Store(
                     new FrameIndex(frame),
                     ShooterClientPredictionRuntimeAdapter.CreateInputCommands(new FrameIndex(frame), commands));
             }
@@ -216,11 +281,50 @@ namespace AbilityKit.Demo.Shooter.View
             var wasAwaitingFullSnapshot = NeedsFullSnapshotResync;
             var hasPredictedControlledPlayer = TryCapturePredictedControlledPlayer(out var predictedControlledPlayer);
             var snapshotApply = _snapshotApply.ApplyGatewayPush(opCode, payload);
+            return ApplySnapshotOutcome(
+                snapshotApply,
+                payload,
+                replayTargetFrame,
+                predictedHashBeforeCorrection,
+                wasAwaitingFullSnapshot,
+                hasPredictedControlledPlayer,
+                in predictedControlledPlayer);
+        }
 
+        public ShooterSnapshotApplyResult ApplyGatewaySnapshot(in ShooterGatewaySnapshot snapshot)
+        {
+            var replayTargetFrame = _runtime.CurrentFrame;
+            var predictedHashBeforeCorrection = _runtime.IsStarted ? _runtime.ComputeStateHash() : 0u;
+            var wasAwaitingFullSnapshot = NeedsFullSnapshotResync;
+            var hasPredictedControlledPlayer = TryCapturePredictedControlledPlayer(out var predictedControlledPlayer);
+            var snapshotApply = _snapshotApply.ApplyGatewaySnapshot(in snapshot);
+            return ApplySnapshotOutcome(
+                snapshotApply,
+                new ArraySegment<byte>(snapshot.PayloadBytes),
+                replayTargetFrame,
+                predictedHashBeforeCorrection,
+                wasAwaitingFullSnapshot,
+                hasPredictedControlledPlayer,
+                in predictedControlledPlayer);
+        }
+
+        private ShooterSnapshotApplyResult ApplySnapshotOutcome(
+            in ShooterClientSnapshotApplyOutcome snapshotApply,
+            ArraySegment<byte> payload,
+            int replayTargetFrame,
+            uint predictedHashBeforeCorrection,
+            bool wasAwaitingFullSnapshot,
+            bool hasPredictedControlledPlayer,
+            in ShooterSveltoPlayerComponent predictedControlledPlayer)
+        {
             LastSnapshotApplyResult = snapshotApply.ApplyResult;
+            LastFreshImportedStateHash = 0u;
+            LastMismatchPackedPayload = null;
+            LastFreshExportedPackedPayload = null;
             if (!snapshotApply.IsSnapshotPush)
             {
                 LastReconciliationResult = ShooterClientReconciliationResult.None;
+                _lastReconciliationHealthEvents = EmptyReconciliationHealthEvents;
                 return LastSnapshotApplyResult;
             }
 
@@ -229,6 +333,35 @@ namespace AbilityKit.Demo.Shooter.View
                 var authoritativeFrame = snapshotApply.AuthoritativeFrame;
                 var authoritativeStateHash = snapshotApply.AuthoritativeStateHash;
                 var importedStateHash = snapshotApply.ImportedStateHash;
+                if (authoritativeStateHash != 0u && authoritativeStateHash != importedStateHash)
+                {
+                    // Distinguish an importer/codec defect from stale state left in a predicted ECS world.
+                    // This diagnostic runs only on a mismatch and never participates in reconciliation.
+                    try
+                    {
+                        var wire = WireRoomGatewayBinary.Deserialize<WireStateSyncSnapshotPush>(payload);
+                        var packedPayload = wire.Payload ?? Array.Empty<byte>();
+                        LastMismatchPackedPayload = (byte[])packedPayload.Clone();
+                        var packed = ShooterPackedSnapshotCodec.Deserialize(packedPayload);
+                        var freshRuntime = new ShooterBattleRuntimePort();
+                        if (freshRuntime.ImportPackedSnapshot(in packed))
+                        {
+                            LastFreshImportedStateHash = freshRuntime.ComputeStateHash();
+                            LastFreshExportedPackedPayload = freshRuntime.ExportPackedSnapshotBytes(
+                                packed.WorldId,
+                                isFullSnapshot: true,
+                                authorityOverride: true);
+                        }
+                    }
+                    catch
+                    {
+                        LastFreshImportedStateHash = 0u;
+                    }
+                }
+                LastImportedSnapshotEvidence = new ShooterClientImportedSnapshotEvidence(
+                    authoritativeFrame,
+                    authoritativeStateHash,
+                    importedStateHash);
                 var isStrongRecoverySnapshot = IsStrongRecoverySnapshot(snapshotApply.SnapshotFlags);
 
                 _recovery.SetState(wasAwaitingFullSnapshot ? ShooterClientRecoveryState.ApplyingFullSnapshot : ShooterClientRecoveryState.Normal);
@@ -249,6 +382,7 @@ namespace AbilityKit.Demo.Shooter.View
                         StepReplayFrame));
 
                 LastReconciliationResult = reconciliation;
+                SetReconciliationHealthEvents(in reconciliation);
                 PreserveReasonableControlledPrediction(hasPredictedControlledPlayer, in predictedControlledPlayer, in reconciliation);
                 if (reconciliation.AuthoritativeHashMatched)
                 {
@@ -289,6 +423,7 @@ namespace AbilityKit.Demo.Shooter.View
             else
             {
                 LastReconciliationResult = ShooterClientReconciliationResult.None;
+                _lastReconciliationHealthEvents = EmptyReconciliationHealthEvents;
                 if (LastSnapshotApplyResult == ShooterSnapshotApplyResult.ImportFailed)
                 {
                     MarkFullSnapshotResyncNeeded(
@@ -314,7 +449,7 @@ namespace AbilityKit.Demo.Shooter.View
             if (RecoveryState == ShooterClientRecoveryState.AwaitingFullSnapshot || RecoveryState == ShooterClientRecoveryState.ApplyingFullSnapshot)
             {
                 _accumulator = 0f;
-                return new ShooterClientFrameTickResult(0, _runtime.CurrentFrame, _runtime.ComputeStateHash());
+                return new ShooterClientFrameTickResult(0, _runtime.CurrentFrame, GetTickResultStateHash());
             }
 
             if (RecoveryState == ShooterClientRecoveryState.CatchUp)
@@ -326,7 +461,7 @@ namespace AbilityKit.Demo.Shooter.View
             {
                 _recovery.SetState(ShooterClientRecoveryState.Normal);
                 _accumulator = 0f;
-                return new ShooterClientFrameTickResult(0, _runtime.CurrentFrame, _runtime.ComputeStateHash());
+                return new ShooterClientFrameTickResult(0, _runtime.CurrentFrame, GetTickResultStateHash());
             }
 
             _accumulator += deltaTime;
@@ -347,7 +482,7 @@ namespace AbilityKit.Demo.Shooter.View
                 PublishRuntimeSnapshot();
             }
 
-            return new ShooterClientFrameTickResult(ticks, _runtime.CurrentFrame, _runtime.ComputeStateHash());
+            return new ShooterClientFrameTickResult(ticks, _runtime.CurrentFrame, GetTickResultStateHash());
         }
 
         private bool StepPredictedFrame(FrameworkPlayerInputCommand[] inputs)
@@ -359,7 +494,11 @@ namespace AbilityKit.Demo.Shooter.View
 
             var currentFrame = _runtime.CurrentFrame;
             var nextFrame = new FrameIndex(currentFrame + 1);
-            _predictionRunner.TickPredicted(nextFrame, _fixedDeltaTime, inputs, _predictionRuntimeAdapter.ComputeHash);
+            _predictionRuntimeAdapter.Submit(nextFrame, inputs);
+            _frameworkInputHistory?.Store(nextFrame, inputs);
+            _predictionRuntimeAdapter.Tick(_fixedDeltaTime);
+            _rollback?.CaptureAndStore(nextFrame);
+            _frameworkStateHashHistory?.Store(nextFrame, _predictionRuntimeAdapter.ComputeHash(nextFrame));
             return _runtime.CurrentFrame > currentFrame;
         }
 
@@ -375,15 +514,20 @@ namespace AbilityKit.Demo.Shooter.View
                 return 0;
             }
 
-            _frameworkInputHistory.Store(
-                new FrameIndex(frame),
-                ShooterClientPredictionRuntimeAdapter.CreateInputCommands(new FrameIndex(frame), commands));
-            return commands.Length;
+            if (_frameworkInputHistory != null)
+            {
+                _frameworkInputHistory.Store(
+                    new FrameIndex(frame),
+                    ShooterClientPredictionRuntimeAdapter.CreateInputCommands(new FrameIndex(frame), commands));
+                return commands.Length;
+            }
+
+            return _runtime.SubmitInput(frame, commands);
         }
 
         private FrameworkPlayerInputCommand[] GetStoredFrameworkInputs(int frame)
         {
-            return _frameworkInputHistory.TryGet(new FrameIndex(frame), out var inputs)
+            return _frameworkInputHistory != null && _frameworkInputHistory.TryGet(new FrameIndex(frame), out var inputs)
                 ? inputs
                 : Array.Empty<FrameworkPlayerInputCommand>();
         }
@@ -395,7 +539,7 @@ namespace AbilityKit.Demo.Shooter.View
             {
                 _recovery.SetState(ShooterClientRecoveryState.Recovered);
                 _accumulator = 0f;
-                return new ShooterClientFrameTickResult(0, _runtime.CurrentFrame, _runtime.ComputeStateHash());
+                return new ShooterClientFrameTickResult(0, _runtime.CurrentFrame, GetTickResultStateHash());
             }
 
             var ticks = 0;
@@ -421,12 +565,12 @@ namespace AbilityKit.Demo.Shooter.View
                 _recovery.SetState(ShooterClientRecoveryState.Normal);
             }
 
-            return new ShooterClientFrameTickResult(ticks, _runtime.CurrentFrame, _runtime.ComputeStateHash());
+            return new ShooterClientFrameTickResult(ticks, _runtime.CurrentFrame, GetTickResultStateHash());
         }
 
         private void CaptureRollbackSnapshot()
         {
-            if (_runtime.IsStarted)
+            if (_runtime.IsStarted && _rollback != null)
             {
                 _rollback.CaptureAndStore(new FrameIndex(_runtime.CurrentFrame));
             }
@@ -510,7 +654,48 @@ namespace AbilityKit.Demo.Shooter.View
 
         private void PublishRuntimeSnapshot()
         {
-            _presentation.ApplyLocalPredictionSnapshot(_runtime.GetSnapshot());
+            var snapshot = _runtime.GetSnapshotTransient();
+            if (PublishControlledPlayerPredictionOnly)
+            {
+                _presentation.ApplyControlledPlayerPrediction(in snapshot);
+                return;
+            }
+
+            _presentation.ApplyLocalPredictionSnapshot(in snapshot);
+        }
+
+        private uint GetTickResultStateHash()
+        {
+            return ComputeTickResultStateHash ? _runtime.ComputeStateHash() : 0u;
+        }
+
+        private void SetReconciliationHealthEvents(in ShooterClientReconciliationResult reconciliation)
+        {
+            if (reconciliation.ReplayTicks <= 0)
+            {
+                _lastReconciliationHealthEvents = EmptyReconciliationHealthEvents;
+                return;
+            }
+
+            var rollback = reconciliation.AuthoritativeHashMatched
+                ? SyncHealthEvent.Warning(
+                    SyncHealthEventKind.RollbackStarted,
+                    reconciliation.AuthoritativeFrame,
+                    reconciliation.ReplayTicks)
+                : SyncHealthEvent.Error(
+                    SyncHealthEventKind.RollbackStarted,
+                    reconciliation.AuthoritativeFrame,
+                    reconciliation.ReplayTicks);
+            var replay = reconciliation.AuthoritativeHashMatched
+                ? SyncHealthEvent.Info(
+                    SyncHealthEventKind.ReplayCompleted,
+                    reconciliation.FinalFrame,
+                    reconciliation.ReplayTicks)
+                : SyncHealthEvent.Error(
+                    SyncHealthEventKind.ReplayCompleted,
+                    reconciliation.FinalFrame,
+                    reconciliation.ReplayTicks);
+            _lastReconciliationHealthEvents = new[] { rollback, replay };
         }
     }
 
@@ -524,6 +709,21 @@ namespace AbilityKit.Demo.Shooter.View
         FrameTooFarAhead = 5,
         SnapshotTimeout = 6,
         WorldMismatch = 7
+    }
+
+    public readonly struct ShooterClientImportedSnapshotEvidence
+    {
+        public static readonly ShooterClientImportedSnapshotEvidence None = new ShooterClientImportedSnapshotEvidence(0, 0u, 0u);
+        public readonly int Frame;
+        public readonly uint AuthoritativeStateHash;
+        public readonly uint ImportedStateHash;
+
+        public ShooterClientImportedSnapshotEvidence(int frame, uint authoritativeStateHash, uint importedStateHash)
+        {
+            Frame = frame;
+            AuthoritativeStateHash = authoritativeStateHash;
+            ImportedStateHash = importedStateHash;
+        }
     }
 
     public readonly struct ShooterClientFrameTickResult

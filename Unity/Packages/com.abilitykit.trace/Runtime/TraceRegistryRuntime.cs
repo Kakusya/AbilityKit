@@ -50,10 +50,12 @@ namespace AbilityKit.Trace
         public readonly long RootId;
         public readonly long ParentId;
         public readonly int Kind;
+        public readonly int CreatedFrame;
         public readonly int EndedFrame;
         public readonly int EndReason;
         public readonly int ChildCount;
         public readonly object Metadata;
+        private readonly bool _isEnded;
 
         public TraceNodeSnapshot(
             long contextId,
@@ -64,18 +66,45 @@ namespace AbilityKit.Trace
             int endReason,
             int childCount,
             object metadata)
+            : this(
+                contextId,
+                rootId,
+                parentId,
+                kind,
+                0,
+                endedFrame,
+                endReason,
+                childCount,
+                metadata,
+                endedFrame != 0)
+        {
+        }
+
+        public TraceNodeSnapshot(
+            long contextId,
+            long rootId,
+            long parentId,
+            int kind,
+            int createdFrame,
+            int endedFrame,
+            int endReason,
+            int childCount,
+            object metadata,
+            bool isEnded)
         {
             ContextId = contextId;
             RootId = rootId;
             ParentId = parentId;
             Kind = kind;
+            CreatedFrame = createdFrame;
             EndedFrame = endedFrame;
             EndReason = endReason;
             ChildCount = childCount;
             Metadata = metadata;
+            _isEnded = isEnded;
         }
 
-        public bool IsEnded => EndedFrame != 0;
+        public bool IsEnded => _isEnded;
         public bool IsRoot => ContextId == RootId;
         public bool IsLeaf => ChildCount == 0;
         public bool IsValid => ContextId != 0;

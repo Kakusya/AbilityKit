@@ -1,5 +1,7 @@
 using AbilityKit.Ability.World.DI;
-using AbilityKit.Core.Numerics;
+using AbilityKit.Deterministic;
+using AbilityKit.Demo.Moba.Attributes;
+using AbilityKit.Demo.Moba.Services;
 using AbilityKit.Demo.Moba.Systems;
 using AbilityKit.Triggering.Registry;
 using AbilityKit.Triggering.Runtime;
@@ -28,9 +30,9 @@ namespace AbilityKit.Demo.Moba.Services.Triggering.PlanActions
                 return;
             }
 
-            var modifierValue = args.Value;
+            var modifierValue = MobaResourceFixedConvert.ToFixed(args.Value);
             var hitCount = 0;
-            var decayFactor = 1f;
+            var decayFactor = Fixed64.One;
             if (args.RepeatTargetDecayFactor > 0f)
             {
                 if (!TryUpdateRepeatTargetState(attack, args, ctx, out hitCount, out decayFactor))
@@ -44,7 +46,18 @@ namespace AbilityKit.Demo.Moba.Services.Triggering.PlanActions
                     return;
                 }
 
-                modifierValue = args.Op == NumberModifierOp.Mul ? decayFactor - 1f : decayFactor;
+                modifierValue = args.Op == CombatNumberModifierOp.Mul ? decayFactor - Fixed64.One : decayFactor;
+            }
+
+            if (args.TargetMissingHpRatioCoefficient != 0f)
+            {
+                if (!TryResolveTargetMissingHpRatio(attack.TargetActorId, ctx, out var missingHpRatio))
+                {
+                    MobaPlanActionDiagnostics.Rejected(ctx.Context, TriggeringConstants.Actions.AdjustDamageNumber, $"cannot resolve target health. target={attack.TargetActorId}");
+                    return;
+                }
+
+                modifierValue += missingHpRatio * MobaResourceFixedConvert.ToFixed(args.TargetMissingHpRatioCoefficient);
             }
 
             if (!TryResolveNumberValue(attack, args.NumberSlot, out var numberValue) || numberValue == null)
@@ -54,14 +67,14 @@ namespace AbilityKit.Demo.Moba.Services.Triggering.PlanActions
             }
 
             var sourceId = args.SourceId != 0 ? args.SourceId : (args.ReasonParam != 0 ? args.ReasonParam : attack.ReasonParam);
-            numberValue.Apply(new NumberModifier(args.Op, modifierValue, sourceId));
-            MobaPlanActionDiagnostics.Applied(ctx.Context, TriggeringConstants.Actions.AdjustDamageNumber, $"modifier applied. slot={args.NumberSlot} op={args.Op} value={modifierValue:0.###} target={attack.TargetActorId} hitCount={hitCount} decay={decayFactor:0.###} reason={attack.ReasonKind}:{attack.ReasonParam}");
+            numberValue.Apply(new CombatNumberModifier(args.Op, modifierValue, sourceId));
+            MobaPlanActionDiagnostics.Applied(ctx.Context, TriggeringConstants.Actions.AdjustDamageNumber, $"modifier applied. slot={args.NumberSlot} op={args.Op} value={MobaResourceFixedConvert.ToSingle(modifierValue):0.###} target={attack.TargetActorId} hitCount={hitCount} decay={MobaResourceFixedConvert.ToSingle(decayFactor):0.###} missingHpCoefficient={args.TargetMissingHpRatioCoefficient:0.###} reason={attack.ReasonKind}:{attack.ReasonParam}");
         }
 
-        private static bool TryUpdateRepeatTargetState(AttackInfo attack, AdjustDamageNumberArgs args, ExecCtx<IWorldResolver> ctx, out int hitCount, out float decayFactor)
+        private static bool TryUpdateRepeatTargetState(AttackInfo attack, AdjustDamageNumberArgs args, ExecCtx<IWorldResolver> ctx, out int hitCount, out Fixed64 decayFactor)
         {
             hitCount = 0;
-            decayFactor = 1f;
+            decayFactor = Fixed64.One;
 
             if (!attack.TryGetOrigin(out var origin) || !origin.SkillRuntimeHandle.IsValid)
             {
@@ -89,10 +102,32 @@ namespace AbilityKit.Demo.Moba.Services.Triggering.PlanActions
 
             for (var i = 1; i < hitCount; i++)
             {
-                decayFactor *= args.RepeatTargetDecayFactor;
+                decayFactor *= MobaResourceFixedConvert.ToFixed(args.RepeatTargetDecayFactor);
             }
 
-            blackboard.SetFloat(in MobaSkillRuntimeBlackboardKeys.DecayFactor, decayFactor);
+            blackboard.SetFloat(in MobaSkillRuntimeBlackboardKeys.DecayFactor, MobaResourceFixedConvert.ToSingle(decayFactor));
+            return true;
+        }
+
+        private static bool TryResolveTargetMissingHpRatio(int targetActorId, ExecCtx<IWorldResolver> ctx, out Fixed64 missingHpRatio)
+        {
+            missingHpRatio = Fixed64.Zero;
+            if (targetActorId <= 0
+                || !ctx.Context.TryResolve<MobaActorLookupService>(out var actors)
+                || actors == null
+                || !actors.TryGetActorEntity(targetActorId, out var target)
+                || target == null
+                || !target.hasAttributeGroup
+                || !target.hasResourceContainer)
+            {
+                return false;
+            }
+
+            var attrs = new MobaAttrs(target);
+            var maxHp = attrs.MaxHp;
+            if (maxHp <= 0f) return false;
+
+            missingHpRatio = DeterministicMath.Clamp(Fixed64.One - attrs.FixedHp / MobaResourceFixedConvert.ToFixed(maxHp), Fixed64.Zero, Fixed64.One);
             return true;
         }
 
@@ -105,7 +140,7 @@ namespace AbilityKit.Demo.Moba.Services.Triggering.PlanActions
                 MobaSkillRuntimeBlackboardScope.Cast);
         }
 
-        private static bool TryResolveNumberValue(AttackInfo attack, DamageNumberSlot slot, out NumberValue numberValue)
+        private static bool TryResolveNumberValue(AttackInfo attack, DamageNumberSlot slot, out CombatNumberValue numberValue)
         {
             switch (slot)
             {

@@ -1,18 +1,29 @@
 #nullable enable
 
 using System;
+using System.Diagnostics;
 using System.Threading;
 using System.Threading.Tasks;
+using AbilityKit.Network.Sdk;
 using AbilityKit.Protocol.Shooter;
 
 namespace AbilityKit.Demo.Shooter.View
 {
     public sealed class ShooterClientBattleHandle
     {
+        private const long AutomaticFullStateSyncRetrySeconds = 5L;
+
         private readonly ShooterClientSession _session;
         private readonly IShooterRoomGatewayRoomClient? _roomClient;
         private readonly ShooterRoomGatewayFlowResult _flow;
+        private readonly NetworkSessionRecoveryActionRouter<ShooterGatewayFullStateSyncRequestResult> _recoveryActions;
+        private readonly NetworkSessionRecoveryRuntime<ShooterGatewayFullStateSyncRequestResult> _recoveryRuntime;
+        private readonly object _fullStateSyncGate = new object();
         private ShooterClientFullStateSyncRequestKey _lastFullStateSyncRequestKey;
+        private Task<ShooterGatewayFullStateSyncRequestResult>? _fullStateSyncInFlight;
+        private bool _automaticFullStateSyncAwaitingRecovery;
+        private long _automaticFullStateSyncAcceptedTimestamp;
+        private long _automaticFullStateSyncCoalescedRequestCount;
 
         public ShooterClientBattleHandle(ShooterClientSession session, ShooterRoomGatewayFlowResult flow)
             : this(session, flow, null)
@@ -39,6 +50,30 @@ namespace AbilityKit.Demo.Shooter.View
             }
 
             _flow = flow;
+            _recoveryActions = new NetworkSessionRecoveryActionRouter<ShooterGatewayFullStateSyncRequestResult>(
+                    new NetworkSessionRecoveryActionRouterOptions<ShooterGatewayFullStateSyncRequestResult>
+                    {
+                        // 保留 Shooter 既有请求异常语义，由上层决定重试或终止流程。
+                        HandlerFailurePolicy = NetworkSessionRecoveryHandlerFailurePolicy.Throw,
+                        CancellationPolicy = NetworkSessionRecoveryCancellationPolicy.Throw
+                    })
+                .Register(
+                    NetworkSessionRecoveryAction.RequestFullSnapshot,
+                    ExecuteFullSnapshotRecoveryAsync)
+                .Register(
+                    NetworkSessionRecoveryAction.RestoreReliableEventBaseline,
+                    ExecuteFullSnapshotRecoveryAsync);
+            _recoveryRuntime = new NetworkSessionRecoveryRuntime<ShooterGatewayFullStateSyncRequestResult>(
+                _recoveryActions,
+                _session.SessionRecoveryCoordinator,
+                new NetworkSessionRecoveryRuntimeOptions
+                {
+                    // Shooter 仍在输入提交或显式恢复入口执行请求，避免改变既有网络调用时机。
+                    ExecutionMode = NetworkSessionRecoveryExecutionMode.Manual,
+                    CancelSupersededExecution = true,
+                    CancelExecutionOnReset = true,
+                    SuppressStaleExecutionCompletion = true
+                });
         }
 
         public ShooterClientSession Session => _session;
@@ -57,9 +92,16 @@ namespace AbilityKit.Demo.Shooter.View
 
         public int CurrentFrame => _session.CurrentFrame;
 
+        /// <summary>当前 Shooter 恢复动作生命周期诊断。</summary>
+        public NetworkSessionRecoveryRuntimeDiagnostics RecoveryRuntimeDiagnostics =>
+            _recoveryRuntime.GetRuntimeDiagnostics();
+
+        public long AutomaticFullStateSyncCoalescedRequestCount =>
+            Interlocked.Read(ref _automaticFullStateSyncCoalescedRequestCount);
+
         public ShooterGatewayBattleInputContext CreateCurrentFrameInputContext()
         {
-            return _flow.CreateBattleInputContext(_session.CurrentFrame);
+            return _flow.CreateBattleInputContext(_session.GatewayInputFrame);
         }
 
         public async Task<ShooterClientGatewayInputSubmitResult> SubmitLocalInputToGatewayAsync(
@@ -90,28 +132,125 @@ namespace AbilityKit.Demo.Shooter.View
             CancellationToken cancellationToken = default)
         {
             var result = _session.ApplyGatewayPush(opCode, payload);
+            ClearAutomaticFullStateSyncIfRecovered();
             await RequestFullSnapshotResyncIfNeededAsync(timeout, cancellationToken).ConfigureAwait(false);
             return result;
         }
 
-        public Task<ShooterGatewayFullStateSyncRequestResult> RequestFullSnapshotResyncIfNeededAsync(
+        public async Task<ShooterGatewayFullStateSyncRequestResult> RequestFullSnapshotResyncIfNeededAsync(
             TimeSpan? timeout = null,
             CancellationToken cancellationToken = default)
         {
+            var decision = _session.EvaluateRecoveryDecision();
+            ClearAutomaticFullStateSyncIfRecovered();
+            if (_recoveryActions.CanExecute(decision.Action))
+            {
+                var execution = await _recoveryRuntime.ExecuteCurrentAsync(
+                    timeout,
+                    cancellationToken).ConfigureAwait(false);
+                return execution.HasValue
+                    ? execution.Value
+                    : ShooterGatewayFullStateSyncRequestResult.NotRequested;
+            }
+
+            // 更高优先级动作应交给 Launcher 或产品流程处理，不能再退化为低优先级快照请求。
+            if (decision.HasAction)
+            {
+                return ShooterGatewayFullStateSyncRequestResult.NotRequested;
+            }
+
             return ShouldRequestFullStateSync()
-                ? RequestFullSnapshotAsync(CreateFullStateSyncRequest(), timeout, cancellationToken)
-                : Task.FromResult(ShooterGatewayFullStateSyncRequestResult.NotRequested);
+                ? await RequestFullSnapshotAsync(
+                    CreateFullStateSyncRequest(),
+                    timeout,
+                    cancellationToken,
+                    coalesceAutomaticRecovery: true).ConfigureAwait(false)
+                : ShooterGatewayFullStateSyncRequestResult.NotRequested;
+        }
+
+        /// <summary>执行当前统一恢复决策，并返回结构化路由结果。</summary>
+        public Task<NetworkSessionRecoveryExecutionResult<ShooterGatewayFullStateSyncRequestResult>> ExecuteRecoveryDecisionAsync(
+            TimeSpan? timeout = null,
+            CancellationToken cancellationToken = default)
+        {
+            _session.EvaluateRecoveryDecision();
+            return _recoveryRuntime.ExecuteCurrentAsync(timeout, cancellationToken);
+        }
+
+        public Task<ShooterGatewayStateSyncSubscriptionResult> SubscribeStateSyncAsync(
+            TimeSpan? timeout = null,
+            CancellationToken cancellationToken = default)
+        {
+            if (_roomClient == null)
+            {
+                return Task.FromResult(new ShooterGatewayStateSyncSubscriptionResult(false, "room client unavailable"));
+            }
+
+            return _roomClient.SubscribeStateSyncAsync(
+                new ShooterGatewayStateSyncSubscriptionRequest(
+                    _flow.SessionToken,
+                    _flow.BattleId,
+                    _flow.RoomId,
+                    _session.ReliableEventEpoch,
+                    _session.LastReliableEventAck),
+                timeout,
+                cancellationToken);
+        }
+
+        public Task<ShooterGatewayReliableBattleEventAckResult> AcknowledgeReliableBattleEventsAsync(
+            TimeSpan? timeout = null,
+            CancellationToken cancellationToken = default)
+        {
+            if (_roomClient == null || string.IsNullOrWhiteSpace(_session.ReliableEventEpoch))
+            {
+                return Task.FromResult(new ShooterGatewayReliableBattleEventAckResult(false, 0L, "reliable event cursor unavailable"));
+            }
+
+            return _roomClient.AcknowledgeReliableBattleEventsAsync(
+                new ShooterGatewayReliableBattleEventAckRequest(
+                    _flow.SessionToken,
+                    _flow.BattleId,
+                    _flow.RoomId,
+                    _session.ReliableEventEpoch,
+                    _session.LastReliableEventAck),
+                timeout,
+                cancellationToken);
         }
 
         public Task<ShooterGatewayFullStateSyncRequestResult> RequestFullSnapshotBaselineAsync(
             TimeSpan? timeout = null,
             CancellationToken cancellationToken = default)
         {
-            return RequestFullSnapshotAsync(CreateBaselineFullStateSyncRequest(), timeout, cancellationToken);
+            return RequestFullSnapshotBaselineAsync(
+                ShooterClientResyncReason.None.ToString(),
+                timeout,
+                cancellationToken);
+        }
+
+        public Task<ShooterGatewayFullStateSyncRequestResult> RequestFullSnapshotBaselineAsync(
+            string reason,
+            TimeSpan? timeout = null,
+            CancellationToken cancellationToken = default)
+        {
+            return RequestFullSnapshotAsync(CreateBaselineFullStateSyncRequest(reason), timeout, cancellationToken);
         }
 
         public ShooterGatewayFullStateSyncRequest CreateFullStateSyncRequest()
         {
+            if (_session.NeedsReliableEventResync)
+            {
+                return new ShooterGatewayFullStateSyncRequest(
+                    _flow.SessionToken,
+                    _flow.BattleId,
+                    _flow.RoomId,
+                    _flow.WorldId,
+                    _session.CurrentFrame,
+                    _session.CurrentFrame,
+                    0u,
+                    0u,
+                    "ReliableEventGap");
+            }
+
             if (_session.NeedsFullSnapshotResync)
             {
                 return new ShooterGatewayFullStateSyncRequest(
@@ -141,10 +280,10 @@ namespace AbilityKit.Demo.Shooter.View
                     reason);
             }
 
-            return CreateBaselineFullStateSyncRequest();
+            return CreateBaselineFullStateSyncRequest(ShooterClientResyncReason.None.ToString());
         }
 
-        private ShooterGatewayFullStateSyncRequest CreateBaselineFullStateSyncRequest()
+        private ShooterGatewayFullStateSyncRequest CreateBaselineFullStateSyncRequest(string reason)
         {
             return new ShooterGatewayFullStateSyncRequest(
                 _flow.SessionToken,
@@ -155,37 +294,145 @@ namespace AbilityKit.Demo.Shooter.View
                 _session.CurrentFrame,
                 0u,
                 0u,
-                ShooterClientResyncReason.None.ToString());
+                string.IsNullOrWhiteSpace(reason) ? ShooterClientResyncReason.None.ToString() : reason);
         }
 
-        private async Task<ShooterGatewayFullStateSyncRequestResult> RequestFullSnapshotAsync(
+        private Task<ShooterGatewayFullStateSyncRequestResult> RequestFullSnapshotAsync(
             ShooterGatewayFullStateSyncRequest request,
             TimeSpan? timeout,
-            CancellationToken cancellationToken)
+            CancellationToken cancellationToken,
+            bool coalesceAutomaticRecovery = false)
         {
             if (_roomClient == null)
             {
-                return ShooterGatewayFullStateSyncRequestResult.NotRequested;
+                return Task.FromResult(ShooterGatewayFullStateSyncRequestResult.NotRequested);
             }
 
             var requestKey = ShooterClientFullStateSyncRequestKey.FromRequest(in request);
-            if (requestKey.Equals(_lastFullStateSyncRequestKey))
+            lock (_fullStateSyncGate)
             {
-                return ShooterGatewayFullStateSyncRequestResult.NotRequested;
-            }
+                var nowTimestamp = Stopwatch.GetTimestamp();
+                if (coalesceAutomaticRecovery)
+                {
+                    if (!ShouldRequestFullStateSync())
+                    {
+                        _automaticFullStateSyncAwaitingRecovery = false;
+                    }
+                    else if (_automaticFullStateSyncAwaitingRecovery &&
+                             nowTimestamp - _automaticFullStateSyncAcceptedTimestamp < AutomaticFullStateSyncRetrySeconds * Stopwatch.Frequency)
+                    {
+                        Interlocked.Increment(ref _automaticFullStateSyncCoalescedRequestCount);
+                        return Task.FromResult(ShooterGatewayFullStateSyncRequestResult.NotRequested);
+                    }
+                }
+                else if (requestKey.Equals(_lastFullStateSyncRequestKey))
+                {
+                    return Task.FromResult(ShooterGatewayFullStateSyncRequestResult.NotRequested);
+                }
 
-            var result = await _session.RequestFullSnapshotResyncAsync(_roomClient, request, timeout, cancellationToken).ConfigureAwait(false);
-            if (result.Accepted)
+                if (_fullStateSyncInFlight != null)
+                {
+                    return _fullStateSyncInFlight;
+                }
+
+                var completion = new TaskCompletionSource<ShooterGatewayFullStateSyncRequestResult>(
+                    TaskCreationOptions.RunContinuationsAsynchronously);
+                _fullStateSyncInFlight = completion.Task;
+                _ = ExecuteFullSnapshotRequestAsync(
+                    _roomClient,
+                    request,
+                    requestKey,
+                    timeout,
+                    cancellationToken,
+                    coalesceAutomaticRecovery,
+                    completion);
+                return completion.Task;
+            }
+        }
+
+        private Task<ShooterGatewayFullStateSyncRequestResult> ExecuteFullSnapshotRecoveryAsync(
+            NetworkSessionRecoveryExecutionContext context,
+            CancellationToken cancellationToken)
+        {
+            var timeout = context.State is TimeSpan configuredTimeout
+                ? configuredTimeout
+                : (TimeSpan?)null;
+            return RequestFullSnapshotAsync(
+                CreateFullStateSyncRequest(),
+                timeout,
+                cancellationToken,
+                coalesceAutomaticRecovery: true);
+        }
+
+        private async Task ExecuteFullSnapshotRequestAsync(
+            IShooterRoomGatewayRoomClient roomClient,
+            ShooterGatewayFullStateSyncRequest request,
+            ShooterClientFullStateSyncRequestKey requestKey,
+            TimeSpan? timeout,
+            CancellationToken cancellationToken,
+            bool coalesceAutomaticRecovery,
+            TaskCompletionSource<ShooterGatewayFullStateSyncRequestResult> completion)
+        {
+            try
             {
-                _lastFullStateSyncRequestKey = requestKey;
-            }
+                var result = await _session.RequestFullSnapshotResyncAsync(
+                    roomClient,
+                    request,
+                    timeout,
+                    cancellationToken).ConfigureAwait(false);
+                if (result.Accepted)
+                {
+                    lock (_fullStateSyncGate)
+                    {
+                        _lastFullStateSyncRequestKey = requestKey;
+                        if (coalesceAutomaticRecovery)
+                        {
+                            _automaticFullStateSyncAwaitingRecovery = true;
+                            _automaticFullStateSyncAcceptedTimestamp = Stopwatch.GetTimestamp();
+                        }
+                    }
+                }
 
-            return result;
+                completion.TrySetResult(result);
+            }
+            catch (OperationCanceledException) when (cancellationToken.IsCancellationRequested)
+            {
+                completion.TrySetCanceled(cancellationToken);
+            }
+            catch (Exception exception)
+            {
+                completion.TrySetException(exception);
+            }
+            finally
+            {
+                lock (_fullStateSyncGate)
+                {
+                    if (ReferenceEquals(_fullStateSyncInFlight, completion.Task))
+                    {
+                        _fullStateSyncInFlight = null;
+                    }
+                }
+            }
         }
 
         private bool ShouldRequestFullStateSync()
         {
-            return _session.NeedsFullSnapshotResync || _session.Presentation.NeedsPureStateFullBaselineResync;
+            return _session.NeedsReliableEventResync
+                || _session.NeedsFullSnapshotResync
+                || _session.Presentation.NeedsPureStateFullBaselineResync;
+        }
+
+        private void ClearAutomaticFullStateSyncIfRecovered()
+        {
+            if (ShouldRequestFullStateSync())
+            {
+                return;
+            }
+
+            lock (_fullStateSyncGate)
+            {
+                _automaticFullStateSyncAwaitingRecovery = false;
+            }
         }
 
         public Task<ShooterClientGatewayInputSubmitResult> SubmitLocalInputToGatewayAsync(

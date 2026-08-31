@@ -56,34 +56,47 @@ namespace AbilityKit.Game.Battle.View.Lib.Skill
 
             if (_ring != null)
             {
-                var diameter = Mathf.Max(74f, Mathf.Min(maxRadius * 0.5f, 144f));
+                var diameter = shape == SkillAimIndicatorShape.TargetCircle
+                    ? Mathf.Max(74f, maxRadius * 2f)
+                    : Mathf.Max(74f, Mathf.Min(maxRadius * 0.5f, 144f));
                 _ring.sizeDelta = new Vector2(diameter, diameter);
                 _ring.SetAsFirstSibling();
             }
 
             if (_dot != null)
             {
-                var size = shape == SkillAimIndicatorShape.DirectionLine
+                var isDirectionLike = shape == SkillAimIndicatorShape.DirectionLine ||
+                                       shape == SkillAimIndicatorShape.DashLine;
+                var size = isDirectionLike
                     ? new Vector2(Mathf.Max(80f, dist), Mathf.Max(24f, config.IndicatorWidthPixels))
                     : Vector2.one * Mathf.Max(48f, config.IndicatorWidthPixels * 0.8f);
                 _dot.sizeDelta = size;
-                _dot.pivot = shape == SkillAimIndicatorShape.DirectionLine
+                _dot.pivot = isDirectionLike
                     ? new Vector2(0f, 0.5f)
                     : new Vector2(0.5f, 0.5f);
-                _dot.anchoredPosition = shape == SkillAimIndicatorShape.DirectionLine ? fromAnchored : target;
-                _dot.localEulerAngles = shape == SkillAimIndicatorShape.DirectionLine ? new Vector3(0f, 0f, angle) : Vector3.zero;
+                _dot.anchoredPosition = isDirectionLike ? fromAnchored : target;
+                _dot.localEulerAngles = isDirectionLike ? new Vector3(0f, 0f, angle) : Vector3.zero;
                 _dot.SetAsLastSibling();
             }
 
             if (_range != null)
             {
-                var width = Mathf.Max(76f, config.IndicatorWidthPixels);
+                var width = shape == SkillAimIndicatorShape.DirectionArea
+                    ? Mathf.Max(28f, config.IndicatorWidthPixels)
+                    : Mathf.Max(76f, config.IndicatorWidthPixels);
                 var length = Mathf.Max(width, config.IndicatorLengthPixels > 0f ? config.IndicatorLengthPixels : maxRadius);
                 if (shape == SkillAimIndicatorShape.Sector)
                 {
                     _range.sizeDelta = new Vector2(length, length);
                     _range.pivot = new Vector2(0.5f, 0.5f);
                     _range.localEulerAngles = new Vector3(0f, 0f, angle - 45f);
+                }
+                else if (shape == SkillAimIndicatorShape.DirectionArea)
+                {
+                    _range.sizeDelta = new Vector2(length, width);
+                    _range.pivot = new Vector2(0f, 0.5f);
+                    _range.anchoredPosition = fromAnchored;
+                    _range.localEulerAngles = new Vector3(0f, 0f, angle);
                 }
                 else
                 {
@@ -124,29 +137,71 @@ namespace AbilityKit.Game.Battle.View.Lib.Skill
 
         private static bool IsAnchorShape(SkillAimIndicatorShape shape)
         {
-            return shape == SkillAimIndicatorShape.DirectionLine || shape == SkillAimIndicatorShape.Sector;
+            return shape == SkillAimIndicatorShape.DirectionLine ||
+                   shape == SkillAimIndicatorShape.TargetCircle ||
+                   shape == SkillAimIndicatorShape.Sector ||
+                   shape == SkillAimIndicatorShape.DirectionArea ||
+                   shape == SkillAimIndicatorShape.DashLine ||
+                   shape == SkillAimIndicatorShape.LockProjectile ||
+                   shape == SkillAimIndicatorShape.FanArea;
         }
 
         private static bool IsDotShape(SkillAimIndicatorShape shape)
         {
-            return shape == SkillAimIndicatorShape.DirectionLine || shape == SkillAimIndicatorShape.TargetCircle;
+            return shape == SkillAimIndicatorShape.DirectionLine ||
+                   shape == SkillAimIndicatorShape.TargetCircle ||
+                   shape == SkillAimIndicatorShape.DashLine ||
+                   shape == SkillAimIndicatorShape.LockProjectile;
         }
 
         private static bool IsRangeShape(SkillAimIndicatorShape shape)
         {
-            return shape == SkillAimIndicatorShape.TargetCircle || shape == SkillAimIndicatorShape.SelfCircle || shape == SkillAimIndicatorShape.Sector;
+            return shape == SkillAimIndicatorShape.TargetCircle ||
+                   shape == SkillAimIndicatorShape.SelfCircle ||
+                   shape == SkillAimIndicatorShape.Sector ||
+                   shape == SkillAimIndicatorShape.DirectionArea ||
+                   shape == SkillAimIndicatorShape.DashLine ||
+                   shape == SkillAimIndicatorShape.LockProjectile ||
+                   shape == SkillAimIndicatorShape.FanArea;
         }
 
         private static Vector2 ResolveRangePosition(SkillAimIndicatorShape shape, Vector2 fromAnchored, Vector2 target)
         {
-            return shape == SkillAimIndicatorShape.TargetCircle ? target : fromAnchored;
+            return shape == SkillAimIndicatorShape.TargetCircle ||
+                   shape == SkillAimIndicatorShape.LockProjectile
+                ? target
+                : fromAnchored;
         }
 
         private void ApplySprites(SkillAimIndicatorShape shape)
         {
             if (_ringImage != null) _ringImage.sprite = SkillAimIndicatorSprites.Ring;
-            if (_dotImage != null) _dotImage.sprite = shape == SkillAimIndicatorShape.DirectionLine ? SkillAimIndicatorSprites.Direction : SkillAimIndicatorSprites.Dot;
-            if (_rangeImage != null) _rangeImage.sprite = shape == SkillAimIndicatorShape.Sector ? SkillAimIndicatorSprites.Sector : SkillAimIndicatorSprites.Area;
+            if (_dotImage != null)
+            {
+                _dotImage.sprite = (shape == SkillAimIndicatorShape.DirectionLine ||
+                                    shape == SkillAimIndicatorShape.DashLine)
+                    ? SkillAimIndicatorSprites.Direction
+                    : SkillAimIndicatorSprites.Dot;
+            }
+            if (_rangeImage != null)
+            {
+                if (shape == SkillAimIndicatorShape.Sector)
+                {
+                    _rangeImage.sprite = SkillAimIndicatorSprites.Sector;
+                }
+                else if (shape == SkillAimIndicatorShape.DirectionArea)
+                {
+                    _rangeImage.sprite = SkillAimIndicatorSprites.DirectionArea;
+                }
+                else if (shape == SkillAimIndicatorShape.FanArea)
+                {
+                    _rangeImage.sprite = SkillAimIndicatorSprites.Sector;
+                }
+                else
+                {
+                    _rangeImage.sprite = SkillAimIndicatorSprites.Area;
+                }
+            }
         }
 
         private void ApplyShapeColors(SkillAimIndicatorShape shape)
@@ -169,6 +224,12 @@ namespace AbilityKit.Game.Battle.View.Lib.Skill
                     return new Color(1f, 0.76f, 0.22f, 0.72f);
                 case SkillAimIndicatorShape.Sector:
                     return new Color(0.35f, 0.92f, 1f, 0.7f);
+                case SkillAimIndicatorShape.DashLine:
+                    return new Color(0.95f, 0.78f, 0.25f, 0.72f);
+                case SkillAimIndicatorShape.LockProjectile:
+                    return new Color(0.95f, 0.45f, 0.55f, 0.72f);
+                case SkillAimIndicatorShape.FanArea:
+                    return new Color(0.7f, 0.95f, 0.45f, 0.72f);
                 default:
                     return new Color(0.3f, 0.82f, 1f, 0.72f);
             }
@@ -203,6 +264,7 @@ namespace AbilityKit.Game.Battle.View.Lib.Skill
         public static Sprite Dot { get; private set; }
         public static Sprite Area { get; private set; }
         public static Sprite Direction { get; private set; }
+        public static Sprite DirectionArea { get; private set; }
         public static Sprite Sector { get; private set; }
 
         public static void Ensure()
@@ -213,6 +275,7 @@ namespace AbilityKit.Game.Battle.View.Lib.Skill
             Dot = CreateDiscSprite(128, 0f, 0.5f, new Color(1f, 1f, 1f, 0.78f));
             Area = CreateDiscSprite(192, 0.28f, 0.5f, new Color(1f, 1f, 1f, 0.34f));
             Direction = CreateDirectionSprite(256, 80, new Color(1f, 1f, 1f, 0.78f));
+            DirectionArea = CreateDirectionAreaSprite(256, 80, new Color(1f, 1f, 1f, 0.48f));
             Sector = CreateSectorSprite(256, 92f, new Color(1f, 1f, 1f, 0.38f));
         }
 
@@ -255,6 +318,22 @@ namespace AbilityKit.Game.Battle.View.Lib.Skill
                 var arrowHalf = Mathf.Lerp(height * 0.34f, 1f, arrowT);
                 var inArrow = x > bodyEnd && Mathf.Abs(y - halfH) <= arrowHalf;
                 texture.SetPixel(x, y, inBody || inArrow ? color : Color.clear);
+            }
+
+            texture.Apply();
+            return CreateSprite(texture);
+        }
+
+        private static Sprite CreateDirectionAreaSprite(int width, int height, Color color)
+        {
+            var texture = CreateTexture(width, height);
+            var border = Mathf.Max(2, height / 12);
+            for (var y = 0; y < height; y++)
+            for (var x = 0; x < width; x++)
+            {
+                var edge = x < border || x >= width - border || y < border || y >= height - border;
+                var alpha = edge ? color.a : color.a * 0.34f;
+                texture.SetPixel(x, y, new Color(color.r, color.g, color.b, alpha));
             }
 
             texture.Apply();

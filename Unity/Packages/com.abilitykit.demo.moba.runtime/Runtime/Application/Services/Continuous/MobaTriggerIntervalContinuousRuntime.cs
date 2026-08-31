@@ -1,6 +1,6 @@
-﻿using System;
+using System;
 using System.Collections.Generic;
-using AbilityKit.Core.Continuous;
+using AbilityKit.Continuous;
 using AbilityKit.Demo.Moba.Config.BattleDemo.MO;
 using AbilityKit.GameplayTags;
 
@@ -30,7 +30,6 @@ namespace AbilityKit.Demo.Moba.Services
         public long SourceContextId { get; }
         public int ModifierSourceId { get; }
         public override IContinuousConfig Config => _config;
-        public float IntervalRemainingSeconds { get; set; }
 
         public float RemainingSeconds
         {
@@ -186,7 +185,7 @@ namespace AbilityKit.Demo.Moba.Services
             }
         }
 
-        private sealed class MobaTriggerIntervalContinuousConfig : MobaContinuousConfigBase, IMobaContinuousOwnerBoundTriggerConfig
+        private sealed class MobaTriggerIntervalContinuousConfig : MobaContinuousConfigBase, IMobaContinuousOwnerBoundTriggerConfig, IMobaContinuousPeriodicGateConfig
         {
             private readonly MobaTriggerIntervalContinuousRuntime _runtime;
             private readonly ContinuousProcessMO _process;
@@ -206,6 +205,8 @@ namespace AbilityKit.Demo.Moba.Services
             public override float IntervalSeconds => _process != null && _process.IntervalMs > 0 ? _process.IntervalMs / 1000f : 0f;
             public override IReadOnlyList<int> IntervalEffectIds => _process?.IntervalTriggerIds ?? Array.Empty<int>();
             public IReadOnlyList<int> TriggerIds => _process?.TriggerIds ?? Array.Empty<int>();
+            public bool RequireOutOfCombat => _process != null && _process.RequireOutOfCombat;
+            public float OutOfCombatSeconds => _process?.OutOfCombatSeconds ?? 0f;
 
             private static GameplayTagSource CreateSource(MobaTriggerIntervalContinuousRuntime runtime)
             {

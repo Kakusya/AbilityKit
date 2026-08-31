@@ -6,14 +6,21 @@ using UnityEngine;
 
 namespace AbilityKit.Game.Editor
 {
-    internal sealed class BattleDebugFrameSyncTimePanel : IBattleDebugPanel
+    [BattleDebugModule(
+        BattleDebugModuleIds.FrameSyncTime,
+        "Frame Sync",
+        Sources = BattleDebugModuleSourceSupport.Live,
+        Selections = BattleDebugModuleSelectionSupport.Frame)]
+    internal sealed class BattleDebugFrameSyncTimePanel : IBattleDebugPanel, IBattleDebugPanelLayout
     {
         public string Name => "帧同步/时间";
         public int Order => 54;
+        public BattleDebugWorkspace Workspace => BattleDebugWorkspace.Diagnostics;
+        public bool OwnsScrollView => false;
 
         public bool IsVisible(in BattleDebugContext ctx)
         {
-            return EditorApplication.isPlaying && BattleFlowDebugProvider.Current != null;
+            return !ctx.IsOffline && EditorApplication.isPlaying && BattleFlowDebugProvider.Current != null;
         }
 
         public void Draw(in BattleDebugContext ctx)

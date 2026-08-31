@@ -22,6 +22,43 @@ public sealed class ShooterRoomGameplayAdapterTests
     }
 
     [Fact]
+    public void CanStart_RequiresConfiguredMinimumPlayers()
+    {
+        var adapter = new ShooterRoomGameplayAdapter();
+        var summary = CreateSummary(new Dictionary<string, string>
+        {
+            [ShooterRoomTagKeys.MinPlayers] = "2"
+        }, maxPlayers: 4);
+        var state = adapter.CreateState(summary);
+        adapter.Join(state, summary, new HashSet<string>(), "player-a");
+        adapter.SetReady(state, new RoomReadyRequest("player-a", true));
+
+        Assert.False(adapter.CanStart(state));
+
+        adapter.Join(state, summary, new HashSet<string> { "player-a" }, "player-b");
+        adapter.SetReady(state, new RoomReadyRequest("player-b", true));
+
+        Assert.True(adapter.CanStart(state));
+    }
+
+    [Fact]
+    public void CanStart_DefaultShooterRoomRequiresTwoReadyPlayers()
+    {
+        var adapter = new ShooterRoomGameplayAdapter();
+        var summary = CreateSummary(maxPlayers: ShooterGameplay.DefaultMaxPlayers);
+        var state = adapter.CreateState(summary);
+        adapter.Join(state, summary, new HashSet<string>(), "player-a");
+        adapter.SetReady(state, new RoomReadyRequest("player-a", true));
+
+        Assert.False(adapter.CanStart(state));
+
+        adapter.Join(state, summary, new HashSet<string> { "player-a" }, "player-b");
+        adapter.SetReady(state, new RoomReadyRequest("player-b", true));
+
+        Assert.True(adapter.CanStart(state));
+    }
+
+    [Fact]
     public void BuildBattleInitParams_WhenShooterRoomReady_MapsRoomToBattleInit()
     {
         var adapter = new ShooterRoomGameplayAdapter();
@@ -30,7 +67,10 @@ public sealed class ShooterRoomGameplayAdapterTests
             [ShooterRoomTagKeys.TickRate] = "20",
             [ShooterRoomTagKeys.MapId] = "3",
             [ShooterRoomTagKeys.RandomSeed] = "1234",
-            [ShooterRoomTagKeys.DurationFrames] = "3600"
+            [ShooterRoomTagKeys.DurationFrames] = "3600",
+            [ShooterRoomTagKeys.EnemyBudget] = "2048",
+            [ShooterRoomTagKeys.VictoryTargetDefeats] = "100000",
+            [ShooterRoomTagKeys.ContinueAfterAllPlayersDefeated] = "true"
         });
         var state = adapter.CreateState(summary);
         adapter.Join(state, summary, new HashSet<string>(), "player-a");
@@ -66,6 +106,9 @@ public sealed class ShooterRoomGameplayAdapterTests
         Assert.Equal(3, initParams.MapId);
         Assert.Equal(1234, initParams.RandomSeed);
         Assert.Equal(3600, initParams.DurationFrames);
+        Assert.Equal(2048, initParams.EnemyBudget);
+        Assert.Equal(100000, initParams.VictoryTargetDefeats);
+        Assert.True(initParams.ContinueAfterAllPlayersDefeated);
         Assert.Equal(7, initParams.RuleSetId);
         Assert.Equal(8, initParams.ConfigVersion);
         Assert.Equal(9, initParams.ProtocolVersion);
@@ -94,6 +137,28 @@ public sealed class ShooterRoomGameplayAdapterTests
                 Assert.Equal("player-b", second.AccountId);
                 Assert.Equal(2f, second.PosX);
             });
+    }
+
+    [Theory]
+    [InlineData(null, ShooterServerProtocol.DefaultEnemyBudget)]
+    [InlineData("0", 1)]
+    [InlineData("8192", ShooterServerProtocol.MaxEnemyBudget)]
+    [InlineData("9000", ShooterServerProtocol.MaxEnemyBudget)]
+    public void BuildBattleInitParams_NormalizesEnemyBudget(string? configuredBudget, int expectedBudget)
+    {
+        Dictionary<string, string>? tags = configuredBudget == null
+            ? null
+            : new Dictionary<string, string>
+            {
+                [ShooterRoomTagKeys.EnemyBudget] = configuredBudget
+            };
+        var adapter = new ShooterRoomGameplayAdapter();
+        var summary = CreateSummary(tags);
+        var state = adapter.CreateState(summary);
+
+        var initParams = adapter.BuildBattleInitParams(state, summary, CreateStartRequest());
+
+        Assert.Equal(expectedBudget, initParams.EnemyBudget);
     }
 
     [Fact]

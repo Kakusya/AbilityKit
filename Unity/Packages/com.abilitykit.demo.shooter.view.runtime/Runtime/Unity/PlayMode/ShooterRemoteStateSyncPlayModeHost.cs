@@ -7,10 +7,13 @@ using AbilityKit.Demo.Shooter.Runtime;
 using AbilityKit.Demo.Shooter.View.Hosting;
 using AbilityKit.Network.Abstractions;
 using AbilityKit.Network.Runtime.Sync;
+using AbilityKit.Network.Sdk;
 using AbilityKit.Protocol.Shooter;
 using UnityEngine;
 using UnityEngine.LowLevel;
 using UnityEngine.PlayerLoop;
+using Unity.Profiling;
+using Stopwatch = System.Diagnostics.Stopwatch;
 
 namespace AbilityKit.Demo.Shooter.View.PlayMode
 {
@@ -26,6 +29,13 @@ namespace AbilityKit.Demo.Shooter.View.PlayMode
         private static readonly UnityShooterPlayInputSource InputSource = new();
         private static readonly UnityShooterSwitchableViewSink ViewSink = new();
         private static readonly ShooterRemoteInputPump InputPump = new(InputSource);
+        private static float _inputSampleAccumulator;
+        private static readonly ReconnectAttemptScheduler SessionReconnectScheduler = new();
+        private static readonly ShooterSyncFramePerformanceCollector PerformanceCollector = new();
+        private static readonly ProfilerMarker LauncherTickMarker = new ProfilerMarker("AbilityKit.Shooter.Sync.LauncherTick");
+        private static readonly ProfilerMarker SessionTickMarker = new ProfilerMarker("AbilityKit.Shooter.Sync.SessionTick");
+        private static readonly ProfilerMarker PresentationBuildMarker = new ProfilerMarker("AbilityKit.Shooter.Sync.PresentationBuild");
+        private static readonly ProfilerMarker ViewRenderMarker = new ProfilerMarker("AbilityKit.Shooter.Sync.ViewRender");
         private static ShooterRemoteStateSyncRuntimeState? _state;
         private static ShooterRemoteInputSubmitStrategy? _inputSubmitStrategy;
         private static ShooterRemoteStateSyncLaunchOptions _options;
@@ -39,6 +49,7 @@ namespace AbilityKit.Demo.Shooter.View.PlayMode
         private static bool _isStarting;
         private static bool _isPaused;
         private static bool _isAutoReconnecting;
+        private static bool _isAutoReconnectAttemptRunning;
         private static bool _isWaitingForInitialFullStateSync;
         private static ShooterSnapshotApplyResult _lastInitialFullStateSyncApplyResult;
         private static Exception? _lastError;
@@ -60,6 +71,7 @@ namespace AbilityKit.Demo.Shooter.View.PlayMode
         public static ShooterSnapshotApplyResult LastInitialFullStateSyncApplyResult => _lastInitialFullStateSyncApplyResult;
         public static Exception? LastError => _lastError;
         public static ShooterClientNetworkLaunchResult? Launch => _state?.Launch;
+        internal static ShooterBattleRuntimePort? Runtime => _state?.RuntimeWorld.Runtime;
         public static ShooterRemoteStateSyncConnectionResult? LastConnectionResult => _lastConnectionResult;
         public static ShooterClientSession? Session => _state?.Launch.Session;
         public static ShooterClientBattleHandle? Battle => _state?.Launch.Battle;
@@ -81,9 +93,23 @@ namespace AbilityKit.Demo.Shooter.View.PlayMode
         public static long StepCount => _stepCount;
         public static long RenderCount => _renderCount;
         public static ShooterUnityViewRenderBackend ViewBackend => ViewSink.Backend;
+        public static ShooterUnityViewRenderDiagnostics ViewRenderDiagnostics => ViewSink.Diagnostics;
         public static SyncTimeAnchor LastLocalTimeAnchor => _timeAnchors?.LastLocalAnchor ?? default;
         public static SyncTimeAnchor LastRemoteTimeAnchor => _lastRemoteTimeAnchor;
         public static ShooterRemoteLatencyCompensationDiagnostics LastRemoteLatencyCompensationDiagnostics => _lastRemoteLatencyCompensationDiagnostics;
+        public static ShooterSyncFramePerformanceDiagnostics PerformanceDiagnostics => PerformanceCollector.Diagnostics;
+        public static ShooterPureStatePlaybackDiagnostics PureStatePlaybackDiagnostics
+        {
+            get
+            {
+                var session = _state?.Launch.Battle.Session;
+                return session != null && session.TryGetPureStatePlaybackDiagnostics(out var diagnostics)
+                    ? diagnostics
+                    : default;
+            }
+        }
+        public static ShooterBattleDataPlaneDiagnostics BattleDataPlaneDiagnostics =>
+            _state?.Launcher.BattleData?.Diagnostics ?? default;
 
         [RuntimeInitializeOnLoadMethod(RuntimeInitializeLoadType.SubsystemRegistration)]
         private static void ResetStatics()
@@ -102,7 +128,18 @@ namespace AbilityKit.Demo.Shooter.View.PlayMode
             return StartAsync(ShooterRemoteStateSyncLaunchOptions.RestoreFirst(options, endpoint, sessionToken, region, serverId));
         }
 
-        public static async Task<ShooterClientNetworkLaunchResult> StartAsync(ShooterRemoteStateSyncLaunchOptions launchOptions)
+        public static Task<ShooterClientNetworkLaunchResult> StartAsync(ShooterRemoteStateSyncLaunchOptions launchOptions)
+        {
+            return StartAsync(launchOptions, launcher: null);
+        }
+
+        /// <summary>
+        /// Starts the battle by adopting an already connected launcher from the formal room flow.
+        /// Ownership transfers to the host as soon as this method is called.
+        /// </summary>
+        public static async Task<ShooterClientNetworkLaunchResult> StartAsync(
+            ShooterRemoteStateSyncLaunchOptions launchOptions,
+            ShooterClientNetworkLauncher? launcher)
         {
             Install();
             var generation = AdvanceLifecycleGeneration();
@@ -113,30 +150,22 @@ namespace AbilityKit.Demo.Shooter.View.PlayMode
             _pausedResumeOptions = default;
             _isPaused = false;
             _isAutoReconnecting = false;
+            _isAutoReconnectAttemptRunning = false;
+            SessionReconnectScheduler.Reset();
             _isWaitingForInitialFullStateSync = false;
             _lastInitialFullStateSyncApplyResult = default;
             NotifyStateChanged();
 
             try
             {
-                var state = await StartSessionAsync(launchOptions, generation).ConfigureAwait(false);
+                var state = await StartSessionAsync(launchOptions, generation, launcher).ConfigureAwait(false);
                 if (!IsCurrentLifecycle(generation))
                 {
                     state.Dispose();
                     throw new OperationCanceledException("Shooter remote state-sync start was superseded by a newer lifecycle.");
                 }
 
-                _state = state;
-                _inputSubmitStrategy = ShooterRemoteInputSubmitStrategy.Create(state.CoordinatorInputBridge, launchOptions.Timeout);
-                _lastInput = default;
-                _lastSubmitResult = default;
-                _lastTickResult = default;
-                _stepCount = 0;
-                _renderCount = 0;
-                _timeAnchors = ShooterTimeAnchorCoordinator.CreateLocal(_options.SessionOptions.TickRate);
-                _lastRemoteTimeAnchor = state.Launch.Flow.RemoteTimeAnchorProjection.TimeAnchor;
-                _lastRemoteLatencyCompensationDiagnostics = default;
-                _lastError = null;
+                ActivateRunningState(state, launchOptions);
                 return state.Launch;
             }
             catch (Exception ex)
@@ -160,10 +189,10 @@ namespace AbilityKit.Demo.Shooter.View.PlayMode
             }
         }
 
-        public static void PauseForReconnectValidation()
+        public static void Pause()
         {
             var state = _state;
-            if (state == null || _isPaused)
+            if (state == null || _isPaused || _isStarting)
             {
                 return;
             }
@@ -174,6 +203,11 @@ namespace AbilityKit.Demo.Shooter.View.PlayMode
             state.Launcher.Close();
             _isPaused = true;
             NotifyStateChanged();
+        }
+
+        public static void PauseForReconnectValidation()
+        {
+            Pause();
         }
 
         public static Task<ShooterClientNetworkLaunchResult> ResumeFromPauseAsync()
@@ -189,17 +223,72 @@ namespace AbilityKit.Demo.Shooter.View.PlayMode
                 throw new InvalidOperationException("Shooter remote state-sync host is not paused.");
             }
 
+            if (_isStarting)
+            {
+                throw new InvalidOperationException("Shooter remote state-sync resume is already in progress.");
+            }
+
             var resumeOptions = _pausedResumeOptions;
             if (string.IsNullOrWhiteSpace(resumeOptions.SessionToken))
             {
                 resumeOptions = ShooterReconnectLaunchOptionsBuilder.RestoreOnly(_options, _state?.Launch.Flow.RoomId ?? _options.RoomId);
             }
 
-            return StartAsync(resumeOptions);
+            return ResumePausedSessionAsync(resumeOptions);
+        }
+
+        private static async Task<ShooterClientNetworkLaunchResult> ResumePausedSessionAsync(
+            ShooterRemoteStateSyncLaunchOptions resumeOptions)
+        {
+            var generation = AdvanceLifecycleGeneration();
+            var previousState = _state;
+            var previousConnectionResult = _lastConnectionResult;
+            var previousControlledPlayerId = _effectiveControlledPlayerId;
+            _isStarting = true;
+            _lastError = null;
+            NotifyStateChanged();
+
+            ShooterRemoteStateSyncRuntimeState? restoredState = null;
+            try
+            {
+                restoredState = await StartSessionAsync(resumeOptions, generation);
+                ThrowIfStaleLifecycle(generation);
+
+                RenderRestoredStateWithoutAdvancingClient(restoredState, resumeOptions);
+                ActivateRunningState(restoredState, resumeOptions);
+                _renderCount = 1;
+                restoredState = null;
+                previousState?.Dispose();
+                _isPaused = false;
+                return _state!.Launch;
+            }
+            catch (Exception ex)
+            {
+                restoredState?.Dispose();
+                if (IsCurrentLifecycle(generation))
+                {
+                    _state = previousState;
+                    _lastConnectionResult = previousConnectionResult;
+                    _effectiveControlledPlayerId = previousControlledPlayerId;
+                    _lastError = ex;
+                    _isPaused = true;
+                }
+
+                throw;
+            }
+            finally
+            {
+                if (IsCurrentLifecycle(generation))
+                {
+                    _isStarting = false;
+                    NotifyStateChanged();
+                }
+            }
         }
 
         public static void Stop()
         {
+            InputSource.SetInputOverride(null);
             StopRunningSession();
             _lastConnectionResult = null;
             _lastError = null;
@@ -209,9 +298,11 @@ namespace AbilityKit.Demo.Shooter.View.PlayMode
 
         public static void Uninstall()
         {
+            InputSource.SetInputOverride(null);
             StopRunningSession();
             UninstallPlayerLoop();
             Application.quitting -= OnApplicationQuitting;
+            Application.focusChanged -= OnApplicationFocusChanged;
             _lastConnectionResult = null;
             _lastError = null;
             ViewSink.Clear();
@@ -246,19 +337,42 @@ namespace AbilityKit.Demo.Shooter.View.PlayMode
             }
         }
 
+        internal static void SetInputOverride(Func<int, ShooterHostFrameInput>? inputOverride)
+        {
+            InputSource.SetInputOverride(inputOverride);
+        }
+
         private static void Install()
         {
             InstallPlayerLoop();
             Application.quitting -= OnApplicationQuitting;
             Application.quitting += OnApplicationQuitting;
+            Application.focusChanged -= OnApplicationFocusChanged;
+            Application.focusChanged += OnApplicationFocusChanged;
         }
 
-        private static async Task<ShooterRemoteStateSyncRuntimeState> StartSessionAsync(ShooterRemoteStateSyncLaunchOptions launchOptions, long generation)
+        /// <summary>立即等待当前远程会话的可靠事件检查点完成持久化。</summary>
+        public static void FlushReliableEventCheckpoints()
         {
-            var runtimeWorld = ShooterBattleWorldSession.Create(
+            _state?.Launcher.FlushReliableEventCheckpointsAsync(
+                ReliableEventCheckpointFlushTrigger.Manual).GetAwaiter().GetResult();
+        }
+
+        private static void FlushReliableEventCheckpoints(
+            ReliableEventCheckpointFlushTrigger trigger)
+        {
+            _state?.Launcher.FlushReliableEventCheckpointsAsync(trigger).GetAwaiter().GetResult();
+        }
+
+        private static async Task<ShooterRemoteStateSyncRuntimeState> StartSessionAsync(
+            ShooterRemoteStateSyncLaunchOptions launchOptions,
+            long generation,
+            ShooterClientNetworkLauncher? existingLauncher = null)
+        {
+            var runtimeWorld = ShooterGameplayScenarioWorldHostFactory.CreateBattleWorld(
                 $"remote-{launchOptions.SessionToken}-client",
-                ShooterGameplayScenarioWorldHostFactory.Create(launchOptions.SessionOptions.GameplayScenario));
-            var launcher = ShooterClientNetworkLauncher.Create(ShooterClientConnectionFactory.Tcp());
+                launchOptions.SessionOptions);
+            var launcher = existingLauncher ?? ShooterClientNetworkLauncher.Create(ShooterClientConnectionFactory.TcpForUnityMainThread());
 
             try
             {
@@ -275,6 +389,10 @@ namespace AbilityKit.Demo.Shooter.View.PlayMode
                     (uint)launchOptions.SessionOptions.ControlledPlayerId).ConfigureAwait(false);
 
                 ThrowIfStaleLifecycle(generation);
+                _effectiveControlledPlayerId = ResolveEffectiveControlledPlayerId(
+                    connectionResult.Launch.Flow,
+                    launchOptions.SessionOptions.ControlledPlayerId);
+                connectionResult.Launch.Session.Presentation.ControlledPlayerId = _effectiveControlledPlayerId;
                 await new ShooterInitialFullStateSyncCoordinator(
                     waiting => SetWaitingForInitialFullStateSync(generation, waiting),
                     result => SetLastInitialFullStateSyncApplyResult(generation, result),
@@ -286,16 +404,8 @@ namespace AbilityKit.Demo.Shooter.View.PlayMode
 
                 ThrowIfStaleLifecycle(generation);
                 _lastConnectionResult = connectionResult;
-                _effectiveControlledPlayerId = ResolveEffectiveControlledPlayerId(connectionResult.Launch.Flow, launchOptions.SessionOptions.ControlledPlayerId);
-                connectionResult.Launch.Session.Presentation.ControlledPlayerId = _effectiveControlledPlayerId;
 
-                var coordinatorInputBridge = ShooterCoordinatorInputBridge.Create(
-                    runtimeWorld.World,
-                    connectionResult.Launch,
-                    launchOptions.Endpoint,
-                    launchOptions.SessionOptions.TickRate);
-
-                return new ShooterRemoteStateSyncRuntimeState(runtimeWorld, launcher, connectionResult.Launch, coordinatorInputBridge);
+                return new ShooterRemoteStateSyncRuntimeState(runtimeWorld, launcher, connectionResult.Launch);
             }
             catch
             {
@@ -313,12 +423,25 @@ namespace AbilityKit.Demo.Shooter.View.PlayMode
         private static void TickRunningSession(float deltaSeconds)
         {
             var state = _state;
-            if (state == null || _isPaused || _isAutoReconnecting)
+            if (state == null || _isPaused)
             {
                 return;
             }
 
-            state.Launcher.Tick(deltaSeconds);
+            if (_isAutoReconnecting)
+            {
+                TickAutoReconnect(deltaSeconds);
+                return;
+            }
+
+            var frameStartedAt = Stopwatch.GetTimestamp();
+            var allocatedBefore = GC.GetAllocatedBytesForCurrentThread();
+            var stageStartedAt = frameStartedAt;
+            using (LauncherTickMarker.Auto())
+            {
+                state.Launcher.Tick(deltaSeconds);
+            }
+            var launcherElapsedTicks = Stopwatch.GetTimestamp() - stageStartedAt;
             if (TryBeginAutoReconnectAfterSocketLoss(state))
             {
                 return;
@@ -328,33 +451,87 @@ namespace AbilityKit.Demo.Shooter.View.PlayMode
 
             var localTimeAnchor = (_timeAnchors ??= ShooterTimeAnchorCoordinator.CreateLocal(_options.SessionOptions.TickRate)).AdvanceLocal();
             _lastRemoteTimeAnchor = state.Launch.Flow.RemoteTimeAnchorProjection.TimeAnchor;
-            var inputResult = InputPump.SubmitFrameInput(
-                state.Launch.Session,
-                ResolveEffectiveControlledPlayerId(state.Launch.Flow, _options.SessionOptions.ControlledPlayerId),
-                _inputSubmitStrategy);
-            _lastInput = inputResult.Input;
-            _lastSubmitResult = inputResult.SubmitResult;
+            // 输入按模拟 tick 节奏采样提交（30Hz），而不是每渲染帧：本机低 RTT 下每帧提交
+            // 的实际到达速率≈编辑器帧率，会耗尽服务端准入令牌桶触发限速→恢复态封锁输入。
+            _inputSampleAccumulator += Math.Max(0f, deltaSeconds);
+            var inputTickInterval = 1f / Math.Max(1, _options.SessionOptions.TickRate);
+            if (_inputSampleAccumulator >= inputTickInterval)
+            {
+                _inputSampleAccumulator = 0f;
+                var inputResult = InputPump.SubmitFrameInput(
+                    state.Launch.Session,
+                    ResolveEffectiveControlledPlayerId(state.Launch.Flow, _options.SessionOptions.ControlledPlayerId),
+                    _inputSubmitStrategy);
+                _lastInput = inputResult.Input;
+                _lastSubmitResult = inputResult.SubmitResult;
+            }
+
             _stepCount++;
 
-            _lastTickResult = state.Launch.Session.Tick(deltaSeconds);
-            state.CoordinatorInputBridge.Tick(deltaSeconds);
+            stageStartedAt = Stopwatch.GetTimestamp();
+            using (SessionTickMarker.Auto())
+            {
+                _lastTickResult = state.Launch.Session.Tick(deltaSeconds);
+            }
+            var sessionTickElapsedTicks = Stopwatch.GetTimestamp() - stageStartedAt;
             _inputSubmitStrategy?.CompleteIfFinished();
             _lastRemoteLatencyCompensationDiagnostics = CreateRemoteLatencyCompensationDiagnostics();
 
-            var frame = ShooterRemotePresentationFrameBuilder.Build(
-                state.Launch,
-                _options.SessionOptions,
-                ResolveEffectiveControlledPlayerId(state.Launch.Flow, _options.SessionOptions.ControlledPlayerId),
-                _lastRemoteTimeAnchor,
-                localTimeAnchor,
-                _lastRemoteLatencyCompensationDiagnostics);
-            ViewSink.Render(in frame);
+            stageStartedAt = Stopwatch.GetTimestamp();
+            ShooterHostPresentationFrame frame;
+            using (PresentationBuildMarker.Auto())
+            {
+                frame = ShooterRemotePresentationFrameBuilder.Build(
+                    state.Launch,
+                    _options.SessionOptions,
+                    ResolveEffectiveControlledPlayerId(state.Launch.Flow, _options.SessionOptions.ControlledPlayerId),
+                    _lastRemoteTimeAnchor,
+                    localTimeAnchor,
+                    _lastRemoteLatencyCompensationDiagnostics);
+            }
+            var presentationBuildElapsedTicks = Stopwatch.GetTimestamp() - stageStartedAt;
+            stageStartedAt = Stopwatch.GetTimestamp();
+            using (ViewRenderMarker.Auto())
+            {
+                ViewSink.Render(in frame);
+            }
+            var viewRenderElapsedTicks = Stopwatch.GetTimestamp() - stageStartedAt;
             _renderCount++;
+            PerformanceCollector.RecordFrame(
+                Stopwatch.GetTimestamp() - frameStartedAt,
+                launcherElapsedTicks,
+                sessionTickElapsedTicks,
+                presentationBuildElapsedTicks,
+                viewRenderElapsedTicks,
+                GC.GetAllocatedBytesForCurrentThread() - allocatedBefore);
         }
 
         private static ShooterRemoteLatencyCompensationDiagnostics CreateRemoteLatencyCompensationDiagnostics()
         {
             return _inputSubmitStrategy?.CreateLatencyDiagnostics() ?? default;
+        }
+
+        private static void RenderRestoredStateWithoutAdvancingClient(
+            ShooterRemoteStateSyncRuntimeState restoredState,
+            ShooterRemoteStateSyncLaunchOptions resumeOptions)
+        {
+            var launch = restoredState.Launch;
+            var controlledPlayerId = ResolveEffectiveControlledPlayerId(
+                launch.Flow,
+                resumeOptions.SessionOptions.ControlledPlayerId);
+            var localTimeAnchor = ShooterTimeAnchorCoordinator.CreateLocal(
+                resumeOptions.SessionOptions.TickRate).LastLocalAnchor;
+            var remoteTimeAnchor = launch.Flow.RemoteTimeAnchorProjection.TimeAnchor;
+            var frame = ShooterRemotePresentationFrameBuilder.Build(
+                launch,
+                resumeOptions.SessionOptions,
+                controlledPlayerId,
+                remoteTimeAnchor,
+                localTimeAnchor,
+                default);
+
+            ViewSink.Clear();
+            ViewSink.Render(in frame);
         }
 
         private static int ResolveEffectiveControlledPlayerId(ShooterRoomGatewayFlowResult flow, int fallbackPlayerId)
@@ -384,11 +561,15 @@ namespace AbilityKit.Demo.Shooter.View.PlayMode
             _stepCount = 0;
             _renderCount = 0;
             _timeAnchors = null;
+            _inputSampleAccumulator = 0f;
             _lastRemoteTimeAnchor = default;
             _lastRemoteLatencyCompensationDiagnostics = default;
+            PerformanceCollector.Reset();
             _isStarting = false;
             _isPaused = false;
             _isAutoReconnecting = false;
+            _isAutoReconnectAttemptRunning = false;
+            SessionReconnectScheduler.Reset();
             _isWaitingForInitialFullStateSync = false;
             _lastInitialFullStateSyncApplyResult = default;
         }
@@ -411,17 +592,43 @@ namespace AbilityKit.Demo.Shooter.View.PlayMode
                 return false;
             }
 
+            if (SessionReconnectScheduler.IsExhausted)
+            {
+                return true;
+            }
+
+            if (!SessionReconnectScheduler.Request())
+            {
+                return true;
+            }
+
             _isAutoReconnecting = true;
             _pausedResumeOptions = ShooterReconnectLaunchOptionsBuilder.RestoreOnly(_options, state.Launch.Flow.RoomId);
             _inputSubmitStrategy?.Reset();
             _inputSubmitStrategy = null;
             state.Launcher.Close();
             NotifyStateChanged();
-            _ = ResumeAfterSocketLossAsync(_pausedResumeOptions, _lifecycleGeneration);
             return true;
         }
 
-        private static async Task ResumeAfterSocketLossAsync(ShooterRemoteStateSyncLaunchOptions resumeOptions, long sourceGeneration)
+        private static void TickAutoReconnect(float deltaSeconds)
+        {
+            if (_isAutoReconnectAttemptRunning ||
+                !SessionReconnectScheduler.TryTakeAttempt(deltaSeconds, out var attempt))
+            {
+                return;
+            }
+
+            _isAutoReconnectAttemptRunning = true;
+            Debug.Log(
+                $"[ShooterRemoteStateSync] Session restore attempt " +
+                $"{attempt}/{SessionReconnectScheduler.MaxAttempts}.");
+            _ = ResumeAfterSocketLossAsync(_pausedResumeOptions, _lifecycleGeneration);
+        }
+
+        private static async Task ResumeAfterSocketLossAsync(
+            ShooterRemoteStateSyncLaunchOptions resumeOptions,
+            long sourceGeneration)
         {
             try
             {
@@ -430,7 +637,22 @@ namespace AbilityKit.Demo.Shooter.View.PlayMode
                     return;
                 }
 
-                await StartAsync(resumeOptions).ConfigureAwait(false);
+                var restoredState = await StartSessionAsync(
+                    resumeOptions,
+                    sourceGeneration).ConfigureAwait(false);
+                if (!IsCurrentLifecycle(sourceGeneration))
+                {
+                    restoredState.Dispose();
+                    return;
+                }
+
+                var previousState = _state;
+                ActivateRunningState(restoredState, resumeOptions);
+                previousState?.Dispose();
+                SessionReconnectScheduler.Reset();
+                _isAutoReconnectAttemptRunning = false;
+                _isAutoReconnecting = false;
+                NotifyStateChanged();
             }
             catch (Exception ex)
             {
@@ -440,10 +662,37 @@ namespace AbilityKit.Demo.Shooter.View.PlayMode
                 }
 
                 _lastError = ex;
-                _isAutoReconnecting = false;
+                _isAutoReconnectAttemptRunning = false;
+                if (SessionReconnectScheduler.IsExhausted)
+                {
+                    _isAutoReconnecting = false;
+                }
                 Debug.LogException(ex);
                 NotifyStateChanged();
             }
+        }
+
+        private static void ActivateRunningState(
+            ShooterRemoteStateSyncRuntimeState state,
+            ShooterRemoteStateSyncLaunchOptions launchOptions)
+        {
+            _state = state;
+            _options = launchOptions;
+            _pausedResumeOptions = default;
+            _inputSubmitStrategy = ShooterRemoteInputSubmitStrategy.Create(
+                state.Launch.Battle,
+                launchOptions.Timeout);
+            _lastInput = default;
+            _lastSubmitResult = default;
+            _lastTickResult = default;
+            _stepCount = 0;
+            _renderCount = 0;
+            _timeAnchors = ShooterTimeAnchorCoordinator.CreateLocal(
+                launchOptions.SessionOptions.TickRate);
+            _lastRemoteTimeAnchor = state.Launch.Flow.RemoteTimeAnchorProjection.TimeAnchor;
+            _lastRemoteLatencyCompensationDiagnostics = default;
+            PerformanceCollector.Reset();
+            _lastError = null;
         }
 
         private static long AdvanceLifecycleGeneration()
@@ -522,7 +771,17 @@ namespace AbilityKit.Demo.Shooter.View.PlayMode
 
         private static void OnApplicationQuitting()
         {
+            FlushReliableEventCheckpoints(ReliableEventCheckpointFlushTrigger.ApplicationQuit);
             Uninstall();
+        }
+
+        private static void OnApplicationFocusChanged(bool hasFocus)
+        {
+            if (!hasFocus)
+            {
+                FlushReliableEventCheckpoints(
+                    ReliableEventCheckpointFlushTrigger.ApplicationPause);
+            }
         }
 
         private static void NotifyStateChanged()
@@ -669,20 +928,16 @@ namespace AbilityKit.Demo.Shooter.View.PlayMode
             public ShooterRemoteStateSyncRuntimeState(
                 ShooterBattleWorldSession runtimeWorld,
                 ShooterClientNetworkLauncher launcher,
-                ShooterClientNetworkLaunchResult launch,
-                ShooterCoordinatorInputBridge coordinatorInputBridge)
+                ShooterClientNetworkLaunchResult launch)
             {
                 RuntimeWorld = runtimeWorld ?? throw new ArgumentNullException(nameof(runtimeWorld));
                 Launcher = launcher ?? throw new ArgumentNullException(nameof(launcher));
                 Launch = launch ?? throw new ArgumentNullException(nameof(launch));
-                CoordinatorInputBridge = coordinatorInputBridge ?? throw new ArgumentNullException(nameof(coordinatorInputBridge));
             }
 
             public ShooterBattleWorldSession RuntimeWorld { get; }
             public ShooterClientNetworkLauncher Launcher { get; }
             public ShooterClientNetworkLaunchResult Launch { get; }
-            public ShooterCoordinatorInputBridge CoordinatorInputBridge { get; }
-
             public void Dispose()
             {
                 if (_disposed)
@@ -691,7 +946,6 @@ namespace AbilityKit.Demo.Shooter.View.PlayMode
                 }
 
                 _disposed = true;
-                CoordinatorInputBridge.Dispose();
                 Launcher.Dispose();
                 RuntimeWorld.Dispose();
             }

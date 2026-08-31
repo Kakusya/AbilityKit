@@ -1,3 +1,5 @@
+using System.Collections.Generic;
+using AbilityKit.Orleans.Contracts.FrameSync;
 using Orleans;
 
 namespace AbilityKit.Orleans.Contracts.Battle;
@@ -9,9 +11,14 @@ namespace AbilityKit.Orleans.Contracts.Battle;
 public interface IBattleLogicHostGrain : IGrainWithStringKey
 {
     /// <summary>
-    /// 初始化战斗世界
+    /// 初始化战斗世界（旧入口，保留兼容，内部委托 <see cref="InitializeBattleWithResultAsync"/>）。
     /// </summary>
     Task InitializeBattleAsync(BattleInitParams initParams);
+
+    /// <summary>
+    /// 幂等 create-or-get 初始化战斗世界，返回结构化结果（含 init spec hash 冲突检测）。
+    /// </summary>
+    Task<BattleInitResult> InitializeBattleWithResultAsync(BattleInitParams initParams, string? initSpecHash);
 
     /// <summary>
     /// 提交玩家输入。
@@ -49,19 +56,34 @@ public interface IBattleLogicHostGrain : IGrainWithStringKey
     Task<WorldStartAnchor?> GetWorldStartAnchorAsync();
 
     /// <summary>
-    /// 订阅状态同步观察者
+    /// 订阅状态同步观察者，并从客户端累计确认位置恢复可靠事件。
+    /// 观察者元数据由调用方随请求传入，避免 Host 回调非可重入 Observer。
     /// </summary>
-    Task SubscribeAsync(IStateSyncObserverGrain observer);
+    Task SubscribeAsync(
+        IStateSyncObserverGrain observer,
+        StateSyncObserverInfo observerInfo,
+        ReliableBattleEventSubscribeCursor eventCursor);
+
+    /// <summary>
+    /// 接受客户端可靠事件累计确认位置。
+    /// </summary>
+    Task<ReliableBattleEventAckResult> AcknowledgeReliableEventsAsync(string observerKey, string epoch, long sequence);
 
     /// <summary>
     /// 向指定观察者推送当前完整快照。
     /// </summary>
-    Task RequestFullSnapshotAsync(IStateSyncObserverGrain observer);
+    Task RequestFullSnapshotAsync(IStateSyncObserverGrain observer, StateSyncObserverInfo observerInfo);
 
     /// <summary>
     /// 取消订阅状态同步观察者
     /// </summary>
     Task UnsubscribeAsync(IStateSyncObserverGrain observer);
+
+    /// <summary>
+    /// 由帧同步外部时钟驱动的单帧 Tick。仅在 <c>BattleWorldWithFrameSync</c> 模式下使用。
+    /// </summary>
+    Task<BattleTickFrameResult> TickFrameAsync(ulong worldId, int frame, float deltaTime,
+        IReadOnlyList<FrameInputItem> frameInputs);
 
     /// <summary>
     /// 销毁战斗世界
@@ -91,6 +113,38 @@ public class BattleInitParams
     [Id(13)] public WorldStartAnchor? WorldStartAnchor { get; set; }
     [Id(14)] public BattleSyncStartOptions? SyncOptions { get; set; }
     [Id(15)] public int DurationFrames { get; set; }
+    [Id(16)] public int VictoryTargetDefeats { get; set; }
+    [Id(17)] public bool ContinueAfterAllPlayersDefeated { get; set; }
+    [Id(18)] public int EnemyBudget { get; set; }
+}
+
+/// <summary>
+/// 战斗初始化结构化结果。支持幂等 create-or-get 与 init spec hash 冲突检测。
+/// </summary>
+[GenerateSerializer]
+public sealed record BattleInitResult(
+    [property: Id(0)] bool Initialized,
+    [property: Id(1)] bool AlreadyInitialized,
+    [property: Id(2)] string? InitSpecHash,
+    [property: Id(3)] WorldStartAnchor? WorldStartAnchor,
+    [property: Id(4)] string? Error)
+{
+    /// <summary>
+    /// 是否成功（首次初始化成功，或已初始化且 hash 匹配的幂等命中）。
+    /// </summary>
+    public bool Succeeded => Error is null && (Initialized || AlreadyInitialized);
+
+    public static BattleInitResult FromInitialized(string? initSpecHash, WorldStartAnchor? anchor) =>
+        new(Initialized: true, AlreadyInitialized: false, initSpecHash, anchor, Error: null);
+
+    public static BattleInitResult FromAlreadyInitialized(string? storedHash, WorldStartAnchor? anchor) =>
+        new(Initialized: false, AlreadyInitialized: true, storedHash, anchor, Error: null);
+
+    public static BattleInitResult FromHashMismatch(string? storedHash) =>
+        new(Initialized: false, AlreadyInitialized: true, storedHash, WorldStartAnchor: null, Error: "InitSpecHashMismatch");
+
+    public static BattleInitResult FromError(string error) =>
+        new(Initialized: false, AlreadyInitialized: false, InitSpecHash: null, WorldStartAnchor: null, Error: error);
 }
 
 [GenerateSerializer]
@@ -121,6 +175,8 @@ public class PlayerInitInfo
     [Id(9)] public int BasicAttackSkillId { get; set; }
     [Id(10)] public List<int>? SkillIds { get; set; }
     [Id(11)] public string? AccountId { get; set; }
+    [Id(12)] public int HasSpawnPosition { get; set; }
+    [Id(13)] public int SpawnIndex { get; set; }
 }
 
 [GenerateSerializer]
@@ -160,6 +216,11 @@ public class BattleInputItem
     [Id(0)] public uint PlayerId { get; set; }
     [Id(1)] public int OpCode { get; set; }
     [Id(2)] public byte[]? Payload { get; set; }
+
+    /// <summary>
+    /// Per-player monotonically increasing command sequence. Zero denotes a legacy caller.
+    /// </summary>
+    [Id(3)] public ulong CommandSequence { get; set; }
 }
 
 [GenerateSerializer]
@@ -248,6 +309,10 @@ public class ActorSnapshot
     [Id(7)] public float Hp { get; set; }
     [Id(8)] public float HpMax { get; set; }
     [Id(9)] public int TeamId { get; set; }
+    // Spawn 层字段（生成缺失 actor 所需）：实体类型（1=Character, 2=Projectile）、配置/模板 id、拥有者 actorId（角色为 0）
+    [Id(10)] public int Kind { get; set; }
+    [Id(11)] public int Code { get; set; }
+    [Id(12)] public int OwnerNetId { get; set; }
 }
 
 /// <summary>
@@ -302,4 +367,39 @@ public class StateSyncPush
     /// 服务端时间域 ticks。Timestamp 保留为兼容字段。
     /// </summary>
     [Id(7)] public long ServerTicks { get; set; }
+
+    /// <summary>
+    /// 创建该快照时已产生的可靠事件最高权威序列。
+    /// </summary>
+    [Id(8)] public long EventWatermark { get; set; }
+
+    /// <summary>
+    /// 快照结构版本。0 表示旧协议；1 表示支持显式 actor 删除列表。
+    /// </summary>
+    [Id(9)] public int SchemaVersion { get; set; }
+
+    /// <summary>
+    /// 相对上一已发布快照被移除的 actor id。全量快照通常为空。
+    /// </summary>
+    [Id(10)] public List<int> RemovedActorIds { get; set; } = new();
+
+    /// <summary>
+    /// EventWatermark 所属的可靠事件 epoch。与全量快照共同构成恢复基线。
+    /// </summary>
+    [Id(11)] public string EventEpoch { get; set; } = string.Empty;
+
+    /// <summary>
+    /// Network conditioning profile selected for this battle. This is internal
+    /// metadata used by the observer delivery budget and is not sent on the wire.
+    /// </summary>
+    [Id(12)] public string NetworkEnvironmentId { get; set; } = string.Empty;
 }
+
+/// <summary>
+/// 帧同步外部时钟 Tick 的结果。
+/// </summary>
+[GenerateSerializer]
+public sealed record BattleTickFrameResult(
+    [property: Id(0)] int Frame,
+    [property: Id(1)] bool WorldTicked,
+    [property: Id(2)] long StateHash);

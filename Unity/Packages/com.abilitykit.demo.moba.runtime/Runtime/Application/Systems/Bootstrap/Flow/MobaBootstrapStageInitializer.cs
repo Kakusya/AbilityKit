@@ -12,14 +12,49 @@ namespace AbilityKit.Demo.Moba.Systems.Bootstrap.Flow
     public static class MobaBootstrapStageInitializer
     {
         private static bool _initialized;
+        private static bool _initializing;
+        private static readonly object InitializationLock = new object();
 
         /// <summary>
         /// 初始化所有 Stage
         /// </summary>
         public static void Initialize()
         {
-            if (_initialized) return;
-            _initialized = true;
+            lock (InitializationLock)
+            {
+                if (_initialized) return;
+                if (_initializing)
+                {
+                    throw new InvalidOperationException("Recursive MOBA bootstrap stage initialization is not supported.");
+                }
+
+                _initializing = true;
+                try
+                {
+                    InitializeCore();
+                    _initialized = true;
+                }
+                finally
+                {
+                    _initializing = false;
+                }
+            }
+        }
+
+        private static void InitializeCore()
+        {
+            if (MobaGeneratedBootstrapStageManifest.RegisterAll() > 0)
+            {
+                return;
+            }
+
+            if (AppContext.TryGetSwitch(
+                    "AbilityKit.Moba.DisableBootstrapStageReflectionFallback",
+                    out var reflectionFallbackDisabled) && reflectionFallbackDisabled)
+            {
+                throw new InvalidOperationException(
+                    "The generated MOBA bootstrap stage manifest is empty and reflection fallback is disabled.");
+            }
 
             var assembly = typeof(MobaBootstrapStageInitializer).Assembly;
             var stageTypes = assembly.GetTypes()

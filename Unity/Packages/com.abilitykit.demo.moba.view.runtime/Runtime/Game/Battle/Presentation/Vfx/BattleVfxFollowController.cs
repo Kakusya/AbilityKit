@@ -60,6 +60,35 @@ namespace AbilityKit.Game.Battle.Vfx
             }
         }
 
+        public int DestroyByFollowTargetActorId(in EC.IEntity vfxRoot, int targetActorId, Action<EC.IECWorld, EC.IEntityId> destroyAction)
+        {
+            if (targetActorId <= 0) return 0;
+            if (!vfxRoot.IsValid) return 0;
+            var world = vfxRoot.World;
+            if (world == null) return 0;
+            if (destroyAction == null) return 0;
+
+            _ids.Clear();
+            _collector.Collect(vfxRoot, _ids);
+            if (_ids.Count == 0) return 0;
+
+            var destroyed = 0;
+            for (int i = 0; i < _ids.Count; i++)
+            {
+                var id = _ids[i];
+                if (!world.IsAlive(id)) continue;
+
+                var entity = world.Wrap(id);
+                if (!entity.TryGetRef(out BattleViewFollowComponent follow) || follow == null) continue;
+                if (follow.TargetActorId != targetActorId) continue;
+
+                destroyAction(world, id);
+                destroyed++;
+            }
+
+            return destroyed;
+        }
+
         public void SyncFollow(EC.IECWorld world, EC.IEntityId vfxEntityId, in Vector3 targetPos)
         {
             var forward = Vector3.zero;

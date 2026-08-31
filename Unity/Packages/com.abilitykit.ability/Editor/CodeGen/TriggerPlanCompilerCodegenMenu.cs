@@ -16,7 +16,7 @@ namespace AbilityKit.Ability.Editor.Utilities
     {
         private const string OutputPath = "Packages/com.abilitykit.ability.editor/Editor/Ability/Editor/Triggering/Generated/GeneratedTriggerPlanCompiler.g.cs";
 
-        [MenuItem("AbilityKit/Triggering/Codegen/Generate Plan Compiler")]
+        [MenuItem("Tools/AbilityKit/Framework/Triggering/Codegen/Generate Plan Compiler")]
         public static void Generate()
         {
             var actions = FindActions();
@@ -198,7 +198,7 @@ namespace AbilityKit.Ability.Editor.Utilities
 
             foreach (var c in conditions)
             {
-                // Only generate for arg_eq / arg_gt currently (compare int).
+                // 目前只为 arg_eq / arg_gt 生成代码（整数比较）。
                 if (!string.Equals(c.Type, TriggerConditionTypes.ArgEq, StringComparison.Ordinal) &&
                     !string.Equals(c.Type, TriggerConditionTypes.ArgGt, StringComparison.Ordinal))
                 {

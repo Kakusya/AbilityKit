@@ -11,8 +11,8 @@
     </div>
     <div class="acceptance-filters row"><div><label>搜索用例 / 描述 / 路径 / 标签</label><input v-model="admin.acceptance.searchText" placeholder="例如：projectile、damage、case id" /></div><div><label>Category</label><select v-model="admin.acceptance.categoryFilter"><option value="">全部</option><option value="contract">contract</option><option value="golden">golden</option><option value="draft">draft</option></select></div><div><label>Tag</label><input v-model="admin.acceptance.tagFilter" placeholder="例如：buff、projectile、core" /></div><div><label>状态过滤</label><select v-model="admin.acceptance.statusFilter"><option value="all">全部</option><option value="failed">失败优先排查</option><option value="passed">仅通过</option><option value="unknown">未知</option></select></div><div><label>排序</label><select v-model="admin.acceptance.sortKey"><option value="caseId">用例 ID</option><option value="failedFirst">失败优先</option><option value="duration">耗时</option><option value="trace">追踪数量</option><option value="status">状态</option></select></div></div>
     <div class="acceptance-runner-panel">
-      <div class="trace-section-head"><h3>后台战斗分析构建</h3><span class="badge">P1 / P2</span></div>
-      <p class="muted">先选模板，再调整角色、技能、效果、生命周期对象和伤害阶段参数；提交后会在产物目录写入 summary / trace JSONL，并自动加载查看。</p>
+      <div class="trace-section-head"><h3>真实英雄 DSL 执行</h3><span class="badge">Unity EditMode</span></div>
+      <p class="muted">选择已提交的英雄场景后，后台会通过固定脚本启动 Unity DSL 执行器。浏览器不能提交命令、路径或任意 DSL；每次运行都会产生独立的 summary、trace JSONL 与 Unity 日志。</p>
       <div class="runner-template-grid">
         <article v-for="template in admin.acceptanceTemplates.value?.templates || []" :key="template.id" class="runner-template-card" :class="{ active: template.id === admin.acceptance.selectedTemplateId }" @click="admin.applyAcceptanceTemplate(template.id)">
           <div><strong>{{ template.displayName }}</strong><span class="badge">{{ template.id }}</span></div>
@@ -21,27 +21,15 @@
         </article>
       </div>
       <div class="runner-form-grid">
-        <div><label>用例 ID（可空）</label><input v-model="admin.acceptance.runCaseId" placeholder="自动生成 admin_combat_..." /></div>
-        <div><label>说明</label><input v-model="admin.acceptance.runDescription" /></div>
-        <div><label>释放者</label><input v-model.number="admin.acceptance.runActorId" type="number" /></div>
-        <div><label>目标</label><input v-model.number="admin.acceptance.runTargetActorId" type="number" /></div>
-        <div><label>技能 ID</label><input v-model.number="admin.acceptance.runSkillId" type="number" /></div>
-        <div><label>效果 ID</label><input v-model.number="admin.acceptance.runEffectId" type="number" /></div>
-        <div><label>投射物 ID</label><input v-model.number="admin.acceptance.runProjectileId" type="number" /></div>
-        <div><label>区域 ID</label><input v-model.number="admin.acceptance.runAreaId" type="number" /></div>
-        <div><label>Buff ID</label><input v-model.number="admin.acceptance.runBuffId" type="number" /></div>
-        <div><label>护盾 ID</label><input v-model.number="admin.acceptance.runShieldId" type="number" /></div>
-        <div><label>基础伤害</label><input v-model.number="admin.acceptance.runBaseDamage" type="number" /></div>
-        <div><label>减免后伤害</label><input v-model.number="admin.acceptance.runMitigatedDamage" type="number" /></div>
-        <div><label>护盾吸收</label><input v-model.number="admin.acceptance.runShieldAbsorb" type="number" /></div>
-        <div><label>生命伤害</label><input v-model.number="admin.acceptance.runHpDamage" type="number" /></div>
-        <div><label>帧率</label><input v-model.number="admin.acceptance.runTickRate" type="number" /></div>
-        <div><label>持续帧</label><input v-model.number="admin.acceptance.runDurationFrames" type="number" /></div>
+        <div><label>受控场景 ID</label><input :value="admin.acceptance.selectedTemplateId" readonly /></div>
+        <div><label>目标用例</label><input :value="admin.acceptance.runCaseId" readonly /></div>
+        <div><label>技能 ID</label><input :value="admin.acceptance.runSkillId" readonly /></div>
+        <div><label>场景说明</label><input v-model="admin.acceptance.runDescription" readonly /></div>
       </div>
       <label>操作原因</label><input v-model="admin.acceptance.runOperatorReason" />
-      <div v-if="admin.acceptanceLastRun.value" class="status-box"><strong>最近导出：{{ admin.acceptanceLastRun.value.caseId }}</strong><span>{{ admin.acceptanceLastRun.value.summaryPath }}</span><span>{{ admin.acceptanceLastRun.value.tracePath }}</span></div>
+      <div v-if="admin.acceptanceLastRun.value" class="status-box" :class="{ failed: !admin.acceptanceLastRun.value.success }"><strong>最近运行：{{ admin.acceptanceLastRun.value.caseId }} / {{ admin.acceptanceLastRun.value.executionStatus }}</strong><span>场景：{{ admin.acceptanceLastRun.value.scenarioId }} / 退出码：{{ admin.acceptanceLastRun.value.exitCode }} / {{ admin.acceptanceLastRun.value.durationMs }}ms</span><span>摘要：{{ admin.acceptanceLastRun.value.summaryPath || '未生成' }}</span><span>追踪：{{ admin.acceptanceLastRun.value.tracePath || '未生成' }}</span><span>日志：{{ admin.acceptanceLastRun.value.logPath || '未生成' }}</span><span>执行结果：{{ admin.acceptanceLastRun.value.executionResultPath || '未生成' }}</span></div>
     </div>
-    <div class="actions action-bar"><button class="success" :disabled="admin.busy.value" @click="admin.runAcceptanceAnalysis">构建并导出分析文件</button><button class="secondary" :disabled="admin.busy.value" @click="admin.refreshAcceptanceArtifacts">刷新场景产物</button><button class="secondary" :disabled="admin.busy.value" @click="admin.refreshAcceptanceRunPlan">查看执行入口边界</button></div>
+    <div class="actions action-bar"><button class="success" :disabled="admin.busy.value" @click="admin.runAcceptanceAnalysis">运行真实 DSL 场景</button><button class="secondary" :disabled="admin.busy.value" @click="admin.refreshAcceptanceArtifacts">刷新场景产物</button><button class="secondary" :disabled="admin.busy.value" @click="admin.refreshAcceptanceRunPlan">查看执行入口边界</button></div>
     <div class="ops-status acceptance-summary"><div><span>产物目录</span><strong>{{ admin.acceptanceBatch.value?.artifactDirectory || admin.acceptance.artifactDirectory }}</strong></div><div><span>批次摘要</span><strong>{{ admin.acceptanceBatch.value?.hasBatchSummary ? '已找到' : '缺失' }}</strong></div><div><span>通过</span><strong>{{ admin.acceptancePassedCount.value }}</strong></div><div><span>失败</span><strong>{{ admin.acceptanceFailedCount.value }}</strong></div><div><span>未知</span><strong>{{ admin.acceptanceUnknownCount.value }}</strong></div><div><span>过滤后</span><strong>{{ admin.acceptanceFilteredCases.value.length }}</strong></div></div>
     <div class="acceptance-layout">
       <div class="acceptance-case-list">

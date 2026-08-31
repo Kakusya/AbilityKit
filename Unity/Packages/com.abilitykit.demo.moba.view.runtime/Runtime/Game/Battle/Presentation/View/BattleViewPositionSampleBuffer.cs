@@ -6,6 +6,7 @@ namespace AbilityKit.Game.Flow
     internal struct BattleViewPositionSampleBuffer
     {
         private const double TimeEpsilon = 1e-6;
+        private const double MaxExtrapolationLeadSeconds = 1d / 15d;
 
         private BattleViewPositionSampleStorage _samples;
 
@@ -43,7 +44,7 @@ namespace AbilityKit.Game.Flow
 
             if (insertAt <= 0) return;
 
-            _samples.ShiftLeftAndAppend(in sample);
+            _samples.RemoveFirstAndInsertAt(insertAt, in sample);
         }
 
         public bool TryEvaluate(double time, out Vector3 pos)
@@ -67,14 +68,35 @@ namespace AbilityKit.Game.Flow
                 return true;
             }
 
-            var last = _samples.Get(_samples.Count - 1);
+            var lastIndex = _samples.Count - 1;
+            var last = _samples.Get(lastIndex);
             if (time >= last.Time)
             {
-                pos = last.Position;
+                pos = ExtrapolateWithinCap(time, lastIndex, in last);
                 return true;
             }
 
-            return TryEvaluateBetweenSamples(time, in last, out pos);
+            return TryEvaluateBetweenSamples(time, out pos);
+        }
+
+        private Vector3 ExtrapolateWithinCap(double time, int lastIndex, in BattleViewPositionSample last)
+        {
+            // Need at least two samples to derive a velocity; otherwise hold.
+            if (lastIndex <= 0) return last.Position;
+
+            var prev = _samples.Get(lastIndex - 1);
+            var dt = last.Time - prev.Time;
+            if (dt <= 0d) return last.Position;
+
+            var lead = time - last.Time;
+            if (lead <= 0d) return last.Position;
+
+            // Clamp lead time to avoid runaway extrapolation on long stalls.
+            var maxLead = MaxExtrapolationLeadSeconds;
+            if (lead > maxLead) lead = maxLead;
+
+            var velocity = (last.Position - prev.Position) / (float)dt;
+            return last.Position + velocity * (float)lead;
         }
 
         private int FindInsertIndex(double time)
@@ -90,7 +112,7 @@ namespace AbilityKit.Game.Flow
             return _samples.Count;
         }
 
-        private bool TryEvaluateBetweenSamples(double time, in BattleViewPositionSample fallback, out Vector3 pos)
+        private bool TryEvaluateBetweenSamples(double time, out Vector3 pos)
         {
             for (var i = 0; i < _samples.Count - 1; i++)
             {
@@ -103,7 +125,11 @@ namespace AbilityKit.Game.Flow
                 return true;
             }
 
-            pos = fallback.Position;
+            // Reached when time equals the last sample time (boundary case);
+            // ExtrapolateWithinCap has already handled time > last.Time, so
+            // fall back to holding last position.
+            var last = _samples.Get(_samples.Count - 1);
+            pos = last.Position;
             return true;
         }
 

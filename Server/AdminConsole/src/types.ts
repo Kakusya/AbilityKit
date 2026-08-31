@@ -566,6 +566,14 @@ export interface AdminSkillAcceptanceRunResponse {
   batch: AdminSkillAcceptanceBatch;
   warnings: string[];
   serverNowTicks: number;
+  scenarioId: string;
+  executionStatus: string;
+  exitCode: number;
+  logPath: string;
+  executionResultPath: string;
+  startedAtUtc: string;
+  endedAtUtc: string;
+  durationMs: number;
 }
 
 export interface AdminSkillAcceptanceTemplate {

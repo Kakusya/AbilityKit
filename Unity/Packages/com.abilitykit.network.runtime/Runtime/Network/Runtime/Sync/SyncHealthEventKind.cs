@@ -42,7 +42,16 @@ namespace AbilityKit.Network.Runtime.Sync
 
         // 服务器侧验证。
         LagCompensatedValidationAccepted = 50,
-        LagCompensatedValidationRejected = 51
+        LagCompensatedValidationRejected = 51,
+
+        // Observer 发送队列与基线。
+        ObserverSnapshotQueued = 60,
+        ObserverSnapshotDropped = 61,
+        ObserverSnapshotCoalesced = 62,
+        ObserverBaselineInvalidated = 63,
+
+        // 可靠事件流。
+        ReliableEventGap = 70
     }
 
     /// <summary>

@@ -13,6 +13,17 @@ namespace AbilityKit.Combat.MotionSystem.Core
         private List<int> _suppressedGroups;
         private bool _disposed;
 
+        // 主导源碰撞策略的 group 优先级（高→低）：硬控 > 主动技能 > 寻路 > 基础移动。
+        // 固定数组序保证选取确定性（不依赖字典迭代序）。
+        private static readonly int[] PolicyGroupPrecedence =
+        {
+            MotionGroups.Control,
+            MotionGroups.Ability,
+            MotionGroups.Path,
+            MotionGroups.Locomotion,
+            MotionGroups.PassiveDisplacement,
+        };
+
         public MotionPipeline()
         {
             _sources = MotionPipelinePool.RentSourceList();
@@ -147,6 +158,45 @@ namespace AbilityKit.Combat.MotionSystem.Core
                 }
             }
 
+            // 选主导贡献源的碰撞策略（按 group 优先级，命中可选 IMotionCollisionPolicySource 才透传）。
+            output.HasDominantCollisionPolicy = false;
+            for (int pi = 0; pi < PolicyGroupPrecedence.Length; pi++)
+            {
+                var gid = PolicyGroupPrecedence[pi];
+                if (IsSuppressed(gid)) continue;
+
+                for (int i = 0; i < _sources.Count; i++)
+                {
+                    var source = _sources[i];
+                    if (source == null || source.GroupId != gid) continue;
+                    if (source.Stacking != MotionStacking.Additive &&
+                        (!_bestIndexByGroup.TryGetValue(gid, out var bestIdx) || bestIdx != i))
+                    {
+                        continue;
+                    }
+
+                    if (!source.IsActive &&
+                        source is IMotionCompletionCollisionPolicySource completionPolicySource &&
+                        completionPolicySource.HasCompletionCollisionPolicy)
+                    {
+                        output.DominantCollisionPolicy = completionPolicySource.CompletionCollisionPolicy;
+                        output.HasDominantCollisionPolicy = true;
+                        break;
+                    }
+
+                    if (source.IsActive &&
+                        source is IMotionCollisionPolicySource policySource &&
+                        policySource.HasCollisionPolicy)
+                    {
+                        output.DominantCollisionPolicy = policySource.CollisionPolicy;
+                        output.HasDominantCollisionPolicy = true;
+                        break;
+                    }
+                }
+
+                if (output.HasDominantCollisionPolicy) break;
+            }
+
             output.DesiredDelta = desired;
 
             var solver = Solver ?? NoMotionSolver.Instance;
@@ -158,6 +208,7 @@ namespace AbilityKit.Combat.MotionSystem.Core
 
             state.Position = new Vec3(state.Position.X + result.AppliedDelta.X, state.Position.Y + result.AppliedDelta.Y, state.Position.Z + result.AppliedDelta.Z);
             state.Velocity = output.NewVelocity;
+            // state.Time 是公共状态字段（快照/调试读），IEEE 加法位一致；源级计时（FixedDelta/Trajectory）已是 raw 定点。
             state.Time += dt;
 
             if (result.Hit.Hit)

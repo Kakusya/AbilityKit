@@ -1,6 +1,8 @@
 param(
     [string]$SourceDir = "Docs\design",
     [string]$OutputDir = "artifacts\feishu-design-export",
+    [ValidateSet("native", "board")]
+    [string]$MermaidMode = "board",
     [switch]$Clean
 )
 
@@ -35,6 +37,12 @@ function Get-TitleFromMarkdown([string]$content, [string]$fallback) {
     return [System.IO.Path]::GetFileNameWithoutExtension($fallback)
 }
 
+function Get-FeishuTitle([string]$title) {
+    $normalized = $title.Trim()
+    if ([string]::IsNullOrWhiteSpace($normalized)) { return 'Untitled design document' }
+    return $normalized
+}
+
 function Get-NewLine() {
     return [Environment]::NewLine
 }
@@ -61,45 +69,68 @@ function Get-MarkdownStats([string]$content) {
     }
 }
 
-function ConvertTo-FeishuMarkdown([string]$content, [string]$relativePath, [string]$title) {
+function ConvertTo-FeishuMarkdown([string]$content, [string]$relativePath, [string]$title, [string]$MermaidMode) {
     $lf = [string][char]10
     $nl = Get-NewLine
     $normalized = $content.Replace([string][char]13 + [string][char]10, $lf)
     $lines = $normalized.Split([char]10)
     $output = New-Object System.Collections.Generic.List[string]
+    $diagrams = New-Object System.Collections.Generic.List[object]
     $output.Add('<!--')
     $output.Add('source: ' + $relativePath)
     $output.Add('title: ' + $title)
-    $output.Add('generated_for: feishu_manual_import')
+    $output.Add('generated_for: feishu_api_import')
     $output.Add('-->')
     $output.Add('')
 
     $inFence = $false
     $fenceLang = ''
+    $diagramBuffer = New-Object System.Collections.Generic.List[string]
     $fencePattern = '^' + [regex]::Escape((Get-MarkdownFence)) + '(.*)\s*$'
     foreach ($line in $lines) {
         if ($line -match $fencePattern) {
             if (-not $inFence) {
                 $fenceLang = $matches[1].Trim()
-                if ($fenceLang -eq 'mermaid') {
-                    $output.Add('> Diagram widget: the following block is Mermaid source. After import, paste it into a Feishu diagram/code component or let a later API sync tool convert it.')
-                    $output.Add('')
-                }
                 $inFence = $true
+                if ($fenceLang -eq 'mermaid' -and $MermaidMode -eq 'board') {
+                    $diagramBuffer.Clear()
+                }
+                else {
+                    $output.Add($line)
+                }
             }
             else {
+                if ($fenceLang -eq 'mermaid' -and $MermaidMode -eq 'board') {
+                    $number = $diagrams.Count + 1
+                    $marker = 'FEISHU_MERMAID_BOARD_' + $number.ToString('000')
+                    $diagrams.Add([pscustomobject]@{
+                        marker = $marker
+                        source = ($diagramBuffer.ToArray() -join $lf).Trim()
+                        index = $number
+                    })
+                    $output.Add($marker)
+                }
+                else {
+                    $output.Add($line)
+                }
                 $inFence = $false
                 $fenceLang = ''
             }
-
-            $output.Add($line)
             continue
         }
 
-        $output.Add($line)
+        if ($inFence -and $fenceLang -eq 'mermaid' -and $MermaidMode -eq 'board') {
+            $diagramBuffer.Add($line)
+        }
+        else {
+            $output.Add($line)
+        }
     }
 
-    return ($output -join $nl)
+    return [pscustomobject]@{
+        content = ($output -join $nl)
+        diagrams = $diagrams.ToArray()
+    }
 }
 
 function HtmlEncode([string]$value) {
@@ -265,17 +296,22 @@ $sourceFull = [System.IO.Path]::GetFullPath($SourceDir)
 $outputFull = [System.IO.Path]::GetFullPath($OutputDir)
 $markdownOut = Join-Path $outputFull "markdown"
 $htmlOut = Join-Path $outputFull "html"
+$mermaidOut = Join-Path $outputFull "mermaid"
 
 if (-not (Test-Path $sourceFull)) {
     throw "SourceDir not found: $SourceDir"
 }
 
 if ($Clean -and (Test-Path $outputFull)) {
-    Remove-Item -Recurse -Force $outputFull
+    Get-ChildItem -LiteralPath $outputFull -Force | Where-Object {
+        $_.Name -ne 'feishu-sync-state.local.json' -and
+        $_.Name -ne 'feishu-user-token.local.json'
+    } | Remove-Item -Recurse -Force
 }
 
 New-Item -ItemType Directory -Force -Path $markdownOut | Out-Null
 New-Item -ItemType Directory -Force -Path $htmlOut | Out-Null
+New-Item -ItemType Directory -Force -Path $mermaidOut | Out-Null
 
 $files = Get-ChildItem -Path $sourceFull -Filter "*.md" -Recurse -File | Sort-Object FullName
 $manifest = New-Object System.Collections.Generic.List[object]
@@ -295,6 +331,7 @@ foreach ($file in $files) {
     $slug = ConvertTo-Slug $relative
     $content = Get-Content -Raw -LiteralPath $file.FullName -Encoding UTF8
     $title = Get-TitleFromMarkdown $content $file.Name
+    $feishuTitle = Get-FeishuTitle $title
     $stats = Get-MarkdownStats $content
 
     $mdTarget = Join-Path $markdownOut ($slug + ".md")
@@ -302,10 +339,22 @@ foreach ($file in $files) {
     New-Item -ItemType Directory -Force -Path ([System.IO.Path]::GetDirectoryName($mdTarget)) | Out-Null
     New-Item -ItemType Directory -Force -Path ([System.IO.Path]::GetDirectoryName($htmlTarget)) | Out-Null
 
-    $feishuMd = ConvertTo-FeishuMarkdown $content $relativeUnix $title
+    $converted = ConvertTo-FeishuMarkdown $content $relativeUnix $title $MermaidMode
     $html = Convert-MarkdownToHtml $content $title $relativeUnix
-    Set-Content -LiteralPath $mdTarget -Value $feishuMd -Encoding UTF8
+    Set-Content -LiteralPath $mdTarget -Value $converted.content -Encoding UTF8
     Set-Content -LiteralPath $htmlTarget -Value $html -Encoding UTF8
+
+    $diagramEntries = New-Object System.Collections.Generic.List[object]
+    foreach ($diagram in $converted.diagrams) {
+        $diagramBase = $slug + '/' + $diagram.index.ToString('000')
+        $mmdTarget = Join-Path $mermaidOut ($diagramBase + '.mmd')
+        New-Item -ItemType Directory -Force -Path ([System.IO.Path]::GetDirectoryName($mmdTarget)) | Out-Null
+        [System.IO.File]::WriteAllText($mmdTarget, [string]$diagram.source, (New-Object System.Text.UTF8Encoding($false)))
+        $diagramEntries.Add([pscustomobject]@{
+            marker = $diagram.marker
+            source = (Get-RelativePathCompat $outputFull $mmdTarget).Replace('\','/')
+        })
+    }
 
     $mdRel = Get-RelativePathCompat $outputFull $mdTarget
     $htmlRel = Get-RelativePathCompat $outputFull $htmlTarget
@@ -313,11 +362,14 @@ foreach ($file in $files) {
         order = $order
         title = $title
         source = $relativeUnix
+        mermaidMode = $MermaidMode
         slug = $slug
         markdown = $mdRel.Replace('\','/')
         html = $htmlRel.Replace('\','/')
         stats = $stats
-        suggestedFeishuTitle = $title
+        diagrams = $diagramEntries.ToArray()
+        feishuTitle = $feishuTitle
+        suggestedFeishuTitle = $feishuTitle
         feishuNodeToken = $null
         feishuDocumentUrl = $null
     }
@@ -331,14 +383,28 @@ $manifestJson = $manifest | ConvertTo-Json -Depth 8
 Set-Content -LiteralPath (Join-Path $outputFull "manifest.json") -Value $manifestJson -Encoding UTF8
 Set-Content -LiteralPath (Join-Path $outputFull "manifest.md") -Value ($indexLines -join $nl) -Encoding UTF8
 
+$mermaidReadmeLines = if ($MermaidMode -eq 'board') {
+    @(
+        '- markdown/: Feishu-import-friendly Markdown. Mermaid source is replaced by stable Board placeholders.',
+        '- mermaid/: Extracted Mermaid source converted into editable Board nodes during API post-processing.'
+    )
+}
+else {
+    @(
+        '- markdown/: Feishu-import-friendly Markdown. Mermaid fenced source is preserved for native Feishu import.',
+        '- mermaid/: Empty in native mode because Mermaid source remains embedded in Markdown.'
+    )
+}
+
 $readmeLines = @(
     '# Feishu offline import package',
     '',
     ('This directory is generated by tools/export_design_docs_for_feishu.ps1 from source directory: {0}.' -f $SourceDir),
+    ('Mermaid publication mode: {0}.' -f $MermaidMode),
     '',
     '## Contents',
-    '',
-    '- markdown/: Feishu-import-friendly Markdown. Mermaid blocks get a diagram-widget note for manual handling or later API conversion.',
+    ''
+) + $mermaidReadmeLines + @(
     '- html/: Static HTML previews for headings, paragraphs, lists, tables, code blocks, and Mermaid source blocks.',
     '- manifest.json: Machine-readable sync manifest. Later Feishu API sync can write back feishuNodeToken and feishuDocumentUrl.',
     '- manifest.md: Human-readable review manifest.',

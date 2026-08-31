@@ -1,4 +1,5 @@
 ﻿using AbilityKit.Orleans.Contracts.Battle;
+using AbilityKit.Orleans.Contracts.Rooms;
 using AbilityKit.Orleans.Gateway.Abstractions;
 using AbilityKit.Protocol.Room;
 using Microsoft.Extensions.Logging;
@@ -14,15 +15,18 @@ public sealed partial class SubscribeStateSyncHandler : GatewayRequestHandlerBas
 {
     private readonly IClusterClient _clusterClient;
     private readonly IGatewaySessionRegistry _sessionRegistry;
+    private readonly Core.GatewayStateSyncPushSubscriptionManager _pushSubscriptions;
     private readonly ILogger<SubscribeStateSyncHandler> _logger;
 
     public SubscribeStateSyncHandler(
         IClusterClient clusterClient,
         IGatewaySessionRegistry sessionRegistry,
+        Core.GatewayStateSyncPushSubscriptionManager pushSubscriptions,
         ILogger<SubscribeStateSyncHandler> logger)
     {
         _clusterClient = clusterClient;
         _sessionRegistry = sessionRegistry;
+        _pushSubscriptions = pushSubscriptions;
         _logger = logger;
     }
 
@@ -35,7 +39,10 @@ public sealed partial class SubscribeStateSyncHandler : GatewayRequestHandlerBas
             return GatewayResponse.Error(request.Seq, GatewayStatusCode.BadRequest);
 
         var req = WireRoomGatewayBinary.Deserialize<WireSubscribeStateSyncReq>(request.Payload);
-        if (string.IsNullOrWhiteSpace(req.SessionToken) || string.IsNullOrWhiteSpace(req.BattleId))
+        if (string.IsNullOrWhiteSpace(req.SessionToken)
+            || string.IsNullOrWhiteSpace(req.BattleId)
+            || string.IsNullOrWhiteSpace(req.RoomId)
+            || context.ConnectionId <= 0)
         {
             return GatewayResponse.Error(request.Seq, GatewayStatusCode.BadRequest);
         }
@@ -58,7 +65,12 @@ public sealed partial class SubscribeStateSyncHandler : GatewayRequestHandlerBas
             var observerKey = $"{accountId}:{roomKey}";
             var observerGrain = _clusterClient.GetGrain<IStateSyncObserverGrain>(observerKey);
 
-            await observerGrain.SubscribeAsync(req.BattleId);
+            await _pushSubscriptions.EnsureBoundAsync(context.ConnectionId, observerKey);
+            await observerGrain.SubscribeAsync(req.BattleId, new ReliableBattleEventSubscribeCursor
+            {
+                Epoch = req.EventEpoch ?? string.Empty,
+                LastAcknowledgedSequence = Math.Max(0, req.LastEventAck)
+            });
 
             var wire = new WireSubscribeStateSyncRes
             {

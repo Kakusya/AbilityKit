@@ -138,20 +138,21 @@ namespace AbilityKit.Game.Test.UnitTest
         {
             const int expectedSkillId = 10010101;
             const int expectedCastFlowId = 10010101;
-            const int expectedEffectId = 10001;
-            const int expectedDebugLogActionId = 589451731;
-            const int expectedShootProjectileActionId = 508656420;
-            const int expectedProjectileLauncherId = 100001;
-            const int expectedProjectileId = 200001;
+            const int expectedEffectId = 10010101;
 
             using var harness = MobaSkillConfigTestHarness.CreateForSinglePlayer(
                 skillIds: new[] { expectedSkillId },
-                worldId: "skill_effect_assertion_world");
+                worldId: "skill_effect_assertion_world",
+                heroId: 1001,
+                attributeTemplateId: 1001);
 
             harness.AssertSkillUsesCastFlow(expectedSkillId, expectedCastFlowId);
             harness.AssertCastFlowContainsTimelineEffect(expectedCastFlowId, expectedEffectId);
-            harness.AssertProjectileConfigExists(expectedProjectileLauncherId, expectedProjectileId);
-            harness.AssertTriggerPlanContainsActions(expectedEffectId, expectedDebugLogActionId, expectedShootProjectileActionId);
+            harness.AssertTriggerPlanContainsActions(
+                expectedEffectId,
+                (int)TriggeringConstants.AddBuffId.Value,
+                (int)TriggeringConstants.DashId.Value,
+                (int)TriggeringConstants.DebugLogId.Value);
 
             harness.EnterGameAndWarmup(reason: "editmode skill effect assertion");
             harness.AssertSlotSkill(slot: 1, expectedSkillId: expectedSkillId);
@@ -161,30 +162,80 @@ namespace AbilityKit.Game.Test.UnitTest
                 skillId: expectedSkillId,
                 effectId: expectedEffectId);
             harness.AssertSkillCastTrace(expectedSkillId);
-            harness.AssertActionExecutedUnderEffect(effectTrace.RootId, expectedDebugLogActionId, "debug_log");
-            harness.AssertActionExecutedUnderEffect(effectTrace.RootId, expectedShootProjectileActionId, "shoot_projectile");
-            harness.AssertProjectileLaunchedUnderEffect(effectTrace.RootId, expectedProjectileLauncherId, expectedProjectileId);
+            harness.AssertActionExecutedUnderEffect(effectTrace.RootId, (int)TriggeringConstants.AddBuffId.Value, TriggeringConstants.Actions.AddBuff);
+            harness.AssertActionExecutedUnderEffect(effectTrace.RootId, (int)TriggeringConstants.DashId.Value, TriggeringConstants.Actions.Dash);
+            harness.AssertActionExecutedUnderEffect(effectTrace.RootId, (int)TriggeringConstants.DebugLogId.Value, TriggeringConstants.Actions.DebugLog);
+        }
+
+        [TestCase(1001, 1001, 10010101, 10010001)]
+        [TestCase(1003, 1003, 10030101, 10030001)]
+        public void MeleeBasicAttack_LoadoutAndConfigUseDirectDamage(
+            int heroId,
+            int attributeTemplateId,
+            int activeSkillId,
+            int basicAttackSkillId)
+        {
+            using var harness = MobaSkillConfigTestHarness.CreateForSinglePlayer(
+                skillIds: new[] { activeSkillId },
+                worldId: "melee_basic_attack_" + heroId + "_world",
+                heroId: heroId,
+                attributeTemplateId: attributeTemplateId);
+
+            harness.AssertSkillUsesCastFlow(basicAttackSkillId, basicAttackSkillId);
+            harness.AssertCastFlowContainsTimelineEffect(basicAttackSkillId, basicAttackSkillId);
+            harness.AssertTriggerPlanContainsActions(basicAttackSkillId, (int)TriggeringConstants.GiveDamageId.Value);
+
+            harness.EnterGameAndWarmup(reason: "melee basic attack loadout assertion");
+            harness.AssertSlotSkill(slot: 2, expectedSkillId: basicAttackSkillId);
+        }
+
+        [TestCase(1002, 1002, 10020101, 10020001, 10020011, 31020001, 30020001)]
+        [TestCase(1004, 1004, 10040101, 10040011, 10040012, 31040011, 30040011)]
+        [TestCase(1005, 1005, 10050101, 10050001, 10050011, 31050001, 30050001)]
+        [TestCase(1006, 1006, 10060101, 10060001, 10060011, 31060001, 30060001)]
+        public void RangedBasicAttack_LoadoutAndConfigUseProjectileHitDamage(
+            int heroId,
+            int attributeTemplateId,
+            int activeSkillId,
+            int basicAttackSkillId,
+            int hitTriggerId,
+            int launcherId,
+            int projectileId)
+        {
+            using var harness = MobaSkillConfigTestHarness.CreateForSinglePlayer(
+                skillIds: new[] { activeSkillId },
+                worldId: "ranged_basic_attack_" + heroId + "_world",
+                heroId: heroId,
+                attributeTemplateId: attributeTemplateId);
+
+            harness.AssertSkillUsesCastFlow(basicAttackSkillId, basicAttackSkillId);
+            harness.AssertCastFlowContainsTimelineEffect(basicAttackSkillId, basicAttackSkillId);
+            harness.AssertProjectileConfigExists(launcherId, projectileId);
+            harness.AssertTriggerPlanContainsActions(basicAttackSkillId, (int)TriggeringConstants.ShootProjectileId.Value);
+            harness.AssertTriggerPlanContainsActions(hitTriggerId, (int)TriggeringConstants.GiveDamageId.Value);
+
+            harness.EnterGameAndWarmup(reason: "ranged basic attack loadout assertion");
+            harness.AssertSlotSkill(slot: 2, expectedSkillId: basicAttackSkillId);
         }
 
         [Test]
-        public void MoziPassive_UsesGenericCounterTriggerPlanAndFourthHitProjectile()
+        public void MoziPassive_UsesGenericCounterTriggerPlanAndFourthHitMeleeAttack()
         {
             const int passiveCounterTriggerId = 10040001;
-            const int passiveProjectileTriggerId = 10040002;
-            const int expectedProjectileLauncherId = 31040201;
-            const int expectedProjectileId = 30040201;
+            const int passiveMeleeTriggerId = 10040002;
 
             using var harness = MobaSkillConfigTestHarness.CreateForSinglePlayer(
                 skillIds: new[] { 10040101, 10040201, 10040301 },
                 worldId: "mozi_passive_trigger_plan_assertion_world");
 
-            harness.AssertProjectileConfigExists(expectedProjectileLauncherId, expectedProjectileId);
             harness.AssertTriggerPlanContainsActions(passiveCounterTriggerId, (int)TriggeringConstants.AdvanceGameplayCounterId.Value);
             harness.AssertTriggerPlanContainsActions(
-                passiveProjectileTriggerId,
-                (int)TriggeringConstants.ShootProjectileId.Value,
+                passiveMeleeTriggerId,
+                (int)TriggeringConstants.GiveDamageId.Value,
+                (int)TriggeringConstants.PullId.Value,
+                (int)TriggeringConstants.AddBuffId.Value,
                 (int)TriggeringConstants.DebugLogId.Value);
-            AssertResourceCopiesMatch("ability/triggers/passives/trigger_10040000.json");
+            AssertPackageResourceExists("ability/triggers/passives/trigger_10040000.json");
         }
 
         [Test]
@@ -211,13 +262,16 @@ namespace AbilityKit.Game.Test.UnitTest
         }
 
         [Test]
-        public void ZhaoYunAndMoziTriggerResources_AreSyncedBetweenAssetsAndPackageRuntime()
+        public void MobaTriggerResources_AreOwnedByViewRuntimePackage()
         {
-            AssertResourceCopiesMatch("moba/characters.json");
-            AssertResourceCopiesMatch("ability/triggers/passives/trigger_10030000.json");
-            AssertResourceCopiesMatch("ability/triggers/passives/trigger_10040000.json");
-            AssertResourceCopiesMatch("ability/triggers/skills/trigger_10030101.json");
-            AssertResourceCopiesMatch("ability/triggers/skills/trigger_10040101.json");
+            Assert.IsFalse(Directory.Exists(Path.Combine("Assets", "Resources")), "MOBA resources must not be duplicated under Assets/Resources.");
+            AssertPackageResourceExists("moba/characters.json");
+            AssertPackageResourceExists("moba/battle_start.json");
+            AssertPackageResourceExists("moba/effect_plans.json");
+            AssertPackageResourceExists("ability/triggers/passives/trigger_10030000.json");
+            AssertPackageResourceExists("ability/triggers/passives/trigger_10040000.json");
+            AssertPackageResourceExists("ability/triggers/skills/trigger_10030101.json");
+            AssertPackageResourceExists("ability/triggers/skills/trigger_10040101.json");
         }
 
         [Test]
@@ -248,14 +302,10 @@ namespace AbilityKit.Game.Test.UnitTest
             return false;
         }
 
-        private static void AssertResourceCopiesMatch(string resourcePath)
+        private static void AssertPackageResourceExists(string resourcePath)
         {
-            var assetsPath = Path.Combine("Assets", "Resources", resourcePath.Replace('/', Path.DirectorySeparatorChar));
             var packagePath = Path.Combine("Packages", "com.abilitykit.demo.moba.view.runtime", "Resources", resourcePath.Replace('/', Path.DirectorySeparatorChar));
-
-            Assert.IsTrue(File.Exists(assetsPath), $"Assets resource missing: {assetsPath}");
             Assert.IsTrue(File.Exists(packagePath), $"Package runtime resource missing: {packagePath}");
-            Assert.AreEqual(File.ReadAllText(assetsPath), File.ReadAllText(packagePath), $"Resource copy mismatch: {resourcePath}");
         }
 
         private sealed class RecordingUnityHeadlessDriver : IBattleTestScriptDriver

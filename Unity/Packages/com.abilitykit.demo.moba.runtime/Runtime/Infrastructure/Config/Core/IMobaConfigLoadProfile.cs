@@ -19,7 +19,7 @@ namespace AbilityKit.Demo.Moba.Config.Core
 
         public ResourcesJsonMobaConfigLoadProfile(
             string resourcesDir = MobaConfigPaths.DefaultResourcesDir,
-            bool strict = false)
+            bool strict = true)
         {
             if (string.IsNullOrEmpty(resourcesDir)) throw new ArgumentException(nameof(resourcesDir));
 

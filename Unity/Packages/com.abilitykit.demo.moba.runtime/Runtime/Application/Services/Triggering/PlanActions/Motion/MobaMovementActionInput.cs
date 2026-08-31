@@ -84,7 +84,7 @@ namespace AbilityKit.Demo.Moba.Services.Triggering.PlanActions
             var delta = caster.transform.Value.Position - self.transform.Value.Position;
             if (delta.SqrMagnitude > 0.01f)
             {
-                direction = delta.Normalized;
+                direction = DeterministicMathBridge.Normalize(in delta);
                 return true;
             }
 
@@ -119,14 +119,24 @@ namespace AbilityKit.Demo.Moba.Services.Triggering.PlanActions
 
             var position = actor.transform.Value.Position;
             delta = new Vec3(ActionInput.AimPosition.X - position.X, 0f, ActionInput.AimPosition.Z - position.Z);
-            return delta.SqrMagnitude > 0f;
+            return true;
         }
 
         public Vec3 ResolveDashOrBlinkDirection(int directionMode, int selfActorId)
         {
             if (directionMode == 0)
             {
-                return TryGetAimDirection(out var aimDirection) ? aimDirection : Vec3.Zero;
+                if (TryGetAimDirection(out var aimDirection))
+                {
+                    return aimDirection;
+                }
+
+                if (TryGetPlanarDeltaToAimPosition(selfActorId, out var aimDelta))
+                {
+                    return DeterministicMathBridge.Normalize(in aimDelta);
+                }
+
+                return Vec3.Zero;
             }
 
             if (directionMode == 1)
@@ -154,13 +164,20 @@ namespace AbilityKit.Demo.Moba.Services.Triggering.PlanActions
                 return Vec3.Up;
             }
 
+            if (directionMode == 3)
+            {
+                return TryGetDirectionToCaster(targetActorId, out var casterDirection)
+                    ? -casterDirection
+                    : Vec3.Zero;
+            }
+
             return Vec3.Zero;
         }
 
         private static Vec3 FlattenDirection(Vec3 direction)
         {
             var flattened = new Vec3(direction.X, 0f, direction.Z);
-            return flattened.SqrMagnitude > 0f ? flattened.Normalized : Vec3.Zero;
+            return flattened.SqrMagnitude > 0f ? DeterministicMathBridge.Normalize(in flattened) : Vec3.Zero;
         }
     }
 }

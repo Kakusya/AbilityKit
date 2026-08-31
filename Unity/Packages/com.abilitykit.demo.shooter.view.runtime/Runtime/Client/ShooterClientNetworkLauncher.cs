@@ -1,10 +1,19 @@
 #nullable enable
 
 using System;
+using System.Globalization;
 using System.Threading;
 using System.Threading.Tasks;
+using AbilityKit.Ability.Host;
+using AbilityKit.Ability.World.Abstractions;
 using AbilityKit.Demo.Shooter.Runtime;
 using AbilityKit.Network.Abstractions;
+using AbilityKit.Network.Battle;
+using AbilityKit.Network.Client;
+using AbilityKit.Network.Room;
+using AbilityKit.Network.Runtime;
+using AbilityKit.Network.Sdk;
+using AbilityKit.Network.Sdk.Observability;
 using AbilityKit.Protocol.Shooter;
 
 namespace AbilityKit.Demo.Shooter.View
@@ -12,13 +21,30 @@ namespace AbilityKit.Demo.Shooter.View
     public sealed class ShooterClientNetworkLauncher : IDisposable
     {
         private readonly IConnection _connection;
+        private readonly NetworkSdkClientKey _sdkClientKey;
+        private readonly NetworkSdkClientLease _sdkClientLease;
+        private readonly NetworkSdkClient _sdkClient;
         private readonly ShooterRoomGatewayConnection _gatewayConnection;
+        private GatewayBattleClientHost? _battleHost;
+        private NetworkTransport? _battleTransport;
+        private ShooterBattleDataPlane? _battleData;
+        private ShooterClientSession? _battleSession;
+        private NetworkSdkClientRecoveryBinding? _sessionRecoveryBinding;
         private bool _disposed;
 
         public ShooterClientNetworkLauncher(IConnection connection)
         {
             _connection = connection ?? throw new ArgumentNullException(nameof(connection));
-            _gatewayConnection = new ShooterRoomGatewayConnection(_connection);
+            _sdkClientKey = new NetworkSdkClientKey(
+                "abilitykit.shooter",
+                "room",
+                Guid.NewGuid().ToString("N"));
+            _sdkClientLease = NetworkSdkClientHub.Default.Acquire(
+                _sdkClientKey,
+                new NetworkSdkBuilder()
+                    .UseOwnedConnectionFactory(() => _connection));
+            _sdkClient = _sdkClientLease.Client;
+            _gatewayConnection = new ShooterRoomGatewayConnection(_sdkClient);
         }
 
         public static ShooterClientNetworkLauncher Create(IShooterClientConnectionFactory connectionFactory)
@@ -35,7 +61,10 @@ namespace AbilityKit.Demo.Shooter.View
 
         public ShooterRoomGatewayConnection GatewayConnection => _gatewayConnection;
 
-        public bool IsConnected => _connection.IsConnected;
+        /// <summary>Battle data-plane push/reconnect surface, fed by the battle <see cref="NetworkTransport"/>.</summary>
+        public ShooterBattleDataPlane? BattleData => _battleData;
+
+        public bool IsConnected => _sdkClient.IsConnected;
 
         public void Open(ShooterClientNetworkEndpoint endpoint)
         {
@@ -45,7 +74,8 @@ namespace AbilityKit.Demo.Shooter.View
         public void Open(string host, int port)
         {
             ThrowIfDisposed();
-            _connection.Open(host, port);
+            if (_sessionRecoveryBinding != null) _sessionRecoveryBinding.Enabled = true;
+            _sdkClient.Open(host, port);
         }
 
         public void Close()
@@ -55,13 +85,58 @@ namespace AbilityKit.Demo.Shooter.View
                 return;
             }
 
-            _connection.Close();
+            try
+            {
+                if (_sessionRecoveryBinding != null) _sessionRecoveryBinding.Enabled = false;
+                FlushReliableEventCheckpointsAsync(
+                    ReliableEventCheckpointFlushTrigger.Disconnect).GetAwaiter().GetResult();
+            }
+            finally
+            {
+                _sdkClient.Close();
+            }
         }
+
+        /// <summary>等待当前战斗会话的可靠事件检查点完成持久化。</summary>
+        public Task FlushReliableEventCheckpointsAsync(CancellationToken cancellationToken = default)
+        {
+            return _battleSession?.FlushReliableEventCheckpointsAsync(cancellationToken)
+                ?? Task.CompletedTask;
+        }
+
+        /// <summary>按指定生命周期原因等待当前检查点完成持久化。</summary>
+        public Task<ReliableEventCheckpointFlushResult> FlushReliableEventCheckpointsAsync(
+            ReliableEventCheckpointFlushTrigger trigger,
+            CancellationToken cancellationToken = default)
+        {
+            return _battleSession?.FlushReliableEventCheckpointsAsync(trigger, cancellationToken)
+                ?? Task.FromResult(new ReliableEventCheckpointFlushResult(
+                    0,
+                    trigger,
+                    ReliableEventCheckpointFlushStatus.Skipped,
+                    TimeSpan.Zero,
+                    null));
+        }
+
+        /// <summary>获取当前战斗会话的检查点生命周期诊断。</summary>
+        public ReliableEventCheckpointLifecycleDiagnostics ReliableEventCheckpointLifecycleDiagnostics =>
+            _battleSession?.ReliableEventCheckpointLifecycleDiagnostics ?? default;
 
         public void Tick(float deltaTime)
         {
             ThrowIfDisposed();
-            _connection.Tick(deltaTime);
+            // Once the battle host exists it pumps both connections (room + battle); before that,
+            // pump the room connection directly. Then run queued battle callbacks (push apply) on
+            // this (main) thread — single-threaded with session.Tick, so ApplyGatewayPush can't race it.
+            if (_battleHost != null)
+            {
+                _battleHost.Tick(deltaTime);
+            }
+            else
+            {
+                _sdkClient.Tick(deltaTime);
+            }
+            _battleData?.Drain();
         }
 
         public Task<ShooterClientNetworkLaunchResult> CreateReadyStartAndSubscribeAsync(
@@ -262,9 +337,9 @@ namespace AbilityKit.Demo.Shooter.View
             CancellationToken cancellationToken = default)
         {
             ThrowIfDisposed();
-            OpenIfNeeded(host, port);
+            await EnsureConnectedAsync(host, port, timeout).ConfigureAwait(false);
 
-            var launcher = new ShooterClientGatewayLauncher(_gatewayConnection);
+            var launcher = new ShooterClientGatewayLauncher(_gatewayConnection, flow => BuildBattleTransport(host, port, flow));
             var launched = await launcher.RestoreRoomAsync(
                 runtime,
                 presentationSession,
@@ -279,7 +354,10 @@ namespace AbilityKit.Demo.Shooter.View
                 timeout,
                 cancellationToken).ConfigureAwait(false);
 
+            AttachBattleSessionRecovery(launched.Session);
+            _battleData?.AttachBattle(launched.Battle);
             _gatewayConnection.AttachBattle(launched.Battle);
+            _battleTransport?.Connect();
             return new ShooterClientNetworkRestoreResult(_connection, _gatewayConnection, launched);
         }
 
@@ -407,9 +485,9 @@ namespace AbilityKit.Demo.Shooter.View
             CancellationToken cancellationToken = default)
         {
             ThrowIfDisposed();
-            OpenIfNeeded(host, port);
+            await EnsureConnectedAsync(host, port, timeout).ConfigureAwait(false);
 
-            var launcher = new ShooterClientGatewayLauncher(_gatewayConnection);
+            var launcher = new ShooterClientGatewayLauncher(_gatewayConnection, flow => BuildBattleTransport(host, port, flow));
             var launched = await launcher.CreateReadyStartAndSubscribeAsync(
                 runtime,
                 presentationSession,
@@ -422,7 +500,10 @@ namespace AbilityKit.Demo.Shooter.View
                 timeout,
                 cancellationToken).ConfigureAwait(false);
 
+            AttachBattleSessionRecovery(launched.Session);
+            _battleData?.AttachBattle(launched.Battle);
             _gatewayConnection.AttachBattle(launched.Battle);
+            _battleTransport?.Connect();
             return new ShooterClientNetworkLaunchResult(_connection, _gatewayConnection, launched);
         }
 
@@ -587,9 +668,9 @@ namespace AbilityKit.Demo.Shooter.View
             CancellationToken cancellationToken = default)
         {
             ThrowIfDisposed();
-            OpenIfNeeded(host, port);
+            await EnsureConnectedAsync(host, port, timeout).ConfigureAwait(false);
 
-            var launcher = new ShooterClientGatewayLauncher(_gatewayConnection);
+            var launcher = new ShooterClientGatewayLauncher(_gatewayConnection, flow => BuildBattleTransport(host, port, flow));
             var launched = await launcher.JoinReadyStartAndSubscribeAsync(
                 runtime,
                 presentationSession,
@@ -603,16 +684,142 @@ namespace AbilityKit.Demo.Shooter.View
                 timeout,
                 cancellationToken).ConfigureAwait(false);
 
+            AttachBattleSessionRecovery(launched.Session);
+            _battleData?.AttachBattle(launched.Battle);
             _gatewayConnection.AttachBattle(launched.Battle);
+            _battleTransport?.Connect();
             return new ShooterClientNetworkLaunchResult(_connection, _gatewayConnection, launched);
+        }
+
+        /// <summary>
+        /// Builds the battle data-plane on its OWN connection (two-connection / MOBA topology) via the
+        /// shared <see cref="GatewayBattleClientHost"/> (primitives path: shooter's room control plane is
+        /// its own staged stack, not the facade). The host assembles gateway/session/protocol-preset;
+        /// the configure callback adds the shooter-specific input preset, reliable-event cursor, and
+        /// raw-downlink mode. Connect is deferred so the <see cref="ShooterBattleDataPlane"/> can
+        /// subscribe before the engine's connect handshake emits its first pushes.
+        /// Called from the gateway launcher's battle-client factory once the room flow yields the battle ids.
+        /// </summary>
+        private IShooterRoomGatewayClient BuildBattleTransport(string host, int port, ShooterRoomGatewayFlowResult flow)
+        {
+            var session = new GatewaySessionResult(
+                flow.SessionToken,
+                flow.RoomId,
+                flow.BattleId,
+                flow.NumericRoomId,
+                flow.PlayerId,
+                roomSnapshot: default,
+                subscribed: false);
+
+            _battleHost = new GatewayBattleClientHost(
+                _sdkClient,
+                in session,
+                host,
+                port,
+                battleTransportFactory: () => new TcpTransport(),
+                battleDispatcher: InlineDispatcher.Instance);
+
+            _battleTransport = _battleHost.AttachBattle((config, s) =>
+            {
+                config
+                    // Standard room-gateway input uplink preset. Engine retry disabled (no retry policy):
+                    // shooter keeps its own RejectedTooFarFuture retry as the sole retry. ShouldResync is
+                    // carried as a pure data field for the client's MarkGatewayInputResyncRequested path.
+                    .UseRoomGatewayStateSyncInput(
+                        s.BattleId,
+                        playerIdToUInt: pid => uint.Parse(pid.Value, CultureInfo.InvariantCulture),
+                        worldIdToUlong: w => ulong.Parse(w.Value, CultureInfo.InvariantCulture))
+                    .WithReliableEventCursor(
+                        () => _battleSession?.ReliableEventEpoch ?? string.Empty,
+                        () => _battleSession?.LastReliableEventAck ?? 0L)
+                    // Shooter is a raw downlink consumer: all pushes route through RawServerPushReceived
+                    // into ShooterClientSession.ApplyGatewayPush; typed deserializers stay off.
+                    .WithRawDownlinkOnly();
+#if UNITY_EDITOR || DEVELOPMENT_BUILD
+                ShooterProtocolDecoderModule.Register(NetworkTrafficMonitor.Default.Decoders);
+                config.ObserveTraffic(NetworkTrafficMonitor.Default, options =>
+                {
+                    options.ConnectionId = "shooter-battle-primary";
+                    options.Role = "battle";
+                    options.CatalogId = "abilitykit.shooter.battle";
+                    options.TransportName = "tcp";
+                    options.MaximumPayloadPreviewBytes = 65536;
+                    options.FilterFactory = NetworkTrafficMonitor.Default.CreateSamplingFilter;
+                });
+#endif
+            }, connect: false);
+
+            // InlineDispatcher callback: PacketReceived (incl. RequestClient response matching) fires
+            // immediately on the receive thread, so an awaited SendInputAsync can't deadlock on the main
+            // thread. ApplyGatewayPush is queued in ShooterBattleDataPlane and drained on the main thread
+            // during Tick, so it can't race session.Tick.
+            _battleData = new ShooterBattleDataPlane(_battleTransport);
+            _battleData.SnapshotPushDispatched += (op, payload, result) => _gatewayConnection.NotifyBattlePushDispatched(op, payload, result);
+            return new ShooterBattleTransportGatewayClient(
+                _battleTransport,
+                playerIdFromUInt: u => new PlayerId(u.ToString(CultureInfo.InvariantCulture)),
+                worldIdFromUlong: u => new WorldId(u.ToString(CultureInfo.InvariantCulture)));
         }
 
         private void OpenIfNeeded(string host, int port)
         {
-            if (!_connection.IsConnected)
+            if (_sessionRecoveryBinding != null) _sessionRecoveryBinding.Enabled = true;
+            _sdkClient.OpenIfDisconnected(host, port);
+        }
+
+        /// <summary>
+        /// 打开连接并等到真正建立（TcpTransport.Connect 是异步发起，Send 不等待就会
+        /// 在 stream 就绪前抛 "Not connected."）。恢复路径是唯一在全新连接上"开完立刻
+        /// 发请求"的路径，此前正是它踩中该竞态导致恢复静默失败。
+        /// </summary>
+        public async Task EnsureConnectedAsync(string host, int port, TimeSpan? timeout)
+        {
+            if (_sdkClient.IsConnected)
             {
-                _connection.Open(host, port);
+                return;
             }
+
+            var deadline = DateTime.UtcNow + (timeout ?? TimeSpan.FromSeconds(10));
+            var connectedTcs = new TaskCompletionSource<bool>(TaskCreationOptions.RunContinuationsAsynchronously);
+            Action handler = () => connectedTcs.TrySetResult(true);
+            _sdkClient.Connected += handler;
+            try
+            {
+                OpenIfNeeded(host, port);
+                if (_sdkClient.IsConnected)
+                {
+                    return;
+                }
+
+                var remaining = deadline - DateTime.UtcNow;
+                if (remaining <= TimeSpan.Zero)
+                {
+                    throw new TimeoutException($"Timed out waiting for gateway connection to {host}:{port}.");
+                }
+
+                var completed = await Task.WhenAny(connectedTcs.Task, Task.Delay(remaining)).ConfigureAwait(false);
+                if (completed != connectedTcs.Task || !_sdkClient.IsConnected)
+                {
+                    throw new TimeoutException($"Timed out waiting for gateway connection to {host}:{port}.");
+                }
+            }
+            finally
+            {
+                _sdkClient.Connected -= handler;
+            }
+        }
+
+        private void AttachBattleSessionRecovery(ShooterClientSession session)
+        {
+            _sessionRecoveryBinding?.Dispose();
+            _battleSession = session ?? throw new ArgumentNullException(nameof(session));
+            _sessionRecoveryBinding = _sdkClient.BindRecoverySignals(
+                session,
+                new NetworkSdkClientRecoveryBindingOptions
+                {
+                    FrameProvider = () => session.CurrentFrame,
+                    CorrelationContextProvider = () => session.ReliableEventEpoch
+                });
         }
 
         private void ThrowIfDisposed()
@@ -631,8 +838,37 @@ namespace AbilityKit.Demo.Shooter.View
             }
 
             _disposed = true;
-            _gatewayConnection.Dispose();
-            _connection.Dispose();
+            try
+            {
+                FlushReliableEventCheckpointsAsync(
+                    ReliableEventCheckpointFlushTrigger.Dispose).GetAwaiter().GetResult();
+            }
+            finally
+            {
+                _sessionRecoveryBinding?.Dispose();
+                _sessionRecoveryBinding = null;
+                _battleData?.Dispose();
+                // The host disposes the battle transport and the room SDK client; if no battle was ever
+                // attached, the room SDK client is still ours to release. Remove the released Hub entry
+                // afterwards so diagnostics never retain a disposed sample client.
+                try
+                {
+                    if (_battleHost != null)
+                    {
+                        _battleHost.Dispose();
+                    }
+                    else
+                    {
+                        _sdkClient.Dispose();
+                    }
+                    _gatewayConnection.Dispose();
+                }
+                finally
+                {
+                    _sdkClientLease.Dispose();
+                    NetworkSdkClientHub.Default.Remove(_sdkClientKey);
+                }
+            }
         }
     }
 

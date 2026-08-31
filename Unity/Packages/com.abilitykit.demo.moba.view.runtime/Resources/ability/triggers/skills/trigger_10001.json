@@ -1,24 +1,26 @@
-﻿{
-    "conditions":  [
-
-                   ],
-    "id":  10001,
-    "enabled":  true,
-    "phase":  "immediate",
-    "event":  "",
-    "name":  "Trigger_10001",
-    "allowExternal":  false,
-    "actions":  [
-                    {
-                        "message":  "测试日志输出1111122233333",
-                        "dump_args":  false,
-                        "type":  "debug_log"
-                    },
-                    {
-                        "projectileId":  200001,
-                        "launcherId":  100001,
-                        "type":  "shoot_projectile"
-                    }
-                ],
-    "priority":  50
+{
+    "triggers": [
+        {
+            "id": 10001,
+            "name": "技能1-添加持续掉血buff",
+            "event": "",
+            "enabled": true,
+            "allowExternal": false,
+            "phase": "immediate",
+            "priority": 50,
+            "conditions": [],
+            "actions": [
+                {
+                    "type": "add_buff",
+                    "buffIds": [101],
+                    "targetActorId": 0
+                },
+                {
+                    "message": "释放技能1，给自己添加持续掉血buff！",
+                    "dump_args": false,
+                    "type": "debug_log"
+                }
+            ]
+        }
+    ]
 }

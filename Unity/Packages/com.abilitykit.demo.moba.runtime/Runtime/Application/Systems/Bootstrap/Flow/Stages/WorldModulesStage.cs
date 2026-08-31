@@ -41,6 +41,7 @@ namespace AbilityKit.Demo.Moba.Systems.Bootstrap.Flow.Stages
             builder.Register<ActionRegistry>(WorldLifetime.Singleton, _ => new ActionRegistry());
             builder.Register<AbilityKit.Demo.Moba.Services.MobaBattleRouteRegistry>(WorldLifetime.Singleton, _ => AbilityKit.Demo.Moba.Services.MobaBattleRouteRegistry.CreateDefault());
             builder.Register<AbilityKit.Demo.Moba.Services.MobaInputCommandContractRegistry>(WorldLifetime.Singleton, _ => AbilityKit.Demo.Moba.Services.MobaInputCommandContractRegistry.CreateDefault());
+            builder.Register<AbilityKit.Demo.Moba.Services.MobaSnapshotContractProfileRegistry>(WorldLifetime.Singleton, _ => AbilityKit.Demo.Moba.Services.MobaSnapshotContractProfileRegistry.CreateDefault());
             builder.TryRegister<MobaGameplayConfigSettings>(WorldLifetime.Scoped, _ => new MobaGameplayConfigSettings());
             builder.Register<AbilityKit.Demo.Moba.Services.MobaTriggerPayloadResolverRegistry>(WorldLifetime.Singleton, _ => new AbilityKit.Demo.Moba.Services.MobaTriggerPayloadResolverRegistry());
             builder.Register<AbilityKit.Demo.Moba.Services.MobaTriggerConditionRegistry>(WorldLifetime.Singleton, _ => new AbilityKit.Demo.Moba.Services.MobaTriggerConditionRegistry());
@@ -48,30 +49,32 @@ namespace AbilityKit.Demo.Moba.Systems.Bootstrap.Flow.Stages
             {
                 var payloads = new PayloadAccessorRegistry();
                 var gameplayAccessor = new GameplayLifecyclePayloadAccessor();
-                payloads.RegisterIntAccessor(gameplayAccessor);
-                payloads.RegisterDoubleAccessor(gameplayAccessor);
+                payloads.RegisterIntAccessor(gameplayAccessor, GameplayLifecyclePayloadAccessor.SupportsField);
+                payloads.RegisterDoubleAccessor(gameplayAccessor, GameplayLifecyclePayloadAccessor.SupportsField);
 
                 var battleAccessor = new MobaBattlePayloadAccessor();
-                payloads.RegisterIntAccessor<AttackInfo>(battleAccessor);
-                payloads.RegisterIntAccessor<DamageResult>(battleAccessor);
-                payloads.RegisterDoubleAccessor<DamageResult>(battleAccessor);
-                payloads.RegisterIntAccessor<Events.Unit.UnitDieEventPayload>(battleAccessor);
-                payloads.RegisterDoubleAccessor<Events.Unit.UnitDieEventPayload>(battleAccessor);
+                payloads.RegisterIntAccessor<AttackInfo>(battleAccessor, MobaBattlePayloadAccessor.SupportsAttackInfoField);
+                payloads.RegisterIntAccessor<DamageResult>(battleAccessor, MobaBattlePayloadAccessor.SupportsDamageResultField);
+                payloads.RegisterDoubleAccessor<DamageResult>(battleAccessor, MobaBattlePayloadAccessor.SupportsDamageResultField);
+                payloads.RegisterIntAccessor<Events.Unit.UnitDieEventPayload>(battleAccessor, MobaBattlePayloadAccessor.SupportsUnitDieField);
+                payloads.RegisterDoubleAccessor<Events.Unit.UnitDieEventPayload>(battleAccessor, MobaBattlePayloadAccessor.SupportsUnitDieField);
 
                 var skillAccessor = new SkillPipelineContextPayloadAccessor(_);
-                payloads.RegisterIntAccessor<SkillPipelineContext>(skillAccessor);
-                payloads.RegisterDoubleAccessor<SkillPipelineContext>(skillAccessor);
+                payloads.RegisterIntAccessor<SkillPipelineContext>(skillAccessor, SkillPipelineContextPayloadAccessor.SupportsField);
+                payloads.RegisterDoubleAccessor<SkillPipelineContext>(skillAccessor, SkillPipelineContextPayloadAccessor.SupportsField);
 
                 var skillCastAccessor = new SkillCastContextPayloadAccessor();
-                payloads.RegisterIntAccessor<SkillCastContext>(skillCastAccessor);
-                payloads.RegisterDoubleAccessor<SkillCastContext>(skillCastAccessor);
+                payloads.RegisterIntAccessor<SkillCastContext>(skillCastAccessor, SkillCastContextPayloadAccessor.SupportsField);
+                payloads.RegisterDoubleAccessor<SkillCastContext>(skillCastAccessor, SkillCastContextPayloadAccessor.SupportsField);
 
                 var skillObjectAccessor = new SkillPipelineContextObjectPayloadAccessor(skillAccessor);
-                payloads.RegisterIntAccessor<object>(skillObjectAccessor);
-                payloads.RegisterDoubleAccessor<object>(skillObjectAccessor);
+                payloads.RegisterIntAccessor<object>(skillObjectAccessor, SkillPipelineContextObjectPayloadAccessor.SupportsField);
+                payloads.RegisterDoubleAccessor<object>(skillObjectAccessor, SkillPipelineContextObjectPayloadAccessor.SupportsField);
                 return payloads;
             });
             builder.Register<IBlackboardResolver>(WorldLifetime.Singleton, _ => new DictionaryBlackboardResolver());
+            builder.Register<IOwnerBlackboardStore>(WorldLifetime.Singleton, r =>
+                new OwnerBlackboardStore(r.Resolve<IBlackboardResolver>()));
             builder.Register<INumericVarDomainRegistry>(WorldLifetime.Singleton, _ =>
             {
                 var registry = new NumericVarDomainRegistry();
@@ -85,13 +88,14 @@ namespace AbilityKit.Demo.Moba.Systems.Bootstrap.Flow.Stages
                 RegisterDefaultBlackboardDomain(registry, "global");
                 return registry;
             });
-            builder.Register<AbilityKit.Triggering.Runtime.TriggerRunner<IWorldResolver>>(WorldLifetime.Singleton, r =>
+            builder.Register<AbilityKit.Triggering.Runtime.TriggerRunner<IWorldResolver>>(WorldLifetime.Scoped, r =>
             {
                 var diagnosticsAdapter = new MobaTriggerDiagnosticsAdapter(r);
                 return new AbilityKit.Triggering.Runtime.TriggerRunner<IWorldResolver>(
                     r.Resolve<AbilityKit.Triggering.Eventing.IEventBus>(),
                     r.Resolve<FunctionRegistry>(),
                     r.Resolve<ActionRegistry>(),
+                    contextSource: new WorldResolverContextSource(r),
                     lifecycle: diagnosticsAdapter,
                     blackboards: r.Resolve<IBlackboardResolver>(),
                     payloads: r.Resolve<IPayloadAccessorRegistry>(),
@@ -115,5 +119,21 @@ namespace AbilityKit.Demo.Moba.Systems.Bootstrap.Flow.Stages
             IWorldResolver services)
         {
         }
+    }
+
+    /// <summary>
+    /// 将 <see cref="IWorldResolver"/> 作为 TriggerRunner 的上下文源，
+    /// 使计划路径谓词函数（如 has_buff）能通过 ExecCtx.Context 访问世界服务。
+    /// </summary>
+    internal sealed class WorldResolverContextSource : AbilityKit.Triggering.Runtime.ITriggerContextSource<IWorldResolver>
+    {
+        private readonly IWorldResolver _resolver;
+
+        public WorldResolverContextSource(IWorldResolver resolver)
+        {
+            _resolver = resolver;
+        }
+
+        public IWorldResolver GetContext() => _resolver;
     }
 }

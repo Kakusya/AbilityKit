@@ -29,22 +29,16 @@ namespace AbilityKit.Game.Flow
             set => _state.Tick.TickAcc = value;
         }
 
+        private bool _worldReady
+        {
+            get => _state.Tick.WorldReady;
+            set => _state.Tick.WorldReady = value;
+        }
+
         private bool _firstFrameReceived
         {
             get => _state.Tick.FirstFrameReceived;
             set => _state.Tick.FirstFrameReceived = value;
-        }
-
-        private int _remoteDrivenLastTickedFrame
-        {
-            get => _state.RemoteDriven.LastTickedFrame;
-            set => _state.RemoteDriven.LastTickedFrame = value;
-        }
-
-        private int _confirmedLastTickedFrame
-        {
-            get => _state.Confirmed.LastTickedFrame;
-            set => _state.Confirmed.LastTickedFrame = value;
         }
 
         private bool _autoPlanLogged

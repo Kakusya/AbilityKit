@@ -10,6 +10,21 @@ namespace AbilityKit.Demo.Shooter.Runtime.Tests;
 public sealed class ShooterPureStateSnapshotSyncControllerTests
 {
     [Fact]
+    public void ConstructorNegotiatesPureStatePlaybackProfileAndSchemaVersion()
+    {
+        var controller = new ShooterPureStateSnapshotSyncController(new ShooterPresentationFacade());
+
+        Assert.True(controller.Negotiation.HasValue);
+        Assert.True(controller.Negotiation.Value.IsCompatible);
+        Assert.Equal(
+            ShooterStateSyncCompatibilityPolicy.MinimumPureStateVersion,
+            controller.Negotiation.Value.MinimumSchemaVersion);
+        Assert.Equal(
+            ShooterPureStateSyncCodec.CurrentVersion,
+            controller.Negotiation.Value.MaximumSchemaVersion);
+    }
+
+    [Fact]
     public void PureStateSnapshotSyncControllerAppliesGatewayFullBaselineToViewModel()
     {
         var source = CreateStartedSourceRuntime();
@@ -153,6 +168,126 @@ public sealed class ShooterPureStateSnapshotSyncControllerTests
         Assert.False(controller.LastDiagnostics.AppliedPresentation);
         Assert.Contains(controller.LastHealthEvents, e => e.Kind == SyncHealthEventKind.FullSnapshotRequested && e.Frame == delta.Frame);
         Assert.Equal(baseline.Frame, presentation.ViewModel.Frame);
+
+        var staleResult = controller.TryApplyGatewayPush(
+            RoomGatewayOpCodes.SnapshotPushed,
+            CreateGatewayPayload(in baseline, ShooterOpCodes.Snapshot.PureState, isFullSnapshot: true));
+
+        Assert.Equal(ShooterPureStateSnapshotApplyResult.IgnoredStaleSnapshot, staleResult);
+        Assert.Equal(baseline.Frame, controller.LastIgnoredFrame);
+        Assert.Equal(ShooterPureStateResyncReason.BaselineMismatch, controller.LastResyncReason);
+        Assert.Equal(delta.Frame, controller.LastResyncFrame);
+        Assert.Equal(delta.StateHash, controller.LastResyncStateHash);
+        Assert.True(controller.NeedsFullBaselineResync);
+    }
+
+    [Fact]
+    public void PureStateSnapshotSyncControllerRejectsMissingPublishedDeltaAndRequestsRecovery()
+    {
+        var source = CreateStartedSourceRuntime();
+        Assert.True(source.Tick(1f / 30f));
+        var baseline = source.ExportPureStateSnapshot(782ul, isFullBaseline: true);
+        var delta = source.ExportPureStateSnapshot(
+            782ul,
+            isFullBaseline: false,
+            settings: new ShooterPureStateSyncSettings(100, 50, 60, 2, 10, 3),
+            baselineFrame: baseline.Frame,
+            baselineHash: baseline.StateHash);
+        delta.Frame = baseline.Frame + 4;
+        delta.ServerTick = delta.Frame;
+
+        var presentation = new ShooterPresentationFacade();
+        var controller = new ShooterPureStateSnapshotSyncController(presentation);
+        Assert.Equal(
+            ShooterPureStateSnapshotApplyResult.AppliedFullBaseline,
+            controller.TryApplyGatewayPush(
+                RoomGatewayOpCodes.SnapshotPushed,
+                CreateGatewayPayload(in baseline, ShooterOpCodes.Snapshot.PureState, isFullSnapshot: true)));
+
+        var result = controller.TryApplyGatewayPush(
+            RoomGatewayOpCodes.DeltaSnapshotPushed,
+            CreateGatewayPayload(in delta, ShooterOpCodes.Snapshot.PureStateDelta, isFullSnapshot: false));
+
+        Assert.Equal(ShooterPureStateSnapshotApplyResult.NeedsFullBaselineResync, result);
+        Assert.True(controller.NeedsFullBaselineResync);
+        Assert.Equal(ShooterPureStateResyncReason.SequenceGap, controller.LastResyncReason);
+        Assert.Equal(baseline.Frame, controller.LastAppliedFrame);
+        Assert.Equal(baseline.Frame, presentation.ViewModel.Frame);
+        Assert.Contains(controller.LastHealthEvents, e =>
+            e.Kind == SyncHealthEventKind.SnapshotGap &&
+            e.Severity == SyncHealthSeverity.Error &&
+            e.Frame == delta.Frame &&
+            e.Value == 3);
+        Assert.Contains(controller.LastHealthEvents, e =>
+            e.Kind == SyncHealthEventKind.FullSnapshotRequested && e.Frame == delta.Frame);
+    }
+
+    [Fact]
+    public void PureStateSnapshotSyncControllerRequiresFullBaselineWhenWorldChanges()
+    {
+        var source = CreateStartedSourceRuntime();
+        Assert.True(source.Tick(1f / 30f));
+        var baseline = source.ExportPureStateSnapshot(779ul, isFullBaseline: true);
+        Assert.True(source.Tick(1f / 30f));
+        var foreignDelta = source.ExportPureStateSnapshot(780ul, isFullBaseline: false, baselineFrame: baseline.Frame, baselineHash: baseline.StateHash);
+        var foreignBaseline = foreignDelta;
+        foreignBaseline.SnapshotKind = ShooterPureStateSnapshotKinds.FullBaseline;
+        foreignBaseline.BaselineFrame = foreignBaseline.Frame;
+        foreignBaseline.BaselineHash = foreignBaseline.StateHash;
+        var presentation = new ShooterPresentationFacade();
+        var controller = new ShooterPureStateSnapshotSyncController(presentation);
+
+        Assert.Equal(
+            ShooterPureStateSnapshotApplyResult.AppliedFullBaseline,
+            controller.TryApplyGatewayPush(RoomGatewayOpCodes.SnapshotPushed, CreateGatewayPayload(in baseline, ShooterOpCodes.Snapshot.PureState, isFullSnapshot: true)));
+        var rejected = controller.TryApplyGatewayPush(
+            RoomGatewayOpCodes.DeltaSnapshotPushed,
+            CreateGatewayPayload(in foreignDelta, ShooterOpCodes.Snapshot.PureStateDelta, isFullSnapshot: false));
+
+        Assert.Equal(ShooterPureStateSnapshotApplyResult.NeedsFullBaselineResync, rejected);
+        Assert.True(controller.NeedsFullBaselineResync);
+        Assert.Equal(ShooterPureStateResyncReason.WorldChanged, controller.LastResyncReason);
+        Assert.Equal(foreignDelta.Frame, controller.LastResyncFrame);
+
+        var recovered = controller.TryApplyGatewayPush(
+            RoomGatewayOpCodes.SnapshotPushed,
+            CreateGatewayPayload(in foreignBaseline, ShooterOpCodes.Snapshot.PureState, isFullSnapshot: true));
+
+        Assert.Equal(ShooterPureStateSnapshotApplyResult.AppliedFullBaseline, recovered);
+        Assert.False(controller.NeedsFullBaselineResync);
+        Assert.Equal(ShooterPureStateResyncReason.None, controller.LastResyncReason);
+        Assert.Equal(-1, controller.LastResyncFrame);
+        Assert.Equal(foreignBaseline.Frame, presentation.ViewModel.Frame);
+    }
+
+    [Fact]
+    public void PureStateSnapshotSyncControllerRejectsUnsupportedVersionWithoutApplyingPresentation()
+    {
+        var source = CreateStartedSourceRuntime();
+        Assert.True(source.Tick(1f / 30f));
+        var unsupported = source.ExportPureStateSnapshot(781ul, isFullBaseline: true);
+        unsupported.Version = ShooterPureStateSyncCodec.CurrentVersion + 1;
+        var presentation = new ShooterPresentationFacade();
+        var controller = new ShooterPureStateSnapshotSyncController(presentation);
+        var payload = CreateGatewayPayload(in unsupported, ShooterOpCodes.Snapshot.PureState, isFullSnapshot: true);
+
+        var result = controller.TryApplyGatewayPush(RoomGatewayOpCodes.SnapshotPushed, payload);
+
+        Assert.Equal(ShooterPureStateSnapshotApplyResult.UnsupportedVersion, result);
+        Assert.False(controller.NeedsFullBaselineResync);
+        Assert.Equal(ShooterPureStateResyncReason.UnsupportedVersion, controller.LastResyncReason);
+        Assert.Equal(unsupported.Frame, controller.LastResyncFrame);
+        Assert.Equal(unsupported.StateHash, controller.LastResyncStateHash);
+        Assert.Equal(0, controller.LastAppliedFrame);
+        Assert.Equal(0, presentation.ViewModel.Frame);
+        Assert.False(controller.LastDiagnostics.AppliedPresentation);
+        Assert.Contains(controller.LastHealthEvents, e => e.Kind == SyncHealthEventKind.SnapshotDropped && e.Frame == unsupported.Frame);
+
+        var facade = new ShooterPresentationFacade();
+        Assert.False(facade.TryApplyGatewayPush(RoomGatewayOpCodes.SnapshotPushed, payload));
+        Assert.Equal(0, facade.LastPureStateAppliedFrame);
+        Assert.False(facade.NeedsPureStateFullBaselineResync);
+        Assert.Equal(ShooterPureStateResyncReason.UnsupportedVersion, facade.LastPureStateResyncReason);
     }
 
     private static ShooterBattleRuntimePort CreateStartedSourceRuntime()

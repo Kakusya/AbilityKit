@@ -1,7 +1,7 @@
 using System;
 using System.Collections.Generic;
 using AbilityKit.Combat.MotionSystem.Core;
-using AbilityKit.Core.Continuous;
+using AbilityKit.Continuous;
 using AbilityKit.Core.Logging;
 using AbilityKit.Demo.Moba.Config.BattleDemo.MO;
 using AbilityKit.GameplayTags;
@@ -77,7 +77,6 @@ namespace AbilityKit.Demo.Moba.Services.Motion
         public int OwnerActorId { get; }
         public long SourceContextId { get; }
         public int ModifierSourceId { get; }
-        public float IntervalRemainingSeconds { get; set; }
         public override IContinuousConfig Config => _config;
 
         protected override bool OnActivating()

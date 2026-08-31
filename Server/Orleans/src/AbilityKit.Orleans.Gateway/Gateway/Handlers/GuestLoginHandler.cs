@@ -13,14 +13,14 @@ namespace AbilityKit.Orleans.Gateway.Handlers;
 public sealed partial class GuestLoginHandler : GatewayRequestHandlerBase
 {
     private readonly IClusterClient _clusterClient;
-    private readonly IGatewaySessionRegistry _registry;
+    private readonly Core.GatewaySessionBinder _sessionBinder;
 
     public GuestLoginHandler(
         IClusterClient clusterClient,
-        IGatewaySessionRegistry registry)
+        Core.GatewaySessionBinder sessionBinder)
     {
         _clusterClient = clusterClient;
-        _registry = registry;
+        _sessionBinder = sessionBinder;
     }
 
     public override async ValueTask<GatewayResponse> HandleAsync(
@@ -38,7 +38,7 @@ public sealed partial class GuestLoginHandler : GatewayRequestHandlerBase
         var session = _clusterClient.GetGrain<ISessionGrain>("global");
         var resp = await session.CreateGuestAsync();
 
-        _registry.BindToken(resp.SessionToken, context.ConnectionId);
+        _sessionBinder.Bind(context, resp.AccountId, resp.SessionToken);
 
         var responsePayload = GatewaySerializer.Serialize(new WireRoomGuestLoginRes
         {

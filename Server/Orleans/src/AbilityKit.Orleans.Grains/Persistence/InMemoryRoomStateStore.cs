@@ -1,5 +1,6 @@
 using System.Collections.Concurrent;
 using AbilityKit.Orleans.Contracts.Rooms;
+using AbilityKit.Protocol.Room;
 
 namespace AbilityKit.Orleans.Grains.Persistence;
 
@@ -9,7 +10,7 @@ public sealed class InMemoryRoomStateStore : IRoomStateStore
     private readonly ConcurrentDictionary<string, ulong> _roomToNumericId = new(StringComparer.Ordinal);
     private readonly ConcurrentDictionary<ulong, string> _numericIdToRoom = new();
     private readonly ConcurrentDictionary<string, string> _accountToRoom = new(StringComparer.Ordinal);
-    private ulong _nextNumericRoomId;
+    private readonly ConcurrentDictionary<string, RoomPersistentState> _runtimeStates = new(StringComparer.Ordinal);
 
     public Task UpsertRoomAsync(string directoryKey, RoomSummary summary, CancellationToken cancellationToken = default)
     {
@@ -23,6 +24,7 @@ public sealed class InMemoryRoomStateStore : IRoomStateStore
             throw new ArgumentNullException(nameof(summary));
         }
 
+        RegisterNumericRoomId(summary.RoomId);
         var rooms = _roomsByDirectory.GetOrAdd(directoryKey, _ => new ConcurrentDictionary<string, RoomSummary>(StringComparer.Ordinal));
         rooms[summary.RoomId] = CloneSummary(summary);
         return Task.CompletedTask;
@@ -76,14 +78,7 @@ public sealed class InMemoryRoomStateStore : IRoomStateStore
             throw new ArgumentException("Room id is required.", nameof(roomId));
         }
 
-        var numericId = _roomToNumericId.GetOrAdd(roomId, key =>
-        {
-            var createdId = (ulong)Interlocked.Increment(ref _nextNumericRoomId);
-            _numericIdToRoom[createdId] = key;
-            return createdId;
-        });
-
-        return Task.FromResult(numericId);
+        return Task.FromResult(RegisterNumericRoomId(roomId));
     }
 
     public Task<string?> TryGetRoomIdAsync(ulong numericRoomId, CancellationToken cancellationToken = default)
@@ -137,6 +132,57 @@ public sealed class InMemoryRoomStateStore : IRoomStateStore
         }
 
         return Task.CompletedTask;
+    }
+
+    public Task<RoomPersistentState?> TryGetRuntimeStateAsync(string roomId, CancellationToken cancellationToken = default)
+    {
+        if (string.IsNullOrWhiteSpace(roomId) || !_runtimeStates.TryGetValue(roomId, out var state))
+        {
+            return Task.FromResult<RoomPersistentState?>(null);
+        }
+
+        return Task.FromResult<RoomPersistentState?>(CloneRuntimeState(state));
+    }
+
+    public Task WriteRuntimeStateAsync(string roomId, RoomPersistentState state, CancellationToken cancellationToken = default)
+    {
+        if (string.IsNullOrWhiteSpace(roomId)) throw new ArgumentException("Room id is required.", nameof(roomId));
+        if (state is null) throw new ArgumentNullException(nameof(state));
+        _runtimeStates[roomId] = CloneRuntimeState(state);
+        return Task.CompletedTask;
+    }
+
+    public Task RemoveRuntimeStateAsync(string roomId, CancellationToken cancellationToken = default)
+    {
+        if (!string.IsNullOrWhiteSpace(roomId)) _runtimeStates.TryRemove(roomId, out _);
+        return Task.CompletedTask;
+    }
+
+    private ulong RegisterNumericRoomId(string roomId)
+    {
+        var numericRoomId = RoomGatewayIds.CreateNumericRoomId(roomId);
+        var mappedRoomId = _numericIdToRoom.GetOrAdd(numericRoomId, roomId);
+        if (!string.Equals(mappedRoomId, roomId, StringComparison.Ordinal))
+        {
+            throw new InvalidOperationException(
+                $"Numeric room id collision. numericRoomId={numericRoomId}, existingRoomId={mappedRoomId}, requestedRoomId={roomId}");
+        }
+
+        _roomToNumericId[roomId] = numericRoomId;
+        return numericRoomId;
+    }
+
+    private static RoomPersistentState CloneRuntimeState(RoomPersistentState state)
+    {
+        return state with
+        {
+            Summary = CloneSummary(state.Summary),
+            Members = state.Members.Select(member => member with { State = member.State with { } }).ToList(),
+            GameplayState = state.GameplayState with { Payload = (byte[])state.GameplayState.Payload.Clone() },
+            Launch = state.Launch with { LockedRoster = new List<string>(state.Launch.LockedRoster) },
+            BattleCommit = state.BattleCommit with { },
+            CommandDedupEntries = state.CommandDedupEntries.Select(entry => entry with { }).ToList()
+        };
     }
 
     private static RoomSummary CloneSummary(RoomSummary summary)

@@ -1,5 +1,6 @@
 using System;
 using System.Collections.Concurrent;
+using System.Text;
 using System.Threading;
 using System.Threading.Tasks;
 using AbilityKit.Network.Abstractions;
@@ -8,7 +9,17 @@ using AbilityKit.Network.Runtime.TcpGateway;
 
 namespace AbilityKit.Network.Runtime
 {
-    public sealed class RequestClient : IDisposable
+    /// <summary>Correlates request packets with their asynchronous responses.</summary>
+    public interface IRequestClient : IDisposable
+    {
+        Task<ArraySegment<byte>> SendRequestAsync(
+            uint opCode,
+            ArraySegment<byte> payload,
+            TimeSpan? timeout = null,
+            CancellationToken cancellationToken = default);
+    }
+
+    public sealed class RequestClient : IRequestClient
     {
         private readonly IConnection _connection;
         private readonly ConcurrentDictionary<uint, TaskCompletionSource<ArraySegment<byte>>> _pending = new();
@@ -26,6 +37,7 @@ namespace AbilityKit.Network.Runtime
         public Task<ArraySegment<byte>> SendRequestAsync(uint opCode, ArraySegment<byte> payload, TimeSpan? timeout = null, CancellationToken cancellationToken = default)
         {
             ThrowIfDisposed();
+            cancellationToken.ThrowIfCancellationRequested();
 
             var seq = unchecked((uint)Interlocked.Increment(ref _nextSeq));
             if (seq == 0) seq = unchecked((uint)Interlocked.Increment(ref _nextSeq));
@@ -37,32 +49,58 @@ namespace AbilityKit.Network.Runtime
             }
 
             CancellationTokenSource? timeoutCts = null;
-            CancellationTokenRegistration ctr = default;
-            CancellationTokenRegistration ttr = default;
+            CancellationTokenRegistration cancellationRegistration = default;
+            CancellationTokenRegistration timeoutRegistration = default;
 
             try
             {
                 if (timeout.HasValue && timeout.Value > TimeSpan.Zero)
                 {
                     timeoutCts = new CancellationTokenSource(timeout.Value);
-                    ttr = timeoutCts.Token.Register(() => TryTimeout(seq), useSynchronizationContext: false);
+                    timeoutRegistration = timeoutCts.Token.Register(
+                        () => TryTimeout(opCode, seq),
+                        useSynchronizationContext: false);
                 }
 
                 if (cancellationToken.CanBeCanceled)
                 {
-                    ctr = cancellationToken.Register(() => TryCancel(seq), useSynchronizationContext: false);
+                    cancellationRegistration = cancellationToken.Register(
+                        () => TryCancel(seq, cancellationToken),
+                        useSynchronizationContext: false);
                 }
 
                 _connection.Send(opCode, payload, flags: (ushort)NetworkPacketFlags.Request, seq: seq);
-                return tcs.Task;
+                return AwaitAndReleaseAsync(
+                    tcs.Task,
+                    timeoutCts,
+                    timeoutRegistration,
+                    cancellationRegistration);
             }
             catch
             {
                 _pending.TryRemove(seq, out _);
-                ctr.Dispose();
-                ttr.Dispose();
+                cancellationRegistration.Dispose();
+                timeoutRegistration.Dispose();
                 timeoutCts?.Dispose();
                 throw;
+            }
+        }
+
+        private static async Task<ArraySegment<byte>> AwaitAndReleaseAsync(
+            Task<ArraySegment<byte>> requestTask,
+            CancellationTokenSource? timeoutCts,
+            CancellationTokenRegistration timeoutRegistration,
+            CancellationTokenRegistration cancellationRegistration)
+        {
+            try
+            {
+                return await requestTask.ConfigureAwait(false);
+            }
+            finally
+            {
+                cancellationRegistration.Dispose();
+                timeoutRegistration.Dispose();
+                timeoutCts?.Dispose();
             }
         }
 
@@ -81,7 +119,9 @@ namespace AbilityKit.Network.Runtime
                 var decoded = TcpGatewayResponseCodec.Decode(result);
                 if (decoded.StatusCode != TcpGatewayStatusCode.Ok)
                 {
-                    tcs.TrySetException(new InvalidOperationException($"Gateway response error. statusCode={decoded.StatusCode} opCode={opCode} seq={seq}"));
+                    var message = DecodeErrorMessage(decoded.Payload);
+                    var detail = string.IsNullOrWhiteSpace(message) ? string.Empty : $" message={message}";
+                    tcs.TrySetException(new InvalidOperationException($"Gateway response error. statusCode={decoded.StatusCode} opCode={opCode} seq={seq}{detail}"));
                     return;
                 }
 
@@ -103,19 +143,19 @@ namespace AbilityKit.Network.Runtime
             FailAll(ex ?? new InvalidOperationException("Connection error."));
         }
 
-        private void TryTimeout(uint seq)
+        private void TryTimeout(uint opCode, uint seq)
         {
             if (_pending.TryRemove(seq, out var tcs) && tcs != null)
             {
-                tcs.TrySetException(new TimeoutException($"Request timeout. seq={seq}"));
+                tcs.TrySetException(new TimeoutException($"Request timeout. opCode={opCode} seq={seq}"));
             }
         }
 
-        private void TryCancel(uint seq)
+        private void TryCancel(uint seq, CancellationToken cancellationToken)
         {
             if (_pending.TryRemove(seq, out var tcs) && tcs != null)
             {
-                tcs.TrySetCanceled();
+                tcs.TrySetCanceled(cancellationToken);
             }
         }
 
@@ -133,9 +173,22 @@ namespace AbilityKit.Network.Runtime
         private static ArraySegment<byte> Copy(ArraySegment<byte> src)
         {
             if (src.Array == null || src.Count <= 0) return default;
+            // Allocates a permanent copy — the underlying transport buffer may be reused/returned before
+            // the consumer processes it. ArrayPool can't be used here because there's no return mechanism
+            // in the TaskCompletionSource<ArraySegment<byte>> API. Gen0 handles this fine at game frame rates.
             var bytes = new byte[src.Count];
             Buffer.BlockCopy(src.Array, src.Offset, bytes, 0, src.Count);
             return new ArraySegment<byte>(bytes);
+        }
+
+        private static string DecodeErrorMessage(ArraySegment<byte> payload)
+        {
+            if (payload.Array == null || payload.Count <= 0) return string.Empty;
+
+            const int maxMessageBytes = 1024;
+            var count = Math.Min(payload.Count, maxMessageBytes);
+            var message = Encoding.UTF8.GetString(payload.Array, payload.Offset, count);
+            return message.Replace('\r', ' ').Replace('\n', ' ').Trim();
         }
 
         private void ThrowIfDisposed()

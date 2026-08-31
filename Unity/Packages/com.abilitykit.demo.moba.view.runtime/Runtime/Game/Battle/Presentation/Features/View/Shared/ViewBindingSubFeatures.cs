@@ -29,9 +29,10 @@ namespace AbilityKit.Game.Flow
             _interpolationSettings.Apply(ctx.Phase, runtime.Binder);
 
             runtime.EntityDestroyedSubscription?.Dispose();
-            if (runtime.Context?.EntityWorld != null)
+            var world = runtime.EntityContext?.EntityWorld;
+            if (world != null)
             {
-                runtime.EntityDestroyedSubscription = runtime.Context.EntityWorld.EntityDestroyed(runtime.OnEntityDestroyed);
+                runtime.EntityDestroyedSubscription = world.EntityDestroyed(runtime.OnEntityDestroyed);
             }
         }
 
@@ -62,7 +63,13 @@ namespace AbilityKit.Game.Flow
     {
         public BattleViewBinder CreateBinder(IViewFeatureRuntime runtime)
         {
-            return new BattleViewBinder(runtime.Vfx, runtime.VfxNode, resources: runtime.Resources);
+            return new BattleViewBinder(
+                runtime.Vfx,
+                runtime.VfxNode,
+                resources: runtime.Resources,
+                pool: runtime.ShellPool,
+                controllers: null,
+                hierarchy: runtime.Hierarchy);
         }
     }
 
@@ -79,6 +86,7 @@ namespace AbilityKit.Game.Flow
             if (settings.TryGetBool("View.Interp.Enabled", out var enabled)) binder.InterpolationEnabled = enabled;
             if (settings.TryGetFloat("View.Interp.BackTimeTicks", out var backTicks)) binder.BackTimeTicks = backTicks;
             if (settings.TryGetFloat("View.Interp.MaxLagTicks", out var maxLagTicks)) binder.MaxLagTicks = maxLagTicks;
+            if (settings.TryGetFloat("View.Interp.SmoothingHz", out var smoothingHz)) binder.SmoothingHz = smoothingHz;
         }
     }
 }

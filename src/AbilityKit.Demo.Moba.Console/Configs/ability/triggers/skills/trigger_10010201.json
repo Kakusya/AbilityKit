@@ -35,8 +35,15 @@
           "duration_ms": 700
         },
         {
+          "type": "reset_cooldown",
+          "skill_id": 10010101,
+          "skill_slot": 1,
+          "target_query_id": 50010201,
+          "target_max_count": 1
+        },
+        {
           "type": "debug_log",
-          "message": "廉颇二技能：获得护盾并生成延迟范围伤害区域",
+          "message": "廉颇二技能：获得护盾并生成延迟范围伤害区域，范围内有敌人时刷新一技能",
           "dump_args": false
         }
       ]

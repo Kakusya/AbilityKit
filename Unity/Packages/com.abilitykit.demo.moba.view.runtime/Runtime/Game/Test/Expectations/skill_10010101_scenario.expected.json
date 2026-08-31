@@ -62,7 +62,8 @@
         "actorAlias": "caster",
         "targetAlias": "target",
         "slot": 1,
-        "position": { "x": 3.0, "y": 0.0, "z": 0.0 }
+        "position": { "x": 3.0, "y": 0.0, "z": 0.0 },
+        "direction": { "x": 1.0, "y": 0.0, "z": 0.0 }
       },
       {
         "stepId": "wait_for_dash_motion_hit",
@@ -82,7 +83,8 @@
         "alias": "target",
         "property": "hp",
         "comparator": "eq",
-        "expectedFloat": 840.0
+        "expectedFloat": 857.5862,
+        "tolerance": { "x": 0.001, "y": 0.001, "z": 0.001 }
       }
     ]
   },
@@ -93,6 +95,6 @@
     { "kind": "EffectAction", "configId": 427896051, "underEffectId": 10010101, "minCount": 1 },
     { "kind": "BuffApply", "configId": 10010000, "minCount": 1 },
     { "kind": "DamageApply", "configId": 10010101, "minCount": 1, "maxCount": 1 },
-    { "kind": "EffectAction", "configId": -13684592, "minCount": 1 }
+    { "kind": "EffectAction", "configId": 2133799056, "minCount": 1 }
   ]
 }

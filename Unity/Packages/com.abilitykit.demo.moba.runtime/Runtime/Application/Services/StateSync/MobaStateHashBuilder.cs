@@ -1,4 +1,7 @@
 using System;
+using System.Collections.Generic;
+using AbilityKit.Demo.Moba.Attributes;
+using AbilityKit.Demo.Moba.Rollback;
 
 namespace AbilityKit.Demo.Moba.Services.StateSync
 {
@@ -52,6 +55,112 @@ namespace AbilityKit.Demo.Moba.Services.StateSync
         public void AddFloat(float value)
         {
             AddInt(BitConverter.SingleToInt32Bits(value));
+        }
+    }
+
+    /// <summary>
+    /// Computes the authoritative state projection shared by snapshot producers and prediction clients.
+    /// Instances own their scratch buffer and must not be used concurrently.
+    /// </summary>
+    public sealed class MobaAuthoritativeStateHashCalculator
+    {
+        private static readonly Comparison<StateHashEntry> CompareEntriesByActorId =
+            (left, right) => left.ActorId.CompareTo(right.ActorId);
+
+        private readonly List<StateHashEntry> _entries = new List<StateHashEntry>(16);
+
+        public uint Compute(bool inGame, AbilityKit.Demo.Moba.Services.MobaActorRegistry registry)
+        {
+            if (registry == null) throw new ArgumentNullException(nameof(registry));
+
+            var hash = new MobaStateHashBuilder(2166136261u);
+            hash.AddBool(inGame);
+
+            _entries.Clear();
+            try
+            {
+                foreach (var pair in registry.Entries)
+                {
+                    var entity = pair.Value;
+                    if (entity == null || !entity.hasTransform) continue;
+
+                    // 真实血量在 ResourceContainer（Q32.32）；HP attribute 只是初始基线，不再进哈希。
+                    var hpRaw = 0L;
+                    if (entity.hasResourceContainer && entity.resourceContainer.Value?.Map != null &&
+                        entity.resourceContainer.Value.Map.TryGetValue(AbilityKit.Demo.Moba.Components.ResourceType.Hp, out var hpState) && hpState != null)
+                    {
+                        hpRaw = hpState.Current.RawValue;
+                    }
+
+                    _entries.Add(new StateHashEntry(pair.Key, entity.transform.Value, hpRaw));
+                }
+
+                _entries.Sort(CompareEntriesByActorId);
+                hash.AddInt(MobaActorTransformRollbackProvider.DefaultKey);
+                hash.AddInt(_entries.Count);
+
+                for (var index = 0; index < _entries.Count; index++)
+                {
+                    var entry = _entries[index];
+                    hash.AddInt(entry.ActorId);
+                    hash.AddFloat(entry.X);
+                    hash.AddFloat(entry.Y);
+                    hash.AddFloat(entry.Z);
+                    hash.AddFloat(entry.RotationX);
+                    hash.AddFloat(entry.RotationY);
+                    hash.AddFloat(entry.RotationZ);
+                    hash.AddFloat(entry.RotationW);
+                    hash.AddFloat(entry.ScaleX);
+                    hash.AddFloat(entry.ScaleY);
+                    hash.AddFloat(entry.ScaleZ);
+                    hash.AddLong(entry.HpRaw);
+                }
+
+                return hash.Value;
+            }
+            finally
+            {
+                _entries.Clear();
+                if(_entries.Capacity > 256)
+                {
+                    _entries.Capacity = 16;
+                }
+            }
+        }
+
+        private readonly struct StateHashEntry
+        {
+            public StateHashEntry(
+                int actorId,
+                in AbilityKit.Core.Mathematics.Transform3 transform,
+                long hpRaw)
+            {
+                ActorId = actorId;
+                X = transform.Position.X;
+                Y = transform.Position.Y;
+                Z = transform.Position.Z;
+                RotationX = transform.Rotation.X;
+                RotationY = transform.Rotation.Y;
+                RotationZ = transform.Rotation.Z;
+                RotationW = transform.Rotation.W;
+                ScaleX = transform.Scale.X;
+                ScaleY = transform.Scale.Y;
+                ScaleZ = transform.Scale.Z;
+                HpRaw = hpRaw;
+            }
+
+            public int ActorId { get; }
+            public float X { get; }
+            public float Y { get; }
+            public float Z { get; }
+            public float RotationX { get; }
+            public float RotationY { get; }
+            public float RotationZ { get; }
+            public float RotationW { get; }
+            public float ScaleX { get; }
+            public float ScaleY { get; }
+            public float ScaleZ { get; }
+            public long HpRaw { get; }
         }
     }
 }

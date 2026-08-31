@@ -10,25 +10,34 @@ namespace AbilityKit.Game.Flow
         public GameObject VfxGo { get; set; }
         public GameObject RangeGo { get; set; }
 
+        /// <summary>
+        /// Pool to return objects to. Set by the factory before use.
+        /// </summary>
+        internal BattleAreaVfxPool Pool { get; set; }
+
         public void Destroy()
         {
-            if (ModelGo != null)
-            {
-                Object.Destroy(ModelGo);
-                ModelGo = null;
-            }
+            ReturnOrDestroy(Pool, TemplateId, BattleAreaVfxPool.PoolKind.Model, ModelGo);
+            ModelGo = null;
 
-            if (RangeGo != null)
-            {
-                Object.Destroy(RangeGo);
-                RangeGo = null;
-            }
+            ReturnOrDestroy(Pool, TemplateId, BattleAreaVfxPool.PoolKind.Range, RangeGo);
+            RangeGo = null;
 
-            if (VfxGo != null)
-            {
-                Object.Destroy(VfxGo);
-                VfxGo = null;
-            }
+            ReturnOrDestroy(Pool, TemplateId, BattleAreaVfxPool.PoolKind.Vfx, VfxGo);
+            VfxGo = null;
+
+            Pool = null;
+        }
+
+        private static void ReturnOrDestroy(BattleAreaVfxPool pool, int templateId, BattleAreaVfxPool.PoolKind kind, GameObject go)
+        {
+            if (go == null) return;
+
+            if (pool != null && templateId > 0 && pool.TryReturn(templateId, kind, go))
+                return;
+
+            if (Application.isPlaying) Object.Destroy(go);
+            else Object.DestroyImmediate(go);
         }
     }
 }

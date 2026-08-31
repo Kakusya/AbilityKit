@@ -44,7 +44,20 @@ internal sealed class RoomMemberTracker
 
     public List<string> MembersSnapshot()
     {
-        return _members.ToList();
+        return _members
+            .OrderBy(accountId => _memberStates.TryGetValue(accountId, out var state) ? state.JoinOrdinal : long.MaxValue)
+            .ThenBy(accountId => accountId, StringComparer.Ordinal)
+            .ToList();
+    }
+
+    public void Restore(IEnumerable<KeyValuePair<string, RoomMemberState>> members)
+    {
+        Clear();
+        foreach (var member in members)
+        {
+            _members.Add(member.Key);
+            _memberStates[member.Key] = member.Value;
+        }
     }
 
     public Dictionary<string, RoomMemberState>? CloneMemberStates()

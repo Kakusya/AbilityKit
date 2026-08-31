@@ -31,6 +31,9 @@ namespace AbilityKit.Network.Runtime.Sync
         SnapshotTimeout = 6,
 
         /// <summary>权威更新指向了与本地不同的世界/会话。</summary>
-        WorldMismatch = 7
+        WorldMismatch = 7,
+
+        /// <summary>本地角色 pose 已按权威状态和未确认输入进行局部校正。</summary>
+        LocalAuthorityCorrection = 8
     }
 }

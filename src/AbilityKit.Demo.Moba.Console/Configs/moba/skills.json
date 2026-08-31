@@ -1,11 +1,41 @@
 [
     {
+        "Id":  1,
+        "Name":  "通用-普通攻击",
+        "CooldownMs":  800,
+        "Range":  6,
+        "IconId":  1,
+        "Category":  0,
+        "SkillType":  1,
+        "Tags":  [
+                 ],
+        "SkillButtonTemplateId":  1,
+        "LevelTableId":  0,
+        "PreCastFlowId":  0,
+        "CastFlowId":  1
+    },
+    {
+        "Id": 10010001,
+        "Name": "廉颇-普通攻击",
+        "CooldownMs": 800,
+        "Range": 3,
+        "IconId": 201,
+        "Category": 1,
+        "SkillType": 1,
+        "Tags": [],
+        "SkillButtonTemplateId": 1,
+        "LevelTableId": 0,
+        "PreCastFlowId": 0,
+        "CastFlowId": 10010001
+    },
+    {
         "Id":  10010101,
         "Name":  "廉颇-爆裂冲撞",
         "CooldownMs":  9000,
         "Range":  8,
         "IconId":  201,
         "Category":  1,
+        "SkillType":  5,
         "Tags":  [
                      101
                  ],
@@ -21,10 +51,11 @@
         "Range":  5,
         "IconId":  202,
         "Category":  1,
+        "SkillType":  5,
         "Tags":  [
                      102
                  ],
-        "SkillButtonTemplateId":  2,
+        "SkillButtonTemplateId":  1,
         "LevelTableId":  10010201,
         "PreCastFlowId":  0,
         "CastFlowId":  10010201
@@ -36,6 +67,7 @@
         "Range":  10,
         "IconId":  203,
         "Category":  1,
+        "SkillType":  4,
         "Tags":  [
                      103
                  ],
@@ -45,12 +77,27 @@
         "CastFlowId":  10010301
     },
     {
+        "Id": 10020001,
+        "Name": "小乔-普通攻击",
+        "CooldownMs": 800,
+        "Range": 8,
+        "IconId": 101,
+        "Category": 2,
+        "SkillType": 1,
+        "Tags": [],
+        "SkillButtonTemplateId": 1,
+        "LevelTableId": 0,
+        "PreCastFlowId": 0,
+        "CastFlowId": 10020001
+    },
+    {
         "Id":  10020101,
         "Name":  "小乔-绽放之舞",
         "CooldownMs":  5000,
         "Range":  12,
         "IconId":  101,
         "Category":  2,
+        "SkillType":  2,
         "Tags":  [
                      201
                  ],
@@ -66,10 +113,11 @@
         "Range":  10,
         "IconId":  102,
         "Category":  2,
+        "SkillType":  2,
         "Tags":  [
                      202
                  ],
-        "SkillButtonTemplateId":  2,
+        "SkillButtonTemplateId":  3,
         "LevelTableId":  10020201,
         "PreCastFlowId":  0,
         "CastFlowId":  10020201
@@ -81,13 +129,28 @@
         "Range":  20,
         "IconId":  103,
         "Category":  2,
+        "SkillType":  4,
         "Tags":  [
                      203
                  ],
-        "SkillButtonTemplateId":  3,
+        "SkillButtonTemplateId":  1,
         "LevelTableId":  10020301,
         "PreCastFlowId":  0,
         "CastFlowId":  10020301
+    },
+    {
+        "Id": 10030001,
+        "Name": "赵云-普通攻击",
+        "CooldownMs": 800,
+        "Range": 3,
+        "IconId": 301,
+        "Category": 3,
+        "SkillType": 1,
+        "Tags": [],
+        "SkillButtonTemplateId": 1,
+        "LevelTableId": 0,
+        "PreCastFlowId": 0,
+        "CastFlowId": 10030001
     },
     {
         "Id":  10030101,
@@ -100,7 +163,7 @@
         "Tags":  [
                      301
                  ],
-        "SkillButtonTemplateId":  2,
+        "SkillButtonTemplateId":  8,
         "LevelTableId":  10030101,
         "PreCastFlowId":  0,
         "CastFlowId":  10030101
@@ -116,7 +179,7 @@
         "Tags":  [
                      302
                  ],
-        "SkillButtonTemplateId":  2,
+        "SkillButtonTemplateId":  9,
         "LevelTableId":  10030201,
         "PreCastFlowId":  0,
         "CastFlowId":  10030201
@@ -132,10 +195,24 @@
         "Tags":  [
                      303
                  ],
-        "SkillButtonTemplateId":  3,
+        "SkillButtonTemplateId":  10,
         "LevelTableId":  10030301,
         "PreCastFlowId":  0,
         "CastFlowId":  10030301
+    },
+    {
+        "Id": 10040011,
+        "Name": "墨子-普通攻击",
+        "CooldownMs": 800,
+        "Range": 8,
+        "IconId": 401,
+        "Category": 4,
+        "SkillType": 1,
+        "Tags": [],
+        "SkillButtonTemplateId": 1,
+        "LevelTableId": 0,
+        "PreCastFlowId": 0,
+        "CastFlowId": 10040011
     },
     {
         "Id":  10040101,
@@ -152,6 +229,22 @@
         "LevelTableId":  10040101,
         "PreCastFlowId":  0,
         "CastFlowId":  10040101
+    },
+    {
+        "Id":  10040112,
+        "Name":  "墨子-和平漫步-强化近战普攻",
+        "CooldownMs":  800,
+        "Range":  6,
+        "IconId":  401,
+        "Category":  4,
+        "SkillType":  1,
+        "Tags":  [
+                      401
+                  ],
+        "SkillButtonTemplateId":  1,
+        "LevelTableId":  0,
+        "PreCastFlowId":  0,
+        "CastFlowId":  10040112
     },
     {
         "Id":  10040201,
@@ -184,5 +277,130 @@
         "LevelTableId":  10040301,
         "PreCastFlowId":  0,
         "CastFlowId":  10040301
+    },
+    {
+        "Id": 10050001,
+        "Name": "妲己-普通攻击",
+        "CooldownMs": 800,
+        "Range": 8,
+        "IconId": 501,
+        "Category": 5,
+        "SkillType": 1,
+        "Tags": [],
+        "SkillButtonTemplateId": 1,
+        "LevelTableId": 0,
+        "PreCastFlowId": 0,
+        "CastFlowId": 10050001
+    },
+    {
+        "Id":  10050101,
+        "Name":  "妲己-灵魂冲击",
+        "CooldownMs":  5000,
+        "Range":  12,
+        "IconId":  501,
+        "Category":  5,
+        "SkillType":  2,
+        "Tags":  [
+                     501
+                 ],
+        "SkillButtonTemplateId":  4,
+        "LevelTableId":  10050101,
+        "PreCastFlowId":  0,
+        "CastFlowId":  10050101
+    },
+    {
+        "Id":  10050201,
+        "Name":  "妲己-偶像魅力",
+        "CooldownMs":  8000,
+        "Range":  10,
+        "IconId":  502,
+        "Category":  5,
+        "SkillType":  2,
+        "Tags":  [
+                     502
+                 ],
+        "SkillButtonTemplateId":  3,
+        "RequiredTargetQueryId": 50050201,
+        "LevelTableId":  10050201,
+        "PreCastFlowId":  0,
+        "CastFlowId":  10050201
+    },
+    {
+        "Id":  10050301,
+        "Name":  "妲己-女王崇拜",
+        "CooldownMs":  18000,
+        "Range":  12,
+        "IconId":  503,
+        "Category":  5,
+        "SkillType":  4,
+        "Tags":  [
+                     503
+                 ],
+        "SkillButtonTemplateId":  1,
+        "LevelTableId":  10050301,
+        "PreCastFlowId":  0,
+        "CastFlowId":  10050301
+    },
+    {
+        "Id": 10060001,
+        "Name": "嬴政-普通攻击",
+        "CooldownMs": 800,
+        "Range": 8,
+        "IconId": 601,
+        "Category": 6,
+        "SkillType": 1,
+        "Tags": [],
+        "SkillButtonTemplateId": 1,
+        "LevelTableId": 0,
+        "PreCastFlowId": 0,
+        "CastFlowId": 10060001
+    },
+    {
+        "Id":  10060101,
+        "Name":  "嬴政-王者惩戒",
+        "CooldownMs":  8000,
+        "Range":  11,
+        "IconId":  601,
+        "Category":  6,
+        "SkillType":  2,
+        "Tags":  [
+                     601
+                 ],
+        "SkillButtonTemplateId":  5,
+        "LevelTableId":  10060101,
+        "PreCastFlowId":  0,
+        "CastFlowId":  10060101
+    },
+    {
+        "Id":  10060201,
+        "Name":  "嬴政-王者守御",
+        "CooldownMs":  10000,
+        "Range":  5,
+        "IconId":  602,
+        "Category":  6,
+        "SkillType":  2,
+        "Tags":  [
+                     602
+                 ],
+        "SkillButtonTemplateId":  6,
+        "LevelTableId":  10060201,
+        "PreCastFlowId":  0,
+        "CastFlowId":  10060201
+    },
+    {
+        "Id":  10060301,
+        "Name":  "嬴政-至尊王权",
+        "CooldownMs":  30000,
+        "Range":  14,
+        "IconId":  603,
+        "Category":  6,
+        "SkillType":  4,
+        "Tags":  [
+                     603
+                 ],
+        "SkillButtonTemplateId":  7,
+        "LevelTableId":  10060301,
+        "PreCastFlowId":  0,
+        "CastFlowId":  10060301
     }
 ]

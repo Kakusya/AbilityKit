@@ -76,6 +76,80 @@ public sealed class ShooterFrameworkSnapshotPipelineApplyTests
         Assert.NotNull(FindPackedChunk(imported, ShooterPackedComponentKinds.Health, ShooterPackedEntityKinds.Enemy));
     }
 
+    [Fact]
+    public void FrameworkSnapshotPipelineAcceptsPreviousPackedVersion()
+    {
+        var source = CreateStartedRuntime("previous-source", 911);
+        Assert.True(source.Tick(1f / 30f));
+        var packed = source.ExportPackedSnapshot(778ul, isFullSnapshot: true, authorityOverride: true);
+        packed.Version = ShooterStateSyncCompatibilityPolicy.MinimumPackedVersion;
+        var target = CreateStartedRuntime("previous-target", 912);
+        var presentation = new ShooterPresentationFacade();
+        using var pipeline = new ShooterFrameworkSnapshotPipeline(target, presentation);
+        var snapshot = CreateGatewaySnapshot(in packed);
+
+        var result = pipeline.ApplyGatewaySnapshot(in snapshot);
+
+        Assert.Equal(ShooterSnapshotApplyResult.AppliedPackedSnapshot, result);
+        Assert.Equal(source.CurrentFrame, target.CurrentFrame);
+        Assert.Equal(source.ComputeStateHash(), target.ComputeStateHash());
+        Assert.Equal(packed.Frame, presentation.ViewModel.Frame);
+    }
+
+    [Theory]
+    [InlineData(1)]
+    [InlineData(ShooterPackedSnapshotCodec.CurrentVersion + 1)]
+    public void FrameworkSnapshotPipelineRejectsUnsupportedPackedVersionBeforeRuntimeMutation(int version)
+    {
+        var target = CreateStartedRuntime("unsupported-target", 913);
+        Assert.True(target.Tick(1f / 30f));
+        var frameBefore = target.CurrentFrame;
+        var hashBefore = target.ComputeStateHash();
+        var packed = target.ExportPackedSnapshot(779ul, isFullSnapshot: true, authorityOverride: true);
+        packed.Version = version;
+        packed.Frame++;
+        var presentation = new ShooterPresentationFacade();
+        using var pipeline = new ShooterFrameworkSnapshotPipeline(target, presentation);
+        var snapshot = CreateGatewaySnapshot(in packed);
+
+        var result = pipeline.ApplyGatewaySnapshot(in snapshot);
+
+        Assert.Equal(ShooterSnapshotApplyResult.UnsupportedVersion, result);
+        Assert.Equal(frameBefore, target.CurrentFrame);
+        Assert.Equal(hashBefore, target.ComputeStateHash());
+        Assert.Equal(0, presentation.ViewModel.Frame);
+        Assert.Equal(0, pipeline.LastAppliedFrame);
+    }
+
+    private static ShooterBattleRuntimePort CreateStartedRuntime(string matchId, int seed)
+    {
+        var runtime = new ShooterBattleRuntimePort();
+        var start = new ShooterStartGamePayload(
+            matchId,
+            30,
+            seed,
+            new[]
+            {
+                new ShooterStartPlayer(1, "P1", 0f, 0f),
+                new ShooterStartPlayer(2, "P2", 4f, 0f)
+            });
+        Assert.True(runtime.StartGame(in start));
+        return runtime;
+    }
+
+    private static ShooterGatewaySnapshot CreateGatewaySnapshot(in ShooterPackedSnapshotPayload packed)
+    {
+        return new ShooterGatewaySnapshot(
+            packed.WorldId,
+            packed.Frame,
+            456.5,
+            packed.ServerTick,
+            isFullSnapshot: true,
+            Array.Empty<ShooterGatewayActorSnapshot>(),
+            ShooterOpCodes.Snapshot.PackedState,
+            packed);
+    }
+
     private static ShooterPackedComponentChunk? FindPackedChunk(in ShooterPackedSnapshotPayload packed, int componentKind, int entityKind)
     {
         for (int i = 0; i < packed.ComponentChunks.Length; i++)

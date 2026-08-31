@@ -40,6 +40,10 @@ namespace AbilityKit.Game.Flow
             if (actorId <= 0) return false;
 
             var meta = entity.TryGetRef(out BattleEntityMetaComponent metaComp) ? metaComp : null;
+
+            // Projectile and AreaEffect entities use their own view systems (not shell binding).
+            if (meta != null && !BattleViewConfigLookup.UsesShellBinding(meta.Kind)) return false;
+
             input = new BattleViewEntitySyncInput(entity, actorId, transform, meta);
             return true;
         }

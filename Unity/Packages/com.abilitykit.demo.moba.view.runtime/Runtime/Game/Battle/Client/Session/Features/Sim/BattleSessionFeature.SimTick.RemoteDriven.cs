@@ -4,14 +4,13 @@ namespace AbilityKit.Game.Flow
     {
         private void TickRemoteDrivenLocalSim(float deltaTime)
         {
-            _remoteDrivenLastTickedFrame = RemoteDrivenWorldTickDriver.Tick(new RemoteDrivenWorldTickOptions(
+            _runtime.Simulation.TickRemoteDriven(
                 _plan,
-                _handles.RemoteDriven,
+                _ctx,
                 _worldCatchUp,
                 _snapshots,
-                _remoteDrivenLastTickedFrame,
                 GetFixedDeltaSeconds(),
-                SessionSimRuntimeTuning.MaxCatchUpStepsPerUpdate));
+                _lastServerAckFrame);
         }
     }
 }

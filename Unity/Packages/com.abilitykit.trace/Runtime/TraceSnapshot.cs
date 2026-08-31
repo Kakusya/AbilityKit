@@ -15,6 +15,7 @@ namespace AbilityKit.Trace
         public long RootId { get; }
         public long ParentId { get; }
         public int Kind { get; }
+        public int CreatedFrame { get; }
         public int EndedFrame { get; }
         public int EndReason { get; }
         public int ChildCount { get; }
@@ -22,7 +23,7 @@ namespace AbilityKit.Trace
         // 玩法元数据
         public T Metadata { get; }
 
-        public bool IsEnded => EndedFrame != 0;
+        public bool IsEnded { get; }
         public bool IsRoot => ContextId == RootId;
         public bool IsLeaf => ChildCount == 0;
         public bool HasChildren => ChildCount > 0;
@@ -37,15 +38,42 @@ namespace AbilityKit.Trace
             int endReason,
             int childCount,
             T metadata)
+            : this(
+                contextId,
+                rootId,
+                parentId,
+                kind,
+                0,
+                endedFrame,
+                endReason,
+                childCount,
+                metadata,
+                endedFrame != 0)
+        {
+        }
+
+        public TraceSnapshot(
+            long contextId,
+            long rootId,
+            long parentId,
+            int kind,
+            int createdFrame,
+            int endedFrame,
+            int endReason,
+            int childCount,
+            T metadata,
+            bool isEnded)
         {
             ContextId = contextId;
             RootId = rootId;
             ParentId = parentId;
             Kind = kind;
+            CreatedFrame = createdFrame;
             EndedFrame = endedFrame;
             EndReason = endReason;
             ChildCount = childCount;
             Metadata = metadata;
+            IsEnded = isEnded;
         }
 
         public bool Equals(TraceSnapshot<T> other) => ContextId == other.ContextId;

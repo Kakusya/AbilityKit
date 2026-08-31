@@ -6,6 +6,7 @@ namespace AbilityKit.Demo.Moba.Share.Config
     public sealed class BattleAttributeTemplateDTO
     {
         public int Id;
+        public int BasicAttackSkillId;
         public int[] ActiveSkills;
         public int[] PassiveSkills;
         public int Hp;
@@ -24,7 +25,7 @@ namespace AbilityKit.Demo.Moba.Share.Config
         public int CooldownReduceR;
         public int PhysicsPenetrationR;
         public int MagicPenetrationR;
-        public int MoveSpeed;
+        public float MoveSpeed;
         public int PhysicsBloodsuckingR;
         public int MagicBloodsuckingR;
         public int AttackRange;

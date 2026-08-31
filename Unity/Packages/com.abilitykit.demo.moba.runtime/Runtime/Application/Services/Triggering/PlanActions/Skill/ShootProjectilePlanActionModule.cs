@@ -1,3 +1,4 @@
+using System.Collections.Generic;
 using AbilityKit.Ability.Host;
 using AbilityKit.Ability.World.DI;
 using AbilityKit.Core.Mathematics;
@@ -37,7 +38,16 @@ namespace AbilityKit.Demo.Moba.Services.Triggering.PlanActions
                 return;
             }
 
-            var input = MobaPlanActionInputResolver.ResolveProjectile(triggerArgs, ctx);
+            if (!MobaPlanActionInputResolver.TryResolve(
+                    triggerArgs,
+                    ctx,
+                    out var coreInput))
+            {
+                LogRejected(ctx, "requires combat execution context.");
+                return;
+            }
+
+            var input = MobaPlanActionInputAssembler.AssembleProjectile(in coreInput);
             if (!input.HasCasterActor)
             {
                 LogRejected(ctx, "caster actor not found");
@@ -65,6 +75,7 @@ namespace AbilityKit.Demo.Moba.Services.Triggering.PlanActions
 
             var aimPos = input.HasAimPosition ? input.AimPosition : Vec3.Zero;
             var aimDir = input.HasAimDirection ? input.AimDirection : Vec3.Zero;
+            var targetActorId = 0;
 
             ProjectileLauncherMO launcher = null;
             ProjectileMO projectile = null;
@@ -110,26 +121,63 @@ namespace AbilityKit.Demo.Moba.Services.Triggering.PlanActions
                 casterPos = casterEntity.transform.Value.Position;
             }
 
-            if (!aimDir.Equals(Vec3.Zero))
+            var requiresTargetResolution = args.TrackTarget
+                || args.TargetRequest.UsesTemplate
+                || args.TargetRequest.TargetActorId > 0
+                || args.TargetRequest.TargetPayloadActorId > 0;
+            if (requiresTargetResolution)
             {
-                aimDir = aimDir.Normalized;
+                var effectInput = new MobaEffectActionInput(in coreInput);
+                var targets = PooledMobaPlanActionLists.GetIntList();
+                try
+                {
+                    if (!MobaActionTargetResolver.TryResolveTargets(in args.TargetRequest, in coreInput, in effectInput, ctx, ActionName, targets)
+                        || targets.Count == 0)
+                    {
+                        LogRejected(ctx, "target query found no target");
+                        return;
+                    }
+
+                    targetActorId = targets[0];
+                }
+                finally
+                {
+                    PooledMobaPlanActionLists.Release(targets);
+                }
+
+                if (actorRegistry == null
+                    || !actorRegistry.TryGet(targetActorId, out var targetEntity)
+                    || targetEntity == null
+                    || !targetEntity.hasTransform)
+                {
+                    LogRejected(ctx, $"target actor is missing transform. targetActorId={targetActorId}");
+                    return;
+                }
+
+                aimPos = targetEntity.transform.Value.Position;
+                var targetDelta = new Vec3(aimPos.X - casterPos.X, 0f, aimPos.Z - casterPos.Z);
+                if (!targetDelta.Equals(Vec3.Zero)) aimDir = DeterministicMathBridge.Normalize(in targetDelta);
+            }
+            else if (!aimDir.Equals(Vec3.Zero))
+            {
+                aimDir = DeterministicMathBridge.Normalize(in aimDir);
             }
             else if (!aimPos.Equals(Vec3.Zero))
             {
                 var delta = new Vec3(aimPos.X - casterPos.X, 0f, aimPos.Z - casterPos.Z);
-                if (!delta.Equals(Vec3.Zero)) aimDir = delta.Normalized;
+                if (!delta.Equals(Vec3.Zero)) aimDir = DeterministicMathBridge.Normalize(in delta);
             }
 
             aimPos = casterPos;
 
-            var sourceContext = input.CreateSourceContext(casterActorId, 0, projectile.Id);
-            if (!projectileSvc.Launch(casterActorId, launcher, projectile, launchParams.CountPerShot, launchParams.FanAngleDeg, launchParams.DurationMs, args.ContinuousProcessId, in aimPos, in aimDir, in sourceContext))
+            var sourceContext = input.CreateSourceContext(casterActorId, targetActorId, projectile.Id);
+            if (!projectileSvc.Launch(casterActorId, launcher, projectile, launchParams.CountPerShot, launchParams.FanAngleDeg, launchParams.DurationMs, args.ContinuousProcessId, args.TrackTarget, in aimPos, in aimDir, in sourceContext))
             {
                 LogRejected(ctx, $"launch failed. launcherId={launchParams.LauncherId} projectileId={launchParams.ProjectileId}");
                 return;
             }
 
-            LogApplied(ctx, $"launch requested. casterActorId={casterActorId} launcherId={launchParams.LauncherId} projectileId={launchParams.ProjectileId} countPerShot={launchParams.CountPerShot} fanAngleDeg={launchParams.FanAngleDeg:0.###} durationMs={launchParams.DurationMs} continuousProcessId={args.ContinuousProcessId} hasAimPos={input.HasAimPosition} hasAimDir={input.HasAimDirection}");
+            LogApplied(ctx, $"launch requested. casterActorId={casterActorId} launcherId={launchParams.LauncherId} projectileId={launchParams.ProjectileId} targetActorId={targetActorId} trackTarget={args.TrackTarget} countPerShot={launchParams.CountPerShot} fanAngleDeg={launchParams.FanAngleDeg:0.###} durationMs={launchParams.DurationMs} continuousProcessId={args.ContinuousProcessId} hasAimPos={input.HasAimPosition} hasAimDir={input.HasAimDirection}");
         }
     }
 }

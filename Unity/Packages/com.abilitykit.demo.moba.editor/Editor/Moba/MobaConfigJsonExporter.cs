@@ -17,7 +17,8 @@ namespace AbilityKit.Ability.Impl.BattleDemo.Moba.Editor
 {
     public static class MobaConfigJsonExporter
     {
-        [MenuItem("AbilityKit/Moba/Export Config Json")]
+        private const string PackageMobaResourcesPath = "Packages/com.abilitykit.demo.moba.view.runtime/Resources/moba";
+        [MenuItem("Tools/AbilityKit/Demos/Moba/Export Config Json")]
         public static void ExportSelected()
         {
             var folder = TryGetSelectedFolderPath();
@@ -28,8 +29,7 @@ namespace AbilityKit.Ability.Impl.BattleDemo.Moba.Editor
         {
             if (string.IsNullOrEmpty(assetFolder)) assetFolder = "Assets";
 
-            var projectAssetsPath = Application.dataPath;
-            var outputDir = Path.Combine(projectAssetsPath, "Resources", "moba");
+            var outputDir = GetMobaResourcesDirectory();
             Directory.CreateDirectory(outputDir);
 
             var tables = LoadTables(assetFolder);
@@ -185,6 +185,11 @@ namespace AbilityKit.Ability.Impl.BattleDemo.Moba.Editor
             }
 
             throw new InvalidOperationException($"Config entry must have public int Id field/property. type={entryType.FullName}");
+        }
+
+        private static string GetMobaResourcesDirectory()
+        {
+            return Path.GetFullPath(Path.Combine(Application.dataPath, "..", PackageMobaResourcesPath));
         }
 
         private static void WriteArray(string outputDir, string fileWithoutExt, Array data, Type entryType)

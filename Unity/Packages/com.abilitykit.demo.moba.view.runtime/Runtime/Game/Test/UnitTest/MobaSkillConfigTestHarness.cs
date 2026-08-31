@@ -12,6 +12,7 @@ using AbilityKit.Ability.World.DI;
 using AbilityKit.Ability.World.Management;
 using AbilityKit.Ability.World.Services;
 using AbilityKit.Ability.World.Services.Attributes;
+using AbilityKit.Combat.Collision;
 using AbilityKit.Demo.Moba;
 using AbilityKit.Demo.Moba.Attributes;
 using AbilityKit.Demo.Moba.Config.Core;
@@ -84,9 +85,11 @@ namespace AbilityKit.Game.Test.UnitTest
             string playerId = DefaultPlayerId,
             int attributeTemplateId = 1001,
             int heroId = 1,
+            int basicAttackSkillId = 0,
             int tickRate = 30,
             int inputDelayFrames = 0,
-            float fixedDelta = DefaultFixedDelta)
+            float fixedDelta = DefaultFixedDelta,
+            MobaRuntimeValidationMode validationMode = MobaRuntimeValidationMode.ManualOnly)
         {
             if (skillIds == null) throw new ArgumentNullException(nameof(skillIds));
 
@@ -103,7 +106,9 @@ namespace AbilityKit.Game.Test.UnitTest
                         heroId: heroId,
                         attributeTemplateId: attributeTemplateId,
                         level: 1,
-                        basicAttackSkillId: 1,
+                        basicAttackSkillId: basicAttackSkillId > 0
+                            ? basicAttackSkillId
+                            : ResolveBasicAttackSkillId(heroId, attributeTemplateId),
                         skillIds: skillIds,
                         spawnIndex: 0,
                         unitSubType: (int)UnitSubType.Hero,
@@ -115,7 +120,7 @@ namespace AbilityKit.Game.Test.UnitTest
                 },
                 tickRate: tickRate,
                 inputDelayFrames: inputDelayFrames);
-            var world = CreateHeadlessMobaWorld(new WorldId(worldId), worldType, in launchSpec);
+            var world = CreateHeadlessMobaWorld(new WorldId(worldId), worldType, in launchSpec, validationMode);
 
             return new MobaSkillConfigTestHarness(world, typedPlayerId, fixedDelta, tickRate, launchSpec.ToGameStartSpec());
         }
@@ -166,12 +171,15 @@ namespace AbilityKit.Game.Test.UnitTest
 
         public void EnterGameAndWarmup(int warmupTicks = 3, string reason = "editmode skill config test")
         {
-            var startPort = World.Services.Resolve<IMobaGameStartPort>();
-            var startResult = startPort.TryStartGame(in _gameStartSpec);
-            var alreadyStarted = !startResult.Succeeded && startResult.FailureCode == MobaGameStartFailureCode.AlreadyStarted;
-            Assert.IsTrue(startResult.Succeeded || alreadyStarted, $"Formal game start failed: {startResult}");
             var phase = World.Services.Resolve<MobaLogicWorldRunGateService>();
-            phase.SetInGame(reason);
+            if (!phase.InGame)
+            {
+                var startPort = World.Services.Resolve<IMobaGameStartPort>();
+                var startResult = startPort.TryStartGame(in _gameStartSpec);
+                Assert.IsTrue(startResult.Succeeded, $"Formal game start failed: {startResult}");
+                phase.SetInGame(reason);
+            }
+
             Tick(warmupTicks);
             RefreshScenarioActorAliases();
             RepairScenarioPlayerActorBindings();
@@ -306,6 +314,25 @@ namespace AbilityKit.Game.Test.UnitTest
             return HasActorBuff(actorId, buffId, message ?? $"Actor entity missing for alias {alias}({actorId}).");
         }
 
+        public bool TryGetActorBuffStackCount(int actorId, int buffId, out int stackCount, string message = null)
+        {
+            stackCount = 0;
+            Assert.Greater(buffId, 0, message ?? "buffId must be positive.");
+            var entity = AssertActorEntity(actorId, message ?? $"Actor entity missing: {actorId}");
+            if (!entity.hasBuffs || entity.buffs.Active == null) return false;
+
+            for (var i = 0; i < entity.buffs.Active.Count; i++)
+            {
+                var runtime = entity.buffs.Active[i];
+                if (runtime == null || runtime.BuffId != buffId) continue;
+
+                stackCount = runtime.StackCount;
+                return true;
+            }
+
+            return false;
+        }
+
         public bool TryGetActorBuffRemainingSeconds(int actorId, int buffId, out float remainingSeconds, string message = null)
         {
             remainingSeconds = 0f;
@@ -337,6 +364,18 @@ namespace AbilityKit.Game.Test.UnitTest
             if (actorId <= 0 || slot <= 0) return false;
             if (!World.Services.TryResolve<SkillCastCoordinator>(out var skills) || skills == null) return false;
             return skills.TryGetRunningBySlot(actorId, slot, out snapshot);
+        }
+
+        public void TickUntilSkillStops(int actorId, int slot, int maxTicks, string message = null)
+        {
+            Assert.Greater(maxTicks, 0, message ?? "maxTicks must be positive.");
+            for (var i = 0; i < maxTicks; i++)
+            {
+                if (!TryGetRunningSkillSnapshot(actorId, slot, out _)) return;
+                Tick(1);
+            }
+
+            Assert.Fail((message ?? "Skill pipeline did not stop within the expected test window.") + " " + DescribeSkillRuntimeState(actorId, slot));
         }
 
         public string DescribeSkillRuntimeState(int actorId, int slot)
@@ -766,6 +805,21 @@ namespace AbilityKit.Game.Test.UnitTest
             return TickUntilTraceNode(MobaTraceKind.EffectExecution, effectId, maxExtraFrames, $"EffectExecution trace missing for effect {effectId} after casting skill {skillId} slot {slot} within accelerated {effectTimeMs} ms plus {maxExtraFrames} fallback ticks; fixed-frame equivalent timeout was {maxTicks} ticks.");
         }
 
+        public long CaptureTraceBaseline()
+        {
+            var latestContextId = 0L;
+            foreach (MobaTraceKind kind in Enum.GetValues(typeof(MobaTraceKind)))
+            {
+                if (kind == MobaTraceKind.None) continue;
+                foreach (var node in Trace.GetNodesByKind((int)kind))
+                {
+                    if (node.ContextId > latestContextId) latestContextId = node.ContextId;
+                }
+            }
+
+            return latestContextId;
+        }
+
         public TraceSnapshot<MobaTraceMetadata> TickUntilTraceNode(MobaTraceKind kind, int configId, int maxTicks, string message)
         {
             if (TryFindTraceNode(kind, configId, out var existing)) return existing;
@@ -774,6 +828,20 @@ namespace AbilityKit.Game.Test.UnitTest
             {
                 Tick(1);
                 if (TryFindTraceNode(kind, configId, out var node)) return node;
+            }
+
+            Assert.Fail(message);
+            return default;
+        }
+
+        public TraceSnapshot<MobaTraceMetadata> TickUntilTraceNodeAfter(long baselineContextId, MobaTraceKind kind, int configId, int maxTicks, string message)
+        {
+            if (TryFindTraceNodeAfter(baselineContextId, kind, configId, out var existing)) return existing;
+
+            for (var i = 0; i < maxTicks; i++)
+            {
+                Tick(1);
+                if (TryFindTraceNodeAfter(baselineContextId, kind, configId, out var node)) return node;
             }
 
             Assert.Fail(message);
@@ -845,6 +913,28 @@ namespace AbilityKit.Game.Test.UnitTest
             return AssertTraceNodeInRoot(effectRootId, MobaTraceKind.AreaSpawn, areaTemplateId, $"spawn_area did not spawn configured area template {areaTemplateId} under effect root {effectRootId}.");
         }
 
+        public int CountTraceNodesInRoot(long rootId, MobaTraceKind kind, int configId)
+        {
+            var count = 0;
+            foreach (var node in Trace.GetNodesByRoot(rootId))
+            {
+                if (node.Kind == (int)kind && node.Metadata != null && node.Metadata.ConfigId == configId)
+                {
+                    count++;
+                }
+            }
+
+            return count;
+        }
+
+        public void AssertTraceLifecycle(in TraceSnapshot<MobaTraceMetadata> parent, in TraceSnapshot<MobaTraceMetadata> child, string message)
+        {
+            Assert.IsTrue(parent.IsValid, message + " Parent trace must be valid.");
+            Assert.IsTrue(child.IsValid, message + " Child trace must be valid.");
+            Assert.AreEqual(parent.RootId, child.RootId, message + $" ParentRoot={parent.RootId}, ChildRoot={child.RootId}.");
+            Assert.AreNotEqual(parent.ContextId, child.ContextId, message + " Parent and child trace contexts must differ.");
+        }
+
         public TraceSnapshot<MobaTraceMetadata> AssertTraceNode(MobaTraceKind kind, int configId, string message)
         {
             if (TryFindTraceNode(kind, configId, out var node)) return node;
@@ -871,7 +961,8 @@ namespace AbilityKit.Game.Test.UnitTest
         private static IWorld CreateHeadlessMobaWorld(
             WorldId worldId,
             string worldType,
-            in MobaBattleLaunchSpec launchSpec)
+            in MobaBattleLaunchSpec launchSpec,
+            MobaRuntimeValidationMode validationMode = MobaRuntimeValidationMode.ManualOnly)
         {
             var registry = new WorldTypeRegistry().RegisterEntitasWorld(worldType);
             var manager = new WorldManager(new RegistryWorldFactory(registry));
@@ -888,9 +979,13 @@ namespace AbilityKit.Game.Test.UnitTest
                 new[] { "AbilityKit" });
 
             builder.RegisterInstance(launchSpec.ToWorldInitData(MobaWorldBootstrapModule.InitOpCode));
+            builder.RegisterInstance(new MobaRuntimeValidationOptions
+            {
+                Mode = validationMode,
+            });
             builder.RegisterInstance<AbilityKit.Ability.Config.ITextAssetLoader>((AbilityKit.Ability.Config.ITextAssetLoader)Activator.CreateInstance(typeof(ResourcesTextAssetLoader), new object[] { null }));
             builder.TryRegister<IFrameTime>(WorldLifetime.Singleton, _ => new FrameTime());
-            builder.TryRegister<ICollisionService>(WorldLifetime.Singleton, _ => new CollisionService());
+            builder.TryRegister<ICollisionService>(WorldLifetime.Singleton, _ => new CollisionService(new CollisionWorldOptions { BroadphaseType = BroadphaseType.Grid, GridCellSize = 4f }));
 
             var options = new WorldCreateOptions(worldId, worldType)
             {
@@ -931,10 +1026,34 @@ namespace AbilityKit.Game.Test.UnitTest
                 enterGamePayload: Array.Empty<byte>());
         }
 
+        public void ResetSkillCooldown(int actorId, int skillId, string message = null)
+        {
+            Assert.Greater(skillId, 0, message ?? "skillId must be positive.");
+            var actor = AssertActorEntity(actorId, message ?? $"Actor entity missing: {actorId}");
+            Assert.IsTrue(actor.hasSkillLoadout && actor.skillLoadout.ActiveSkills != null, message ?? $"Actor {actorId} should retain an active skill loadout.");
+
+            for (var i = 0; i < actor.skillLoadout.ActiveSkills.Length; i++)
+            {
+                var runtime = actor.skillLoadout.ActiveSkills[i];
+                if (runtime == null || runtime.SkillId != skillId) continue;
+                runtime.CooldownEndTimeMs = 0L;
+                runtime.CooldownDurationMs = 0;
+                return;
+            }
+
+            Assert.Fail(message ?? $"Active skill runtime {skillId} missing for actor {actorId} while resetting cooldown.");
+        }
+
         private bool TryFindTraceNode(MobaTraceKind kind, int configId, out TraceSnapshot<MobaTraceMetadata> match)
+        {
+            return TryFindTraceNodeAfter(0L, kind, configId, out match);
+        }
+
+        private bool TryFindTraceNodeAfter(long baselineContextId, MobaTraceKind kind, int configId, out TraceSnapshot<MobaTraceMetadata> match)
         {
             foreach (var node in Trace.GetNodesByKind((int)kind))
             {
+                if (node.ContextId <= baselineContextId) continue;
                 if (node.Metadata != null && node.Metadata.ConfigId == configId)
                 {
                     match = node;
@@ -1259,7 +1378,9 @@ namespace AbilityKit.Game.Test.UnitTest
                         heroId: heroId,
                         attributeTemplateId: attributeTemplateId,
                         level: actor.level > 0 ? actor.level : 1,
-                        basicAttackSkillId: actor.basicAttackSkillId > 0 ? actor.basicAttackSkillId : 1,
+                        basicAttackSkillId: actor.basicAttackSkillId > 0
+                            ? actor.basicAttackSkillId
+                            : ResolveBasicAttackSkillId(heroId, attributeTemplateId),
                         skillIds: skillIds,
                         spawnIndex: actor.spawnIndex,
                         unitSubType: actor.unitSubType != 0 ? actor.unitSubType : (int)UnitSubType.Hero,
@@ -1273,16 +1394,21 @@ namespace AbilityKit.Game.Test.UnitTest
 
             if (players.Count == 0)
             {
-                var skillIds = expectation != null && expectation.config != null && expectation.config.skillId > 0
-                    ? new[] { expectation.config.skillId }
+                var configuredSkillId = expectation != null && expectation.config != null
+                    ? expectation.config.skillId
+                    : 0;
+                var heroId = configuredSkillId > 0 ? configuredSkillId / 10000 : 1;
+                var attributeTemplateId = heroId > 1 ? heroId : 1001;
+                var skillIds = configuredSkillId > 0
+                    ? new[] { configuredSkillId }
                     : Array.Empty<int>();
                 players.Add(new MobaPlayerLoadout(
                     fallbackPlayerId,
                     teamId: 1,
-                    heroId: 1,
-                    attributeTemplateId: 1001,
+                    heroId: heroId,
+                    attributeTemplateId: attributeTemplateId,
                     level: 1,
-                    basicAttackSkillId: 1,
+                    basicAttackSkillId: ResolveBasicAttackSkillId(heroId, attributeTemplateId),
                     skillIds: skillIds,
                     spawnIndex: 0,
                     unitSubType: (int)UnitSubType.Hero,
@@ -1294,6 +1420,17 @@ namespace AbilityKit.Game.Test.UnitTest
             }
 
             return players.ToArray();
+        }
+
+        private static int ResolveBasicAttackSkillId(int heroId, int attributeTemplateId)
+        {
+            if (heroId == 1001 || attributeTemplateId == 1001) return 10010001;
+            if (heroId == 1002 || attributeTemplateId == 1002) return 10020001;
+            if (heroId == 1003 || attributeTemplateId == 1003) return 10030001;
+            if (heroId == 1004 || attributeTemplateId == 1004) return 10040011;
+            if (heroId == 1005 || attributeTemplateId == 1005) return 10050001;
+            if (heroId == 1006 || attributeTemplateId == 1006) return 10060001;
+            return 1;
         }
 
         private static int[] ResolveDefaultSkillIds(int heroId, int attributeTemplateId)

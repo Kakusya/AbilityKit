@@ -1,12 +1,18 @@
 using System;
 using System.Text;
 using AbilityKit.Core.Logging;
+using AbilityKit.Core.Timing;
 using AbilityKit.Network.Abstractions;
 using AbilityKit.Network.Protocol;
+using AbilityKit.Network.Runtime.Observability;
+using AbilityKit.Network.Runtime.Sync;
 
 namespace AbilityKit.Network.Runtime
 {
-    public sealed class ConnectionManager : IConnection
+    public sealed class ConnectionManager :
+        IConnection,
+        IReconnectableConnection,
+        INetworkConnectionDiagnosticsSource
     {
         private readonly Func<ITransport> _transportFactory;
         private readonly ConnectionOptions _options;
@@ -14,8 +20,8 @@ namespace AbilityKit.Network.Runtime
         private readonly IDispatcher _ioDispatcher;
 
         private ITransport _transport;
-        private NetworkSession _session;
-        private HeartbeatMiddleware _heartbeat;
+        private INetworkRuntimeSession _session;
+        private INetworkHeartbeatMiddleware _heartbeat;
 
         private string _host;
         private int _port;
@@ -24,17 +30,20 @@ namespace AbilityKit.Network.Runtime
         private float _timeSinceLastHeartbeatSend;
 
         private bool _openRequested;
+        private readonly string _connectionId;
+        private int _connectionGeneration;
 
-        private int _reconnectAttempts;
-        private float _reconnectDelaySeconds;
-        private float _timeToReconnect;
+        private readonly IReconnectAttemptScheduler _reconnectScheduler;
 
         public ConnectionManager(Func<ITransport> transportFactory, ConnectionOptions options = null, IDispatcher dispatcher = null)
         {
             _transportFactory = transportFactory ?? throw new ArgumentNullException(nameof(transportFactory));
             _options = options ?? new ConnectionOptions();
+            _options.TrafficCapture?.Validate();
             _dispatcher = dispatcher ?? InlineDispatcher.Instance;
             _ioDispatcher = _dispatcher;
+            _reconnectScheduler = CreateReconnectScheduler(_options);
+            _connectionId = ResolveConnectionId(_options);
 
             State = ConnectionState.Disconnected;
         }
@@ -43,19 +52,74 @@ namespace AbilityKit.Network.Runtime
         {
             _transportFactory = transportFactory ?? throw new ArgumentNullException(nameof(transportFactory));
             _options = options ?? new ConnectionOptions();
+            _options.TrafficCapture?.Validate();
             _dispatcher = callbackDispatcher ?? InlineDispatcher.Instance;
             _ioDispatcher = ioDispatcher ?? InlineDispatcher.Instance;
+            _reconnectScheduler = CreateReconnectScheduler(_options);
+            _connectionId = ResolveConnectionId(_options);
 
             State = ConnectionState.Disconnected;
         }
 
         public ConnectionState State { get; private set; }
 
+        public bool IsReconnectExhausted { get; private set; }
+
         public bool IsConnected => _transport != null && _transport.IsConnected;
+
+        /// <summary>
+        /// 当前会话的中间件管线。会话未建立（未 Open 或已断开）时返回 null。
+        /// 调用方可在 <see cref="Connected"/> 事件后通过 <see cref="NetworkPipeline.Add"/>
+        /// 注入自定义中间件（例如 <see cref="Conditioning.NetworkConditioningMiddleware"/>）。
+        /// </summary>
+        public NetworkPipeline Pipeline => _session?.Pipeline;
+
+        /// <summary>当前物理会话的统一协议路由器；会话未建立时返回 null。</summary>
+        public NetworkPacketRouter PacketRouter => _session?.PacketRouter;
+
+        /// <summary>读取当前连接、重连、心跳和协议路由的只读诊断快照。</summary>
+        public NetworkConnectionDiagnosticsSnapshot GetDiagnosticsSnapshot()
+        {
+            var scheduler = _reconnectScheduler;
+            var packetRouter = _session?.PacketRouter?.GetSnapshot();
+            return new NetworkConnectionDiagnosticsSnapshot(
+                _connectionId,
+                _connectionGeneration,
+                _host,
+                _port,
+                State,
+                IsConnected,
+                _openRequested,
+                scheduler.IsPending,
+                IsReconnectExhausted,
+                scheduler.AttemptsStarted,
+                scheduler.MaxAttempts,
+                scheduler.NextAttemptNumber,
+                scheduler.NextDelaySeconds,
+                scheduler.RemainingDelaySeconds,
+                _timeSinceLastReceive,
+                _timeSinceLastHeartbeatSend,
+                _session?.Pipeline?.Count ?? 0,
+                packetRouter);
+        }
 
         public event Action Connected;
         public event Action Disconnected;
         public event Action<Exception> Error;
+        public event Action<int, float> ReconnectScheduled;
+        public event Action<int> ReconnectAttemptStarted;
+        public event Action<int> ReconnectExhausted;
+
+        /// <summary>
+        /// 新会话管线创建并安装内置中间件后触发。重连会创建新管线并再次触发。
+        /// </summary>
+        public event Action<NetworkPipeline> PipelineCreated;
+
+        /// <summary>
+        /// 连接处于可收发状态时，每帧以当前单调毫秒时钟触发。
+        /// 时间相关中间件可订阅该事件以释放到期数据包。
+        /// </summary>
+        public event Action<long> MiddlewareTick;
 
         public event Action<uint, uint, ArraySegment<byte>> PacketReceived;
         public event Action<uint, ArraySegment<byte>> ServerPushReceived;
@@ -70,6 +134,11 @@ namespace AbilityKit.Network.Runtime
             _port = port;
             _openRequested = true;
 
+            if (IsReconnectExhausted)
+            {
+                return;
+            }
+
             if (State == ConnectionState.Disconnected)
             {
                 StartConnect(ConnectionState.Connecting);
@@ -80,6 +149,16 @@ namespace AbilityKit.Network.Runtime
         {
             _openRequested = false;
             StopInternal();
+        }
+
+        public void ResetReconnect()
+        {
+            IsReconnectExhausted = false;
+            _reconnectScheduler.Reset();
+            if (_openRequested && State == ConnectionState.Disconnected)
+            {
+                StartConnect(ConnectionState.Connecting);
+            }
         }
 
         public void Tick(float deltaTime)
@@ -93,10 +172,21 @@ namespace AbilityKit.Network.Runtime
 
             if (State == ConnectionState.Reconnecting)
             {
-                _timeToReconnect -= deltaTime;
-                if (_timeToReconnect <= 0f)
+                if (_reconnectScheduler.TryTakeAttempt(deltaTime, out var attemptNumber))
                 {
-                    StartConnect(ConnectionState.Reconnecting);
+                    _dispatcher.Post(() => ReconnectAttemptStarted?.Invoke(attemptNumber));
+                    try
+                    {
+                        StartConnect(ConnectionState.Reconnecting);
+                    }
+                    catch (Exception ex)
+                    {
+                        _dispatcher.Post(() => Error?.Invoke(ex));
+                        if (_reconnectScheduler.IsExhausted)
+                        {
+                            MarkReconnectExhausted();
+                        }
+                    }
                 }
                 return;
             }
@@ -121,6 +211,10 @@ namespace AbilityKit.Network.Runtime
             {
                 ScheduleReconnect(new TimeoutException("Heartbeat timeout."));
             }
+
+            // 驱动时间相关中间件（如网络调理模拟器），让到期包在每帧冲刷。
+            // 使用高精度单调时钟，避免 32 位回绕。
+            MiddlewareTick?.Invoke(MonotonicTime.GetMilliseconds());
         }
 
         public void Send(uint opCode, ArraySegment<byte> payload, ushort flags = 0, uint seq = 0)
@@ -139,29 +233,78 @@ namespace AbilityKit.Network.Runtime
         {
             StopInternal(keepState: true);
 
+            _connectionGeneration = checked(_connectionGeneration + 1);
             State = connectState;
-            _reconnectDelaySeconds = 0f;
+            try
+            {
+                _transport = _transportFactory.Invoke()
+                    ?? throw new InvalidOperationException("Network transport factory returned null.");
+                var frameCodec = _options.FrameCodec ?? LengthPrefixedFrameCodec.Instance;
+                var sessionContext = new NetworkRuntimeSessionFactoryContext(
+                    _transport,
+                    _dispatcher,
+                    _ioDispatcher,
+                    frameCodec);
+                _session = _options.SessionFactory != null
+                    ? _options.SessionFactory.Invoke(sessionContext)
+                    : new NetworkSession(_transport, _dispatcher, _ioDispatcher, frameCodec);
+                if (_session == null)
+                {
+                    throw new InvalidOperationException("Network session factory returned null.");
+                }
 
-            _transport = _transportFactory.Invoke();
-            _session = new NetworkSession(_transport, _dispatcher, _ioDispatcher, _options.FrameCodec);
+                if (_session.Pipeline == null)
+                {
+                    throw new InvalidOperationException("Network session factory returned a session without a pipeline.");
+                }
 
-            _session.Start();
-            _session.PacketReceived += OnSessionPacketReceived;
-            _session.ServerPushReceived += OnSessionServerPushReceived;
-            _session.Connected += OnSessionConnected;
-            _session.Disconnected += OnSessionDisconnected;
-            _session.Error += OnSessionError;
+                _session.Start();
+                _session.PacketReceived += OnSessionPacketReceived;
+                _session.ServerPushReceived += OnSessionServerPushReceived;
+                _session.Connected += OnSessionConnected;
+                _session.Disconnected += OnSessionDisconnected;
+                _session.Error += OnSessionError;
 
-            _heartbeat = new HeartbeatMiddleware(_options.HeartbeatOpCode);
-            _heartbeat.HeartbeatReceived += OnHeartbeatReceived;
-            _session.Pipeline.Add(_heartbeat);
+                _heartbeat = _options.HeartbeatFactory != null
+                    ? _options.HeartbeatFactory.Invoke(_options.HeartbeatOpCode)
+                    : new HeartbeatMiddleware(_options.HeartbeatOpCode);
+                if (_heartbeat == null)
+                {
+                    throw new InvalidOperationException("Heartbeat middleware factory returned null.");
+                }
 
-            _transport.BytesReceived += OnTransportBytesReceived;
+                _heartbeat.HeartbeatReceived += OnHeartbeatReceived;
+                InstallTrafficProbe(_session.Pipeline, _transport);
+                _session.Pipeline.Add(_heartbeat);
+                PipelineCreated?.Invoke(_session.Pipeline);
 
-            _transport.Connect(_host, _port);
+                _transport.BytesReceived += OnTransportBytesReceived;
+                _transport.Connect(_host, _port);
+            }
+            catch
+            {
+                if (_session == null && _transport != null)
+                {
+                    try
+                    {
+                        _transport.Dispose();
+                    }
+                    catch (Exception ex)
+                    {
+                        Log.Exception(ex, "[ConnectionManager] StartConnect: transport dispose failed");
+                    }
+
+                    _transport = null;
+                }
+
+                StopInternal(
+                    keepState: connectState == ConnectionState.Reconnecting,
+                    resetReconnect: false);
+                throw;
+            }
         }
 
-        private void StopInternal(bool keepState = false)
+        private void StopInternal(bool keepState = false, bool resetReconnect = true)
         {
             if (_session != null)
             {
@@ -203,8 +346,10 @@ namespace AbilityKit.Network.Runtime
             _timeSinceLastReceive = 0f;
             _timeSinceLastHeartbeatSend = 0f;
 
-            _reconnectAttempts = 0;
-            _timeToReconnect = 0f;
+            if (!keepState && resetReconnect)
+            {
+                _reconnectScheduler.Reset();
+            }
         }
 
         private void OnTransportBytesReceived(ArraySegment<byte> bytes)
@@ -220,8 +365,8 @@ namespace AbilityKit.Network.Runtime
         private void OnSessionConnected()
         {
             State = ConnectionState.Connected;
-            _reconnectAttempts = 0;
-            _timeToReconnect = 0f;
+            IsReconnectExhausted = false;
+            _reconnectScheduler.Reset();
             _timeSinceLastReceive = 0f;
             _timeSinceLastHeartbeatSend = 0f;
 
@@ -367,27 +512,22 @@ namespace AbilityKit.Network.Runtime
                 return;
             }
 
-            if (_options.ReconnectMaxAttempts >= 0 && _reconnectAttempts >= _options.ReconnectMaxAttempts)
+            var wasPending = _reconnectScheduler.IsPending;
+            if (_options.ReconnectMaxAttempts == 0 ||
+                _reconnectScheduler.IsExhausted ||
+                !_reconnectScheduler.Request())
             {
-                StopInternal();
+                MarkReconnectExhausted();
                 return;
             }
 
-            _reconnectAttempts++;
-
-            var initial = (float)_options.ReconnectInitialDelay.TotalSeconds;
-            var max = (float)_options.ReconnectMaxDelay.TotalSeconds;
-            if (_reconnectDelaySeconds <= 0f)
-            {
-                _reconnectDelaySeconds = initial;
-            }
-            else
-            {
-                _reconnectDelaySeconds = (float)Math.Min(max, _reconnectDelaySeconds * _options.ReconnectBackoffMultiplier);
-            }
-
             State = ConnectionState.Reconnecting;
-            _timeToReconnect = _reconnectDelaySeconds;
+            if (!wasPending)
+            {
+                var attemptNumber = _reconnectScheduler.NextAttemptNumber;
+                var delaySeconds = _reconnectScheduler.NextDelaySeconds;
+                _dispatcher.Post(() => ReconnectScheduled?.Invoke(attemptNumber, delaySeconds));
+            }
 
             try
             {
@@ -397,6 +537,79 @@ namespace AbilityKit.Network.Runtime
             {
                 Log.Exception(ex2, "[ConnectionManager] ScheduleReconnect: transport close failed");
             }
+        }
+
+        private void MarkReconnectExhausted()
+        {
+            if (IsReconnectExhausted) return;
+            IsReconnectExhausted = true;
+            var attempts = _reconnectScheduler.AttemptsStarted;
+            StopInternal(resetReconnect: false);
+            _dispatcher.Post(() => ReconnectExhausted?.Invoke(attempts));
+        }
+
+        private static IReconnectAttemptScheduler CreateReconnectScheduler(
+            ConnectionOptions options)
+        {
+            var maxAttempts = options.ReconnectMaxAttempts > 0
+                ? options.ReconnectMaxAttempts
+                : int.MaxValue;
+            Func<int, float> resolveDelay =
+                attemptIndex => ResolveReconnectDelay(options, attemptIndex);
+            if (options.ReconnectSchedulerFactory == null)
+            {
+                return new ReconnectAttemptScheduler(maxAttempts, resolveDelay);
+            }
+
+            var context = new ReconnectAttemptSchedulerFactoryContext(maxAttempts, resolveDelay);
+            return options.ReconnectSchedulerFactory.Invoke(context)
+                ?? throw new InvalidOperationException("Reconnect scheduler factory returned null.");
+        }
+
+        private void InstallTrafficProbe(NetworkPipeline pipeline, ITransport transport)
+        {
+            var capture = _options.TrafficCapture;
+            if (capture == null) return;
+
+            capture.Validate();
+            var context = new NetworkTrafficConnectionContext(
+                _connectionId,
+                _connectionGeneration,
+                capture.Role,
+                capture.CatalogId,
+                $"{_host}:{_port}",
+                string.IsNullOrWhiteSpace(capture.TransportName)
+                    ? transport.GetType().Name
+                    : capture.TransportName);
+            var observer = capture.ObserverFactory.Invoke(context)
+                ?? throw new InvalidOperationException("Traffic observer factory returned null.");
+            var filter = capture.FilterFactory?.Invoke(context) ?? capture.Filter;
+            pipeline.AddFirst(new NetworkTrafficProbeMiddleware(
+                context,
+                observer,
+                capture.MaximumPayloadPreviewBytes,
+                filter,
+                capture.UtcNowProvider,
+                capture.ObserverErrorHandler));
+        }
+
+        private static string ResolveConnectionId(ConnectionOptions options)
+        {
+            var configured = options.TrafficCapture?.ConnectionId;
+            return string.IsNullOrWhiteSpace(configured)
+                ? Guid.NewGuid().ToString("N")
+                : configured;
+        }
+
+        private static float ResolveReconnectDelay(
+            ConnectionOptions options,
+            int attemptIndex)
+        {
+            var initial = Math.Max(0d, options.ReconnectInitialDelay.TotalSeconds);
+            var max = Math.Max(initial, options.ReconnectMaxDelay.TotalSeconds);
+            var multiplier = Math.Max(0d, options.ReconnectBackoffMultiplier);
+            var delay = initial * Math.Pow(multiplier, Math.Max(0, attemptIndex));
+            return (float)Math.Min(max, delay);
         }
 
     }

@@ -14,6 +14,9 @@ namespace AbilityKit.Demo.Moba.Config.BattleDemo.MO
         public float Speed { get; }
         public int LifetimeMs { get; }
         public float MaxDistance { get; }
+        public float CollisionWidth { get; }
+        public float CollisionHeight { get; }
+        public float CollisionLength { get; }
 
         public ProjectileHitPolicyKind HitPolicyKind { get; }
         public int HitsRemaining { get; }
@@ -33,6 +36,11 @@ namespace AbilityKit.Demo.Moba.Config.BattleDemo.MO
         public float ReturnSpeed { get; }
         public float ReturnStopDistance { get; }
 
+        public string StateMachineProfileId { get; }
+        public float SpawnRandomOffsetX { get; }
+        public float SpawnRandomOffsetY { get; }
+        public float SpawnRandomOffsetZ { get; }
+
         public ProjectileMO(ProjectileDTO dto)
         {
             if (dto == null) throw new ArgumentNullException(nameof(dto));
@@ -44,6 +52,9 @@ namespace AbilityKit.Demo.Moba.Config.BattleDemo.MO
             Speed = dto.Speed;
             LifetimeMs = dto.LifetimeMs;
             MaxDistance = dto.MaxDistance;
+            CollisionWidth = dto.CollisionWidth;
+            CollisionHeight = dto.CollisionHeight;
+            CollisionLength = dto.CollisionLength;
 
             HitPolicyKind = (ProjectileHitPolicyKind)dto.HitPolicyKind;
             HitsRemaining = dto.HitsRemaining;
@@ -62,6 +73,11 @@ namespace AbilityKit.Demo.Moba.Config.BattleDemo.MO
             ReturnAfterMs = dto.ReturnAfterMs;
             ReturnSpeed = dto.ReturnSpeed;
             ReturnStopDistance = dto.ReturnStopDistance;
+
+            StateMachineProfileId = dto.StateMachineProfileId ?? string.Empty;
+            SpawnRandomOffsetX = dto.SpawnRandomOffsetX;
+            SpawnRandomOffsetY = dto.SpawnRandomOffsetY;
+            SpawnRandomOffsetZ = dto.SpawnRandomOffsetZ;
         }
     }
 }

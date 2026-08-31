@@ -31,7 +31,7 @@ namespace AbilityKit.Triggering.Runtime
                     return;
                 }
 
-                if (entry.Phase == other.Phase && entry.Priority < other.Priority)
+                if (entry.Phase == other.Phase && entry.Priority > other.Priority)
                 {
                     list.Insert(i, entry);
                     return;

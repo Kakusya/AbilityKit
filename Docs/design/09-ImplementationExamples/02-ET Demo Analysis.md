@@ -22,6 +22,15 @@ ET Demo 解决的问题是：已有项目如果使用 ET 作为场景、实体�
 
 ET 接入链路与 [MOBA Demo 解析](./03-MOBA%20Demo%20Analysis.md) 共享战斗域能力，本文重点放在 ET 宿主、场景组件、输入桥接和快照表现边界。
 
+| 归属 | 应负责 | 不应由该层统一规定 |
+|------|--------|--------------------|
+| AbilityKit 框架/运行时 | World/Host、MOBA 战斗服务、输入与快照协议 | ET Scene、Entity 生命周期和热更事件模型 |
+| ET 宿主适配 | Scene/Component/System 驱动、命令转换、ETUnit/cache 和事件发布 | 修改 MOBA 权威逻辑以迁就表现对象 |
+| MOBA 示例应用层 | launch spec、配置、角色/技能目录和 runtime port | 被误写为所有 ET 项目的框架依赖 |
+| 项目团队 | 决定 ET 热更边界、双索引、资源、网络和故障恢复 | 直接复制示例而不验证自身 ET 版本与生命周期 |
+
+ET Demo 的价值是展示外部框架接入方法，不是提供 ET 官方集成包。复用时应保留协议和所有权边界，按项目重建 Scene 流程与表现适配。
+
 ---
 
 ## 2. 源码入口
@@ -357,4 +366,45 @@ sequenceDiagram
 
 ---
 
-*文档版本：v2.0 | 最后更新：2026-07-04*
+## 16. 独立宿主、组合根与释放边界
+
+ET Demo 与 Unity Starter 没有启动依赖。`DemoProcessComponentSystem.ChangeToBattleScene` 才是 ET 应用组合根：它创建 ET Battle Scene、Room、玩家出生数据、`BattleStartPlan`、`ETBattleComponent`、自动化安装器和 View Sink；`ETBattleWorldFactory` 再把这些项目数据翻译为 `MobaSessionCoordinatorHost`、`SessionConfig`、World 与 `MobaBattleDriverHost`。Unity 的 Profile/Catalog/Root Prefab 不参与这条链路。
+
+```mermaid
+flowchart LR
+    Process[DemoProcessComponentSystem] --> Scene[ET Battle Scene]
+    Scene --> Room[ETMobaRoomComponent]
+    Scene --> Battle[ETBattleComponent]
+    Battle --> Driver[ETMobaBattleDriver]
+    Driver --> Factory[ETBattleWorldFactory]
+    Factory --> Session[MobaSessionCoordinatorHost]
+    Session --> World[MOBA Runtime World]
+    Driver --> View[ET View Sink and Unit Cache]
+```
+
+| 生命周期阶段 | 当前所有者与动作 | 边界或风险 |
+|--------------|------------------|------------|
+| 切入战斗 | `DemoProcessComponentSystem` 先 Dispose 活动子 Scene，再创建新 Battle Scene | Scene 切换是 ET 责任，不由 AbilityKit Starter 处理 |
+| 初始化 | `ETBattleComponentSystem.InitializeBattle` 创建 Unit/Input/Driver/Cache，Driver 内创建 World | 中途失败缺少显式的逐阶段补偿事务 |
+| 推进 | ET `Update` 以 `1 / TickRate` 调用 `IBattleDriver.Tick` | 这里是 ET 固定步长策略，不是框架统一 PlayerLoop |
+| 停止 | `EndBattle` 调用 `BattleDriver.Stop` | Stop 只停止驱动，不代表 World/Host 已释放 |
+| Scene 销毁 | `ETBattleComponentSystem.Destroy` 先 Stop，再调用 `BattleDriver.Destroy` | 当前 `ETMobaBattleDriver.Destroy` 停止 driver host 并清空引用、缓存和 Dispatcher，但未显式调用 session host、world manager 或 world 的 Dispose/Destroy |
+
+因此当前销毁路径只能证明 ET 对象和 Driver 持有的引用被清空，不能从源码直接推出 MOBA World、HostRuntime 内部资源和订阅已经完整回收。生产接入应把 World/SessionHost 的明确销毁加入同一个 owner，并为重复进入、初始化失败、Stop/Destroy 幂等和销毁后无 Tick/快照补集成测试。
+
+---
+
+## 17. 验证证据与已知限制
+
+| 证据 | 等级与结论 |
+|------|------------|
+| ET Logic/Hotfix 源码与项目文件 | E0–E1：Scene、Component/System、世界创建、输入转换和快照表现链可审计/构建 |
+| `ETBattleWorldFactory` 与 `ETMobaBattleDriver` | E2 接入代码：真实复用 `MobaSessionCoordinatorHost`、`MobaBattleDriverHost` 与 MOBA runtime port |
+| 自动化 installer/snapshot sink | E2 工具接点：允许场景验收复用快照，但不能等同于自动测试已经执行 |
+| 独立 ET 测试与 artifact | 当前未发现专门的 ET 自动测试工程或日期化 E4 运行产物 |
+
+主要风险是 ET Scene 销毁与 AbilityKit Host/World 的双生命周期、输入缓存清理、异常中途创建的回滚、ActorId 与 ET Entity.Id 冲突、快照顺序/重连重建以及热更程序集版本兼容。迁移到真实 ET 项目前，应增加完整 scene enter/tick/exit、重复进入、异常销毁和快照表现的集成测试。
+
+文档类型：示例接入分析 | 事实基线：2026-08-17 | 证据等级：E0/E1 源码与构建入口、E2 接入实现；未发现独立 E3–E5
+
+*文档版本：v3.1 | 最后更新：2026-08-17*

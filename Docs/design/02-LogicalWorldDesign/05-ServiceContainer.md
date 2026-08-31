@@ -2,6 +2,8 @@
 
 > 本文基于 `Unity/Packages/com.abilitykit.world.di` 的真实源码，解释 AbilityKit 的世界级依赖注入容器如何注册、解析、初始化和销毁服务。这里的容器不是通用 IOC 框架，而是围绕一个逻辑世界的生命周期做的轻量装配层。
 
+文档类型：Canonical 设计 | 事实基线：2026-08-16 | 适用范围：World DI 注册、解析、作用域、模块规划与服务生命周期
+
 ---
 
 ## 目录
@@ -15,8 +17,9 @@
 7. [生命周期回调与销毁顺序](#7-生命周期回调与销毁顺序)
 8. [属性扫描模块](#8-属性扫描模块)
 9. [设计意图与解决的问题](#9-设计意图与解决的问题)
-10. [边界判断](#10-边界判断)
-11. [源码阅读路径](#11-源码阅读路径)
+10. [验证入口与证据状态](#10-验证入口与证据状态)
+11. [边界判断](#11-边界判断)
+12. [源码阅读路径](#12-源码阅读路径)
 
 ---
 
@@ -51,6 +54,8 @@
 | `Unity/Packages/com.abilitykit.world.di/Runtime/World/Services/Attributes/WorldServiceAttribute.cs` | 服务属性声明、生命周期、profile 与默认标记 |
 | `Unity/Packages/com.abilitykit.world.di/Runtime/World/Services/Attributes/WorldInjectAttribute.cs` | 字段/属性注入标记，支持 required/optional |
 | `Unity/Packages/com.abilitykit.world.di/Runtime/World/Services/Attributes/AttributeWorldServicesModule.cs` | 基于属性扫描注册世界服务 |
+| `src/AbilityKit.World.DI.Tests/AbilityKit.World.DI.Tests.csproj` | `.NET` 独立测试入口 |
+| `src/AbilityKit.World.DI.Tests/*.cs` | 注册、播种、注入、释放、属性扫描与模块规划回归测试 |
 
 ---
 
@@ -181,6 +186,8 @@ flowchart TD
 
 `TryResolve` 不会把未注册服务当作异常路径；但 seeded 实例即使没有注册描述符，也可以被 `TryResolve` 找到。这让调用方可以把“本次战斗输入”“本次技能上下文”一类运行时对象注入到作用域里。
 
+两种 resolver 的失败语义并不完全一致：根容器 `TryResolve` 会捕获所有异常并返回 false，可能把 factory 抛错或依赖环隐藏成“未解析”；Scope 路径对循环依赖异常会重新抛出。需要诊断配置错误时应优先使用 `Resolve`，不要把 `TryResolve == false` 一律解释为未注册。
+
 ---
 
 ## 6. 作用域与播种
@@ -253,6 +260,12 @@ flowchart TD
 
 逆序释放能让“后创建、依赖更多”的对象先退出，减少释放阶段访问已销毁依赖的概率。释放过程中异常会记录日志，但不会中断后续实例释放。
 
+Transient 只在解析时执行 `OnInit`，不会加入根容器或 scope 的销毁列表。容器无法知道临时实例何时结束使用，因此其 `OnDeinit`/`Dispose` 由调用方负责；把持有资源的 transient 当作容器托管对象会造成所有权泄漏。
+
+创建失败不享受上述逆序释放保证。singleton 和 scoped 都在 factory、成员注入与 `OnInit` 全部返回后才写入缓存和 dispose order；其中任一步抛错，已构造实例不会进入容器所有权，也不会自动执行 `OnDeinit/Dispose`。`WorldActivator` 尤其可能在构造函数成功后因 `[WorldInject]` required 成员失败而丢失实例引用。Transient 本来就由调用方负责，但解析抛错时调用方甚至拿不到实例，factory/实现必须自行补偿半完成资源。
+
+`TryInit` 还会在调用 `OnInit` 前先把实例加入 `_initialized`。若同一外部实例被多个服务契约的 factory 返回，第一次 `OnInit` 抛错后，该实例已被标记为初始化过；后续解析可能跳过 `OnInit` 并缓存它。初始化回调应保持原子或可显式回滚，不能假设容器会撤销 `_initialized` 标记。
+
 ---
 
 ## 8. 属性扫描模块
@@ -313,30 +326,73 @@ AbilityKit 的世界容器支持必要的构造函数选择和成员注入，但
 
 ---
 
-## 10. 边界判断
+## 10. 验证入口与证据状态
+
+World DI 有独立的 `.NET` 测试工程，可直接执行：
+
+```powershell
+dotnet test src/AbilityKit.World.DI.Tests/AbilityKit.World.DI.Tests.csproj
+```
+
+2026-08-16 实际执行结果为 31/31 通过，并有 1 个既有 CS0649 警告。当前 7 个测试文件不是只验证“容器能构建”，而是直接断言以下契约：
+
+| 测试资产 | 已覆盖契约 |
+|----------|------------|
+| `WorldServiceRegistrationTests.cs` | `Register` 覆盖、`TryRegister` 保留、Reject 策略诊断、嵌套模块来源恢复、组合报告溯源 |
+| `WorldScopeSeedingTests.cs` | seeded 优先于 scoped 工厂、未注册类型可解析、类型校验、`TryResolve` 命中，以及 scope 不接管 seeded 实例释放 |
+| `WorldInjectAttributeTests.cs` | 字段/属性注入、optional 缺失、required 缺失异常、显式 ServiceType、scoped 构造依赖环检测 |
+| `WorldDeinitializableTests.cs` | scoped 与 singleton 逆创建顺序释放、每个实例先 `OnDeinit` 后 `Dispose`、外部实例不参与容器初始化和释放 |
+| `AttributeWorldServicesModuleTests.cs` | 一个实现注册多个 scoped 契约时，同一 scope 共享实例、不同 scope 隔离 |
+| `WorldModulePlannerTests.cs` | 依赖、order、来源顺序，接口依赖，以及重复类型、重复 id、冲突、缺依赖和依赖环诊断 |
+| `WorldTestInjectorTests.cs` | 不创建容器时的测试成员注入、显式契约、optional 和 required 行为 |
+
+已有测试支持本文关于注册优先级、播种所有权、成员注入、依赖环和逆序释放的主要描述，但还不能推导出容器全部行为都已封闭。优先补测项如下：
+
+1. 根容器直接解析 scoped，以及 singleton 构造链捕获 scoped 时的拒绝和诊断。
+2. singleton、scoped、transient 的实例复用次数，以及 transient 是否按每次解析初始化和释放。
+3. 多个 public 构造函数并存时，按参数数量选择可解析候选；没有候选时的缺失依赖报告。
+4. `IWorldInitializable.OnInit` 对 singleton、scoped、transient 的 resolver 类型和只初始化一次语义。
+5. `OnInit`、`OnDeinit` 或 `Dispose` 抛异常时，后续实例是否继续处理及日志内容。
+6. 构造成功后成员注入/`OnInit` 失败的实例所有权，以及同一实例再次解析时 `_initialized` 标记的语义。
+7. 属性扫描的 namespace、profile、缓存清理、非法 ServiceType 与项目显式覆盖。
+
+因此，文档中的生命周期结论可以引用现有测试；构造函数选择、异常续处理和完整生命周期矩阵目前仍主要来自源码检查。
+
+---
+
+## 11. 边界判断
 
 | 容易混淆的判断 | 设计边界 |
 |----------------|----------|
 | 以为有 `RegisterSingleton`、`RegisterTransient` | 源码使用 `Register(..., WorldLifetime.Singleton)` 或 `RegisterType(..., WorldLifetime.Transient)` |
 | 以为 `RegisterType` 只能调用无参构造函数 | 实际通过 `WorldActivator` 选择所有参数都可解析的 public 构造函数，并优先选择参数更多的候选 |
-| 在根容器解析 scoped 服务 | scoped 必须从 `WorldScope` 解析 |
+| 在根容器解析 scoped 服务 | scoped 必须从 `WorldScope` 解析；该拒绝语义仍应补独立测试 |
 | 把一局战斗上下文注册成 singleton | 用 `CreateScope(seed => seed.Seed(...))` 传入运行时上下文 |
 | 认为 `TryResolve` 会自动创建未注册服务 | 未注册服务返回 false；只有 seeded 实例可以不依赖注册描述符 |
 | 认为属性扫描会覆盖项目服务 | 属性扫描用 `TryRegisterType`，默认不覆盖已有注册 |
 | 认为 `[WorldInject(required: false)]` 一定会有值 | optional 注入失败会保留默认值，使用前仍要判空或提供降级路径 |
 | 忘记释放作用域 | scoped 服务的 `OnDeinit` 和 `Dispose` 依赖 `WorldScope.Dispose()` |
+| 看到 31 个测试就认为所有容器路径已覆盖 | 当前强项是注册、播种、成员注入和释放顺序；构造选择、transient 和异常路径仍有缺口 |
+| 容器会释放 transient | transient 会初始化但不进入 root/scope 的销毁列表，资源所有权由调用方承担 |
+| 容器和 scope 可以并发解析与装配 | 内部注册、缓存与 seeded 字典不是并发容器，当前定位是单线程装配/解析 |
+| 根与 scope 的 `TryResolve` 失败完全等价 | 根路径会吞掉更广泛异常并返回 false，scope 对循环错误会重新抛出 |
+| `TryResolve == false` 说明没有产生副作用 | factory、构造、成员注入或 `OnInit` 可能已部分执行；根路径会把这些异常也折叠成 false |
+| `OnInit` 失败的对象会随容器释放 | 缓存和 dispose order 在初始化成功后才登记，失败实例不由容器补偿 |
 
 ---
 
-## 11. 源码阅读路径
+## 12. 源码阅读路径
 
 1. `WorldContainerBuilder.cs`：真实注册 API。
 2. `WorldActivator.cs`：构造函数选择和 `[WorldInject]` 成员注入。
 3. `WorldContainer.cs`：根容器如何处理 singleton、transient 和禁止 root-scoped 解析。
 4. `WorldScope.cs`：scoped 缓存、seeded 实例和作用域释放。
 5. `AttributeWorldServicesModule.cs`：框架默认服务如何批量注册。
-6. [逻辑世界概述](01-WorldOverview.md)、[系统设计](04-SystemDesign.md) 与 [Host 运行时](../03-LogicalWorldHostDesign/01-HostRuntime.md)：容器如何接入世界创建、System 安装与 Tick。
+6. `src/AbilityKit.World.DI.Tests`：把源码语义与已有回归断言逐项对照。
+7. [逻辑世界概述](01-WorldOverview.md)、[系统设计](04-SystemDesign.md) 与 [Host 运行时](../03-LogicalWorldHostDesign/01-HostRuntime.md)：容器如何接入世界创建、System 安装与 Tick。
 
 ---
 
-*文档版本：v2.1 | 最后更新：2026-07-04*
+当前证据可标记为局部 E3：31 项测试覆盖注册策略、模块规划、播种、成员注入、依赖环和部分释放顺序。它们没有覆盖构造函数选择、transient 所有权、初始化异常和完整并发/失败矩阵。`runtime-contracts` 配置虽然包含 World DI 测试，但 `ciPolicy` 当前全为 false，workflow 没有执行对应 job，因此不能标记 E5。规范目标是保持轻量、可预测的世界级容器，并补齐所有权和异常契约；它不是用来替代应用层完整 IOC 容器的通用框架。
+
+*文档版本：v3.2 | 最后更新：2026-08-16*

@@ -30,6 +30,12 @@ namespace AbilityKit.Demo.Moba.Services.EntityConstruction
                 else entity.AddModelId(setup.ModelId);
             }
 
+            if (setup.SetBrain)
+            {
+                if (entity.hasActorBrain) entity.ReplaceActorBrain(setup.BrainId, setup.BrainOwnerActorId, setup.BrainSourceKind, setup.BrainSourceId, 0L);
+                else entity.AddActorBrain(setup.BrainId, setup.BrainOwnerActorId, setup.BrainSourceKind, setup.BrainSourceId, 0L);
+            }
+
             if (setup.SetFlyingProjectileTag)
             {
                 entity.isFlyingProjectileTag = true;

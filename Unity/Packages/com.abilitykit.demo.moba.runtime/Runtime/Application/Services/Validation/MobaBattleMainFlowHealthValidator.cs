@@ -1,6 +1,7 @@
 using AbilityKit.Ability.Host;
 using AbilityKit.Ability.Host.Extensions.Moba.Runtime;
 using AbilityKit.Ability.Host.Extensions.Moba.StartSources;
+using AbilityKit.Demo.Moba.Gameplay;
 using AbilityKit.Demo.Moba.Services.LogicWorld;
 
 namespace AbilityKit.Demo.Moba.Services
@@ -87,9 +88,10 @@ namespace AbilityKit.Demo.Moba.Services
         private static bool ValidateExecution(in MobaRuntimeValidationContext context, MobaRuntimeValidationReport report)
         {
             var ready = true;
+            // Preparation and policy resolution are private collaborators constructed by
+            // SkillCastCoordinator; validating them as container services would require
+            // duplicate instances that are not part of the actual cast execution path.
             ready &= Require<SkillCastCoordinator>(in context, report, "execute.skill.executor", "SkillCastCoordinator is required to execute command driven skill casts.");
-            ready &= Require<SkillCastPreparationService>(in context, report, "execute.skill.preparation", "SkillCastPreparationService is required to formalize skill cast validation and runtime preparation.");
-            ready &= Require<SkillCastPolicyResolver>(in context, report, "execute.skill.policy_resolver", "SkillCastPolicyResolver is required to resolve formal skill cast policy.");
             ready &= Require<MobaEffectExecutionService>(in context, report, "execute.effect.service", "MobaEffectExecutionService is required to execute configured skill effects and trigger plans.");
             ready &= Require<MobaEffectInvokerService>(in context, report, "execute.effect.invoker", "MobaEffectInvokerService is required as the formal bridge from skill phases and buff stages into effect execution.");
             return ready;
@@ -102,10 +104,28 @@ namespace AbilityKit.Demo.Moba.Services
             ready &= Require<IWorldStateSnapshotProvider>(in context, report, "output.snapshot.provider", "IWorldStateSnapshotProvider is required for snapshot retrieval by frame.");
             ready &= Require<IMobaSnapshotHealthProvider>(in context, report, "output.snapshot.health", "IMobaSnapshotHealthProvider is required to verify snapshot emitter readiness.");
 
-            if (context.TryResolve<IMobaSnapshotHealthProvider>(out var healthProvider) && healthProvider != null)
+            MobaSnapshotOutputContract contract = null;
+            if (!context.TryResolve<MobaGameplayConfigSettings>(out var gameplaySettings) || gameplaySettings == null)
+            {
+                report.Error(Source, "output.snapshot.gameplay_settings", "MobaGameplayConfigSettings is required to resolve the gameplay-aware snapshot contract.", nameof(MobaGameplayConfigSettings), blocksStartup: true);
+                ready = false;
+            }
+            else if (!context.TryResolve<MobaSnapshotContractProfileRegistry>(out var profiles) || profiles == null)
+            {
+                report.Error(Source, "output.snapshot.profile_registry", "MobaSnapshotContractProfileRegistry is required to resolve the gameplay-aware snapshot contract.", nameof(MobaSnapshotContractProfileRegistry), blocksStartup: true);
+                ready = false;
+            }
+            else if (!profiles.TryResolve(gameplaySettings.DefaultGameplayId, out contract, out var profileError))
+            {
+                report.Error(Source, "output.snapshot.profile", profileError, nameof(MobaSnapshotContractProfileRegistry), blocksStartup: true);
+                ready = false;
+            }
+
+            if (contract != null &&
+                context.TryResolve<IMobaSnapshotHealthProvider>(out var healthProvider) &&
+                healthProvider != null)
             {
                 var health = healthProvider.GetHealth();
-                var contract = MobaSnapshotOutputContract.CreateDefault();
                 var validation = contract.Validate(in health);
                 if (!validation.Succeeded)
                 {

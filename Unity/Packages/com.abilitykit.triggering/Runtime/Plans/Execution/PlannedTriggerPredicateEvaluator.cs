@@ -172,12 +172,14 @@ namespace AbilityKit.Triggering.Runtime.Plan
                     {
                         var left = ResolveNumeric(in args, in n.Left, in ctx);
                         var right = ResolveNumeric(in args, in n.Right, in ctx);
-                        stack[sp++] = CompareNumeric(n.CompareOp, left, right);
+                        var cmpResult = CompareNumeric(n.CompareOp, left, right);
+                        stack[sp++] = cmpResult;
                         break;
                     }
                     case EBoolExprNodeKind.Function:
                     {
-                        stack[sp++] = EvaluateExprFunction(in n, in args, in ctx);
+                        var funcResult = EvaluateExprFunction(in n, in args, in ctx);
+                        stack[sp++] = funcResult;
                         break;
                     }
                     default:

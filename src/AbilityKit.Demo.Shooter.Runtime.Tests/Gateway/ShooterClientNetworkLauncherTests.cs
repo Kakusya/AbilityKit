@@ -52,21 +52,27 @@ public sealed class ShooterClientNetworkLauncherTests
         Assert.Equal(launched.Session, launched.Battle.Session);
         Assert.Equal("battle-launch", launched.Battle.BattleId);
         Assert.Equal(launcher.GatewayConnection, launched.GatewayConnection);
-        Assert.Equal(5, connection.SentOpCodes.Count);
         Assert.Equal(RoomGatewayOpCodes.CreateRoom, connection.SentOpCodes[0]);
-        Assert.Equal(RoomGatewayOpCodes.SubscribeStateSync, connection.SentOpCodes[4]);
+        Assert.Equal(RoomGatewayOpCodes.JoinRoom, connection.SentOpCodes[1]);
+        Assert.Equal(RoomGatewayOpCodes.SetReady, connection.SentOpCodes[2]);
+        Assert.Equal(RoomGatewayOpCodes.BeginLoading, connection.SentOpCodes[3]);
+        var progressCount = connection.SentOpCodes.Count(opCode => opCode == RoomGatewayOpCodes.ReportLoadingProgress);
+        Assert.True(progressCount >= 1);
+        Assert.All(
+            connection.SentOpCodes.GetRange(4, progressCount),
+            opCode => Assert.Equal(RoomGatewayOpCodes.ReportLoadingProgress, opCode));
+        var assetsIndex = 4 + progressCount;
+        Assert.Equal(RoomGatewayOpCodes.ReportAssetsLoaded, connection.SentOpCodes[assetsIndex]);
+        Assert.Equal(RoomGatewayOpCodes.GetSnapshot, connection.SentOpCodes[assetsIndex + 1]);
+        Assert.Equal(RoomGatewayOpCodes.SubscribeStateSync, connection.SentOpCodes[assetsIndex + 2]);
+        Assert.Equal(assetsIndex + 3, connection.SentOpCodes.Count);
 
         launcher.Tick(1f / 30f);
-        var submit = await launched.Battle.SubmitLocalInputToGatewayAsync(moveX: 1f, moveY: 0f, aimX: 1f, aimY: 0f, fire: true);
-
         Assert.Equal(1, connection.TickCount);
-        Assert.True(submit.Remote.Success);
-        Assert.Equal(RoomGatewayOpCodes.SubmitBattleInput, connection.SentOpCodes[5]);
-        var inputWire = WireRoomGatewayBinary.Deserialize<WireSubmitBattleInputReq>(connection.LastSentPayload);
-        Assert.Equal("battle-launch", inputWire.BattleId);
-        Assert.Equal(9041ul, inputWire.WorldId);
-        Assert.Equal(51u, inputWire.PlayerId);
+        Assert.DoesNotContain(RoomGatewayOpCodes.SubmitBattleInput, connection.SentOpCodes);
 
+        // Room 连接只拥有控制面；战斗输入和快照由独立 BattleDataPlane 连接处理。
+        var frameBeforeRoomPush = launched.Session.CurrentFrame;
         var authority = new ShooterBattleRuntimePort();
         Assert.True(authority.StartGame(in start));
         authority.SubmitInput(0, new[] { new ShooterPlayerCommand(51, 0f, 1f, 1f, 0f, true) });
@@ -85,10 +91,41 @@ public sealed class ShooterClientNetworkLauncherTests
 
         connection.Push(RoomGatewayOpCodes.SnapshotPushed, WireRoomGatewayBinary.Serialize(in push));
 
-        Assert.Equal(ShooterSnapshotApplyResult.AppliedPackedSnapshot, launcher.GatewayConnection.LastPushResult);
-        Assert.Equal(authority.CurrentFrame, launched.Session.CurrentFrame);
-        Assert.Equal(authority.ComputeStateHash(), runtime.ComputeStateHash());
-        Assert.Equal(authority.CurrentFrame, presentation.ViewModel.Frame);
+        Assert.Equal(ShooterSnapshotApplyResult.Ignored, launcher.GatewayConnection.LastPushResult);
+        Assert.Equal(frameBeforeRoomPush, launched.Session.CurrentFrame);
+    }
+
+    [Fact]
+    public void ClientNetworkLauncherUsesSingleSdkRequestOwnerAndDisposesConnectionOnce()
+    {
+        var connection = new FakeGatewayConnection();
+        var launcher = new ShooterClientNetworkLauncher(connection);
+
+        Assert.Same(connection, launcher.Connection);
+        Assert.Equal(1, connection.PacketReceivedSubscriberCount);
+        Assert.Equal(1, connection.ServerPushReceivedSubscriberCount);
+
+        launcher.Dispose();
+        launcher.Dispose();
+
+        Assert.Equal(0, connection.PacketReceivedSubscriberCount);
+        Assert.Equal(0, connection.ServerPushReceivedSubscriberCount);
+        Assert.Equal(1, connection.DisposeCount);
+        Assert.Equal(2, connection.CloseCount);
+    }
+
+    [Fact]
+    public void SdkBackedGatewayDisposeDoesNotOwnLauncherConnection()
+    {
+        var connection = new FakeGatewayConnection();
+        using var launcher = new ShooterClientNetworkLauncher(connection);
+
+        launcher.GatewayConnection.Dispose();
+
+        Assert.Equal(1, connection.PacketReceivedSubscriberCount);
+        Assert.Equal(1, connection.ServerPushReceivedSubscriberCount);
+        Assert.Equal(0, connection.DisposeCount);
+        Assert.True(connection.IsConnected);
     }
 
     [Fact]

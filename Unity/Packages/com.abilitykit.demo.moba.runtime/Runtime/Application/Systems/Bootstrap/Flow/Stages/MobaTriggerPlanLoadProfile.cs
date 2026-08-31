@@ -11,14 +11,18 @@ namespace AbilityKit.Demo.Moba.Systems.Bootstrap.Flow.Stages
                 TriggerPlanLoadEntry.Directory("Directory trigger plans", "ability/triggers", "**/*.json"),
                 TriggerPlanLoadEntry.Directory("Ability rules", "ability/rules", "**/*.json"),
                 TriggerPlanLoadEntry.File("Moba effect plans", "moba/effect_plans.json"),
-            });
+            },
+            failFastOnDirectoryLoad: true);
 
-        public MobaTriggerPlanLoadProfile(TriggerPlanLoadEntry[] entries)
+        public MobaTriggerPlanLoadProfile(TriggerPlanLoadEntry[] entries, bool failFastOnDirectoryLoad = false)
         {
             Entries = entries ?? Array.Empty<TriggerPlanLoadEntry>();
+            FailFastOnDirectoryLoad = failFastOnDirectoryLoad;
         }
 
         public TriggerPlanLoadEntry[] Entries { get; }
+
+        public bool FailFastOnDirectoryLoad { get; }
     }
 
     public readonly struct TriggerPlanLoadEntry

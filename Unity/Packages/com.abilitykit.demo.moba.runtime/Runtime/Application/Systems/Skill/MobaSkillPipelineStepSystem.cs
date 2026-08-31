@@ -12,6 +12,7 @@ namespace AbilityKit.Demo.Moba.Systems
     {
         private SkillCastCoordinator _skills;
         private IWorldClock _clock;
+        private MobaCombatRulesService _combatRules;
 
         private MobaWorldSystemServices _systemServices;
         private global::Entitas.IGroup<global::ActorEntity> _group;
@@ -25,6 +26,7 @@ namespace AbilityKit.Demo.Moba.Systems
         {
             Services.TryResolve(out _skills);
             Services.TryResolve(out _clock);
+            Services.TryResolve(out _combatRules);
             _systemServices = MobaWorldSystemExecution.Resolve(Services);
             _group = Contexts.Actor().GetGroup(ActorMatcher.AllOf(ActorComponentsLookup.ActorId));
         }
@@ -67,6 +69,16 @@ namespace AbilityKit.Demo.Moba.Systems
                 var actorId = e.actorId.Value;
                 try
                 {
+                    // Tick-level gate covers status changes after the cast has started,
+                    // including death. Actor despawn later performs the stronger remove path.
+                    if (_combatRules != null)
+                    {
+                        var ruleResult = _combatRules.CanCastSkill(actorId);
+                        if (!ruleResult.Passed)
+                        {
+                            _skills.CancelAll(actorId);
+                        }
+                    }
                     _skills.Step(actorId);
                     stepped++;
                 }

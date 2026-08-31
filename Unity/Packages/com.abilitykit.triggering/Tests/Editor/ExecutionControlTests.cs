@@ -73,7 +73,7 @@ namespace AbilityKit.Triggering.Tests
                 new DelegateTrigger<Ping, TestContext>(
                     predicate: (evt, ctx) => true,
                     actions: (evt, ctx) => executed += 100),
-                priority: 20);
+                priority: 5);
 
             bus.Publish(key, new Ping());
 

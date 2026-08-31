@@ -17,8 +17,35 @@ namespace AbilityKit.Demo.Moba.Services
         public static MobaBattleRouteRegistry CreateDefault()
         {
             var registry = new MobaBattleRouteRegistry();
-            MarkerScanner<MobaBattleRouteAttribute>.ScanAll(registry);
+            if (RegisterGeneratedAndExternalRoutes(registry) == 0)
+            {
+                if (AppContext.TryGetSwitch(
+                        "AbilityKit.Moba.DisableBattleRouteReflectionFallback",
+                        out var reflectionFallbackDisabled) && reflectionFallbackDisabled)
+                {
+                    throw new InvalidOperationException(
+                        "The generated MOBA battle route manifest is empty and reflection fallback is disabled.");
+                }
+
+                MarkerScanner<MobaBattleRouteAttribute>.Scan(
+                    new[] { typeof(MobaBattleRouteRegistry).Assembly },
+                    registry);
+            }
+
             return registry;
+        }
+
+        private static int RegisterGeneratedAndExternalRoutes(MobaBattleRouteRegistry registry)
+        {
+            var runtimeAssembly = typeof(MobaBattleRouteRegistry).Assembly;
+            var generatedCount = MobaGeneratedBattleRouteManifest.Register(registry);
+            var assemblies = MobaRegistryAssemblyDiscovery.GetExternalAssemblies(runtimeAssembly);
+            for (int i = 0; i < assemblies.Length; i++)
+            {
+                MarkerScanner<MobaBattleRouteAttribute>.Scan(new[] { assemblies[i] }, registry);
+            }
+
+            return generatedCount;
         }
 
         public void Register(Type implType)

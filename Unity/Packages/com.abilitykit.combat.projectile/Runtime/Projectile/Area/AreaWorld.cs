@@ -1,5 +1,6 @@
 using System;
 using System.Collections.Generic;
+using AbilityKit.Combat.Collision;
 using AbilityKit.Core.Pooling;
 using AbilityKit.Core.Mathematics;
 
@@ -94,7 +95,8 @@ namespace AbilityKit.Combat.Projectile
 
                 // 查询当前重叠目标。
                 var curr = a.GetCurrListAndClear();
-                var count = _collision.OverlapSphere(new Sphere(a.Center, a.Radius), a.LayerMask, curr);
+                var filter = new LayerFilter(a.LayerMask);
+                var count = _collision.OverlapSphere(new Sphere(a.Center, a.Radius), in filter, curr);
                 if (count > 1)
                 {
                     curr.Sort(CompareCollider);

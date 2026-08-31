@@ -1,4 +1,5 @@
 using System;
+using AbilityKit.Combat.MotionSystem.Constraints;
 using AbilityKit.Combat.MotionSystem.Core;
 using AbilityKit.Combat.MotionSystem.Generic;
 using AbilityKit.Core.Logging;
@@ -21,6 +22,8 @@ namespace AbilityKit.Demo.Moba.Services.Triggering.PlanActions
     [PlanActionModule(order: MobaPlanActionModuleOrders.Dash)]
     public sealed class DashPlanActionModule : MobaPlanActionModuleBase<DashArgs, DashPlanActionModule>
     {
+        private const float DashCollisionRadius = 0.5f;
+
         protected override IActionSchema<DashArgs, IWorldResolver> Schema => DashSchema.Instance;
 
         protected override void Execute(object triggerArgs, DashArgs args, ExecCtx<IWorldResolver> ctx)
@@ -74,7 +77,7 @@ namespace AbilityKit.Demo.Moba.Services.Triggering.PlanActions
                 }
 
                 velocity = aimDelta / duration;
-                dir = aimDelta.Normalized;
+                dir = DeterministicMathBridge.Normalize(in aimDelta);
             }
             else
             {
@@ -87,7 +90,49 @@ namespace AbilityKit.Demo.Moba.Services.Triggering.PlanActions
                 velocity = dir * args.Speed;
             }
             var group = MobaMotionGroupConfigResolver.Resolve(ctx.Context, args.MotionGroupId, MotionGroups.Ability, args.Priority, 10);
-            var source = new FixedDeltaMotionSource(velocity, duration, group.Priority, group.GroupId, group.Stacking);
+
+            // A wall-piercing dash must still sweep units so motion-hit triggers can fire. World geometry is
+            // ignored during travel and is consulted only once when projecting an invalid final endpoint.
+            MotionCollisionConstraints collisionPolicy = default;
+            MotionCollisionConstraints completionCollisionPolicy = default;
+            var hasCollisionPolicy = false;
+            var hasCompletionCollisionPolicy = false;
+            if (args.PassThroughWalls)
+            {
+                collisionPolicy = new MotionCollisionConstraints(
+                    enable: true,
+                    allowPassThrough: false,
+                    endOverlapPolicy: MotionEndOverlapPolicy.AllowInside,
+                    radius: DashCollisionRadius,
+                    skin: 0f,
+                    obstacleMask: MobaCollisionLayers.UnitMask,
+                    ignoreMask: 0,
+                    slideAlongWalls: false,
+                    maxSlideIterations: 1);
+                completionCollisionPolicy = new MotionCollisionConstraints(
+                    enable: true,
+                    allowPassThrough: true,
+                    endOverlapPolicy: MotionEndOverlapPolicy.ProjectToNearestFree,
+                    radius: DashCollisionRadius,
+                    skin: 0f,
+                    obstacleMask: MobaCollisionLayers.WorldMask,
+                    ignoreMask: 0,
+                    slideAlongWalls: false,
+                    maxSlideIterations: 1);
+                hasCollisionPolicy = true;
+                hasCompletionCollisionPolicy = true;
+            }
+
+            var source = new FixedDeltaMotionSource(
+                velocity,
+                duration,
+                group.Priority,
+                group.GroupId,
+                group.Stacking,
+                collisionPolicy,
+                hasCollisionPolicy,
+                completionCollisionPolicy,
+                hasCompletionCollisionPolicy);
 
             Log.Info($"[DashPlanActionModule] activate request actorId={actorId}, caster={input.CasterActorId}, directionMode={args.DirectionMode}, moveToAimPosition={args.MoveToAimPosition}, fallbackToForward={fallbackToForward}, dir=({dir.X:F3},{dir.Y:F3},{dir.Z:F3}), aimDelta=({aimDelta.X:F3},{aimDelta.Y:F3},{aimDelta.Z:F3}), speed={args.Speed:F3}, velocity=({velocity.X:F3},{velocity.Y:F3},{velocity.Z:F3}), duration={duration:F3}, groupId={group.GroupId}, priority={group.Priority}, stacking={group.Stacking}, hitTrigger={args.HitTriggerPlanId}");
 

@@ -1,6 +1,8 @@
 using System;
 using AbilityKit.Game.Battle.Component;
+using AbilityKit.Game.Battle.Hierarchy;
 using AbilityKit.Game.Flow;
+using AbilityKit.World.ECS;
 using UnityEngine;
 using EC = AbilityKit.World.ECS;
 
@@ -12,17 +14,21 @@ namespace AbilityKit.Game.Battle.Vfx
         private readonly BattleVfxGameObjectFactory _gameObjects;
         private readonly BattleVfxLifetimePolicy _lifetime;
         private readonly BattleVfxEntityBuilder _entities;
+        private readonly BattleViewHierarchyManager _hierarchy;
 
         public BattleVfxEntityFactory(
             VfxDatabase db,
             BattleVfxPrefabCache prefabs,
             BattleVfxLifetimePolicy lifetime = null,
-            BattleVfxGameObjectFactory gameObjects = null)
+            BattleVfxGameObjectFactory gameObjects = null,
+            BattleVfxGameObjectPool pool = null,
+            BattleViewHierarchyManager hierarchy = null)
         {
             _db = db ?? throw new ArgumentNullException(nameof(db));
             _lifetime = lifetime ?? new BattleVfxLifetimePolicy();
-            _gameObjects = gameObjects ?? new BattleVfxGameObjectFactory(prefabs);
+            _gameObjects = gameObjects ?? new BattleVfxGameObjectFactory(prefabs, pool: pool);
             _entities = new BattleVfxEntityBuilder(_lifetime);
+            _hierarchy = hierarchy;
         }
 
         public bool TryCreateEntity(EC.IECWorld world, EC.IEntity parent, int vfxId, EC.IEntityId followTarget, in Vector3 position, out EC.IEntity entity)
@@ -59,12 +65,20 @@ namespace AbilityKit.Game.Battle.Vfx
                 go = _gameObjects.CreatePlaceholder(vfxId);
             }
 
+            if (go == null) return false;
+
             if (durationMsOverride > 0)
             {
                 durationMs = durationMsOverride;
             }
 
             go.transform.SetPositionAndRotation(position, rotation);
+
+            // Parent active VFX GameObject under categorized active root for visibility.
+            if (_hierarchy != null && go != null)
+            {
+                _hierarchy.ParentActive(BattleViewCategory.ActiveVfx, vfxId, go);
+            }
 
             entity = _entities.Create(world, parent, vfxId, followTarget, followTargetActorId, go, durationMs);
             return true;

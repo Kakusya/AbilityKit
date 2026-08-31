@@ -18,6 +18,7 @@ namespace AbilityKit.Core.Markers
     /// }
     /// </code>
     /// </example>
+    [Obsolete("Global marker bootstrapping does not belong to Core; use owner-controlled discovery or generated registration before the next major version.")]
     public abstract class MarkerBootstrapper<TAttr, TRegistry>
         where TAttr : MarkerAttribute
         where TRegistry : class, IMarkerRegistry
@@ -56,10 +57,12 @@ namespace AbilityKit.Core.Markers
     /// <summary>
     /// KeyedMarkerRegistry 的引导器基类。
     /// </summary>
-    /// <typeparam name="TKey">键类型</typeparam>
+    /// <typeparam name="TKey">非空键类型</typeparam>
     /// <typeparam name="TAttr">MarkerAttribute 子类</typeparam>
     /// <typeparam name="TRegistry">对应的 Registry 类型</typeparam>
+    [Obsolete("Global marker bootstrapping does not belong to Core; use owner-controlled discovery or generated registration before the next major version.")]
     public abstract class KeyedMarkerBootstrapper<TKey, TAttr, TRegistry>
+        where TKey : notnull
         where TAttr : MarkerAttribute
         where TRegistry : KeyedMarkerRegistry<TKey, TAttr>
     {
@@ -96,12 +99,17 @@ namespace AbilityKit.Core.Markers
     /// <typeparam name="TSelf">子类类型</typeparam>
     /// <typeparam name="TAttr">MarkerAttribute 子类</typeparam>
     /// <typeparam name="TRegistry">Registry 类型</typeparam>
+    [Obsolete("Static registration side effects do not belong to Core; use explicit owner-controlled or generated registration before the next major version.")]
     public abstract class StaticMarkerBootstrapper<TSelf, TAttr, TRegistry>
         where TSelf : StaticMarkerBootstrapper<TSelf, TAttr, TRegistry>, new()
         where TAttr : MarkerAttribute
         where TRegistry : class, IMarkerRegistry
     {
+        // 字段值本身不读取；保留它是为了配合 static 构造里的注册副作用（Register 在 static ctor 中完成），
+        // 并作为“已注册”的静态标记。故在此显式抑制 CS0414。
+#pragma warning disable CS0414
         private static readonly bool _registered;
+#pragma warning restore CS0414
 
         static StaticMarkerBootstrapper()
         {

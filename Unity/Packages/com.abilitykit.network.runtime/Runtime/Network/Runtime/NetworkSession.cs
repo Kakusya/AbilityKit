@@ -4,7 +4,18 @@ using AbilityKit.Network.Protocol;
 
 namespace AbilityKit.Network.Runtime
 {
-    public sealed class NetworkSession : ISession
+    /// <summary>
+    /// A transport session that exposes the middleware pipeline used by the connection runtime.
+    /// Implementations returned by a connection session factory are owned and disposed by the
+    /// connection manager, and therefore own the transport supplied to that factory.
+    /// </summary>
+    public interface INetworkRuntimeSession : ISession
+    {
+        NetworkPipeline Pipeline { get; }
+        NetworkPacketRouter PacketRouter { get; }
+    }
+
+    public sealed class NetworkSession : INetworkRuntimeSession, IProtocolRoutedConnection
     {
         private readonly ITransport _transport;
         private readonly IDispatcher _dispatcher;
@@ -13,6 +24,7 @@ namespace AbilityKit.Network.Runtime
         private readonly IFrameDecoder _frameDecoder;
 
         private readonly NetworkPipeline _pipeline;
+        private readonly NetworkPacketRouter _packetRouter;
         private readonly SessionContext _context;
 
         private bool _started;
@@ -26,6 +38,7 @@ namespace AbilityKit.Network.Runtime
             _frameDecoder = _frameCodec.CreateDecoder();
 
             _pipeline = new NetworkPipeline();
+            _packetRouter = new NetworkPacketRouter(exception => _dispatcher.Post(() => Error?.Invoke(exception)));
             _context = new SessionContext(this, _dispatcher);
         }
 
@@ -38,6 +51,7 @@ namespace AbilityKit.Network.Runtime
             _frameDecoder = _frameCodec.CreateDecoder();
 
             _pipeline = new NetworkPipeline();
+            _packetRouter = new NetworkPacketRouter(exception => _dispatcher.Post(() => Error?.Invoke(exception)));
             _context = new SessionContext(this, _dispatcher);
         }
 
@@ -51,6 +65,8 @@ namespace AbilityKit.Network.Runtime
         public event Action<uint, ArraySegment<byte>> ServerPushReceived;
 
         public NetworkPipeline Pipeline => _pipeline;
+
+        public NetworkPacketRouter PacketRouter => _packetRouter;
 
         public void Start()
         {
@@ -113,7 +129,18 @@ namespace AbilityKit.Network.Runtime
                 return;
             }
 
-            _ioDispatcher.Post(() => HandleBytesReceived(bytes));
+            // Inline fast path: avoid allocating a closure per received chunk when the
+            // dispatcher would invoke inline anyway.
+            if (ReferenceEquals(_ioDispatcher, InlineDispatcher.Instance))
+            {
+                HandleBytesReceived(bytes);
+                return;
+            }
+
+            // ITransport only guarantees receive bytes for the duration of this callback.
+            // Own the chunk before crossing the asynchronous dispatcher boundary.
+            var copy = Copy(bytes);
+            _ioDispatcher.Post(() => HandleBytesReceived(copy));
         }
 
         private void HandleBytesReceived(ArraySegment<byte> bytes)
@@ -134,12 +161,30 @@ namespace AbilityKit.Network.Runtime
 
         private void DispatchPacketReceived(NetworkPacketHeader header, ArraySegment<byte> payload)
         {
+            _packetRouter.Dispatch(header, payload);
+
             var opCode = header.OpCode;
             var seq = header.Seq;
 
+            // Inline fast path: avoid allocating a closure per packet when the dispatcher
+            // would invoke inline anyway (single-threaded hosts / smoke runners).
+            var inline = ReferenceEquals(_dispatcher, InlineDispatcher.Instance);
+
             if ((header.Flags & NetworkPacketFlags.ServerPush) != 0)
             {
+                if (inline)
+                {
+                    ServerPushReceived?.Invoke(opCode, payload);
+                    return;
+                }
+
                 _dispatcher.Post(() => ServerPushReceived?.Invoke(opCode, payload));
+                return;
+            }
+
+            if (inline)
+            {
+                PacketReceived?.Invoke(opCode, seq, payload);
                 return;
             }
 
@@ -150,6 +195,18 @@ namespace AbilityKit.Network.Runtime
         {
             var frame = _frameCodec.Encode(header, payload);
             _transport.Send(frame);
+        }
+
+        private static ArraySegment<byte> Copy(ArraySegment<byte> bytes)
+        {
+            if (bytes.Array == null || bytes.Count == 0)
+            {
+                return default;
+            }
+
+            var copy = new byte[bytes.Count];
+            Buffer.BlockCopy(bytes.Array, bytes.Offset, copy, 0, bytes.Count);
+            return new ArraySegment<byte>(copy);
         }
 
         private sealed class SessionContext : AbilityKit.Network.Abstractions.ISessionContext

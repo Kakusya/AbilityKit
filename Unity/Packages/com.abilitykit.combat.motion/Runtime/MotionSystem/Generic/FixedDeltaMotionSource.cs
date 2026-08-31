@@ -1,10 +1,11 @@
+using AbilityKit.Combat.MotionSystem.Constraints;
 using AbilityKit.Combat.MotionSystem.Core;
 using AbilityKit.Core.Mathematics;
 using AbilityKit.Core.Pooling;
 
 namespace AbilityKit.Combat.MotionSystem.Generic
 {
-    public sealed class FixedDeltaMotionSource : IMotionSource, IMotionFinishEventSource, IMotionSnapshotSource
+    public sealed class FixedDeltaMotionSource : IMotionSource, IMotionFinishEventSource, IMotionSnapshotSource, IMotionCollisionPolicySource, IMotionCompletionCollisionPolicySource
     {
         private static readonly ObjectPool<FixedDeltaMotionSource> Pool = Pools.GetPool(
             createFunc: () => new FixedDeltaMotionSource(),
@@ -18,23 +19,65 @@ namespace AbilityKit.Combat.MotionSystem.Generic
         private int _priority;
 
         private Vec3 _deltaPerSecond;
-        private float _timeLeft;
+        // Q32.32 raw 剩余时间（整数减法无漂移）；float TimeLeft 是边界视图。
+        private long _timeLeftRaw;
         private bool _active;
+
+        private MotionCollisionConstraints _collisionPolicy;
+        private bool _hasCollisionPolicy;
+        private MotionCollisionConstraints _completionCollisionPolicy;
+        private bool _hasCompletionCollisionPolicy;
 
         private FixedDeltaMotionSource()
         {
             Reset();
         }
 
-        public FixedDeltaMotionSource(in Vec3 deltaPerSecond, float duration, int priority, int groupId, MotionStacking stacking)
+        public FixedDeltaMotionSource(
+            in Vec3 deltaPerSecond,
+            float duration,
+            int priority,
+            int groupId,
+            MotionStacking stacking,
+            MotionCollisionConstraints collisionPolicy = default,
+            bool hasCollisionPolicy = false,
+            MotionCollisionConstraints completionCollisionPolicy = default,
+            bool hasCompletionCollisionPolicy = false)
         {
-            Configure(in deltaPerSecond, duration, priority, groupId, stacking);
+            Configure(
+                in deltaPerSecond,
+                duration,
+                priority,
+                groupId,
+                stacking,
+                collisionPolicy,
+                hasCollisionPolicy,
+                completionCollisionPolicy,
+                hasCompletionCollisionPolicy);
         }
 
-        public static FixedDeltaMotionSource Rent(in Vec3 deltaPerSecond, float duration, int priority, int groupId, MotionStacking stacking)
+        public static FixedDeltaMotionSource Rent(
+            in Vec3 deltaPerSecond,
+            float duration,
+            int priority,
+            int groupId,
+            MotionStacking stacking,
+            MotionCollisionConstraints collisionPolicy = default,
+            bool hasCollisionPolicy = false,
+            MotionCollisionConstraints completionCollisionPolicy = default,
+            bool hasCompletionCollisionPolicy = false)
         {
             var source = Pool.Get();
-            source.Configure(in deltaPerSecond, duration, priority, groupId, stacking);
+            source.Configure(
+                in deltaPerSecond,
+                duration,
+                priority,
+                groupId,
+                stacking,
+                collisionPolicy,
+                hasCollisionPolicy,
+                completionCollisionPolicy,
+                hasCompletionCollisionPolicy);
             return source;
         }
 
@@ -44,14 +87,27 @@ namespace AbilityKit.Combat.MotionSystem.Generic
             Pool.Release(source);
         }
 
-        public void Configure(in Vec3 deltaPerSecond, float duration, int priority, int groupId, MotionStacking stacking)
+        public void Configure(
+            in Vec3 deltaPerSecond,
+            float duration,
+            int priority,
+            int groupId,
+            MotionStacking stacking,
+            MotionCollisionConstraints collisionPolicy = default,
+            bool hasCollisionPolicy = false,
+            MotionCollisionConstraints completionCollisionPolicy = default,
+            bool hasCompletionCollisionPolicy = false)
         {
             _deltaPerSecond = deltaPerSecond;
-            _timeLeft = duration;
+            _timeLeftRaw = DeterministicMathBridge.ToFixed(duration).RawValue;
             _priority = priority;
             _groupId = groupId;
             _stacking = stacking;
             _active = duration > 0f;
+            _collisionPolicy = collisionPolicy;
+            _hasCollisionPolicy = hasCollisionPolicy;
+            _completionCollisionPolicy = completionCollisionPolicy;
+            _hasCompletionCollisionPolicy = hasCompletionCollisionPolicy;
         }
 
         public void Reset()
@@ -60,8 +116,12 @@ namespace AbilityKit.Combat.MotionSystem.Generic
             _stacking = MotionStacking.ExclusiveHighestPriority;
             _priority = 0;
             _deltaPerSecond = Vec3.Zero;
-            _timeLeft = 0f;
+            _timeLeftRaw = 0L;
             _active = false;
+            _collisionPolicy = default;
+            _hasCollisionPolicy = false;
+            _completionCollisionPolicy = default;
+            _hasCompletionCollisionPolicy = false;
         }
 
         public int GroupId => _groupId;
@@ -70,31 +130,42 @@ namespace AbilityKit.Combat.MotionSystem.Generic
         public int Priority => _priority;
         public bool IsActive => _active;
 
-        public float TimeLeft => _timeLeft;
+        public float TimeLeft => Deterministic.Fixed64.FromRaw(_timeLeftRaw).ToSingle();
+
+        public bool HasCollisionPolicy => _hasCollisionPolicy;
+        public MotionCollisionConstraints CollisionPolicy => _collisionPolicy;
+        public bool HasCompletionCollisionPolicy => _hasCompletionCollisionPolicy;
+        public MotionCollisionConstraints CompletionCollisionPolicy => _completionCollisionPolicy;
 
         public void Tick(int id, ref MotionState state, float dt, ref Vec3 outDesiredDelta)
         {
             if (!_active) return;
             if (dt <= 0f) return;
 
-            if (_timeLeft <= 0f)
+            var epsilonRaw = DeterministicMathBridge.Epsilon.RawValue;
+            if (_timeLeftRaw <= epsilonRaw)
             {
+                _timeLeftRaw = 0L;
                 _active = false;
                 return;
             }
 
-            var step = dt;
-            if (step > _timeLeft) step = _timeLeft;
-            _timeLeft -= step;
+            var dtRaw = DeterministicMathBridge.ToFixed(dt).RawValue;
+            var stepRaw = dtRaw < _timeLeftRaw ? dtRaw : _timeLeftRaw;
+            _timeLeftRaw -= stepRaw;
 
-            outDesiredDelta = outDesiredDelta + _deltaPerSecond * step;
+            outDesiredDelta = outDesiredDelta + _deltaPerSecond * Deterministic.Fixed64.FromRaw(stepRaw).ToSingle();
 
-            if (_timeLeft <= 0f) _active = false;
+            if (_timeLeftRaw <= epsilonRaw)
+            {
+                _timeLeftRaw = 0L;
+                _active = false;
+            }
         }
 
         public void Cancel()
         {
-            _timeLeft = 0f;
+            _timeLeftRaw = 0L;
             _active = false;
         }
 
@@ -106,7 +177,7 @@ namespace AbilityKit.Combat.MotionSystem.Generic
                 Priority = _priority,
                 Stacking = _stacking,
                 IsActive = _active,
-                TimeLeft = _timeLeft,
+                TimeLeft = TimeLeft,
                 Vector0 = _deltaPerSecond,
             };
             return true;
@@ -118,7 +189,7 @@ namespace AbilityKit.Combat.MotionSystem.Generic
             _priority = snapshot.Priority;
             _stacking = snapshot.Stacking;
             _active = snapshot.IsActive;
-            _timeLeft = snapshot.TimeLeft;
+            _timeLeftRaw = DeterministicMathBridge.ToFixed(snapshot.TimeLeft).RawValue;
             _deltaPerSecond = snapshot.Vector0;
             return true;
         }

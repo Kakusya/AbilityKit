@@ -4,7 +4,7 @@ param(
     [string]$StepName,
     [string]$ConfigPath = 'tools\test-gates.json',
     [string]$Configuration = 'Debug',
-    [string]$ResultsDirectory = 'artifacts\test-gates',
+    [string]$ResultsDirectory = 'local\Logs\test-gates',
     [switch]$List,
     [switch]$NoRestore,
     [switch]$NoBuild,
@@ -40,7 +40,7 @@ if (-not (Test-Path $resolvedConfigPath)) {
     throw "Test gate config not found: $resolvedConfigPath"
 }
 
-$config = Get-Content -Path $resolvedConfigPath -Raw | ConvertFrom-Json
+$config = Get-Content -Path $resolvedConfigPath -Raw -Encoding utf8 | ConvertFrom-Json
 $gatesByName = @{}
 foreach ($gateDef in $config.gates) {
     $gatesByName[[string]$gateDef.name] = $gateDef
@@ -163,15 +163,25 @@ function Invoke-DotNetStep {
     Write-Host ("=== {0} ===" -f $DisplayName) -ForegroundColor Cyan
     Write-Host ("dotnet {0}" -f ($Arguments -join ' ')) -ForegroundColor DarkGray
 
-    if (-not [string]::IsNullOrWhiteSpace($LogFilePath)) {
-        $null = New-Item -ItemType Directory -Force -Path (Split-Path $LogFilePath)
-        & dotnet @Arguments 2>&1 | Tee-Object -FilePath $LogFilePath | ForEach-Object { Write-Host $_ }
+    $previousErrorActionPreference = $ErrorActionPreference
+    try {
+        # Windows PowerShell wraps native stderr as ErrorRecord objects. Preserve that output
+        # without allowing it to bypass exit-code and TRX result handling.
+        $ErrorActionPreference = 'Continue'
+        if (-not [string]::IsNullOrWhiteSpace($LogFilePath)) {
+            $null = New-Item -ItemType Directory -Force -Path (Split-Path $LogFilePath)
+            & dotnet @Arguments 2>&1 | Tee-Object -FilePath $LogFilePath | ForEach-Object { Write-Host $_ }
+        }
+        else {
+            & dotnet @Arguments
+        }
+
+        $exitCode = $LASTEXITCODE
     }
-    else {
-        & dotnet @Arguments
+    finally {
+        $ErrorActionPreference = $previousErrorActionPreference
     }
 
-    $exitCode = $LASTEXITCODE
     $endedAt = Get-Date
 
     $record = [ordered]@{
@@ -191,6 +201,156 @@ function Invoke-DotNetStep {
     }
 
     return [pscustomobject]$record
+}
+
+function Assert-DotNetTrxResult {
+    param(
+        [pscustomobject]$Record,
+        [string]$DisplayName,
+        [string]$TrxFilePath
+    )
+
+    $failureReason = $null
+    $testTotal = $null
+    $testPassed = $null
+    $testFailed = $null
+    $testResultCount = $null
+
+    if (-not (Test-Path -LiteralPath $TrxFilePath -PathType Leaf)) {
+        $failureReason = "dotnet test did not create expected TRX results file '$TrxFilePath'."
+    }
+    else {
+        try {
+            [xml]$trxXml = Get-Content -LiteralPath $TrxFilePath -Raw
+            $testRun = $trxXml.DocumentElement
+            if ($null -eq $testRun -or $testRun.LocalName -ne 'TestRun') {
+                throw "Root element 'TestRun' was not found."
+            }
+
+            $counters = $trxXml.SelectSingleNode("/*[local-name()='TestRun']/*[local-name()='ResultSummary']/*[local-name()='Counters']")
+            if ($null -eq $counters -or -not $counters.Attributes['total']) {
+                throw "ResultSummary/Counters total attribute was not found."
+            }
+
+            $testTotal = [int]$counters.Attributes['total'].Value
+            $testPassed = if ($counters.Attributes['passed']) { [int]$counters.Attributes['passed'].Value } else { $null }
+            $testFailed = if ($counters.Attributes['failed']) { [int]$counters.Attributes['failed'].Value } else { $null }
+            $testResultCount = @($trxXml.SelectNodes("/*[local-name()='TestRun']/*[local-name()='Results']/*[local-name()='UnitTestResult']")).Count
+
+            if ($testTotal -le 0) {
+                $failureReason = "dotnet test step '$DisplayName' matched zero tests."
+            }
+            elseif ($testResultCount -le 0) {
+                $failureReason = "dotnet test step '$DisplayName' produced a TRX file without test results."
+            }
+        }
+        catch {
+            $failureReason = "dotnet test TRX results file '$TrxFilePath' is invalid: $($_.Exception.Message)"
+        }
+    }
+
+    $Record | Add-Member -NotePropertyName trxFileExists -NotePropertyValue (Test-Path -LiteralPath $TrxFilePath -PathType Leaf) -Force
+    $Record | Add-Member -NotePropertyName testTotal -NotePropertyValue $testTotal -Force
+    $Record | Add-Member -NotePropertyName testPassed -NotePropertyValue $testPassed -Force
+    $Record | Add-Member -NotePropertyName testFailed -NotePropertyValue $testFailed -Force
+    $Record | Add-Member -NotePropertyName testResultCount -NotePropertyValue $testResultCount -Force
+    $Record | Add-Member -NotePropertyName failureReason -NotePropertyValue $failureReason -Force
+
+    if ($null -ne $failureReason) {
+        $Record.status = 'Failed'
+    }
+
+    return $Record
+}
+
+function Invoke-PowerShellScriptStep {
+    param(
+        [string]$DisplayName,
+        [object]$Step,
+        [string]$GateOutputDirectory,
+        [int]$StepIndex
+    )
+
+    $scriptPath = Resolve-RepoPath ([string]$Step.script)
+    $repoRootPath = [System.IO.Path]::GetFullPath([string]$repoRoot).TrimEnd('\', '/') + [System.IO.Path]::DirectorySeparatorChar
+    $fullScriptPath = [System.IO.Path]::GetFullPath($scriptPath)
+    if (-not $fullScriptPath.StartsWith($repoRootPath, [System.StringComparison]::OrdinalIgnoreCase)) {
+        throw "PowerShell step '$DisplayName' references a script outside the repository: $fullScriptPath"
+    }
+    if (-not (Test-Path -LiteralPath $fullScriptPath -PathType Leaf)) {
+        throw "PowerShell step '$DisplayName' script was not found: $fullScriptPath"
+    }
+
+    $arguments = @('-NoProfile', '-ExecutionPolicy', 'Bypass', '-File', $fullScriptPath)
+    if ($Step.PSObject.Properties['arguments']) {
+        $arguments += @($Step.arguments | ForEach-Object {
+            ([string]$_).Replace('{GateOutputDirectory}', $GateOutputDirectory)
+        })
+    }
+
+    $logFile = Join-Path $GateOutputDirectory (('{0:00}-{1}.log' -f $StepIndex, (ConvertTo-SafeName $DisplayName)))
+    $errorLogFile = Join-Path $GateOutputDirectory (('{0:00}-{1}.error.log' -f $StepIndex, (ConvertTo-SafeName $DisplayName)))
+    $commandText = 'powershell {0}' -f (($arguments | ForEach-Object {
+        if ([string]$_ -match '\s') { '"{0}"' -f $_ } else { [string]$_ }
+    }) -join ' ')
+    $timeoutSeconds = if ($Step.PSObject.Properties['timeoutSeconds']) { [int]$Step.timeoutSeconds } else { 0 }
+    $startedAt = Get-Date
+    Write-Host ("=== {0} ===" -f $DisplayName) -ForegroundColor Cyan
+    Write-Host $commandText -ForegroundColor DarkGray
+
+    $nativeArguments = ($arguments | ForEach-Object {
+        $value = [string]$_
+        if ($value -match '[\s"]') { '"{0}"' -f $value.Replace('"', '\"') } else { $value }
+    }) -join ' '
+    $processStartInfo = New-Object System.Diagnostics.ProcessStartInfo
+    $processStartInfo.FileName = 'powershell.exe'
+    $processStartInfo.Arguments = $nativeArguments
+    $processStartInfo.UseShellExecute = $false
+    $processStartInfo.CreateNoWindow = $true
+    $processStartInfo.RedirectStandardOutput = $true
+    $processStartInfo.RedirectStandardError = $true
+    $process = New-Object System.Diagnostics.Process
+    $process.StartInfo = $processStartInfo
+    $null = $process.Start()
+    $standardOutputStream = [System.IO.File]::Create($logFile)
+    $standardErrorStream = [System.IO.File]::Create($errorLogFile)
+    $standardOutputTask = $process.StandardOutput.BaseStream.CopyToAsync($standardOutputStream)
+    $standardErrorTask = $process.StandardError.BaseStream.CopyToAsync($standardErrorStream)
+    $timedOut = $timeoutSeconds -gt 0 -and -not $process.WaitForExit($timeoutSeconds * 1000)
+    if ($timedOut) {
+        try { $process.Kill() } catch { }
+        $process.WaitForExit()
+        $exitCode = 124
+    }
+    else {
+        $process.WaitForExit()
+        $exitCode = [int]$process.ExitCode
+    }
+    $standardOutputAwaiter = $standardOutputTask.GetAwaiter()
+    $standardErrorAwaiter = $standardErrorTask.GetAwaiter()
+    $null = $standardOutputAwaiter.GetResult()
+    $null = $standardErrorAwaiter.GetResult()
+    $standardOutputStream.Dispose()
+    $standardErrorStream.Dispose()
+    if (Test-Path -LiteralPath $logFile) { Get-Content -LiteralPath $logFile | ForEach-Object { Write-Host $_ } }
+    if (Test-Path -LiteralPath $errorLogFile) { Get-Content -LiteralPath $errorLogFile | ForEach-Object { Write-Host $_ -ForegroundColor Red } }
+    $endedAt = Get-Date
+
+    return [pscustomobject][ordered]@{
+        name = $DisplayName
+        kind = 'powershell-script'
+        script = $fullScriptPath
+        command = $commandText
+        status = $(if ($exitCode -eq 0) { 'Passed' } else { 'Failed' })
+        exitCode = $exitCode
+        timedOut = $timedOut
+        timeoutSeconds = $timeoutSeconds
+        startedAt = $startedAt.ToString('o')
+        endedAt = $endedAt.ToString('o')
+        elapsedSeconds = [math]::Round(($endedAt - $startedAt).TotalSeconds, 3)
+        logFile = $logFile
+        errorLogFile = $errorLogFile
+    }
 }
 
 function Get-UnityEditorPath {
@@ -312,7 +472,7 @@ function Invoke-UnityBatchModeStep {
     return [pscustomobject]$record
 }
 
-function Invoke-UnityEditModeStep {
+function Invoke-UnityTestStep {
     param(
         [string]$DisplayName,
         [object]$Step,
@@ -337,7 +497,8 @@ function Invoke-UnityEditModeStep {
     }
     $arguments += @('-testResults', $xmlFilePath)
 
-    $record = Invoke-UnityBatchModeStep -DisplayName $DisplayName -Kind 'unity-editmode-test' -Step $Step -GateOutputDirectory $GateOutputDirectory -Arguments $arguments -ResultsFilePath ($safeName + '.xml') -Filter $testFilter
+    $kind = if ($testPlatform -ieq 'PlayMode') { 'unity-playmode-test' } else { 'unity-editmode-test' }
+    $record = Invoke-UnityBatchModeStep -DisplayName $DisplayName -Kind $kind -Step $Step -GateOutputDirectory $GateOutputDirectory -Arguments $arguments -ResultsFilePath ($safeName + '.xml') -Filter $testFilter
 
     $recoveredResultsFrom = $null
     $testRunnerStarted = $false
@@ -372,12 +533,47 @@ function Invoke-UnityEditModeStep {
         }
     }
 
+    $testResult = $null
+    $testTotal = $null
+    $testPassed = $null
+    $testFailed = $null
+    if ($hasResultsFile) {
+        try {
+            [xml]$resultsXml = Get-Content -Path $xmlFilePath -Raw
+            $testRun = $resultsXml.'test-run'
+            if ($null -eq $testRun) {
+                throw "Root element 'test-run' was not found."
+            }
+
+            $testResult = [string]$testRun.result
+            $testTotal = [int]$testRun.total
+            $testPassed = [int]$testRun.passed
+            $testFailed = [int]$testRun.failed
+
+            if ($null -eq $failureReason -and $testTotal -le 0) {
+                $failureReason = "Unity test filter '$testFilter' matched zero tests."
+            }
+            elseif ($null -eq $failureReason -and ($testFailed -gt 0 -or $testResult -ne 'Passed')) {
+                $failureReason = "Unity test results were not successful: result=$testResult, total=$testTotal, passed=$testPassed, failed=$testFailed."
+            }
+        }
+        catch {
+            if ($null -eq $failureReason) {
+                $failureReason = "Unity results file '$xmlFilePath' is invalid: $($_.Exception.Message)"
+            }
+        }
+    }
+
     $record | Add-Member -NotePropertyName resultsFileExists -NotePropertyValue $hasResultsFile -Force
     $record | Add-Member -NotePropertyName testRunnerStarted -NotePropertyValue $testRunnerStarted -Force
     $record | Add-Member -NotePropertyName batchmodeQuitInvoked -NotePropertyValue $batchmodeQuitInvoked -Force
     $record | Add-Member -NotePropertyName savedResultsPathFromLog -NotePropertyValue $savedResultsPathFromLog -Force
     $record | Add-Member -NotePropertyName recoveredResultsFrom -NotePropertyValue $recoveredResultsFrom -Force
     $record | Add-Member -NotePropertyName testPlatform -NotePropertyValue $testPlatform -Force
+    $record | Add-Member -NotePropertyName testResult -NotePropertyValue $testResult -Force
+    $record | Add-Member -NotePropertyName testTotal -NotePropertyValue $testTotal -Force
+    $record | Add-Member -NotePropertyName testPassed -NotePropertyValue $testPassed -Force
+    $record | Add-Member -NotePropertyName testFailed -NotePropertyValue $testFailed -Force
     $record.failureReason = $failureReason
     $record.status = if ($null -eq $failureReason) { 'Passed' } else { 'Failed' }
 
@@ -497,13 +693,22 @@ function Invoke-Gate {
                         $arguments += @('--filter', [string]$step.filter)
                     }
                     $record = Invoke-DotNetStep -DisplayName $stepName -Kind 'dotnet-test' -Arguments $arguments -LogFilePath $logFile -ProjectPath $project -Filter ([string]$step.filter) -ResultsDirectory $testResultsDirectory -TrxFilePath $trxFilePath
+                    $record = Assert-DotNetTrxResult -Record $record -DisplayName $stepName -TrxFilePath $trxFilePath
+                    $stepResults.Add($record)
+                    if ($record.status -ne 'Passed') {
+                        $failureDetail = if ([string]::IsNullOrWhiteSpace([string]$record.failureReason)) { "exit code $($record.exitCode)" } else { [string]$record.failureReason }
+                        throw "Step '$stepName' failed: $failureDetail"
+                    }
+                }
+                'powershell-script' {
+                    $record = Invoke-PowerShellScriptStep -DisplayName $stepName -Step $step -GateOutputDirectory $gateOutputDirectory -StepIndex $stepIndex
                     $stepResults.Add($record)
                     if ($record.status -ne 'Passed') {
                         throw "Step '$stepName' failed with exit code $($record.exitCode)."
                     }
                 }
-                'unity-editmode-test' {
-                    $record = Invoke-UnityEditModeStep -DisplayName $stepName -Step $step -GateOutputDirectory $gateOutputDirectory
+                { $_ -in @('unity-editmode-test', 'unity-playmode-test') } {
+                    $record = Invoke-UnityTestStep -DisplayName $stepName -Step $step -GateOutputDirectory $gateOutputDirectory
                     $stepResults.Add($record)
                     if ($record.status -ne 'Passed') {
                         throw "Step '$stepName' failed with exit code $($record.exitCode)."

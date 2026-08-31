@@ -74,6 +74,11 @@ namespace AbilityKit.Samples.Abstractions
         /// 目标搜索系统
         /// </summary>
         Targeting = 12,
+
+        /// <summary>
+        /// 行为树系统
+        /// </summary>
+        Behavior = 13,
     }
 
     /// <summary>
@@ -102,6 +107,7 @@ namespace AbilityKit.Samples.Abstractions
                 SampleCategory.Demo => "Demo",
                 SampleCategory.Continuous => "Continuous",
                 SampleCategory.Targeting => "Targeting",
+                SampleCategory.Behavior => "Behavior",
                 _ => "Unknown"
             };
         }

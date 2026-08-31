@@ -15,13 +15,11 @@ namespace AbilityKit.Game.Flow
                 _subFeatureHost.ForEach<ISessionFramePacketTransformSubFeature<BattleSessionFeature>>(m => packet = m.TransformFramePacket(fctx, packet));
             }
 
-            _lastFrame = packet.Frame.Value;
-
-            if (!_firstFrameReceived)
+            if (packet.Frame.Value > _lastFrame)
             {
-                _firstFrameReceived = true;
-                _eventsCtrl.NotifyFirstFrameReceived(this);
+                _lastFrame = packet.Frame.Value;
             }
+            NotifyFirstFrameReceivedOnce();
 
             SessionContextBinder.BindLastFrame(_ctx, _state);
 
@@ -30,6 +28,20 @@ namespace AbilityKit.Game.Flow
                 var fctx = new FeatureModuleContext<BattleSessionFeature>(_phaseCtx, this);
                 _subFeatureHost.ForEach<ISessionFrameReceivedSubFeature<BattleSessionFeature>>(m => m.OnFrameReceived(fctx, packet));
             }
+        }
+
+        private void NotifyFirstFrameReceivedOnce()
+        {
+            if (_firstFrameReceived) return;
+
+            NotifyWorldReadyOnce();
+            _firstFrameReceived = true;
+            _eventsCtrl.NotifyFirstFrameReceived(this);
+        }
+
+        internal static bool CompletesAssetBarrierOnFirstFrame(BattleHostMode hostMode)
+        {
+            return false;
         }
     }
 }

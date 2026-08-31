@@ -1,3 +1,5 @@
+using System;
+using System.Collections.Generic;
 using System.Linq;
 using AbilityKit.Game.Flow;
 using AbilityKit.Game.View.Flow;
@@ -128,9 +130,9 @@ namespace AbilityKit.Game.View.Runtime.Tests
         }
 
         [Fact]
-        public void BattleMachine_Has5Transitions()
+        public void BattleMachine_Has9Transitions()
         {
-            Assert.Equal(5, _config.BattleMachine.Transitions.Count);
+            Assert.Equal(9, _config.BattleMachine.Transitions.Count);
         }
 
         [Fact]
@@ -164,10 +166,11 @@ namespace AbilityKit.Game.View.Runtime.Tests
         }
 
         [Fact]
-        public void BattleMachine_LoadingDone_LoadAssetsToInMatch()
+        public void BattleMachine_AssetsLoadCompleted_LoadAssetsToInMatch()
         {
+            // 阶段 7a：真实资源加载完成（manifest barrier）驱动 LoadAssets → InMatch。
             var t = _config.BattleMachine.Transitions[3];
-            Assert.Equal(MobaBattleEvent.LoadingDone, t.Trigger);
+            Assert.Equal(MobaBattleEvent.AssetsLoadCompleted, t.Trigger);
             Assert.Equal(MobaBattleState.LoadAssets, t.From);
             Assert.Equal(MobaBattleState.InMatch, t.To);
             Assert.Null(t.ConditionId);
@@ -176,11 +179,45 @@ namespace AbilityKit.Game.View.Runtime.Tests
         [Fact]
         public void BattleMachine_Ended_InMatchToEnd()
         {
-            var t = _config.BattleMachine.Transitions[4];
+            var t = _config.BattleMachine.Transitions[8];
             Assert.Equal(MobaBattleEvent.Ended, t.Trigger);
             Assert.Equal(MobaBattleState.InMatch, t.From);
             Assert.Equal(MobaBattleState.End, t.To);
             Assert.Null(t.ConditionId);
+        }
+
+        [Fact]
+        public void StateDescriptions_AreStableAndCoverEveryConfiguredState()
+        {
+            foreach (MobaRootState state in Enum.GetValues(typeof(MobaRootState)))
+            {
+                Assert.False(string.IsNullOrWhiteSpace(_config.GetRootStateDescription(state)), state.ToString());
+            }
+
+            foreach (MobaBattleState state in Enum.GetValues(typeof(MobaBattleState)))
+            {
+                Assert.False(string.IsNullOrWhiteSpace(_config.GetBattleStateDescription(state)), state.ToString());
+            }
+        }
+
+        [Fact]
+        public void ConfigurationValidator_AcceptsDefaultConfiguration()
+        {
+            var result = MobaFlowConfigurationValidator.Validate(_config);
+
+            Assert.True(result.IsValid, string.Join(" | ", result.Errors));
+        }
+
+        [Fact]
+        public void ConfigurationValidator_ReportsMissingStateDescription()
+        {
+            var descriptions = (Dictionary<MobaBattleState, string>)_config.BattleStateDescriptions;
+            descriptions.Remove(MobaBattleState.LoadAssets);
+
+            var result = MobaFlowConfigurationValidator.Validate(_config);
+
+            Assert.False(result.IsValid);
+            Assert.Contains("MOBA battle state has no stable description: LoadAssets", result.Errors);
         }
 
         // ====================================================================
@@ -205,12 +242,15 @@ namespace AbilityKit.Game.View.Runtime.Tests
         // ====================================================================
 
         [Fact]
-        public void LobbyFeatures_StateId_ClearBeforeEnter_NoFeaturesNoActions()
+        public void LobbyFeatures_StateId_ClearBeforeEnter_DefaultEntryFeaturesOnly_NoActions()
         {
             var f = _config.LobbyFeatures;
             Assert.Equal("Lobby", f.StateId);
             Assert.True(f.ClearBeforeEnter);
-            Assert.Empty(f.FeatureIds);
+            Assert.Equal(2, f.FeatureIds.Count);
+            Assert.Equal("demo_lobby", f.FeatureIds[0]);
+            Assert.Equal("formal_lobby", f.FeatureIds[1]);
+            Assert.DoesNotContain("root_debug", f.FeatureIds);
             Assert.Empty(f.EnterBeforeActionIds);
             Assert.Empty(f.EnterAfterActionIds);
             Assert.Empty(f.ExitActionIds);
@@ -293,13 +333,14 @@ namespace AbilityKit.Game.View.Runtime.Tests
         // ====================================================================
 
         [Fact]
-        public void BattleLoadAssetsFeatures_NoClear_DebugOngui_AdvanceOnLoadAssetsEnter()
+        public void BattleLoadAssetsFeatures_NoClear_LoadingScreenDebugOngui_AdvanceOnLoadAssetsEnter()
         {
             var f = _config.BattleLoadAssetsFeatures;
             Assert.Equal("Battle.LoadAssets", f.StateId);
             Assert.False(f.ClearBeforeEnter);
-            Assert.Single(f.FeatureIds);
-            Assert.Equal("debug_ongui", f.FeatureIds[0]);
+            Assert.Equal(2, f.FeatureIds.Count);
+            Assert.Equal("loading_screen", f.FeatureIds[0]);
+            Assert.Equal("debug_ongui", f.FeatureIds[1]);
             Assert.Single(f.SwitchFlowIds);
             Assert.Equal(MobaFlowSwitchIds.AdvanceOnLoadAssetsEnter, f.SwitchFlowIds[0]);
             Assert.Empty(f.EnterBeforeActionIds);
@@ -312,19 +353,20 @@ namespace AbilityKit.Game.View.Runtime.Tests
         // ====================================================================
 
         [Fact]
-        public void BattleInMatchFeatures_NoClear_5Features_NoActions()
+        public void BattleInMatchFeatures_NoClear_6Features_NoActions()
         {
             var f = _config.BattleInMatchFeatures;
             Assert.Equal("Battle.InMatch", f.StateId);
             Assert.False(f.ClearBeforeEnter);
 
             var ids = f.FeatureIds;
-            Assert.Equal(5, ids.Count);
+            Assert.Equal(6, ids.Count);
             Assert.Equal("sync", ids[0]);
             Assert.Equal("input", ids[1]);
             Assert.Equal("view", ids[2]);
             Assert.Equal("hud", ids[3]);
-            Assert.Equal("debug_ongui", ids[4]);
+            Assert.Equal("end_recorder", ids[4]);
+            Assert.Equal("debug_ongui", ids[5]);
 
             Assert.Empty(f.EnterBeforeActionIds);
             Assert.Empty(f.EnterAfterActionIds);
@@ -337,13 +379,14 @@ namespace AbilityKit.Game.View.Runtime.Tests
         // ====================================================================
 
         [Fact]
-        public void BattleEndFeatures_ClearBeforeEnter_DebugOngui_EnterAfterReturnLobby()
+        public void BattleEndFeatures_ClearBeforeEnter_SettlementDebugOngui_EnterAfterReturnLobby()
         {
             var f = _config.BattleEndFeatures;
             Assert.Equal("Battle.End", f.StateId);
             Assert.True(f.ClearBeforeEnter);
-            Assert.Single(f.FeatureIds);
-            Assert.Equal("debug_ongui", f.FeatureIds[0]);
+            Assert.Equal(2, f.FeatureIds.Count);
+            Assert.Equal("end_settlement", f.FeatureIds[0]);
+            Assert.Equal("debug_ongui", f.FeatureIds[1]);
             Assert.Single(f.EnterAfterActionIds);
             Assert.Equal(MobaFlowActionIds.ReturnLobbyAfterBattleEnd, f.EnterAfterActionIds[0]);
             Assert.Empty(f.EnterBeforeActionIds);

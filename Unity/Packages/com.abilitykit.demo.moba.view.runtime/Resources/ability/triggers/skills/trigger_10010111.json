@@ -22,7 +22,8 @@
         },
         {
           "type": "give_damage",
-          "damage_value": 160,
+          "damage_value": 200,
+          "source_attack_ratio": 0.80,
           "damage_type": 1,
           "reason_param": 10010101,
           "target_max_count": 1

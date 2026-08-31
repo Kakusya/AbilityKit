@@ -12,11 +12,12 @@ namespace AbilityKit.Ability.Editor.Utilities
     {
         private const string ReadableFileName = "ability_trigger_plans_readable.json";
         private const string InternalFileName = "ability_trigger_plans.json";
+        private const string PackageAbilityResourcesPath = "Packages/com.abilitykit.demo.moba.view.runtime/Resources/ability";
 
         /// <summary>
         /// 导出可读格式
         /// </summary>
-        [MenuItem("AbilityKit/Ability/Export Readable Trigger Plan Json")]
+        [MenuItem("Tools/AbilityKit/Framework/Ability/导出/Readable Trigger Plan Json")]
         public static void ExportReadable()
         {
             ExportReadableFromInternal();
@@ -25,7 +26,7 @@ namespace AbilityKit.Ability.Editor.Utilities
         /// <summary>
         /// 从可读格式导入
         /// </summary>
-        [MenuItem("AbilityKit/Ability/Import Readable Trigger Plan Json")]
+        [MenuItem("Tools/AbilityKit/Framework/Ability/导入/Readable Trigger Plan Json")]
         public static void ImportReadable()
         {
             ImportReadableToInternal();
@@ -34,10 +35,10 @@ namespace AbilityKit.Ability.Editor.Utilities
         /// <summary>
         /// 双向转换：可读格式 <-> 内部格式
         /// </summary>
-        [MenuItem("AbilityKit/Ability/Convert Trigger Plan Format")]
+        [MenuItem("Tools/AbilityKit/Framework/Ability/格式转换/Convert Trigger Plan Format")]
         public static void ConvertFormat()
         {
-            var outputDir = Path.Combine(Application.dataPath, "Resources", "ability");
+            var outputDir = GetAbilityResourcesDirectory();
             var readablePath = Path.Combine(outputDir, ReadableFileName);
             var internalPath = Path.Combine(outputDir, InternalFileName);
 
@@ -90,7 +91,7 @@ namespace AbilityKit.Ability.Editor.Utilities
 
         private static void ExportReadableFromInternal()
         {
-            var outputDir = Path.Combine(Application.dataPath, "Resources", "ability");
+            var outputDir = GetAbilityResourcesDirectory();
             Directory.CreateDirectory(outputDir);
 
             var internalPath = Path.Combine(outputDir, InternalFileName);
@@ -129,7 +130,7 @@ namespace AbilityKit.Ability.Editor.Utilities
 
         private static void ImportReadableToInternal()
         {
-            var outputDir = Path.Combine(Application.dataPath, "Resources", "ability");
+            var outputDir = GetAbilityResourcesDirectory();
             Directory.CreateDirectory(outputDir);
 
             var readablePath = Path.Combine(outputDir, ReadableFileName);
@@ -164,6 +165,11 @@ namespace AbilityKit.Ability.Editor.Utilities
             {
                 Debug.LogError($"[ReadableTriggerPlan] Import failed: {ex.Message}");
             }
+        }
+
+        private static string GetAbilityResourcesDirectory()
+        {
+            return Path.GetFullPath(Path.Combine(Application.dataPath, "..", PackageAbilityResourcesPath));
         }
 
         private static void ConvertInternalToReadable(string internalPath, string readablePath)

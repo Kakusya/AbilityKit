@@ -7,6 +7,8 @@ using Microsoft.Extensions.Logging;
 
 var builder = Host.CreateApplicationBuilder(args);
 builder.Services.AddAbilityKitServerOptions(builder.Configuration);
+builder.Services.AddStateSyncObserverOptions(builder.Configuration);
+builder.Services.AddBattleInputSecurityOptions(builder.Configuration);
 builder.Services.AddAbilityKitDeploymentOptions(builder.Configuration);
 builder.Services.AddAbilityKitSiloRoleOptions(builder.Configuration);
 builder.Services.AddAbilityKitSiloRuntimeProfileOptions(builder.Configuration);

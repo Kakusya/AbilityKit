@@ -19,23 +19,24 @@ namespace AbilityKit.Ability.Editor.Utilities
         private const string OutputResourcesDir = "ability";
         private const string OutputFileWithoutExt = "ability_triggers";
         private const string OutputPlanFileWithoutExt = "ability_trigger_plans";
+        private const string PackageAbilityResourcesPath = "Packages/com.abilitykit.demo.moba.view.runtime/Resources/ability";
         private const string DefaultAbilityConfigFolder = "Assets/Configs/Ability";
 
-        [MenuItem("AbilityKit/Ability/Export Trigger Json")]
+        [MenuItem("Tools/AbilityKit/Framework/Ability/导出/Trigger Json")]
         public static void ExportSelectedFolder()
         {
             var folder = AbilityTriggerExportUtils.TryGetSelectedFolderPath();
             ExportFromFolder(folder);
         }
 
-        [MenuItem("AbilityKit/Ability/Export Trigger Plan Json")]
+        [MenuItem("Tools/AbilityKit/Framework/Ability/导出/Trigger Plan Json")]
         public static void ExportSelectedFolderPlans()
         {
             var folder = AbilityTriggerExportUtils.TryGetSelectedFolderPath();
             ExportPlanFromFolder(folder);
         }
 
-        [MenuItem("AbilityKit/Ability/Export Trigger Json (Configs/Ability)")]
+        [MenuItem("Tools/AbilityKit/Framework/Ability/导出/Trigger Json (Configs/Ability)")]
         public static void ExportDefaultFolder()
         {
             ExportFromFolder(DefaultAbilityConfigFolder);
@@ -46,7 +47,7 @@ namespace AbilityKit.Ability.Editor.Utilities
             ExportPlanFromFolder("Assets");
         }
 
-        [MenuItem("AbilityKit/Ability/Export Trigger Plan Json (Configs/Ability)")]
+        [MenuItem("Tools/AbilityKit/Framework/Ability/导出/Trigger Plan Json (Configs/Ability)")]
         public static void ExportDefaultFolderPlans()
         {
             ExportDefaultFolderPlansForBatchMode();
@@ -58,7 +59,7 @@ namespace AbilityKit.Ability.Editor.Utilities
 
             ExportLog.Info($"ExportFromFolder: {assetFolder}");
 
-            var outputDir = Path.Combine(Application.dataPath, "Resources", OutputResourcesDir);
+            var outputDir = GetAbilityResourcesDirectory();
             Directory.CreateDirectory(outputDir);
 
             var dto = LegacyTriggerJsonBuilder.BuildDto(assetFolder, out var moduleCount, out var exportedTriggerCount, out var skippedDisabledCount, out var skippedInvalidIdCount);
@@ -84,7 +85,7 @@ namespace AbilityKit.Ability.Editor.Utilities
 
             ExportLog.Info($"ExportPlanFromFolder: {assetFolder}");
 
-            var outputDir = Path.Combine(Application.dataPath, "Resources", OutputResourcesDir);
+            var outputDir = GetAbilityResourcesDirectory();
             Directory.CreateDirectory(outputDir);
 
             var dto = TriggerPlanExportPipeline.BuildPlanDto(assetFolder, out var moduleCount, out var exportedTriggerCount, out var skippedDisabledCount, out var skippedInvalidIdCount);
@@ -104,6 +105,11 @@ namespace AbilityKit.Ability.Editor.Utilities
             ExportLog.Info($"Exported plans to: {outputPath}");
         }
 
+        private static string GetAbilityResourcesDirectory()
+        {
+            return Path.GetFullPath(Path.Combine(Application.dataPath, "..", PackageAbilityResourcesPath));
+        }
+
         internal static string[] FindAbilityModuleGuids(string assetFolder)
         {
             if (string.IsNullOrEmpty(assetFolder)) assetFolder = "Assets";
@@ -118,8 +124,8 @@ namespace AbilityKit.Ability.Editor.Utilities
 
             ExportLog.Warning($"FindAssets('t:AbilityModuleSO') found 0 under '{assetFolder}'. Trying fallback scan...");
 
-            // Fallback: some Unity setups may fail to resolve t:AbilityModuleSO queries for types defined in packages.
-            // Scan ScriptableObjects and filter by main asset type.
+            // 回退：某些 Unity 环境可能无法通过 t:AbilityModuleSO 查询解析包中定义的类型。
+            // 扫描 ScriptableObject，并按主资产类型过滤。
             var soGuids = AssetDatabase.FindAssets("t:ScriptableObject", new[] { assetFolder });
             var soCount = soGuids != null ? soGuids.Length : 0;
             if (soGuids == null || soGuids.Length == 0)

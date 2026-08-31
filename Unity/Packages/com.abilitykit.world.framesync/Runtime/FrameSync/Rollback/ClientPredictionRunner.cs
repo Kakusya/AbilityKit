@@ -4,6 +4,13 @@ using AbilityKit.Ability.World.Abstractions;
 
 namespace AbilityKit.Ability.FrameSync.Rollback
 {
+    /// <summary>
+    /// world.framesync 自带的客户端预测 runner。由 Shooter demo
+    /// (<c>ShooterClientFrameSyncController</c>) 和 MOBA test harness
+    /// (<c>ClientPredictionTestHarness</c>) 使用。
+    /// 规范预测栈 <c>ClientPredictionDriverModule</c> 也间接依赖同包的
+    /// <c>ClientPredictionReconciler</c>。
+    /// </summary>
     public sealed class ClientPredictionRunner
     {
         public Action<string> Log;

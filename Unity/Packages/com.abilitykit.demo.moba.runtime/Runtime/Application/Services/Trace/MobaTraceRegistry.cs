@@ -1,6 +1,9 @@
+using System;
 using System.Collections.Generic;
+using AbilityKit.Ability.FrameSync;
 using AbilityKit.Ability.World.Services;
 using AbilityKit.Ability.World.Services.Attributes;
+using AbilityKit.Demo.Moba.Diagnostics;
 using AbilityKit.Trace;
 
 namespace AbilityKit.Demo.Moba.Services
@@ -13,6 +16,9 @@ namespace AbilityKit.Demo.Moba.Services
         private readonly IMobaTraceLifecycle _lifecycle;
         private readonly IMobaTraceQuery _query;
 
+        [WorldInject(required: false)] private IMobaBattleDiagnosticEventSink _eventCollector = null;
+        [WorldInject(required: false)] private IFrameTime _frameTime = null;
+
         public MobaTraceRegistry()
             : base(new DictionaryTraceMetadataStore<MobaTraceMetadata>())
         {
@@ -20,7 +26,10 @@ namespace AbilityKit.Demo.Moba.Services
             _writer = new MobaTraceWriter(this);
             _lifecycle = new MobaTraceLifecycle(this);
             _query = new MobaTraceQuery(this);
+            RegistryEvent += OnRegistryEvent;
         }
+
+        protected override int Frame => _frameTime != null ? _frameTime.Frame.Value : 0;
 
         public TraceEndpoint ResolveEndpoint(MobaTraceKind kind, int configId)
         {
@@ -89,6 +98,29 @@ namespace AbilityKit.Demo.Moba.Services
             return _query.ValidateChain(rootId);
         }
 
+        public MobaTraceValidationResult ValidateChainDetailed(long rootId)
+        {
+            return _query.ValidateChainDetailed(rootId);
+        }
+
+        public bool TrySetSkillPhaseLocation(
+            long contextId,
+            int skillId,
+            int castFlowId,
+            string phaseId)
+        {
+            if (contextId == 0 || !TryGetNodeSnapshot(contextId, out var snapshot) ||
+                !(snapshot.Metadata is MobaTraceMetadata metadata))
+            {
+                return false;
+            }
+
+            metadata.SkillId = skillId;
+            metadata.CastFlowId = castFlowId;
+            metadata.PhaseId = phaseId ?? string.Empty;
+            return true;
+        }
+
         public override string GetKindName(int kind)
         {
             return ((MobaTraceKind)kind).ToString();
@@ -128,6 +160,167 @@ namespace AbilityKit.Demo.Moba.Services
         protected override string GetOriginSourceDisplay(MobaTraceMetadata metadata) => metadata.OriginSource;
         protected override long GetOriginTargetId(MobaTraceMetadata metadata) => metadata.OriginTargetId;
         protected override string GetOriginTargetDisplay(MobaTraceMetadata metadata) => metadata.OriginTarget;
+
+        // ===== TraceNode 诊断 Producer =====
+
+        internal void AttachDiagnosticCollector(IMobaBattleDiagnosticEventSink collector)
+        {
+            _eventCollector = collector;
+        }
+
+        internal void AttachFrameTime(IFrameTime frameTime)
+        {
+            _frameTime = frameTime;
+        }
+
+        private void OnRegistryEvent(TraceRegistryEvent evt)
+        {
+            if (!_eventCollector.IsEnabled(BattleDiagnosticEventChannel.Skill)) return;
+            if (evt.Kind != TraceRegistryEventKind.RootCreated
+                && evt.Kind != TraceRegistryEventKind.ChildCreated
+                && evt.Kind != TraceRegistryEventKind.NodeEnded)
+                return;
+
+            try
+            {
+                if (evt.Kind == TraceRegistryEventKind.NodeEnded)
+                {
+                    if (!TryResolveTraceNodeFields(evt.ContextId, out var kind, out var configId, out var sourceActorId, out var targetActorId))
+                        return;
+                    var draft = CreateTraceNodeEndedDraft(
+                        evt.ContextId,
+                        evt.RootId,
+                        evt.ParentId,
+                        kind,
+                        configId,
+                        sourceActorId,
+                        targetActorId,
+                        evt.Reason);
+                    _eventCollector.TryCollect(in draft);
+                }
+                else
+                {
+                    if (!TryResolveTraceNodeFields(evt.ContextId, out var kind, out var configId, out var sourceActorId, out var targetActorId))
+                        return;
+                    var draft = CreateTraceNodeStartedDraft(
+                        evt.ContextId,
+                        evt.RootId,
+                        evt.ParentId,
+                        kind,
+                        configId,
+                        sourceActorId,
+                        targetActorId);
+                    _eventCollector.TryCollect(in draft);
+                }
+            }
+            catch (Exception) { }
+        }
+
+        private bool TryResolveTraceNodeFields(
+            long contextId,
+            out int kind,
+            out int configId,
+            out long sourceActorId,
+            out long targetActorId)
+        {
+            kind = 0;
+            configId = 0;
+            sourceActorId = 0;
+            targetActorId = 0;
+            if (!TryGetNodeSnapshot(contextId, out var snapshot))
+                return false;
+            kind = snapshot.Kind;
+            if (snapshot.Metadata is MobaTraceMetadata metadata)
+            {
+                configId = metadata.ConfigId;
+                sourceActorId = metadata.SourceActorId;
+                targetActorId = metadata.TargetActorId;
+            }
+            return true;
+        }
+
+        internal static MobaBattleDiagnosticEventDraft CreateTraceNodeStartedDraft(
+            long contextId,
+            long rootContextId,
+            long parentContextId,
+            int traceKind,
+            int configId,
+            long sourceActorId,
+            long targetActorId)
+        {
+            var resolvedRoot = rootContextId != 0L ? rootContextId : contextId;
+            var summary = $"traceKind={traceKind}, configId={configId}, contextId={contextId}, parentContextId={parentContextId}";
+
+            return new MobaBattleDiagnosticEventDraft(
+                BattleDiagnosticEventKind.TraceNodeStarted,
+                BattleDiagnosticEventChannel.Skill,
+                BattleDiagnosticEventOutcome.Succeeded,
+                sourceActorId,
+                targetActorId,
+                configId,
+                resolvedRoot,
+                contextId,
+                summary: summary,
+                definitionKind: ResolveDefinitionKind(traceKind));
+        }
+
+        internal static MobaBattleDiagnosticEventDraft CreateTraceNodeEndedDraft(
+            long contextId,
+            long rootContextId,
+            long parentContextId,
+            int traceKind,
+            int configId,
+            long sourceActorId,
+            long targetActorId,
+            int reason)
+        {
+            var resolvedRoot = rootContextId != 0L ? rootContextId : contextId;
+            var summary = $"traceKind={traceKind}, configId={configId}, contextId={contextId}, parentContextId={parentContextId}, reason={reason}";
+
+            return new MobaBattleDiagnosticEventDraft(
+                BattleDiagnosticEventKind.TraceNodeEnded,
+                BattleDiagnosticEventChannel.Skill,
+                BattleDiagnosticEventOutcome.Succeeded,
+                sourceActorId,
+                targetActorId,
+                configId,
+                resolvedRoot,
+                contextId,
+                summary: summary,
+                definitionKind: ResolveDefinitionKind(traceKind));
+        }
+
+        private static BattleDiagnosticDefinitionKind ResolveDefinitionKind(int traceKind)
+        {
+            switch ((MobaTraceKind)traceKind)
+            {
+                case MobaTraceKind.SkillCast:
+                case MobaTraceKind.SkillEffect:
+                case MobaTraceKind.SkillPhase:
+                    return BattleDiagnosticDefinitionKind.Skill;
+                case MobaTraceKind.EffectExecution:
+                case MobaTraceKind.EffectAction:
+                    return BattleDiagnosticDefinitionKind.Effect;
+                case MobaTraceKind.BuffApply:
+                case MobaTraceKind.BuffTick:
+                case MobaTraceKind.BuffRemove:
+                    return BattleDiagnosticDefinitionKind.Buff;
+                case MobaTraceKind.ProjectileLaunch:
+                case MobaTraceKind.ProjectileHit:
+                    return BattleDiagnosticDefinitionKind.Projectile;
+                case MobaTraceKind.AreaSpawn:
+                case MobaTraceKind.AreaEnter:
+                case MobaTraceKind.AreaExit:
+                case MobaTraceKind.AreaExpire:
+                case MobaTraceKind.AreaStay:
+                    return BattleDiagnosticDefinitionKind.Area;
+                case MobaTraceKind.SummonSpawn:
+                case MobaTraceKind.SummonDeath:
+                    return BattleDiagnosticDefinitionKind.Summon;
+                default:
+                    return BattleDiagnosticDefinitionKind.Unknown;
+            }
+        }
     }
 
     /// <summary>

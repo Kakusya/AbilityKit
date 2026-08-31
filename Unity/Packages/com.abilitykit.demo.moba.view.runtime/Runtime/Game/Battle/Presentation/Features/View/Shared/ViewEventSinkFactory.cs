@@ -16,7 +16,9 @@ namespace AbilityKit.Game.Flow
                 runtime.VfxNode,
                 runtime.FloatingTexts,
                 runtime.AreaViews,
-                runtime.Resources);
+                runtime.Resources,
+                handlers: null,
+                hierarchy: runtime.Hierarchy);
         }
     }
 }

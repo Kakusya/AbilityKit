@@ -1,19 +1,21 @@
-﻿{
-    "conditions":  [
-
-                   ],
-    "id":  20002,
-    "enabled":  true,
-    "phase":  "immediate",
-    "event":  "skill.cast.complete",
-    "name":  "Trigger_20002",
-    "allowExternal":  true,
-    "actions":  [
-                    {
-                        "message":  "监听别人释放技能完成日志输出22222",
-                        "dump_args":  false,
-                        "type":  "debug_log"
-                    }
-                ],
-    "priority":  50
+{
+    "triggers": [
+        {
+            "id": 20002,
+            "name": "Trigger_20002",
+            "event": "skill.cast.complete",
+            "enabled": true,
+            "allowExternal": true,
+            "phase": "immediate",
+            "priority": 50,
+            "conditions": [],
+            "actions": [
+                {
+                    "message": "监听别人释放技能完成日志输出22222",
+                    "dump_args": false,
+                    "type": "debug_log"
+                }
+            ]
+        }
+    ]
 }

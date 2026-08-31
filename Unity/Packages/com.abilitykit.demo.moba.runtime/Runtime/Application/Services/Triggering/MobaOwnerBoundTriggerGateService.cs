@@ -17,6 +17,7 @@ namespace AbilityKit.Demo.Moba.Services.Triggering
         [WorldInject(required: false)] private MobaPassiveSkillLifecycleService _passiveGate = null;
 
         private readonly List<IMobaOwnerBoundTriggerGate> _runtimeGates = new List<IMobaOwnerBoundTriggerGate>(4);
+        private readonly Stack<MobaOwnerBoundTriggerExecutionSource> _evaluationSources = new Stack<MobaOwnerBoundTriggerExecutionSource>();
 
         public void RegisterGate(IMobaOwnerBoundTriggerGate gate)
         {
@@ -56,9 +57,34 @@ namespace AbilityKit.Demo.Moba.Services.Triggering
             return provider.TryGetExecutionSource(ownerKey, triggerId, out source) && source.HasExecutionSource;
         }
 
+        public IDisposable BeginEvaluationScope(in MobaOwnerBoundTriggerExecutionSource source)
+        {
+            if (!source.HasExecutionSource) return EmptyScope.Instance;
+            _evaluationSources.Push(source);
+            return new EvaluationScope(this);
+        }
+
+        public bool TryGetCurrentEvaluationSource(out MobaOwnerBoundTriggerExecutionSource source)
+        {
+            if (_evaluationSources.Count > 0)
+            {
+                source = _evaluationSources.Peek();
+                return source.HasExecutionSource;
+            }
+
+            source = default;
+            return false;
+        }
+
         public void Dispose()
         {
             _runtimeGates.Clear();
+            _evaluationSources.Clear();
+        }
+
+        private void EndEvaluationScope()
+        {
+            if (_evaluationSources.Count > 0) _evaluationSources.Pop();
         }
 
         private bool TryGetGate(long ownerKey, int triggerId, out IMobaOwnerBoundTriggerGate gate)
@@ -90,6 +116,32 @@ namespace AbilityKit.Demo.Moba.Services.Triggering
             }
 
             return false;
+        }
+
+        private sealed class EvaluationScope : IDisposable
+        {
+            private MobaOwnerBoundTriggerGateService _owner;
+
+            public EvaluationScope(MobaOwnerBoundTriggerGateService owner)
+            {
+                _owner = owner;
+            }
+
+            public void Dispose()
+            {
+                var owner = _owner;
+                _owner = null;
+                owner?.EndEvaluationScope();
+            }
+        }
+
+        private sealed class EmptyScope : IDisposable
+        {
+            public static readonly EmptyScope Instance = new EmptyScope();
+
+            public void Dispose()
+            {
+            }
         }
     }
 }

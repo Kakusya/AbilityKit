@@ -1,8 +1,5 @@
-using System;
-using AbilityKit.Ability.FrameSync;
 using AbilityKit.Ability.Host;
 using AbilityKit.Core.Logging;
-using AbilityKit.Protocol.Moba;
 using AbilityKit.Ability.World.Abstractions;
 using AbilityKit.Game.Battle.Requests;
 
@@ -22,25 +19,19 @@ namespace AbilityKit.Game.Flow
             var gateway = _plan.Gateway;
             var auto = _plan.Auto;
 
-            if (_plan.HostMode == BattleStartConfig.BattleHostMode.GatewayRemote && gateway.UseGatewayTransport)
+            if (_plan.HostMode == BattleHostMode.GatewayRemote && gateway.UseGatewayTransport)
             {
-                Log.Info("[BattleSessionFeature] GatewayRemote transport active. Skipping AutoCreateWorld/AutoJoin (not applicable). Use GatewayAutoCreateRoom/GatewayAutoJoinRoom for room lifecycle. AutoConnect/AutoReady are supported.");
+                Log.Info("[BattleSessionFeature] GatewayRemote transport active. Skipping AutoCreateWorld/AutoJoin/AutoReady (room lifecycle owns these actions). AutoConnect is supported.");
                 if (auto.AutoConnect)
                 {
                     Log.Info($"[BattleSessionFeature] GatewayRemote AutoConnect -> Connect() to {gateway.Host}:{gateway.Port}");
                     _session?.Connect();
                 }
 
-                if (auto.AutoReady)
-                {
-                    Log.Info($"[BattleSessionFeature] GatewayRemote AutoReady -> SubmitInput(Ready). worldId='{world.WorldId}' playerId={world.PlayerId} frame={_lastFrame + 1}");
-                    var cmd = new PlayerInputCommand(new FrameIndex(_lastFrame + 1), new PlayerId(world.PlayerId), opCode: MobaOpCodes.Input.Ready, payload: Array.Empty<byte>());
-                    _session?.SubmitInput(new SubmitInputRequest(new WorldId(world.WorldId), cmd));
-                }
                 return;
             }
 
-            var isLocal = sync.SyncMode != BattleSyncMode.SnapshotAuthority && _plan.HostMode == BattleStartConfig.BattleHostMode.Local;
+            var isLocal = sync.SyncMode != BattleSyncMode.SnapshotAuthority && _plan.HostMode == BattleHostMode.Local;
             if (isLocal) _session?.Connect();
             else if (auto.AutoConnect) _session?.Connect();
 
@@ -48,11 +39,6 @@ namespace AbilityKit.Game.Flow
             if (auto.AutoJoin)
             {
                 _session?.Join(new JoinWorldRequest(new WorldId(world.WorldId), new PlayerId(world.PlayerId)));
-            }
-            if (auto.AutoReady)
-            {
-                var cmd = new PlayerInputCommand(new FrameIndex(_lastFrame + 1), new PlayerId(world.PlayerId), opCode: MobaOpCodes.Input.Ready, payload: Array.Empty<byte>());
-                _session?.SubmitInput(new SubmitInputRequest(new WorldId(world.WorldId), cmd));
             }
         }
     }

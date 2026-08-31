@@ -8,21 +8,45 @@
     "TriggerIds": [],
     "ContinuousTagTemplateId": 0,
     "Tags": [],
-    "Modifiers": [],
+    "Modifiers": [
+      {
+        "TargetKind": 1,
+        "AttrTypeId": 13,
+        "TargetId": 13,
+        "Op": 0,
+        "Value": 0,
+        "MagnitudeSourceType": 5,
+        "MagnitudeBaseValue": 0,
+        "MagnitudeCoefficient": 0.3,
+        "MagnitudeContextKey": "resource.rage.ratio",
+        "Priority": 20
+      },
+      {
+        "TargetKind": 1,
+        "AttrTypeId": 8,
+        "TargetId": 8,
+        "Op": 3,
+        "Value": 0,
+        "MagnitudeSourceType": 5,
+        "MagnitudeBaseValue": 0,
+        "MagnitudeCoefficient": 0.2,
+        "MagnitudeContextKey": "resource.rage.ratio",
+        "Priority": 20
+      },
+      {
+        "TargetKind": 1,
+        "AttrTypeId": 9,
+        "TargetId": 9,
+        "Op": 3,
+        "Value": 0,
+        "MagnitudeSourceType": 5,
+        "MagnitudeBaseValue": 0,
+        "MagnitudeCoefficient": 0.2,
+        "MagnitudeContextKey": "resource.rage.ratio",
+        "Priority": 20
+      }
+    ],
     "RequireOutOfCombat": true,
     "OutOfCombatSeconds": 5
-  },
-  {
-    "Id": 10020101,
-    "Name": "小乔-绽放之舞-投射物发射过程",
-    "DurationMs": 0,
-    "IntervalMs": 0,
-    "IntervalTriggerIds": [],
-    "TriggerIds": [],
-    "ContinuousTagTemplateId": 0,
-    "Tags": [],
-    "Modifiers": [],
-    "RequireOutOfCombat": false,
-    "OutOfCombatSeconds": 0
   }
 ]

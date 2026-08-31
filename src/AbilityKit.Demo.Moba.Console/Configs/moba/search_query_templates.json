@@ -2,18 +2,185 @@
     {
         "Id":  1,
         "Name":  "范围查询",
-        "CenterMode":  0,
-        "Radius":  10.0,
         "MaxCount":  10,
-        "ExcludeCaster":  true
+        "ExplicitTargetPolicy":  2,
+        "Provider":  {
+                         "Kind":  1
+                     },
+        "Rules":  [
+                      {
+                          "Kind":  257,
+                          "Center":  0,
+                          "Radius":  10.0
+                      },
+                      {
+                          "Kind":  769
+                      }
+                  ],
+        "Selector":  {
+                         "Kind":  4097
+                     },
+        "Scorers":  [
+                        {
+                            "Kind":  8196,
+                            "Source":  0
+                        }
+                    ]
     },
     {
         "Id":  2,
         "Name":  "锥形查询",
-        "CenterMode":  0,
-        "Radius":  8.0,
         "MaxCount":  5,
-        "ExcludeCaster":  true
+        "ExplicitTargetPolicy":  2,
+        "Provider":  {
+                         "Kind":  1
+                     },
+        "Rules":  [
+                      {
+                          "Kind":  258,
+                          "Center":  0,
+                          "Forward":  1,
+                          "Radius":  8.0,
+                          "HalfAngleDeg":  45.0
+                      },
+                      {
+                          "Kind":  769
+                      }
+                  ],
+        "Selector":  {
+                         "Kind":  4097
+                     },
+        "Scorers":  [
+                        {
+                            "Kind":  8196,
+                            "Source":  0
+                        }
+                    ]
+    },
+    {
+        "Id":  50010201,
+        "Name":  "廉颇-熔岩重击-自身范围敌方查询",
+        "MaxCount":  10,
+        "ExplicitTargetPolicy":  2,
+        "Provider":  {
+                         "Kind":  6
+                     },
+        "Rules":  [
+                      {
+                          "Kind":  257,
+                          "Center":  0,
+                          "Radius":  3.5
+                      }
+                  ],
+        "Selector":  {
+                         "Kind":  4097
+                     },
+        "Scorers":  [
+                        {
+                            "Kind":  8196,
+                            "Source":  0
+                        }
+                    ]
+    },
+    {
+        "Id":  50010301,
+        "Name":  "廉颇-天崩地裂-自身范围敌方查询",
+        "MaxCount":  10,
+        "ExplicitTargetPolicy":  2,
+        "Provider":  {
+                         "Kind":  6
+                     },
+        "Rules":  [
+                      {
+                          "Kind":  257,
+                          "Center":  0,
+                          "Radius":  4.5
+                      }
+                  ],
+        "Selector":  {
+                         "Kind":  4097
+                     },
+        "Scorers":  [
+                        {
+                            "Kind":  8196,
+                            "Source":  0
+                        }
+                    ]
+    },
+    {
+        "Id":  50020201,
+        "Name":  "小乔-甜蜜恋风-目标点范围查询",
+        "MaxCount":  10,
+        "ExplicitTargetPolicy":  2,
+        "Provider":  {
+                         "Kind":  6
+                     },
+        "Rules":  [
+                      {
+                          "Kind":  257,
+                          "Center":  1,
+                          "Radius":  4.0
+                      }
+                  ],
+        "Selector":  {
+                         "Kind":  4097
+                     },
+        "Scorers":  [
+                        {
+                            "Kind":  8196,
+                            "Source":  0
+                        }
+                    ]
+    },
+    {
+        "Id":  50020301,
+        "Name":  "小乔-星华缭乱-自身周围落星目标查询",
+        "MaxCount":  1,
+        "ExplicitTargetPolicy":  2,
+        "Provider":  {
+                         "Kind":  6
+                     },
+        "Rules":  [
+                      {
+                          "Kind":  257,
+                          "Center":  0,
+                          "Radius":  8.0
+                      }
+                  ],
+        "Selector":  {
+                         "Kind":  4097
+                     },
+        "Scorers":  [
+                        {
+                            "Kind":  8194,
+                            "RandomSeed":  10020301
+                        }
+                    ]
+    },
+    {
+        "Id":  50020302,
+        "Name":  "小乔-星华缭乱-落星区域内敌方查询",
+        "MaxCount":  1,
+        "ExplicitTargetPolicy":  2,
+        "Provider":  {
+                         "Kind":  6
+                     },
+        "Rules":  [
+                      {
+                          "Kind":  257,
+                          "Center":  1,
+                          "Radius":  2.5
+                      }
+                  ],
+        "Selector":  {
+                         "Kind":  4097
+                     },
+        "Scorers":  [
+                        {
+                            "Kind":  8196,
+                            "Source":  1
+                        }
+                    ]
     },
     {
         "Id":  50030201,
@@ -32,13 +199,69 @@
                           "HalfAngleDeg":  35
                       }
                   ],
-        "Scorer":  {
-                       "Kind":  8196,
-                       "Source":  0
-                   },
         "Selector":  {
                          "Kind":  4097
-                     }
+                     },
+        "Scorers":  [
+                        {
+                            "Kind":  8196,
+                            "Source":  0
+                        }
+                    ]
+    },
+    {
+        "Id":  50030202,
+        "Name":  "赵云-破云之龙-二档前方突刺敌方查询",
+        "MaxCount":  10,
+        "ExplicitTargetPolicy":  2,
+        "Provider":  {
+                         "Kind":  6
+                     },
+        "Rules":  [
+                      {
+                          "Kind":  258,
+                          "Center":  0,
+                          "Forward":  1,
+                          "Radius":  7.0,
+                          "HalfAngleDeg":  40.0
+                      }
+                  ],
+        "Selector":  {
+                         "Kind":  4097
+                     },
+        "Scorers":  [
+                        {
+                            "Kind":  8196,
+                            "Source":  0
+                        }
+                    ]
+    },
+    {
+        "Id":  50030203,
+        "Name":  "赵云-破云之龙-三档前方突刺敌方查询",
+        "MaxCount":  10,
+        "ExplicitTargetPolicy":  2,
+        "Provider":  {
+                         "Kind":  6
+                     },
+        "Rules":  [
+                      {
+                          "Kind":  258,
+                          "Center":  0,
+                          "Forward":  1,
+                          "Radius":  8.0,
+                          "HalfAngleDeg":  45.0
+                      }
+                  ],
+        "Selector":  {
+                         "Kind":  4097
+                     },
+        "Scorers":  [
+                        {
+                            "Kind":  8196,
+                            "Source":  0
+                        }
+                    ]
     },
     {
         "Id":  50030301,
@@ -55,13 +278,40 @@
                           "Radius":  4.5
                       }
                   ],
-        "Scorer":  {
-                       "Kind":  8196,
-                       "Source":  0
-                   },
         "Selector":  {
                          "Kind":  4097
-                     }
+                     },
+        "Scorers":  [
+                        {
+                            "Kind":  8196,
+                            "Source":  0
+                        }
+                    ]
+    },
+    {
+        "Id":  50030302,
+        "Name":  "赵云-天翔之龙-三档目标点范围敌方查询",
+        "MaxCount":  10,
+        "ExplicitTargetPolicy":  2,
+        "Provider":  {
+                         "Kind":  6
+                     },
+        "Rules":  [
+                      {
+                          "Kind":  257,
+                          "Center":  1,
+                          "Radius":  5.5
+                      }
+                  ],
+        "Selector":  {
+                         "Kind":  4097
+                     },
+        "Scorers":  [
+                        {
+                            "Kind":  8196,
+                            "Source":  0
+                        }
+                    ]
     },
     {
         "Id":  50040201,
@@ -78,13 +328,15 @@
                           "Radius":  3.5
                       }
                   ],
-        "Scorer":  {
-                       "Kind":  8196,
-                       "Source":  0
-                   },
         "Selector":  {
                          "Kind":  4097
-                     }
+                     },
+        "Scorers":  [
+                        {
+                            "Kind":  8196,
+                            "Source":  0
+                        }
+                    ]
     },
     {
         "Id":  50040301,
@@ -101,12 +353,114 @@
                           "Radius":  5
                       }
                   ],
-        "Scorer":  {
-                       "Kind":  8196,
-                       "Source":  0
-                   },
         "Selector":  {
                          "Kind":  4097
-                     }
+                     },
+        "Scorers":  [
+                        {
+                            "Kind":  8196,
+                            "Source":  0
+                        }
+                    ]
+    },
+    {
+        "Id":  50050201,
+        "Name":  "妲己-偶像魅力-施法范围锁定敌方查询",
+        "MaxCount":  1,
+        "ExplicitTargetPolicy":  2,
+        "Provider":  {
+                         "Kind":  6
+                     },
+        "Rules":  [
+                      {
+                          "Kind":  257,
+                          "Center":  0,
+                          "Radius":  10.0
+                      }
+                  ],
+        "Selector":  {
+                         "Kind":  4097
+                     },
+        "Scorers":  [
+                        {
+                            "Kind":  8196,
+                            "Source":  0
+                        }
+                    ]
+    },
+    {
+        "Id":  50050301,
+        "Name":  "妲己-女王崇拜-自身周围狐火目标查询",
+        "MaxCount":  1,
+        "ExplicitTargetPolicy":  2,
+        "Provider":  {
+                         "Kind":  6
+                     },
+        "Rules":  [
+                      {
+                          "Kind":  257,
+                          "Center":  0,
+                          "Radius":  8.0
+                      }
+                  ],
+        "Selector":  {
+                         "Kind":  4097
+                     },
+        "Scorers":  [
+                        {
+                            "Kind":  8196,
+                            "Source":  0
+                        }
+                    ]
+    },
+    {
+        "Id":  50060101,
+        "Name":  "嬴政-王者惩戒-目标点剑阵敌方查询",
+        "MaxCount":  10,
+        "ExplicitTargetPolicy":  2,
+        "Provider":  {
+                         "Kind":  6
+                     },
+        "Rules":  [
+                      {
+                          "Kind":  257,
+                          "Center":  1,
+                          "Radius":  4.0
+                      }
+                  ],
+        "Selector":  {
+                         "Kind":  4097
+                     },
+        "Scorers":  [
+                        {
+                            "Kind":  8196,
+                            "Source":  0
+                        }
+                    ]
+    },
+    {
+        "Id":  50060201,
+        "Name":  "嬴政-王者守御-自身周围敌方查询",
+        "MaxCount":  10,
+        "ExplicitTargetPolicy":  2,
+        "Provider":  {
+                         "Kind":  6
+                     },
+        "Rules":  [
+                      {
+                          "Kind":  257,
+                          "Center":  0,
+                          "Radius":  4.0
+                      }
+                  ],
+        "Selector":  {
+                         "Kind":  4097
+                     },
+        "Scorers":  [
+                        {
+                            "Kind":  8196,
+                            "Source":  0
+                        }
+                    ]
     }
 ]

@@ -1,5 +1,6 @@
 using System;
 using AbilityKit.Ability.World.DI;
+using AbilityKit.Ability.World.Services;
 using AbilityKit.Ability.World.Services.Attributes;
 using Xunit;
 
@@ -57,6 +58,7 @@ public sealed class WorldInjectAttributeTests
     {
         var builder = new WorldContainerBuilder();
         builder.RegisterType<IDependencyContract, ContractDependency>(WorldLifetime.Scoped);
+        builder.RegisterType<ExplicitServiceTypeDependency, ExplicitServiceTypeDependency>(WorldLifetime.Scoped);
         builder.RegisterType<TargetWithExplicitServiceType, TargetWithExplicitServiceType>(WorldLifetime.Scoped);
 
         using var container = builder.Build();
@@ -64,7 +66,8 @@ public sealed class WorldInjectAttributeTests
 
         var target = scope.Resolve<TargetWithExplicitServiceType>();
 
-        Assert.IsType<ContractDependency>(target.Dependency);
+        // [WorldInject(typeof(ExplicitServiceTypeDependency))] 应该注入 ExplicitServiceTypeDependency
+        Assert.IsType<ExplicitServiceTypeDependency>(target.Dependency);
     }
 
     private sealed class FieldDependency
@@ -110,9 +113,46 @@ public sealed class WorldInjectAttributeTests
         public MissingDependency RequiredDependency => _requiredDependency;
     }
 
+    private sealed class ExplicitServiceTypeDependency
+    {
+    }
+
     private sealed class TargetWithExplicitServiceType
     {
-        [WorldInject(typeof(IDependencyContract))]
-        public IDependencyContract Dependency { get; private set; } = null!;
+        [WorldInject(typeof(ExplicitServiceTypeDependency))]
+        public ExplicitServiceTypeDependency Dependency { get; private set; } = null!;
+    }
+
+    [Fact]
+    public void Resolve_CircularDependencyBetweenScopedServices_Throws()
+    {
+        var builder = new WorldContainerBuilder();
+
+        // ScopedA 需要 ScopedB，ScopedB 需要 ScopedA，形成循环
+        builder.RegisterType<IScopedA, ScopedA>(WorldLifetime.Scoped);
+        builder.RegisterType<IScopedB, ScopedB>(WorldLifetime.Scoped);
+
+        using var container = builder.Build();
+        using var scope = container.CreateScope();
+
+        // 尝试解析 IScopedA 应该抛出循环依赖异常
+        // ScopedA 构造函数需要 IScopedB
+        // IScopedB 的实现 ScopedB 构造函数需要 IScopedA
+        // IScopedA 的实现 ScopedA 构造函数需要 IScopedB -> 循环！
+        var ex = Assert.Throws<InvalidOperationException>(() => scope.Resolve<IScopedA>());
+        Assert.True(ex.Message.Contains("Circular dependency"), "Expected circular dependency message, got: " + ex.Message);
+    }
+
+    private interface IScopedA { }
+    private interface IScopedB { }
+
+    private sealed class ScopedA : IScopedA
+    {
+        public ScopedA(IScopedB b) { }
+    }
+
+    private sealed class ScopedB : IScopedB
+    {
+        public ScopedB(IScopedA a) { }
     }
 }

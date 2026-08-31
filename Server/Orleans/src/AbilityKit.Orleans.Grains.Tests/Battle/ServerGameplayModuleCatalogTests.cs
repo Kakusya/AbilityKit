@@ -1,4 +1,10 @@
+using System.Collections.Generic;
 using System.Linq;
+using AbilityKit.Ability.Host.Extensions.Moba.Runtime;
+using AbilityKit.Protocol.Moba;
+using AbilityKit.Protocol.Moba.StateSync;
+using AbilityKit.Ability.World.Services;
+using AbilityKit.Demo.Moba.Systems;
 using AbilityKit.Demo.Moba.Worlds.Blueprints;
 using AbilityKit.Orleans.Contracts.Battle;
 using AbilityKit.Demo.Shooter;
@@ -6,8 +12,10 @@ using AbilityKit.Orleans.Contracts.Shooter;
 using AbilityKit.Demo.Shooter.Runtime;
 using AbilityKit.Orleans.Contracts.Rooms;
 using AbilityKit.Orleans.Grains.Battle;
+using AbilityKit.Orleans.Grains.Battle.Gameplay;
 using AbilityKit.Orleans.Grains.Gameplay;
 using AbilityKit.Orleans.Grains.Gameplays.Moba.Battle;
+using AbilityKit.Orleans.Grains.Gameplays.Moba.Protocol;
 using AbilityKit.Orleans.Grains.Rooms;
 using AbilityKit.Orleans.Grains.Gameplays.Moba.Rooms;
 using AbilityKit.Orleans.Grains.Gameplays.Shooter.Battle;
@@ -52,18 +60,16 @@ public sealed class ServerGameplayModuleCatalogTests
         Assert.Equal("frame-sync-authority", mobaProfile.DefaultTemplateId);
         Assert.True(mobaProfile.SupportsFrameSync);
         Assert.False(mobaProfile.SupportsStateSyncPush);
-        Assert.True(mobaProfile.SupportsTemplate("state-sync-authority"));
+        Assert.False(mobaProfile.SupportsTemplate("state-sync-authority"));
         Assert.Equal(ServerBattleSyncMode.FrameSync, mobaProfile.ResolveTemplate(null).Mode);
-        Assert.Equal(ServerBattleRuntimeMode.FrameRelayOnly, mobaProfile.ResolveTemplate(null).RuntimeMode);
-        Assert.False(mobaProfile.ResolveTemplate(null).RequiresBattleRuntime);
+        Assert.Equal(ServerBattleRuntimeMode.BattleWorldWithFrameSync, mobaProfile.ResolveTemplate(null).RuntimeMode);
+        Assert.True(mobaProfile.ResolveTemplate(null).RequiresBattleRuntime);
         Assert.Equal(ServerBattleSyncMode.FrameSync, mobaProfile.ResolveTemplate("frame-sync-authority").Mode);
-        Assert.Equal(ServerBattleRuntimeMode.FrameRelayOnly, mobaProfile.ResolveTemplate("frame-sync-authority").RuntimeMode);
-        Assert.Equal(ServerBattleSyncMode.StateSync, mobaProfile.ResolveTemplate("state-sync-authority").Mode);
-        Assert.True(mobaProfile.ResolveTemplate("state-sync-authority").RequiresBattleRuntime);
+        Assert.Equal(ServerBattleRuntimeMode.BattleWorldWithFrameSync, mobaProfile.ResolveTemplate("frame-sync-authority").RuntimeMode);
         Assert.Equal("frame-sync-authority", moduleCatalog.GameplayCatalog.Resolve(GameplayRoomTypes.Moba).DefaultSyncTemplateId);
         Assert.Equal(ServerBattleSyncMode.StateSync, shooterProfile.DefaultMode);
-        Assert.Equal(ShooterServerProtocol.PredictRollbackAuthorityTemplate, shooterProfile.DefaultTemplateId);
-        Assert.Equal(ShooterServerProtocol.PredictRollbackAuthorityTemplate, moduleCatalog.GameplayCatalog.Resolve(ShooterGameplay.RoomType).DefaultSyncTemplateId);
+        Assert.Equal(ShooterServerProtocol.StateSyncAuthorityTemplate, shooterProfile.DefaultTemplateId);
+        Assert.Equal(ShooterServerProtocol.StateSyncAuthorityTemplate, moduleCatalog.GameplayCatalog.Resolve(ShooterGameplay.RoomType).DefaultSyncTemplateId);
         Assert.True(shooterProfile.SupportsStateSyncPush);
         Assert.False(shooterProfile.SupportsFrameSync);
         Assert.True(shooterProfile.SupportsTemplate(ShooterServerProtocol.AuthoritativeInterpolationPresentationTemplate));
@@ -108,7 +114,7 @@ public sealed class ServerGameplayModuleCatalogTests
         var shooterStartRoute = RoomFrameSyncRoute.ResolveStartRoute(shooterSummary, "battle-2", CreateInitParams(syncTemplateId: null));
 
         Assert.NotNull(mobaFrameRoute);
-        Assert.False(mobaFrameStartRoute.RequiresBattleRuntime);
+        Assert.True(mobaFrameStartRoute.RequiresBattleRuntime);
         Assert.False(mobaFrameStartRoute.IsUnsupportedTemplate);
         Assert.Equal("frame-sync-authority", mobaFrameStartRoute.SyncTemplateId);
         Assert.Equal(123UL, mobaFrameRoute!.RoomId);
@@ -116,10 +122,11 @@ public sealed class ServerGameplayModuleCatalogTests
         Assert.Equal(30, mobaFrameRoute.TickRate);
         Assert.Equal("battle-1", mobaFrameRoute.BattleId);
         Assert.Equal("frame-sync-authority", mobaFrameRoute.SyncTemplateId);
+        Assert.True(mobaFrameRoute.EnableRecording);
         Assert.Null(mobaStateRoute);
         Assert.True(mobaStateStartRoute.RequiresBattleRuntime);
-        Assert.False(mobaStateStartRoute.IsUnsupportedTemplate);
-        Assert.Equal("state-sync-authority", mobaStateStartRoute.SyncTemplateId);
+        Assert.True(mobaStateStartRoute.IsUnsupportedTemplate);
+        Assert.Equal("frame-sync-authority", mobaStateStartRoute.SyncTemplateId);
         Assert.Null(shooterRoute);
         Assert.True(shooterStartRoute.RequiresBattleRuntime);
         Assert.False(shooterStartRoute.IsUnsupportedTemplate);
@@ -136,7 +143,8 @@ public sealed class ServerGameplayModuleCatalogTests
         Assert.Equal(GameplayRoomTypes.Moba, moba.RoomType);
         Assert.True(moba.RequiresPlayerLoadout);
         Assert.True(moba.SupportsFrameSync);
-        Assert.Contains("state-sync-authority", moba.SupportedSyncTemplateIds);
+        Assert.False(moba.SupportsStateSyncPush);
+        Assert.Equal(new[] { "frame-sync-authority" }, moba.SupportedSyncTemplateIds);
         Assert.Equal(ShooterGameplay.RoomType, shooter.RoomType);
         Assert.False(shooter.RequiresPlayerLoadout);
         Assert.True(shooter.SupportsStateSyncPush);
@@ -150,13 +158,118 @@ public sealed class ServerGameplayModuleCatalogTests
     [Fact]
     public void ServerBattleWorldManager_WhenCreatingWorlds_UsesGameplayModuleWorldBlueprints()
     {
-        using var worldManager = new ServerBattleWorldManager(NullLogger.Instance);
+        const string mobaRoomId = "moba-room";
+        const int tickRate = 30;
+        var initParams = CreateMobaWorldInitParams();
+        var launchSpec = DefaultOrleansBattleProtocolMapper.Instance.CreateLaunchSpec(
+            mobaRoomId,
+            tickRate,
+            initParams);
+        var initData = launchSpec.ToWorldInitData(MobaWorldBootstrapModule.InitOpCode);
 
-        var mobaWorld = worldManager.CreateBattleWorld("moba-room", 30);
-        var shooterWorld = worldManager.CreateBattleWorld("shooter-room", ShooterGameplay.WorldType, 30);
+        using var worldManager = new ServerBattleWorldManager(NullLogger.Instance);
+        var mobaWorld = worldManager.CreateBattleWorld(
+            mobaRoomId,
+            tickRate,
+            options =>
+            {
+                options.ServiceBuilder ??= WorldServiceContainerFactory.CreateDefaultOnly();
+                options.ServiceBuilder.RegisterInstance(initData);
+            });
+        var shooterWorld = worldManager.CreateBattleWorld("shooter-room", ShooterGameplay.WorldType, tickRate);
 
         Assert.Equal(MobaBattleWorldBlueprint.Type, mobaWorld.WorldType);
+        Assert.True(mobaWorld.Services.TryResolve<IMobaBattleRuntimePort>(out var mobaRuntimePort));
+        Assert.NotNull(mobaRuntimePort);
         Assert.Equal(ShooterGameplay.WorldType, shooterWorld.WorldType);
+    }
+
+    [Fact]
+    public void MobaBattleRuntimeSession_WhenBootstrapStartsGameplay_StartsSuccessfullyOnce()
+    {
+        const string battleId = "moba-runtime-start";
+        using var worldManager = new ServerBattleWorldManager(NullLogger.Instance);
+        var adapter = new MobaBattleRuntimeAdapter(
+            worldManager,
+            DefaultOrleansBattleProtocolMapper.Instance);
+        using var session = adapter.CreateSession(battleId);
+
+        var result = session.Start(CreateMobaWorldInitParams());
+
+        Assert.True(result.Succeeded, result.Error);
+        Assert.Null(result.Error);
+        var initialState = session.CreateStateSyncPush(1UL, frame: 0, isFullSnapshot: true);
+        var actor = Assert.Single(initialState.Actors);
+        Assert.Equal(-12f, actor.X, 3);
+        Assert.Equal(0f, actor.Z, 3);
+        Assert.True(session.Tick(1, 30, 1f / 30f));
+    }
+
+    [Fact]
+    public void MobaBattleRuntimeSession_WhenMoveInputIsSubmitted_AdvancesAuthoritativeProjection()
+    {
+        const string battleId = "moba-runtime-authoritative-move";
+        using var worldManager = new ServerBattleWorldManager(NullLogger.Instance);
+        var adapter = new MobaBattleRuntimeAdapter(
+            worldManager,
+            DefaultOrleansBattleProtocolMapper.Instance);
+        using var session = adapter.CreateSession(battleId);
+
+        var start = session.Start(CreateMobaWorldInitParams());
+        Assert.True(start.Succeeded, start.Error);
+
+        var initialState = session.CreateStateSyncPush(1UL, frame: 0, isFullSnapshot: true);
+        var initialActor = Assert.Single(initialState.Actors);
+        var submitted = session.SubmitInputs(
+            0,
+            new[]
+            {
+                new BattleInputItem
+                {
+                    PlayerId = 1,
+                    OpCode = MobaOpCodes.Input.Move,
+                    Payload = MobaMoveCodec.Serialize(1f, 0f)
+                }
+            });
+
+        Assert.Equal(1, submitted);
+        Assert.True(session.Tick(1, 30, 1f / 30f));
+
+        var movedState = session.CreateStateSyncPush(1UL, frame: 1, isFullSnapshot: true);
+        var movedActor = Assert.Single(movedState.Actors);
+        Assert.True(
+            movedActor.X > initialActor.X,
+            $"Authoritative actor did not move. initial=({initialActor.X},{initialActor.Y},{initialActor.Z}), moved=({movedActor.X},{movedActor.Y},{movedActor.Z})");
+    }
+
+    [Fact]
+    public void MobaBattleRuntimeSession_WhenInputIsRejected_ExposesRuntimeDiagnostic()
+    {
+        const string battleId = "moba-runtime-input-diagnostic";
+        using var worldManager = new ServerBattleWorldManager(NullLogger.Instance);
+        var adapter = new MobaBattleRuntimeAdapter(
+            worldManager,
+            DefaultOrleansBattleProtocolMapper.Instance);
+        using var session = adapter.CreateSession(battleId);
+
+        var start = session.Start(CreateMobaWorldInitParams());
+        Assert.True(start.Succeeded, start.Error);
+
+        var submitted = session.SubmitInputs(
+            0,
+            new[]
+            {
+                new BattleInputItem
+                {
+                    PlayerId = 1,
+                    OpCode = int.MaxValue,
+                    Payload = Array.Empty<byte>()
+                }
+            });
+
+        Assert.Equal(0, submitted);
+        var diagnostics = Assert.IsAssignableFrom<IBattleRuntimeInputDiagnostics>(session);
+        Assert.Contains("NoCommandHandled", diagnostics.LastInputSubmitDiagnostic);
     }
 
     private static RoomSummary CreateSummary(string roomType)
@@ -173,6 +286,33 @@ public sealed class ServerGameplayModuleCatalogTests
             OwnerAccountId: "account-a",
             CreatedAtUnixMs: 0,
             Tags: null);
+    }
+
+    private static BattleInitParams CreateMobaWorldInitParams()
+    {
+        return new BattleInitParams
+        {
+            WorldId = 1UL,
+            TickRate = 30,
+            MapId = 1,
+            GameplayId = 1,
+            RandomSeed = 12345,
+            WorldType = MobaBattleWorldBlueprint.Type,
+            Players = new List<PlayerInitInfo>
+            {
+                new()
+                {
+                    PlayerId = 1,
+                    ActorId = 1,
+                    HeroId = 1001,
+                    TeamId = 1,
+                    Level = 1,
+                    AttributeTemplateId = 1001,
+                    BasicAttackSkillId = 10010001,
+                    SkillIds = new List<int> { 10010101, 10010201, 10010301 }
+                }
+            }
+        };
     }
 
     private static BattleInitParams CreateInitParams(string? syncTemplateId)

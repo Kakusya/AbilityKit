@@ -20,7 +20,15 @@ namespace AbilityKit.Demo.Moba.Services.Triggering.PlanActions
                 return;
             }
 
-            var coreInput = MobaPlanActionInputResolver.Resolve(triggerArgs, ctx);
+            if (!MobaPlanActionInputResolver.TryResolve(
+                    triggerArgs,
+                    ctx,
+                    out var coreInput))
+            {
+                LogRejected(ctx, "requires combat execution context.");
+                return;
+            }
+
             var effectInput = new MobaEffectActionInput(in coreInput);
             var targets = PooledMobaPlanActionLists.GetIntList();
             try
@@ -30,16 +38,19 @@ namespace AbilityKit.Demo.Moba.Services.Triggering.PlanActions
                     return;
                 }
 
-                var sourceActorId = args.SourceActorId > 0 ? args.SourceActorId : effectInput.CasterActorId;
+                // A cleanse targets every matching slow, regardless of which actor applied it.
+                var sourceActorId = args.RemoveSlow ? 0 : (args.SourceActorId > 0 ? args.SourceActorId : effectInput.CasterActorId);
                 var removed = 0;
                 for (var i = 0; i < targets.Count; i++)
                 {
                     var targetActorId = targets[i];
                     if (targetActorId <= 0) continue;
-                    removed += buffs.RemoveBuffsImmediate(targetActorId, args.BuffId, sourceActorId, args.RemoveAll, args.Reason);
+                    removed += args.RemoveSlow
+                        ? buffs.RemoveBuffsWithTagImmediate(targetActorId, "Debuff.Slow", sourceActorId, args.RemoveAll, args.Reason)
+                        : buffs.RemoveBuffsImmediate(targetActorId, args.BuffId, sourceActorId, args.RemoveAll, args.Reason);
                 }
 
-                LogApplied($"buffId={args.BuffId} source={sourceActorId} targets={targets.Count} removed={removed} reason={args.Reason}");
+                LogApplied($"buffId={args.BuffId} removeSlow={args.RemoveSlow} source={sourceActorId} targets={targets.Count} removed={removed} reason={args.Reason}");
             }
             finally
             {

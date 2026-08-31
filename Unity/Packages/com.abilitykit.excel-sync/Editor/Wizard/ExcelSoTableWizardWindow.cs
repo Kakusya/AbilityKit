@@ -26,7 +26,7 @@ namespace AbilityKit.ExcelSync.Editor
         private string _codeOutputFolderAssetsPath = DefaultCodeOutputFolder;
         private string _assetOutputFolderAssetsPath = DefaultAssetOutputFolder;
 
-        [MenuItem("Tools/Excel/Create DataList Table From Excel...")]
+        [MenuItem("Tools/AbilityKit/Framework/Excel/Create DataList Table From Excel...")]
         private static void Open()
         {
             GetWindow<ExcelSoTableWizardWindow>(false, "Excel->SO Wizard", true);
@@ -307,10 +307,10 @@ namespace AbilityKit.ExcelSync.Editor
             }
 
             var sheet = string.IsNullOrEmpty(options.SheetName)
-                ? package.Workbook.Worksheets[0]
-                : (package.Workbook.Worksheets[options.SheetName] ?? package.Workbook.Worksheets[0]);
+                ? ExcelSheetLookup.FirstSheet(package)
+                : (package.Workbook.Worksheets[options.SheetName] ?? ExcelSheetLookup.FirstSheet(package));
 
-            if (sheet.Dimension == null)
+            if (sheet == null || sheet.Dimension == null)
             {
                 return (new List<string>(), new List<string>(), new List<string>());
             }

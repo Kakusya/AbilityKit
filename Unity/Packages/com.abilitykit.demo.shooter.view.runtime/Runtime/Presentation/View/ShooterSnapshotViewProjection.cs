@@ -35,6 +35,7 @@ namespace AbilityKit.Demo.Shooter.View
  
         public ShooterViewProjectionApplyResult Apply(in ShooterSnapshotViewBatch batch)
         {
+            _store.EnsureCapacityForEntityChanges(batch.EntityChanges);
             var missingEntityRemovals = 0;
             if (ShouldReplaceMissingEntities(in batch))
             {
@@ -42,10 +43,11 @@ namespace AbilityKit.Demo.Shooter.View
             }
  
             var explicitEntityRemovals = ApplyRemovedEntities(in batch);
-            var entityChangeResult = ApplyEntityChanges(in batch);
+            var entityChangeResult = ApplyEntityChanges(in batch, out var fusedTransformUpdates);
             var recoveredPlayerEntities = RecoverMissingPlayerEntitiesFromComponents(in batch);
             var componentUpdates =
-                ApplyTransformChanges(in batch) +
+                fusedTransformUpdates +
+                ApplyUnfusedTransformChanges(in batch) +
                 ApplyHealthChanges(in batch) +
                 ApplyScoreChanges(in batch) +
                 ApplyProjectileLifetimeChanges(in batch);
@@ -81,13 +83,14 @@ namespace AbilityKit.Demo.Shooter.View
 
         private static bool ShouldReplaceMissingEntities(in ShooterSnapshotViewBatch batch)
         {
-            return batch.ShouldReplaceMissingEntities && batch.EntityChangeCount > 0;
+            return batch.ShouldReplaceMissingEntities;
         }
 
         private int RemoveEntitiesMissingFromFullSnapshot(in ShooterSnapshotViewBatch batch)
         {
             _presentEntities.Clear();
             var entityChanges = batch.EntityChanges;
+            _presentEntities.EnsureCapacity(entityChanges.Count);
             for (int i = 0; i < entityChanges.Count; i++)
             {
                 var change = entityChanges[i];
@@ -98,6 +101,11 @@ namespace AbilityKit.Demo.Shooter.View
             }
 
             _staleEntities.Clear();
+            if (_store.EntityCount > _staleEntities.Capacity)
+            {
+                _staleEntities.Capacity = _store.EntityCount;
+            }
+
             foreach (var key in _store.Entities.Keys)
             {
                 if (!_presentEntities.Contains(key))
@@ -133,17 +141,33 @@ namespace AbilityKit.Demo.Shooter.View
             return removedCount;
         }
  
-        private EntityChangeApplyResult ApplyEntityChanges(in ShooterSnapshotViewBatch batch)
+        private EntityChangeApplyResult ApplyEntityChanges(
+            in ShooterSnapshotViewBatch batch,
+            out int fusedTransformUpdates)
         {
             var added = 0;
             var updated = 0;
             var deadRemovals = 0;
+            fusedTransformUpdates = 0;
             var changes = batch.EntityChanges;
+            var transforms = batch.TransformChanges;
             for (int i = 0; i < changes.Count; i++)
             {
                 var change = changes[i];
-                var existed = _store.ContainsEntity(change.Key);
-                _store.UpsertEntity(change);
+                bool existed;
+                if (change.Alive && i < transforms.Count && change.Key.Equals(transforms[i].Key))
+                {
+                    existed = _store.UpsertEntityAndTransform(change, transforms[i], out var transformApplied);
+                    if (transformApplied)
+                    {
+                        fusedTransformUpdates++;
+                    }
+                }
+                else
+                {
+                    existed = _store.UpsertEntity(change);
+                }
+
                 if (!change.Alive)
                 {
                     if (existed)
@@ -204,25 +228,27 @@ namespace AbilityKit.Demo.Shooter.View
 
         private bool TryRecoverMissingPlayerEntity(ShooterViewEntityKey key)
         {
-            if (key.Kind != ShooterViewEntityKind.Player || _store.ContainsEntity(key))
+            if (key.Kind != ShooterViewEntityKind.Player)
             {
                 return false;
             }
 
-            _store.UpsertEntity(new ShooterViewEntityChange(key, ownerEntityId: 0, alive: true));
-            return true;
+            return !_store.UpsertEntity(new ShooterViewEntityChange(key, ownerEntityId: 0, alive: true));
         }
 
-        private int ApplyTransformChanges(in ShooterSnapshotViewBatch batch)
+        private int ApplyUnfusedTransformChanges(in ShooterSnapshotViewBatch batch)
         {
             var applied = 0;
             var changes = batch.TransformChanges;
+            var entities = batch.EntityChanges;
             for (int i = 0; i < changes.Count; i++)
             {
-                if (!_store.ContainsEntity(changes[i].Key)) continue;
+                if (i < entities.Count && entities[i].Alive && entities[i].Key.Equals(changes[i].Key))
+                {
+                    continue;
+                }
 
-                _store.UpsertTransform(changes[i]);
-                applied++;
+                if (_store.UpsertTransform(changes[i])) applied++;
             }
 
             return applied;
@@ -234,10 +260,7 @@ namespace AbilityKit.Demo.Shooter.View
             var changes = batch.HealthChanges;
             for (int i = 0; i < changes.Count; i++)
             {
-                if (!_store.ContainsEntity(changes[i].Key)) continue;
-
-                _store.UpsertHealth(changes[i]);
-                applied++;
+                if (_store.UpsertHealth(changes[i])) applied++;
             }
 
             return applied;
@@ -249,10 +272,7 @@ namespace AbilityKit.Demo.Shooter.View
             var changes = batch.ScoreChanges;
             for (int i = 0; i < changes.Count; i++)
             {
-                if (!_store.ContainsEntity(changes[i].Key)) continue;
-
-                _store.UpsertScore(changes[i]);
-                applied++;
+                if (_store.UpsertScore(changes[i])) applied++;
             }
 
             return applied;
@@ -264,10 +284,7 @@ namespace AbilityKit.Demo.Shooter.View
             var changes = batch.ProjectileLifetimeChanges;
             for (int i = 0; i < changes.Count; i++)
             {
-                if (!_store.ContainsEntity(changes[i].Key)) continue;
-
-                _store.UpsertProjectileLifetime(changes[i]);
-                applied++;
+                if (_store.UpsertProjectileLifetime(changes[i])) applied++;
             }
 
             return applied;

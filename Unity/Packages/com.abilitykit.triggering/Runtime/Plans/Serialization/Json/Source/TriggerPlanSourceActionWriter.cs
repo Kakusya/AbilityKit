@@ -429,6 +429,60 @@ namespace AbilityKit.Triggering.Runtime.Plan.Json
                     enumValue = 0;
                     return true;
                 }
+
+                if (string.Equals(value, "target_query", StringComparison.OrdinalIgnoreCase) ||
+                    string.Equals(value, "TargetQuery", StringComparison.OrdinalIgnoreCase))
+                {
+                    enumValue = 1;
+                    return true;
+                }
+            }
+
+            if (string.Equals(argName, "damageType", StringComparison.OrdinalIgnoreCase) ||
+                string.Equals(argName, "damage_type", StringComparison.OrdinalIgnoreCase))
+            {
+                if (string.Equals(value, "none", StringComparison.OrdinalIgnoreCase))
+                {
+                    enumValue = 0;
+                    return true;
+                }
+
+                if (string.Equals(value, "physical", StringComparison.OrdinalIgnoreCase))
+                {
+                    enumValue = 1;
+                    return true;
+                }
+
+                if (string.Equals(value, "magic", StringComparison.OrdinalIgnoreCase))
+                {
+                    enumValue = 2;
+                    return true;
+                }
+
+                if (string.Equals(value, "true", StringComparison.OrdinalIgnoreCase) ||
+                    string.Equals(value, "true_damage", StringComparison.OrdinalIgnoreCase) ||
+                    string.Equals(value, "trueDamage", StringComparison.OrdinalIgnoreCase))
+                {
+                    enumValue = 4;
+                    return true;
+                }
+            }
+
+            if (string.Equals(argName, "formulaType", StringComparison.OrdinalIgnoreCase) ||
+                string.Equals(argName, "formula_type", StringComparison.OrdinalIgnoreCase))
+            {
+                if (string.Equals(value, "none", StringComparison.OrdinalIgnoreCase))
+                {
+                    enumValue = 0;
+                    return true;
+                }
+
+                if (string.Equals(value, "fixed", StringComparison.OrdinalIgnoreCase) ||
+                    string.Equals(value, "standard", StringComparison.OrdinalIgnoreCase))
+                {
+                    enumValue = 1;
+                    return true;
+                }
             }
 
             return false;

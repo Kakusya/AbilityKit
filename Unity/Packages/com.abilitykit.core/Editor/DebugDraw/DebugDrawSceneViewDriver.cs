@@ -7,6 +7,7 @@ using UnityEngine;
 namespace AbilityKit.Core.Editor.Debugging
 {
     [InitializeOnLoad]
+    [Obsolete("Use AbilityKit.Diagnostics.Editor.DebugDraw.DebugDrawSceneViewDriver before the next major version.")]
     public static class DebugDrawSceneViewDriver
     {
         private static readonly List<IDebugDrawContributor> s_contributors = new List<IDebugDrawContributor>(32);
@@ -94,7 +95,12 @@ namespace AbilityKit.Core.Editor.Debugging
 
                 try
                 {
-                    c.Draw(in ctx, s_draw);
+                    // Scene GUI callbacks share Handles state. Give every contributor an
+                    // isolated world-space scope so another editor extension cannot offset it.
+                    using (new Handles.DrawingScope(Color.white, Matrix4x4.identity))
+                    {
+                        c.Draw(in ctx, s_draw);
+                    }
                 }
                 catch
                 {

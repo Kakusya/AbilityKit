@@ -1,5 +1,6 @@
 using System.Collections.Generic;
 using System.Text;
+using AbilityKit.Deterministic;
 using AbilityKit.Demo.Moba.Config.Core;
 using AbilityKit.Demo.Moba;
 using AbilityKit.Demo.Moba.Attributes;
@@ -32,7 +33,12 @@ namespace AbilityKit.Demo.Moba.Services.Triggering.PlanActions
                 return;
             }
 
-            var coreInput = MobaPlanActionInputResolver.Resolve(triggerArgs, ctx);
+            if (!MobaPlanActionInputResolver.TryResolve(triggerArgs, ctx, out var coreInput))
+            {
+                LogRejected(ctx, "requires combat execution context.");
+                return;
+            }
+
             var effectInput = new MobaEffectActionInput(in coreInput);
             if (!effectInput.HasCasterActor)
             {
@@ -69,47 +75,140 @@ namespace AbilityKit.Demo.Moba.Services.Triggering.PlanActions
             }
 
             var origin = input.BuildOrigin(attackerActorId, targetActorId, MobaTraceKind.EffectExecution, 0);
-            var requestedDamage = ResolveRequestedDamage(args, ctx, attackerActorId);
+            if (!TryResolveRequestedDamage(args, input, ctx, attackerActorId, out var attributeSourceActorId, out var requestedDamage, out var failure))
+            {
+                MobaPlanActionDiagnostics.Rejected(
+                    ctx.Context,
+                    TriggeringConstants.Actions.GiveDamage,
+                    $"cannot resolve damage attribute source. attacker={attackerActorId}, target={targetActorId}, policy={args.AttributeSource}, ratio={args.SourceAttackRatio:0.###}, reason={failure}");
+                return;
+            }
+
             var attack = new AttackInfo
             {
                 AttackerActorId = attackerActorId,
                 TargetActorId = targetActorId,
                 DamageType = args.DamageType,
                 CritType = CritType.None,
-                ReasonKind = DamageReasonKind.Skill,
+                ReasonKind = args.ReasonKind,
                 ReasonParam = args.ReasonParam,
                 FormulaKind = (int)DamageFormulaKind.Standard,
             };
             attack.SetOrigin(in origin);
-            attack.BaseDamage.BaseValue = requestedDamage;
+            attack.BaseDamage.FixedBaseValue = requestedDamage;
 
             var result = combat.DealDamage(attack);
             if (result == null)
             {
-                MobaPlanActionDiagnostics.Rejected(ctx.Context, TriggeringConstants.Actions.GiveDamage, $"pipeline returned null. attacker={attackerActorId} target={targetActorId} damage={requestedDamage:0.###} reasonParam={args.ReasonParam}");
+                MobaPlanActionDiagnostics.Rejected(ctx.Context, TriggeringConstants.Actions.GiveDamage, $"pipeline returned null. attacker={attackerActorId} target={targetActorId} damage={MobaResourceFixedConvert.ToSingle(requestedDamage):0.###} reasonParam={args.ReasonParam}");
                 return;
             }
 
-            LogDamageTrace(args, input, ctx, requestedDamage, attack.BaseDamage.Value, in origin, result);
+            LogDamageTrace(args, input, ctx, attributeSourceActorId, MobaResourceFixedConvert.ToSingle(requestedDamage), attack.BaseDamage.Value, in origin, result);
         }
 
-        private static float ResolveRequestedDamage(GiveDamageArgs args, ExecCtx<IWorldResolver> ctx, int attackerActorId)
+        internal static bool TryResolveRequestedDamage(
+            GiveDamageArgs args,
+            MobaEffectActionInput input,
+            ExecCtx<IWorldResolver> ctx,
+            int attackerActorId,
+            out int attributeSourceActorId,
+            out Fixed64 requestedDamage,
+            out string failure)
         {
-            if (args.SourceAttackRatio == 0f || attackerActorId <= 0) return args.DamageValue;
-            if (!ctx.Context.TryResolve<MobaActorLookupService>(out var actors) || actors == null) return args.DamageValue;
-            if (!actors.TryGetActorEntity(attackerActorId, out var attacker) || attacker == null || !attacker.hasAttributeGroup) return args.DamageValue;
+            attributeSourceActorId = 0;
+            requestedDamage = MobaResourceFixedConvert.ToFixed(args.DamageValue);
+            failure = null;
+            if (args.SourceAttackRatio == 0f) return true;
 
-            var attrs = attacker.GetMobaAttrs();
-            var sourceAttack = args.DamageType == DamageType.Magic ? attrs.MagicAttack : attrs.PhysicsAttack;
-            return args.DamageValue + sourceAttack * args.SourceAttackRatio;
+            var skillRuntimeHandle = input.ExecutionContext.SkillRuntimeHandle;
+            MobaSkillCastRuntimeService skillRuntimes = null;
+            if (args.AttributeSource == DamageAttributeSourceKind.SkillCaster)
+                ctx.Context.TryResolve(out skillRuntimes);
+            if (!TryResolveAttributeSourceActorId(
+                    args.AttributeSource,
+                    in skillRuntimeHandle,
+                    skillRuntimes,
+                    attackerActorId,
+                    out attributeSourceActorId,
+                    out failure))
+                return false;
+            if (!ctx.Context.TryResolve<MobaActorLookupService>(out var actors) || actors == null)
+            {
+                failure = "MobaActorLookupService is unavailable";
+                return false;
+            }
+            if (!actors.TryGetActorEntity(attributeSourceActorId, out var sourceActor) || sourceActor == null)
+            {
+                failure = $"attribute source actor {attributeSourceActorId} was not found";
+                return false;
+            }
+            if (!sourceActor.hasAttributeGroup)
+            {
+                failure = $"attribute source actor {attributeSourceActorId} has no attribute group";
+                return false;
+            }
+
+            var attrs = sourceActor.GetMobaAttrs();
+            var sourceAttack = MobaResourceFixedConvert.ToFixed(args.DamageType == DamageType.Magic ? attrs.MagicAttack : attrs.PhysicsAttack);
+            requestedDamage += sourceAttack * MobaResourceFixedConvert.ToFixed(args.SourceAttackRatio);
+            return true;
         }
- 
-        private static void LogDamageTrace(GiveDamageArgs args, MobaEffectActionInput input, ExecCtx<IWorldResolver> ctx, float requestedDamage, float pipelineBaseDamage, in MobaGameplayOrigin origin, DamageResult result)
+
+        internal static bool TryResolveAttributeSourceActorId(
+            DamageAttributeSourceKind sourceKind,
+            in MobaSkillCastRuntimeHandle skillRuntimeHandle,
+            MobaSkillCastRuntimeService skillRuntimes,
+            int attackerActorId,
+            out int actorId,
+            out string failure)
+        {
+            actorId = 0;
+            failure = null;
+            switch (sourceKind)
+            {
+                case DamageAttributeSourceKind.AttributionActor:
+                    actorId = attackerActorId;
+                    if (actorId > 0) return true;
+                    failure = "attribution actor is missing";
+                    return false;
+
+                case DamageAttributeSourceKind.SkillCaster:
+                    if (!skillRuntimeHandle.IsValid)
+                    {
+                        failure = "skill runtime handle is missing";
+                        return false;
+                    }
+                    if (skillRuntimes == null)
+                    {
+                        failure = "MobaSkillCastRuntimeService is unavailable";
+                        return false;
+                    }
+                    if (!skillRuntimes.TryGet(in skillRuntimeHandle, out var runtime) || runtime == null)
+                    {
+                        failure = $"skill runtime {skillRuntimeHandle} was not found";
+                        return false;
+                    }
+
+                    actorId = runtime.CasterActorId;
+                    if (actorId > 0) return true;
+                    failure = $"skill runtime {skillRuntimeHandle} has no caster";
+                    return false;
+
+                default:
+                    failure = $"unsupported attribute source policy {sourceKind}";
+                    return false;
+            }
+        }
+
+        private static void LogDamageTrace(GiveDamageArgs args, MobaEffectActionInput input, ExecCtx<IWorldResolver> ctx, int attributeSourceActorId, float requestedDamage, float pipelineBaseDamage, in MobaGameplayOrigin origin, DamageResult result)
         {
             var sb = new StringBuilder(1024);
             sb.Append("[MobaDamageTrace] damage applied")
                 .Append(" attacker=").Append(result.AttackerActorId)
                 .Append(" target=").Append(result.TargetActorId)
+                .Append(" attributeSourcePolicy=").Append(args.AttributeSource)
+                .Append(" attributeSourceActor=").Append(attributeSourceActorId)
                 .Append(" requested=").Append(requestedDamage.ToString("0.###"))
                 .Append(" pipelineBase=").Append(pipelineBaseDamage.ToString("0.###"))
                 .Append(" actual=").Append(result.Value.ToString("0.###"))

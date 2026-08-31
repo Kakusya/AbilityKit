@@ -8,18 +8,27 @@ using AbilityKit.Core.Mathematics;
 using AbilityKit.Demo.Moba.Services;
 using AbilityKit.Protocol.Moba.StateSync;
 using AbilityKit.Trace;
+using AbilityKit.Demo.Moba.Services.Observability;
 
 namespace AbilityKit.Demo.Moba.Services.Area
 {
     [WorldService(typeof(MobaAreaRuntimeService))]
-    public sealed class MobaAreaRuntimeService : IService
+    public sealed class MobaAreaRuntimeService :
+        IMobaRuntimeObjectBootstrapContributor,
+        IService
     {
         [WorldInject(required: false)] private IProjectileService _projectiles = null;
         [WorldInject(required: false)] private IFrameTime _frameTime = null;
         [WorldInject(required: false)] private IMobaTemporaryEntityLifecycleService _lifecycle = null;
         [WorldInject(required: false)] private MobaTraceRegistry _trace = null;
+        [WorldInject(required: false)] private MobaSkillCastRuntimeService _skillRuntimes = null;
+        [WorldInject(required: false)] private IMobaRuntimeObjectLifecycleHook _objectLifecycle = null;
+        [WorldInject(required: false)] private IMobaRuntimeObjectBootstrapRegistry _objectBootstrap = null;
+
+        private bool _objectBootstrapRegistered;
 
         private readonly Dictionary<int, MobaAreaRuntimeInfo> _areas = new Dictionary<int, MobaAreaRuntimeInfo>();
+        private readonly Dictionary<int, MobaSkillRuntimeRetainHandle> _skillRuntimeRetainsByAreaId = new Dictionary<int, MobaSkillRuntimeRetainHandle>();
         private readonly Dictionary<int, List<int>> _areasByOwner = new Dictionary<int, List<int>>();
         private readonly Dictionary<int, List<int>> _areasByTemplate = new Dictionary<int, List<int>>();
         private readonly HashSet<int> _delayTriggeredAreas = new HashSet<int>();
@@ -40,9 +49,11 @@ namespace AbilityKit.Demo.Moba.Services.Area
             int delayFrames,
             long sourceContextId,
             long rootContextId,
-            long ownerContextId)
+            long ownerContextId,
+            MobaSkillCastRuntimeHandle skillRuntimeHandle = default)
         {
             if (areaId.Value <= 0) return;
+            EnsureObjectBootstrapRegistered();
 
             if (ownerActorId <= 0 || sourceContextId == 0L)
             {
@@ -61,19 +72,29 @@ namespace AbilityKit.Demo.Moba.Services.Area
                 delayFrames > 0 ? frame + delayFrames : frame,
                 sourceContextId,
                 rootContextId != 0L ? rootContextId : sourceContextId,
-                ownerContextId != 0L ? ownerContextId : sourceContextId);
+                ownerContextId != 0L ? ownerContextId : sourceContextId,
+                skillRuntimeHandle);
 
             if (_areas.TryGetValue(areaId.Value, out var oldInfo))
             {
+                PublishAreaLifecycle(
+                    MobaRuntimeObjectLifecycleStage.Destroyed,
+                    in oldInfo,
+                    frame,
+                    (int)TraceLifecycleReason.Replaced);
                 Unindex(oldInfo);
+                EndAreaTrace(in oldInfo, TraceLifecycleReason.Replaced);
+                ReleaseSkillRuntime(areaId.Value);
             }
 
             _areas[areaId.Value] = info;
+            RetainSkillRuntime(in info);
             _delayTriggeredAreas.Remove(areaId.Value);
             Index(_areasByOwner, ownerActorId, areaId.Value);
             Index(_areasByTemplate, templateId, areaId.Value);
             _presentationEvents.Add(new MobaAreaEventSnapshotEntry((int)AreaEventKind.Spawn, areaId.Value, ownerActorId, templateId, center.X, center.Y, center.Z, radius));
             _lifecycle?.RecordSpawn(MobaTemporaryEntityKind.Area, ActiveCount, frame);
+            PublishAreaLifecycle(MobaRuntimeObjectLifecycleStage.Created, in info, frame);
         }
 
         public bool Unregister(AreaId areaId)
@@ -86,7 +107,46 @@ namespace AbilityKit.Demo.Moba.Services.Area
             Unindex(info);
             _presentationEvents.Add(new MobaAreaEventSnapshotEntry((int)AreaEventKind.Expire, info.AreaId, info.OwnerActorId, info.TemplateId, info.Center.X, info.Center.Y, info.Center.Z, info.Radius));
             EndAreaTrace(in info, TraceLifecycleReason.Completed);
+            ReleaseSkillRuntime(areaId.Value);
             _lifecycle?.RecordDespawn(MobaTemporaryEntityKind.Area, ActiveCount, CurrentFrame);
+            PublishAreaLifecycle(
+                MobaRuntimeObjectLifecycleStage.Destroyed,
+                in info,
+                CurrentFrame,
+                (int)TraceLifecycleReason.Completed);
+            return true;
+        }
+
+        public bool RollbackSpawn(
+            AreaId areaId,
+            long expectedSourceContextId)
+        {
+            if (areaId.Value <= 0) return false;
+            if (!_areas.TryGetValue(areaId.Value, out var info)) return false;
+            if (expectedSourceContextId != 0L
+                && info.SourceContextId != expectedSourceContextId)
+            {
+                return false;
+            }
+
+            var transaction = new MobaTemporaryEntitySpawnTransaction();
+            transaction.Enlist("area-lifecycle-diagnostic", () =>
+                _lifecycle?.RecordDespawn(
+                    MobaTemporaryEntityKind.Area,
+                    ActiveCount,
+                    CurrentFrame));
+            transaction.Enlist("area-skill-retain", () => ReleaseSkillRuntime(areaId.Value));
+            transaction.Enlist("area-indexes", () => Unindex(info));
+            transaction.Enlist("area-delay-index", () => _delayTriggeredAreas.Remove(areaId.Value));
+            transaction.Enlist("area-runtime", () => _areas.Remove(areaId.Value));
+            transaction.Enlist("area-object-catalog", () =>
+                PublishAreaLifecycle(
+                    MobaRuntimeObjectLifecycleStage.Destroyed,
+                    in info,
+                    CurrentFrame,
+                    (int)TraceLifecycleReason.Failed));
+            transaction.Rollback();
+
             return true;
         }
 
@@ -172,6 +232,24 @@ namespace AbilityKit.Demo.Moba.Services.Area
 
         public void Dispose()
         {
+            if (_objectBootstrapRegistered)
+            {
+                _objectBootstrap?.Unregister(this);
+                _objectBootstrapRegistered = false;
+            }
+            var diagnosticFrame = _frameTime != null ? _frameTime.Frame.Value : -1;
+            foreach (var pair in _areas)
+            {
+                var info = pair.Value;
+                PublishAreaLifecycle(
+                    MobaRuntimeObjectLifecycleStage.Destroyed,
+                    in info,
+                    diagnosticFrame,
+                    (int)TraceLifecycleReason.Cancelled);
+                EndAreaTrace(in info, TraceLifecycleReason.Cancelled);
+            }
+
+            ReleaseAllSkillRuntimes();
             _areas.Clear();
             _areasByOwner.Clear();
             _areasByTemplate.Clear();
@@ -179,6 +257,63 @@ namespace AbilityKit.Demo.Moba.Services.Area
             _delayTriggeredAreas.Clear();
             _presentationEvents.ClearAndTrim();
             _lifecycle?.SetActive(MobaTemporaryEntityKind.Area, 0, CurrentFrame);
+        }
+
+        private void PublishAreaLifecycle(
+            MobaRuntimeObjectLifecycleStage stage,
+            in MobaAreaRuntimeInfo info,
+            int frame,
+            int endReason = 0)
+        {
+            EnsureObjectBootstrapRegistered();
+            var hook = _objectLifecycle;
+            if (hook == null || !hook.IsEnabled || info.AreaId <= 0) return;
+            PublishAreaLifecycleTo(hook, stage, in info, frame, endReason);
+        }
+
+        void IMobaRuntimeObjectBootstrapContributor.CaptureActiveRuntimeObjects(
+            IMobaRuntimeObjectLifecycleHook hook,
+            int frame)
+        {
+            foreach (var info in _areas.Values)
+            {
+                PublishAreaLifecycleTo(
+                    hook,
+                    MobaRuntimeObjectLifecycleStage.Created,
+                    in info,
+                    frame);
+            }
+        }
+
+        private static void PublishAreaLifecycleTo(
+            IMobaRuntimeObjectLifecycleHook hook,
+            MobaRuntimeObjectLifecycleStage stage,
+            in MobaAreaRuntimeInfo info,
+            int frame,
+            int endReason = 0)
+        {
+            if (hook == null || !hook.IsEnabled || info.AreaId <= 0) return;
+            var observation = new MobaRuntimeObjectLifecycleObservation(
+                stage,
+                MobaRuntimeObjectKind.Area,
+                info.AreaId,
+                frame,
+                MobaRuntimeObjectDefinitionKind.Area,
+                info.TemplateId,
+                ownerActorId: info.OwnerActorId,
+                sourceActorId: info.OwnerActorId,
+                rootContextId: info.RootContextId,
+                contextId: info.SourceContextId,
+                endReason: endReason);
+            hook.TryObserve(in observation);
+        }
+
+        private void EnsureObjectBootstrapRegistered()
+        {
+            if (_objectBootstrapRegistered) return;
+            var registry = _objectBootstrap;
+            if (registry != null && registry.Register(this))
+                _objectBootstrapRegistered = true;
         }
 
         private int CurrentFrame
@@ -240,6 +375,60 @@ namespace AbilityKit.Demo.Moba.Services.Area
             _trace.EndContext(info.SourceContextId, reason);
         }
 
+        private bool RetainSkillRuntime(in MobaAreaRuntimeInfo info)
+        {
+            if (_skillRuntimes == null) return false;
+            if (!info.SkillRuntimeHandle.IsValid) return false;
+            if (_skillRuntimeRetainsByAreaId.ContainsKey(info.AreaId)) return true;
+
+            var child = new MobaSkillRuntimeChildRef(
+                MobaSkillRuntimeChildKind.Area,
+                info.AreaId,
+                info.SourceContextId,
+                info.TemplateId);
+            var runtimeHandle = info.SkillRuntimeHandle;
+            if (!_skillRuntimes.RetainChild(in runtimeHandle, in child, out var retainHandle)) return false;
+
+            _skillRuntimeRetainsByAreaId[info.AreaId] = retainHandle;
+            return true;
+        }
+
+        private void ReleaseSkillRuntime(int areaId)
+        {
+            if (!_skillRuntimeRetainsByAreaId.TryGetValue(areaId, out var retainHandle)) return;
+            _skillRuntimeRetainsByAreaId.Remove(areaId);
+
+            try
+            {
+                _skillRuntimes?.ReleaseChild(in retainHandle);
+            }
+            catch (Exception ex)
+            {
+                AbilityKit.Core.Logging.Log.Exception(ex, $"[MobaAreaRuntimeService] Release skill runtime retain failed (areaId={areaId})");
+            }
+        }
+
+        private void ReleaseAllSkillRuntimes()
+        {
+            if (_skillRuntimeRetainsByAreaId.Count == 0) return;
+
+            foreach (var pair in _skillRuntimeRetainsByAreaId)
+            {
+                var areaId = pair.Key;
+                var retainHandle = pair.Value;
+                try
+                {
+                    _skillRuntimes?.ReleaseChild(in retainHandle);
+                }
+                catch (Exception ex)
+                {
+                    AbilityKit.Core.Logging.Log.Exception(ex, $"[MobaAreaRuntimeService] Release skill runtime retain failed during dispose (areaId={areaId})");
+                }
+            }
+
+            _skillRuntimeRetainsByAreaId.Clear();
+        }
+
         private static void Index(Dictionary<int, List<int>> index, int key, int areaId)
         {
             if (key <= 0 || areaId <= 0) return;
@@ -297,6 +486,7 @@ namespace AbilityKit.Demo.Moba.Services.Area
         public readonly long SourceContextId;
         public readonly long RootContextId;
         public readonly long OwnerContextId;
+        public readonly MobaSkillCastRuntimeHandle SkillRuntimeHandle;
 
         public MobaAreaRuntimeInfo(
             int areaId,
@@ -310,7 +500,8 @@ namespace AbilityKit.Demo.Moba.Services.Area
             int delayTriggerFrame,
             long sourceContextId,
             long rootContextId,
-            long ownerContextId)
+            long ownerContextId,
+            MobaSkillCastRuntimeHandle skillRuntimeHandle = default)
         {
             AreaId = areaId;
             TemplateId = templateId;
@@ -324,6 +515,7 @@ namespace AbilityKit.Demo.Moba.Services.Area
             SourceContextId = sourceContextId;
             RootContextId = rootContextId;
             OwnerContextId = ownerContextId;
+            SkillRuntimeHandle = skillRuntimeHandle;
         }
     }
 }

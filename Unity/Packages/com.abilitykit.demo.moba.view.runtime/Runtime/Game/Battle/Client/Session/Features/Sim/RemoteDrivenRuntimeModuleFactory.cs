@@ -8,11 +8,15 @@ namespace AbilityKit.Game.Flow
 {
     internal static class RemoteDrivenRuntimeModuleFactory
     {
+        internal const int PredictionRollbackHistoryFrames = 600;
+
         public static HostRuntimeModuleHost Create(RemoteDrivenWorldRuntimeFactoryOptions options)
         {
             return new HostRuntimeModuleHost()
                 .Add(CreatePredictionModule(options))
-                .Add(new ServerFrameTimeModule(options.FixedDelta))
+                .Add(new ServerFrameTimeModule(
+                    options.FixedDelta,
+                    advanceOnHostTickFallback: false))
                 .Add(new WorldAutoStartModule());
         }
 
@@ -34,10 +38,11 @@ namespace AbilityKit.Game.Flow
                 minPredictionWindow: 1,
                 backlogEwmaAlpha: 0.20f,
                 enableRollback: true,
-                rollbackHistoryFrames: 240,
+                rollbackHistoryFrames: PredictionRollbackHistoryFrames,
                 rollbackCaptureEveryNFrames: 1,
                 buildRollbackRegistry: options.BuildRollbackRegistry,
-                buildComputeHash: options.BuildComputeHash);
+                buildComputeHash: options.BuildComputeHash,
+                bufferOptions: options.PredictionBufferOptions);
         }
 
         private static ClientPredictionDriverModule CreateRemoteOnlyModule(RemoteDrivenWorldRuntimeFactoryOptions options)
@@ -54,7 +59,8 @@ namespace AbilityKit.Game.Flow
                 rollbackHistoryFrames: 0,
                 rollbackCaptureEveryNFrames: 0,
                 buildRollbackRegistry: _ => new RollbackRegistry(),
-                buildComputeHash: _ => null);
+                buildComputeHash: _ => null,
+                bufferOptions: options.PredictionBufferOptions);
         }
     }
 }

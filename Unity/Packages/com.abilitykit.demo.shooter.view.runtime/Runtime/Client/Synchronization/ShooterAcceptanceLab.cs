@@ -6,7 +6,7 @@ using AbilityKit.Demo.Shooter.Runtime;
 using AbilityKit.Demo.Shooter.View.PlayMode;
 using AbilityKit.Network.Runtime;
 using AbilityKit.Network.Runtime.Conditioning;
-using AbilityKit.Network.Runtime.DemoHarness;
+using AbilityKit.Demo.Harness;
 using AbilityKit.Network.Runtime.Sync;
 using AbilityKit.Protocol.Shooter;
 
@@ -97,6 +97,33 @@ namespace AbilityKit.Demo.Shooter.View
             int midLodIntervalFrames,
             int farLodIntervalFrames,
             int interpolationDelayFrames)
+            : this(
+                snapshotIntervalFrames,
+                batchWindowFrames,
+                keyFrameIntervalFrames,
+                maxEntityCount,
+                activeEntityBudget,
+                aoiRadius,
+                aoiRadius,
+                nearLodIntervalFrames,
+                midLodIntervalFrames,
+                farLodIntervalFrames,
+                interpolationDelayFrames)
+        {
+        }
+
+        public ShooterSyncTemplateSendPolicy(
+            int snapshotIntervalFrames,
+            int batchWindowFrames,
+            int keyFrameIntervalFrames,
+            int maxEntityCount,
+            int activeEntityBudget,
+            float aoiRadius,
+            float aoiBoundaryRadius,
+            int nearLodIntervalFrames,
+            int midLodIntervalFrames,
+            int farLodIntervalFrames,
+            int interpolationDelayFrames)
         {
             SnapshotIntervalFrames = snapshotIntervalFrames < 1 ? 1 : snapshotIntervalFrames;
             BatchWindowFrames = batchWindowFrames < 1 ? 1 : batchWindowFrames;
@@ -104,6 +131,7 @@ namespace AbilityKit.Demo.Shooter.View
             MaxEntityCount = maxEntityCount < 1 ? 1 : maxEntityCount;
             ActiveEntityBudget = activeEntityBudget < 1 ? 1 : activeEntityBudget;
             AoiRadius = aoiRadius < 0f ? 0f : aoiRadius;
+            AoiBoundaryRadius = aoiBoundaryRadius < AoiRadius ? AoiRadius : aoiBoundaryRadius;
             NearLodIntervalFrames = nearLodIntervalFrames < 1 ? 1 : nearLodIntervalFrames;
             MidLodIntervalFrames = midLodIntervalFrames < 1 ? NearLodIntervalFrames : midLodIntervalFrames;
             FarLodIntervalFrames = farLodIntervalFrames < 1 ? MidLodIntervalFrames : farLodIntervalFrames;
@@ -116,6 +144,7 @@ namespace AbilityKit.Demo.Shooter.View
         public int MaxEntityCount { get; }
         public int ActiveEntityBudget { get; }
         public float AoiRadius { get; }
+        public float AoiBoundaryRadius { get; }
         public int NearLodIntervalFrames { get; }
         public int MidLodIntervalFrames { get; }
         public int FarLodIntervalFrames { get; }
@@ -139,6 +168,7 @@ namespace AbilityKit.Demo.Shooter.View
             maxEntityCount: 10000,
             activeEntityBudget: 512,
             aoiRadius: 0f,
+            aoiBoundaryRadius: 0f,
             nearLodIntervalFrames: 1,
             midLodIntervalFrames: 2,
             farLodIntervalFrames: 15,
@@ -151,22 +181,24 @@ namespace AbilityKit.Demo.Shooter.View
             maxEntityCount: 10000,
             activeEntityBudget: 1024,
             aoiRadius: 0f,
+            aoiBoundaryRadius: 0f,
             nearLodIntervalFrames: 15,
             midLodIntervalFrames: 30,
             farLodIntervalFrames: 60,
             interpolationDelayFrames: 60);
 
         public static ShooterSyncTemplateSendPolicy MassBattleLod { get; } = new ShooterSyncTemplateSendPolicy(
-            snapshotIntervalFrames: 90,
-            batchWindowFrames: 90,
+            snapshotIntervalFrames: 3,
+            batchWindowFrames: 3,
             keyFrameIntervalFrames: 450,
             maxEntityCount: 20000,
             activeEntityBudget: 2048,
-            aoiRadius: 48f,
-            nearLodIntervalFrames: 10,
-            midLodIntervalFrames: 30,
-            farLodIntervalFrames: 90,
-            interpolationDelayFrames: 90);
+            aoiRadius: 24f,
+            aoiBoundaryRadius: 30f,
+            nearLodIntervalFrames: 3,
+            midLodIntervalFrames: 9,
+            farLodIntervalFrames: 30,
+            interpolationDelayFrames: 3);
     }
 
     public readonly struct ShooterSyncAcceptanceCriterion
@@ -320,10 +352,12 @@ namespace AbilityKit.Demo.Shooter.View
 
     public static class ShooterSyncTemplateIds
     {
+        public const string StateSyncAuthority = "state-sync-authority";
         public const string PredictRollbackAuthority = "predict-rollback-authority";
         public const string AuthoritativeInterpolationPresentation = "authoritative-interpolation-presentation";
         public const string BatchStateLowFrequency = "batch-state-low-frequency";
         public const string MassBattleLodAoi = "mass-battle-lod-aoi";
+        public const string MassBattleLodAoiSampleBlock = "mass-battle-lod-aoi-sample-block";
         public const string HybridHeroPrediction = "hybrid-hero-prediction";
         public const string FastReconnectResume = "fast-reconnect-resume";
     }
@@ -358,6 +392,18 @@ namespace AbilityKit.Demo.Shooter.View
 
         public static IReadOnlyList<ShooterSyncTemplate> SyncTemplates { get; } = new[]
         {
+            new ShooterSyncTemplate(
+                ShooterSyncTemplateIds.StateSyncAuthority,
+                "State Sync / Server Authority",
+                "服务器权威 packed 状态快照驱动客户端插值播放，用于协议验证和小规模显式配置。",
+                NetworkSyncModel.AuthoritativeInterpolation,
+                "ideal",
+                ShooterInterpolationDemoHarnessCarrier.DefaultCarrierName,
+                recommendedPlayerCount: 2,
+                enableAuthoritativeWorld: false,
+                expectsInterpolationDiagnostics: true,
+                ShooterSyncTemplateConvergenceKind.PresentationInterpolation,
+                InterpolationConfig.Default),
             new ShooterSyncTemplate(
                 ShooterSyncTemplateIds.PredictRollbackAuthority,
                 "Predict Rollback / Authority Compare",
@@ -399,7 +445,21 @@ namespace AbilityKit.Demo.Shooter.View
             new ShooterSyncTemplate(
                 ShooterSyncTemplateIds.MassBattleLodAoi,
                 "Mass Battle LOD / AOI Budget Playback",
-                "面向上万单位的距离 AOI、优先级预算与 LOD 频率同步模板，复用纯状态低频导出参数。",
+                "Shooter 正式多人默认模板，使用距离 AOI、优先级预算与 LOD 频率同步大规模单位。",
+                NetworkSyncModel.MassBattleLodSync,
+                "limitedbw",
+                ShooterInterpolationDemoHarnessCarrier.DefaultCarrierName,
+                recommendedPlayerCount: 16,
+                enableAuthoritativeWorld: false,
+                expectsInterpolationDiagnostics: true,
+                ShooterSyncTemplateConvergenceKind.MassBattleLodPresentation,
+                InterpolationConfig.Default,
+                ShooterSyncTemplateSendPolicy.MassBattleLod,
+                ShooterSyncTemplateStatus.Experimental),
+            new ShooterSyncTemplate(
+                ShooterSyncTemplateIds.MassBattleLodAoiSampleBlock,
+                "Mass Battle LOD / AOI Sample Block",
+                "Mass-battle AOI/LOD authority with density-limited historical transform samples for presentation A/B validation.",
                 NetworkSyncModel.MassBattleLodSync,
                 "limitedbw",
                 ShooterInterpolationDemoHarnessCarrier.DefaultCarrierName,
@@ -837,6 +897,7 @@ namespace AbilityKit.Demo.Shooter.View
             }
 
             _disposed = true;
+            _authoritativeDriver?.Dispose();
             _authoritativeDriver = null;
             _authoritativeWorldSession?.Dispose();
             _runtimeWorld.Dispose();
@@ -924,6 +985,36 @@ namespace AbilityKit.Demo.Shooter.View
                 acceptedHits,
                 rejectedHits,
                 ShooterAuthoritySnapshotPublishOptions.RealtimePacked);
+        }
+
+        internal static ShooterAcceptanceSession CreateForTemplate(
+            string syncTemplateId,
+            NetworkSyncModel syncModel,
+            NetworkConditionProfile networkProfile,
+            string? networkName,
+            int tickRate,
+            IReadOnlyList<ShooterStartPlayer> players,
+            int randomSeed,
+            bool enableAuthoritativeWorld,
+            ShooterSveltoGameplayScenarioConfig gameplayScenario)
+        {
+            var template = ShooterAcceptanceCatalog.GetSyncTemplate(syncTemplateId);
+            return Create(
+                syncModel,
+                networkProfile,
+                networkName,
+                tickRate,
+                players,
+                matchId: null,
+                randomSeed,
+                template.InterpolationConfig,
+                enableAuthoritativeWorld,
+                gameplayScenario,
+                networkStats: null,
+                remoteJitter: null,
+                acceptedHits: null,
+                rejectedHits: null,
+                new ShooterAuthoritySnapshotPublishOptions(template.SendPolicy, template.ConvergenceKind));
         }
 
         public static ShooterAcceptanceSession Create(in ShooterSyncTemplate template)
@@ -1183,5 +1274,3 @@ namespace AbilityKit.Demo.Shooter.View
         }
     }
 }
-
-

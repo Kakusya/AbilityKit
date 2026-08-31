@@ -1,11 +1,33 @@
 using AbilityKit.Demo.Shooter.View;
+using AbilityKit.Network.Runtime;
 using AbilityKit.Protocol.Shooter;
 using Xunit;
 
 namespace AbilityKit.Demo.Shooter.Runtime.Tests.Presentation;
 
+[Collection(ShooterSnapshotViewProjectionTestCollection.Name)]
 public sealed class ShooterSnapshotViewProjectionTests
 {
+    [Fact]
+    public void DenseStoreSwapBackKeepsMovedEntityAndTransformAligned()
+    {
+        var store = new ShooterViewEntityStore();
+        var first = new ShooterViewEntityKey(ShooterViewEntityKind.Enemy, 1);
+        var second = new ShooterViewEntityKey(ShooterViewEntityKind.Enemy, 2);
+        store.UpsertEntity(new ShooterViewEntityChange(first, 0, alive: true));
+        store.UpsertEntity(new ShooterViewEntityChange(second, 0, alive: true));
+        store.UpsertTransform(new ShooterViewTransformComponentChange(first, 1f, 2f, 1f, 0f, 0f, 0f));
+        store.UpsertTransform(new ShooterViewTransformComponentChange(second, 3f, 4f, 0f, 1f, 0f, 0f));
+
+        Assert.True(store.RemoveEntity(first));
+
+        Assert.Equal(1, store.DenseCount);
+        Assert.True(store.TryGetDenseEntityAndTransform(0, out var entity, out var transform));
+        Assert.Equal(second, entity.Key);
+        Assert.Equal(3f, transform.X);
+        Assert.Equal(4f, transform.Y);
+    }
+
     [Fact]
     public void FullSnapshotProjectsEntitiesAndSeparatedComponentsIntoStore()
     {
@@ -287,8 +309,10 @@ public sealed class ShooterSnapshotViewProjectionTests
                     ownerId: 0,
                     quantizedX: 2500,
                     quantizedY: -1500,
-                    quantizedVelocityX: 250,
-                    quantizedVelocityY: -500,
+                    quantizedVelocityX: 0,
+                    quantizedVelocityY: 0,
+                    quantizedFacingX: 250,
+                    quantizedFacingY: -500,
                     hp: 100,
                     score: 3,
                     remainingFrames: 0,
@@ -304,6 +328,210 @@ public sealed class ShooterSnapshotViewProjectionTests
         Assert.True(projection.Store.TryGetTransform(controlledPlayer, out var transform));
         Assert.Equal(2.5f, transform.X);
         Assert.Equal(-1.5f, transform.Y);
+    }
+
+    [Fact]
+    public void PureStateDespawnRemovesPlayerWithoutRecoveringItFromResidualComponents()
+    {
+        var projection = new ShooterSnapshotViewProjection();
+        var mapper = new ShooterSnapshotViewModelMapper();
+        var player = new ShooterViewEntityKey(ShooterViewEntityKind.Player, 2);
+        var spawn = CreatePureStateSnapshot(
+            frame: 10,
+            settings: ShooterPureStateSyncSettings.Default,
+            entities: new[]
+            {
+                new ShooterPureStateEntityDelta(
+                    2,
+                    ShooterPackedEntityKinds.Player,
+                    ShooterPureStateEntityLayers.KeyInteraction,
+                    ShooterPureStateDeltaKinds.Spawn,
+                    ownerId: 2,
+                    quantizedX: 2500,
+                    quantizedY: -1500,
+                    quantizedVelocityX: 0,
+                    quantizedVelocityY: 0,
+                    quantizedFacingX: 250,
+                    quantizedFacingY: -500,
+                    hp: 100,
+                    score: 3,
+                    remainingFrames: 0,
+                    flags: ShooterPureStateEntityFlags.Alive | ShooterPureStateEntityFlags.Visible)
+            });
+        var despawn = CreatePureStateSnapshot(
+            frame: 11,
+            settings: ShooterPureStateSyncSettings.Default,
+            entities: new[]
+            {
+                new ShooterPureStateEntityDelta(
+                    2,
+                    ShooterPackedEntityKinds.Player,
+                    ShooterPureStateEntityLayers.KeyInteraction,
+                    ShooterPureStateDeltaKinds.Despawn,
+                    ownerId: 2,
+                    quantizedX: 2500,
+                    quantizedY: -1500,
+                    quantizedVelocityX: 0,
+                    quantizedVelocityY: 0,
+                    quantizedFacingX: 250,
+                    quantizedFacingY: -500,
+                    hp: 100,
+                    score: 3,
+                    remainingFrames: 0,
+                    flags: 0)
+            },
+            snapshotKind: ShooterPureStateSnapshotKinds.Delta);
+
+        var spawnBatch = mapper.Map(in spawn);
+        projection.Apply(in spawnBatch);
+        var despawnBatch = mapper.Map(in despawn);
+        var result = projection.Apply(in despawnBatch);
+
+        Assert.Single(despawnBatch.RemovedEntities);
+        Assert.Contains(player, despawnBatch.RemovedEntities);
+        Assert.Empty(despawnBatch.EntityChanges);
+        Assert.Empty(despawnBatch.TransformChanges);
+        Assert.Empty(despawnBatch.HealthChanges);
+        Assert.Empty(despawnBatch.ScoreChanges);
+        Assert.Equal(1, result.ExplicitEntityRemovals);
+        Assert.False(projection.Store.ContainsEntity(player));
+        Assert.False(projection.Store.TryGetTransform(player, out _));
+        Assert.False(projection.Store.TryGetHealth(player, out _));
+        Assert.False(projection.Store.TryGetScore(player, out _));
+    }
+
+    [Fact]
+    public void PureStateSettingsConfigurePresentationInterpolationDelay()
+    {
+        var presentation = new ShooterPresentationFacade();
+        var snapshot = CreatePureStateSnapshot(
+            frame: 1,
+            settings: new ShooterPureStateSyncSettings(100, 50, 60, 2, 10, 7),
+            entities: Array.Empty<ShooterPureStateEntityDelta>());
+
+        presentation.ApplyPureStateSnapshot(in snapshot);
+
+        Assert.Equal(7f, presentation.Snapshots.InterpolationDelayFrames);
+    }
+
+    [Fact]
+    public void PureStatePredictedLocalSkipsControlledAuthoritativeTransform()
+    {
+        var mapper = new ShooterSnapshotViewModelMapper();
+        var projection = new ShooterSnapshotViewProjection();
+        var player = new ShooterViewEntityKey(ShooterViewEntityKind.Player, 1);
+        var predicted = new ShooterSnapshotViewBatch(
+            worldId: 99ul,
+            frame: 11,
+            sequence: 11ul,
+            ShooterViewSnapshotKind.Delta,
+            ShooterViewBatchSource.LocalPrediction,
+            new[] { new ShooterViewEntityChange(player, ownerEntityId: 0, alive: true) },
+            Array.Empty<ShooterViewEntityKey>(),
+            new[] { new ShooterViewTransformComponentChange(player, 9f, 4f, 1f, 0f, 0f, 0f) },
+            Array.Empty<ShooterViewHealthComponentChange>(),
+            Array.Empty<ShooterViewScoreComponentChange>(),
+            Array.Empty<ShooterViewProjectileLifetimeComponentChange>(),
+            Array.Empty<ShooterEventSnapshot>());
+        var snapshot = CreatePureStateSnapshot(
+            frame: 12,
+            settings: ShooterPureStateSyncSettings.Default,
+            entities: new[]
+            {
+                new ShooterPureStateEntityDelta(
+                    1,
+                    ShooterPackedEntityKinds.Player,
+                    ShooterPureStateEntityLayers.Combat,
+                    ShooterPureStateDeltaKinds.Spawn,
+                    ownerId: 0,
+                    quantizedX: 2500,
+                    quantizedY: -1500,
+                    quantizedVelocityX: 0,
+                    quantizedVelocityY: 0,
+                    quantizedFacingX: 250,
+                    quantizedFacingY: -500,
+                    hp: 100,
+                    score: 3,
+                    remainingFrames: 0,
+                    flags: ShooterPureStateEntityFlags.Alive |
+                        ShooterPureStateEntityFlags.Visible |
+                        ShooterPureStateEntityFlags.PredictedLocal)
+            });
+
+        projection.Apply(in predicted);
+        var batch = mapper.Map(in snapshot, controlledPlayerId: 1);
+        projection.Apply(in batch);
+
+        Assert.Single(batch.EntityChanges);
+        Assert.Single(batch.HealthChanges);
+        Assert.Single(batch.ScoreChanges);
+        Assert.Empty(batch.TransformChanges);
+        Assert.True(projection.Store.TryGetTransform(player, out var transform));
+        Assert.Equal(9f, transform.X);
+        Assert.Equal(4f, transform.Y);
+        Assert.True(projection.Store.TryGetHealth(player, out var health));
+        Assert.Equal(100, health.Hp);
+    }
+
+    [Fact]
+    public void PureStateLowFrequencyFlagFlowsToTransformChange()
+    {
+        var mapper = new ShooterSnapshotViewModelMapper();
+        var snapshot = CreatePureStateSnapshot(
+            frame: 12,
+            settings: ShooterPureStateSyncSettings.Default,
+            entities: new[]
+            {
+                new ShooterPureStateEntityDelta(
+                    2001,
+                    ShooterPackedEntityKinds.Enemy,
+                    ShooterPureStateEntityLayers.Combat,
+                    ShooterPureStateDeltaKinds.Spawn,
+                    ownerId: 0,
+                    quantizedX: 2500,
+                    quantizedY: -1500,
+                    quantizedVelocityX: 0,
+                    quantizedVelocityY: 0,
+                    quantizedFacingX: 0,
+                    quantizedFacingY: 0,
+                    hp: 100,
+                    score: 0,
+                    remainingFrames: 0,
+                    flags: ShooterPureStateEntityFlags.Alive |
+                        ShooterPureStateEntityFlags.Visible |
+                        ShooterPureStateEntityFlags.LowFrequency)
+            });
+
+        var batch = mapper.Map(in snapshot);
+
+        Assert.Single(batch.TransformChanges);
+        Assert.True(batch.TransformChanges[0].IsLowFrequency);
+    }
+
+    [Fact]
+    public void PureStateVisibilityChangeRemovesHiddenEntityFromProjection()
+    {
+        var projection = new ShooterSnapshotViewProjection();
+        var mapper = new ShooterSnapshotViewModelMapper();
+        var key = new ShooterViewEntityKey(ShooterViewEntityKind.Enemy, 2001);
+        var visible = CreatePureStateVisibilitySnapshot(
+            frame: 1,
+            deltaKind: ShooterPureStateDeltaKinds.Spawn,
+            flags: ShooterPureStateEntityFlags.Alive | ShooterPureStateEntityFlags.Visible);
+        var hidden = CreatePureStateVisibilitySnapshot(
+            frame: 2,
+            deltaKind: ShooterPureStateDeltaKinds.VisibilityChange,
+            flags: ShooterPureStateEntityFlags.Alive);
+
+        var visibleBatch = mapper.Map(in visible);
+        projection.Apply(in visibleBatch);
+        var hiddenBatch = mapper.Map(in hidden);
+        var result = projection.Apply(in hiddenBatch);
+
+        Assert.True(visibleBatch.EntityChanges[0].Alive);
+        Assert.False(hiddenBatch.EntityChanges[0].Alive);
+        Assert.Equal(1, result.DeadEntityRemovals);
+        Assert.False(projection.Store.ContainsEntity(key));
     }
 
     [Fact]
@@ -549,6 +777,70 @@ public sealed class ShooterSnapshotViewProjectionTests
         Assert.False(projection.Store.ContainsEntity(playerTwo));
         Assert.False(projection.Store.Transforms.ContainsKey(playerTwo));
         Assert.Equal(1, projection.Store.PlayerCount);
+    }
+
+    [Fact]
+    public void EmptyAuthoritativeFullSnapshotClearsLargeProjection()
+    {
+        const int entityCount = 2048;
+        var projection = new ShooterSnapshotViewProjection();
+        var entities = new ShooterViewEntityChange[entityCount];
+        var transforms = new ShooterViewTransformComponentChange[entityCount];
+        for (var i = 0; i < entityCount; i++)
+        {
+            var key = new ShooterViewEntityKey(ShooterViewEntityKind.Enemy, i + 1);
+            entities[i] = new ShooterViewEntityChange(key, 0, alive: true);
+            transforms[i] = new ShooterViewTransformComponentChange(key, i, 0f, 1f, 0f, 0f, 0f);
+        }
+
+        var full = new ShooterSnapshotViewBatch(
+            77ul,
+            1,
+            1ul,
+            ShooterViewSnapshotKind.Full,
+            ShooterViewBatchSource.AuthoritativeCorrection,
+            entities,
+            Array.Empty<ShooterViewEntityKey>(),
+            transforms,
+            Array.Empty<ShooterViewHealthComponentChange>(),
+            Array.Empty<ShooterViewScoreComponentChange>(),
+            Array.Empty<ShooterViewProjectileLifetimeComponentChange>(),
+            Array.Empty<ShooterEventSnapshot>());
+        var empty = new ShooterSnapshotViewBatch(
+            77ul,
+            2,
+            2ul,
+            ShooterViewSnapshotKind.Full,
+            ShooterViewBatchSource.AuthoritativeCorrection,
+            Array.Empty<ShooterViewEntityChange>(),
+            Array.Empty<ShooterViewEntityKey>(),
+            Array.Empty<ShooterViewTransformComponentChange>(),
+            Array.Empty<ShooterViewHealthComponentChange>(),
+            Array.Empty<ShooterViewScoreComponentChange>(),
+            Array.Empty<ShooterViewProjectileLifetimeComponentChange>(),
+            Array.Empty<ShooterEventSnapshot>());
+
+        projection.Apply(in full);
+        var result = projection.Apply(in empty);
+
+        Assert.Equal(entityCount, result.MissingEntityRemovals);
+        Assert.Equal(0, result.FinalEntityCount);
+        Assert.Empty(projection.Store.Entities);
+        Assert.Empty(projection.Store.Transforms);
+    }
+
+    [Fact]
+    public void ClearBatchRemovesAllProjectedEntities()
+    {
+        var projection = new ShooterSnapshotViewProjection();
+        var full = CreateBatch(frame: 1, sequence: 1ul);
+
+        projection.Apply(in full);
+        var result = projection.Apply(ShooterSnapshotViewBatch.Empty);
+
+        Assert.True(ShooterSnapshotViewBatch.Empty.ShouldReplaceMissingEntities);
+        Assert.Equal(1, result.MissingEntityRemovals);
+        Assert.Equal(0, projection.Store.EntityCount);
     }
 
     [Fact]
@@ -897,6 +1189,64 @@ public sealed class ShooterSnapshotViewProjectionTests
     }
 
     [Fact]
+    public void SnapshotStreamPrebuffersConfiguredDelayBeforeContinuousPlayback()
+    {
+        var stream = new ShooterSnapshotStream(bufferCapacity: 8)
+        {
+            PlaybackFramesPerSecond = 30f,
+            InterpolationDelayFrames = 6f
+        };
+        var first = CreateBatch(frame: 0, sequence: 1ul, x: 0f);
+        var second = CreateBatch(frame: 3, sequence: 2ul, x: 3f);
+        var third = CreateBatch(frame: 6, sequence: 3ul, x: 6f);
+
+        stream.Publish(in first);
+        Assert.True(stream.TryAdvancePlayback(0f, out var initial));
+        Assert.Equal(0f, initial.SampleFrame);
+        Assert.False(stream.IsPlaybackStarved);
+
+        stream.Publish(in second);
+        Assert.False(stream.TryAdvancePlayback(1f / 30f, out _));
+        Assert.Equal(0f, stream.PlaybackFrame);
+        Assert.False(stream.IsPlaybackStarved);
+
+        stream.Publish(in third);
+        Assert.True(stream.TryAdvancePlayback(1f / 30f, out var playing));
+        Assert.Equal(1f, playing.SampleFrame, 3);
+        Assert.Equal(5f, stream.AvailablePlaybackLeadFrames, 3);
+    }
+
+    [Fact]
+    public void SnapshotStreamConvergesDelayWithoutMovingPlaybackBackwards()
+    {
+        var stream = new ShooterSnapshotStream(bufferCapacity: 8)
+        {
+            PlaybackFramesPerSecond = 30f,
+            InterpolationDelayFrames = 6f,
+            DelayConvergenceRate = 0.125f
+        };
+        var first = CreateBatch(frame: 0, sequence: 1ul, x: 0f);
+        var latest = CreateBatch(frame: 30, sequence: 2ul, x: 30f);
+        stream.Publish(in first);
+        stream.Publish(in latest);
+        Assert.True(stream.TryAdvancePlayback(0f, out _));
+        Assert.Equal(24f, stream.PlaybackFrame, 3);
+
+        Assert.True(stream.TrySetTargetInterpolationDelayFrames(9f));
+        var previous = stream.PlaybackFrame;
+        for (var i = 0; i < 24; i++)
+        {
+            stream.TryAdvancePlayback(1f / 30f, out _);
+            Assert.True(stream.PlaybackFrame >= previous);
+            previous = stream.PlaybackFrame;
+        }
+
+        Assert.Equal(9f, stream.InterpolationDelayFrames, 3);
+        Assert.Equal(30f, stream.PlaybackFrame, 3);
+        Assert.True(stream.IsPlaybackStarved);
+    }
+
+    [Fact]
     public void SnapshotStreamAdvancesBatchesWithSameSequenceButDifferentFrames()
     {
         var stream = new ShooterSnapshotStream(bufferCapacity: 4)
@@ -957,6 +1307,157 @@ public sealed class ShooterSnapshotViewProjectionTests
     }
 
     [Fact]
+    public void SnapshotStreamInterpolatesSparseLowFrequencyTrackAcrossIntermediateBatch()
+    {
+        var stream = new ShooterSnapshotStream(bufferCapacity: 4);
+        var target = new ShooterViewEntityKey(ShooterViewEntityKind.Enemy, 2001);
+        var baseline = CreateSparseTransformBatch(
+            frame: 0,
+            sequence: 1ul,
+            ShooterViewSnapshotKind.Full,
+            target,
+            x: 0f,
+            deliveryHints: SnapshotDeliveryHints.None);
+        var intermediate = CreateSparseTransformBatch(
+            frame: 5,
+            sequence: 2ul,
+            ShooterViewSnapshotKind.Delta,
+            target,
+            x: null,
+            deliveryHints: SnapshotDeliveryHints.None);
+        var update = CreateSparseTransformBatch(
+            frame: 10,
+            sequence: 3ul,
+            ShooterViewSnapshotKind.Delta,
+            target,
+            x: 10f,
+            deliveryHints: SnapshotDeliveryHints.SparseUpdate);
+
+        stream.Publish(in baseline);
+        stream.Publish(in intermediate);
+        stream.Publish(in update);
+
+        Assert.True(stream.TrySample(5f, out var sampled, out var isContinuousSample));
+        Assert.True(isContinuousSample);
+        Assert.Single(sampled.TransformChanges);
+        Assert.Equal(target, sampled.TransformChanges[0].Key);
+        Assert.Equal(5f, sampled.TransformChanges[0].X);
+        Assert.True(sampled.TransformChanges[0].IsLowFrequency);
+    }
+
+    [Fact]
+    public void SnapshotStreamHoldsLatestLowFrequencyTransformWithoutFutureSample()
+    {
+        var stream = new ShooterSnapshotStream(bufferCapacity: 4);
+        var target = new ShooterViewEntityKey(ShooterViewEntityKind.Enemy, 2001);
+        var update = CreateSparseTransformBatch(
+            frame: 10,
+            sequence: 1ul,
+            ShooterViewSnapshotKind.Delta,
+            target,
+            x: 10f,
+            deliveryHints: SnapshotDeliveryHints.SparseUpdate);
+        var later = CreateSparseTransformBatch(
+            frame: 15,
+            sequence: 2ul,
+            ShooterViewSnapshotKind.Delta,
+            target,
+            x: null,
+            deliveryHints: SnapshotDeliveryHints.None);
+
+        stream.Publish(in update);
+        stream.Publish(in later);
+
+        Assert.True(stream.TrySample(15f, out var sampled, out var isContinuousSample));
+        Assert.True(isContinuousSample);
+        Assert.Single(sampled.TransformChanges);
+        Assert.Equal(target, sampled.TransformChanges[0].Key);
+        Assert.Equal(10f, sampled.TransformChanges[0].X);
+    }
+
+    [Fact]
+    public void SnapshotStreamExtrapolatesSparseVelocityWithBoundedHorizon()
+    {
+        var stream = new ShooterSnapshotStream(bufferCapacity: 4)
+        {
+            PlaybackFramesPerSecond = 30f,
+            MaxTransformExtrapolationFrames = 6f
+        };
+        var target = new ShooterViewEntityKey(ShooterViewEntityKind.Enemy, 2001);
+        var moving = new ShooterViewTransformComponentChange(
+            target,
+            10f,
+            0f,
+            1f,
+            0f,
+            30f,
+            0f,
+            SnapshotDeliveryHints.SparseUpdate);
+        var update = new ShooterSnapshotViewBatch(
+            worldId: 77ul,
+            frame: 10,
+            sequence: 1ul,
+            ShooterViewSnapshotKind.Delta,
+            ShooterViewBatchSource.AuthoritativeCorrection,
+            Array.Empty<ShooterViewEntityChange>(),
+            Array.Empty<ShooterViewEntityKey>(),
+            new[] { moving },
+            Array.Empty<ShooterViewHealthComponentChange>(),
+            Array.Empty<ShooterViewScoreComponentChange>(),
+            Array.Empty<ShooterViewProjectileLifetimeComponentChange>(),
+            Array.Empty<ShooterEventSnapshot>());
+        var later = CreateSparseTransformBatch(
+            frame: 30,
+            sequence: 2ul,
+            ShooterViewSnapshotKind.Delta,
+            target,
+            x: null,
+            deliveryHints: SnapshotDeliveryHints.None);
+
+        stream.Publish(in update);
+        stream.Publish(in later);
+
+        Assert.True(stream.TrySample(13f, out var projected));
+        Assert.True(stream.TrySample(30f, out var clamped));
+        Assert.Equal(13f, projected.TransformChanges[0].X, 3);
+        Assert.Equal(16f, clamped.TransformChanges[0].X, 3);
+    }
+
+    [Fact]
+    public void SnapshotStreamStopsHoldingLowFrequencyTransformAfterDespawn()
+    {
+        var stream = new ShooterSnapshotStream(bufferCapacity: 4);
+        var target = new ShooterViewEntityKey(ShooterViewEntityKind.Enemy, 2001);
+        var update = CreateSparseTransformBatch(
+            frame: 10,
+            sequence: 1ul,
+            ShooterViewSnapshotKind.Delta,
+            target,
+            x: 10f,
+            deliveryHints: SnapshotDeliveryHints.SparseUpdate);
+        var despawn = new ShooterSnapshotViewBatch(
+            worldId: 77ul,
+            frame: 15,
+            sequence: 2ul,
+            ShooterViewSnapshotKind.Delta,
+            ShooterViewBatchSource.AuthoritativeCorrection,
+            new[] { new ShooterViewEntityChange(target, ownerEntityId: 0, alive: false) },
+            new[] { target },
+            Array.Empty<ShooterViewTransformComponentChange>(),
+            Array.Empty<ShooterViewHealthComponentChange>(),
+            Array.Empty<ShooterViewScoreComponentChange>(),
+            Array.Empty<ShooterViewProjectileLifetimeComponentChange>(),
+            Array.Empty<ShooterEventSnapshot>());
+
+        stream.Publish(in update);
+        stream.Publish(in despawn);
+
+        Assert.True(stream.TrySample(15f, out var sampled, out var isContinuousSample));
+        Assert.False(isContinuousSample);
+        Assert.Empty(sampled.TransformChanges);
+    }
+
+    [Fact]
     public void SnapshotStreamCanDisableTransformInterpolationThroughPolicy()
     {
         var policy = new ShooterSnapshotSamplingPolicy(new ShooterSnapshotSamplingPolicyOptions
@@ -973,6 +1474,149 @@ public sealed class ShooterSnapshotViewProjectionTests
         Assert.True(stream.TrySample(playbackFrame: 15f, out var sampled, out var isContinuousSample));
         Assert.False(isContinuousSample);
         Assert.Equal(0f, sampled.TransformChanges[0].X);
+    }
+
+    [Fact]
+    public void SnapshotStreamRetainedSamplesAreNotOverwrittenByLaterSamples()
+    {
+        var stream = new ShooterSnapshotStream(bufferCapacity: 4);
+        var first = CreateBatch(frame: 10, sequence: 10ul, x: 0f);
+        var second = CreateBatch(frame: 20, sequence: 20ul, x: 10f);
+        stream.Publish(in first);
+        stream.Publish(in second);
+
+        Assert.True(stream.TrySample(playbackFrame: 12.5f, out var retained));
+        Assert.True(stream.TrySample(playbackFrame: 17.5f, out var later));
+
+        Assert.Equal(2.5f, retained.TransformChanges[0].X);
+        Assert.Equal(7.5f, later.TransformChanges[0].X);
+    }
+
+    [Fact]
+    public void SnapshotStreamTransientPlaybackReusesLargeTransformBufferAfterWarmup()
+    {
+        const int entityCount = 2048;
+        var stream = new ShooterSnapshotStream(bufferCapacity: 4)
+        {
+            PlaybackFramesPerSecond = 30f,
+            InterpolationDelayFrames = 99_999f
+        };
+        var first = CreateLargeTransformBatch(frame: 0, sequence: 1ul, entityCount, xOffset: 0f);
+        var second = CreateLargeTransformBatch(frame: 100_000, sequence: 2ul, entityCount, xOffset: 10f);
+        stream.Publish(in first);
+        stream.Publish(in second);
+
+        for (var i = 0; i < 16; i++)
+        {
+            Assert.True(stream.TryAdvancePlaybackTransient(1f / 60f, out _));
+        }
+
+        var checksum = 0f;
+        var allSamplesValid = true;
+        var sampleFramesAdvance = true;
+        var lastSampleFrame = float.MinValue;
+        var before = GC.GetAllocatedBytesForCurrentThread();
+        for (var i = 0; i < 64; i++)
+        {
+            if (!stream.TryAdvancePlaybackTransient(1f / 60f, out var sampled) || sampled.TransformChanges.Count != entityCount)
+            {
+                allSamplesValid = false;
+                continue;
+            }
+
+            sampleFramesAdvance &= sampled.SampleFrame > lastSampleFrame;
+            lastSampleFrame = sampled.SampleFrame;
+            checksum += sampled.TransformChanges[0].X;
+        }
+
+        var allocatedBytes = GC.GetAllocatedBytesForCurrentThread() - before;
+        Assert.True(allSamplesValid);
+        Assert.True(sampleFramesAdvance);
+        Assert.True(checksum > 0f);
+        Assert.True(allocatedBytes < 1_024L, $"Transient interpolation allocated {allocatedBytes} bytes after warmup.");
+    }
+
+    [Fact]
+    public void LargeStateMappingKeepsSteadyStateAllocationBoundedAfterWarmup()
+    {
+        const int entityCount = 2048;
+        var enemies = new ShooterEnemySnapshot[entityCount];
+        for (var i = 0; i < enemies.Length; i++)
+        {
+            enemies[i] = new ShooterEnemySnapshot(i + 1, i, 0f, 1f, 0f, 10, 10, alive: true);
+        }
+
+        var snapshot = new ShooterStateSnapshotPayload(
+            1,
+            Array.Empty<ShooterPlayerSnapshot>(),
+            Array.Empty<ShooterBulletSnapshot>(),
+            Array.Empty<ShooterEventSnapshot>(),
+            0,
+            0,
+            0,
+            enemies);
+        var mapper = new ShooterSnapshotViewModelMapper();
+        var warmup = mapper.Map(in snapshot);
+        warmup.ReleasePooledResources();
+
+        var countsAreValid = true;
+        long mapAllocated = 0;
+        long releaseAllocated = 0;
+        for (var i = 0; i < 32; i++)
+        {
+            var before = GC.GetAllocatedBytesForCurrentThread();
+            var batch = mapper.Map(in snapshot);
+            mapAllocated += GC.GetAllocatedBytesForCurrentThread() - before;
+            countsAreValid &= batch.EntityChangeCount == entityCount;
+            countsAreValid &= batch.TransformChanges.Count == entityCount;
+            before = GC.GetAllocatedBytesForCurrentThread();
+            batch.ReleasePooledResources();
+            releaseAllocated += GC.GetAllocatedBytesForCurrentThread() - before;
+        }
+
+        var allocated = mapAllocated + releaseAllocated;
+        Assert.True(countsAreValid);
+        Assert.True(allocated < 256_000L, $"Large mapping allocated {allocated} bytes after warmup (map={mapAllocated}, release={releaseAllocated}).");
+    }
+
+    [Fact]
+    public void LargeRepeatedEntityUpdatesDoNotGrowProjectionCapacity()
+    {
+        const int entityCount = 2048;
+        var entityChanges = new ShooterViewEntityChange[entityCount];
+        var transformChanges = new ShooterViewTransformComponentChange[entityCount];
+        for (var i = 0; i < entityCount; i++)
+        {
+            var key = new ShooterViewEntityKey(ShooterViewEntityKind.Enemy, i + 1);
+            entityChanges[i] = new ShooterViewEntityChange(key, 0, alive: true);
+            transformChanges[i] = new ShooterViewTransformComponentChange(key, i, 0f, 1f, 0f, 0f, 0f);
+        }
+
+        var batch = new ShooterSnapshotViewBatch(
+            1,
+            1,
+            1,
+            ShooterViewSnapshotKind.Delta,
+            ShooterViewBatchSource.AuthoritativeCorrection,
+            entityChanges,
+            Array.Empty<ShooterViewEntityKey>(),
+            transformChanges,
+            Array.Empty<ShooterViewHealthComponentChange>(),
+            Array.Empty<ShooterViewScoreComponentChange>(),
+            Array.Empty<ShooterViewProjectileLifetimeComponentChange>(),
+            Array.Empty<ShooterEventSnapshot>());
+        var projection = new ShooterSnapshotViewProjection();
+        projection.Apply(in batch);
+
+        var before = GC.GetAllocatedBytesForCurrentThread();
+        for (var i = 0; i < 32; i++)
+        {
+            projection.Apply(in batch);
+        }
+
+        var allocatedBytes = GC.GetAllocatedBytesForCurrentThread() - before;
+        Assert.Equal(entityCount, projection.Store.EntityCount);
+        Assert.Equal(0, allocatedBytes);
     }
 
     [Fact]
@@ -1084,6 +1728,110 @@ public sealed class ShooterSnapshotViewProjectionTests
             Array.Empty<ShooterEventSnapshot>());
     }
 
+    private static ShooterSnapshotViewBatch CreateLargeTransformBatch(int frame, ulong sequence, int entityCount, float xOffset)
+    {
+        var transforms = new ShooterViewTransformComponentChange[entityCount];
+        for (var i = 0; i < entityCount; i++)
+        {
+            var key = new ShooterViewEntityKey(ShooterViewEntityKind.Enemy, i + 1);
+            transforms[i] = new ShooterViewTransformComponentChange(key, xOffset + i, i, 1f, 0f, 0f, 0f);
+        }
+
+        return new ShooterSnapshotViewBatch(
+            worldId: 77ul,
+            frame,
+            sequence,
+            ShooterViewSnapshotKind.Full,
+            ShooterViewBatchSource.AuthoritativeCorrection,
+            Array.Empty<ShooterViewEntityChange>(),
+            Array.Empty<ShooterViewEntityKey>(),
+            transforms,
+            Array.Empty<ShooterViewHealthComponentChange>(),
+            Array.Empty<ShooterViewScoreComponentChange>(),
+            Array.Empty<ShooterViewProjectileLifetimeComponentChange>(),
+            Array.Empty<ShooterEventSnapshot>());
+    }
+
+    private static ShooterSnapshotViewBatch CreateSparseTransformBatch(
+        int frame,
+        ulong sequence,
+        ShooterViewSnapshotKind snapshotKind,
+        ShooterViewEntityKey key,
+        float? x,
+        SnapshotDeliveryHints deliveryHints)
+    {
+        var transforms = x.HasValue
+            ? new[] { new ShooterViewTransformComponentChange(key, x.Value, 0f, 1f, 0f, 0f, 0f, deliveryHints) }
+            : Array.Empty<ShooterViewTransformComponentChange>();
+        return new ShooterSnapshotViewBatch(
+            worldId: 77ul,
+            frame,
+            sequence,
+            snapshotKind,
+            ShooterViewBatchSource.AuthoritativeCorrection,
+            Array.Empty<ShooterViewEntityChange>(),
+            Array.Empty<ShooterViewEntityKey>(),
+            transforms,
+            Array.Empty<ShooterViewHealthComponentChange>(),
+            Array.Empty<ShooterViewScoreComponentChange>(),
+            Array.Empty<ShooterViewProjectileLifetimeComponentChange>(),
+            Array.Empty<ShooterEventSnapshot>());
+    }
+
+    private static ShooterPureStateSnapshotPayload CreatePureStateSnapshot(
+        int frame,
+        ShooterPureStateSyncSettings settings,
+        ShooterPureStateEntityDelta[] entities,
+        int snapshotKind = ShooterPureStateSnapshotKinds.FullBaseline)
+    {
+        return new ShooterPureStateSnapshotPayload(
+            ShooterPureStateSyncCodec.CurrentVersion,
+            worldId: 99ul,
+            frame,
+            serverTick: frame,
+            snapshotKind,
+            baselineFrame: frame,
+            baselineHash: 111u,
+            stateHash: 111u,
+            settings,
+            entities,
+            visibilityHints: Array.Empty<ShooterPureStateVisibilityHint>());
+    }
+
+    private static ShooterPureStateSnapshotPayload CreatePureStateVisibilitySnapshot(int frame, int deltaKind, byte flags)
+    {
+        return new ShooterPureStateSnapshotPayload(
+            ShooterPureStateSyncCodec.CurrentVersion,
+            77ul,
+            frame,
+            frame,
+            frame == 1 ? ShooterPureStateSnapshotKinds.FullBaseline : ShooterPureStateSnapshotKinds.Delta,
+            1,
+            0u,
+            0u,
+            ShooterPureStateSyncSettings.Default,
+            new[]
+            {
+                new ShooterPureStateEntityDelta(
+                    2001,
+                    ShooterPackedEntityKinds.Enemy,
+                    ShooterPureStateEntityLayers.Combat,
+                    deltaKind,
+                    0,
+                    0,
+                    0,
+                    0,
+                    0,
+                    0,
+                    0,
+                    10,
+                    0,
+                    0,
+                    flags)
+            },
+            Array.Empty<ShooterPureStateVisibilityHint>());
+    }
+
     private sealed class RecordingSnapshotViewSink : IShooterSnapshotViewSink
     {
         public int ApplyCount { get; private set; }
@@ -1130,4 +1878,10 @@ public sealed class ShooterSnapshotViewProjectionTests
             LastAddedEntities = 0;
         }
     }
+}
+
+[CollectionDefinition(Name, DisableParallelization = true)]
+public sealed class ShooterSnapshotViewProjectionTestCollection
+{
+    public const string Name = "Shooter snapshot view projection";
 }

@@ -1,4 +1,4 @@
-﻿using AbilityKit.Core.Continuous;
+using AbilityKit.Continuous;
 using AbilityKit.Demo.Moba.Components;
 using AbilityKit.Demo.Moba.Config.BattleDemo.MO;
 using AbilityKit.GameplayTags;
@@ -43,7 +43,7 @@ namespace AbilityKit.Demo.Moba.Services.Buffs.Runtime {
             runtime.Continuous.Refresh(sourceActorId, remainingSeconds, runtime.StackCount, buff.MaxStacks, requirements);
             runtime.Continuous.IntervalRemainingSeconds = runtime.IntervalRemainingSeconds;
 
-            if (_continuous == null) return false;
+            if (_continuous == null) return true;
             if (wasActive)
             {
                 if (_continuous is MobaContinuousManager mobaContinuous)

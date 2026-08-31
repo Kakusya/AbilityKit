@@ -1,23 +1,25 @@
-﻿{
-    "conditions":  [
-
-                   ],
-    "id":  20001,
-    "enabled":  true,
-    "phase":  "immediate",
-    "event":  "skill.cast.complete",
-    "name":  "Trigger_20001",
-    "allowExternal":  false,
-    "actions":  [
-                    {
-                        "message":  "释放技能完成日志输出11111",
-                        "dump_args":  false,
-                        "type":  "debug_log"
-                    },
-                    {
-                        "emitterId":  400001,
-                        "type":  "emit"
-                    }
-                ],
-    "priority":  50
+{
+    "triggers": [
+        {
+            "id": 20001,
+            "name": "Trigger_20001",
+            "event": "skill.cast.complete",
+            "enabled": true,
+            "allowExternal": false,
+            "phase": "immediate",
+            "priority": 50,
+            "conditions": [],
+            "actions": [
+                {
+                    "message": "释放技能完成日志输出11111",
+                    "dump_args": false,
+                    "type": "debug_log"
+                },
+                {
+                    "emitterId": 400001,
+                    "type": "emit"
+                }
+            ]
+        }
+    ]
 }

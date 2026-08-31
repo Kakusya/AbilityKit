@@ -2,6 +2,7 @@ using System;
 using AbilityKit.Ability.FrameSync;
 using AbilityKit.Ability.FrameSync.Rollback;
 using AbilityKit.Ability.World.Abstractions;
+using AbilityKit.Demo.Moba.Rollback;
 
 namespace AbilityKit.Game.Flow
 {
@@ -9,7 +10,8 @@ namespace AbilityKit.Game.Flow
     {
         public readonly BattleStartPlan Plan;
         public readonly BattleContext Context;
-        public readonly BattleSessionHandles.RemoteDrivenHandles Handles;
+        public readonly BattleSessionRemoteDrivenWorldRuntime Handles;
+        public readonly BattleSessionDiagnostics Diagnostics;
         public readonly float FixedDeltaSeconds;
         public readonly Func<WorldId, int> ResolveIdealFrameLimit;
         public readonly Func<bool> ShouldForceHashMismatch;
@@ -18,7 +20,8 @@ namespace AbilityKit.Game.Flow
         public RemoteDrivenWorldInstallOptions(
             BattleStartPlan plan,
             BattleContext context,
-            BattleSessionHandles.RemoteDrivenHandles handles,
+            BattleSessionRemoteDrivenWorldRuntime handles,
+            BattleSessionDiagnostics diagnostics,
             float fixedDeltaSeconds,
             Func<WorldId, int> resolveIdealFrameLimit,
             Func<bool> shouldForceHashMismatch,
@@ -27,6 +30,7 @@ namespace AbilityKit.Game.Flow
             Plan = plan;
             Context = context;
             Handles = handles;
+            Diagnostics = diagnostics;
             FixedDeltaSeconds = fixedDeltaSeconds;
             ResolveIdealFrameLimit = resolveIdealFrameLimit;
             ShouldForceHashMismatch = shouldForceHashMismatch;
@@ -52,13 +56,13 @@ namespace AbilityKit.Game.Flow
                 options.ShouldForceHashMismatch);
 
             options.ResetTickState?.Invoke();
-            CreateInputRuntime(handles, inputDelayFrames);
+            CreateInputRuntime(handles, options.Diagnostics, inputDelayFrames);
         }
 
         private static void CreateWorldRuntime(
             BattleStartPlan plan,
             BattleContext ctx,
-            BattleSessionHandles.RemoteDrivenHandles handles,
+            BattleSessionRemoteDrivenWorldRuntime handles,
             float fixedDeltaSeconds,
             int inputDelayFrames,
             Func<WorldId, int> resolveIdealFrameLimit,
@@ -72,7 +76,7 @@ namespace AbilityKit.Game.Flow
                 _ => handles.Consumable,
                 _ => ctx != null ? ctx.LocalInputQueue : null,
                 resolveIdealFrameLimit,
-                RemoteDrivenRollbackRegistryFactory.Create,
+                MobaRollbackRegistryBuilder.Create,
                 world => CreateStateHash(world, shouldForceHashMismatch)));
 
             handles.BindWorldRuntime(worldRuntime);
@@ -90,10 +94,11 @@ namespace AbilityKit.Game.Flow
         }
 
         private static void CreateInputRuntime(
-            BattleSessionHandles.RemoteDrivenHandles handles,
+            BattleSessionRemoteDrivenWorldRuntime handles,
+            BattleSessionDiagnostics diagnostics,
             int inputDelayFrames)
         {
-            var inputRuntime = RemoteDrivenInputRuntime.Create(inputDelayFrames);
+            var inputRuntime = RemoteDrivenInputRuntime.Create(inputDelayFrames, diagnostics);
             handles.BindInputRuntime(inputRuntime);
             inputRuntime?.PublishDebugStats();
         }

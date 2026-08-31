@@ -1,0 +1,90 @@
+{
+  "schemaVersion": 1,
+  "manifest": "moba-hero-acceptance-coverage",
+  "heroes": [
+    {
+      "heroId": 1,
+      "heroName": "LianPo",
+      "fixture": "AbilityKit.Game.Test.UnitTest.LianPoSkillAcceptanceTests",
+      "gate": "moba-lianpo-unity",
+      "sceneContract": "scenario-trace-and-effect-root",
+      "coverage": {
+        "repeatedRelease": "covered",
+        "buff": "covered",
+        "projectile": "not-covered",
+        "area": "covered",
+        "presentation": "not-covered"
+      }
+    },
+    {
+      "heroId": 1002,
+      "heroName": "XiaoQiao",
+      "fixture": "AbilityKit.Game.Test.UnitTest.XiaoQiaoSkillAcceptanceTests",
+      "gate": "moba-xiaoqiao-unity",
+      "sceneContract": "scenario-trace-and-effect-root",
+      "coverage": {
+        "repeatedRelease": "covered",
+        "buff": "covered",
+        "projectile": "covered",
+        "area": "covered",
+        "presentation": "covered"
+      }
+    },
+    {
+      "heroId": 1003,
+      "heroName": "ZhaoYun",
+      "fixture": "AbilityKit.Game.Test.UnitTest.ZhaoYunSkillAcceptanceTests",
+      "gate": "moba-zhaoyun-unity",
+      "sceneContract": "headless-harness-trace-and-root-lifecycle",
+      "coverage": {
+        "repeatedRelease": "covered",
+        "buff": "covered",
+        "projectile": "not-covered",
+        "area": "covered",
+        "presentation": "not-covered"
+      }
+    },
+    {
+      "heroId": 1004,
+      "heroName": "Mozi",
+      "fixture": "AbilityKit.Game.Test.UnitTest.MoziSkillAcceptanceTests",
+      "gate": "moba-mozi-unity",
+      "sceneContract": "headless-harness-trace-and-root-lifecycle",
+      "coverage": {
+        "repeatedRelease": "covered",
+        "buff": "covered",
+        "projectile": "covered",
+        "area": "covered",
+        "presentation": "covered"
+      }
+    },
+    {
+      "heroId": 1005,
+      "heroName": "Daji",
+      "fixture": "AbilityKit.Game.Test.UnitTest.DajiSkillAcceptanceTests",
+      "gate": "moba-daji-unity",
+      "sceneContract": "headless-harness-trace-and-projectile-state",
+      "coverage": {
+        "repeatedRelease": "covered",
+        "buff": "covered",
+        "projectile": "covered",
+        "area": "not-covered",
+        "presentation": "not-covered"
+      }
+    },
+    {
+      "heroId": 1006,
+      "heroName": "YingZheng",
+      "fixture": "AbilityKit.Game.Test.UnitTest.YingZhengSkillAcceptanceTests",
+      "gate": "moba-yingzheng-unity",
+      "sceneContract": "headless-harness-trace-and-buff-cleanse",
+      "coverage": {
+        "repeatedRelease": "covered",
+        "buff": "covered",
+        "projectile": "covered",
+        "area": "not-covered",
+        "presentation": "not-covered"
+      }
+    }
+  ]
+}

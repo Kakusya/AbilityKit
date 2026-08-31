@@ -1,349 +1,142 @@
 using System;
-using System.Collections.Generic;
 using System.Threading;
 using System.Threading.Tasks;
-using AbilityKit.Network.Abstractions;
-using AbilityKit.Network.Runtime;
-using AbilityKit.Protocol.Moba.GatewayTimeSync;
-using AbilityKit.Protocol.Moba.Generated.GatewayFrameSync;
-using AbilityKit.Protocol.Moba.Room;
-using AbilityKit.Protocol.Moba.StateSync;
+using AbilityKit.Demo.Common.Rooms;
 using AbilityKit.Game.Flow;
+using AbilityKit.Network.Abstractions;
+using AbilityKit.Network.Room;
+using AbilityKit.Network.Sdk;
 
 namespace AbilityKit.Game.Battle.Agent
 {
-    public sealed class GatewayRoomClient : IGatewayRoomClient
+    public sealed partial class GatewayRoomClient :
+        IGatewayRoomClient,
+        IDemoRoomDirectoryClient,
+        IRoomGatewayRequestTransport,
+        IRoomGatewayPushSource,
+        IDisposable
     {
-        private readonly IConnection _connection;
-        private readonly RequestClient _request;
+        private readonly GatewayRoomTransportAdapter _transport;
+        private readonly GatewayRoomWireProtocolClient _wireClient;
         private readonly GatewayRoomOpCodes _opCodes;
+        private readonly RoomGatewayWireSessionClient _roomSessionClient;
+        private bool _disposed;
 
         public GatewayRoomClient(IConnection connection, GatewayRoomOpCodes opCodes)
+            : this(new GatewayRoomTransportAdapter(connection), opCodes)
         {
-            _connection = connection ?? throw new ArgumentNullException(nameof(connection));
+        }
+
+        public GatewayRoomClient(NetworkSdkClient sdkClient, GatewayRoomOpCodes opCodes)
+            : this(new GatewayRoomTransportAdapter(sdkClient), opCodes)
+        {
+        }
+
+        internal GatewayRoomClient(
+            GatewayRoomTransportAdapter transport,
+            GatewayRoomOpCodes opCodes)
+        {
+            _transport = transport ?? throw new ArgumentNullException(nameof(transport));
             _opCodes = opCodes;
-            _request = new RequestClient(connection);
+            _wireClient = new GatewayRoomWireProtocolClient(
+                transport,
+                opCodes,
+                new BattleInputCommandSequence());
+            _roomSessionClient = new RoomGatewayWireSessionClient(
+                transport,
+                transport,
+                ToWireOpCodes(in opCodes));
         }
 
-        public Task<ArraySegment<byte>> SendRawRequestAsync(uint opCode, ArraySegment<byte> payload, TimeSpan? timeout = null, CancellationToken cancellationToken = default)
+        public event Action<uint, ArraySegment<byte>> ServerPushReceived
         {
-            return _request.SendRequestAsync(opCode, payload, timeout, cancellationToken);
+            add => _transport.ServerPushReceived += value;
+            remove => _transport.ServerPushReceived -= value;
         }
 
-        public async Task<GatewayTimeSyncResult> TimeSyncAsync(uint timeSyncOpCode, long clientSendTicks, TimeSpan? timeout = null, CancellationToken cancellationToken = default)
-        {
-            var req = new WireTimeSyncReq(clientSendTicks);
-            var payload = WireTimeSyncBinary.Serialize(in req);
-            var resp = await _request.SendRequestAsync(timeSyncOpCode, payload, timeout, cancellationToken);
-            var wire = WireTimeSyncBinary.DeserializeTimeSyncRes(resp);
-            return new GatewayTimeSyncResult(wire.ClientSendTicks, wire.ServerNowTicks, wire.ServerTickFrequency);
-        }
-
-        public async Task<string> GuestLoginAsync(uint guestLoginOpCode, TimeSpan? timeout = null, CancellationToken cancellationToken = default)
-        {
-            var req = new WireRoomGuestLoginReq
-            {
-                GuestId = Guid.NewGuid().ToString("N")
-            };
-            var payload = WireRoomGatewayBinary.Serialize(in req);
-            var resp = await _request.SendRequestAsync(guestLoginOpCode, payload, timeout, cancellationToken);
-            var wire = WireRoomGatewayBinary.Deserialize<WireRoomGuestLoginRes>(resp);
-            return wire.Success ? wire.SessionToken ?? string.Empty : string.Empty;
-        }
-
-        public async Task<GatewayCreateRoomResult> CreateRoomAsync(
-            string sessionToken,
-            string region,
-            string serverId,
-            string roomType,
-            string title,
-            bool isPublic,
-            int maxPlayers,
-            IReadOnlyDictionary<string, string> tags,
+        public Task<ArraySegment<byte>> SendRawRequestAsync(
+            uint opCode,
+            ArraySegment<byte> payload,
             TimeSpan? timeout = null,
             CancellationToken cancellationToken = default)
         {
-            if (string.IsNullOrWhiteSpace(sessionToken)) throw new ArgumentException("sessionToken is required.", nameof(sessionToken));
-            if (string.IsNullOrWhiteSpace(region)) throw new ArgumentException("region is required.", nameof(region));
-            if (string.IsNullOrWhiteSpace(serverId)) throw new ArgumentException("serverId is required.", nameof(serverId));
-            if (string.IsNullOrWhiteSpace(roomType)) roomType = "battle";
-            if (title == null) title = string.Empty;
-
-            var req = new WireCreateRoomReq
-            {
-                SessionToken = sessionToken,
-                Region = region,
-                ServerId = serverId,
-                RoomType = roomType,
-                Title = title,
-                IsPublic = isPublic,
-                MaxPlayers = maxPlayers,
-                Tags = ToDictionary(tags)
-            };
-            var payload = WireRoomGatewayBinary.Serialize(in req);
-            var respPayload = await _request.SendRequestAsync(_opCodes.CreateRoom, payload, timeout, cancellationToken);
-            var wire = WireRoomGatewayBinary.Deserialize<WireCreateRoomRes>(respPayload);
-            return new GatewayCreateRoomResult(wire.RoomId ?? string.Empty, wire.NumericRoomId);
+            return _transport.SendRequestAsync(
+                opCode,
+                payload,
+                timeout,
+                cancellationToken);
         }
 
-        public async Task<GatewayJoinRoomResult> JoinRoomAsync(
-            string sessionToken,
-            string region,
-            string serverId,
-            string roomId,
+        public Task<ArraySegment<byte>> SendRequestAsync(
+            uint opCode,
+            ArraySegment<byte> payload,
             TimeSpan? timeout = null,
             CancellationToken cancellationToken = default)
         {
-            if (string.IsNullOrWhiteSpace(sessionToken)) throw new ArgumentException("sessionToken is required.", nameof(sessionToken));
-            if (string.IsNullOrWhiteSpace(region)) throw new ArgumentException("region is required.", nameof(region));
-            if (string.IsNullOrWhiteSpace(serverId)) throw new ArgumentException("serverId is required.", nameof(serverId));
-            if (string.IsNullOrWhiteSpace(roomId)) throw new ArgumentException("roomId is required.", nameof(roomId));
-
-            var req = new WireJoinRoomReq
-            {
-                SessionToken = sessionToken,
-                Region = region,
-                ServerId = serverId,
-                RoomId = roomId
-            };
-            var payload = WireRoomGatewayBinary.Serialize(in req);
-            var respPayload = await _request.SendRequestAsync(_opCodes.JoinRoom, payload, timeout, cancellationToken);
-            var wire = WireRoomGatewayBinary.Deserialize<WireJoinRoomRes>(respPayload);
-            var anchor = ToGatewayAnchor(wire.WorldStartAnchor);
-            return new GatewayJoinRoomResult(wire.NumericRoomId, string.Empty, in anchor);
+            return SendRawRequestAsync(opCode, payload, timeout, cancellationToken);
         }
 
-        public async Task<GatewayRoomSnapshotResult> SetReadyAsync(
-            string sessionToken,
-            string roomId,
-            bool ready,
+        public Task<GatewayTimeSyncResult> TimeSyncAsync(
+            uint timeSyncOpCode,
+            long clientSendTicks,
             TimeSpan? timeout = null,
             CancellationToken cancellationToken = default)
         {
-            if (string.IsNullOrWhiteSpace(sessionToken)) throw new ArgumentException("sessionToken is required.", nameof(sessionToken));
-            if (string.IsNullOrWhiteSpace(roomId)) throw new ArgumentException("roomId is required.", nameof(roomId));
-
-            var req = new WireRoomReadyReq
-            {
-                SessionToken = sessionToken,
-                RoomId = roomId,
-                Ready = ready
-            };
-            var payload = WireRoomGatewayBinary.Serialize(in req);
-            var respPayload = await _request.SendRequestAsync(_opCodes.SetReady, payload, timeout, cancellationToken);
-            var wire = WireRoomGatewayBinary.Deserialize<WireRoomSnapshotRes>(respPayload);
-            return new GatewayRoomSnapshotResult(wire.RoomId ?? string.Empty, wire.NumericRoomId);
+            return _wireClient.TimeSyncAsync(
+                timeSyncOpCode,
+                clientSendTicks,
+                timeout,
+                cancellationToken);
         }
 
-        public async Task<GatewayRoomSnapshotResult> PickHeroAsync(
-            string sessionToken,
-            string roomId,
-            int heroId,
-            int teamId,
-            int spawnPointId,
-            int level,
-            int attributeTemplateId,
-            int basicAttackSkillId,
-            IReadOnlyList<int> skillIds,
+        public Task<string> GuestLoginAsync(
+            uint guestLoginOpCode,
             TimeSpan? timeout = null,
             CancellationToken cancellationToken = default)
         {
-            if (string.IsNullOrWhiteSpace(sessionToken)) throw new ArgumentException("sessionToken is required.", nameof(sessionToken));
-            if (string.IsNullOrWhiteSpace(roomId)) throw new ArgumentException("roomId is required.", nameof(roomId));
-
-            var req = new WireRoomPickHeroReq
-            {
-                SessionToken = sessionToken,
-                RoomId = roomId,
-                HeroId = heroId,
-                TeamId = teamId,
-                SpawnPointId = spawnPointId,
-                Level = level,
-                AttributeTemplateId = attributeTemplateId,
-                BasicAttackSkillId = basicAttackSkillId,
-                SkillIds = ToList(skillIds)
-            };
-            var payload = WireRoomGatewayBinary.Serialize(in req);
-            var respPayload = await _request.SendRequestAsync(_opCodes.PickHero, payload, timeout, cancellationToken);
-            var wire = WireRoomGatewayBinary.Deserialize<WireRoomSnapshotRes>(respPayload);
-            return new GatewayRoomSnapshotResult(wire.RoomId ?? string.Empty, wire.NumericRoomId);
+            return _wireClient.GuestLoginAsync(
+                guestLoginOpCode,
+                timeout,
+                cancellationToken);
         }
 
-        public async Task<GatewayStartBattleResult> StartBattleAsync(
-            string sessionToken,
-            string roomId,
-            int gameplayId,
-            int ruleSetId,
-            int configVersion,
-            int protocolVersion,
-            string worldType,
-            string clientId,
+        public Task<DemoRoomDirectoryResult> ListRoomsAsync(
+            DemoRoomDirectoryQuery query,
             TimeSpan? timeout = null,
             CancellationToken cancellationToken = default)
         {
-            if (string.IsNullOrWhiteSpace(sessionToken)) throw new ArgumentException("sessionToken is required.", nameof(sessionToken));
-            if (string.IsNullOrWhiteSpace(roomId)) throw new ArgumentException("roomId is required.", nameof(roomId));
-
-            var req = new WireStartRoomBattleReq
-            {
-                SessionToken = sessionToken,
-                RoomId = roomId,
-                GameplayId = gameplayId,
-                RuleSetId = ruleSetId,
-                ConfigVersion = configVersion,
-                ProtocolVersion = protocolVersion,
-                WorldType = worldType ?? string.Empty,
-                ClientId = clientId ?? string.Empty
-            };
-            var payload = WireRoomGatewayBinary.Serialize(in req);
-            var respPayload = await _request.SendRequestAsync(_opCodes.StartBattle, payload, timeout, cancellationToken);
-            var wire = WireRoomGatewayBinary.Deserialize<WireStartRoomBattleRes>(respPayload);
-            return new GatewayStartBattleResult(wire.BattleId ?? string.Empty, wire.WorldId, wire.Started);
+            return _wireClient.ListRoomsAsync(
+                query,
+                timeout,
+                cancellationToken);
         }
 
-        public async Task<GatewayStateSyncSubscriptionResult> SubscribeStateSyncAsync(
-            string sessionToken,
-            string battleId,
-            string roomId,
-            TimeSpan? timeout = null,
-            CancellationToken cancellationToken = default)
+        private static RoomGatewayWireOpCodes ToWireOpCodes(in GatewayRoomOpCodes opCodes)
         {
-            if (string.IsNullOrWhiteSpace(sessionToken)) throw new ArgumentException("sessionToken is required.", nameof(sessionToken));
-            if (string.IsNullOrWhiteSpace(battleId)) throw new ArgumentException("battleId is required.", nameof(battleId));
-
-            var req = new WireSubscribeStateSyncReq
-            {
-                BattleGrainKey = battleId,
-                RoomId = roomId ?? string.Empty
-            };
-            var payload = WireRoomGatewayBinary.Serialize(in req);
-            var respPayload = await _request.SendRequestAsync(_opCodes.SubscribeStateSync, payload, timeout, cancellationToken);
-            var wire = WireRoomGatewayBinary.Deserialize<WireSubscribeStateSyncRes>(respPayload);
-            return new GatewayStateSyncSubscriptionResult(wire.Success);
+            return new RoomGatewayWireOpCodes(
+                opCodes.CreateRoom,
+                opCodes.JoinRoom,
+                opCodes.LeaveRoom,
+                opCodes.SetReady,
+                opCodes.StartBattle,
+                opCodes.SubscribeStateSync,
+                opCodes.RestoreRoom,
+                opCodes.PickHero,
+                opCodes.BeginLoading,
+                opCodes.ReportLoadingProgress,
+                opCodes.ReportAssetsLoaded,
+                opCodes.CancelLoading,
+                opCodes.GetSnapshot,
+                opCodes.RoomStateChanged);
         }
 
-        public GatewayStateSyncSnapshot DeserializeStateSyncSnapshotPush(ArraySegment<byte> payload)
+        public void Dispose()
         {
-            var wire = MobaWorldSnapshotCodec.Deserialize(CopySegment(payload));
-            return ToGatewaySnapshot(in wire);
-        }
-
-        public bool IsStateSyncSnapshotPush(uint opCode)
-        {
-            return opCode == _opCodes.SnapshotPushed || opCode == _opCodes.DeltaSnapshotPushed;
-        }
-
-        public async Task<GatewayBattleInputResult> SubmitBattleInputAsync(
-            string sessionToken,
-            string battleId,
-            ulong worldId,
-            int frame,
-            uint playerId,
-            int inputOpCode,
-            byte[] inputPayload,
-            TimeSpan? timeout = null,
-            CancellationToken cancellationToken = default)
-        {
-            if (string.IsNullOrWhiteSpace(sessionToken)) throw new ArgumentException("sessionToken is required.", nameof(sessionToken));
-            if (string.IsNullOrWhiteSpace(battleId)) throw new ArgumentException("battleId is required.", nameof(battleId));
-            if (worldId == 0) throw new ArgumentOutOfRangeException(nameof(worldId));
-            if (frame < 0) throw new ArgumentOutOfRangeException(nameof(frame));
-            if (playerId == 0) throw new ArgumentOutOfRangeException(nameof(playerId));
-
-            var req = new WireSubmitFrameInputReq(0UL, worldId, playerId, frame, inputOpCode, inputPayload ?? Array.Empty<byte>());
-            var payload = WireCustomBinary.Serialize(in req);
-            var respPayload = await _request.SendRequestAsync(_opCodes.SubmitBattleInput, payload, timeout, cancellationToken);
-            var wire = WireCustomBinary.DeserializeSubmitFrameInputRes(respPayload);
-            return new GatewayBattleInputResult(wire.ServerFrame, wire.Accepted);
-        }
-
-        private static Dictionary<string, string> ToDictionary(IReadOnlyDictionary<string, string> source)
-        {
-            if (source == null || source.Count == 0)
-            {
-                return null;
-            }
-
-            var result = new Dictionary<string, string>(source.Count);
-            foreach (var kv in source)
-            {
-                result[kv.Key ?? string.Empty] = kv.Value ?? string.Empty;
-            }
-
-            return result;
-        }
-
-        private static List<int> ToList(IReadOnlyList<int> source)
-        {
-            if (source == null || source.Count == 0)
-            {
-                return null;
-            }
-
-            var result = new List<int>(source.Count);
-            for (int i = 0; i < source.Count; i++)
-            {
-                result.Add(source[i]);
-            }
-
-            return result;
-        }
-
-        private static GatewayStateSyncSnapshot ToGatewaySnapshot(in MobaWorldSnapshotPayload push)
-        {
-            var source = push.Actors;
-            var actors = source == null || source.Length == 0
-                ? Array.Empty<GatewayStateSyncActorSnapshot>()
-                : new GatewayStateSyncActorSnapshot[source.Length];
-
-            for (int i = 0; i < actors.Length; i++)
-            {
-                var actor = source[i];
-                actors[i] = new GatewayStateSyncActorSnapshot(
-                    actor.ActorId,
-                    actor.PositionX,
-                    actor.PositionY,
-                    actor.PositionZ,
-                    actor.Rotation,
-                    actor.VelocityX,
-                    actor.VelocityZ,
-                    actor.Hp,
-                    actor.HpMax,
-                    actor.TeamId);
-            }
-
-            return new GatewayStateSyncSnapshot(
-                push.WorldId,
-                push.Frame,
-                push.Timestamp,
-                push.IsFullSnapshot,
-                actors);
-        }
-
-        private static GatewayWorldStartAnchor ToGatewayAnchor(in WireWorldStartAnchor anchor)
-        {
-            return new GatewayWorldStartAnchor(
-                anchor.StartServerTicks,
-                anchor.ServerTickFrequency,
-                anchor.StartFrame,
-                anchor.FixedDeltaSeconds);
-        }
-
-        private static byte[] CopySegment(ArraySegment<byte> segment)
-        {
-            if (segment.Array == null || segment.Count <= 0)
-            {
-                return Array.Empty<byte>();
-            }
-
-            if (segment.Offset == 0 && segment.Count == segment.Array.Length)
-            {
-                return segment.Array;
-            }
-
-            var bytes = new byte[segment.Count];
-            Buffer.BlockCopy(segment.Array, segment.Offset, bytes, 0, segment.Count);
-            return bytes;
+            if (_disposed) return;
+            _disposed = true;
+            _roomSessionClient.Dispose();
+            _transport.Dispose();
         }
     }
+
 }

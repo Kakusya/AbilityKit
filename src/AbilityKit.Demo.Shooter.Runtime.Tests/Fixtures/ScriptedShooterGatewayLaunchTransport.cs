@@ -3,7 +3,10 @@ using System.Collections.Generic;
 using System.Threading;
 using System.Threading.Tasks;
 using AbilityKit.Demo.Shooter.View;
+using AbilityKit.Network.Runtime;
+using AbilityKit.Network.Runtime.Sync;
 using AbilityKit.Protocol.Room;
+using AbilityKit.Protocol.Shooter;
 
 namespace AbilityKit.Demo.Shooter.Runtime.Tests;
 
@@ -32,6 +35,10 @@ internal sealed class ScriptedShooterGatewayLaunchTransport : IShooterRoomGatewa
     public uint JoinCurrentPlayerId { get; set; } = 121u;
  
     public WireRoomJoinKind JoinKind { get; set; } = WireRoomJoinKind.TeamLobby;
+
+    public bool IncludeSyncCapabilities { get; set; }
+
+    public WireReportAssetsLoadedReq LastReportAssetsLoadedRequest { get; private set; }
 
     public ArraySegment<byte> LastPayload { get; private set; }
 
@@ -72,16 +79,43 @@ internal sealed class ScriptedShooterGatewayLaunchTransport : IShooterRoomGatewa
                     Snapshot = new WireRoomSnapshot { BattleId = "battle-ready", CanStart = true },
                     Message = "ready"
                 }));
-            case RoomGatewayOpCodes.StartBattle:
-                return Task.FromResult(WireRoomGatewayBinary.Serialize(new WireStartRoomBattleRes
+            case RoomGatewayOpCodes.BeginLoading:
+                return Task.FromResult(WireRoomGatewayBinary.Serialize(new WireRoomOperationRes
                 {
                     Success = true,
-                    BattleId = "battle-launch",
-                    WorldId = 9041ul,
-                    Started = true,
-                    WorldStartAnchor = CreateAnchor(),
-                    ServerNowTicks = StartServerNowTicks,
-                    Message = "started"
+                    Applied = true,
+                    RoomRevision = 3L,
+                    Snapshot = CreateStagedSnapshot(phase: 1, battleId: string.Empty, worldId: 0ul),
+                    Message = "loading"
+                }));
+            case RoomGatewayOpCodes.ReportLoadingProgress:
+                return Task.FromResult(WireRoomGatewayBinary.Serialize(new WireRoomOperationRes
+                {
+                    Success = true,
+                    Applied = true,
+                    RoomRevision = 3L,
+                    Snapshot = CreateStagedSnapshot(phase: 1, battleId: string.Empty, worldId: 0ul),
+                    Message = "progress"
+                }));
+            case RoomGatewayOpCodes.ReportAssetsLoaded:
+                LastReportAssetsLoadedRequest = WireRoomGatewayBinary.Deserialize<WireReportAssetsLoadedReq>(payload);
+                return Task.FromResult(WireRoomGatewayBinary.Serialize(new WireRoomOperationRes
+                {
+                    Success = true,
+                    Applied = true,
+                    RoomRevision = 4L,
+                    Snapshot = CreateStagedSnapshot(phase: 3, battleId: "battle-launch", worldId: 9041ul),
+                    Message = "loaded"
+                }));
+            case RoomGatewayOpCodes.GetSnapshot:
+                return Task.FromResult(WireRoomGatewayBinary.Serialize(new WireRoomSnapshotRes
+                {
+                    Success = true,
+                    RoomId = "room-launch",
+                    NumericRoomId = 1041ul,
+                    Snapshot = CreateStagedSnapshot(phase: 3, battleId: "battle-launch", worldId: 9041ul),
+                    Message = "running",
+                    ServerNowTicks = StartServerNowTicks
                 }));
             case RoomGatewayOpCodes.SubscribeStateSync:
                 return Task.FromResult(WireRoomGatewayBinary.Serialize(new WireSubscribeStateSyncRes
@@ -99,6 +133,49 @@ internal sealed class ScriptedShooterGatewayLaunchTransport : IShooterRoomGatewa
             default:
                 throw new InvalidOperationException("Unexpected room gateway opCode: " + opCode);
         }
+    }
+
+    private WireRoomSnapshot CreateStagedSnapshot(int phase, string battleId, ulong worldId)
+    {
+        return new WireRoomSnapshot
+        {
+            Summary = new WireRoomSummary { RoomId = "room-launch" },
+            CanStart = true,
+            BattleId = battleId,
+            WorldId = worldId,
+            WorldStartAnchor = CreateAnchor(),
+            Phase = phase,
+            LaunchGeneration = 7L,
+            LaunchManifestVersion = 3,
+            LaunchManifestHash = "manifest-shooter-v3",
+            RoomRevision = 4L,
+            LastEventSequence = 4L,
+            SyncCapabilities = IncludeSyncCapabilities ? CreateSyncCapabilities() : null
+        };
+    }
+
+    private static WireNetworkSyncCapabilities CreateSyncCapabilities()
+    {
+        return new WireNetworkSyncCapabilities
+        {
+            MetadataVersion = 1,
+            ProfileName = nameof(NetworkSyncModel.AuthoritativeInterpolation),
+            MinimumSchemaVersion = ShooterStateSyncCompatibilityPolicy.MinimumPureStateVersion,
+            MaximumSchemaVersion = ShooterPureStateSyncCodec.CurrentVersion,
+            ClientPlayback = (int)ClientPlaybackCapabilities.AuthoritativeInterpolation,
+            Input = (int)InputPolicy.NoClientInput,
+            Snapshot = (int)(SnapshotPolicy.FullSnapshot | SnapshotPolicy.AuthorityOverride |
+                SnapshotPolicy.FixedRateStateStream | SnapshotPolicy.EventStream),
+            Interest = (int)InterestPolicy.AllEntities,
+            Recovery = (int)(RecoveryPolicy.CatchUpToServerFrame | RecoveryPolicy.RequestFullSnapshot |
+                RecoveryPolicy.RequestKeyFrame),
+            ServerValidation = (int)ServerValidationPolicy.AuthoritativeOnly,
+            ReliableEvent = (int)(ReliableEventCapabilities.OrderedDelivery |
+                ReliableEventCapabilities.ExternalAcknowledgement |
+                ReliableEventCapabilities.PersistentCheckpoint |
+                ReliableEventCapabilities.BufferedOutOfOrder |
+                ReliableEventCapabilities.AuthoritativeBaselineRecovery)
+        };
     }
 
     private WireWorldStartAnchor CreateAnchor()

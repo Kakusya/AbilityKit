@@ -22,10 +22,17 @@ namespace AbilityKit.Demo.Moba.Services.EntityConstruction
 
             var info = spec.Info;
             var entity = ActorArchetypeFactory.Create(actorContext, in info);
-            initializer?.Invoke(entity, spec);
-            onActorBuilt?.Invoke(entity, spec);
-
-            return new BuildActorResult(entity, spec);
+            try
+            {
+                initializer?.Invoke(entity, spec);
+                onActorBuilt?.Invoke(entity, spec);
+                return new BuildActorResult(entity, spec);
+            }
+            catch
+            {
+                DestroyBuiltEntity(entity);
+                throw;
+            }
         }
 
         public static BuildActorResult BuildActorAndRegister(
@@ -37,8 +44,20 @@ namespace AbilityKit.Demo.Moba.Services.EntityConstruction
             Action<ActorEntity, MobaActorBuildSpec> onActorBuilt = null)
         {
             var result = BuildActor(actorContext, in spec, initializer, onActorBuilt);
-            RegisterBuiltActor(registry, entities, result.Entity, in spec);
-            return result;
+            try
+            {
+                RegisterBuiltActor(registry, entities, result.Entity, in spec);
+                return result;
+            }
+            catch
+            {
+                new MobaActorSpawnRegistrar(registry, entities).Unregister(
+                    spec.Info.ActorId,
+                    out _,
+                    publishDespawn: false);
+                DestroyBuiltEntity(result.Entity);
+                throw;
+            }
         }
 
         public static void RegisterBuiltActor(
@@ -50,16 +69,25 @@ namespace AbilityKit.Demo.Moba.Services.EntityConstruction
             if (entity == null) throw new ArgumentNullException(nameof(entity));
             if (spec.Info.ActorId <= 0) throw new InvalidOperationException("actorId is required");
 
-            registry?.Register(spec.Info.ActorId, entity);
+            var registrar = new MobaActorSpawnRegistrar(registry, entities);
+            var registered = registrar.Register(
+                entity,
+                in spec,
+                registerActor: registry != null,
+                registerEntityManager: entities != null,
+                registerEntityManagerFromEntity: false);
+            if (registered && entities != null)
+            {
+                entities.PublishSpawn(entity);
+            }
+        }
 
-            if (entities == null) return;
-            entities.Register(
-                actorId: spec.Info.ActorId,
-                entity: entity,
-                team: spec.Info.Team,
-                mainType: spec.Info.MainType,
-                unitSubType: spec.Info.UnitSubType,
-                ownerPlayer: spec.Info.OwnerPlayer);
+        internal static void DestroyBuiltEntity(ActorEntity entity)
+        {
+            if (entity != null && entity.isEnabled)
+            {
+                entity.Destroy();
+            }
         }
 
         public static BuildActorsResult BuildActorsFromLoadoutsAndInitialize(
@@ -140,33 +168,54 @@ namespace AbilityKit.Demo.Moba.Services.EntityConstruction
             var localActorId = 0;
             var localTransform = Transform3.Identity;
 
-            for (int i = 0; i < loadouts.Length; i++)
+            var builtActors = new BuildActorResult[loadouts.Length];
+            var builtCount = 0;
+            try
             {
-                var loadout = loadouts[i];
-                var spec = specs[i];
-                var built = BuildActorAndRegister(
-                    actorContext,
-                    registry,
-                    entities,
-                    in spec,
-                    onActorBuilt: (entity, buildSpec) => onActorBuilt?.Invoke(entity, loadout));
-
-                players[i] = new MobaPlayerEntry(loadout.PlayerId, loadout.TeamId, loadout.HeroId, loadout.SpawnIndex);
-                playerActors[i] = new MobaPlayerActorEntry(loadout.PlayerId, built.Spec.Info.ActorId);
-
-                if (localActorId == 0 && loadout.PlayerId.Equals(localPlayerId))
+                for (int i = 0; i < loadouts.Length; i++)
                 {
-                    localActorId = built.Spec.Info.ActorId;
-                    localTransform = built.Spec.Info.Transform;
+                    var loadout = loadouts[i];
+                    var spec = specs[i];
+                    var built = BuildActorAndRegister(
+                        actorContext,
+                        registry,
+                        entities,
+                        in spec,
+                        onActorBuilt: (entity, buildSpec) => onActorBuilt?.Invoke(entity, loadout));
+                    builtActors[builtCount++] = built;
+
+                    players[i] = new MobaPlayerEntry(loadout.PlayerId, loadout.TeamId, loadout.HeroId, loadout.SpawnIndex);
+                    playerActors[i] = new MobaPlayerActorEntry(loadout.PlayerId, built.Spec.Info.ActorId);
+
+                    if (localActorId == 0 && loadout.PlayerId.Equals(localPlayerId))
+                    {
+                        localActorId = built.Spec.Info.ActorId;
+                        localTransform = built.Spec.Info.Transform;
+                    }
                 }
-            }
 
-            if (localActorId == 0)
+                if (localActorId == 0)
+                {
+                    throw new InvalidOperationException($"localPlayerId not found in loadouts. playerId={localPlayerId.Value}");
+                }
+
+                return new BuildActorsResult(localActorId: localActorId, players: players, playerActors: playerActors, localActorTransform: localTransform);
+            }
+            catch
             {
-                throw new InvalidOperationException($"localPlayerId not found in loadouts. playerId={localPlayerId.Value}");
-            }
+                var registrar = new MobaActorSpawnRegistrar(registry, entities);
+                for (var i = builtCount - 1; i >= 0; i--)
+                {
+                    var built = builtActors[i];
+                    registrar.Unregister(
+                        built.Spec.Info.ActorId,
+                        out _,
+                        publishDespawn: false);
+                    DestroyBuiltEntity(built.Entity);
+                }
 
-            return new BuildActorsResult(localActorId: localActorId, players: players, playerActors: playerActors, localActorTransform: localTransform);
+                throw;
+            }
         }
 
         public static BuildActorsResult BuildActorsFromEnterGameReqAndInitialize(
@@ -257,13 +306,25 @@ namespace AbilityKit.Demo.Moba.Services.EntityConstruction
         public readonly MobaPlayerEntry[] Players;
         public readonly MobaPlayerActorEntry[] PlayerActors;
         public readonly Transform3 LocalActorTransform;
+        public readonly MobaActorSpawnResult[] SpawnResults;
 
         public BuildActorsResult(int localActorId, MobaPlayerEntry[] players, MobaPlayerActorEntry[] playerActors, in Transform3 localActorTransform)
+            : this(localActorId, players, playerActors, in localActorTransform, null)
+        {
+        }
+
+        public BuildActorsResult(
+            int localActorId,
+            MobaPlayerEntry[] players,
+            MobaPlayerActorEntry[] playerActors,
+            in Transform3 localActorTransform,
+            MobaActorSpawnResult[] spawnResults)
         {
             LocalActorId = localActorId;
             Players = players;
             PlayerActors = playerActors;
             LocalActorTransform = localActorTransform;
+            SpawnResults = spawnResults ?? Array.Empty<MobaActorSpawnResult>();
         }
     }
 }

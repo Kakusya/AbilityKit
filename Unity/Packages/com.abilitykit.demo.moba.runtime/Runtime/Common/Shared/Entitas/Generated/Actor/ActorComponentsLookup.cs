@@ -48,8 +48,10 @@ public static class ActorComponentsLookup {
     public const int Transform = 37;
     public const int UnitSubType = 38;
     public const int ActorDespawnRequest = 39;
+    public const int ActorBrain = 40;
+    public const int ActorStateMachine = 41;
 
-    public const int TotalComponents = 40;
+    public const int TotalComponents = 42;
 
     public static readonly string[] componentNames = {
         "ActorId",
@@ -91,7 +93,9 @@ public static class ActorComponentsLookup {
         "Team",
         "Transform",
         "UnitSubType",
-        "ActorDespawnRequest"
+        "ActorDespawnRequest",
+        "ActorBrain",
+        "ActorStateMachine"
     };
 
     public static readonly System.Type[] componentTypes = {
@@ -134,6 +138,8 @@ public static class ActorComponentsLookup {
         typeof(AbilityKit.Demo.Moba.Components.TeamComponent),
         typeof(AbilityKit.Demo.Moba.Components.TransformComponent),
         typeof(AbilityKit.Demo.Moba.Components.UnitSubTypeComponent),
-        typeof(AbilityKit.Demo.Moba.Components.ActorDespawnRequestComponent)
+        typeof(AbilityKit.Demo.Moba.Components.ActorDespawnRequestComponent),
+        typeof(AbilityKit.Demo.Moba.Components.ActorBrainComponent),
+        typeof(AbilityKit.Demo.Moba.Components.ActorStateMachineComponent)
     };
 }

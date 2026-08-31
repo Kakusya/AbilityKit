@@ -15,6 +15,32 @@ namespace AbilityKit.Network.Runtime
             _middlewares.Add(middleware);
         }
 
+        /// <summary>
+        /// 将中间件插入管线首部。适用于需要先于协议中间件处理全部流量的工具。
+        /// </summary>
+        public void AddFirst(INetworkMiddleware middleware)
+        {
+            if (middleware == null) throw new ArgumentNullException(nameof(middleware));
+            _middlewares.Insert(0, middleware);
+        }
+
+        /// <summary>
+        /// 从管线中移除指定中间件。用于运行时动态卸载（例如禁用网络调理模拟）。
+        /// 若中间件不存在则无操作。
+        /// </summary>
+        /// <param name="middleware">要移除的中间件实例。</param>
+        /// <returns>是否成功移除。</returns>
+        public bool Remove(INetworkMiddleware middleware)
+        {
+            if (middleware == null) return false;
+            return _middlewares.Remove(middleware);
+        }
+
+        /// <summary>
+        /// 当前管线中的中间件数量。
+        /// </summary>
+        public int Count => _middlewares.Count;
+
         public void ProcessInbound(ISessionContext context, NetworkPacketHeader header, ArraySegment<byte> payload, Action<NetworkPacketHeader, ArraySegment<byte>> terminal)
         {
             if (context == null) throw new ArgumentNullException(nameof(context));

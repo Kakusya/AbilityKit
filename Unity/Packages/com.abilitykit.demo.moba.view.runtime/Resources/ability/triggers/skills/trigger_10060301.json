@@ -1,0 +1,32 @@
+{
+  "triggers": [
+    {
+      "id": 10060301,
+      "name": "嬴政-至尊王权-开启飞剑状态",
+      "event": "",
+      "enabled": true,
+      "allowExternal": false,
+      "phase": "immediate",
+      "priority": 50,
+      "conditions": [],
+      "actions": [
+        {
+          "type": "add_buff",
+          "buffIds": [10060301],
+          "target_self": true
+        },
+        {
+          "type": "shoot_projectile",
+          "launcher_id": 31060301,
+          "projectile_id": 30060301,
+          "directionSource": "cast_context"
+        },
+        {
+          "type": "debug_log",
+          "message": "嬴政三技能至尊王权：启动单个持续飞剑发射器，共11波55支飞剑",
+          "dump_args": false
+        }
+      ]
+    }
+  ]
+}

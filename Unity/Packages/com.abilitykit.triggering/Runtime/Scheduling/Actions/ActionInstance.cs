@@ -60,9 +60,6 @@ namespace AbilityKit.Triggering.Runtime.ActionScheduler
         public object GlobalContext { get; private set; }
         public float CreatedAtMs { get; private set; }
 
-        private float _delayStartMs;
-        private bool _hasDelayStart;
-
         internal ActionInstance()
         {
         }
@@ -99,8 +96,6 @@ namespace AbilityKit.Triggering.Runtime.ActionScheduler
             ExecutionCount = 0;
             InterruptReason = null;
             CreatedAtMs = Math.Max(0f, createdAtMs);
-            _delayStartMs = 0f;
-            _hasDelayStart = false;
             ActionDelegate = null;
             ConditionDelegate = null;
             BoundArgs = null;
@@ -160,12 +155,7 @@ namespace AbilityKit.Triggering.Runtime.ActionScheduler
                 case Config.EActionScheduleMode.Immediate:
                     return true;
                 case Config.EActionScheduleMode.Delayed:
-                    if (!_hasDelayStart)
-                    {
-                        _delayStartMs = ElapsedMs;
-                        _hasDelayStart = true;
-                    }
-                    return ElapsedMs - _delayStartMs >= Math.Max(0f, schedule.Param);
+                    return ElapsedMs >= Math.Max(0f, schedule.Param);
                 case Config.EActionScheduleMode.Periodic:
                 case Config.EActionScheduleMode.Continuous:
                     if (schedule.Param <= 0f)
@@ -273,7 +263,6 @@ namespace AbilityKit.Triggering.Runtime.ActionScheduler
             LastExecuteMs = 0;
             ExecutionCount = 0;
             InterruptReason = null;
-            _hasDelayStart = false;
         }
 
         internal void ResetForPool()
@@ -288,8 +277,6 @@ namespace AbilityKit.Triggering.Runtime.ActionScheduler
             LastExecuteMs = 0;
             ExecutionCount = 0;
             InterruptReason = null;
-            _delayStartMs = 0f;
-            _hasDelayStart = false;
             InstanceId = 0;
             TriggerId = 0;
             Plan = default;

@@ -3,6 +3,7 @@ using System.Text;
 using System.Text.Json;
 using AbilityKit.Core.Recording.FrameRecord;
 using AbilityKit.Demo.Shooter.Runtime;
+using AbilityKit.Demo.Shooter.View;
 using AbilityKit.Orleans.Contracts.Battle;
 using AbilityKit.Protocol.Room;
 using AbilityKit.Protocol.Shooter;
@@ -69,8 +70,13 @@ internal static class ShooterSmokeReplayValidation
 
         var runtime = new ShooterBattleRuntimePort();
         var bytesCodec = new ShooterPackedSnapshotBytesCodec();
+        var pureStateSync = new ShooterPureStateSnapshotSyncController(
+            static _ => { },
+            new ShooterGatewaySnapshotDecoder());
         var consumedSnapshots = 0;
         var importedPackedSnapshots = 0;
+        var appliedPureStateSnapshots = 0;
+        var appliedPureStateBaselines = 0;
         var lastFrame = -1;
 
         for (var i = 0; i < snapshots.Count; i++)
@@ -102,22 +108,55 @@ internal static class ShooterSmokeReplayValidation
                 {
                     importedPackedSnapshots++;
                 }
+
+                continue;
+            }
+
+            if (wire.PayloadOpCode == ShooterOpCodes.Snapshot.PureState || wire.PayloadOpCode == ShooterOpCodes.Snapshot.PureStateDelta)
+            {
+                var gatewaySnapshot = ShooterGatewaySnapshotMapper.ToGatewaySnapshot(in wire);
+                var applyResult = pureStateSync.ApplyGatewaySnapshot(in gatewaySnapshot);
+                if (applyResult == ShooterPureStateSnapshotApplyResult.AppliedFullBaseline)
+                {
+                    appliedPureStateBaselines++;
+                    appliedPureStateSnapshots++;
+                }
+                else if (applyResult == ShooterPureStateSnapshotApplyResult.AppliedDelta)
+                {
+                    appliedPureStateSnapshots++;
+                }
             }
         }
 
-        if (importedPackedSnapshots == 0)
+        if (importedPackedSnapshots == 0 && appliedPureStateSnapshots == 0)
         {
-            throw new InvalidOperationException($"Shooter input-state replay did not contain an importable packed snapshot. Path={path}");
+            throw new InvalidOperationException($"Shooter input-state replay did not contain an importable packed or applicable pure-state snapshot. Path={path}");
         }
 
+        if (appliedPureStateSnapshots > 0 && appliedPureStateBaselines == 0)
+        {
+            throw new InvalidOperationException($"Shooter input-state replay applied pure-state snapshots without a full baseline. Path={path}");
+        }
+
+        if (appliedPureStateSnapshots > 0 && pureStateSync.NeedsFullBaselineResync)
+        {
+            throw new InvalidOperationException($"Shooter input-state replay ended with an unresolved pure-state baseline recovery. Path={path}, Reason={pureStateSync.LastResyncReason}");
+        }
+
+        var replayFrame = appliedPureStateSnapshots > 0
+            ? pureStateSync.LastAppliedFrame
+            : runtime.CurrentFrame;
+        var replayStateHash = appliedPureStateSnapshots > 0
+            ? pureStateSync.LastAppliedStateHash
+            : runtime.ComputeStateHash();
         return new ShooterSmokeReplayValidationResult(
             path,
             true,
             record.Inputs?.Count ?? 0,
             consumedSnapshots,
             record.StateHashes?.Count ?? 0,
-            runtime.CurrentFrame,
-            runtime.ComputeStateHash(),
+            replayFrame,
+            replayStateHash,
             true,
             SummarizeReplay(path, record));
     }

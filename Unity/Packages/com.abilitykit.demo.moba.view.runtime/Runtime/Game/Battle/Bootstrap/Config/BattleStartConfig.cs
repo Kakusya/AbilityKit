@@ -14,21 +14,6 @@ namespace AbilityKit.Game.Flow
     [CreateAssetMenu(menuName = "AbilityKit/Game/Battle Start Config", fileName = "BattleStartConfig")]
     public sealed class BattleStartConfig : ScriptableObject
     {
-        private const int DefaultBasicAttackSkillId = 1;
-
-        public enum BattleRunMode
-        {
-            Normal = 0,
-            Record = 1,
-            Replay = 2,
-        }
-
-        public enum BattleHostMode
-        {
-            Local = 0,
-            GatewayRemote = 1,
-        }
-
         [Header("Preset")]
         [LabelText("Preset(妯℃澘/瀹屽叏瑕嗙洊)")]
         public BattleStartPresetSO Preset;
@@ -186,7 +171,7 @@ namespace AbilityKit.Game.Flow
                     var p = playersSo.Team1Players[i];
                     if (p == null || string.IsNullOrEmpty(p.PlayerId)) continue;
 
-                    var ov = new MobaRoomLoadoutOverrides(p.Level, p.AttributeTemplateId, ResolveBasicAttackSkillId(p), p.SkillIds);
+                    var ov = new MobaRoomLoadoutOverrides(p.Level, p.AttributeTemplateId, ResolveBasicAttackSkillId(p), p.SkillIds, p.BrainId, p.EnableBrainOnSpawn);
                     slots.Add(new MobaRoomPlayerSlot(new PlayerId(p.PlayerId), (int)p.TeamId, p.HeroId, p.SpawnIndex, in ov));
                 }
             }
@@ -198,7 +183,7 @@ namespace AbilityKit.Game.Flow
                     var p = playersSo.Team2Players[i];
                     if (p == null || string.IsNullOrEmpty(p.PlayerId)) continue;
 
-                    var ov = new MobaRoomLoadoutOverrides(p.Level, p.AttributeTemplateId, ResolveBasicAttackSkillId(p), p.SkillIds);
+                    var ov = new MobaRoomLoadoutOverrides(p.Level, p.AttributeTemplateId, ResolveBasicAttackSkillId(p), p.SkillIds, p.BrainId, p.EnableBrainOnSpawn);
                     slots.Add(new MobaRoomPlayerSlot(new PlayerId(p.PlayerId), (int)p.TeamId, p.HeroId, p.SpawnIndex, in ov));
                 }
             }
@@ -313,7 +298,9 @@ namespace AbilityKit.Game.Flow
                         hasSpawnPosition: 1,
                         spawnX: p.SpawnPosition.x,
                         spawnY: p.SpawnPosition.y,
-                        spawnZ: p.SpawnPosition.z));
+                        spawnZ: p.SpawnPosition.z,
+                        brainId: p.BrainId,
+                        enableBrainOnSpawn: p.EnableBrainOnSpawn));
                 }
             }
 
@@ -337,7 +324,9 @@ namespace AbilityKit.Game.Flow
                         hasSpawnPosition: 1,
                         spawnX: p.SpawnPosition.x,
                         spawnY: p.SpawnPosition.y,
-                        spawnZ: p.SpawnPosition.z));
+                        spawnZ: p.SpawnPosition.z,
+                        brainId: p.BrainId,
+                        enableBrainOnSpawn: p.EnableBrainOnSpawn));
                 }
             }
 
@@ -346,8 +335,7 @@ namespace AbilityKit.Game.Flow
 
         private static int ResolveBasicAttackSkillId(BattlePlayersConfigSO.PlayerConfig player)
         {
-            if (player == null) return DefaultBasicAttackSkillId;
-            return player.BasicAttackSkillId > 0 ? player.BasicAttackSkillId : DefaultBasicAttackSkillId;
+            return player != null ? player.BasicAttackSkillId : 0;
         }
     }
 }

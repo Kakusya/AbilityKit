@@ -12,7 +12,8 @@
       "actions": [
         {
           "type": "give_damage",
-          "damage_value": 100,
+          "damage_value": 300,
+          "source_attack_ratio": 0.50,
           "damage_type": 2,
           "reason_param": 10020201,
           "target_query_id": 50020201,

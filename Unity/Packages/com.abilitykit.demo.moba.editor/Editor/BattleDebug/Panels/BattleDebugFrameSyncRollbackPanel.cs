@@ -1,24 +1,42 @@
+using AbilityKit.Demo.Moba.Diagnostics;
 using AbilityKit.Game.Flow;
 using UnityEditor;
 using UnityEngine;
 
 namespace AbilityKit.Game.Editor
 {
-    internal sealed class BattleDebugFrameSyncRollbackPanel : IBattleDebugPanel
+    [BattleDebugModule(
+        BattleDebugModuleIds.FrameSyncRollback,
+        "Frame Sync",
+        Sources = BattleDebugModuleSourceSupport.All,
+        Selections = BattleDebugModuleSelectionSupport.Frame)]
+    internal sealed class BattleDebugFrameSyncRollbackPanel : IBattleDebugPanel, IBattleDebugPanelLayout
     {
         public string Name => "帧同步/回滚";
         public int Order => 52;
+        public BattleDebugWorkspace Workspace => BattleDebugWorkspace.Diagnostics;
+        public bool OwnsScrollView => false;
 
         public bool IsVisible(in BattleDebugContext ctx)
         {
-            return EditorApplication.isPlaying && BattleFlowDebugProvider.Current != null;
+            return BattleDebugFrameMetricHistory.IsAvailable(
+                       in ctx,
+                       BattleDiagnosticMetricCategory.Rollback) ||
+                   !ctx.IsOffline &&
+                   EditorApplication.isPlaying &&
+                   BattleFlowDebugProvider.Current != null;
         }
 
         public void Draw(in BattleDebugContext ctx)
         {
-            var flowCtx = BattleFlowDebugProvider.Current;
+            var hasHistory = BattleDebugFrameMetricHistory.Draw(
+                in ctx,
+                BattleDiagnosticMetricCategory.Rollback,
+                "Rollback History");
+            var flowCtx = ctx.IsOffline ? null : BattleFlowDebugProvider.Current;
             if (flowCtx == null)
             {
+                if (hasHistory) return;
                 EditorGUILayout.HelpBox("BattleFlowDebugProvider.Current 为空。", MessageType.Info);
                 return;
             }

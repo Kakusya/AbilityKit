@@ -13,6 +13,7 @@
   <ItemGroup>
     <!-- 包含所有 .cs 文件 -->
     <Compile Include="../../Unity/Packages/com.abilitykit.demo.moba.runtime/Runtime/**/*.cs" />
+    <Compile Include="../../Unity/Packages/com.abilitykit.demo.moba.runtime/DiagnosticsCore/**/*.cs" />
   </ItemGroup>
 
   <!-- 排除 Unity/Entitas 相关的目录和文件 -->
@@ -32,14 +33,18 @@
 
   <!-- 引用 AbilityKit packages -->
   <ItemGroup>
+    <ProjectReference Include="..\AbilityKit.AI.Abstractions\AbilityKit.AI.Abstractions.csproj" />
     <ProjectReference Include="..\AbilityKit.Demo.Moba.Share\AbilityKit.Demo.Moba.Share.csproj" />
     <ProjectReference Include="..\AbilityKit.Core\AbilityKit.Core.csproj" />
+    <ProjectReference Include="..\AbilityKit.Continuous\AbilityKit.Continuous.csproj" />
+    <ProjectReference Include="..\AbilityKit.HFSM.Core\AbilityKit.HFSM.Core.csproj" />
     <ProjectReference Include="..\AbilityKit.Modifiers\AbilityKit.Modifiers.csproj" />
     <ProjectReference Include="..\AbilityKit.GameplayTags\AbilityKit.GameplayTags.csproj" />
     <ProjectReference Include="..\AbilityKit.Context\AbilityKit.Context.csproj" />
     <ProjectReference Include="..\AbilityKit.Trace\AbilityKit.Trace.csproj" />
     <ProjectReference Include="..\AbilityKit.Attributes\AbilityKit.Attributes.csproj" />
     <ProjectReference Include="..\AbilityKit.Behavior\AbilityKit.Behavior.csproj" />
+    <ProjectReference Include="..\AbilityKit.BehaviorTree\AbilityKit.BehaviorTree.csproj" />
     <ProjectReference Include="..\AbilityKit.Combat.Projectile\AbilityKit.Combat.Projectile.csproj" />
     <ProjectReference Include="..\AbilityKit.Host\AbilityKit.Host.csproj" />
     <ProjectReference Include="..\AbilityKit.Combat.Motion\AbilityKit.Combat.Motion.csproj" />
@@ -52,17 +57,32 @@
     <ProjectReference Include="..\AbilityKit.Pipeline\AbilityKit.Pipeline.csproj" />
     <ProjectReference Include="..\AbilityKit.Protocol\AbilityKit.Protocol.csproj" />
     <ProjectReference Include="..\AbilityKit.Game.Battle.Runtime\AbilityKit.Game.Battle.Runtime.csproj" />
+    <ProjectReference Include="..\AbilityKit.Network.Battle\AbilityKit.Network.Battle.csproj" />
     <ProjectReference Include="..\AbilityKit.Combat.Targeting\AbilityKit.Combat.Targeting.csproj" />
     <ProjectReference Include="..\AbilityKit.ThirdParty.Luban.Runtime\AbilityKit.ThirdParty.Luban.Runtime.csproj" />
     <ProjectReference Include="..\AbilityKit.ActionSchema\AbilityKit.ActionSchema.csproj" />
     <ProjectReference Include="..\AbilityKit.Ability\AbilityKit.Ability.csproj" />
     <ProjectReference Include="..\AbilityKit.Protocol.Moba\AbilityKit.Protocol.Moba.csproj" />
     <ProjectReference Include="..\AbilityKit.Host.Extension\AbilityKit.Host.Extension.csproj" />
+    <ProjectReference Include="..\AbilityKit.Demo.Moba.Host\AbilityKit.Demo.Moba.Host.csproj" />
+    <ProjectReference Include="../AbilityKit.Demo.Moba.Host/AbilityKit.Demo.Moba.Host.csproj" />
     <ProjectReference Include="..\AbilityKit.Combat.EntityManager\AbilityKit.Combat.EntityManager.csproj" />
+    <ProjectReference Include="..\AbilityKit.Deterministic\AbilityKit.Deterministic.csproj" />
+    <ProjectReference Include="..\AbilityKit.Combat.Navigation\AbilityKit.Combat.Navigation.csproj" />
     <ProjectReference Include="..\AbilityKit.Coordinator\AbilityKit.Coordinator.csproj" />
     <ProjectReference Include="..\AbilityKit.World.DI\AbilityKit.World.DI.csproj" />
     <ProjectReference Include="..\AbilityKit.World.Entitas\AbilityKit.World.Entitas.csproj" />
     <ProjectReference Include="..\AbilityKit.Flow\AbilityKit.Flow.csproj" />
+  </ItemGroup>
+
+  <ItemGroup>
+    <AdditionalFiles Include="..\Config\PackageConstraints.json" />
+    <ProjectReference Include="..\..\Unity\Packages\com.abilitykit.demo.moba.codegen\DotNet~\AbilityKit.Demo.Moba.CodeGen\AbilityKit.Demo.Moba.CodeGen.csproj"
+                      OutputItemType="Analyzer"
+                      ReferenceOutputAssembly="false" />
+    <ProjectReference Include="..\..\Unity\Packages\com.abilitykit.analyzer\DotNet~\AbilityKit.Analyzer\AbilityKit.Analyzer.csproj"
+                      OutputItemType="Analyzer"
+                      ReferenceOutputAssembly="false" />
   </ItemGroup>
 
   <!-- NuGet Dependencies -->

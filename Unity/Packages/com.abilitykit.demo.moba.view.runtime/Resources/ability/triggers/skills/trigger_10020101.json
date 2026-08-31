@@ -13,8 +13,7 @@
         {
           "type": "shoot_projectile",
           "launcher_id": 31020101,
-          "projectile_id": 30020101,
-          "continuous_process_id": 10020101
+          "projectile_id": 30020101
         },
         {
           "type": "debug_log",

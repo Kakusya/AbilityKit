@@ -29,7 +29,8 @@ namespace AbilityKit.Game.Flow
         PrepareDone = 0,
         Connected = 1,
         JoinedWorld = 2,
-        LoadingDone = 3,
-        Ended = 4
+        Ended = 4,
+        // 真实资源加载完成信号（manifest barrier）。首帧不代表资源加载完成。
+        AssetsLoadCompleted = 5
     }
 }

@@ -12,25 +12,41 @@ namespace AbilityKit.Demo.Shooter.View
 {
     internal sealed class ShooterClientSyncCore
     {
-        private readonly ShooterClientFrameSyncCoordinator _frameSync;
+        private readonly IShooterBattleRuntimePort _runtime;
+        private readonly ShooterPresentationFacade _presentation;
+        private readonly ShooterClientFrameSyncController _frameSync;
         private readonly ShooterClientInputCoordinator _input;
+        private readonly SyncHealthEventListView _lastHealthEvents;
 
         public ShooterClientSyncCore(
             IShooterBattleRuntimePort runtime,
             ShooterPresentationFacade presentation,
             int tickRate,
             ShooterGatewaySnapshotDecoder? decoder,
-            IShooterRoomGatewayClient? gateway)
+            IShooterRoomGatewayClient? gateway,
+            ShooterClientPredictionBufferOptions? predictionBufferOptions = null)
         {
-            _frameSync = new ShooterClientFrameSyncCoordinator(runtime, presentation, tickRate, decoder);
-            _input = new ShooterClientInputCoordinator(_frameSync.Controller, gateway);
+            _runtime = runtime ?? throw new ArgumentNullException(nameof(runtime));
+            _presentation = presentation ?? throw new ArgumentNullException(nameof(presentation));
+            _frameSync = new ShooterClientFrameSyncController(
+                _runtime,
+                _presentation,
+                tickRate,
+                decoder,
+                rollbackWorldId: 0ul,
+                predictionBufferOptions: predictionBufferOptions ?? ShooterClientPredictionBufferOptions.Default);
+            _input = new ShooterClientInputCoordinator(_frameSync, gateway);
+            _lastHealthEvents = new SyncHealthEventListView(
+                () => _frameSync.LastFastReconnectHealthEvents,
+                () => _input.LastHealthEvents,
+                () => _frameSync.LastReconciliationHealthEvents);
         }
 
-        public bool IsStarted => _frameSync.IsStarted;
+        public bool IsStarted => _runtime.IsStarted;
 
         public int CurrentFrame => _frameSync.CurrentFrame;
 
-        public ShooterClientFrameSyncController FrameSync => _frameSync.Controller;
+        public ShooterClientFrameSyncController FrameSync => _frameSync;
 
         public ShooterClientInputCoordinator InputCoordinator => _input;
 
@@ -44,8 +60,8 @@ namespace AbilityKit.Demo.Shooter.View
 
         public FastReconnectPhase FastReconnectPhase => _frameSync.FastReconnectPhase;
 
-        public IReadOnlyList<SyncHealthEvent> LastFastReconnectHealthEvents
-            => MergeHealthEvents(_frameSync.LastFastReconnectHealthEvents, _input.LastHealthEvents);
+        public IReadOnlyList<SyncHealthEvent> LastFastReconnectHealthEvents =>
+            _lastHealthEvents;
 
         public ShooterClientResyncReason LastResyncReason => _frameSync.LastResyncReason;
 
@@ -61,7 +77,12 @@ namespace AbilityKit.Demo.Shooter.View
 
         public bool StartGame(in ShooterStartGamePayload startGame)
         {
-            return _frameSync.StartGame(in startGame);
+            if (!_runtime.StartGame(in startGame))
+                return false;
+
+            var snapshot = _runtime.GetSnapshotTransient();
+            _presentation.ApplyLocalPredictionSnapshot(in snapshot);
+            return true;
         }
 
         public ShooterClientInputSubmitResult SubmitLocalInput(int playerId, float moveX, float moveY, float aimX, float aimY, bool fire)
@@ -112,32 +133,10 @@ namespace AbilityKit.Demo.Shooter.View
             return _frameSync.ApplyGatewayPush(opCode, payload);
         }
 
-        private static IReadOnlyList<SyncHealthEvent> MergeHealthEvents(
-            IReadOnlyList<SyncHealthEvent> primary,
-            IReadOnlyList<SyncHealthEvent> secondary)
+        public ShooterSnapshotApplyResult ApplyGatewaySnapshot(in ShooterGatewaySnapshot snapshot)
         {
-            if (primary.Count == 0)
-            {
-                return secondary;
-            }
-
-            if (secondary.Count == 0)
-            {
-                return primary;
-            }
-
-            var merged = new SyncHealthEvent[primary.Count + secondary.Count];
-            for (int i = 0; i < primary.Count; i++)
-            {
-                merged[i] = primary[i];
-            }
-
-            for (int i = 0; i < secondary.Count; i++)
-            {
-                merged[primary.Count + i] = secondary[i];
-            }
-
-            return merged;
+            return _frameSync.ApplyGatewaySnapshot(in snapshot);
         }
+
     }
 }

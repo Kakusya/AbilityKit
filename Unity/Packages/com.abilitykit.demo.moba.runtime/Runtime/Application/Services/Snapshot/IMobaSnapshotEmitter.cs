@@ -2,6 +2,8 @@ using System;
 using System.Collections.Generic;
 using AbilityKit.Ability.FrameSync;
 using AbilityKit.Ability.Host;
+using AbilityKit.Ability.World.DI;
+using AbilityKit.Ability.World.Services.Attributes;
 
 /// <summary>
 /// 文件名称: IMobaSnapshotEmitter.cs
@@ -143,6 +145,7 @@ namespace AbilityKit.Demo.Moba.Services
             contract.Require(AbilityKit.Protocol.Moba.MobaOpCodes.Snapshot.AreaEvent, typeof(MobaAreaEventSnapshotService), "AreaEvent");
             contract.Require(AbilityKit.Protocol.Moba.MobaOpCodes.Snapshot.DamageEvent, typeof(MobaDamageEventSnapshotService), "DamageEvent");
             contract.Require(AbilityKit.Protocol.Moba.MobaOpCodes.Snapshot.ActorDespawn, typeof(MobaActorDespawnSnapshotService), "ActorDespawn");
+            contract.Require(AbilityKit.Protocol.Moba.MobaOpCodes.Snapshot.PlayerHeroChanged, typeof(MobaPlayerHeroChangedSnapshotService), "PlayerHeroChanged");
             contract.Require(AbilityKit.Protocol.Moba.MobaOpCodes.Snapshot.PresentationCue, typeof(MobaPresentationCueSnapshotService), "PresentationCue");
             contract.Require(AbilityKit.Protocol.Moba.MobaOpCodes.Snapshot.SkillState, typeof(MobaSkillStateSnapshotService), "SkillState");
             return contract;
@@ -166,6 +169,70 @@ namespace AbilityKit.Demo.Moba.Services
             }
 
             return result;
+        }
+    }
+
+    [WorldService(typeof(MobaSnapshotContractProfileRegistry), WorldLifetime.Singleton)]
+    public sealed class MobaSnapshotContractProfileRegistry
+    {
+        private readonly Dictionary<int, MobaSnapshotOutputContract> _profiles =
+            new Dictionary<int, MobaSnapshotOutputContract>();
+        private MobaSnapshotOutputContract _defaultProfile;
+
+        public static MobaSnapshotContractProfileRegistry CreateDefault()
+        {
+            var registry = new MobaSnapshotContractProfileRegistry();
+            registry.RegisterDefault(MobaSnapshotOutputContract.CreateDefault());
+            return registry;
+        }
+
+        public void RegisterDefault(MobaSnapshotOutputContract contract)
+        {
+            _defaultProfile = contract ?? throw new ArgumentNullException(nameof(contract));
+        }
+
+        public void Register(int gameplayId, MobaSnapshotOutputContract contract)
+        {
+            if (gameplayId <= 0)
+            {
+                throw new ArgumentOutOfRangeException(nameof(gameplayId), gameplayId, "gameplay id must be positive.");
+            }
+
+            if (contract == null) throw new ArgumentNullException(nameof(contract));
+            if (_profiles.ContainsKey(gameplayId))
+            {
+                throw new InvalidOperationException($"duplicate snapshot contract profile. gameplayId={gameplayId}");
+            }
+
+            _profiles.Add(gameplayId, contract);
+        }
+
+        public bool TryResolve(
+            int gameplayId,
+            out MobaSnapshotOutputContract contract,
+            out string error)
+        {
+            contract = null;
+            error = null;
+            if (gameplayId <= 0)
+            {
+                error = $"snapshot contract gameplay id must be positive. gameplayId={gameplayId}";
+                return false;
+            }
+
+            if (_profiles.TryGetValue(gameplayId, out contract) && contract != null)
+            {
+                return true;
+            }
+
+            if (_defaultProfile != null)
+            {
+                contract = _defaultProfile;
+                return true;
+            }
+
+            error = $"snapshot contract profile is not declared. gameplayId={gameplayId}";
+            return false;
         }
     }
 

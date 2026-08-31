@@ -1,4 +1,5 @@
 using System;
+using AbilityKit.Deterministic;
 
 namespace AbilityKit.Core.Mathematics
 {
@@ -6,39 +7,46 @@ namespace AbilityKit.Core.Mathematics
     {
         public static bool Raycast(in Ray3 ray, in Sphere sphere, out float distance, out Vec3 normal)
         {
-            // 求解 |o + t d - c|^2 = r^2。
-            var oc = ray.Origin - sphere.Center;
-            var a = Vec3.Dot(ray.Direction, ray.Direction);
-            var b = 2f * Vec3.Dot(oc, ray.Direction);
-            var c = Vec3.Dot(oc, oc) - sphere.Radius * sphere.Radius;
-            var discriminant = b * b - 4f * a * c;
+            // 求解 |o + t d - c|^2 = r^2。判别式开方与法线归一化走定点内核
+            // （DeterministicMathBridge），保证命中判定跨平台位一致。
+            var o = DeterministicMathBridge.ToFixed(ray.Origin);
+            var d = DeterministicMathBridge.ToFixed(ray.Direction);
+            var c = DeterministicMathBridge.ToFixed(sphere.Center);
+            var r = Fixed64.FromSingle(sphere.Radius);
 
-            if (discriminant < 0f)
+            var oc = o - c;
+            var a = FixedVec3.Dot(d, d);
+            var b = Fixed64.FromInt64(2) * FixedVec3.Dot(oc, d);
+            var cc = FixedVec3.Dot(oc, oc) - r * r;
+            var discriminant = (b * b) - (Fixed64.FromInt64(4) * a * cc);
+
+            if (discriminant < Fixed64.Zero)
             {
                 distance = 0f;
                 normal = Vec3.Zero;
                 return false;
             }
 
-            var sqrt = MathUtil.Sqrt(discriminant);
-            var inv2a = 1f / (2f * a);
-            var t0 = (-b - sqrt) * inv2a;
-            var t1 = (-b + sqrt) * inv2a;
+            var sqrt = DeterministicMath.Sqrt(discriminant);
+            var inv2a = Fixed64.FromInt64(2) * a;
+            var t0 = (-b - sqrt) / inv2a;
+            var t1 = (-b + sqrt) / inv2a;
 
             var t = t0;
-            if (t < 0f) t = t1;
-            if (t < 0f)
+            if (t < Fixed64.Zero) t = t1;
+            if (t < Fixed64.Zero)
             {
                 distance = 0f;
                 normal = Vec3.Zero;
                 return false;
             }
 
-            distance = t;
-            var hitPoint = ray.GetPoint(t);
-            var n = hitPoint - sphere.Center;
-            var len = n.Magnitude;
-            normal = len > MathUtil.Epsilon ? n / len : Vec3.Zero;
+            distance = t.ToSingle();
+            var hitDelta = (o + (d * t)) - c;
+            var len = DeterministicMath.Sqrt(hitDelta.SqrMagnitude);
+            normal = len > DeterministicMathBridge.Epsilon
+                ? DeterministicMathBridge.ToVec3(hitDelta / len)
+                : Vec3.Zero;
             return true;
         }
 
@@ -211,6 +219,8 @@ namespace AbilityKit.Core.Mathematics
                     return Raycast(ray, shape.Aabb, out distance, out normal);
                 case ColliderShapeType.Capsule:
                     return Raycast(ray, shape.Capsule, out distance, out normal);
+                case ColliderShapeType.OBB:
+                    return Raycast(ray, shape.Obb, out distance, out normal);
                 default:
                     distance = 0f;
                     normal = Vec3.Zero;
@@ -228,9 +238,133 @@ namespace AbilityKit.Core.Mathematics
                     return Overlap(sphere, shape.Aabb);
                 case ColliderShapeType.Capsule:
                     return Overlap(sphere, shape.Capsule);
+                case ColliderShapeType.OBB:
+                    return OverlapObbSphere(in shape.Obb, in sphere);
                 default:
                     return false;
             }
+        }
+
+        public static bool Raycast(in Ray3 ray, in Obb obb, out float distance, out Vec3 normal)
+        {
+            obb.GetAxes(out var right, out var up, out var forward);
+            var e = obb.HalfExtents;
+
+            var obbToRay = ray.Origin - obb.Center;
+
+            // OBB 到射线空间的变换矩阵（局部坐标系基向量）
+            var f0 = right;
+            var f1 = up;
+            var f2 = forward;
+
+            var ox = Vec3.Dot(obbToRay, f0);
+            var oy = Vec3.Dot(obbToRay, f1);
+            var oz = Vec3.Dot(obbToRay, f2);
+
+            var dx = Vec3.Dot(ray.Direction, f0);
+            var dy = Vec3.Dot(ray.Direction, f1);
+            var dz = Vec3.Dot(ray.Direction, f2);
+
+            var ex = e.X;
+            var ey = e.Y;
+            var ez = e.Z;
+
+            var tmin = float.NegativeInfinity;
+            var tmax = float.PositiveInfinity;
+            normal = Vec3.Zero;
+
+            // X 轴 slab
+            if (!Slab(ox, dx, -ex, ex, ref tmin, ref tmax, -f0, f0, ref normal)) { distance = 0f; return false; }
+            // Y 轴 slab
+            if (!Slab(oy, dy, -ey, ey, ref tmin, ref tmax, -f1, f1, ref normal)) { distance = 0f; return false; }
+            // Z 轴 slab
+            if (!Slab(oz, dz, -ez, ez, ref tmin, ref tmax, -f2, f2, ref normal)) { distance = 0f; return false; }
+
+            if (tmax < 0f) { distance = 0f; return false; }
+
+            distance = tmin >= 0f ? tmin : tmax;
+            return true;
+        }
+
+        public static bool Overlap(in Aabb a, in Capsule capsule)
+        {
+            var closest = new Vec3(
+                MathUtil.Clamp(capsule.Center.X, a.Min.X, a.Max.X),
+                MathUtil.Clamp(capsule.Center.Y, a.Min.Y, a.Max.Y),
+                MathUtil.Clamp(capsule.Center.Z, a.Min.Z, a.Max.Z));
+
+            var distSq = (closest - capsule.Center).SqrMagnitude;
+            return distSq <= capsule.Radius * capsule.Radius;
+        }
+
+        public static bool Overlap(in Capsule a, in Capsule b)
+        {
+            var distSq = DistancePointSegmentSquared(a.Center, b.A, b.B, out _);
+            var r = a.Radius + b.Radius;
+            return distSq <= r * r;
+        }
+
+        private static bool OverlapObbSphere(in Obb obb, in Sphere sphere)
+        {
+            obb.GetAxes(out var right, out var up, out var forward);
+            var e = obb.HalfExtents;
+
+            var d = sphere.Center - obb.Center;
+
+            var qx = Vec3.Dot(d, right);
+            var qy = Vec3.Dot(d, up);
+            var qz = Vec3.Dot(d, forward);
+
+            var ex = e.X;
+            var ey = e.Y;
+            var ez = e.Z;
+
+            var cx = qx;
+            if (cx < -ex) cx = -ex;
+            if (cx > ex) cx = ex;
+
+            var cy = qy;
+            if (cy < -ey) cy = -ey;
+            if (cy > ey) cy = ey;
+
+            var cz = qz;
+            if (cz < -ez) cz = -ez;
+            if (cz > ez) cz = ez;
+
+            var dx = qx - cx;
+            var dy = qy - cy;
+            var dz = qz - cz;
+            return dx * dx + dy * dy + dz * dz <= sphere.Radius * sphere.Radius;
+        }
+
+        public static bool Overlap(in Obb a, in Obb b)
+        {
+            a.GetAxes(out var ar0, out var ar1, out var ar2);
+            b.GetAxes(out var br0, out var br1, out var br2);
+
+            var ae = a.HalfExtents;
+            var be = b.HalfExtents;
+
+            var d = b.Center - a.Center;
+
+            var ad = new[] { Vec3.Dot(d, ar0), Vec3.Dot(d, ar1), Vec3.Dot(d, ar2) };
+            var bd = new[] { Vec3.Dot(d, br0), Vec3.Dot(d, br1), Vec3.Dot(d, br2) };
+            var r = new[] { ae.X, ae.Y, ae.Z };
+            var s = new[] { be.X, be.Y, be.Z };
+
+            var ra = r[0];
+            var rb = s[0] * MathUtil.Abs(Vec3.Dot(ar0, br0)) + s[1] * MathUtil.Abs(Vec3.Dot(ar0, br1)) + s[2] * MathUtil.Abs(Vec3.Dot(ar0, br2));
+            if (MathUtil.Abs(ad[0]) > ra + rb) return false;
+
+            ra = r[1];
+            rb = s[0] * MathUtil.Abs(Vec3.Dot(ar1, br0)) + s[1] * MathUtil.Abs(Vec3.Dot(ar1, br1)) + s[2] * MathUtil.Abs(Vec3.Dot(ar1, br2));
+            if (MathUtil.Abs(ad[1]) > ra + rb) return false;
+
+            ra = r[2];
+            rb = s[0] * MathUtil.Abs(Vec3.Dot(ar2, br0)) + s[1] * MathUtil.Abs(Vec3.Dot(ar2, br1)) + s[2] * MathUtil.Abs(Vec3.Dot(ar2, br2));
+            if (MathUtil.Abs(ad[2]) > ra + rb) return false;
+
+            return true;
         }
     }
 }

@@ -14,15 +14,58 @@ namespace AbilityKit.Game.Battle.Agent
 
     public readonly struct GatewayJoinRoomResult
     {
+        public readonly bool Success;
+        public readonly string RoomId;
         public readonly ulong NumericRoomId;
         public readonly string SnapshotJson;
         public readonly GatewayWorldStartAnchor WorldStartAnchor;
+        public readonly string Message;
+        public readonly string BattleId;
+        public readonly bool CanStart;
+        public readonly long ServerNowTicks;
+        public readonly ulong WorldId;
+        public readonly uint CurrentPlayerId;
 
         public GatewayJoinRoomResult(ulong numericRoomId, string snapshotJson, in GatewayWorldStartAnchor worldStartAnchor)
+            : this(
+                success: true,
+                roomId: string.Empty,
+                numericRoomId,
+                snapshotJson,
+                in worldStartAnchor,
+                message: string.Empty,
+                battleId: string.Empty,
+                canStart: false,
+                serverNowTicks: 0L,
+                worldId: 0UL,
+                currentPlayerId: 0u)
         {
+        }
+
+        public GatewayJoinRoomResult(
+            bool success,
+            string roomId,
+            ulong numericRoomId,
+            string snapshotJson,
+            in GatewayWorldStartAnchor worldStartAnchor,
+            string message,
+            string battleId,
+            bool canStart,
+            long serverNowTicks,
+            ulong worldId,
+            uint currentPlayerId)
+        {
+            Success = success;
+            RoomId = roomId ?? string.Empty;
             NumericRoomId = numericRoomId;
-            SnapshotJson = snapshotJson;
+            SnapshotJson = snapshotJson ?? string.Empty;
             WorldStartAnchor = worldStartAnchor;
+            Message = message ?? string.Empty;
+            BattleId = battleId ?? string.Empty;
+            CanStart = canStart;
+            ServerNowTicks = serverNowTicks;
+            WorldId = worldId;
+            CurrentPlayerId = currentPlayerId;
         }
     }
 
@@ -44,12 +87,31 @@ namespace AbilityKit.Game.Battle.Agent
 
     public readonly struct GatewayRoomSnapshotResult
     {
+        public readonly bool Success;
+        public readonly bool Applied;
+        public readonly int ErrorCode;
+        public readonly string Message;
         public readonly string RoomId;
         public readonly ulong NumericRoomId;
 
         public GatewayRoomSnapshotResult(string roomId, ulong numericRoomId)
+            : this(true, true, 0, string.Empty, roomId, numericRoomId)
         {
-            RoomId = roomId;
+        }
+
+        public GatewayRoomSnapshotResult(
+            bool success,
+            bool applied,
+            int errorCode,
+            string message,
+            string roomId,
+            ulong numericRoomId)
+        {
+            Success = success;
+            Applied = applied;
+            ErrorCode = errorCode;
+            Message = message ?? string.Empty;
+            RoomId = roomId ?? string.Empty;
             NumericRoomId = numericRoomId;
         }
     }
@@ -72,11 +134,36 @@ namespace AbilityKit.Game.Battle.Agent
     {
         public readonly int AcceptedFrame;
         public readonly bool Success;
+        public readonly int CurrentFrame;
+        public readonly string Status;
+        public readonly string Message;
+        public readonly bool ShouldResync;
+        public readonly long ServerTicks;
+        public readonly ulong CommandSequence;
 
         public GatewayBattleInputResult(int acceptedFrame, bool success)
+            : this(acceptedFrame, success, acceptedFrame, string.Empty, string.Empty, !success, 0L, 0UL)
+        {
+        }
+
+        public GatewayBattleInputResult(
+            int acceptedFrame,
+            bool success,
+            int currentFrame,
+            string status,
+            string message,
+            bool shouldResync,
+            long serverTicks,
+            ulong commandSequence)
         {
             AcceptedFrame = acceptedFrame;
             Success = success;
+            CurrentFrame = currentFrame;
+            Status = status ?? string.Empty;
+            Message = message ?? string.Empty;
+            ShouldResync = shouldResync;
+            ServerTicks = serverTicks;
+            CommandSequence = commandSequence;
         }
     }
 
@@ -92,19 +179,38 @@ namespace AbilityKit.Game.Battle.Agent
 
     public readonly struct GatewayStateSyncSnapshot
     {
+        public const int CurrentSchemaVersion = 1;
+
         public readonly ulong WorldId;
         public readonly int Frame;
         public readonly double Timestamp;
         public readonly bool IsFullSnapshot;
         public readonly GatewayStateSyncActorSnapshot[] Actors;
+        public readonly int SchemaVersion;
+        public readonly int[] RemovedActorIds;
+        public readonly long EventWatermark;
+        public readonly string EventEpoch;
 
-        public GatewayStateSyncSnapshot(ulong worldId, int frame, double timestamp, bool isFullSnapshot, GatewayStateSyncActorSnapshot[] actors)
+        public GatewayStateSyncSnapshot(
+            ulong worldId,
+            int frame,
+            double timestamp,
+            bool isFullSnapshot,
+            GatewayStateSyncActorSnapshot[] actors,
+            int schemaVersion = 0,
+            int[] removedActorIds = null,
+            long eventWatermark = 0L,
+            string eventEpoch = null)
         {
             WorldId = worldId;
             Frame = frame;
             Timestamp = timestamp;
             IsFullSnapshot = isFullSnapshot;
             Actors = actors;
+            SchemaVersion = schemaVersion;
+            RemovedActorIds = removedActorIds ?? System.Array.Empty<int>();
+            EventWatermark = System.Math.Max(0L, eventWatermark);
+            EventEpoch = eventEpoch ?? string.Empty;
         }
     }
 
@@ -120,8 +226,11 @@ namespace AbilityKit.Game.Battle.Agent
         public readonly float Hp;
         public readonly float HpMax;
         public readonly int TeamId;
+        public readonly int Kind;
+        public readonly int Code;
+        public readonly int OwnerNetId;
 
-        public GatewayStateSyncActorSnapshot(int actorId, float x, float y, float z, float rotation, float velocityX, float velocityZ, float hp, float hpMax, int teamId)
+        public GatewayStateSyncActorSnapshot(int actorId, float x, float y, float z, float rotation, float velocityX, float velocityZ, float hp, float hpMax, int teamId, int kind = 0, int code = 0, int ownerNetId = 0)
         {
             ActorId = actorId;
             X = x;
@@ -133,6 +242,9 @@ namespace AbilityKit.Game.Battle.Agent
             Hp = hp;
             HpMax = hpMax;
             TeamId = teamId;
+            Kind = kind;
+            Code = code;
+            OwnerNetId = ownerNetId;
         }
     }
 

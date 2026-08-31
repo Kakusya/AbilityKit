@@ -1,5 +1,8 @@
 # MOBA 主动、被动、Buff、Projectile 与 AOE 触发效果设计
 
+> 文档类型：MOBA 项目应用组合深潜
+> 事实基线：2026-08-16
+>
 > 本文补齐 MOBA 示例中“触发效果如何从技能、被动、Buff、Projectile、AOE 进入 TriggerPlan，并最终落到领域服务”的专题说明。既有文档已经分别覆盖 Skill 执行、Buff 生命周期、Projectile/Damage、Trace/Context、PlanActions DSL 和英雄技能配置；本文只聚焦触发效果链路本身，说明哪些对象负责产生触发点，哪些对象负责执行 TriggerPlan，哪些对象负责承接副作用。
 
 ## 1. 能力定位
@@ -151,7 +154,7 @@ sequenceDiagram
     Exec->>Gate: Complete(ownerKey, triggerId)
 ```
 
-被动技能与主动技能最大的差别是 ownership：被动不是直接在一次 cast 内执行，而是把 trigger 绑定到 ownerKey。事件发生时，owner-bound gate 会检查：
+被动技能与主动技能最大的差别是订阅生命周期：被动不是直接在一次 cast 内执行，而是把 trigger 绑定到 ownerKey。ownerKey 是 subscription、gate、stop 使用的路由身份，不自动等于 trace lifecycle ownership。事件发生时，owner-bound gate 会检查：
 
 | 检查 | 来源 |
 |------|------|
@@ -160,7 +163,7 @@ sequenceDiagram
 | cooldown 是否结束 | `PassiveSkillRuntime.CooldownEndTimeMs` |
 | 执行来源是否可追踪 | `MobaOwnerBoundTriggerExecutionSource` |
 
-这使得被动技能可以监听全局战斗事件，但执行时仍能回到“某个 actor 的某个 passive skill”这一来源上。
+这使得被动技能可以监听全局战斗事件，但执行时仍能回到“某个 actor 的某个 passive skill”这一来源上。被动 teardown 只结束 `MobaPassiveSkillLifecycleService` 自己创建并记录的 passive root；任意传播进来的 ownerKey 即使数值非零，也不授予结束对应 trace 的权限。
 
 ## 5. Buff 触发与生命周期
 
@@ -202,8 +205,8 @@ Projectile 触发链从 `shoot_projectile` action 开始。`ShootProjectilePlanA
 |------|------|
 | 创建发射过程 | 用 `MobaProjectileLaunchContinuous` 表达持续发射或多发序列 |
 | 创建 launcher actor | `ProjectileLauncherComponent` 保存 launcherId、projectileId、rootActorId、结束时间和发射计数 |
-| 创建 projectile source | 从父 context 派生 projectile launch context |
-| 保留技能 runtime | projectile 生命周期内可保留技能 runtime 句柄 |
+| 创建 projectile source | 从父 context 派生 projectile launch context，并先 `BindLauncherSource` 建立单一 launcher record |
+| 保留技能 runtime | source 建立后再绑定 retain；launcher 使用独立的 `ProjectileLauncher` child kind，实际弹体使用 `Projectile` child kind |
 | 输出 projectile events | spawn/tick/hit/exit 由 projectile sync 和 stage trigger 消费 |
 
 ```mermaid
@@ -232,7 +235,7 @@ Projectile stage trigger 的配置分发集中在 `MobaStageTriggerService`：
 | exit | `ProjectileMO.OnExitTriggerIds` | `ProjectileEventArgs` |
 | hit | `ProjectileMO.OnHitEffectId`、`ProjectileMO.OnHitTriggerIds` | `ProjectileHitArgs` |
 
-命中阶段有一个兼容性细节：`OnHitEffectId` 会先作为直接 effect 执行，`OnHitTriggerIds` 再逐个执行。这让旧式“单 effect id”配置和新式“多 trigger id”配置可以共存。
+命中阶段有一个兼容性细节：`OnHitEffectId` 会先作为直接 effect 执行，`OnHitTriggerIds` 再逐个执行。这让旧式“单 effect id”配置和新式“多 trigger id”配置可以共存。launcher 结束时，despawn cleanup 先用 source 结束 trace，再消费并释放 launcher retain，最后 unlink record；消费 retain 不会提前清掉 source。
 
 ## 7. AOE / Area 触发
 
@@ -247,7 +250,7 @@ AOE 配置由 `AoeMO` 表达，核心不是一个视觉范围，而是一组阶�
 | `IntervalMs` | stay/tick 间隔 |
 | `DurationMs` | 区域持续时间 |
 
-`SpawnAreaPlanActionModule` 负责解析位置、半径、持续时间、碰撞层和 tick 间隔，然后调用 `IProjectileService.SpawnArea`。Area runtime 信息由 `MobaAreaRuntimeService.RegisterSpawn` 保存，包括 templateId、owner、center、radius、source/root/owner context。
+`SpawnAreaPlanActionModule` 负责解析位置、半径、持续时间、碰撞层和 tick 间隔，然后调用 `IProjectileService.SpawnArea`。Area runtime 信息由 `MobaAreaRuntimeService.RegisterSpawn` 保存，包括 templateId、owner、center、radius、source/root/owner context。若输入已经携带有效 parent/root，Area 将它视为借用的 lineage，不取得父 trace 的结束权；创建失败或注册失败时只补偿本次 action 自己创建的 area、child context 和 retain，不结束借入的父上下文。
 
 ```mermaid
 sequenceDiagram
@@ -294,7 +297,7 @@ Area 阶段映射规则：
 | Projectile | launch 从 parent context 派生 projectile launch context，hit payload 带 `ProjectileSourceContext` |
 | AOE | spawn action 创建 area spawn child context，area runtime 保存 source/root/owner context，enter 可再派生 child context |
 
-`MobaEffectExecutionService` 会在每次正式执行 TriggerPlan 时创建 effect trace scope，并为 plan actions 创建 action child nodes。这样 trace artifact 可以还原出：技能触发 projectile，projectile hit 触发 damage，damage event 激活 passive，被动再添加 Buff 的完整父子链。
+`MobaEffectExecutionService` 会在每次正式执行 TriggerPlan 时创建 effect trace scope，并为 plan actions 创建 action child nodes。actor-only payload 不会把 Actor ID 写成 parent/root trace ID；resolver 先输出零 parent/root 的 root candidate，effect trace root 创建成功后再通过 `PromoteToExecutionRoot` 提升 execution frame。这样 trace artifact 可以还原出：技能触发 projectile，projectile hit 触发 damage，damage event 激活 passive，被动再添加 Buff 的完整父子链。
 
 ## 9. PlanAction 副作用边界
 
@@ -321,7 +324,7 @@ Area 阶段映射规则：
 | context 完整性 | projectile launch、area spawn、Buff apply 等需要保留 parent/root/owner context |
 | 预算保护 | `MobaEffectExecutionService` 通过 execution budget 防止递归或同帧爆量触发 |
 | 条件评估 | trigger conditions 在 plan action 执行前统一评估，失败时不进入副作用层 |
-| 生命周期归属 | Buff、Projectile、Area、Passive continuous 的结束、清理、trace end 必须由各自领域服务负责 |
+| 生命周期归属 | Buff、Projectile、Area、Passive continuous 只结束自己创建并持有的资源；ownerKey 或借入 parent 只用于路由/传播，不转移 trace end 权限 |
 | 表现隔离 | 表现只消费 snapshot/cue/view event，不参与权威逻辑判定 |
 
 ## 11. 源码阅读路径
@@ -358,4 +361,27 @@ Area 阶段映射规则：
 | [09-Trace、Context 与 Effect 执行深潜](09-TraceContextEffectDeepDive.md) | 该文讲 trace/context 机制，本文补充不同触发源如何继承 context |
 | [10-Trigger、Validation 与 Presentation Cue 深潜](10-TriggerValidationPresentationDeepDive.md) | 该文讲 trigger validation/cue，本文补充主动/被动/Buff/Projectile/AOE 的入口分类 |
 | [11-PlanActions DSL 与 Continuous Runtime 深潜](11-PlanActionsAndContinuousRuntimeDeepDive.md) | 该文讲 DSL 和 continuous runtime，本文补充这些 action 在触发效果链路中的位置 |
-| [14-四英雄技能正式实现设计](14-HeroSkillFormalDesign.md) | 该文讲英雄资源映射，本文提供这些资源背后的通用运行时链路 |
+| [14-英雄技能正式实现设计](14-HeroSkillFormalDesign.md) | 该文讲英雄资源映射，本文提供这些资源背后的通用运行时链路 |
+
+---
+
+## 13. 当前收紧语义与证据边界
+
+近期源码把跨触发源链路的“来源”和“生命周期”进一步显式化：
+
+| 链路 | 当前约束 |
+|------|----------|
+| Effect/Action trace | canonical provenance 统一保留 immediate/parent/root/owner context；Action 必须在所属 Effect 下成对开始/结束 |
+| Buff 恢复 | parent skill runtime retain 必须重新取得；无效 parent 会回滚恢复项 |
+| Projectile | link、unlink、clear、dispose 统一消费 retain，launcher/projectile 不允许靠 GC 隐式结束 |
+| Area | `SpawnArea` 必须解析 Area runtime 与 Trace；注册失败回滚 runtime、despawn area 并以 Failed 结束 trace |
+| Damage | `attribute_source` 区分 AttributionActor 与 SkillCaster，数值属性来源不会篡改伤害归因 actor |
+| Skill pipeline | 正常结束、`ForceTerminate`、`Clear` 统一 exactly-once；Pipeline 不再重复结束 root trace |
+
+这些规则说明 direct trigger、owner-bound subscription 和 PlanAction 都只是项目执行入口，不能替代领域所有权。创建 Buff、Projectile、Area 或 Damage side effect 的 action 必须把控制权交给对应 service，并由该 service 在正常结束、失败和世界清理路径完成闭环。
+
+2026-08-16 View Runtime 147/147，其中包含 payload compatibility；本地 Unity ownership fixture 9/9 覆盖关键 retain/clear 语义。主 MOBA 工程 279/305 的 26 项失败均来自 trigger `10060201 / action[2]` 的 SpawnArea `duration_ms=300 < delay_ms=400`，因此不能继续引用旧的局部 21/21 结果作为全链路通过证明。
+
+Triggering、ActionSchema、Continuous、Projectile、Damage、Trace 是可复用原语；事件目录、payload 字段、owner key、PlanAction DSL、归因策略和各领域事务仍是 MOBA 项目应用组合。框架不应提供一套预制的“主动/被动/Buff/Projectile/AOE 全链路应用套件”。
+
+*文档版本：v3.0 | 最后更新：2026-08-16*

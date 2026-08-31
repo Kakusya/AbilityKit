@@ -12,32 +12,30 @@ namespace AbilityKit.Game.Flow.Battle.ViewEvents
 {
     internal sealed class BattlePresentationCueViewEventHandler
     {
-        private readonly BattleContext _ctx;
         private readonly IBattleEntityQuery _query;
         private readonly BattlePresentationCueVfxSpawner _spawner;
         private readonly BattlePresentationCueResolver _resolver;
         private readonly Dictionary<BattlePresentationCueRequestKey, EC.IEntityId> _activeByRequestKey = new();
 
         public BattlePresentationCueViewEventHandler(
-            BattleContext ctx,
+            EC.IECWorld world,
             IBattleEntityQuery query,
             BattleVfxManager vfx,
             in EC.IEntity vfxNode)
-            : this(ctx, query, vfx, in vfxNode, null)
+            : this(world, query, vfx, in vfxNode, null)
         {
         }
 
         internal BattlePresentationCueViewEventHandler(
-            BattleContext ctx,
+            EC.IECWorld world,
             IBattleEntityQuery query,
             BattleVfxManager vfx,
             in EC.IEntity vfxNode,
             BattlePresentationCueViewEventHandlerFactory handlers)
         {
-            _ctx = ctx;
             _query = query;
             handlers ??= new BattlePresentationCueViewEventHandlerFactory();
-            _spawner = handlers.CreateSpawner(ctx, vfx, in vfxNode);
+            _spawner = handlers.CreateSpawner(world, vfx, in vfxNode);
             _resolver = handlers.CreateResolver();
         }
 
@@ -71,11 +69,17 @@ namespace AbilityKit.Game.Flow.Battle.ViewEvents
 
         private void Play(in BattlePresentationCueDecision decision, in PresentationCueData data)
         {
-            if (_activeByRequestKey.ContainsKey(decision.RequestKey)) return;
-
             var spawnRequest = decision.SpawnRequest;
             var position = ResolvePosition(in spawnRequest);
             var followTarget = ResolveFollowTarget(in spawnRequest);
+
+            if (_activeByRequestKey.TryGetValue(decision.RequestKey, out var existingId))
+            {
+                // Refresh: update existing VFX parameters instead of ignoring.
+                _spawner.Update(existingId, spawnRequest.Scale, spawnRequest.Radius, spawnRequest.DurationMsOverride);
+                return;
+            }
+
             if (_spawner.TrySpawn(spawnRequest.VfxId, in position, followTarget, spawnRequest.DurationMsOverride, spawnRequest.Scale, spawnRequest.Radius, out var entity))
             {
                 _activeByRequestKey[decision.RequestKey] = entity.Id;
@@ -140,23 +144,23 @@ namespace AbilityKit.Game.Flow.Battle.ViewEvents
         }
 
         public BattlePresentationCueVfxSpawner CreateSpawner(
-            BattleContext ctx,
+            EC.IECWorld world,
             BattleVfxManager vfx,
             in EC.IEntity vfxNode)
         {
-            return new BattlePresentationCueVfxSpawner(ctx, vfx, in vfxNode);
+            return new BattlePresentationCueVfxSpawner(world, vfx, in vfxNode);
         }
     }
 
     internal sealed class BattlePresentationCueVfxSpawner
     {
-        private readonly BattleContext _ctx;
+        private readonly EC.IECWorld _world;
         private readonly BattleVfxManager _vfx;
         private readonly EC.IEntity _vfxNode;
 
-        public BattlePresentationCueVfxSpawner(BattleContext ctx, BattleVfxManager vfx, in EC.IEntity vfxNode)
+        public BattlePresentationCueVfxSpawner(EC.IECWorld world, BattleVfxManager vfx, in EC.IEntity vfxNode)
         {
-            _ctx = ctx;
+            _world = world;
             _vfx = vfx;
             _vfxNode = vfxNode;
         }
@@ -165,7 +169,7 @@ namespace AbilityKit.Game.Flow.Battle.ViewEvents
         {
             get
             {
-                if (_ctx?.EntityWorld == null) return false;
+                if (_world == null) return false;
                 if (_vfx == null) return false;
                 if (!_vfxNode.IsValid) return false;
                 return true;
@@ -179,7 +183,7 @@ namespace AbilityKit.Game.Flow.Battle.ViewEvents
             if (vfxId <= 0) return false;
 
             if (!_vfx.TryCreateVfxEntity(
-                    _ctx.EntityWorld,
+                    _world,
                     _vfxNode,
                     vfxId,
                     followTarget,
@@ -208,10 +212,48 @@ namespace AbilityKit.Game.Flow.Battle.ViewEvents
 
         public void Destroy(EC.IEntityId id)
         {
-            if (_ctx?.EntityWorld == null) return;
+            if (_world == null) return;
             if (id == default) return;
 
-            _vfx.DestroyVfxEntity(_ctx.EntityWorld, id);
+            _vfx.DestroyVfxEntity(_world, id);
+        }
+
+        /// <summary>
+        /// Updates an active VFX instance for a Cue refresh. A positive duration override
+        /// restarts the remaining visual lifetime; zero or negative values preserve it.
+        /// </summary>
+        public void Update(EC.IEntityId id, float scale, float radius, int durationMsOverride)
+        {
+            if (!id.IsValid) return;
+
+            ApplyPresentationScale(id, scale, radius);
+            RefreshLifetime(id, durationMsOverride);
+        }
+
+        private void RefreshLifetime(EC.IEntityId id, int durationMsOverride)
+        {
+            if (durationMsOverride <= 0) return;
+
+            var world = _world;
+            if (world == null || !world.IsAlive(id)) return;
+
+            var entity = world.Wrap(id);
+            if (!entity.TryGetRef(out BattleVfxLifetimeComponent lifetime) || lifetime == null) return;
+
+            lifetime.ExpireAtTime = Time.time + (durationMsOverride / 1000f);
+        }
+
+        private void ApplyPresentationScale(EC.IEntityId id, float scale, float radius)
+        {
+            if (!id.IsValid) return;
+            var world = _world;
+            if (world == null || !world.IsAlive(id)) return;
+            var entity = world.Wrap(id);
+            if (!entity.TryGetRef(out BattleViewGameObjectComponent goComp) || goComp == null || goComp.GameObject == null) return;
+
+            var resolvedScale = scale > 0f ? scale : 1f;
+            var radiusScale = radius > 0f ? radius : 1f;
+            goComp.GameObject.transform.localScale = Vector3.one * resolvedScale * radiusScale;
         }
     }
 }

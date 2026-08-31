@@ -28,6 +28,9 @@ namespace UnityHFSM.Graph
         private bool _isGhostState;
 
         [SerializeField]
+        private string _nextBehaviorKey;
+
+        [SerializeField]
         private List<string> _entryActionMethodNames = new List<string>();
 
         [SerializeField]
@@ -42,9 +45,6 @@ namespace UnityHFSM.Graph
         // ========== Behavior System Support ==========
         [SerializeField]
         private List<HfsmBehaviorItem> _behaviorItems = new List<HfsmBehaviorItem>();
-
-        [SerializeField]
-        private string _rootBehaviorId;
 
         /// <summary>
         /// If true, the state will wait for CanExit to return true before transitioning.
@@ -64,6 +64,13 @@ namespace UnityHFSM.Graph
             set => _isGhostState = value;
         }
 
+        /// <summary>Stable AbilityKit.HFSM state binding key used by Next Definition export.</summary>
+        public string NextBehaviorKey
+        {
+            get => _nextBehaviorKey;
+            set => _nextBehaviorKey = value ?? string.Empty;
+        }
+
         public IReadOnlyList<string> EntryActionMethodNames => _entryActionMethodNames;
         public IReadOnlyList<string> LogicActionMethodNames => _logicActionMethodNames;
         public IReadOnlyList<string> ExitActionMethodNames => _exitActionMethodNames;
@@ -79,15 +86,6 @@ namespace UnityHFSM.Graph
         /// Access to behavior items list for editor and serialization
         /// </summary>
         public List<HfsmBehaviorItem> BehaviorItemsInternal => _behaviorItems;
-
-        /// <summary>
-        /// The root behavior item ID.
-        /// </summary>
-        public string RootBehaviorId
-        {
-            get => _rootBehaviorId;
-            set => _rootBehaviorId = value;
-        }
 
         /// <summary>
         /// Whether this state has any behaviors defined.
@@ -184,7 +182,6 @@ namespace UnityHFSM.Graph
         public void ClearBehaviorItems()
         {
             _behaviorItems.Clear();
-            _rootBehaviorId = null;
         }
 
         /// <summary>
@@ -289,6 +286,7 @@ namespace UnityHFSM.Graph
             clone._size = _size;
             clone._needsExitTime = _needsExitTime;
             clone._isGhostState = _isGhostState;
+            clone._nextBehaviorKey = _nextBehaviorKey;
             clone._entryActionMethodNames = new List<string>(_entryActionMethodNames);
             clone._logicActionMethodNames = new List<string>(_logicActionMethodNames);
             clone._exitActionMethodNames = new List<string>(_exitActionMethodNames);
@@ -326,11 +324,6 @@ namespace UnityHFSM.Graph
                     clonedItem.childIds = newChildIds;
                 }
 
-                // Update root behavior ID
-                if (!string.IsNullOrEmpty(_rootBehaviorId) && idMapping.TryGetValue(_rootBehaviorId, out var newRootId))
-                {
-                    clone._rootBehaviorId = newRootId;
-                }
             }
 
             return clone;

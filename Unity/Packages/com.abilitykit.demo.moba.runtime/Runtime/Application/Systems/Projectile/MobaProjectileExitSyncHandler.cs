@@ -1,6 +1,7 @@
 using System;
 using System.Collections.Generic;
 using AbilityKit.Combat.Projectile;
+using AbilityKit.Demo.Moba.Components;
 using AbilityKit.Demo.Moba.Runtime.Application.Services.Triggering;
 
 namespace AbilityKit.Demo.Moba.Runtime.Application.Systems.Projectile
@@ -25,10 +26,76 @@ namespace AbilityKit.Demo.Moba.Runtime.Application.Systems.Projectile
                 _sys.ProjectileSnapshots?.RecordExit(evt);
                 _sys.StageTriggers?.ExecuteProjectileExit(evt);
                 DecrementLauncherActiveBullets(evt.LauncherActorId);
-                if (!_sys.Links.TryGetActorId(evt.Projectile, out var actorId) || actorId <= 0) continue;
+                if (_sys.Links.TryGetActorId(evt.Projectile, out var actorId) && actorId > 0)
+                {
+                    RequestProjectileActorDespawn(evt, actorId);
+                }
+                else
+                {
+                    CleanupUnlinkedProjectile(evt.Projectile);
+                }
             }
 
             exits.Clear();
+        }
+
+        private void RequestProjectileActorDespawn(in ProjectileExitEvent evt, int actorId)
+        {
+            global::ActorEntity projectileEntity = null;
+            if (_sys.Registry != null) _sys.Registry.TryGet(actorId, out projectileEntity);
+            if (projectileEntity == null && _sys.Entities != null) _sys.Entities.TryGetActorEntity(actorId, out projectileEntity);
+            if (projectileEntity == null) return;
+
+            var sourceActorId = evt.OwnerId;
+            var sourceContextId = 0L;
+            if (_sys.Links != null && _sys.Links.TryGetSource(evt.Projectile, out var source))
+            {
+                if (source.SourceActorId > 0) sourceActorId = source.SourceActorId;
+                sourceContextId = source.SourceContextId;
+            }
+
+            _sys.CleanupProjectileActorOnExit(evt.Projectile, projectileEntity, ActorDespawnReason.ProjectileHitOrExit, sourceActorId, sourceContextId);
+        }
+
+        private void CleanupUnlinkedProjectile(ProjectileId projectileId)
+        {
+            var links = _sys.Links;
+            if (links == null) return;
+
+            if (links.TryGetSource(projectileId, out var source)
+                && source.SourceContextId != 0L
+                && _sys.Trace != null)
+            {
+                try
+                {
+                    _sys.Trace.EndContext(
+                        source.SourceContextId,
+                        AbilityKit.Trace.TraceLifecycleReason.Completed);
+                }
+                catch (Exception ex)
+                {
+                    AbilityKit.Core.Logging.Log.Exception(
+                        ex,
+                        $"[MobaProjectileExitSyncHandler] end unlinked projectile trace failed (projectileId={projectileId.Value}, sourceContextId={source.SourceContextId})");
+                }
+            }
+
+            if (_sys.SkillRuntimes != null
+                && links.TryConsumeRetain(projectileId, out var retainHandle))
+            {
+                try
+                {
+                    _sys.SkillRuntimes.ReleaseChild(in retainHandle);
+                }
+                catch (Exception ex)
+                {
+                    AbilityKit.Core.Logging.Log.Exception(
+                        ex,
+                        $"[MobaProjectileExitSyncHandler] release unlinked projectile retain failed (projectileId={projectileId.Value})");
+                }
+            }
+
+            links.UnlinkByProjectileId(projectileId);
         }
 
         private void DecrementLauncherActiveBullets(int launcherActorId)

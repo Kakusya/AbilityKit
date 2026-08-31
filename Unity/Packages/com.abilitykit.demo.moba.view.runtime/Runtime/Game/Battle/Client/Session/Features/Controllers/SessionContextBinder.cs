@@ -12,6 +12,14 @@ namespace AbilityKit.Game.Flow
             if (ctx == null) return;
 
             ctx.Session = handles.Session;
+            ctx.RuntimeWorld = handles.RemoteDriven.World;
+            if (ctx.RuntimeWorld == null &&
+                handles.Session != null &&
+                handles.Session.TryGetWorld(out var sessionWorld))
+            {
+                ctx.RuntimeWorld = sessionWorld;
+            }
+
             BindLastFrame(ctx, state);
         }
 
@@ -20,6 +28,16 @@ namespace AbilityKit.Game.Flow
             if (ctx == null || state == null) return;
 
             ctx.LastFrame = state.Tick.LastFrame;
+        }
+
+        public static void BindTickProjection(
+            BattleContext ctx,
+            in BattleSessionTickProjection projection)
+        {
+            if (ctx == null) return;
+
+            ctx.LastFrame = projection.LastFrame;
+            ctx.LogicTimeSeconds = projection.LogicTimeSeconds;
         }
 
         public static void BindSession(
@@ -41,6 +59,7 @@ namespace AbilityKit.Game.Flow
             if (ctx == null) return;
 
             ctx.Session = null;
+            ctx.RuntimeWorld = null;
             ctx.Hooks = null;
         }
     }

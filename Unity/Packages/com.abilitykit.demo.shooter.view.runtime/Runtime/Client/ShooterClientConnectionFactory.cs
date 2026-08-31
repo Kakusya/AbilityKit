@@ -1,9 +1,13 @@
 #nullable enable
 
 using System;
+using System.Threading;
 using AbilityKit.GameFramework.Network;
 using AbilityKit.Network.Abstractions;
 using AbilityKit.Network.Runtime;
+using AbilityKit.Network.Runtime.Observability;
+using AbilityKit.Network.Sdk.Observability;
+using AbilityKit.Protocol.Room;
 using GameFramework.Network;
 
 namespace AbilityKit.Demo.Shooter.View
@@ -53,6 +57,16 @@ namespace AbilityKit.Demo.Shooter.View
             return FromTransportFactory(() => new TcpTransport(), options, callbackDispatcher, ioDispatcher);
         }
 
+        public static ShooterClientConnectionFactory TcpForUnityMainThread(
+            ConnectionOptions? options = null,
+            IDispatcher? ioDispatcher = null)
+        {
+            var synchronizationContext = SynchronizationContext.Current
+                ?? throw new InvalidOperationException(
+                    "SynchronizationContext.Current is null. Capture must be called on the Unity main thread.");
+            return Tcp(options, new SynchronizationContextDispatcher(synchronizationContext), ioDispatcher);
+        }
+
         public static ShooterClientConnectionFactory FromGameFrameworkNetwork(INetworkManager networkManager, string channelName = "ShooterGateway", ServiceType serviceType = ServiceType.Tcp)
         {
             if (networkManager == null)
@@ -75,7 +89,37 @@ namespace AbilityKit.Demo.Shooter.View
 
         public static ConnectionOptions CreateDefaultOptions()
         {
-            return new ConnectionOptions();
+            var options = new ConnectionOptions();
+#if UNITY_EDITOR || DEVELOPMENT_BUILD
+            RoomProtocolDecoderModule.Register(NetworkTrafficMonitor.Default.Decoders);
+            options.TrafficCapture = new NetworkTrafficCaptureOptions
+            {
+                ConnectionId = "shooter-room-primary",
+                Role = "room",
+                CatalogId = "abilitykit.room",
+                TransportName = "tcp",
+                MaximumPayloadPreviewBytes = 65536,
+                ObserverFactory = _ => NetworkTrafficMonitor.Default,
+                FilterFactory = NetworkTrafficMonitor.Default.CreateSamplingFilter
+            };
+#endif
+            return options;
+        }
+
+        internal sealed class SynchronizationContextDispatcher : IDispatcher
+        {
+            private readonly SynchronizationContext _synchronizationContext;
+
+            public SynchronizationContextDispatcher(SynchronizationContext synchronizationContext)
+            {
+                _synchronizationContext = synchronizationContext;
+            }
+
+            public void Post(Action action)
+            {
+                if (action == null) throw new ArgumentNullException(nameof(action));
+                _synchronizationContext.Post(_ => action(), null);
+            }
         }
     }
 }

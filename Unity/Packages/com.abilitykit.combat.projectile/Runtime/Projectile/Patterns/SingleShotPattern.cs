@@ -7,7 +7,7 @@ namespace AbilityKit.Combat.Projectile
         public void Build(in ProjectileSpawnParams baseSpawn, List<ProjectileSpawnParams> results)
         {
             if (results == null) return;
-            results.Add(baseSpawn);
+            results.Add(baseSpawn.WithPatternSlot(0, 1));
         }
     }
 }

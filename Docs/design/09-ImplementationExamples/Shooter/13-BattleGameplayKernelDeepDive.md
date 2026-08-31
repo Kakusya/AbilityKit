@@ -1,10 +1,15 @@
 # Shooter 战斗玩法内核深潜：一帧管线、敌人波次、空间索引与 Bot AI
 
-> 本文补齐 Shooter 示例中网络、快照和表现层文档之外的玩法内核视角，聚焦 fixed tick 内部的玩法状态变化。
+> 文档类型：项目示例深潜
+> 事实基线：2026-08-16
+>
+> 本文补齐 Shooter 示例中网络、快照和表现层文档之外的玩法内核视角，聚焦 fixed tick 内部的玩法状态变化。World、RuntimePort、Svelto 结构提交、容量和 snapshot 导入见 [Shooter Runtime、Svelto 装配与恢复边界](01-RuntimeSveltoSimulation.md)。
 
 ## 1. 能力定位
 
-Shooter 玩法内核运行在 `com.abilitykit.demo.shooter.runtime` 内部，由 `ShooterBattleRuntimePort.Tick` 驱动 `ShooterBattleSveltoStepEngine`。它不负责 Gateway/Orleans 编排、snapshot/hash 网络格式或 Unity 表现绑定，而是负责玩家输入、子弹、敌人、命中、事件和胜负状态。
+Shooter 玩法内核运行在 `com.abilitykit.demo.shooter.runtime` 内部，由 `ShooterBattleRuntimePort.Tick` 驱动 `ShooterBattleSveltoStepEngine`。它不负责 Gateway/Orleans 编排、world 装配、snapshot 导入事务、同步网络格式或 Unity 表现绑定，而是负责玩家输入、projectile、敌人、命中、事件和胜负状态。
+
+玩法状态由 `ShooterBattleState` 持有帧、输入、事件、击杀目标、时间限制和 match metadata；实体组件由 `IShooterEntityManager` 持有。玩法系统通过 service context 协作，不直接拥有网络连接、observer baseline 或表现对象。
 
 | 问题 | 源码落点 | 设计含义 |
 |------|----------|----------|
@@ -64,9 +69,11 @@ flowchart TD
 |-------------|------|
 | 默认 | 单发，方向等于玩家 aim |
 | Spread | 三发散射，中心弹带 explosion radius / explosion damage |
-| Twin | 双发穿透，两发带 lateral offset，`PenetrationRemaining = 2` |
+| Twin | 双发穿透，两发带 lateral offset，`PenetrationRemaining = 5` |
 
-`SpawnBullet` 会分配 `BulletId`，调用 `IShooterEntityManager.AddProjectile`，并通过 `AddFire` 追加当前帧事件。
+`SpawnBullet` 会分配 `BulletId`，调用 `IShooterEntityManager.AddProjectile`，并通过 `AddFire` 追加当前帧事件。Twin 的数值由源码常量和测试共同锁定为 5：两发 projectile 各自可以连续命中 5 个 enemy，而不是旧文档中的 2。
+
+实体创建仍受 runtime 总容量约束。`AddProjectile` 达到预算时会静默返回，因此“产生 Fire 事件”或“调用 SpawnBullet”不能单独证明 projectile 实体已经落地；需要强一致断言时应查询 entity manager 或 packed snapshot。
 
 ## 5. Projectile 命中结算
 
@@ -124,11 +131,56 @@ Action 都只写 blackboard command：`wander` 用 frame/playerId/phase 做确�
 
 ## 9. 胜负状态与输出
 
-`ShooterMatchStateBattleSystem` 在一帧最后裁决状态：击杀数达到 `VictoryTargetDefeats` 为 Victory；没有玩家或所有玩家死亡为 Defeat；时间耗尽为 Ended。`ShooterBattleState.TryCompleteMatch` 设置 `MatchState` 和 `MatchCompletedFrame`，并把 match result 写入当前帧事件。
+`ShooterMatchStateBattleSystem` 在一帧最后裁决状态，优先级是 Victory、Defeat、时间耗尽 Ended。`ShooterBattleState.TryCompleteMatch` 设置 `MatchState` 和 `MatchCompletedFrame`，并把 match result 写入当前帧事件。
 
 match result 同时存在于状态快照和事件流里：快照适合 late join/reconnect 后恢复最终状态，事件适合表现层或 smoke runner 观察当前帧状态变化。
 
-## 10. 源码阅读路径
+终局帧执行完整管线后，RuntimePort 因状态不再是 Running 而让本次 `Tick` 返回 `false`。这表示“终局已经完成”，不是“该帧未执行”。后续 Tick 不再推进，调用方应读取 match result 或权威快照。
+
+## 10. 确定性与恢复续跑证据
+
+Shooter 的确定性不是只比较同一进程中的位置，而是同时覆盖输入重放和 checkpoint 续跑：
+
+| 场景 | 断言 |
+|------|------|
+| 相同输入脚本运行两次 | frame、state hash、玩家数、projectile 数、实体数和 packed hash 一致 |
+| 连续运行与 full checkpoint 恢复后续跑 | 最终 frame、state hash 和实体数一致 |
+| 波次生成 | 角度由 `waveId * 97 + spawnIndex * 37` 推导，不依赖随机枚举顺序 |
+| first hit | 空间索引选择稳定 component index，不依赖 dictionary 顺序 |
+| Bot Wander/Fire | 使用 frame、playerId 和 phase/interval 产生确定性命令 |
+
+checkpoint 测试先运行到中间帧并导出 full packed snapshot，将其导入新 RuntimePort，再提交剩余输入。最终 hash 与未中断运行一致，证明玩法状态、projectile metadata、bullet allocator 和终局 metadata 足以支持当前测试场景的继续运行。
+
+这里的证据不等于 importer 会自动验证 `StateHash`。导入可信性和失败事务边界属于 runtime 恢复职责，见 [Shooter Runtime、Svelto 装配与恢复边界](01-RuntimeSveltoSimulation.md)。
+
+## 11. 失败边界与调试检查
+
+| 现象 | 真实语义 | 检查点 |
+|------|----------|--------|
+| `Tick` 在终局帧返回 `false` | 管线已执行且比赛已完成 | 读取 `MatchState`、`MatchCompletedFrame` 和 match result |
+| 下一帧看不到上一帧事件 | FrameBegin 每帧清空事件，事件只保证当前帧有效 | 持久结果读取 snapshot，表现事件当帧消费 |
+| 开火但 projectile 数未增加 | 实体总预算可能已满，Add 静默返回 | 对比 entity count、projectile query 和容量诊断 |
+| 死亡敌人没有在攻击阶段出手 | cleanup 位于 attack 之前，是预期顺序 | 检查 order 250/300 和死亡帧事件 |
+| Bot 行为与真人不同步 | Bot 应只写 `InputBuffer`，不应直接改实体 | 检查 Bot system 是否在 order 100 产生命令 |
+| 重放出现 hash 漂移 | 可能引入非稳定枚举、随机源或恢复字段缺失 | 比较每帧 hash、packed chunks 和输入脚本 |
+
+## 12. 可执行验证
+
+| 测试 | 玩法证据 |
+|------|----------|
+| `ShooterWorldModuleTests` | Spread/Twin、Twin 五次穿透、arena clamp、命中事件、波次移动/攻击和三类终局 |
+| `ShooterBotAiRuntimeSmokeTests` | Bot 追踪目标、进入攻击距离后经输入缓冲开火 |
+| `ShooterDeterministicReplayTests` | 同脚本重放一致、full checkpoint 恢复后续跑一致 |
+| `ShooterPackedSnapshotRuntimeTests` | projectile metadata、despawn 和终局 metadata 可恢复 |
+| `ShooterEntityLimitOptionsTests` | 容量耗尽时实体创建静默截断 |
+
+聚焦验证命令：
+
+```powershell
+dotnet test src/AbilityKit.Demo.Shooter.Runtime.Tests/AbilityKit.Demo.Shooter.Runtime.Tests.csproj --filter "FullyQualifiedName~ShooterWorldModuleTests|FullyQualifiedName~ShooterBotAiRuntimeSmokeTests|FullyQualifiedName~ShooterDeterministicReplayTests|FullyQualifiedName~ShooterPackedSnapshotRuntimeTests|FullyQualifiedName~ShooterEntityLimitOptionsTests"
+```
+
+## 13. 源码阅读路径
 
 1. `Unity/Packages/com.abilitykit.demo.shooter.runtime/Runtime/Domain/Battle/Factories/ShooterBattlePipelineFactory.cs`
 2. `Unity/Packages/com.abilitykit.demo.shooter.runtime/Runtime/Domain/Battle/Systems/ShooterBattleSystem.cs`
@@ -145,3 +197,19 @@ match result 同时存在于状态快照和事件流里：快照适合 late join
 13. `Unity/Packages/com.abilitykit.demo.shooter.runtime/Runtime/Domain/Battle/AI/ShooterBotAiRuntime.cs`
 14. `Unity/Packages/com.abilitykit.demo.shooter.runtime/Runtime/Domain/Battle/AI/ShooterBotAiService.cs`
 15. `Unity/Packages/com.abilitykit.demo.shooter.runtime/Runtime/Domain/Battle/ShooterBattleState.cs`
+16. `src/AbilityKit.Demo.Shooter.Runtime.Tests/Worlds/ShooterWorldModuleTests.cs`
+17. `src/AbilityKit.Demo.Shooter.Runtime.Tests/Application/Runtime/ShooterBotAiRuntimeSmokeTests.cs`
+18. `src/AbilityKit.Demo.Shooter.Runtime.Tests/Application/Runtime/ShooterDeterministicReplayTests.cs`
+19. `src/AbilityKit.Demo.Shooter.Runtime.Tests/Application/Runtime/ShooterPackedSnapshotRuntimeTests.cs`
+
+## 14. 数值、分配、可复用性与证据边界
+
+战斗 step order 由 Shooter pipeline 显式固定，但移动、projectile、距离和时间等主体计算仍使用 `float`。空间索引通过 Dictionary、List 与候选缓冲减少全量比较，小规模时还会回退 full scan；这些结构是复杂度优化，不是零分配或固定上界证明。
+
+Bot AI 只生成 `ShooterPlayerCommand` 并进入与玩家相同的输入缓冲，这是值得框架项目参考的输入统一原则；HFSM 状态、瞄准、开火、波次和胜负规则仍是 Shooter 应用策略。公共框架不应固化其 step order、entity schema 或玩法常量。
+
+`ShooterDeterministicReplayTests` 和 packed checkpoint 续跑证明当前构建、输入序列及覆盖状态下可以重放到相同 hash。它们没有覆盖不同平台/运行时、浮点模式、全部异常路径或真实网络调度，所以不构成跨平台逐位确定性承诺。
+
+2026-08-16 `AbilityKit.Demo.Shooter.Runtime.Tests` 489/489 通过，属于 E3，构建保留既有依赖警告。本批没有新增 E4 Smoke、Unity PlayMode 或 E5 gate 运行证据。
+
+*文档版本：v3.0 | 最后更新：2026-08-16*

@@ -5,7 +5,9 @@
     "AbilityKit.Core",
     "AbilityKit.Flow",
     "AbilityKit.Game.View.Runtime",
+    "AbilityKit.Game.Battle.Shared.Assets",
     "AbilityKit.HFSM.Core",
+    "AbilityKit.Network.Room",
     "AbilityKit.World.DI",
     "AbilityKit.World.ECS"
   ],

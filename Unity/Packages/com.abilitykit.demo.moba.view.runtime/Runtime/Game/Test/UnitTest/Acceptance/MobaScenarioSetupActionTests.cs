@@ -127,7 +127,7 @@ namespace AbilityKit.Game.Test.UnitTest
                         action = "add_buff",
                         targetAlias = "target",
                         sourceAlias = "caster",
-                        buffId = 1,
+                        buffId = 101,
                         durationOverrideMs = 10000
                     }
                 },
@@ -138,7 +138,7 @@ namespace AbilityKit.Game.Test.UnitTest
                         alias = "target",
                         property = "hasBuff",
                         comparator = "eq",
-                        expectedInt = 1,
+                        expectedInt = 101,
                         expectedBool = true
                     }
                 });
@@ -155,7 +155,7 @@ namespace AbilityKit.Game.Test.UnitTest
                         action = "add_buff",
                         targetAlias = "target",
                         sourceAlias = "caster",
-                        buffId = 1,
+                        buffId = 101,
                         durationOverrideMs = 10000
                     },
                     new MobaAcceptanceSetupActionExpectation
@@ -163,7 +163,7 @@ namespace AbilityKit.Game.Test.UnitTest
                         action = "remove_buff",
                         targetAlias = "target",
                         sourceAlias = "caster",
-                        buffId = 1,
+                        buffId = 101,
                         removeAll = true
                     }
                 },
@@ -174,7 +174,7 @@ namespace AbilityKit.Game.Test.UnitTest
                         alias = "target",
                         property = "hasBuff",
                         comparator = "eq",
-                        expectedInt = 1,
+                        expectedInt = 101,
                         expectedBool = false
                     }
                 });
@@ -204,8 +204,10 @@ namespace AbilityKit.Game.Test.UnitTest
                             alias = "caster",
                             playerId = "p1",
                             teamId = 1,
-                            heroId = 1,
+                            heroId = 1001,
                             attributeTemplateId = 1001,
+                            basicAttackSkillId = 10010001,
+                            skillIds = new[] { 10010101, 10010201, 10010301 },
                             hasSpawnPosition = true,
                             spawnPosition = new MobaAcceptanceVector3Expectation { x = 0f, y = 0f, z = 0f }
                         },
@@ -214,8 +216,10 @@ namespace AbilityKit.Game.Test.UnitTest
                             alias = "target",
                             playerId = "p2",
                             teamId = 2,
-                            heroId = 1,
+                            heroId = 1001,
                             attributeTemplateId = 1001,
+                            basicAttackSkillId = 10010001,
+                            skillIds = new[] { 10010101, 10010201, 10010301 },
                             hasSpawnPosition = true,
                             spawnPosition = new MobaAcceptanceVector3Expectation { x = 6f, y = 0f, z = 0f }
                         }

@@ -6,6 +6,8 @@ namespace AbilityKit.Game
 {
     public sealed class GameEntryBootstrap : IGameEntryModule
     {
+        private GameManager _gameManager;
+
         public string Id => "game.entry.bootstrap";
 
         public void OnAttach(in GameEntryModuleContext ctx)
@@ -14,21 +16,21 @@ namespace AbilityKit.Game
 
             TryInstallUnityLogSink();
 
-            var entry = ctx.Entry;
-
-            if (!entry.TryGet(out GameManager gm))
+            var root = ctx.Root;
+            if (!root.TryGetRef(out GameManager gm))
             {
                 gm = new GameManager();
-                entry.Set(gm);
+                root.WithRef(gm);
             }
 
-            gm.EnterGame();
+            _gameManager = gm;
+            _gameManager.EnterGame();
 
             const int SystemsNodeId = 1;
-            var systems = entry.GetNode(SystemsNodeId);
+            root.TryGetChildById(SystemsNodeId, out var systems);
             if (!systems.IsValid)
             {
-                systems = EntityGenerator.CreateChild(entry.Root, SystemsNodeId, "SystemsNode");
+                systems = EntityGenerator.CreateChild(root, SystemsNodeId, "SystemsNode");
             }
 
             systems.WithRef(new SystemsTag());
@@ -37,10 +39,8 @@ namespace AbilityKit.Game
 
         public void OnDetach(in GameEntryModuleContext ctx)
         {
-            if (ctx.Root.IsValid && ctx.Entry.TryGet(out GameManager gm))
-            {
-                gm.LeaveGame();
-            }
+            _gameManager?.LeaveGame();
+            _gameManager = null;
         }
 
         private static void TryInstallUnityLogSink()

@@ -19,11 +19,7 @@ namespace AbilityKit.Game.Flow
         ISessionEditorHooksRuntime,
 #endif
         ISessionPlanHost,
-        ISessionReplayHost,
-        ISessionEventsHost,
-        ITickLoopHost,
-        ISessionOrchestratorHost,
-        INetAdapterContextHost
+        ISessionEventsHost
     {
         BattleSessionHandles ISessionDispatchersRuntime.Handles => _handles;
         SessionDispatchersController ISessionDispatchersRuntime.Dispatchers => _dispatchers;
@@ -42,6 +38,7 @@ namespace AbilityKit.Game.Flow
         BattleSessionHandles ISessionReplayRuntime.Handles => _handles;
         BattleContext ISessionReplayRuntime.Context => _ctx;
         SessionReplayController ISessionReplayRuntime.Replay => _replayCtrl;
+        BattleReplayRuntime ISessionReplayRuntime.ReplayResources => _runtime.Replay;
 
         BattleLogicSession ISessionNetAdapterRuntime.Session => _session;
         BattleSessionNetAdapter ISessionNetAdapterRuntime.NetAdapter => _netAdapter;
@@ -56,6 +53,7 @@ namespace AbilityKit.Game.Flow
         Task ISessionGatewayRuntime.GatewayRoomPreparationTask => GatewayRoomPreparationTask;
         bool ISessionGatewayRuntime.ShouldPrepareGatewayRoom() => ShouldPrepareGatewayRoom();
         void ISessionGatewayRuntime.StartGatewayRoomPreparation() => StartGatewayRoomPreparation();
+        void ISessionGatewayRuntime.CompleteGatewayRoomPreparation() => CompleteGatewayRoomPreparation();
         void ISessionGatewayRuntime.StopGatewayRoomPreparation() => StopGatewayRoomPreparation();
         void ISessionGatewayRuntime.TickGatewayRoomConnection(float deltaTime) => TickGatewayRoomConnection(deltaTime);
         void ISessionGatewayRuntime.OnStartSessionRequested() => OnStartSessionRequested();

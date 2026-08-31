@@ -69,6 +69,8 @@ namespace AbilityKit.Demo.Moba.Services.Triggering.PlanActions
                     return ctx.Payloads.TryGetDouble(in attackInfo, fieldId, out value);
                 case UnitDieEventPayload unitDie:
                     return ctx.Payloads.TryGetDouble(in unitDie, fieldId, out value);
+                case SkillCastContext skillCast:
+                    return ctx.Payloads.TryGetDouble(in skillCast, fieldId, out value);
                 default:
                     value = default;
                     return false;

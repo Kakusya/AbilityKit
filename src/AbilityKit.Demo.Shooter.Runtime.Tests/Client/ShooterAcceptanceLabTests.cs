@@ -3,7 +3,7 @@ using AbilityKit.Demo.Shooter.Runtime;
 using AbilityKit.Demo.Shooter.View;
 using AbilityKit.Network.Runtime;
 using AbilityKit.Network.Runtime.Conditioning;
-using AbilityKit.Network.Runtime.DemoHarness;
+using AbilityKit.Demo.Harness;
 using AbilityKit.Network.Runtime.LagCompensation;
 using AbilityKit.Network.Runtime.Sync;
 using AbilityKit.Demo.Shooter.View.PlayMode;
@@ -90,6 +90,11 @@ public sealed class ShooterAcceptanceLabTests
                 && template.ConvergenceKind == ShooterSyncTemplateConvergenceKind.MassBattleLodPresentation
                 && template.Status == ShooterSyncTemplateStatus.Experimental);
         Assert.Contains(ShooterAcceptanceCatalog.SyncTemplates,
+            template => template.Id == "mass-battle-lod-aoi-sample-block"
+                && template.ExpectedCarrierName == ShooterInterpolationDemoHarnessCarrier.DefaultCarrierName
+                && template.ConvergenceKind == ShooterSyncTemplateConvergenceKind.MassBattleLodPresentation
+                && template.Status == ShooterSyncTemplateStatus.Experimental);
+        Assert.Contains(ShooterAcceptanceCatalog.SyncTemplates,
             template => template.Id == "hybrid-hero-prediction"
                 && template.ExpectedCarrierName == ShooterHybridDemoHarnessCarrier.DefaultCarrierName
                 && template.ConvergenceKind == ShooterSyncTemplateConvergenceKind.RuntimeSnapshotWithRemoteInterpolation
@@ -106,14 +111,16 @@ public sealed class ShooterAcceptanceLabTests
         var launchSpec = ShooterRoomLaunchSpec.CreateDefault("client-a");
         var template = ShooterAcceptanceCatalog.GetSyncTemplate(launchSpec.SyncTemplateId);
 
-        Assert.Equal("predict-rollback-authority", launchSpec.SyncTemplateId);
-        Assert.Equal((int)NetworkSyncModel.PredictRollback, launchSpec.SyncModel);
+        // 可玩默认走 sample-block 纯状态模板 + ideal 网络（不做弱链路压测注入）；
+        // limitedbw 压测与 packed 路径仍可显式选择。
+        Assert.Equal(ShooterSyncTemplateIds.MassBattleLodAoiSampleBlock, launchSpec.SyncTemplateId);
+        Assert.Equal((int)NetworkSyncModel.MassBattleLodSync, launchSpec.SyncModel);
         Assert.Equal("ideal", launchSpec.NetworkEnvironmentId);
-        Assert.Equal("server", launchSpec.CarrierName);
+        Assert.Equal(ShooterInterpolationDemoHarnessCarrier.DefaultCarrierName, launchSpec.CarrierName);
         Assert.Equal(template.SyncModel, (NetworkSyncModel)launchSpec.SyncModel);
         Assert.True(template.IsRunnable);
-        Assert.True(launchSpec.EnableAuthoritativeWorld);
-        Assert.False(launchSpec.InterpolationEnabled);
+        Assert.False(launchSpec.EnableAuthoritativeWorld);
+        Assert.True(launchSpec.InterpolationEnabled);
     }
 
     [Fact]
@@ -162,16 +169,17 @@ public sealed class ShooterAcceptanceLabTests
         Assert.Equal(ShooterSyncTemplateConvergenceKind.MassBattleLodPresentation, mass.ConvergenceKind);
         Assert.Equal(ShooterSyncTemplateStatus.Experimental, mass.Status);
         Assert.True(mass.IsRunnable);
-        Assert.Equal(90, mass.SendPolicy.SnapshotIntervalFrames);
-        Assert.Equal(90, mass.SendPolicy.BatchWindowFrames);
+        Assert.Equal(3, mass.SendPolicy.SnapshotIntervalFrames);
+        Assert.Equal(3, mass.SendPolicy.BatchWindowFrames);
         Assert.Equal(450, mass.SendPolicy.KeyFrameIntervalFrames);
         Assert.Equal(20000, mass.SendPolicy.MaxEntityCount);
         Assert.Equal(2048, mass.SendPolicy.ActiveEntityBudget);
-        Assert.Equal(48f, mass.SendPolicy.AoiRadius);
-        Assert.Equal(10, mass.SendPolicy.NearLodIntervalFrames);
-        Assert.Equal(30, mass.SendPolicy.MidLodIntervalFrames);
-        Assert.Equal(90, mass.SendPolicy.FarLodIntervalFrames);
-        Assert.Equal(90, mass.SendPolicy.InterpolationDelayFrames);
+        Assert.Equal(24f, mass.SendPolicy.AoiRadius);
+        Assert.Equal(30f, mass.SendPolicy.AoiBoundaryRadius);
+        Assert.Equal(3, mass.SendPolicy.NearLodIntervalFrames);
+        Assert.Equal(9, mass.SendPolicy.MidLodIntervalFrames);
+        Assert.Equal(30, mass.SendPolicy.FarLodIntervalFrames);
+        Assert.Equal(3, mass.SendPolicy.InterpolationDelayFrames);
     }
 
     [Fact]
@@ -196,7 +204,10 @@ public sealed class ShooterAcceptanceLabTests
         Assert.Equal(template.SyncModel, options.SyncModel);
         Assert.Equal(template.RecommendedPlayerCount, options.PlayerCount);
         Assert.Equal(template.EnableAuthoritativeWorld, options.EnableAuthoritativeWorld);
-        Assert.Equal(template.DisplayName, options.NetworkName);
+        // 网络名来自模板选中的网络环境，而不是模板展示名。
+        Assert.Equal(
+            ShooterAcceptanceCatalog.GetNetworkEnvironment(template.NetworkEnvironmentId).DisplayName,
+            options.NetworkName);
         Assert.Equal(NetworkConditionProfile.Lan.BaseLatencyMs, options.LatencyMs);
     }
 
@@ -327,21 +338,22 @@ public sealed class ShooterAcceptanceLabTests
     {
         var batch = ShooterAcceptanceLab.RunCatalogMatrix(stepCount: 2);
 
-        var implementedModes = 0;
-        foreach (var mode in ShooterAcceptanceCatalog.SyncModes)
+        // 矩阵按可运行模板（Implemented + Experimental，不含 Reserved）× 网络环境展开。
+        var runnableTemplates = 0;
+        foreach (var template in ShooterAcceptanceCatalog.SyncTemplates)
         {
-            if (mode.Implemented)
+            if (template.IsRunnable)
             {
-                implementedModes++;
+                runnableTemplates++;
             }
         }
 
-        var expected = implementedModes * ShooterAcceptanceCatalog.NetworkEnvironments.Count;
+        var expected = runnableTemplates * ShooterAcceptanceCatalog.NetworkEnvironments.Count;
         Assert.Equal(expected, batch.ScenarioCount);
         Assert.Equal(expected, batch.Results.Count);
 
         var netCount = ShooterAcceptanceCatalog.NetworkEnvironments.Count;
-        Assert.Equal(netCount * 5, batch.CompletedCount);
+        Assert.Equal(netCount * runnableTemplates, batch.CompletedCount);
         Assert.Equal(0, batch.UnsupportedCount);
         Assert.Equal(0, batch.FailedCount);
         Assert.Equal(0, batch.DegradedCount);
@@ -353,7 +365,7 @@ public sealed class ShooterAcceptanceLabTests
             ShooterDemoHarnessCarrier.DefaultCarrierName,
             NetworkSyncModel.PredictRollback,
             DemoHarnessRunStatus.Completed));
-        Assert.Equal(netCount, batch.Summary.CountFor(
+        Assert.Equal(netCount * 2, batch.Summary.CountFor(
             ShooterInterpolationDemoHarnessCarrier.DefaultCarrierName,
             NetworkSyncModel.AuthoritativeInterpolation,
             DemoHarnessRunStatus.Completed));
@@ -361,7 +373,7 @@ public sealed class ShooterAcceptanceLabTests
             ShooterInterpolationDemoHarnessCarrier.DefaultCarrierName,
             NetworkSyncModel.BatchStateSync,
             DemoHarnessRunStatus.Completed));
-        Assert.Equal(netCount, batch.Summary.CountFor(
+        Assert.Equal(netCount * 2, batch.Summary.CountFor(
             ShooterInterpolationDemoHarnessCarrier.DefaultCarrierName,
             NetworkSyncModel.MassBattleLodSync,
             DemoHarnessRunStatus.Completed));

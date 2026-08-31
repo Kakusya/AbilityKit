@@ -11,8 +11,8 @@ namespace AbilityKit.Game.Flow
         public void Tick(in FeatureModuleContext<TFeature> ctx, float deltaTime)
         {
             var f = ctx.Feature;
-            if (f?.Context?.DirtyEntities == null) return;
-            if (f.Context.DirtyEntities.Count == 0) return;
+            var dirty = f?.EntityContext?.DirtyEntities;
+            if (dirty == null || dirty.Count == 0) return;
 
             f.RefreshDirtyViews();
         }
@@ -20,7 +20,7 @@ namespace AbilityKit.Game.Flow
         public void RebindAll(in FeatureModuleContext<TFeature> ctx)
         {
             var f = ctx.Feature;
-            if (f?.Context?.EntityWorld == null) return;
+            if (f?.EntityContext?.EntityWorld == null) return;
 
             f.RebindAllViews();
         }

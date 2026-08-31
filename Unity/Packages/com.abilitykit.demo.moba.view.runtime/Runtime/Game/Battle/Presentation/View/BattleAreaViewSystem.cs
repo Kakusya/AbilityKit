@@ -1,5 +1,6 @@
 using AbilityKit.Protocol.Moba;
 using AbilityKit.Game.Battle.Entity;
+using AbilityKit.Game.Battle.Hierarchy;
 using AbilityKit.Protocol.Moba.StateSync;
 
 namespace AbilityKit.Game.Flow
@@ -10,20 +11,25 @@ namespace AbilityKit.Game.Flow
         private readonly BattleViewResourceProvider _resources;
         private readonly BattleAreaViewHandleFactory _handles;
 
-        public BattleAreaViewSystem(BattleViewResourceProvider resources = null)
-            : this(resources, null)
+        public BattleAreaViewSystem(
+            BattleViewResourceProvider resources = null,
+            BattleAreaVfxPool areaVfxPool = null,
+            BattleViewHierarchyManager hierarchy = null)
+            : this(resources, areaVfxPool, hierarchy, null)
         {
         }
 
         internal BattleAreaViewSystem(
             BattleViewResourceProvider resources,
+            BattleAreaVfxPool areaVfxPool,
+            BattleViewHierarchyManager hierarchy,
             BattleAreaViewSystemFactory factory)
         {
             factory ??= new BattleAreaViewSystemFactory();
 
             _resources = BattleViewResourceProvider.OrDefault(resources);
             _areaViews = factory.CreateStore();
-            _handles = factory.CreateHandles(_resources);
+            _handles = factory.CreateHandles(_resources, areaVfxPool, hierarchy);
         }
 
         public void HandleSnapshot(
@@ -79,9 +85,15 @@ namespace AbilityKit.Game.Flow
             return new BattleAreaViewStore();
         }
 
-        public BattleAreaViewHandleFactory CreateHandles(BattleViewResourceProvider resources)
+        public BattleAreaViewHandleFactory CreateHandles(
+            BattleViewResourceProvider resources,
+            BattleAreaVfxPool areaVfxPool,
+            BattleViewHierarchyManager hierarchy = null)
         {
-            return new BattleAreaViewHandleFactory(resources);
+            return new BattleAreaViewHandleFactory(
+                resources,
+                areaVfxPool: areaVfxPool,
+                hierarchy: hierarchy);
         }
     }
 }

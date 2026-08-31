@@ -11,6 +11,7 @@ namespace AbilityKit.Demo.Shooter.Runtime
     {
         private const float CellSize = 6f;
         private const int MaxSearchRadius = 64;
+        private const int DirectScanThreshold = 16;
         private const int FullScanFallbackThreshold = 256;
 
         private readonly ShooterSpatialHashGrid _grid = new(CellSize);
@@ -38,8 +39,16 @@ namespace AbilityKit.Demo.Shooter.Runtime
             Rebuild(players, count);
         }
 
-        public void Rebuild(NB<ShooterSveltoPlayerComponent> players, int count)
+        public void Rebuild(NB<ShooterSveltoPlayerComponent> players, int count, int frame = -1)
         {
+            // 帧去重：同一帧内多个系统（敌人移动/敌人攻击/BotAI）共享一份索引，
+            // 首个调用方重建，后续调用直接复用（高单位量优化：省 O(n) 字典重建）。
+            if (frame >= 0 && _lastRebuildFrame == frame)
+            {
+                return;
+            }
+
+            _lastRebuildFrame = frame;
             _grid.Clear();
             _recordIndicesByPlayerId.Clear();
             _records.Clear();
@@ -180,6 +189,19 @@ namespace AbilityKit.Demo.Shooter.Runtime
             if (_records.Count == 0)
             {
                 return false;
+            }
+
+            // Shooter rooms normally have only a handful of players. For that
+            // shape a short contiguous scan is substantially cheaper than a
+            // dictionary-backed expanding-ring query for every enemy.
+            if (_records.Count <= DirectScanThreshold)
+            {
+                return TryFindBestRecord(
+                    selfX,
+                    selfY,
+                    selfPlayerId,
+                    ref targetRecord,
+                    ref targetDistanceSq);
             }
 
             var cellX = _grid.ComputeCellX(selfX);

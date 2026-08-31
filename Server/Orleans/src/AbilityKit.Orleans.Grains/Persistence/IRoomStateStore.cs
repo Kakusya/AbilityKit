@@ -21,4 +21,10 @@ public interface IRoomStateStore
     Task<string?> TryGetAccountRoomAsync(string accountId, CancellationToken cancellationToken = default);
 
     Task ClearAccountRoomAsync(string accountId, string roomId, CancellationToken cancellationToken = default);
+
+    Task<RoomPersistentState?> TryGetRuntimeStateAsync(string roomId, CancellationToken cancellationToken = default);
+
+    Task WriteRuntimeStateAsync(string roomId, RoomPersistentState state, CancellationToken cancellationToken = default);
+
+    Task RemoveRuntimeStateAsync(string roomId, CancellationToken cancellationToken = default);
 }

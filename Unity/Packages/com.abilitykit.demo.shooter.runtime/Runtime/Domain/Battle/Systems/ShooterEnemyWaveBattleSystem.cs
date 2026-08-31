@@ -25,7 +25,7 @@ namespace AbilityKit.Demo.Shooter.Runtime
         private readonly ShooterEnemyWaveCombatModule _combat;
         private readonly ShooterEnemyWavePhase _phase;
         private readonly ShooterArenaGameplayOptions _arenaOptions;
-        private int _lastSynchronizedFrame = -1;
+        private long _lastSynchronizedImportRevision = -1;
 
         public ShooterEnemyWaveBattleSystem(IShooterBattleServiceResolver services)
             : this(services, ShooterEnemyWavePhase.Spawn)
@@ -67,7 +67,7 @@ namespace AbilityKit.Demo.Shooter.Runtime
 
             if (_phase == ShooterEnemyWavePhase.Spawn)
             {
-                TickSpawnPhase();
+                TickSpawnPhase(deltaTime);
             }
             else
             {
@@ -75,7 +75,7 @@ namespace AbilityKit.Demo.Shooter.Runtime
             }
         }
 
-        private void TickSpawnPhase()
+        private void TickSpawnPhase(float deltaTime)
         {
             if (_state.CurrentFrame <= 1)
             {
@@ -86,7 +86,7 @@ namespace AbilityKit.Demo.Shooter.Runtime
                 SynchronizeImportedWaveState();
             }
 
-            _spawnDirector.Tick(_state);
+            _spawnDirector.Tick(_state, deltaTime);
         }
 
         private void ResetWaveState()
@@ -112,19 +112,26 @@ namespace AbilityKit.Demo.Shooter.Runtime
             }
 
             _spawnDirector.Reset();
-            _lastSynchronizedFrame = _state.CurrentFrame;
+            _lastSynchronizedImportRevision = _state.SnapshotImportRevision;
         }
 
         private void SynchronizeImportedWaveState()
         {
-            if (_lastSynchronizedFrame == _state.CurrentFrame)
+            var importRevision = _state.SnapshotImportRevision;
+            if (_lastSynchronizedImportRevision == importRevision)
             {
                 return;
             }
 
             var importedSpawnCount = SynchronizeNextEnemyIdFromExistingTargets();
-            _spawnDirector.SynchronizeFromImportedTargets(importedSpawnCount);
-            _lastSynchronizedFrame = _state.CurrentFrame;
+            var resolvedSpawnCount = Math.Max(importedSpawnCount, _state.DefeatedEnemies + _entities.EnemyCount);
+            if (resolvedSpawnCount > 0)
+            {
+                _idAllocator.AdvancePast(ShooterEnemyIdAllocator.FirstEnemyEntityId + resolvedSpawnCount - 1);
+            }
+
+            _spawnDirector.SynchronizeFromImportedTargets(resolvedSpawnCount);
+            _lastSynchronizedImportRevision = importRevision;
         }
 
         private int SynchronizeNextEnemyIdFromExistingTargets()

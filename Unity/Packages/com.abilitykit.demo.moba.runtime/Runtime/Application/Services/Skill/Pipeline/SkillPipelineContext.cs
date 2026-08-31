@@ -1,6 +1,5 @@
 using System;
 using System.Collections.Generic;
-using AbilityKit.Core.Serialization;
 using AbilityKit.Ability.Share.ECS;
 using AbilityKit.ECS;
 using AbilityKit.Core.Mathematics;
@@ -21,16 +20,23 @@ namespace AbilityKit.Demo.Moba.Services
         public bool IsAborted { get; set; }
         public bool IsPaused { get; set; }
         public float StartTime { get; set; }
-        public float ElapsedTime { get; private set; }
+
+        // Q32.32 raw 时间累计（整数加法无漂移）；float 属性是触发/表现边界的单次换算视图。
+        private long _elapsedRaw;
+
+        public float ElapsedTime => Deterministic.Fixed64.FromRaw(_elapsedRaw).ToSingle();
 
         public MobaSkillCastRuntimeHandle RuntimeHandle { get; set; }
         public long RuntimeId { get; set; }
         public long SourceContextId { get; set; }
+        public long PipelineTraceParentContextId { get; set; }
         public string FailReason { get; set; }
 
         public int SkillId { get; private set; }
+        public int CastFlowId { get; private set; }
         public int SkillSlot { get; private set; }
         public int SkillLevel { get; private set; }
+        public ResolvedSkillCastConfiguration ResolvedConfiguration { get; private set; }
         public int CastSequence { get; private set; }
         public int TimelineNextEventIndex { get; private set; }
         public bool InputReleased { get; private set; }
@@ -159,11 +165,13 @@ namespace AbilityKit.Demo.Moba.Services
             IsAborted = false;
             IsPaused = false;
             StartTime = 0f;
-            ElapsedTime = 0f;
+            _elapsedRaw = 0L;
 
             SharedData.Clear();
             FailReason = null;
             SkillLevel = triggerContext?.SkillLevel ?? 0;
+            ResolvedConfiguration = triggerContext?.ResolvedConfiguration ?? default;
+            SkillCooldownMs = ResolvedConfiguration.CooldownMs;
             CastSequence = triggerContext?.Sequence ?? 0;
             TimelineNextEventIndex = 0;
             InputReleased = false;
@@ -175,8 +183,10 @@ namespace AbilityKit.Demo.Moba.Services
             RuntimeHandle = triggerContext != null ? triggerContext.RuntimeHandle : default;
             RuntimeId = RuntimeHandle.IsValid ? RuntimeHandle.RuntimeId : triggerContext?.RuntimeId ?? 0L;
             SourceContextId = triggerContext?.SourceContextId ?? 0L;
+            PipelineTraceParentContextId = 0L;
 
             SkillId = request.SkillId;
+            CastFlowId = triggerContext?.CastFlowId ?? 0;
             SkillSlot = request.SkillSlot;
             CasterActorId = request.CasterActorId;
             TargetActorId = request.TargetActorId;
@@ -198,6 +208,12 @@ namespace AbilityKit.Demo.Moba.Services
             this.SetContextKind((int)EffectContextKind.Skill);
             this.SetSourceContextId(SourceContextId);
             this.SetSkillRuntimeHandle(in runtimeHandle);
+        }
+
+        public void SetPipelineTraceLocation(int castFlowId, long parentContextId)
+        {
+            CastFlowId = castFlowId;
+            PipelineTraceParentContextId = parentContextId;
         }
 
         public void UpdateInput(in Vec3 aimPos, in Vec3 aimDir, int targetActorId)
@@ -246,7 +262,7 @@ namespace AbilityKit.Demo.Moba.Services
         public void AdvanceTime(float deltaTime)
         {
             if (deltaTime <= 0f) return;
-            ElapsedTime += deltaTime;
+            _elapsedRaw += DeterministicMathBridge.ToFixed(deltaTime).RawValue;
         }
 
         public bool TryGetCombatContextSource(out MobaCombatContextSource source)
@@ -320,7 +336,7 @@ namespace AbilityKit.Demo.Moba.Services
             IsAborted = false;
             IsPaused = false;
             StartTime = 0f;
-            ElapsedTime = 0f;
+            _elapsedRaw = 0L;
 
             SharedData.Clear();
 
@@ -335,6 +351,8 @@ namespace AbilityKit.Demo.Moba.Services
             SkillId = 0;
             SkillSlot = 0;
             SkillLevel = 0;
+            ResolvedConfiguration = default;
+            SkillCooldownMs = 0;
             CastSequence = 0;
             TimelineNextEventIndex = 0;
             InputReleased = false;

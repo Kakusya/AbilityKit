@@ -2,6 +2,10 @@
   "name": "AbilityKit.Demo.Moba.Editor",
   "rootNamespace": "AbilityKit",
   "references": [
+    "AbilityKit.Demo.Common",
+    "AbilityKit.Demo.Common.Unity",
+    "AbilityKit.Demo.Starter",
+    "AbilityKit.Demo.Moba.Diagnostics.Core",
     "AbilityKit.Demo.Moba.Runtime",
     "AbilityKit.Demo.Moba.Share",
     "AbilityKit.Demo.Moba.View.Runtime",
@@ -10,9 +14,14 @@
     "AbilityKit.Ability",
     "AbilityKit.Ability.Editor",
     "AbilityKit.Core",
-    "AbilityKit.Core.Editor",
+    "AbilityKit.Diagnostics",
+    "AbilityKit.Diagnostics.Editor",
+    "AbilityKit.Continuous",
     "AbilityKit.Combat.Collision.Abstractions",
+    "AbilityKit.Combat.Navigation",
+    "AbilityKit.Combat.Projectile",
     "AbilityKit.Attributes",
+    "AbilityKit.Modifiers",
     "AbilityKit.World.FrameSync",
     "AbilityKit.World.ECS",
     "AbilityKit.World.Snapshot",
@@ -21,7 +30,10 @@
     "AbilityKit.HotReload",
     "AbilityKit.World.DI",
     "AbilityKit.World.Entitas",
-    "AbilityKit.World.NetworkFragments"
+    "AbilityKit.World.NetworkFragments",
+    "AbilityKit.ExcelSync.Editor",
+    "AbilityKit.Ability.Explain",
+    "AbilityKit.Ability.Explain.Editor"
   ],
   "includePlatforms": [
     "Editor"

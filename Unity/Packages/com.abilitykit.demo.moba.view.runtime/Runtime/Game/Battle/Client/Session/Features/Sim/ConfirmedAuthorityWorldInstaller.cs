@@ -8,7 +8,8 @@ namespace AbilityKit.Game.Flow
         public readonly BattleStartPlan Plan;
         public readonly BattleContext Context;
         public readonly GameFlowDomain Flow;
-        public readonly BattleSessionHandles.ConfirmedHandles Handles;
+        public readonly BattleSessionConfirmedWorldRuntime Handles;
+        public readonly BattleSessionDiagnostics Diagnostics;
         public readonly bool HasSession;
         public readonly float FixedDeltaSeconds;
         public readonly Func<WorldId, int> ResolveIdealFrameLimit;
@@ -18,7 +19,8 @@ namespace AbilityKit.Game.Flow
             BattleStartPlan plan,
             BattleContext context,
             GameFlowDomain flow,
-            BattleSessionHandles.ConfirmedHandles handles,
+            BattleSessionConfirmedWorldRuntime handles,
+            BattleSessionDiagnostics diagnostics,
             bool hasSession,
             float fixedDeltaSeconds,
             Func<WorldId, int> resolveIdealFrameLimit,
@@ -28,6 +30,7 @@ namespace AbilityKit.Game.Flow
             Context = context;
             Flow = flow;
             Handles = handles;
+            Diagnostics = diagnostics;
             HasSession = hasSession;
             FixedDeltaSeconds = fixedDeltaSeconds;
             ResolveIdealFrameLimit = resolveIdealFrameLimit;
@@ -44,7 +47,7 @@ namespace AbilityKit.Game.Flow
 
             options.ResetTickState?.Invoke();
 
-            var authWorldId = CreateWorldRuntime(
+            CreateWorldRuntime(
                 options.Plan,
                 handles,
                 options.FixedDeltaSeconds,
@@ -52,17 +55,14 @@ namespace AbilityKit.Game.Flow
 
             CreateInputRuntime(handles);
             CreateViewEventPipeline(options.Plan, handles, options.HasSession);
-            ConfirmedViewSideInstaller.EnsureInstalled(
-                options.Context,
-                options.Flow,
-                handles,
-                authWorldId,
-                options.Plan.Authority.EnableConfirmedAuthorityWorld);
+            ConfirmedAuthorityDebugStatsPublisher.Initialize(
+                options.Diagnostics,
+                ConfirmedAuthorityWorldId.Create(options.Plan));
         }
 
-        private static WorldId CreateWorldRuntime(
+        private static void CreateWorldRuntime(
             BattleStartPlan plan,
-            BattleSessionHandles.ConfirmedHandles handles,
+            BattleSessionConfirmedWorldRuntime handles,
             float fixedDeltaSeconds,
             Func<WorldId, int> resolveIdealFrameLimit)
         {
@@ -73,10 +73,9 @@ namespace AbilityKit.Game.Flow
                 resolveIdealFrameLimit);
 
             handles.BindWorldRuntime(worldRuntime);
-            return worldRuntime.WorldId;
         }
 
-        private static void CreateInputRuntime(BattleSessionHandles.ConfirmedHandles handles)
+        private static void CreateInputRuntime(BattleSessionConfirmedWorldRuntime handles)
         {
             var inputRuntime = ConfirmedAuthorityInputRuntime.Create();
             handles.BindInputRuntime(inputRuntime);
@@ -85,7 +84,7 @@ namespace AbilityKit.Game.Flow
 
         private static void CreateViewEventPipeline(
             BattleStartPlan plan,
-            BattleSessionHandles.ConfirmedHandles handles,
+            BattleSessionConfirmedWorldRuntime handles,
             bool hasSession)
         {
             if (!hasSession) return;

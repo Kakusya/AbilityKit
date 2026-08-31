@@ -3,6 +3,7 @@
         "id":  10040000,
         "name":  "墨子-机关术-释放技能获得护盾",
         "event":  "skill.cast.complete",
+        "scope":  "owner",
         "enabled":  true,
         "allowExternal":  false,
         "phase":  "immediate",
@@ -41,6 +42,7 @@
         "id":  10040001,
         "name":  "墨子-机关术-普攻计数",
         "event":  "damage.apply.after",
+        "scope":  "owner",
         "enabled":  true,
         "allowExternal":  false,
         "phase":  "immediate",
@@ -76,8 +78,9 @@
     },
     {
         "id":  10040002,
-        "name":  "墨子-机关术-第四次普攻炮击",
+        "name":  "墨子-机关术-第四次强化近战普攻",
         "event":  "",
+        "scope":  "owner",
         "enabled":  true,
         "allowExternal":  true,
         "phase":  "immediate",
@@ -87,10 +90,23 @@
                        ],
         "actions":  [
                         {
-                            "type":  "shoot_projectile",
-                            "launcher_id":  31040201,
-                            "projectile_id":  30040201,
-                            "directionSource":  "cast_context"
+                            "type":  "give_damage",
+                            "damage_value":  260,
+                            "source_attack_ratio":  0.8,
+                            "damage_type":  2,
+                            "reason_param":  10040002,
+                            "target_mode":  2,
+                            "target_max_count":  1
+                        },
+                        {
+                            "type":  "pull",
+                            "speed":  12,
+                            "duration_ms":  300,
+                            "direction_mode":  1,
+                            "target_distance":  3,
+                            "priority":  15,
+                            "motion_group_id":  3,
+                            "target_mode":  2
                         },
                         {
                             "type":  "add_buff",
@@ -102,7 +118,7 @@
                         },
                         {
                             "type":  "debug_log",
-                            "message":  "墨子被动机关术：第四次普攻转换为机关炮击并刷新护盾",
+                            "message":  "墨子被动机关术：第四次普攻强化为近战命中，击退目标并刷新护盾",
                             "dump_args":  false
                         }
                     ]

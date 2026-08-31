@@ -1,4 +1,4 @@
-﻿using System.Collections.Generic;
+using System.Collections.Generic;
 using AbilityKit.Ability.FrameSync;
 using AbilityKit.Ability.World.DI;
 using AbilityKit.Ability.World.Services;
@@ -8,9 +8,11 @@ using AbilityKit.Demo.Moba.Services.Buffs.Core;
 using AbilityKit.Demo.Moba.Services.Buffs.Presentation;
 using AbilityKit.Demo.Moba.Services.Buffs.Runtime;
 using AbilityKit.Ability.Triggering.Runtime;
-using AbilityKit.Core.Continuous;
+using AbilityKit.Continuous;
 using AbilityKit.Demo.Moba.Config.Core;
 using AbilityKit.Demo.Moba.Runtime.Application.Services.Triggering;
+using AbilityKit.Demo.Moba.Services.Observability;
+using AbilityKit.Demo.Moba.Rollback;
 
 namespace AbilityKit.Demo.Moba.Services
 {
@@ -19,7 +21,7 @@ namespace AbilityKit.Demo.Moba.Services
     /// </summary>
     [WorldService(typeof(IContinuousManager), WorldLifetime.Scoped)]
     [WorldService(typeof(MobaContinuousManager), WorldLifetime.Scoped)]
-    public sealed class MobaContinuousManager : DefaultContinuousManager, IWorldInitializable, System.IDisposable
+    public sealed class MobaContinuousManager : DefaultContinuousManager, IWorldInitializable, IMobaOwnerKeySource, System.IDisposable
     {
         private readonly List<IMobaContinuousIntervalHandler> _intervalHandlers = new List<IMobaContinuousIntervalHandler>();
         private MobaContinuousModifierProjectorRegistry _modifierProjectors;
@@ -40,9 +42,11 @@ namespace AbilityKit.Demo.Moba.Services
             services.TryResolve(out IFrameTime frameTime);
             services.TryResolve(out MobaPresentationCueSnapshotService cueSnapshots);
             services.TryResolve(out MobaRuntimeContextService runtimeContexts);
+            services.TryResolve(out IMobaBuffLifecycleHook observationHook);
             services.TryResolve(out AbilityKit.Demo.Moba.Services.Triggering.MobaTriggerPlanSubscriptionService triggerSubscriptions);
             services.TryResolve(out AbilityKit.Demo.Moba.Services.Triggering.MobaOwnerBoundTriggerGateService ownerBoundTriggerGates);
             services.TryResolve(out MobaTriggerExecutionGateway triggerGateway);
+            services.TryResolve(out MobaCombatActivityService combatActivity);
             if (triggerGateway == null) triggerGateway = new MobaTriggerExecutionGateway(effects, triggerSubscriptions);
 
             _modifierProjectors = new MobaContinuousModifierProjectorRegistry();
@@ -59,9 +63,15 @@ namespace AbilityKit.Demo.Moba.Services
             var events = new BuffEventPublisher(eventBus);
             var stageEffects = new BuffStageEffectExecutor(triggerGateway);
             var presentationCues = new MobaBuffPresentationCueReporter(configs, cueSnapshots);
-            _buffIntervalHandler = new BuffContinuousIntervalHandler(configs, events, stageEffects, presentationCues, buffContextRegistry);
+            _buffIntervalHandler = new BuffContinuousIntervalHandler(
+                configs,
+                events,
+                stageEffects,
+                presentationCues,
+                buffContextRegistry,
+                observationHook);
             _intervalHandlers.Add(_buffIntervalHandler);
-            _triggerIntervalHandler = new MobaTriggerIntervalContinuousHandler(triggerGateway);
+            _triggerIntervalHandler = new MobaTriggerIntervalContinuousHandler(triggerGateway, combatActivity);
             _intervalHandlers.Add(_triggerIntervalHandler);
             _tickProcessor = new MobaContinuousTickProcessor(_intervalHandlers);
         }
@@ -69,6 +79,15 @@ namespace AbilityKit.Demo.Moba.Services
         public void Reproject(IContinuous continuous)
         {
             _lifecycleBinder?.Reproject(continuous);
+        }
+
+        public string Name => "continuous";
+
+        public void CopyActiveOwnerKeys(List<long> destination)
+        {
+            if (destination == null) return;
+            _ownerBoundTriggerBinder?.CopyActiveOwnerKeys(destination);
+            if (_ownerBoundTriggerBinder == null) destination.Clear();
         }
 
         public void Tick(float deltaTimeSeconds)

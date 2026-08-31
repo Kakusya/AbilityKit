@@ -1,5 +1,6 @@
 using System;
 using System.Collections.Generic;
+using AbilityKit.Combat.Collision;
 using AbilityKit.Core.Mathematics;
 using AbilityKit.Ability.World.DI;
 using AbilityKit.Ability.World;
@@ -19,7 +20,8 @@ namespace AbilityKit.Demo.Moba.Systems.Collision
         private readonly IGroup<global::ActorEntity> _withCollisionId;
 
         private readonly HashSet<int> _validIds = new HashSet<int>();
-        private readonly List<CollisionWorldDebugShape> _worldShapes = new List<CollisionWorldDebugShape>(2048);
+        private readonly HashSet<int> _ownedIds = new HashSet<int>();
+        private readonly List<int> _staleOwnedIds = new List<int>();
 
         public CollisionWorldSyncSystem(global::Entitas.IContexts contexts, IWorldResolver services)
             : base(contexts, services)
@@ -52,19 +54,21 @@ namespace AbilityKit.Demo.Moba.Systems.Collision
 
                 var t = e.transform.Value;
                 var shape = e.collider.LocalShape;
-                var layerMask = e.hasCollisionLayer ? e.collisionLayer.Mask : -1;
+                var layerMask = e.hasCollisionLayer ? e.collisionLayer.Mask : 0;
+                var layerId = ResolveLayerId(layerMask);
 
                 if (!e.hasCollisionId)
                 {
-                    var id = _world.Add(t, shape, layerMask);
+                    var id = _world.Add(t, shape, layerId);
                     e.AddCollisionId(id);
+                    _ownedIds.Add(id.Value);
                     _validIds.Add(id.Value);
                 }
                 else
                 {
                     var id = e.collisionId.Value;
                     _world.Update(id, t, shape);
-                    _world.UpdateLayer(id, layerMask);
+                    _world.UpdateLayer(id, layerId);
                     _validIds.Add(id.Value);
                 }
             }
@@ -81,24 +85,44 @@ namespace AbilityKit.Demo.Moba.Systems.Collision
                 {
                     var id = e.collisionId.Value;
                     _world.Remove(id);
+                    _ownedIds.Remove(id.Value);
                     e.RemoveCollisionId();
                 }
             }
 
-            // 标记-清扫式清理：
-            // 部分实体可能已销毁或禁用，不再出现在分组中，
-            // 这会在碰撞世界中留下陈旧的碰撞体条目。
-            // 这里保守移除所有未关联到当前活跃（Transform+Collider）实体的碰撞体 ID。
-            if (_world is ICollisionWorldDebugView debugView)
+            // 只回收本系统创建的 Actor Collider。地图和其他服务注册的静态 Collider
+            // 不属于本系统，不能通过全世界扫描进行清理。
+            _staleOwnedIds.Clear();
+            foreach (var idValue in _ownedIds)
             {
-                debugView.CopyWorldShapes(_worldShapes);
-                for (int i = 0; i < _worldShapes.Count; i++)
+                if (!_validIds.Contains(idValue))
                 {
-                    var id = _worldShapes[i].Id;
-                    if (_validIds.Contains(id.Value)) continue;
-                    _world.Remove(id);
+                    _staleOwnedIds.Add(idValue);
                 }
             }
+
+            for (int i = 0; i < _staleOwnedIds.Count; i++)
+            {
+                var idValue = _staleOwnedIds[i];
+                _world.Remove(new ColliderId(idValue));
+                _ownedIds.Remove(idValue);
+            }
+        }
+
+        private static int ResolveLayerId(int layerMask)
+        {
+            if (layerMask == 0) return 0;
+            if (layerMask < 0 || (layerMask & (layerMask - 1)) != 0)
+            {
+                throw new InvalidOperationException($"Actor collision layer must contain exactly one bit. mask=0x{layerMask:X8}");
+            }
+
+            var layerId = 0;
+            while ((layerMask >>= 1) != 0)
+            {
+                layerId++;
+            }
+            return layerId;
         }
     }
 }

@@ -9,33 +9,50 @@ namespace AbilityKit.Demo.Shooter.View.PlayMode
 {
     public readonly struct ShooterPlayModeSessionOptions
     {
-        private const int PlayModeDefaultDurationFrames = ShooterAcceptanceLab.DefaultTickRate * 120;
+        private const int PlayModeDefaultDurationFrames = ShooterAcceptanceLab.DefaultTickRate * 600;
         private const int PlayModeEnemiesPerWave = 64;
+        private const int PlayModeCampaignReinforcementGroups = 5;
+        private const int PlayModeReinforcementIntervalSeconds = 60;
 
-        public const int PlayModeDefaultEnemyBudget = 512;
+        public const int PlayModeDefaultEnemyBudget = 1024;
         public const int PlayModeMediumEnemyBudget = 2048;
         public const int PlayModeHighDensityEnemyBudget = 8192;
 
         public static ShooterPlayModeSessionOptions Default => FromTemplate(
-            ShooterAcceptanceCatalog.GetSyncTemplate(ShooterSyncTemplateIds.PredictRollbackAuthority));
+            ShooterAcceptanceCatalog.GetSyncTemplate(ShooterRoomLaunchSpec.DefaultSyncTemplateId));
 
         public static ShooterPlayModeSessionOptions FromTemplate(in ShooterSyncTemplate template)
         {
-            var network = ShooterAcceptanceCatalog.GetNetworkEnvironment(template.NetworkEnvironmentId);
+            return FromTemplateForNetwork(
+                in template,
+                template.NetworkEnvironmentId,
+                randomSeed: 3901,
+                controlledPlayerId: 1,
+                worldScale: 1f);
+        }
+
+        public static ShooterPlayModeSessionOptions FromTemplateForNetwork(
+            in ShooterSyncTemplate template,
+            string networkEnvironmentId,
+            int randomSeed,
+            int controlledPlayerId,
+            float worldScale)
+        {
+            var network = ShooterAcceptanceCatalog.GetNetworkEnvironment(networkEnvironmentId);
             return new ShooterPlayModeSessionOptions(
                 template.SyncModel,
                 ShooterAcceptanceLab.DefaultTickRate,
                 template.RecommendedPlayerCount,
-                randomSeed: 3901,
-                controlledPlayerId: 1,
+                randomSeed,
+                controlledPlayerId,
                 enableAuthoritativeWorld: template.EnableAuthoritativeWorld,
                 latencyMs: network.Profile.BaseLatencyMs,
                 jitterMs: network.Profile.JitterMs,
                 packetLossRate: (float)network.Profile.PacketLossRate,
                 reorderRate: (float)network.Profile.ReorderRate,
                 bandwidthKbps: network.Profile.BandwidthKbps,
-                worldScale: 1f,
-                networkName: template.DisplayName,
+                worldScale,
+                networkName: network.DisplayName,
                 syncTemplateId: template.Id,
                 gameplayScenario: CreatePlayModeScenario(PlayModeDefaultEnemyBudget));
         }
@@ -300,15 +317,18 @@ namespace AbilityKit.Demo.Shooter.View.PlayMode
             var battleFlow = scenario.BattleFlow;
             var tickRate = Math.Max(1, (int)Math.Round(1f / scenario.TickDeltaTime));
             var durationFrames = Math.Max(battleFlow.DurationFrames, PlayModeDefaultDurationFrames);
-            var normalizedEnemyBudget = Math.Max(1, enemyBudget);
-            var playModeWaves = CreatePlayModeDefaultWaves(normalizedEnemyBudget);
+            var normalizedEnemyBudget = Math.Min(
+                Math.Max(1, enemyBudget),
+                PlayModeHighDensityEnemyBudget);
+            var campaignEnemyBudget = SaturatingMultiply(normalizedEnemyBudget, PlayModeCampaignReinforcementGroups);
+            var playModeWaves = CreatePlayModeDefaultWaves(normalizedEnemyBudget, campaignEnemyBudget, tickRate);
             var playModeFlow = new ShooterSveltoGameplayBattleFlowConfig(
                 durationFrames,
-                victoryTargetDefeats: Math.Max(battleFlow.VictoryTargetDefeats, normalizedEnemyBudget),
+                victoryTargetDefeats: campaignEnemyBudget,
                 maxActiveEnemies: normalizedEnemyBudget,
                 playModeWaves,
                 battleFlow.EnemyLoadoutId,
-                enemyAttackIntervalFrames: tickRate * 60,
+                enemyAttackIntervalFrames: tickRate * 2,
                 battleFlow.EnemyAttackDamage,
                 battleFlow.EnemyProjectileSpeedScale,
                 battleFlow.EnemyProjectilesPerShot,
@@ -327,25 +347,40 @@ namespace AbilityKit.Demo.Shooter.View.PlayMode
                 playModeFlow);
         }
 
-        private static ShooterSveltoGameplayWaveConfig[] CreatePlayModeDefaultWaves(int enemyBudget)
+        private static ShooterSveltoGameplayWaveConfig[] CreatePlayModeDefaultWaves(
+            int activeEnemyBudget,
+            int campaignEnemyBudget,
+            int tickRate)
         {
-            var waveCount = Math.Max(1, (enemyBudget + PlayModeEnemiesPerWave - 1) / PlayModeEnemiesPerWave);
+            var waveCount = DivideRoundUp(campaignEnemyBudget, PlayModeEnemiesPerWave);
+            var initialWaveCount = DivideRoundUp(activeEnemyBudget, PlayModeEnemiesPerWave);
             var waves = new ShooterSveltoGameplayWaveConfig[waveCount];
-            var remainingEnemies = enemyBudget;
+            var remainingEnemies = campaignEnemyBudget;
             for (var i = 0; i < waves.Length; i++)
             {
                 var enemiesInWave = Math.Min(PlayModeEnemiesPerWave, remainingEnemies);
+                var reinforcementGroup = i / initialWaveCount;
                 waves[i] = new ShooterSveltoGameplayWaveConfig(
                     waveId: i + 1,
-                    startFrame: 0,
+                    startFrame: reinforcementGroup * tickRate * PlayModeReinforcementIntervalSeconds,
                     spawnFrameInterval: 1,
                     enemyCount: enemiesInWave,
-                    enemyHp: i < waves.Length / 2 ? 2 : 3,
-                    spawnRadius: 18f + i % 16);
+                    enemyHp: 2 + reinforcementGroup * 2,
+                    spawnRadius: (18f + i % 16) * 2f);
                 remainingEnemies -= enemiesInWave;
             }
 
             return waves;
+        }
+
+        private static int SaturatingMultiply(int value, int multiplier)
+        {
+            return value > int.MaxValue / multiplier ? int.MaxValue : value * multiplier;
+        }
+
+        private static int DivideRoundUp(int value, int divisor)
+        {
+            return Math.Max(1, (value - 1) / divisor + 1);
         }
 
         private static float Clamp01(float value)

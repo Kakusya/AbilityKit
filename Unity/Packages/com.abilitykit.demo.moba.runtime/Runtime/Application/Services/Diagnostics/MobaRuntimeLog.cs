@@ -46,6 +46,7 @@ namespace AbilityKit.Demo.Moba.Services
         RuntimeTrace = 7,
         Investigation = 8,
         AIInvestigation = 9,
+        ConfiguredActionDebug = 10,
     }
 
     public readonly struct MobaRuntimeLogContext
@@ -70,6 +71,7 @@ namespace AbilityKit.Demo.Moba.Services
         public static bool EnableRuntimeTraceLogs { get; set; }
         public static bool EnableInvestigationLogs { get; set; }
         public static bool EnableAIInvestigationLogs { get; set; }
+        public static bool EnableConfiguredActionDebugLogs { get; set; }
         public static bool EnableLifecycleInfoLogs { get; set; } = true;
         public static bool EnableConfigurationInfoLogs { get; set; } = true;
 
@@ -238,6 +240,7 @@ namespace AbilityKit.Demo.Moba.Services
             if (purpose == MobaRuntimeLogPurpose.RuntimeTrace) return EnableRuntimeTraceLogs;
             if (purpose == MobaRuntimeLogPurpose.Investigation) return EnableInvestigationLogs;
             if (purpose == MobaRuntimeLogPurpose.AIInvestigation) return EnableAIInvestigationLogs;
+            if (purpose == MobaRuntimeLogPurpose.ConfiguredActionDebug) return EnableConfiguredActionDebugLogs;
 
             return true;
         }

@@ -3,9 +3,11 @@ using System.Collections.Generic;
 using AbilityKit.Combat.Projectile;
 using AbilityKit.Core.Logging;
 using AbilityKit.Demo.Moba.Runtime.Application.Services.Triggering;
+using AbilityKit.Demo.Moba.Services;
 using AbilityKit.Demo.Moba.Services.EntityConstruction;
 using AbilityKit.Demo.Moba.Util.Converter;
 using AbilityKit.Protocol.Moba.StateSync;
+using AbilityKit.Demo.Moba.Config.BattleDemo.MO;
 
 namespace AbilityKit.Demo.Moba.Runtime.Application.Systems.Projectile
 {
@@ -58,17 +60,37 @@ namespace AbilityKit.Demo.Moba.Runtime.Application.Systems.Projectile
                 return;
             }
 
-            if (evt.LauncherActorId <= 0)
+            if (evt.LauncherActorId <= 0
+                || !links.TryGetLauncherSource(evt.LauncherActorId, out var launcherSource))
             {
                 return;
             }
 
-            if (!links.TryGetLauncherSource(evt.LauncherActorId, out var launcherSource))
+            var trace = _sys.Trace;
+            if (trace == null)
             {
-                return;
+                throw new InvalidOperationException(
+                    $"Scheduled projectile requires trace service. projectile={evt.Projectile} templateId={evt.TemplateId} launcherActorId={evt.LauncherActorId}");
             }
 
-            links.BindSource(evt.Projectile, in launcherSource);
+            var sourceActorId = launcherSource.SourceActorId > 0
+                ? launcherSource.SourceActorId
+                : evt.OwnerId;
+            var targetActorId = launcherSource.InitialTargetActorId;
+            var projectileContextId = trace.CreateChildContext(
+                launcherSource.SourceContextId,
+                MobaTraceKind.ProjectileLaunch,
+                evt.TemplateId,
+                sourceActorId,
+                targetActorId);
+            if (projectileContextId == 0L)
+            {
+                throw new InvalidOperationException(
+                    $"Scheduled projectile trace creation failed. projectile={evt.Projectile} templateId={evt.TemplateId} launcherActorId={evt.LauncherActorId} launcherContextId={launcherSource.SourceContextId}");
+            }
+
+            var projectileSource = launcherSource.WithLaunchContext(projectileContextId);
+            links.BindSource(evt.Projectile, in projectileSource);
         }
 
         private void EnsureProjectileActor(in ProjectileSpawnEvent evt)
@@ -117,6 +139,26 @@ namespace AbilityKit.Demo.Moba.Runtime.Application.Systems.Projectile
             });
 
             links.Link(evt.Projectile, projectileActorId);
+            AttachConfiguredStateMachine(evt.TemplateId, spawnResult.Entity);
+        }
+
+        private void AttachConfiguredStateMachine(int templateId, global::ActorEntity actor)
+        {
+            if (actor == null || _sys.Configs == null) return;
+            if (!_sys.Configs.TryGetProjectile(templateId, out ProjectileMO config) || config == null) return;
+            if (string.IsNullOrWhiteSpace(config.StateMachineProfileId)) return;
+
+            var factory = _sys.StateMachineFactory
+                          ?? throw new InvalidOperationException(
+                              $"Projectile '{templateId}' requires HFSM profile '{config.StateMachineProfileId}', but the state-machine factory is unavailable.");
+            if (!factory.TryCreate(actor, config.StateMachineProfileId, out var runtime) || runtime == null)
+            {
+                throw new InvalidOperationException(
+                    $"Projectile '{templateId}' references missing HFSM profile '{config.StateMachineProfileId}'.");
+            }
+
+            actor.AddActorStateMachine(config.StateMachineProfileId, runtime,
+                AbilityKit.Demo.Moba.Components.MobaActorStateMachineOwnerKind.Projectile);
         }
 
         private void IncrementLauncherActiveBullets(int launcherActorId)

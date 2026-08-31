@@ -14,6 +14,84 @@ namespace AbilityKit.Demo.Shooter.Runtime.Tests.Client;
 public sealed class ShooterPlaySessionRunnerTests
 {
     [Fact]
+    public void PlayModeScenarioSeparatesActiveDensityFromCampaignLength()
+    {
+        var scenario = ShooterPlayModeSessionOptions.CreatePlayModeScenario(
+            ShooterPlayModeSessionOptions.PlayModeDefaultEnemyBudget);
+        var flow = scenario.BattleFlow;
+        var totalEnemies = 0;
+        var initialEnemies = 0;
+        var firstReinforcementFrame = int.MaxValue;
+        for (var i = 0; i < flow.Waves.Length; i++)
+        {
+            var wave = flow.Waves[i];
+            totalEnemies += wave.EnemyCount;
+            if (wave.StartFrame == 0)
+            {
+                initialEnemies += wave.EnemyCount;
+            }
+            else
+            {
+                firstReinforcementFrame = Math.Min(firstReinforcementFrame, wave.StartFrame);
+            }
+        }
+
+        Assert.Equal(ShooterPlayModeSessionOptions.PlayModeDefaultEnemyBudget, flow.MaxActiveEnemies);
+        Assert.Equal(ShooterPlayModeSessionOptions.PlayModeDefaultEnemyBudget, initialEnemies);
+        Assert.Equal(totalEnemies, flow.VictoryTargetDefeats);
+        Assert.True(totalEnemies >= flow.MaxActiveEnemies * 5);
+        Assert.True(firstReinforcementFrame >= ShooterAcceptanceLab.DefaultTickRate * 60);
+        Assert.True(flow.DurationFrames >= ShooterAcceptanceLab.DefaultTickRate * 600);
+        Assert.Equal(ShooterAcceptanceLab.DefaultTickRate * 2, flow.EnemyAttackIntervalFrames);
+        Assert.Equal(36f, scenario.ArenaRadius);
+        Assert.All(flow.Waves, wave => Assert.True(
+            wave.SpawnRadius >= 36f,
+            $"Expected doubled PlayMode spawn radius, got {wave.SpawnRadius}."));
+    }
+
+    [Theory]
+    [InlineData(ShooterPlayModeSessionOptions.PlayModeMediumEnemyBudget)]
+    [InlineData(ShooterPlayModeSessionOptions.PlayModeHighDensityEnemyBudget)]
+    public void PlayModeScenarioPreservesSupportedDensityProfilesAcrossCampaign(int enemyBudget)
+    {
+        var flow = ShooterPlayModeSessionOptions.CreatePlayModeScenario(enemyBudget).BattleFlow;
+        var totalEnemies = 0;
+        var initialEnemies = 0;
+        for (var i = 0; i < flow.Waves.Length; i++)
+        {
+            totalEnemies += flow.Waves[i].EnemyCount;
+            if (flow.Waves[i].StartFrame == 0)
+            {
+                initialEnemies += flow.Waves[i].EnemyCount;
+            }
+        }
+
+        Assert.Equal(enemyBudget, flow.MaxActiveEnemies);
+        Assert.Equal(enemyBudget, initialEnemies);
+        Assert.Equal(enemyBudget * 5, totalEnemies);
+        Assert.Equal(totalEnemies, flow.VictoryTargetDefeats);
+        Assert.True(flow.Waves.Length > initialEnemies / 64);
+    }
+
+    [Theory]
+    [InlineData(int.MaxValue, ShooterPlayModeSessionOptions.PlayModeHighDensityEnemyBudget)]
+    [InlineData(0, 1)]
+    [InlineData(-100, 1)]
+    public void PlayModeScenarioClampsUnsupportedDensityWithoutOverflow(int requestedBudget, int expectedBudget)
+    {
+        var flow = ShooterPlayModeSessionOptions.CreatePlayModeScenario(requestedBudget).BattleFlow;
+        var totalEnemies = 0;
+        for (var i = 0; i < flow.Waves.Length; i++)
+        {
+            totalEnemies += flow.Waves[i].EnemyCount;
+        }
+
+        Assert.Equal(expectedBudget, flow.MaxActiveEnemies);
+        Assert.Equal(expectedBudget * 5, totalEnemies);
+        Assert.Equal(totalEnemies, flow.VictoryTargetDefeats);
+    }
+
+    [Fact]
     public void FiveHundredMsLatencyDoesNotPullControlledPlayerBackAfterStopping()
     {
         const int tickRate = 30;
@@ -205,6 +283,30 @@ public sealed class ShooterPlaySessionRunnerTests
     }
 
     [Fact]
+    public void MassBattlePlayModeHidesEnemiesUntilTheyEnterConfiguredAoi()
+    {
+        var template = ShooterAcceptanceCatalog.GetSyncTemplate(ShooterSyncTemplateIds.MassBattleLodAoi);
+        var input = new ScriptedInputSource(Array.Empty<ShooterHostFrameInput>());
+        var view = new AggregatingViewSink();
+        using var runner = new ShooterPlaySessionRunner(input, view);
+        runner.Start(ShooterPlayModeSessionOptions.FromTemplate(in template));
+
+        runner.Tick(1f / runner.Options.TickRate);
+
+        Assert.Equal(template.SendPolicy.SnapshotIntervalFrames, runner.PresentationSnapshotIntervalTicks);
+        Assert.True(runner.Session!.Runtime.GetSnapshot().Enemies.Length > 0);
+        Assert.Equal(0, view.ProjectedEnemyCount);
+
+        var ticksUntilEnemyEnters = runner.Options.TickRate * 9;
+        for (var tick = 1; tick < ticksUntilEnemyEnters; tick++)
+        {
+            runner.Tick(1f / runner.Options.TickRate);
+        }
+
+        Assert.True(view.ProjectedEnemyCount > 0, "Expected inward-moving enemies to appear after entering the configured AOI radius.");
+    }
+
+    [Fact]
     public void LocalMenuDefaultSessionDoesNotDefeatIdlePlayersAfterTwelveSeconds()
     {
         var input = new ScriptedInputSource(Array.Empty<ShooterHostFrameInput>());
@@ -236,16 +338,26 @@ public sealed class ShooterPlaySessionRunnerTests
         runner.Start(options);
 
         var totalTicks = runner.Options.TickRate * 3;
+        var maxAuthoritativeEnemyCount = 0;
         for (var tick = 0; tick < totalTicks; tick++)
         {
             runner.Tick(1f / runner.Options.TickRate);
+            maxAuthoritativeEnemyCount = Math.Max(
+                maxAuthoritativeEnemyCount,
+                runner.Session!.Runtime.GetSnapshot().Enemies.Length);
         }
 
         Assert.Equal(totalTicks, runner.StepCount);
         Assert.Equal(totalTicks, view.RenderCount);
         Assert.Equal(ShooterBattleMatchState.Running, runner.Session!.Runtime.MatchState);
         Assert.True(runner.Session.Runtime.IsStarted);
-        Assert.True(view.MaxEnemyCount >= 2048, $"Expected the explicit high-density PlayMode scenario to demonstrate thousands of active enemies, but max was {view.MaxEnemyCount}.");
+        Assert.True(
+            maxAuthoritativeEnemyCount >= 2048,
+            $"Expected the explicit high-density PlayMode scenario to simulate thousands of active enemies, but max was {maxAuthoritativeEnemyCount}.");
+        Assert.InRange(
+            view.MaxEnemyCount,
+            1,
+            options.GameplayScenario.BattleFlow.MaxActiveEnemies);
     }
 
     [Fact]
@@ -258,21 +370,48 @@ public sealed class ShooterPlaySessionRunnerTests
             ShooterPlayModeSessionOptions.CreatePlayModeScenario(ShooterPlayModeSessionOptions.PlayModeHighDensityEnemyBudget));
         runner.Start(options);
 
-        for (var tick = 0; tick < 3; tick++)
+        var publishInterval = runner.PresentationSnapshotIntervalTicks;
+        var publishedBatches = new List<ShooterSnapshotViewBatch>();
+        var observedPublishCount = runner.PresentationPublishCount;
+        for (var tick = 0; tick < publishInterval * 2; tick++)
         {
             runner.Tick(1f / runner.Options.TickRate);
+            if (runner.PresentationPublishCount == observedPublishCount)
+            {
+                continue;
+            }
+
+            observedPublishCount = runner.PresentationPublishCount;
+            publishedBatches.Add(view.Frames[^1].ClientBatch);
         }
 
-        Assert.True(view.Frames.Count >= 3);
-        Assert.Equal(ShooterViewSnapshotKind.Full, view.Frames[0].ClientBatch.SnapshotKind);
-        Assert.Equal(ShooterViewSnapshotKind.Delta, view.Frames[1].ClientBatch.SnapshotKind);
-        Assert.Equal(ShooterViewSnapshotKind.Delta, view.Frames[2].ClientBatch.SnapshotKind);
+        Assert.Equal(3, publishedBatches.Count);
+        Assert.Equal(ShooterViewSnapshotKind.Full, publishedBatches[0].SnapshotKind);
+        Assert.Equal(ShooterViewSnapshotKind.Delta, publishedBatches[1].SnapshotKind);
+        Assert.Equal(ShooterViewSnapshotKind.Delta, publishedBatches[2].SnapshotKind);
         Assert.True(
-            view.Frames[1].ClientBatch.EntityChanges.Count <= ShooterPureStateSyncSettings.Default.ActiveSyncBudget,
-            $"Expected high-density pure-state presentation deltas to stay within the active budget, but got {view.Frames[1].ClientBatch.EntityChanges.Count} entities.");
+            publishedBatches[1].EntityChanges.Count <= ShooterPureStateSyncSettings.Default.ActiveSyncBudget,
+            $"Expected high-density pure-state presentation deltas to stay within the active budget, but got {publishedBatches[1].EntityChanges.Count} entities.");
         Assert.True(
-            view.Frames[2].ClientBatch.EntityChanges.Count <= ShooterPureStateSyncSettings.Default.ActiveSyncBudget,
-            $"Expected high-density pure-state presentation deltas to stay within the active budget, but got {view.Frames[2].ClientBatch.EntityChanges.Count} entities.");
+            publishedBatches[2].EntityChanges.Count <= ShooterPureStateSyncSettings.Default.ActiveSyncBudget,
+            $"Expected high-density pure-state presentation deltas to stay within the active budget, but got {publishedBatches[2].EntityChanges.Count} entities.");
+    }
+
+    [Fact]
+    public void CatchUpFramePublishesOnlyFinalPresentationSnapshot()
+    {
+        var input = new ScriptedInputSource(Array.Empty<ShooterHostFrameInput>());
+        var view = new RecordingViewSink();
+        using var runner = new ShooterPlaySessionRunner(input, view);
+        runner.Start(ShooterPlayModeSessionOptions.Default);
+
+        runner.Tick(2.1f / runner.Options.TickRate);
+        var session = runner.Session!;
+
+        Assert.Equal(2, runner.StepCount);
+        Assert.Equal(1, runner.RenderCount);
+        Assert.Equal(1, runner.PresentationPublishCount);
+        Assert.Equal(session.Runtime.CurrentFrame, session.Presentation.ViewModel.Current.Frame);
     }
 
     [Fact]
@@ -367,7 +506,10 @@ public sealed class ShooterPlaySessionRunnerTests
         Assert.Equal(totalTicks, runner.StepCount);
         Assert.Equal(totalTicks, view.Frames.Count);
         Assert.Contains(view.Frames, frame => frame.ClientBatch.Frame > enemyHitFrame);
-        Assert.True(ProjectionContainsEnemyAfterFrame(view.Frames, enemyHitFrame));
+        var finalRuntimeSnapshot = runner.Session!.Runtime.GetSnapshot();
+        Assert.True(
+            ProjectionContainsEnemyAfterFrame(view.Frames, enemyHitFrame),
+            $"Expected an enemy projection after hit frame {enemyHitFrame}; finalRuntimeEnemies={finalRuntimeSnapshot.Enemies.Length}, matchState={runner.Session.Runtime.MatchState}, finalRuntimeFrame={finalRuntimeSnapshot.Frame}, finalViewFrame={view.Frames[^1].ClientBatch.Frame}.");
 
         var firstHit = Assert.IsType<ShooterEventSnapshot>(firstPresentationHit);
         var projection = new ShooterSnapshotViewProjection();
@@ -872,8 +1014,15 @@ public sealed class ShooterPlaySessionRunnerTests
                         waveId: 1,
                         startFrame: 0,
                         spawnFrameInterval: 1,
-                        enemyCount: 2,
+                        enemyCount: 1,
                         enemyHp: 1,
+                        spawnRadius: 2f),
+                    new ShooterSveltoGameplayWaveConfig(
+                        waveId: 2,
+                        startFrame: tickRate,
+                        spawnFrameInterval: 1,
+                        enemyCount: 1,
+                        enemyHp: tickRate * 4,
                         spawnRadius: 2f)
                 },
                 enemyLoadoutId: ShooterSveltoGameplayBattleFlowConfig.DefaultEnemyLoadoutId,

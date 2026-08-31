@@ -15,6 +15,7 @@ namespace AbilityKit.Game.Battle.View
         public event Action<int, Vector2> SkillAimStart;
         public event Action<int, Vector2> SkillAimUpdate;
         public event Action<int, Vector2> SkillAimEnd;
+        public event Action SkillAimCancel;
 
         public void Initialize(BattleHudInputView hud, Transform cameraTransform)
         {
@@ -46,7 +47,7 @@ namespace AbilityKit.Game.Battle.View
         private void EnsureHudSubscription()
         {
             EnsureDependencies();
-            _hudSubscription ??= _factory.CreateSubscription(OnAimStart, OnAimUpdate, OnAimEnd);
+            _hudSubscription ??= _factory.CreateSubscription(OnAimStart, OnAimUpdate, OnAimEnd, OnAimCancel);
         }
 
         private void OnAimStart(int slot, Vector2 dir)
@@ -62,6 +63,11 @@ namespace AbilityKit.Game.Battle.View
         private void OnAimEnd(int slot, Vector2 dir)
         {
             SkillAimEnd?.Invoke(slot, TransformAim(dir));
+        }
+
+        private void OnAimCancel()
+        {
+            SkillAimCancel?.Invoke();
         }
 
         private Vector2 TransformAim(Vector2 dir)
@@ -92,7 +98,8 @@ namespace AbilityKit.Game.Battle.View
         public BattleHudInputViewSubscription CreateSubscription(
             Action<int, Vector2> aimStart,
             Action<int, Vector2> aimUpdate,
-            Action<int, Vector2> aimEnd)
+            Action<int, Vector2> aimEnd,
+            Action aimCancel)
         {
             return new BattleHudInputViewSubscription(
                 hud =>
@@ -100,12 +107,14 @@ namespace AbilityKit.Game.Battle.View
                     hud.SkillAimStart += aimStart;
                     hud.SkillAimUpdate += aimUpdate;
                     hud.SkillAimEnd += aimEnd;
+                    hud.SkillAimCancel += aimCancel;
                 },
                 hud =>
                 {
                     hud.SkillAimStart -= aimStart;
                     hud.SkillAimUpdate -= aimUpdate;
                     hud.SkillAimEnd -= aimEnd;
+                    hud.SkillAimCancel -= aimCancel;
                 });
         }
     }

@@ -1,0 +1,29 @@
+{
+  "triggers": [
+    {
+      "id": 10060316,
+      "name": "嬴政-至尊皇冠-剑阵落地范围伤害（区域触发）",
+      "event": "",
+      "enabled": true,
+      "allowExternal": false,
+      "phase": "immediate",
+      "priority": 50,
+      "conditions": [],
+      "actions": [
+        {
+          "type": "give_damage",
+          "damage_value": 130,
+          "damage_type": 2,
+          "source_attack_ratio": 0.2,
+          "reason_param": 10060301
+        },
+        {
+          "type": "debug_log",
+          "message": "嬴政三技能：剑阵落地造成法术伤害",
+          "dump_args": false
+        }
+      ],
+      "scope": "owner"
+    }
+  ]
+}

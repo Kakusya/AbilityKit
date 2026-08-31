@@ -132,16 +132,30 @@ namespace AbilityKit.Demo.Moba.Services.Search
             var toPoint = ResolvePoint(pointKind);
             var fx = toPoint.X - origin.X;
             var fy = toPoint.Y - origin.Y;
-            if (fx * fx + fy * fy > 0.000001f) return new ST.Vec2(fx, fy);
+            if (fx * fx + fy * fy > 0.000001f) return Normalize(fx, fy);
+
+            if (TryGetActorForward(CasterActorId, out var casterForward)) return casterForward;
 
             if (TryGetActorPosition(CasterActorId, out var casterPos))
             {
                 fx = origin.X - casterPos.X;
                 fy = origin.Y - casterPos.Y;
-                if (fx * fx + fy * fy > 0.000001f) return new ST.Vec2(fx, fy);
+                if (fx * fx + fy * fy > 0.000001f) return Normalize(fx, fy);
             }
 
             return ST.Vec2.Up;
+        }
+
+        public void ResolveShapeFrame(SearchTargetRuleConfig config, out ST.Vec2 origin, out ST.Vec2 forward)
+        {
+            if (config == null) throw new ArgumentNullException(nameof(config));
+
+            origin = ResolvePoint(config.Center);
+            forward = ResolveForward(config.Forward, origin);
+            var right = new ST.Vec2(forward.Y, -forward.X);
+            origin = origin
+                + forward * config.LocalOffsetForward
+                + right * config.LocalOffsetRight;
         }
 
         public bool TryGetActorPosition(int actorId, out ST.Vec2 position)
@@ -156,6 +170,20 @@ namespace AbilityKit.Demo.Moba.Services.Search
             }
 
             return false;
+        }
+
+        public bool TryGetActorForward(int actorId, out ST.Vec2 forward)
+        {
+            forward = default;
+            if (actorId <= 0) return false;
+            if (Actors == null || !Actors.TryGet(actorId, out var actor) || actor == null || !actor.hasTransform) return false;
+
+            var value = actor.transform.Value.Forward;
+            var sqrMagnitude = value.X * value.X + value.Z * value.Z;
+            if (sqrMagnitude <= 0.000001f) return false;
+
+            forward = Normalize(value.X, value.Z);
+            return true;
         }
 
         public bool TryGetActorTeam(int actorId, out Team team)
@@ -188,6 +216,34 @@ namespace AbilityKit.Demo.Moba.Services.Search
 
             return config.HalfAngleDeg;
         }
+
+        public static float ResolveWidth(SearchTargetRuleConfig config)
+        {
+            if (config == null) throw new ArgumentNullException(nameof(config));
+            if (config.Width <= 0f)
+            {
+                throw new InvalidOperationException($"Search target shape rule requires positive width. ruleKind={config.Kind}");
+            }
+
+            return config.Width;
+        }
+
+        public static float ResolveLength(SearchTargetRuleConfig config)
+        {
+            if (config == null) throw new ArgumentNullException(nameof(config));
+            if (config.Length <= 0f)
+            {
+                throw new InvalidOperationException($"Search target shape rule requires positive length. ruleKind={config.Kind}");
+            }
+
+            return config.Length;
+        }
+
+        private static ST.Vec2 Normalize(float x, float y)
+        {
+            var inv = 1f / DeterministicMathBridge.Sqrt(x * x + y * y);
+            return new ST.Vec2(x * inv, y * inv);
+        }
     }
 
     internal sealed class MobaTargetQueryFactoryRegistry
@@ -204,11 +260,66 @@ namespace AbilityKit.Demo.Moba.Services.Search
             return DefaultRegistry.Value;
         }
 
-        private static MobaTargetQueryFactoryRegistry BuildDefaultRegistry()
+        internal static MobaTargetQueryFactoryRegistry BuildDefaultRegistry()
         {
             var registry = new MobaTargetQueryFactoryRegistry();
+            if (MobaGeneratedTargetQueryFactoryManifest.Register(registry) > 0)
+            {
+                return registry;
+            }
+
+            if (AppContext.TryGetSwitch(
+                    "AbilityKit.Moba.DisableTargetQueryFactoryReflectionFallback",
+                    out var reflectionFallbackDisabled) && reflectionFallbackDisabled)
+            {
+                throw new InvalidOperationException(
+                    "The generated MOBA target query factory manifest is empty and reflection fallback is disabled.");
+            }
+
             registry.ScanAssembly(typeof(MobaTargetQueryFactoryRegistry).Assembly);
             return registry;
+        }
+
+        internal int SourceCount => _sources.Count;
+        internal int FilterCount => _filters.Count;
+        internal int OrderCount => _orders.Count;
+        internal int SelectCount => _selects.Count;
+
+        internal void RegisterSource(int code, IMobaTargetSourceFactory factory)
+        {
+            RegisterUnique(_sources, code, factory, "source");
+        }
+
+        internal void RegisterFilter(int code, IMobaTargetFilterFactory factory)
+        {
+            RegisterUnique(_filters, code, factory, "filter");
+        }
+
+        internal void RegisterOrder(int code, IMobaTargetOrderFactory factory)
+        {
+            RegisterUnique(_orders, code, factory, "order");
+        }
+
+        internal void RegisterSelect(int code, IMobaTargetSelectFactory factory)
+        {
+            RegisterUnique(_selects, code, factory, "select");
+        }
+
+        private static void RegisterUnique<TFactory>(
+            Dictionary<int, TFactory> factories,
+            int code,
+            TFactory factory,
+            string kind)
+            where TFactory : class
+        {
+            if (factory == null) throw new ArgumentNullException(nameof(factory));
+            if (factories.TryGetValue(code, out var existing))
+            {
+                throw new InvalidOperationException(
+                    $"Duplicate MOBA target query {kind} code '{code}' uses both '{existing.GetType().FullName}' and '{factory.GetType().FullName}'.");
+            }
+
+            factories.Add(code, factory);
         }
 
         public ICandidateProvider CreateSource(SearchTargetProviderConfig config, in MobaTargetQueryBuildContext context)
@@ -321,7 +432,7 @@ namespace AbilityKit.Demo.Moba.Services.Search
             var instance = (IMobaTargetSourceFactory)Activator.CreateInstance(type);
             foreach (var attr in attrs)
             {
-                _sources[attr.Code] = instance;
+                RegisterSource(attr.Code, instance);
             }
         }
 
@@ -337,7 +448,7 @@ namespace AbilityKit.Demo.Moba.Services.Search
             var instance = (IMobaTargetFilterFactory)Activator.CreateInstance(type);
             foreach (var attr in attrs)
             {
-                _filters[attr.Code] = instance;
+                RegisterFilter(attr.Code, instance);
             }
         }
 
@@ -353,7 +464,7 @@ namespace AbilityKit.Demo.Moba.Services.Search
             var instance = (IMobaTargetOrderFactory)Activator.CreateInstance(type);
             foreach (var attr in attrs)
             {
-                _orders[attr.Code] = instance;
+                RegisterOrder(attr.Code, instance);
             }
         }
 
@@ -369,7 +480,7 @@ namespace AbilityKit.Demo.Moba.Services.Search
             var instance = (IMobaTargetSelectFactory)Activator.CreateInstance(type);
             foreach (var attr in attrs)
             {
-                _selects[attr.Code] = instance;
+                RegisterSelect(attr.Code, instance);
             }
         }
     }
@@ -472,7 +583,7 @@ namespace AbilityKit.Demo.Moba.Services.Search
     {
         public ITargetRule Create(in MobaTargetQueryBuildContext context, SearchTargetRuleConfig config)
         {
-            var origin = context.ResolvePoint(config.Center);
+            context.ResolveShapeFrame(config, out var origin, out _);
             return new CircleShapeRule(origin, MobaTargetQueryBuildContext.ResolveRadius(config));
         }
     }
@@ -482,13 +593,41 @@ namespace AbilityKit.Demo.Moba.Services.Search
     {
         public ITargetRule Create(in MobaTargetQueryBuildContext context, SearchTargetRuleConfig config)
         {
-            var origin = context.ResolvePoint(config.Center);
-            var forward = context.ResolveForward(config.Forward, origin);
+            context.ResolveShapeFrame(config, out var origin, out var forward);
             return new SectorShapeRule(
                 origin,
                 forward,
                 MobaTargetQueryBuildContext.ResolveRadius(config),
                 MobaTargetQueryBuildContext.ResolveHalfAngleDeg(config));
+        }
+    }
+
+    [MobaTargetFilter((int)SearchTargetRuleKind.RectangleShape)]
+    internal sealed class RectangleShapeTargetFilterFactory : IMobaTargetFilterFactory
+    {
+        public ITargetRule Create(in MobaTargetQueryBuildContext context, SearchTargetRuleConfig config)
+        {
+            context.ResolveShapeFrame(config, out var origin, out var forward);
+            return new MobaRectangleShapeRule(
+                origin,
+                forward,
+                MobaTargetQueryBuildContext.ResolveWidth(config),
+                MobaTargetQueryBuildContext.ResolveLength(config));
+        }
+    }
+
+    [MobaTargetFilter((int)SearchTargetRuleKind.CapsuleShape)]
+    internal sealed class CapsuleShapeTargetFilterFactory : IMobaTargetFilterFactory
+    {
+        public ITargetRule Create(in MobaTargetQueryBuildContext context, SearchTargetRuleConfig config)
+        {
+            context.ResolveShapeFrame(config, out var origin, out var forward);
+            var radius = MobaTargetQueryBuildContext.ResolveWidth(config) * 0.5f;
+            return new MobaCapsuleShapeRule(
+                origin,
+                forward,
+                radius,
+                MobaTargetQueryBuildContext.ResolveLength(config));
         }
     }
 
@@ -540,12 +679,9 @@ namespace AbilityKit.Demo.Moba.Services.Search
     [MobaTargetOrder((int)SearchTargetScorerKind.SeededHashRandom)]
     internal sealed class SeededHashRandomTargetOrderFactory : IMobaTargetOrderFactory
     {
-        private readonly SeededHashRandomScorer _scorer = new SeededHashRandomScorer(MobaSearchQueryBuilder.RandomSeedContextKey);
-
         public ITargetScorer Create(in MobaTargetQueryBuildContext context, SearchTargetScorerConfig config)
         {
-            context.SearchContext.SetData(MobaSearchQueryBuilder.RandomSeedContextKey, config != null ? config.RandomSeed : 0);
-            return _scorer;
+            return new SeededHashRandomScorer(config != null ? config.RandomSeed : 0);
         }
     }
 
@@ -594,8 +730,6 @@ namespace AbilityKit.Demo.Moba.Services.Search
             _actorId = actorId;
         }
 
-        public bool RequiresPosition => false;
-
         public void ForEachCandidate<TConsumer>(in SearchQuery query, SearchContext context, ref TConsumer consumer)
             where TConsumer : struct, ICandidateConsumer
         {
@@ -614,8 +748,6 @@ namespace AbilityKit.Demo.Moba.Services.Search
             _predicate = predicate;
         }
 
-        public bool RequiresPosition => false;
-
         public void ForEachCandidate<TConsumer>(in SearchQuery query, SearchContext context, ref TConsumer consumer)
             where TConsumer : struct, ICandidateConsumer
         {
@@ -632,7 +764,7 @@ namespace AbilityKit.Demo.Moba.Services.Search
         }
     }
 
-    internal sealed class ArrayActorIdSet : IActorIdSet
+    internal sealed class ArrayActorIdSet : IEntityIdSet
     {
         private readonly int[] _actorIds;
 
@@ -643,11 +775,14 @@ namespace AbilityKit.Demo.Moba.Services.Search
 
         public int Count => _actorIds.Length;
 
-        public bool Contains(int actorId)
+        public bool Contains(EntityId id)
         {
+            if (!id.IsValid) return false;
+
             for (int i = 0; i < _actorIds.Length; i++)
             {
-                if (_actorIds[i] == actorId) return true;
+                var actorId = _actorIds[i];
+                if (actorId > 0 && (ulong)actorId == id.Value) return true;
             }
 
             return false;

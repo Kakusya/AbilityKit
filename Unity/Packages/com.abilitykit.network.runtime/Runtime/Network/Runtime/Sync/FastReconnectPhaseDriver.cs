@@ -11,8 +11,11 @@ namespace AbilityKit.Network.Runtime.Sync
     /// </summary>
     public sealed class FastReconnectPhaseDriver
     {
+        private const int EventBufferCapacity = 16;
+
         private readonly FastReconnectSession _session;
-        private readonly List<SyncHealthEvent> _events = new List<SyncHealthEvent>();
+        private readonly SyncHealthEventBuffer _events =
+            new SyncHealthEventBuffer(EventBufferCapacity);
 
         public FastReconnectPhaseDriver(int resumeWindowFrames)
             : this(new FastReconnectSession(resumeWindowFrames < 1 ? 1 : resumeWindowFrames))
@@ -32,7 +35,7 @@ namespace AbilityKit.Network.Runtime.Sync
 
         public void ResetEventBuffer()
         {
-            _events.Clear();
+            _events.Reset();
         }
 
         public void Heartbeat(int authoritativeFrame)
@@ -169,11 +172,7 @@ namespace AbilityKit.Network.Runtime.Sync
 
         private void Collect(in FastReconnectStepReport report)
         {
-            var events = report.HealthEvents;
-            for (var i = 0; i < events.Count; i++)
-            {
-                _events.Add(events[i]);
-            }
+            _events.Publish(report.HealthEvents);
         }
     }
 }

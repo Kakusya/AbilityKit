@@ -1,7 +1,9 @@
+using System.Text.Json;
 using AbilityKit.Demo.Shooter;
 using AbilityKit.Orleans.Contracts.Battle;
 using AbilityKit.Orleans.Contracts.Rooms;
 using AbilityKit.Orleans.Contracts.Shooter;
+using AbilityKit.Orleans.Grains.Persistence;
 using AbilityKit.Orleans.Grains.Rooms;
 using AbilityKit.Orleans.Grains.Rooms.Gameplay;
 
@@ -9,11 +11,43 @@ namespace AbilityKit.Orleans.Grains.Gameplays.Shooter.Rooms;
 
 internal sealed class ShooterRoomGameplayAdapter : IRoomGameplayAdapter
 {
+    private const string PersistentFormat = "shooter.room.v1";
+
     public string RoomType => ShooterGameplay.RoomType;
 
     public object CreateState(RoomSummary summary)
     {
-        return new ShooterRoomState(summary.MaxPlayers > 0 ? summary.MaxPlayers : ShooterGameplay.DefaultMaxPlayers);
+        var maxPlayers = summary.MaxPlayers > 0 ? summary.MaxPlayers : ShooterGameplay.DefaultMaxPlayers;
+        var minPlayers = ReadIntTag(summary, ShooterRoomTagKeys.MinPlayers, ShooterGameplay.DefaultMinPlayers);
+        return new ShooterRoomState(maxPlayers, minPlayers);
+    }
+
+    public RoomGameplayPersistentState ExportPersistentState(object state)
+    {
+        var roomState = RequireState(state);
+        var players = BuildOrderedPlayerSlots(roomState)
+            .Select(pair => new ShooterPersistentPlayer(pair.Key, pair.Value.PlayerId, pair.Value.Ready))
+            .ToList();
+        var snapshot = new ShooterPersistentSnapshot(
+            roomState.MaxPlayers,
+            roomState.MinPlayers,
+            roomState.NextPlayerId,
+            roomState.ReleasedPlayerIds.ToList(),
+            players);
+        return new RoomGameplayPersistentState(PersistentFormat, 1, JsonSerializer.SerializeToUtf8Bytes(snapshot));
+    }
+
+    public object RestorePersistentState(RoomSummary summary, RoomGameplayPersistentState persistentState)
+    {
+        if (persistentState is null || persistentState.Version != 1 ||
+            !string.Equals(persistentState.Format, PersistentFormat, StringComparison.Ordinal))
+        {
+            throw new InvalidOperationException("Unsupported Shooter room persistent state format.");
+        }
+
+        var snapshot = JsonSerializer.Deserialize<ShooterPersistentSnapshot>(persistentState.Payload)
+            ?? throw new InvalidOperationException("Shooter room persistent state payload is empty.");
+        return ShooterRoomState.Restore(snapshot);
     }
 
     public void Join(object state, RoomSummary summary, IReadOnlyCollection<string> members, string accountId)
@@ -32,14 +66,43 @@ internal sealed class ShooterRoomGameplayAdapter : IRoomGameplayAdapter
         RequireState(state).SetReady(request.AccountId, request.Ready);
     }
 
-    public void SubmitCommand(object state, RoomGameplayCommandRequest request)
+    public RoomGameplayCommandResult SubmitCommand(object state, RoomGameplayCommandRequest request)
     {
         // Shooter 刻意保持房间配置极简；该玩法会忽略房间玩法命令。
+        return RoomGameplayCommandResult.Accepted();
     }
 
     public bool CanStart(object state)
     {
         return RequireState(state).CanStart();
+    }
+
+    public bool ValidateBeginLoading(object state)
+    {
+        // Shooter 玩法极简，委托 CanStart。
+        return RequireState(state).CanStart();
+    }
+
+    public RoomLaunchManifest BuildLaunchManifest(object state, RoomSummary summary)
+    {
+        var roomState = RequireState(state);
+        var references = new List<string>();
+
+        var mapId = ReadIntTag(summary, ShooterRoomTagKeys.MapId, 1);
+        references.Add($"map:{mapId}");
+
+        foreach (var kv in roomState.Players)
+        {
+            references.Add($"player:{kv.Value.PlayerId}");
+        }
+
+        var metadata = new Dictionary<string, string>
+        {
+            ["mapId"] = mapId.ToString(),
+            ["players"] = roomState.Players.Count.ToString()
+        };
+
+        return RoomLaunchManifestBuilder.Build(RoomLaunchManifestBuilder.CurrentManifestVersion, references, metadata);
     }
 
     public List<RoomPlayerSnapshot> BuildPlayerSnapshots(object state)
@@ -88,6 +151,13 @@ internal sealed class ShooterRoomGameplayAdapter : IRoomGameplayAdapter
         }
 
         var syncOptions = RoomBattleSyncOptionsMapper.Resolve(summary, request);
+        var requestedEnemyBudget = ReadIntTag(
+            summary,
+            ShooterRoomTagKeys.EnemyBudget,
+            ShooterServerProtocol.DefaultEnemyBudget);
+        var enemyBudget = Math.Min(
+            Math.Max(1, requestedEnemyBudget),
+            ShooterServerProtocol.MaxEnemyBudget);
         return new BattleInitParams
         {
             WorldId = CreateNumericWorldId(summary.RoomId),
@@ -96,6 +166,9 @@ internal sealed class ShooterRoomGameplayAdapter : IRoomGameplayAdapter
             RandomSeed = ReadIntTag(summary, ShooterRoomTagKeys.RandomSeed, Environment.TickCount),
             InputDelayFrames = syncOptions.InputDelayFrames,
             DurationFrames = ReadIntTag(summary, ShooterRoomTagKeys.DurationFrames, 0),
+            EnemyBudget = enemyBudget,
+            VictoryTargetDefeats = ReadIntTag(summary, ShooterRoomTagKeys.VictoryTargetDefeats, 0),
+            ContinueAfterAllPlayersDefeated = ReadBoolTag(summary, ShooterRoomTagKeys.ContinueAfterAllPlayersDefeated, false),
             Players = players,
             GameplayId = request.GameplayId > 0 ? request.GameplayId : ShooterGameplay.GameplayId,
             RuleSetId = request.RuleSetId,
@@ -134,6 +207,16 @@ internal sealed class ShooterRoomGameplayAdapter : IRoomGameplayAdapter
         return slots;
     }
 
+    private static bool ReadBoolTag(RoomSummary summary, string key, bool fallback)
+    {
+        if (summary.Tags is null || !summary.Tags.TryGetValue(key, out var value))
+        {
+            return fallback;
+        }
+
+        return bool.TryParse(value, out var parsed) ? parsed : fallback;
+    }
+
     private static ShooterRoomState RequireState(object state)
     {
         return state as ShooterRoomState
@@ -168,18 +251,40 @@ internal sealed class ShooterRoomGameplayAdapter : IRoomGameplayAdapter
 
     private sealed class ShooterRoomState
     {
-        public ShooterRoomState(int maxPlayers)
+        public ShooterRoomState(int maxPlayers, int minPlayers)
         {
             MaxPlayers = Math.Max(1, maxPlayers);
+            MinPlayers = Math.Max(1, Math.Min(MaxPlayers, minPlayers));
         }
 
         public int MaxPlayers { get; }
 
+        public int MinPlayers { get; }
+
         public Dictionary<string, ShooterRoomPlayer> Players { get; } = new(StringComparer.Ordinal);
 
-        private SortedSet<int> ReleasedPlayerIds { get; } = new();
+        internal SortedSet<int> ReleasedPlayerIds { get; } = new();
 
-        private int NextPlayerId { get; set; } = 1;
+        internal int NextPlayerId { get; private set; } = 1;
+
+        public static ShooterRoomState Restore(ShooterPersistentSnapshot snapshot)
+        {
+            var state = new ShooterRoomState(
+                snapshot.MaxPlayers,
+                snapshot.MinPlayers <= 0 ? ShooterGameplay.DefaultMinPlayers : snapshot.MinPlayers)
+            {
+                NextPlayerId = Math.Max(1, snapshot.NextPlayerId)
+            };
+            foreach (var playerId in snapshot.ReleasedPlayerIds ?? new List<int>())
+            {
+                state.ReleasedPlayerIds.Add(playerId);
+            }
+            foreach (var player in snapshot.Players ?? new List<ShooterPersistentPlayer>())
+            {
+                state.Players[player.AccountId] = new ShooterRoomPlayer(player.PlayerId) { Ready = player.Ready };
+            }
+            return state;
+        }
 
         public void Join(string accountId)
         {
@@ -210,7 +315,7 @@ internal sealed class ShooterRoomGameplayAdapter : IRoomGameplayAdapter
 
         public bool CanStart()
         {
-            if (Players.Count == 0) return false;
+            if (Players.Count < MinPlayers) return false;
             foreach (var kv in Players)
             {
                 if (!kv.Value.Ready) return false;
@@ -230,7 +335,17 @@ internal sealed class ShooterRoomGameplayAdapter : IRoomGameplayAdapter
 
             return NextPlayerId++;
         }
+
     }
+
+    internal sealed record ShooterPersistentSnapshot(
+        int MaxPlayers,
+        int MinPlayers,
+        int NextPlayerId,
+        List<int> ReleasedPlayerIds,
+        List<ShooterPersistentPlayer> Players);
+
+    internal sealed record ShooterPersistentPlayer(string AccountId, int PlayerId, bool Ready);
 
     private sealed class ShooterRoomPlayer
     {

@@ -13,14 +13,14 @@ namespace AbilityKit.Orleans.Gateway.Handlers;
 public sealed partial class AccountLoginHandler : GatewayRequestHandlerBase
 {
     private readonly IClusterClient _clusterClient;
-    private readonly IGatewaySessionRegistry _registry;
+    private readonly Core.GatewaySessionBinder _sessionBinder;
 
     public AccountLoginHandler(
         IClusterClient clusterClient,
-        IGatewaySessionRegistry registry)
+        Core.GatewaySessionBinder sessionBinder)
     {
         _clusterClient = clusterClient;
-        _registry = registry;
+        _sessionBinder = sessionBinder;
     }
 
     public override async ValueTask<GatewayResponse> HandleAsync(
@@ -43,8 +43,7 @@ public sealed partial class AccountLoginHandler : GatewayRequestHandlerBase
                 req.ExpireSeconds,
                 req.KickExisting));
 
-            _registry.BindToken(resp.SessionToken, context.ConnectionId);
-            context.AccountId = req.AccountId;
+            _sessionBinder.Bind(context, req.AccountId, resp.SessionToken);
 
             var responsePayload = GatewaySerializer.Serialize(new WireRoomAccountLoginRes
             {

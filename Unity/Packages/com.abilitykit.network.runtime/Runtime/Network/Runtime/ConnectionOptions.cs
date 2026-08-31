@@ -1,11 +1,59 @@
+#nullable enable
+
 using System;
 using AbilityKit.Network.Abstractions;
+using AbilityKit.Network.Runtime.Observability;
 
 namespace AbilityKit.Network.Runtime
 {
+    /// <summary>Inputs supplied when a connection manager creates a transport session.</summary>
+    public readonly struct NetworkRuntimeSessionFactoryContext
+    {
+        internal NetworkRuntimeSessionFactoryContext(
+            ITransport transport,
+            IDispatcher callbackDispatcher,
+            IDispatcher ioDispatcher,
+            IFrameCodec frameCodec)
+        {
+            Transport = transport;
+            CallbackDispatcher = callbackDispatcher;
+            IoDispatcher = ioDispatcher;
+            FrameCodec = frameCodec;
+        }
+
+        public ITransport Transport { get; }
+        public IDispatcher CallbackDispatcher { get; }
+        public IDispatcher IoDispatcher { get; }
+        public IFrameCodec FrameCodec { get; }
+    }
+
+    /// <summary>Inputs supplied when a connection manager creates its reconnect scheduler.</summary>
+    public readonly struct ReconnectAttemptSchedulerFactoryContext
+    {
+        internal ReconnectAttemptSchedulerFactoryContext(
+            int maxAttempts,
+            Func<int, float> resolveDelay)
+        {
+            MaxAttempts = maxAttempts;
+            ResolveDelay = resolveDelay;
+        }
+
+        public int MaxAttempts { get; }
+        public Func<int, float> ResolveDelay { get; }
+    }
+
+    public delegate INetworkRuntimeSession NetworkRuntimeSessionFactory(
+        NetworkRuntimeSessionFactoryContext context);
+
+    public delegate INetworkHeartbeatMiddleware NetworkHeartbeatMiddlewareFactory(
+        uint heartbeatOpCode);
+
+    public delegate Sync.IReconnectAttemptScheduler ReconnectAttemptSchedulerFactory(
+        ReconnectAttemptSchedulerFactoryContext context);
+
     public sealed class ConnectionOptions
     {
-        public IFrameCodec FrameCodec;
+        public IFrameCodec? FrameCodec;
 
         public TimeSpan HeartbeatInterval = TimeSpan.FromSeconds(10);
         public TimeSpan HeartbeatTimeout = TimeSpan.FromSeconds(30);
@@ -20,7 +68,25 @@ namespace AbilityKit.Network.Runtime
 
         public uint HeartbeatOpCode = 0;
 
-        public bool EnableKickHandling = true;
-        public uint KickPushOpCode = 9000;
+        /// <summary>
+        /// Optional transport-session factory. The connection manager owns and disposes the
+        /// returned session; the session owns the transport supplied in the factory context.
+        /// </summary>
+        public NetworkRuntimeSessionFactory? SessionFactory;
+
+        /// <summary>Optional heartbeat middleware factory.</summary>
+        public NetworkHeartbeatMiddlewareFactory? HeartbeatFactory;
+
+        /// <summary>Optional reconnect cadence factory.</summary>
+        public ReconnectAttemptSchedulerFactory? ReconnectSchedulerFactory;
+
+        /// <summary>
+        /// Optional packet observation settings. A new observer is resolved for every physical
+        /// session, including reconnects; the connection generation identifies that session.
+        /// </summary>
+        public NetworkTrafficCaptureOptions? TrafficCapture;
+
+        public bool EnableKickHandling;
+        public uint KickPushOpCode;
     }
 }

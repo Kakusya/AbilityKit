@@ -147,6 +147,20 @@ public sealed class ShooterClientFrameSyncControllerTests
         Assert.Equal(3, reconciliation.PendingInputFramesBeforeCorrection);
         Assert.Equal(2, reconciliation.PendingInputFramesAfterTrim);
         Assert.Equal(2, reconciliation.PendingInputFramesAfterReplay);
+        Assert.Collection(
+            controller.LastReconciliationHealthEvents,
+            rollback =>
+            {
+                Assert.Equal(AbilityKit.Network.Runtime.Sync.SyncHealthEventKind.RollbackStarted, rollback.Kind);
+                Assert.Equal(reconciliation.AuthoritativeFrame, rollback.Frame);
+                Assert.Equal(reconciliation.ReplayTicks, rollback.Value);
+            },
+            replay =>
+            {
+                Assert.Equal(AbilityKit.Network.Runtime.Sync.SyncHealthEventKind.ReplayCompleted, replay.Kind);
+                Assert.Equal(reconciliation.FinalFrame, replay.Frame);
+                Assert.Equal(reconciliation.ReplayTicks, replay.Value);
+            });
         Assert.Equal(1, publishedDiagnosticsCount);
         Assert.Equal(reconciliation.ApplyResult, publishedDiagnostics.ApplyResult);
         Assert.Equal(reconciliation.PredictedFrameBeforeCorrection, publishedDiagnostics.PredictedFrameBeforeCorrection);
@@ -211,6 +225,116 @@ public sealed class ShooterClientFrameSyncControllerTests
     }
 
     [Fact]
+    public void ClientFrameSyncControllerImportsFullAuthorityAfterSustainedPrediction()
+    {
+        var start = new ShooterStartGamePayload(
+            "full-authority-after-prediction",
+            30,
+            3901,
+            new[]
+            {
+                new ShooterStartPlayer(1, "P1", 0f, 0f),
+                new ShooterStartPlayer(2, "P2", 2f, 0f)
+            });
+        var authority = new ShooterBattleRuntimePort();
+        var local = new ShooterBattleRuntimePort();
+        Assert.True(authority.StartGame(in start));
+        Assert.True(local.StartGame(in start));
+        var controller = new ShooterClientFrameSyncController(local, new ShooterPresentationFacade(), tickRate: 30);
+
+        for (var frame = 0; frame < 300; frame++)
+        {
+            var fire = frame == 75 || frame == 81 || frame == 194 || frame == 217 || frame == 223 || frame == 260 || frame == 272;
+            var localCommand = new ShooterPlayerCommand(1, frame < 145 ? 1f : 0f, 0f, 1f, 0f, fire);
+            Assert.Equal(2, authority.SubmitInput(frame, new[]
+            {
+                localCommand,
+                new ShooterPlayerCommand(2, frame < 145 ? -1f : 0f, 0f, -1f, 0f, fire)
+            }));
+            Assert.True(authority.Tick(1f / 30f));
+            Assert.Equal(1, controller.SubmitLocalInput(localCommand));
+            Assert.Equal(1, controller.Tick(1f / 30f).Ticks);
+
+            if (frame % 6 != 5)
+            {
+                continue;
+            }
+
+            var snapshot = authority.ExportPackedSnapshot(3901ul, isFullSnapshot: true, authorityOverride: true);
+            var payload = CreatePackedPushPayload(in snapshot, frame, frame);
+            Assert.Equal(ShooterSnapshotApplyResult.AppliedPackedSnapshot, controller.ApplyGatewayPush(RoomGatewayOpCodes.SnapshotPushed, payload));
+            var evidence = controller.LastImportedSnapshotEvidence;
+            Assert.True(
+                evidence.AuthoritativeStateHash == evidence.ImportedStateHash,
+                $"Full authority import mismatch at frame {evidence.Frame}; expected=0x{evidence.AuthoritativeStateHash:X8}, actual=0x{evidence.ImportedStateHash:X8}.");
+        }
+    }
+
+    [Fact]
+    public void ClientFrameSyncControllerImportsServerEnemyWavesDuringSustainedPrediction()
+    {
+        var start = new ShooterStartGamePayload(
+            "server-enemy-waves-after-prediction",
+            30,
+            3902,
+            new[]
+            {
+                new ShooterStartPlayer(1, "P1", 0f, 0f),
+                new ShooterStartPlayer(2, "P2", 3f, 0f)
+            });
+        var defaultFlow = ShooterSveltoGameplayBattleFlowConfig.Default;
+        var longRunningFlow = new ShooterSveltoGameplayBattleFlowConfig(
+            durationFrames: 18000,
+            victoryTargetDefeats: int.MaxValue,
+            defaultFlow.MaxActiveEnemies,
+            defaultFlow.Waves,
+            defaultFlow.EnemyLoadoutId,
+            defaultFlow.EnemyAttackIntervalFrames,
+            defaultFlow.EnemyAttackDamage,
+            defaultFlow.EnemyProjectileSpeedScale,
+            defaultFlow.EnemyProjectilesPerShot,
+            defaultFlow.EnemySpreadDegrees);
+        var authority = new ShooterBattleRuntimePort(
+            ShooterEntityLimitOptions.Default,
+            new ShooterEnemyWaveOptions(true, longRunningFlow));
+        var local = new ShooterBattleRuntimePort();
+        Assert.True(authority.StartGame(in start));
+        Assert.True(local.StartGame(in start));
+        Assert.True(authority.TryGetPlayer(1, out var authorityPlayerOne));
+        Assert.True(authority.TryGetPlayer(2, out var authorityPlayerTwo));
+        authorityPlayerOne.Hp = 100000;
+        authorityPlayerTwo.Hp = 100000;
+        authority.SetPlayer(in authorityPlayerOne);
+        authority.SetPlayer(in authorityPlayerTwo);
+        var controller = new ShooterClientFrameSyncController(local, new ShooterPresentationFacade(), tickRate: 30);
+
+        for (var frame = 0; frame < 300; frame++)
+        {
+            var fire = frame is 74 or 80 or 193 or 216 or 222 or 259 or 271;
+            var localCommand = new ShooterPlayerCommand(1, frame < 144 ? 1f : 0f, 0f, 1f, 0f, fire);
+            Assert.Equal(2, authority.SubmitInput(frame, new[]
+            {
+                localCommand,
+                new ShooterPlayerCommand(2, frame < 144 ? -1f : 0f, 0f, -1f, 0f, fire)
+            }));
+            Assert.True(authority.Tick(1f / 30f));
+            Assert.Equal(1, controller.SubmitLocalInput(localCommand));
+            Assert.Equal(1, controller.Tick(1f / 30f).Ticks);
+
+            var snapshot = authority.ExportPackedSnapshot(3902ul, isFullSnapshot: true, authorityOverride: true);
+            var payload = CreatePackedPushPayload(in snapshot, frame, frame);
+            Assert.Equal(
+                ShooterSnapshotApplyResult.AppliedPackedSnapshot,
+                controller.ApplyGatewayPush(RoomGatewayOpCodes.SnapshotPushed, payload));
+            var evidence = controller.LastImportedSnapshotEvidence;
+            Assert.True(
+                evidence.AuthoritativeStateHash == evidence.ImportedStateHash,
+                $"Server enemy-wave full import mismatch at frame {evidence.Frame}; " +
+                $"expected=0x{evidence.AuthoritativeStateHash:X8}, actual=0x{evidence.ImportedStateHash:X8}.");
+        }
+    }
+
+    [Fact]
     public void ClientFrameSyncControllerRestoresPredictedSnapshotFromRollbackBuffer()
     {
         var start = new ShooterStartGamePayload(
@@ -242,6 +366,92 @@ public sealed class ShooterClientFrameSyncControllerTests
         Assert.Equal(frameOne, local.CurrentFrame);
         Assert.Equal(frameOneHash, local.ComputeStateHash());
         Assert.Equal(frameOne, presentation.ViewModel.Frame);
+    }
+
+    [Fact]
+    public void ClientFrameSyncControllerTicksAndReplaysWithoutPredictionBuffers()
+    {
+        var start = new ShooterStartGamePayload(
+            "no-prediction-buffers",
+            30,
+            5911,
+            new[]
+            {
+                new ShooterStartPlayer(1, "P1", 0f, 0f),
+                new ShooterStartPlayer(2, "P2", 8f, 0f)
+            });
+        var replayedCommand = new ShooterPlayerCommand(1, 1f, 0f, 1f, 0f, false);
+
+        var authority = new ShooterBattleRuntimePort();
+        Assert.True(authority.StartGame(in start));
+        Assert.True(authority.Tick(1f / 30f));
+        var packed = authority.ExportPackedSnapshot(5991ul, isFullSnapshot: true, authorityOverride: true);
+        var payload = CreatePackedPushPayload(in packed, timestamp: 591.5, serverTicks: 591500L);
+
+        var local = new ShooterBattleRuntimePort();
+        Assert.True(local.StartGame(in start));
+        var controller = new ShooterClientFrameSyncController(
+            local,
+            new ShooterPresentationFacade(),
+            tickRate: 30,
+            decoder: null,
+            rollbackWorldId: 0ul,
+            ShooterClientPredictionBufferOptions.Disabled);
+        Assert.Equal(1, controller.SubmitLocalInput(new ShooterPlayerCommand(1, 0f, 1f, 0f, 1f, false)));
+        Assert.Equal(1, controller.Tick(1f / 30f).Ticks);
+        Assert.Equal(1, controller.SubmitLocalInput(replayedCommand));
+        Assert.Equal(1, controller.Tick(1f / 30f).Ticks);
+
+        var expected = new ShooterBattleRuntimePort();
+        Assert.True(expected.ImportPackedSnapshot(in packed));
+        Assert.Equal(1, expected.SubmitInput(packed.Frame, new[] { replayedCommand }));
+        Assert.True(expected.Tick(1f / 30f));
+
+        Assert.Equal(
+            ShooterSnapshotApplyResult.AppliedPackedSnapshot,
+            controller.ApplyGatewayPush(RoomGatewayOpCodes.SnapshotPushed, payload));
+        Assert.Equal(expected.CurrentFrame, local.CurrentFrame);
+        Assert.Equal(expected.ComputeStateHash(), local.ComputeStateHash());
+        Assert.False(controller.HasFrameworkInputHistory);
+        Assert.False(controller.HasRollbackSnapshotHistory);
+        Assert.False(controller.HasStateHashHistory);
+        Assert.False(controller.TryRestorePredictedSnapshot(packed.Frame));
+    }
+
+    [Fact]
+    public void ClientFrameSyncControllerCanAssembleRollbackSnapshotsOnly()
+    {
+        var start = new ShooterStartGamePayload(
+            "rollback-only",
+            30,
+            5921,
+            new[] { new ShooterStartPlayer(1, "P1", 0f, 0f) });
+        var options = new ShooterClientPredictionBufferOptions(
+            ShooterClientPredictionBufferFeatures.RollbackSnapshots,
+            inputHistoryCapacity: 0,
+            rollbackSnapshotCapacity: 8,
+            stateHashHistoryCapacity: 0);
+        var local = new ShooterBattleRuntimePort();
+        Assert.True(local.StartGame(in start));
+        var controller = new ShooterClientFrameSyncController(
+            local,
+            new ShooterPresentationFacade(),
+            tickRate: 30,
+            decoder: null,
+            rollbackWorldId: 0ul,
+            options);
+
+        Assert.Equal(1, controller.SubmitLocalInput(new ShooterPlayerCommand(1, 1f, 0f, 1f, 0f, false)));
+        Assert.Equal(1, controller.Tick(1f / 30f).Ticks);
+        var capturedFrame = local.CurrentFrame;
+        var capturedHash = local.ComputeStateHash();
+        Assert.Equal(1, controller.Tick(1f / 30f).Ticks);
+
+        Assert.False(controller.HasFrameworkInputHistory);
+        Assert.True(controller.HasRollbackSnapshotHistory);
+        Assert.False(controller.HasStateHashHistory);
+        Assert.True(controller.TryRestorePredictedSnapshot(capturedFrame));
+        Assert.Equal(capturedHash, local.ComputeStateHash());
     }
 
     [Fact]
@@ -308,7 +518,7 @@ public sealed class ShooterClientFrameSyncControllerTests
         var presentation = new ShooterPresentationFacade();
         var controller = new ShooterClientFrameSyncController(local, presentation, tickRate: 30);
         var invalidPacked = new ShooterPackedSnapshotPayload(
-            version: 0,
+            version: ShooterPackedSnapshotCodec.CurrentVersion,
             worldId: 6991ul,
             frame: 1,
             serverTick: 10L,

@@ -8,11 +8,13 @@ using AbilityKit.Triggering.Eventing;
 
 namespace AbilityKit.Demo.Moba.Services
 {
-    public sealed class SkillCastContext : IMobaActorContextProvider
+    public sealed class SkillCastContext : IMobaActorContextProvider, IMobaCombatContextSource, IMobaCombatExecutionContextProvider, IMobaTriggerLineageContextProvider, IMobaTriggerExecutionSnapshotProvider, IMobaOriginContextProvider, IMobaContextSourceProvider
     {
         public int SkillId;
         public int SkillSlot;
         public int SkillLevel;
+        public int CastFlowId;
+        public ResolvedSkillCastConfiguration ResolvedConfiguration;
 
         public int Sequence;
 
@@ -100,6 +102,8 @@ namespace AbilityKit.Demo.Moba.Services
             SkillId = skillId;
             SkillSlot = skillSlot;
             SkillLevel = skillLevel;
+            CastFlowId = 0;
+            ResolvedConfiguration = default;
             Sequence = sequence;
             RuntimeHandle = default;
             RuntimeId = 0L;
@@ -120,6 +124,8 @@ namespace AbilityKit.Demo.Moba.Services
             SkillId = 0;
             SkillSlot = 0;
             SkillLevel = 0;
+            CastFlowId = 0;
+            ResolvedConfiguration = default;
             Sequence = 0;
             RuntimeHandle = default;
             RuntimeId = 0L;
@@ -153,6 +159,61 @@ namespace AbilityKit.Demo.Moba.Services
         {
             actorId = TargetActorId;
             return actorId > 0;
+        }
+
+        public bool TryGetCombatContextSource(out MobaCombatContextSource source)
+        {
+            source = MobaCombatContextBuilder.SkillCast(
+                SkillId,
+                CasterActorId,
+                TargetActorId,
+                SourceContextId,
+                0,
+                in RuntimeHandle);
+            return source.HasExecutionSource;
+        }
+
+        public bool TryGetCombatExecutionContext(out MobaCombatExecutionContext context)
+        {
+            return MobaCombatContextBuilder.TryFromSource(this, out context);
+        }
+
+        public bool TryGetLineageContext(out MobaTriggerLineageContext lineageContext)
+        {
+            lineageContext = default;
+            if (!TryGetCombatContextSource(out var source)) return false;
+
+            lineageContext = source.ToLineageContext();
+            return true;
+        }
+
+        public bool TryGetExecutionSnapshot(out MobaTriggerExecutionSnapshot snapshot)
+        {
+            snapshot = default;
+            if (!TryGetCombatContextSource(out var source)) return false;
+
+            snapshot = source.ToExecutionSnapshot();
+            return snapshot.IsValid;
+        }
+
+        public bool TryGetOrigin(out MobaGameplayOrigin origin)
+        {
+            origin = default;
+            if (!TryGetCombatContextSource(out var source)) return false;
+
+            origin = source.ToOrigin();
+            return origin.IsValid;
+        }
+
+        public bool TryGetContextSource(out MobaContextSourceView source)
+        {
+            source = default;
+            if (!TryGetCombatContextSource(out var combatSource)) return false;
+
+            source = combatSource.ToContextSourceView(
+                MobaContextSourceResolveKind.DirectProvider,
+                MobaContextSourceBoundary.LiveRuntime);
+            return source.IsValid;
         }
     }
 

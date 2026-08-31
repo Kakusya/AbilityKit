@@ -1,7 +1,11 @@
 using System;
 using System.Collections.Generic;
+using System.IO;
 using System.Threading.Tasks;
 using AbilityKit.Demo.Shooter.View;
+using AbilityKit.Network.Room;
+using AbilityKit.Network.Runtime.Sync;
+using AbilityKit.Protocol.Room;
 using Xunit;
 
 namespace AbilityKit.Demo.Shooter.Runtime.Tests;
@@ -9,11 +13,64 @@ namespace AbilityKit.Demo.Shooter.Runtime.Tests;
 public sealed class ShooterRoomGatewayFlowTests
 {
     [Fact]
+    public void RoomGatewayFlowUsesFrameworkStagedApisInsteadOfObsoleteAggregateApis()
+    {
+        var sourcePath = FindRepositoryFile(
+            "Unity",
+            "Packages",
+            "com.abilitykit.demo.shooter.view.runtime",
+            "Runtime",
+            "Client",
+            "Gateway",
+            "ShooterRoomGatewayFlow.cs");
+        var source = File.ReadAllText(sourcePath);
+
+        Assert.DoesNotContain("_flow.CreateReadyStartAndSubscribeAsync(", source, StringComparison.Ordinal);
+        Assert.DoesNotContain("_flow.JoinReadyStartAndSubscribeAsync(", source, StringComparison.Ordinal);
+        Assert.DoesNotContain("_flow.RestoreRoomAsync(", source, StringComparison.Ordinal);
+        Assert.Contains("_flow.CreateRoomAsync(", source, StringComparison.Ordinal);
+        Assert.Contains("_flow.JoinRoomAsync(", source, StringComparison.Ordinal);
+        Assert.Contains("_flow.BeginLoadingAsync(", source, StringComparison.Ordinal);
+        Assert.Contains("_flow.ReportAssetsLoadedAsync(", source, StringComparison.Ordinal);
+        Assert.Contains("_flow.WaitForBattleStartAsync(", source, StringComparison.Ordinal);
+        Assert.Contains("_flow.SubscribeStateSyncAsync(", source, StringComparison.Ordinal);
+        Assert.Contains("_flow.RestoreAsync(", source, StringComparison.Ordinal);
+
+        var frameworkSourcePath = FindRepositoryFile(
+            "Unity",
+            "Packages",
+            "com.abilitykit.network.room",
+            "Runtime",
+            "RoomGatewaySessionFlow.cs");
+        var frameworkSource = File.ReadAllText(frameworkSourcePath);
+        var repositoryRoot = Directory.GetParent(frameworkSourcePath)!
+            .Parent!
+            .Parent!
+            .Parent!
+            .Parent!
+            .FullName;
+        var legacyFrameworkPath = Path.Combine(
+            repositoryRoot,
+            "Unity",
+            "Packages",
+            "com.abilitykit.host.extension",
+            "Runtime",
+            "Session",
+            "RoomGatewaySessionFlow.cs");
+
+        Assert.DoesNotContain("CreateReadyStartAndSubscribeAsync(", frameworkSource, StringComparison.Ordinal);
+        Assert.DoesNotContain("JoinReadyStartAndSubscribeAsync(", frameworkSource, StringComparison.Ordinal);
+        Assert.DoesNotContain("Task<RoomGatewaySessionFlowResult> RestoreRoomAsync(", frameworkSource, StringComparison.Ordinal);
+        Assert.False(File.Exists(legacyFrameworkPath));
+    }
+
+    [Fact]
     public async Task RoomGatewayFlowCreatesReadyStartsSubscribesAndBuildsBattleInputContext()
     {
         var roomClient = new ScriptedShooterRoomClient
         {
-            JoinCurrentPlayerId = 121u
+            JoinCurrentPlayerId = 121u,
+            SyncCapabilities = CreateSyncCapabilities()
         };
         var flow = new ShooterRoomGatewayFlow(roomClient);
         var launchSpec = new ShooterRoomLaunchSpec(
@@ -51,8 +108,12 @@ public sealed class ShooterRoomGatewayFlowTests
         Assert.Equal("create:shooter", roomClient.Calls[0]);
         Assert.Equal("join:room-1", roomClient.Calls[1]);
         Assert.Equal("ready:room-1:True", roomClient.Calls[2]);
-        Assert.Equal("start:room-1:2", roomClient.Calls[3]);
-        Assert.Equal("subscribe:room-1:battle-1", roomClient.Calls[4]);
+        Assert.Equal("begin-loading:room-1", roomClient.Calls[3]);
+        var postLoadingIndex = AssertProgressSequence(roomClient.Calls, 4, "room-1");
+        Assert.Equal("assets-loaded:room-1", roomClient.Calls[postLoadingIndex]);
+        Assert.Equal("get-snapshot:room-1", roomClient.Calls[postLoadingIndex + 1]);
+        Assert.Equal("subscribe:room-1:battle-1", roomClient.Calls[postLoadingIndex + 2]);
+        Assert.DoesNotContain(roomClient.Calls, call => call.StartsWith("start:", StringComparison.Ordinal));
         Assert.Equal("session-token", roomClient.LastCreateRequest.SessionToken);
         Assert.Equal("local", roomClient.LastCreateRequest.Region);
         Assert.Equal("dev", roomClient.LastCreateRequest.ServerId);
@@ -68,15 +129,14 @@ public sealed class ShooterRoomGatewayFlowTests
         Assert.Equal("True", createTags["enableAuthoritativeWorld"]);
         Assert.Equal("True", createTags["interpolationEnabled"]);
         Assert.Equal("4", createTags["inputDelayFrames"]);
-        Assert.Equal(ShooterGameplay.WorldType, roomClient.LastStartBattleRequest.WorldType);
-        Assert.Equal("client-a", roomClient.LastStartBattleRequest.ClientId);
-        Assert.Equal("runtime-snapshot-interpolation", roomClient.LastStartBattleRequest.SyncTemplateId);
-        Assert.Equal(2, roomClient.LastStartBattleRequest.SyncModel);
-        Assert.Equal("wan-90ms", roomClient.LastStartBattleRequest.NetworkEnvironmentId);
-        Assert.Equal("server", roomClient.LastStartBattleRequest.CarrierName);
-        Assert.True(roomClient.LastStartBattleRequest.EnableAuthoritativeWorld);
-        Assert.True(roomClient.LastStartBattleRequest.InterpolationEnabled);
-        Assert.Equal(4, roomClient.LastStartBattleRequest.InputDelayFrames);
+        Assert.Equal("room-1", roomClient.LastReportAssetsLoadedRequest.RoomId);
+        Assert.Equal(7L, roomClient.LastReportAssetsLoadedRequest.LaunchGeneration);
+        Assert.Equal(3, roomClient.LastReportAssetsLoadedRequest.ManifestVersion);
+        Assert.Equal("manifest-shooter-v3", roomClient.LastReportAssetsLoadedRequest.ManifestHash);
+        Assert.False(string.IsNullOrWhiteSpace(roomClient.LastReportAssetsLoadedRequest.CommandId));
+        Assert.Equal(100, roomClient.LastReportLoadingProgressRequest.Progress);
+        Assert.Equal(string.Empty, roomClient.LastSubscribeRequest.EventEpoch);
+        Assert.Equal(0L, roomClient.LastSubscribeRequest.LastEventAck);
         Assert.Equal("room-1", result.RoomId);
         Assert.Equal(1001ul, result.NumericRoomId);
         Assert.Equal("battle-1", result.BattleId);
@@ -91,6 +151,7 @@ public sealed class ShooterRoomGatewayFlowTests
         Assert.Equal(3, result.CatchUpFrames);
         Assert.Equal(ShooterRoomGatewayEntryKind.TeamLobby, result.EntryKind);
         Assert.Equal("subscribed", result.Message);
+        Assert.Same(roomClient.SyncCapabilities, result.SyncCapabilities);
 
         var inputContext = result.CreateBattleInputContext(frame: 8);
         Assert.Equal("session-token", inputContext.SessionToken);
@@ -98,6 +159,23 @@ public sealed class ShooterRoomGatewayFlowTests
         Assert.Equal(9001ul, inputContext.WorldId);
         Assert.Equal(8, inputContext.Frame);
         Assert.Equal(121u, inputContext.PlayerId);
+    }
+
+    private static RoomGatewayNetworkSyncCapabilities CreateSyncCapabilities()
+    {
+        return RoomGatewayNetworkSyncCapabilitiesConverter.FromWire(new WireNetworkSyncCapabilities
+        {
+            MetadataVersion = 1,
+            ProfileName = "Shooter.PureStateSnapshotInterpolation",
+            MinimumSchemaVersion = 1,
+            MaximumSchemaVersion = 1,
+            ClientPlayback = (int)ClientPlaybackCapabilities.AuthoritativeInterpolation,
+            Input = (int)InputPolicy.ImmediateSubmit,
+            Snapshot = (int)(SnapshotPolicy.FullSnapshot | SnapshotPolicy.FixedRateStateStream),
+            Interest = (int)InterestPolicy.AllEntities,
+            Recovery = (int)RecoveryPolicy.RequestFullSnapshot,
+            ServerValidation = (int)ServerValidationPolicy.AuthoritativeOnly
+        })!;
     }
 
     [Fact]
@@ -118,8 +196,16 @@ public sealed class ShooterRoomGatewayFlowTests
         Assert.DoesNotContain(roomClient.Calls, call => call.StartsWith("create:", StringComparison.Ordinal));
         Assert.Equal("join:existing-room", roomClient.Calls[0]);
         Assert.Equal("ready:existing-room:True", roomClient.Calls[1]);
-        Assert.Equal("start:existing-room:2", roomClient.Calls[2]);
-        Assert.Equal("subscribe:existing-room:battle-1", roomClient.Calls[3]);
+        Assert.Equal("get-snapshot:existing-room", roomClient.Calls[2]);
+        var postLoadingIndex = AssertProgressSequence(roomClient.Calls, 3, "existing-room");
+        Assert.Equal("assets-loaded:existing-room", roomClient.Calls[postLoadingIndex]);
+        Assert.Equal("get-snapshot:existing-room", roomClient.Calls[postLoadingIndex + 1]);
+        Assert.Equal("subscribe:existing-room:battle-1", roomClient.Calls[postLoadingIndex + 2]);
+        Assert.DoesNotContain(roomClient.Calls, call => call.StartsWith("begin-loading:", StringComparison.Ordinal));
+        Assert.DoesNotContain(roomClient.Calls, call => call.StartsWith("start:", StringComparison.Ordinal));
+        Assert.Equal(7L, roomClient.LastReportAssetsLoadedRequest.LaunchGeneration);
+        Assert.Equal(3, roomClient.LastReportAssetsLoadedRequest.ManifestVersion);
+        Assert.Equal("manifest-shooter-v3", roomClient.LastReportAssetsLoadedRequest.ManifestHash);
         Assert.Equal("existing-room", result.RoomId);
         Assert.Equal("battle-1", result.BattleId);
         Assert.Equal(131u, result.PlayerId);
@@ -167,6 +253,163 @@ public sealed class ShooterRoomGatewayFlowTests
     }
 
     [Fact]
+    public async Task RoomGatewayFlowRestoreLeavesReliableEventCursorToBattleDataPlane()
+    {
+        var roomClient = new ScriptedShooterRoomClient
+        {
+            JoinBattleId = "battle-restored",
+            JoinWorldId = 9301ul,
+            JoinCurrentPlayerId = 143u,
+            RestoreIsInBattle = true
+        };
+        var flow = new ShooterRoomGatewayFlow(roomClient);
+
+        var result = await flow.RestoreRoomAsync(
+            "session-token",
+            "local",
+            "dev",
+            ShooterRoomLaunchSpec.CreateDefault("client-restore"),
+            playerId: 43u,
+            eventEpoch: "epoch-restore",
+            lastEventAck: 27L);
+
+        Assert.Equal("restore:local:dev", roomClient.Calls[0]);
+        Assert.Equal("get-snapshot:room-1", roomClient.Calls[1]);
+        Assert.Equal(2, roomClient.Calls.Count);
+        Assert.DoesNotContain(roomClient.Calls, call => call.StartsWith("subscribe:", StringComparison.Ordinal));
+        Assert.Equal("state sync subscription owned by battle data plane", result.Message);
+        Assert.Equal("battle-restored", result.BattleId);
+        Assert.Equal(9301ul, result.WorldId);
+        Assert.Equal(143u, result.PlayerId);
+    }
+
+    [Fact]
+    public async Task RoomGatewayFlowRestoreNoActiveRoomPreservesDiagnosticWithoutContinuing()
+    {
+        var roomClient = new ScriptedShooterRoomClient
+        {
+            RestoreHasActiveRoom = false,
+            RestoreStatus = ShooterGatewayRoomRestoreStatus.NoActiveRoom,
+            RestoreErrorCode = ShooterGatewayRoomRestoreErrorCode.NoAccountRoomMapping
+        };
+        var flow = new ShooterRoomGatewayFlow(roomClient);
+
+        var result = await flow.RestoreRoomAsync(
+            "session-token",
+            "local",
+            "dev",
+            ShooterRoomLaunchSpec.CreateDefault("client-no-room"),
+            playerId: 43u);
+
+        Assert.Equal(new[] { "restore:local:dev" }, roomClient.Calls);
+        Assert.Equal(ShooterGatewayRoomRestoreStatus.NoActiveRoom, result.RestoreStatus);
+        Assert.Equal(ShooterGatewayRoomRestoreErrorCode.NoAccountRoomMapping, result.RestoreErrorCode);
+        Assert.False(result.CanRetryRestore);
+        Assert.False(result.Started);
+        Assert.False(result.Subscribed);
+    }
+
+    [Fact]
+    public async Task RoomGatewayFlowRestoreTimeoutReturnsRetryableDiagnostic()
+    {
+        var roomClient = new ScriptedShooterRoomClient
+        {
+            RestoreException = new TimeoutException("restore timeout")
+        };
+        var flow = new ShooterRoomGatewayFlow(roomClient);
+
+        var result = await flow.RestoreRoomAsync(
+            "session-token",
+            "local",
+            "dev",
+            ShooterRoomLaunchSpec.CreateDefault("client-timeout"),
+            playerId: 43u);
+
+        Assert.Equal(ShooterGatewayRoomRestoreStatus.Timeout, result.RestoreStatus);
+        Assert.Equal(ShooterGatewayRoomRestoreErrorCode.Timeout, result.RestoreErrorCode);
+        Assert.True(result.CanRetryRestore);
+        Assert.Contains("restore timeout", result.Message);
+        Assert.False(result.Started);
+        Assert.False(result.Subscribed);
+    }
+
+    [Theory]
+    [InlineData(0)]
+    [InlineData(1)]
+    [InlineData(2)]
+    public async Task RoomGatewayFlowRestoresFromEachPreBattleStageWithoutRepeatingCompletedStages(
+        int restorePhase)
+    {
+        var roomClient = new ScriptedShooterRoomClient
+        {
+            JoinBattleId = string.Empty,
+            JoinWorldId = 0ul,
+            JoinCurrentPlayerId = 144u,
+            RestoreIsInBattle = false,
+            RestoreSnapshotPhase = restorePhase,
+            SnapshotLocalIsOwner = restorePhase == 0
+        };
+        var flow = new ShooterRoomGatewayFlow(roomClient);
+
+        var result = await flow.RestoreRoomAsync(
+            "session-token",
+            "local",
+            "dev",
+            ShooterRoomLaunchSpec.CreateDefault("client-staged-restore"),
+            playerId: 44u,
+            eventEpoch: "epoch-staged",
+            lastEventAck: 31L);
+
+        var callIndex = 0;
+        Assert.Equal("restore:local:dev", roomClient.Calls[callIndex++]);
+        Assert.Equal("get-snapshot:room-1", roomClient.Calls[callIndex++]);
+        if (restorePhase == 0)
+        {
+            Assert.Equal("ready:room-1:True", roomClient.Calls[callIndex++]);
+            Assert.Equal("begin-loading:room-1", roomClient.Calls[callIndex++]);
+        }
+        if (restorePhase <= 1)
+        {
+            callIndex = AssertProgressSequence(roomClient.Calls, callIndex, "room-1");
+            Assert.Equal("assets-loaded:room-1", roomClient.Calls[callIndex++]);
+        }
+        Assert.Equal("get-snapshot:room-1", roomClient.Calls[callIndex++]);
+        Assert.Equal("subscribe:room-1:battle-1", roomClient.Calls[callIndex++]);
+        Assert.Equal(callIndex, roomClient.Calls.Count);
+        Assert.Equal("epoch-staged", roomClient.LastSubscribeRequest.EventEpoch);
+        Assert.Equal(31L, roomClient.LastSubscribeRequest.LastEventAck);
+        Assert.Equal("battle-1", result.BattleId);
+        Assert.Equal(9001ul, result.WorldId);
+        Assert.Equal(144u, result.PlayerId);
+        Assert.True(result.Started);
+        Assert.True(result.Subscribed);
+    }
+
+    [Fact]
+    public async Task RoomOwnerWaitsForCanStartBeforeBeginningLoading()
+    {
+        var roomClient = new ScriptedShooterRoomClient
+        {
+            ReadyCanStart = false,
+            PreAssetsSnapshotPhase = 0,
+            PreAssetsSnapshotCanStart = true,
+            SnapshotLocalIsOwner = true
+        };
+        var flow = new ShooterRoomGatewayFlow(roomClient);
+
+        var result = await flow.CreateReadyStartAndSubscribeAsync(
+            "session-token",
+            ShooterRoomLaunchSpec.CreateDefault("owner-client"),
+            playerId: 21u);
+
+        Assert.Equal("ready:room-1:True", roomClient.Calls[2]);
+        Assert.Equal("get-snapshot:room-1", roomClient.Calls[3]);
+        Assert.Equal("begin-loading:room-1", roomClient.Calls[4]);
+        Assert.True(result.Started);
+        Assert.True(result.Subscribed);
+    }
+
+    [Fact]
     public async Task RoomGatewayFlowLateJoinsRunningBattleWithoutReadyOrStart()
     {
         var roomClient = new ScriptedShooterRoomClient
@@ -200,5 +443,35 @@ public sealed class ShooterRoomGatewayFlowTests
         Assert.True(result.Started);
         Assert.True(result.Subscribed);
         Assert.Equal(142u, result.PlayerId);
+    }
+
+    private static string FindRepositoryFile(params string[] segments)
+    {
+        var directory = new DirectoryInfo(AppContext.BaseDirectory);
+        while (directory != null)
+        {
+            var candidate = Path.Combine(directory.FullName, Path.Combine(segments));
+            if (File.Exists(candidate)) return candidate;
+            directory = directory.Parent;
+        }
+
+        throw new FileNotFoundException("Could not locate repository source file.");
+    }
+
+    private static int AssertProgressSequence(
+        IReadOnlyList<string> calls,
+        int startIndex,
+        string roomId)
+    {
+        var index = startIndex;
+        var prefix = "loading-progress:" + roomId + ":";
+        while (index < calls.Count && calls[index].StartsWith(prefix, StringComparison.Ordinal))
+        {
+            index++;
+        }
+
+        Assert.True(index > startIndex, "Expected at least one loading progress report.");
+        Assert.Equal(prefix + "100", calls[index - 1]);
+        return index;
     }
 }

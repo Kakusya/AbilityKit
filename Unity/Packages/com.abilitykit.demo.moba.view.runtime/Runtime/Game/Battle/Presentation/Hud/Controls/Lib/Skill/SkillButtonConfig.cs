@@ -15,6 +15,10 @@ namespace AbilityKit.Game.Battle.View.Lib.Skill
         TargetCircle = 2,
         SelfCircle = 3,
         Sector = 4,
+        DirectionArea = 5,
+        DashLine = 6,
+        LockProjectile = 7,
+        FanArea = 8,
     }
 
     public enum SkillUsePointMode

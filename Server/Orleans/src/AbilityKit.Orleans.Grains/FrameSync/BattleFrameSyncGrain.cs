@@ -1,6 +1,8 @@
 using System;
 using System.Collections.Generic;
+using AbilityKit.Orleans.Contracts.Battle;
 using AbilityKit.Orleans.Contracts.FrameSync;
+using AbilityKit.Orleans.Grains.Gameplay;
 using Microsoft.Extensions.Logging;
 using Orleans;
 
@@ -20,6 +22,10 @@ public sealed class BattleFrameSyncGrain : Grain, IBattleFrameSyncGrain
     private ulong _worldId;
     private string? _battleId;
     private string? _syncTemplateId;
+    private int _runtimeMode = (int)ServerBattleRuntimeMode.FrameRelayOnly;
+    private bool _enableRecording;
+    private int _minTickRate = 10;
+    private int _maxTickRate = 60;
     private int _frame;
 
     private DateTime _tickWindowStartUtc;
@@ -32,8 +38,22 @@ public sealed class BattleFrameSyncGrain : Grain, IBattleFrameSyncGrain
     private DateTime _nextTickDueUtc;
 
     private const int MaxCatchUpFramesPerTimer = 5;
+    private const int MaxFutureLeadFrames = 120;
+    private const int MaxHistoryFrames = 600;
 
     private const int DefaultTickRate = 30;
+
+    /// <summary>完整输入历史上限：3 小时 @ 60fps，供新进程从确定性初始基线追帧。</summary>
+    private const int MaxRecordingFrames = 648000;
+
+    private DateTime _startedAtUtc;
+    private int _totalInputCount;
+
+    /// <summary>帧输入历史 ring buffer，用于 CatchUp 追帧。</summary>
+    private readonly SortedDictionary<int, List<FrameInputItem>> _inputHistory = new();
+
+    /// <summary>完整帧输入录制（不修剪），仅在 EnableRecording 时使用。</summary>
+    private readonly List<List<FrameInputItem>> _fullRecording = new();
 
     public BattleFrameSyncGrain(ILogger<BattleFrameSyncGrain> logger)
     {
@@ -51,6 +71,7 @@ public sealed class BattleFrameSyncGrain : Grain, IBattleFrameSyncGrain
         _frame = 0;
 
         var now = DateTime.UtcNow;
+        _startedAtUtc = now;
         _tickWindowStartUtc = now;
         _lastTickUtc = now;
         _tickCountInWindow = 0;
@@ -69,6 +90,8 @@ public sealed class BattleFrameSyncGrain : Grain, IBattleFrameSyncGrain
         _timer?.Dispose();
         _timer = null;
         _inputsByFrame.Clear();
+        _inputHistory.Clear();
+        _fullRecording.Clear();
         return Task.CompletedTask;
     }
 
@@ -80,6 +103,10 @@ public sealed class BattleFrameSyncGrain : Grain, IBattleFrameSyncGrain
         _worldId = options.WorldId;
         _battleId = options.BattleId;
         _syncTemplateId = options.SyncTemplateId;
+        _runtimeMode = options.RuntimeMode;
+        _enableRecording = options.EnableRecording;
+        _minTickRate = options.MinTickRate > 0 ? options.MinTickRate : 10;
+        _maxTickRate = options.MaxTickRate >= _minTickRate ? options.MaxTickRate : 60;
 
         var tickRate = options.TickRate > 0 ? options.TickRate : DefaultTickRate;
         _tickInterval = TimeSpan.FromSeconds(1.0 / tickRate);
@@ -109,12 +136,20 @@ public sealed class BattleFrameSyncGrain : Grain, IBattleFrameSyncGrain
         return Task.CompletedTask;
     }
 
-    public Task SubmitInputAsync(ulong worldId, int frame, FrameInputItem input)
+    public async Task SubmitInputAsync(ulong worldId, int frame, FrameInputItem input)
+    {
+        await SubmitInputWithResultAsync(worldId, frame, input);
+    }
+
+    public Task<FrameInputSubmitResult> SubmitInputWithResultAsync(ulong worldId, int frame, FrameInputItem input)
     {
         if (input == null) throw new ArgumentNullException(nameof(input));
-        if (frame < 0) return Task.CompletedTask;
 
-        if (_worldId == 0) _worldId = worldId;
+        var reason = ValidateSubmission(_worldId, _frame, worldId, frame);
+        if (reason != FrameInputSubmitReason.None)
+        {
+            return Task.FromResult(new FrameInputSubmitResult(false, _frame, reason));
+        }
 
         if (!_inputsByFrame.TryGetValue(frame, out var list))
         {
@@ -123,10 +158,303 @@ public sealed class BattleFrameSyncGrain : Grain, IBattleFrameSyncGrain
         }
 
         list.Add(input);
+        _totalInputCount++;
+        _logger.LogInformation(
+            "[BattleFrameSyncGrain] Input accepted. RoomId={RoomId} WorldId={WorldId} RequestedFrame={RequestedFrame} ServerFrame={ServerFrame} PlayerId={PlayerId} OpCode={OpCode} PayloadBytes={PayloadBytes}",
+            _roomId,
+            worldId,
+            frame,
+            _frame,
+            input.PlayerId,
+            input.OpCode,
+            input.Payload?.Length ?? 0);
+        return Task.FromResult(new FrameInputSubmitResult(true, _frame, FrameInputSubmitReason.None));
+    }
+
+    internal static FrameInputSubmitReason ValidateSubmission(
+        ulong authoritativeWorldId,
+        int serverFrame,
+        ulong requestedWorldId,
+        int requestedFrame)
+    {
+        if (requestedWorldId == 0
+            || authoritativeWorldId == 0
+            || requestedWorldId != authoritativeWorldId)
+        {
+            return FrameInputSubmitReason.WorldMismatch;
+        }
+
+        if (requestedFrame < 0)
+        {
+            return FrameInputSubmitReason.NegativeFrame;
+        }
+
+        if (requestedFrame < serverFrame)
+        {
+            return FrameInputSubmitReason.FrameAlreadyProcessed;
+        }
+
+        return requestedFrame > serverFrame + MaxFutureLeadFrames
+            ? FrameInputSubmitReason.FrameTooFarAhead
+            : FrameInputSubmitReason.None;
+    }
+
+    public Task<FrameSyncCatchUpPayload?> RequestCatchUpAsync(FrameSyncCatchUpRequest request)
+    {
+        if (request is null) throw new ArgumentNullException(nameof(request));
+
+        var history = request.FromFrameExclusive == -1 && _enableRecording
+            ? _fullRecording
+            : null;
+        // FromFrameExclusive=-1 is reserved for a new-process lockstep restore. Never let it
+        // fall through to the short ring buffer: an absent/truncated full recording must fail.
+        var maxAvailableFrames = request.FromFrameExclusive == -1
+            ? history?.Count ?? 0
+            : MaxHistoryFrames;
+        if (!TryResolveCatchUpRange(
+                _roomId,
+                _worldId,
+                _frame,
+                request,
+                maxAvailableFrames,
+                out var from,
+                out var to))
+        {
+            _logger.LogWarning(
+                "[BattleFrameSyncGrain] Catch-up range rejected. AuthoritativeRoomId={AuthoritativeRoomId} AuthoritativeWorldId={AuthoritativeWorldId} NextFrame={NextFrame} RequestedRoomId={RequestedRoomId} RequestedWorldId={RequestedWorldId} FromFrameExclusive={FromFrameExclusive} ToFrameInclusive={ToFrameInclusive} MaxAvailableFrames={MaxAvailableFrames}",
+                _roomId,
+                _worldId,
+                _frame,
+                request.RoomId,
+                request.WorldId,
+                request.FromFrameExclusive,
+                request.ToFrameInclusive,
+                maxAvailableFrames);
+            return Task.FromResult<FrameSyncCatchUpPayload?>(null);
+        }
+
+        var frameCount = to - from;
+        var frameInputs = new List<List<FrameInputItem>>(frameCount);
+        for (var f = from + 1; f <= to; f++)
+        {
+            List<FrameInputItem>? inputs;
+            if (history != null && f >= 0 && f < history.Count)
+            {
+                inputs = history[f];
+            }
+            else if (!_inputHistory.TryGetValue(f, out inputs))
+            {
+                // MOBA 锁步恢复要求连续的权威输入历史。缺帧时拒绝恢复；不能回退到
+                // shooter 状态同步的全量状态快照，否则会破坏确定性追帧语义。
+                _logger.LogWarning(
+                    "[BattleFrameSyncGrain] Catch-up history frame missing. RoomId={RoomId} WorldId={WorldId} MissingFrame={MissingFrame} FromFrameExclusive={FromFrameExclusive} ToFrameInclusive={ToFrameInclusive} NextFrame={NextFrame} HistoryCount={HistoryCount} RecordingCount={RecordingCount}",
+                    _roomId,
+                    _worldId,
+                    f,
+                    from,
+                    to,
+                    _frame,
+                    _inputHistory.Count,
+                    _fullRecording.Count);
+                return Task.FromResult<FrameSyncCatchUpPayload?>(null);
+            }
+
+            frameInputs.Add(new List<FrameInputItem>(inputs));
+        }
+
+        var payload = new FrameSyncCatchUpPayload(
+            _roomId,
+            _worldId,
+            from + 1,
+            frameInputs);
+        return Task.FromResult<FrameSyncCatchUpPayload?>(payload);
+    }
+
+    internal static bool TryResolveCatchUpRange(
+        ulong authoritativeRoomId,
+        ulong authoritativeWorldId,
+        int currentFrame,
+        FrameSyncCatchUpRequest request,
+        out int fromFrameExclusive,
+        out int toFrameInclusive)
+    {
+        return TryResolveCatchUpRange(
+            authoritativeRoomId,
+            authoritativeWorldId,
+            currentFrame,
+            request,
+            MaxHistoryFrames,
+            out fromFrameExclusive,
+            out toFrameInclusive);
+    }
+
+    internal static bool TryResolveCatchUpRange(
+        ulong authoritativeRoomId,
+        ulong authoritativeWorldId,
+        int currentFrame,
+        FrameSyncCatchUpRequest request,
+        int maxAvailableFrames,
+        out int fromFrameExclusive,
+        out int toFrameInclusive)
+    {
+        fromFrameExclusive = 0;
+        toFrameInclusive = 0;
+
+        if (request.RoomId == 0
+            || request.RoomId != authoritativeRoomId
+            || request.WorldId == 0
+            || request.WorldId != authoritativeWorldId
+            || request.FromFrameExclusive < -1
+            || request.ToFrameInclusive <= request.FromFrameExclusive
+            || maxAvailableFrames <= 0)
+        {
+            return false;
+        }
+
+        // _frame/currentFrame 表示下一个待处理帧；历史只写入到 currentFrame - 1。
+        // CatchUp 尾帧必须 clamp 到最后一个已处理权威帧，否则会请求尚不存在的历史项。
+        var latestProcessedFrame = currentFrame - 1;
+        var clampedTo = Math.Min(request.ToFrameInclusive, latestProcessedFrame);
+        var frameCount = (long)clampedTo - request.FromFrameExclusive;
+        if (frameCount <= 0 || frameCount > maxAvailableFrames)
+        {
+            return false;
+        }
+
+        fromFrameExclusive = request.FromFrameExclusive;
+        toFrameInclusive = clampedTo;
+        return true;
+    }
+
+    public Task<FrameSyncRecording?> DumpRecordingAsync()
+    {
+        if (!_enableRecording || _fullRecording.Count == 0)
+        {
+            return Task.FromResult<FrameSyncRecording?>(null);
+        }
+
+        var startOptions = new FrameSyncStartOptions(
+            _roomId,
+            _worldId,
+            (int)(1.0 / _tickInterval.TotalSeconds),
+            _battleId,
+            _syncTemplateId,
+            _runtimeMode,
+            EnableRecording: true);
+
+        var recording = new FrameSyncRecording(
+            startOptions,
+            _fullRecording,
+            DateTime.UtcNow.Ticks,
+            _fullRecording.Count);
+
+        return Task.FromResult<FrameSyncRecording?>(recording);
+    }
+
+    /// <summary>
+    /// 运行时调整 Tick 频率。调用方（如运维管理端或自动化测试）必须在调用后通过
+    /// FramePushed 或其他带外机制通知所有客户端同步更新 tick rate，否则 lockstep
+    /// 确定性会被破坏。
+    /// </summary>
+    public Task<int> AdjustTickRateAsync(int targetTickRate)
+    {
+        var clamped = Math.Max(_minTickRate, Math.Min(_maxTickRate, targetTickRate));
+        var currentTickRate = (int)(1.0 / _tickInterval.TotalSeconds);
+
+        if (clamped == currentTickRate)
+        {
+            return Task.FromResult(clamped);
+        }
+
+        _tickInterval = TimeSpan.FromSeconds(1.0 / clamped);
+        _nextTickDueUtc = DateTime.UtcNow + _tickInterval;
+
+        // 重置时间窗口统计，避免突跳影响 Hz 计算
+        _tickWindowStartUtc = DateTime.UtcNow;
+        _tickCountInWindow = 0;
+        _tickDeltaSumMs = 0;
+
+        _logger.LogInformation(
+            "[BattleFrameSyncGrain] Tick rate adjusted. RoomId={RoomId} {OldHz}Hz -> {NewHz}Hz. Caller must broadcast new rate to all clients.",
+            _roomId, currentTickRate, clamped);
+
+        return Task.FromResult(clamped);
+    }
+
+    public Task<FrameSyncMetrics> GetMetricsAsync()
+    {
+        var now = DateTime.UtcNow;
+        var uptimeSeconds = (long)(now - _startedAtUtc).TotalSeconds;
+
+        var windowSeconds = (now - _tickWindowStartUtc).TotalSeconds;
+        var hz = windowSeconds > 0 ? _tickCountInWindow / windowSeconds : 0;
+
+        var avgTickDelta = _tickCountInWindow > 0
+            ? _tickDeltaSumMs / _tickCountInWindow
+            : 0;
+
+        var metrics = new FrameSyncMetrics(
+            _roomId,
+            _worldId,
+            _battleId,
+            _frame,
+            (int)(1.0 / _tickInterval.TotalSeconds),
+            _observers.Count,
+            avgTickDelta,
+            _tickDeltaLastMs,
+            hz,
+            TotalInputsReceived: _totalInputCount,
+            CatchUpHistoryFrames: _inputHistory.Count,
+            RecordingFrameCount: _enableRecording ? _fullRecording.Count : 0,
+            uptimeSeconds);
+
+        return Task.FromResult(metrics);
+    }
+
+    public Task DestroyAsync()
+    {
+        _timer?.Dispose();
+        _timer = null;
+        _observers.Clear();
+        _inputsByFrame.Clear();
+        _inputHistory.Clear();
+        _fullRecording.Clear();
+        _worldId = 0UL;
+        _battleId = null;
+        _syncTemplateId = null;
+        _frame = 0;
+        _totalInputCount = 0;
+        DeactivateOnIdle();
         return Task.CompletedTask;
     }
 
-    private Task OnTickAsync()
+    private void StoreInputHistory(int frame, List<FrameInputItem> inputs)
+    {
+        _inputHistory[frame] = new List<FrameInputItem>(inputs);
+
+        // Trim old entries (ring buffer)
+        var threshold = frame - MaxHistoryFrames;
+        var keysToRemove = new List<int>();
+        foreach (var kv in _inputHistory)
+        {
+            if (kv.Key < threshold) keysToRemove.Add(kv.Key);
+            else break;
+        }
+
+        foreach (var k in keysToRemove)
+        {
+            _inputHistory.Remove(k);
+        }
+
+        // 录制模式：追加到完整历史（不修剪）。达到上限后 Count 将小于权威帧数，
+        // 冷启动 CatchUp 的连续范围校验会明确拒绝恢复，不会错误退回短历史或状态快照。
+        if (_enableRecording && _fullRecording.Count < MaxRecordingFrames)
+        {
+            _fullRecording.Add(new List<FrameInputItem>(inputs));
+        }
+    }
+
+    private async Task OnTickAsync()
     {
         var now = DateTime.UtcNow;
         var deltaMs = (now - _lastTickUtc).TotalMilliseconds;
@@ -136,7 +464,7 @@ public sealed class BattleFrameSyncGrain : Grain, IBattleFrameSyncGrain
 
         if (now < _nextTickDueUtc)
         {
-            return Task.CompletedTask;
+            return;
         }
 
         var lagTicks = (now - _nextTickDueUtc).Ticks;
@@ -161,7 +489,37 @@ public sealed class BattleFrameSyncGrain : Grain, IBattleFrameSyncGrain
                 inputs = new List<FrameInputItem>(0);
             }
 
+            StoreInputHistory(cur, inputs);
             _inputsByFrame.Remove(cur);
+
+            // 混合模式：由 BattleFrameSyncGrain 外部驱动 BattleLogicHostGrain 的世界推进
+            if (_runtimeMode == (int)ServerBattleRuntimeMode.BattleWorldWithFrameSync
+                && !string.IsNullOrEmpty(_battleId))
+            {
+                var delta = (float)_tickInterval.TotalSeconds;
+                try
+                {
+                    var battleHost = GrainFactory.GetGrain<IBattleLogicHostGrain>(_battleId);
+                    await battleHost.TickFrameAsync(_worldId, cur, delta, inputs);
+                }
+                catch (Exception ex)
+                {
+                    _logger.LogError(ex,
+                        "[BattleFrameSyncGrain] Failed to drive BattleLogicHostGrain. RoomId={RoomId} BattleId={BattleId} Frame={Frame}",
+                        _roomId, _battleId, cur);
+                }
+            }
+
+            if (inputs.Count > 0)
+            {
+                _logger.LogInformation(
+                    "[BattleFrameSyncGrain] Emitting input frame. RoomId={RoomId} WorldId={WorldId} Frame={Frame} InputCount={InputCount} ObserverCount={ObserverCount}",
+                    _roomId,
+                    _worldId,
+                    cur,
+                    inputs.Count,
+                    _observers.Count);
+            }
 
             var evt = new FramePushedEvent(
                 RoomId: _roomId,
@@ -192,7 +550,5 @@ public sealed class BattleFrameSyncGrain : Grain, IBattleFrameSyncGrain
             _tickCountInWindow = 0;
             _tickDeltaSumMs = 0;
         }
-
-        return Task.CompletedTask;
     }
 }

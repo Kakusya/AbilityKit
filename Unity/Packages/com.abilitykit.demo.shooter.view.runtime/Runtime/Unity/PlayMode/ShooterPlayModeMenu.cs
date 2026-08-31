@@ -6,6 +6,7 @@ using System.Threading.Tasks;
 using AbilityKit.Demo.Common.Rooms;
 using AbilityKit.Demo.Shooter.View.Hosting;
 using UnityEngine;
+using UnityEngine.SceneManagement;
 
 namespace AbilityKit.Demo.Shooter.View.PlayMode
 {
@@ -14,10 +15,10 @@ namespace AbilityKit.Demo.Shooter.View.PlayMode
     {
         private const float Width = 440f;
         private const float TextFieldWidth = 180f;
-        private const string DefaultTemplateId = ShooterSyncTemplateIds.PredictRollbackAuthority;
+        private const string DefaultTemplateId = ShooterRoomLaunchSpec.DefaultSyncTemplateId;
         private static readonly string[] EnemyBudgetLabels =
         {
-            "Playable 512",
+            "Playable 1024",
             "Stress 2k",
             "Extreme 8k"
         };
@@ -28,6 +29,7 @@ namespace AbilityKit.Demo.Shooter.View.PlayMode
 
         [Header("Session")]
         [SerializeField] private string templateId = DefaultTemplateId;
+        [SerializeField] private string networkEnvironmentId = ShooterRoomLaunchSpec.DefaultNetworkEnvironmentId;
         [SerializeField] private int randomSeed = 12345;
         [SerializeField] private int playerCount = 2;
         [SerializeField] private int controlledPlayerId = 1;
@@ -51,7 +53,7 @@ namespace AbilityKit.Demo.Shooter.View.PlayMode
         [Header("Room")]
         [SerializeField] private string roomId = string.Empty;
         [SerializeField] private string roomTitle = "Unity Shooter Room";
-        [SerializeField] private int maxPlayers = 4;
+        [SerializeField] private int maxPlayers = ShooterGameplay.DefaultMaxPlayers;
         [SerializeField] private int roomListLimit = 10;
 
         private readonly DemoMultiplayerAccountState _accountState = new DemoMultiplayerAccountState(
@@ -62,14 +64,32 @@ namespace AbilityKit.Demo.Shooter.View.PlayMode
         private string _status = "Ready";
         private string _error = string.Empty;
         private bool _busy;
+        private bool _multiplayerEntry;
 
         private void Awake()
         {
+            _multiplayerEntry = DemoMultiplayerLaunchIntent.TryConsume(
+                DemoMultiplayerGameplay.Shooter,
+                out _);
             EnsureUniqueDefaultIdentity();
+        }
+
+        private void OnDestroy()
+        {
+            ShooterPlayModeSessionHost.Stop();
+            ShooterRemoteStateSyncPlayModeHost.Stop();
         }
 
         private void OnGUI()
         {
+            // 远程同步会话期间的战斗控制窗（右侧）：断线演示入口，与进入路径无关。
+            if (ShooterRemoteStateSyncPlayModeHost.IsRunning ||
+                ShooterRemoteStateSyncPlayModeHost.IsPaused ||
+                ShooterRemoteStateSyncPlayModeHost.IsStarting)
+            {
+                DrawRemoteBattleControlWindow();
+            }
+
             if (!showMenu)
             {
                 if (GUI.Button(new Rect(12f, 12f, 130f, 28f), "Shooter Menu"))
@@ -89,10 +109,16 @@ namespace AbilityKit.Demo.Shooter.View.PlayMode
 
             DrawSessionSettings();
             DrawRenderingSettings();
-            DrawLocalControls();
-            DrawGatewayControls();
-            DrawRemoteControls();
-            DrawRoomList();
+            if (_multiplayerEntry)
+            {
+                DrawGatewayControls();
+                DrawRemoteControls();
+                DrawRoomList();
+            }
+            else
+            {
+                DrawLocalControls();
+            }
             DrawStatus();
 
             GUILayout.Space(4f);
@@ -113,6 +139,7 @@ namespace AbilityKit.Demo.Shooter.View.PlayMode
         {
             GUILayout.Label("Session");
             templateId = TextField("Template", templateId);
+            networkEnvironmentId = TextField("Network", networkEnvironmentId);
             randomSeed = IntField("Seed", randomSeed);
             playerCount = Math.Max(1, IntField("Players", playerCount));
             controlledPlayerId = Math.Min(Math.Max(1, IntField("Player", controlledPlayerId)), playerCount);
@@ -255,16 +282,18 @@ namespace AbilityKit.Demo.Shooter.View.PlayMode
                 && ShooterRemoteStateSyncPlayModeHost.IsRunning
                 && !ShooterRemoteStateSyncPlayModeHost.IsPaused
                 && !ShooterRemoteStateSyncPlayModeHost.IsAutoReconnecting;
-            if (GUILayout.Button("Pause Remote"))
+            if (GUILayout.Button("Pause Client"))
             {
-                ShooterRemoteStateSyncPlayModeHost.PauseForReconnectValidation();
-                SetStatus("Remote session paused for reconnect validation.");
+                ShooterRemoteStateSyncPlayModeHost.Pause();
+                SetStatus("Client simulation paused; server battle continues.");
             }
 
-            GUI.enabled = !_busy && ShooterRemoteStateSyncPlayModeHost.IsPaused;
-            if (GUILayout.Button("Resume Remote"))
+            GUI.enabled = !_busy
+                && ShooterRemoteStateSyncPlayModeHost.IsPaused
+                && !ShooterRemoteStateSyncPlayModeHost.IsStarting;
+            if (GUILayout.Button("Resume & Refresh"))
             {
-                RunAsync("resume remote", ResumeRemoteAsync);
+                RunAsync("refresh latest state", ResumeRemoteAsync);
             }
 
             GUI.enabled = !_busy && (ShooterRemoteStateSyncPlayModeHost.IsRunning || ShooterRemoteStateSyncPlayModeHost.IsPaused || ShooterRemoteStateSyncPlayModeHost.IsStarting);
@@ -278,6 +307,45 @@ namespace AbilityKit.Demo.Shooter.View.PlayMode
             GUILayout.EndHorizontal();
             GUILayout.Label($"Remote: {RemoteStateLabel()}");
             GUILayout.Label($"Initial Sync: {ShooterRemoteStateSyncPlayModeHost.LastInitialFullStateSyncApplyResult}");
+            DrawMultiplayerLoadingStatus();
+        }
+
+        private static void DrawMultiplayerLoadingStatus()
+        {
+            var loading = ShooterMultiplayerLoadingStatus.Current;
+            if (loading.LocalProgress <= 0 && string.IsNullOrWhiteSpace(loading.Stage) && loading.Snapshot == null)
+            {
+                return;
+            }
+
+            GUILayout.Space(4f);
+            GUILayout.Label($"Loading: {loading.LocalProgress}%  {loading.Stage}");
+            DrawProgressBar(loading.LocalProgress);
+
+            var players = loading.Snapshot?.Players;
+            if (players == null || players.Count == 0)
+            {
+                return;
+            }
+
+            GUILayout.Label("Authoritative player readiness:");
+            for (var i = 0; i < players.Count; i++)
+            {
+                var player = players[i];
+                var state = player.AssetsLoaded ? "Ready" : "Loading";
+                GUILayout.Label($"P{player.PlayerId} {player.AccountId}: {player.LoadingProgress}% ({state})");
+                DrawProgressBar(player.LoadingProgress);
+            }
+        }
+
+        private static void DrawProgressBar(int progress)
+        {
+            var value = Mathf.Clamp(progress, 0, 100);
+            var rect = GUILayoutUtility.GetRect(1f, 18f, GUILayout.ExpandWidth(true));
+            GUI.Box(rect, string.Empty);
+            var fill = new Rect(rect.x + 2f, rect.y + 2f, (rect.width - 4f) * value / 100f, rect.height - 4f);
+            if (fill.width > 0f) GUI.Box(fill, string.Empty);
+            GUI.Label(rect, $"{value}%", new GUIStyle(GUI.skin.label) { alignment = TextAnchor.MiddleCenter });
         }
 
         private void DrawRoomList()
@@ -321,6 +389,12 @@ namespace AbilityKit.Demo.Shooter.View.PlayMode
             if (!string.IsNullOrWhiteSpace(_error))
             {
                 GUILayout.Label($"Error: {_error}");
+            }
+
+            if (_multiplayerEntry && !_busy && GUILayout.Button("Exit to Starter", GUILayout.Height(28f)))
+            {
+                ShooterRemoteStateSyncPlayModeHost.Stop();
+                SceneManager.LoadScene("StarterScene", LoadSceneMode.Single);
             }
         }
 
@@ -411,12 +485,57 @@ namespace AbilityKit.Demo.Shooter.View.PlayMode
             SetStatus($"Remote {mode} ok: room={flow.RoomId} battle={flow.BattleId}");
         }
 
+        private void DrawRemoteBattleControlWindow()
+        {
+            var isPaused = ShooterRemoteStateSyncPlayModeHost.IsPaused;
+            var isRefreshing = isPaused && ShooterRemoteStateSyncPlayModeHost.IsStarting;
+            var width = 236f;
+            var rect = new Rect(Screen.width - width - 12f, 12f, width, isPaused ? 168f : 150f);
+            GUILayout.Window(GetInstanceID() + 1, rect, DrawRemoteBattleControlWindowContent, "Battle Control (Sync Demo)");
+        }
+
+        private void DrawRemoteBattleControlWindowContent(int windowId)
+        {
+            var isPaused = ShooterRemoteStateSyncPlayModeHost.IsPaused;
+            var isRefreshing = isPaused && ShooterRemoteStateSyncPlayModeHost.IsStarting;
+            GUILayout.Label($"State: {RemoteStateLabel()}");
+            GUILayout.Label($"Room: {ShooterRemoteStateSyncPlayModeHost.Flow?.RoomId ?? string.Empty}");
+
+            // 暂停 = 断开连接模拟断线：推送停止→画面冻结，输入泵停止→不接受输入；
+            // 服务器战斗继续。恢复 = 重连并请求最新全量快照覆盖到最新，再开启输入。
+            GUI.enabled = !_busy && !isPaused && !isRefreshing && !ShooterRemoteStateSyncPlayModeHost.IsAutoReconnecting;
+            if (GUILayout.Button("Pause Client", GUILayout.Height(30f)))
+            {
+                ShooterRemoteStateSyncPlayModeHost.Pause();
+                SetStatus("Client paused (connection closed); server battle continues.");
+            }
+
+            GUI.enabled = !_busy && isPaused && !isRefreshing;
+            if (GUILayout.Button("Resume & Refresh", GUILayout.Height(30f)))
+            {
+                RunAsync("refresh latest state", ResumeRemoteAsync);
+            }
+
+            GUI.enabled = true;
+            if (isRefreshing)
+            {
+                DrawMultiplayerLoadingStatus();
+            }
+
+            if (!string.IsNullOrWhiteSpace(_error))
+            {
+                GUILayout.Label($"Error: {_error}");
+            }
+
+            GUI.DragWindow();
+        }
+
         private async Task ResumeRemoteAsync()
         {
             var launch = await ShooterRemoteStateSyncPlayModeHost.ResumeFromPauseAsync();
             var flow = launch.Flow;
             roomId = flow.RoomId;
-            SetStatus($"Remote resumed through reconnect: room={flow.RoomId} battle={flow.BattleId}");
+            SetStatus($"Client resumed at latest server state: room={flow.RoomId} battle={flow.BattleId}");
         }
 
         private static string RemoteStateLabel()
@@ -424,6 +543,11 @@ namespace AbilityKit.Demo.Shooter.View.PlayMode
             if (ShooterRemoteStateSyncPlayModeHost.IsWaitingForInitialFullStateSync)
             {
                 return "Syncing Latest State";
+            }
+
+            if (ShooterRemoteStateSyncPlayModeHost.IsPaused && ShooterRemoteStateSyncPlayModeHost.IsStarting)
+            {
+                return "Refreshing Latest State";
             }
 
             if (ShooterRemoteStateSyncPlayModeHost.IsStarting)
@@ -446,8 +570,11 @@ namespace AbilityKit.Demo.Shooter.View.PlayMode
 
         private ShooterPlayModeSessionOptions BuildSessionOptions()
         {
-            var templateOptions = ShooterPlayModeSessionOptions.FromTemplate(
-                ShooterAcceptanceCatalog.GetSyncTemplate(NormalizeOrDefault(templateId, DefaultTemplateId)),
+            var template = ShooterAcceptanceCatalog.GetSyncTemplate(
+                NormalizeOrDefault(templateId, DefaultTemplateId));
+            var templateOptions = ShooterPlayModeSessionOptions.FromTemplateForNetwork(
+                template,
+                NormalizeOrDefault(networkEnvironmentId, ShooterRoomLaunchSpec.DefaultNetworkEnvironmentId),
                 randomSeed,
                 Math.Min(Math.Max(1, controlledPlayerId), Math.Max(1, playerCount)),
                 Math.Max(0.01f, worldScale));
@@ -494,17 +621,21 @@ namespace AbilityKit.Demo.Shooter.View.PlayMode
         {
             var defaults = ShooterRoomLaunchSpec.CreateDefault($"unity-{sessionOptions.ControlledPlayerId}");
             var template = ShooterAcceptanceCatalog.GetSyncTemplate(NormalizeOrDefault(sessionOptions.SyncTemplateId, DefaultTemplateId));
+            var networkEnvironment = NormalizeOrDefault(
+                networkEnvironmentId,
+                ShooterRoomLaunchSpec.DefaultNetworkEnvironmentId);
             var tags = new Dictionary<string, string>(defaults.Tags, StringComparer.Ordinal)
             {
                 [ShooterRoomLaunchTagKeys.SyncTemplateId] = template.Id,
                 [ShooterRoomLaunchTagKeys.SyncModel] = ((int)template.SyncModel).ToString(),
-                [ShooterRoomLaunchTagKeys.NetworkEnvironmentId] = template.NetworkEnvironmentId,
+                [ShooterRoomLaunchTagKeys.NetworkEnvironmentId] = networkEnvironment,
                 [ShooterRoomLaunchTagKeys.CarrierName] = template.ExpectedCarrierName,
                 [ShooterRoomLaunchTagKeys.EnableAuthoritativeWorld] = template.EnableAuthoritativeWorld.ToString(),
                 [ShooterRoomLaunchTagKeys.InterpolationEnabled] = template.ExpectsInterpolationDiagnostics.ToString(),
                 [ShooterRoomLaunchTagKeys.InputDelayFrames] = "0",
                 [ShooterRoomLaunchTagKeys.RandomSeed] = sessionOptions.RandomSeed.ToString(),
-                [ShooterRoomLaunchTagKeys.DurationFrames] = sessionOptions.GameplayScenario.BattleFlow.DurationFrames.ToString()
+                [ShooterRoomLaunchTagKeys.DurationFrames] = sessionOptions.GameplayScenario.BattleFlow.DurationFrames.ToString(),
+                [ShooterRoomLaunchTagKeys.EnemyBudget] = sessionOptions.GameplayScenario.BattleFlow.MaxActiveEnemies.ToString()
             };
 
             return new ShooterRoomLaunchSpec(
@@ -521,7 +652,7 @@ namespace AbilityKit.Demo.Shooter.View.PlayMode
                 tags,
                 template.Id,
                 (int)template.SyncModel,
-                template.NetworkEnvironmentId,
+                networkEnvironment,
                 template.ExpectedCarrierName,
                 template.EnableAuthoritativeWorld,
                 template.ExpectsInterpolationDiagnostics,
@@ -530,7 +661,7 @@ namespace AbilityKit.Demo.Shooter.View.PlayMode
 
         private async Task<T> WithRoomClient<T>(Func<ShooterRoomGatewayRoomClient, Task<T>> action)
         {
-            var launcher = ShooterClientNetworkLauncher.Create(ShooterClientConnectionFactory.Tcp());
+            var launcher = ShooterClientNetworkLauncher.Create(ShooterClientConnectionFactory.TcpForUnityMainThread());
             try
             {
                 launcher.Open(Endpoint());

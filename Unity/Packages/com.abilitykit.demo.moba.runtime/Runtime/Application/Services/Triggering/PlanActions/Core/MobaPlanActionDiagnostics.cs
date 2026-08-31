@@ -41,6 +41,11 @@ namespace AbilityKit.Demo.Moba.Services.Triggering.PlanActions
             Write(resolver, MobaRuntimeLogPurpose.Investigation, "trace", actionName, message);
         }
 
+        public static void ConfiguredActionDebug(IWorldResolver resolver, string actionName, string message)
+        {
+            Write(resolver, MobaRuntimeLogPurpose.ConfiguredActionDebug, "debug", actionName, message);
+        }
+
         public static void Rejected(string actionName, string reason)
         {
             Rejected(null, actionName, reason);
@@ -93,6 +98,7 @@ namespace AbilityKit.Demo.Moba.Services.Triggering.PlanActions
                 case "applied":
                     return MobaBattleDiagnosticMetric.PlanActionApplied;
                 case "trace":
+                case "debug":
                     return MobaBattleDiagnosticMetric.PlanActionTrace;
                 default:
                     return MobaBattleDiagnosticMetric.PlanActionTrace;

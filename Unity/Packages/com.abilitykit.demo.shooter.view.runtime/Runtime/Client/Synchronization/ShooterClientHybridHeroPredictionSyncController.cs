@@ -15,7 +15,7 @@ namespace AbilityKit.Demo.Shooter.View
     /// <see cref="NetworkSyncModel.HybridHeroPrediction"/> 的混合同步控制器。
     /// 本地模拟与权威校正仍委托给预测回滚；已解码的远端 actor 样本会进入缓冲，并通过延迟权威插值播放。
     /// </summary>
-    public sealed class ShooterClientHybridHeroPredictionSyncController : IShooterClientSyncController, IInterpolationDiagnosticsProvider
+    public sealed class ShooterClientHybridHeroPredictionSyncController : IShooterClientSyncController, IShooterClientFrameSyncCapability, IShooterClientInputCapability, IInterpolationDiagnosticsProvider
     {
         private readonly ShooterClientPredictRollbackSyncController _rollback;
         private readonly ShooterPresentationFacade _presentation;
@@ -39,7 +39,8 @@ namespace AbilityKit.Demo.Shooter.View
             int tickRate,
             ShooterGatewaySnapshotDecoder? decoder,
             IShooterRoomGatewayClient? gateway,
-            InterpolationConfig config)
+            InterpolationConfig config,
+            ShooterClientPredictionBufferOptions? predictionBufferOptions = null)
         {
             _presentation = presentation ?? throw new ArgumentNullException(nameof(presentation));
             _decoder = decoder ?? new ShooterGatewaySnapshotDecoder();
@@ -48,7 +49,8 @@ namespace AbilityKit.Demo.Shooter.View
                 presentation,
                 tickRate,
                 decoder,
-                gateway);
+                gateway,
+                predictionBufferOptions);
             _playback = new RemoteInterpolationPlayback<ShooterRemoteSnapshotSample>(config);
         }
 
@@ -57,6 +59,8 @@ namespace AbilityKit.Demo.Shooter.View
         public bool IsStarted => _rollback.IsStarted;
 
         public int CurrentFrame => _rollback.CurrentFrame;
+
+        public int GatewayInputFrame => _rollback.GatewayInputFrame;
 
         public ShooterClientFrameSyncController FrameSync => _rollback.FrameSync;
 
@@ -170,6 +174,18 @@ namespace AbilityKit.Demo.Shooter.View
             return rollbackResult == ShooterSnapshotApplyResult.Ignored ? interpolationResult : rollbackResult;
         }
 
+        public ShooterSnapshotApplyResult ApplyGatewaySnapshot(in ShooterGatewaySnapshot snapshot)
+        {
+            var rollbackResult = _rollback.ApplyGatewaySnapshot(in snapshot);
+            if (snapshot.PureStateSnapshot.HasValue)
+            {
+                return rollbackResult;
+            }
+
+            var interpolationResult = BufferRemoteSnapshot(in snapshot);
+            return rollbackResult == ShooterSnapshotApplyResult.Ignored ? interpolationResult : rollbackResult;
+        }
+
         /// <summary>为延迟插值缓冲一个已经解码的远端权威快照。</summary>
         public ShooterSnapshotApplyResult BufferRemoteSnapshot(in ShooterGatewaySnapshot snapshot)
         {
@@ -177,7 +193,8 @@ namespace AbilityKit.Demo.Shooter.View
                 snapshot.WorldId,
                 snapshot.Frame,
                 snapshot.ServerTicks,
-                snapshot.Actors);
+                snapshot.Actors,
+                snapshot.PackedSnapshot);
 
             return _playback.Observe(sample)
                 ? ShooterSnapshotApplyResult.AppliedActorSnapshot

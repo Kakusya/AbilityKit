@@ -17,7 +17,7 @@ namespace AbilityKit.Combat.Projectile
 
             for (int i = 0; i < _count; i++)
             {
-                results.Add(baseSpawn);
+                results.Add(baseSpawn.WithPatternSlot(i, _count));
             }
         }
     }

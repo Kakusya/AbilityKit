@@ -1,8 +1,20 @@
+using System;
+using System.Collections.Generic;
 using AbilityKit.Ability.StateSync.Aoi;
 using AbilityKit.Protocol.Shooter;
 
 namespace AbilityKit.Demo.Shooter.Runtime
 {
+    /// <summary>
+    /// Optional server-side timing hook. The callback is invoked for each
+    /// battle system and selected RVO substages, and is never installed by
+    /// the normal Unity client path.
+    /// </summary>
+    public interface IShooterBattlePerformancePort
+    {
+        Action<string, double>? StageTimingSink { get; set; }
+    }
+
     public interface IShooterGameStartPort
     {
         bool IsStarted { get; }
@@ -19,6 +31,8 @@ namespace AbilityKit.Demo.Shooter.Runtime
     public interface IShooterInputPort
     {
         int SubmitInput(int frame, ShooterPlayerCommand[] commands);
+
+        int SubmitInput(int frame, IReadOnlyList<ShooterPlayerCommand> commands);
     }
 
     public interface IShooterSimulationClock
@@ -52,6 +66,16 @@ namespace AbilityKit.Demo.Shooter.Runtime
     public interface IShooterPureStateSnapshotPort
     {
         ShooterPureStateSnapshotPayload ExportPureStateSnapshot(
+            ulong worldId,
+            bool isFullBaseline = true,
+            ShooterPureStateSyncSettings? settings = null,
+            int baselineFrame = 0,
+            uint baselineHash = 0,
+            ShooterPureStateInterestScope? interestScope = null,
+            AoiInterestSet? aoiInterestSet = null,
+            bool computeStateHash = true);
+
+        ShooterPureStateSnapshotPayload ExportPureStateSnapshotTransient(
             ulong worldId,
             bool isFullBaseline = true,
             ShooterPureStateSyncSettings? settings = null,

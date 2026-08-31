@@ -2,14 +2,24 @@
 
 using System.Collections.Generic;
 using AbilityKit.Demo.Shooter.View.Hosting;
+using Unity.Profiling;
 using UnityEngine;
 
 namespace AbilityKit.Demo.Shooter.View.PlayMode
 {
     internal sealed class UnityShooterPlayInputSource : IShooterHostInputSource
     {
+        private System.Func<int, ShooterHostFrameInput>? _inputOverride;
+
+        internal void SetInputOverride(System.Func<int, ShooterHostFrameInput>? inputOverride)
+        {
+            _inputOverride = inputOverride;
+        }
+
         public ShooterHostFrameInput ReadInput(int controlledPlayerId)
         {
+            if (_inputOverride != null) return _inputOverride(controlledPlayerId);
+
             var moveX = Input.GetAxisRaw("Horizontal");
             var moveY = Input.GetAxisRaw("Vertical");
 
@@ -29,6 +39,9 @@ namespace AbilityKit.Demo.Shooter.View.PlayMode
 
     internal sealed class UnityShooterGameObjectViewSink : IUnityShooterViewSink
     {
+        private static readonly ProfilerMarker RenderStoreMarker = new ProfilerMarker("AbilityKit.Shooter.View.GameObject.RenderStore");
+        private static readonly ProfilerMarker RenderDeltaMarker = new ProfilerMarker("AbilityKit.Shooter.View.GameObject.RenderDelta");
+
         private const string PlayerViewPrefabName = "ShooterPlayerViewPrefab";
         private const string BulletViewPrefabName = "ShooterBulletViewPrefab";
         private const string EnemyViewPrefabName = "ShooterEnemyViewPrefab";
@@ -72,6 +85,8 @@ namespace AbilityKit.Demo.Shooter.View.PlayMode
         private ulong _lastAuthoritySequence;
         private int _lastClientFrame;
         private int _lastAuthorityFrame;
+        private float _lastClientSampleFrame;
+        private float _lastAuthoritySampleFrame;
         private ShooterViewBatchSource _lastClientSource;
         private ShooterViewBatchSource _lastAuthoritySource;
         private ShooterViewSnapshotKind _lastClientSnapshotKind;
@@ -81,51 +96,111 @@ namespace AbilityKit.Demo.Shooter.View.PlayMode
  
         public ShooterUnityViewRenderBackend Backend => ShooterUnityViewRenderBackend.GameObject;
 
+        public ShooterUnityViewRenderDiagnostics Diagnostics => new ShooterUnityViewRenderDiagnostics(
+            Backend,
+            usesIndirectRendering: false,
+            fullRebuildCount: 0L,
+            incrementalBatchCount: 0L,
+            indirectUploadPassCount: 0L,
+            matrixUploadCallCount: 0L,
+            uploadedMatrixCount: 0L,
+            fullBufferUploadCount: 0L,
+            partialUploadRangeCount: 0L,
+            _playerViews.Count,
+            _bulletViews.Count,
+            _enemyViews.Count,
+            _playerViews.ContainsKey(_lastControlledPlayerId));
+
         public void Render(in ShooterHostPresentationFrame frame)
         {
             EnsureViewRoot();
+            var presentationScaleChanged = _lastControlledPlayerId != frame.ControlledPlayerId ||
+                !Mathf.Approximately(_lastWorldScale, frame.WorldScale);
             _lastControlledPlayerId = frame.ControlledPlayerId;
             _lastWorldScale = frame.WorldScale;
             CaptureHudData(in frame);
 
             var clientBatch = frame.ClientBatch;
-            if (!IsSameClientBatch(in clientBatch))
+            var hadClientBatch = _hasAppliedClientBatch;
+            var clientBatchChanged = !IsSameClientBatch(in clientBatch);
+            if (clientBatchChanged)
             {
                 _clientProjection.Apply(in clientBatch);
                 CaptureClientBatchKey(in clientBatch);
             }
 
-            RenderStore(
-                _clientProjection.Store,
-                frame.ControlledPlayerId,
-                frame.WorldScale,
-                _playerViews,
-                _bulletViews,
-                _enemyViews,
-                _clientRoot,
-                isAuthority: false);
+            if (clientBatchChanged || presentationScaleChanged)
+            {
+                if (!hadClientBatch || presentationScaleChanged || clientBatch.IsFullSnapshot)
+                {
+                    RenderStore(
+                        _clientProjection.Store,
+                        frame.ControlledPlayerId,
+                        frame.WorldScale,
+                        _playerViews,
+                        _bulletViews,
+                        _enemyViews,
+                        _clientRoot,
+                        isAuthority: false);
+                }
+                else
+                {
+                    RenderDelta(
+                        in clientBatch,
+                        _clientProjection.Store,
+                        frame.ControlledPlayerId,
+                        frame.WorldScale,
+                        _playerViews,
+                        _bulletViews,
+                        _enemyViews,
+                        _clientRoot,
+                        isAuthority: false);
+                }
+            }
 
             if (frame.HasAuthorityBatch)
             {
                 var authorityBatch = frame.AuthorityBatch;
-                if (!IsSameAuthorityBatch(in authorityBatch))
+                var hadAuthorityBatch = _hasAppliedAuthorityBatch;
+                var authorityBatchChanged = !IsSameAuthorityBatch(in authorityBatch);
+                if (authorityBatchChanged)
                 {
                     _authorityProjection.Apply(in authorityBatch);
                     CaptureAuthorityBatchKey(in authorityBatch);
                 }
 
                 _hasAuthorityProjection = true;
-                RenderStore(
-                    _authorityProjection.Store,
-                    frame.ControlledPlayerId,
-                    frame.WorldScale,
-                    _authorityPlayerViews,
-                    _authorityBulletViews,
-                    _authorityEnemyViews,
-                    _authorityRoot,
-                    isAuthority: true);
+                if (authorityBatchChanged || presentationScaleChanged)
+                {
+                    if (!hadAuthorityBatch || presentationScaleChanged || authorityBatch.IsFullSnapshot)
+                    {
+                        RenderStore(
+                            _authorityProjection.Store,
+                            frame.ControlledPlayerId,
+                            frame.WorldScale,
+                            _authorityPlayerViews,
+                            _authorityBulletViews,
+                            _authorityEnemyViews,
+                            _authorityRoot,
+                            isAuthority: true);
+                    }
+                    else
+                    {
+                        RenderDelta(
+                            in authorityBatch,
+                            _authorityProjection.Store,
+                            frame.ControlledPlayerId,
+                            frame.WorldScale,
+                            _authorityPlayerViews,
+                            _authorityBulletViews,
+                            _authorityEnemyViews,
+                            _authorityRoot,
+                            isAuthority: true);
+                    }
+                }
             }
-            else
+            else if (_hasAuthorityProjection || _hasAppliedAuthorityBatch ||
+                _authorityPlayerViews.Count > 0 || _authorityBulletViews.Count > 0 || _authorityEnemyViews.Count > 0)
             {
                 _hasAuthorityProjection = false;
                 _hasAppliedAuthorityBatch = false;
@@ -141,6 +216,7 @@ namespace AbilityKit.Demo.Shooter.View.PlayMode
             return _hasAppliedClientBatch &&
                 batch.Sequence == _lastClientSequence &&
                 batch.Frame == _lastClientFrame &&
+                batch.SampleFrame.Equals(_lastClientSampleFrame) &&
                 batch.Source == _lastClientSource &&
                 batch.SnapshotKind == _lastClientSnapshotKind;
         }
@@ -150,6 +226,7 @@ namespace AbilityKit.Demo.Shooter.View.PlayMode
             return _hasAppliedAuthorityBatch &&
                 batch.Sequence == _lastAuthoritySequence &&
                 batch.Frame == _lastAuthorityFrame &&
+                batch.SampleFrame.Equals(_lastAuthoritySampleFrame) &&
                 batch.Source == _lastAuthoritySource &&
                 batch.SnapshotKind == _lastAuthoritySnapshotKind;
         }
@@ -158,6 +235,7 @@ namespace AbilityKit.Demo.Shooter.View.PlayMode
         {
             _lastClientSequence = batch.Sequence;
             _lastClientFrame = batch.Frame;
+            _lastClientSampleFrame = batch.SampleFrame;
             _lastClientSource = batch.Source;
             _lastClientSnapshotKind = batch.SnapshotKind;
             _hasAppliedClientBatch = true;
@@ -167,6 +245,7 @@ namespace AbilityKit.Demo.Shooter.View.PlayMode
         {
             _lastAuthoritySequence = batch.Sequence;
             _lastAuthorityFrame = batch.Frame;
+            _lastAuthoritySampleFrame = batch.SampleFrame;
             _lastAuthoritySource = batch.Source;
             _lastAuthoritySnapshotKind = batch.SnapshotKind;
             _hasAppliedAuthorityBatch = true;
@@ -264,6 +343,8 @@ namespace AbilityKit.Demo.Shooter.View.PlayMode
             _lastAuthoritySequence = 0ul;
             _lastClientFrame = 0;
             _lastAuthorityFrame = 0;
+            _lastClientSampleFrame = 0f;
+            _lastAuthoritySampleFrame = 0f;
             _lastClientSource = default;
             _lastAuthoritySource = default;
             _lastClientSnapshotKind = default;
@@ -335,14 +416,14 @@ namespace AbilityKit.Demo.Shooter.View.PlayMode
             Transform? parent,
             bool isAuthority)
         {
+            using var renderStoreSample = RenderStoreMarker.Auto();
             _seenPlayers.Clear();
             _seenBullets.Clear();
             _seenEnemies.Clear();
 
-            foreach (var kvp in store.Entities)
+            for (var i = 0; i < store.DenseCount; i++)
             {
-                var entity = kvp.Value;
-                if (!entity.Alive || !store.TryGetTransform(entity.Key, out var transform))
+                if (!store.TryGetDenseEntityAndTransform(i, out var entity, out var transform) || !entity.Alive)
                 {
                     continue;
                 }
@@ -372,6 +453,119 @@ namespace AbilityKit.Demo.Shooter.View.PlayMode
             PruneViews(playerViews, _seenPlayers, _playerPool);
             PruneViews(bulletViews, _seenBullets, _bulletPool);
             PruneViews(enemyViews, _seenEnemies, _enemyPool);
+        }
+
+        private void RenderDelta(
+            in ShooterSnapshotViewBatch batch,
+            ShooterViewEntityStore store,
+            int controlledPlayerId,
+            float worldScale,
+            Dictionary<int, GameObject> playerViews,
+            Dictionary<int, GameObject> bulletViews,
+            Dictionary<int, GameObject> enemyViews,
+            Transform? parent,
+            bool isAuthority)
+        {
+            using var renderDeltaSample = RenderDeltaMarker.Auto();
+            var removed = batch.RemovedEntities;
+            for (var i = 0; i < removed.Count; i++)
+            {
+                ReleaseView(removed[i], playerViews, bulletViews, enemyViews);
+            }
+
+            var entityChanges = batch.EntityChanges;
+            for (var i = 0; i < entityChanges.Count; i++)
+            {
+                var change = entityChanges[i];
+                if (!change.Alive)
+                {
+                    ReleaseView(change.Key, playerViews, bulletViews, enemyViews);
+                }
+            }
+
+            var transformChanges = batch.TransformChanges;
+            for (var i = 0; i < transformChanges.Count; i++)
+            {
+                var key = transformChanges[i].Key;
+                if (!store.TryGetEntity(key, out var entity) ||
+                    !entity.Alive ||
+                    !store.TryGetTransform(key, out var transform))
+                {
+                    continue;
+                }
+
+                RenderEntityTransform(
+                    in entity,
+                    in transform,
+                    controlledPlayerId,
+                    worldScale,
+                    playerViews,
+                    bulletViews,
+                    enemyViews,
+                    parent,
+                    isAuthority);
+            }
+        }
+
+        private void RenderEntityTransform(
+            in ShooterViewEntityState entity,
+            in ShooterViewTransformState transform,
+            int controlledPlayerId,
+            float worldScale,
+            Dictionary<int, GameObject> playerViews,
+            Dictionary<int, GameObject> bulletViews,
+            Dictionary<int, GameObject> enemyViews,
+            Transform? parent,
+            bool isAuthority)
+        {
+            var position = new Vector3(transform.X * worldScale, isAuthority ? 0.15f : 0f, transform.Y * worldScale);
+            if (entity.Kind == ShooterViewEntityKind.Player)
+            {
+                var view = GetOrCreatePlayerView(playerViews, parent, entity.EntityId, controlledPlayerId, isAuthority);
+                view.transform.localPosition = position;
+                ApplyFacing(view.transform, transform.FacingX, transform.FacingY);
+            }
+            else if (entity.Kind == ShooterViewEntityKind.Bullet)
+            {
+                GetOrCreateBulletView(bulletViews, parent, entity.EntityId, isAuthority).transform.localPosition = position;
+            }
+            else if (entity.Kind == ShooterViewEntityKind.Enemy)
+            {
+                var view = GetOrCreateEnemyView(enemyViews, parent, entity.EntityId, isAuthority);
+                view.transform.localPosition = position;
+                ApplyFacing(view.transform, transform.FacingX, transform.FacingY);
+            }
+        }
+
+        private void ReleaseView(
+            ShooterViewEntityKey key,
+            Dictionary<int, GameObject> playerViews,
+            Dictionary<int, GameObject> bulletViews,
+            Dictionary<int, GameObject> enemyViews)
+        {
+            Dictionary<int, GameObject>? views = null;
+            Queue<GameObject>? pool = null;
+            if (key.Kind == ShooterViewEntityKind.Player)
+            {
+                views = playerViews;
+                pool = _playerPool;
+            }
+            else if (key.Kind == ShooterViewEntityKind.Bullet)
+            {
+                views = bulletViews;
+                pool = _bulletPool;
+            }
+            else if (key.Kind == ShooterViewEntityKind.Enemy)
+            {
+                views = enemyViews;
+                pool = _enemyPool;
+            }
+
+            if (views != null && pool != null && views.TryGetValue(key.EntityId, out var view))
+            {
+                views.Remove(key.EntityId);
+                ReleaseView(view, pool);
+            }
         }
 
         private GameObject GetOrCreatePlayerView(
@@ -432,7 +626,10 @@ namespace AbilityKit.Demo.Shooter.View.PlayMode
             }
 
             var root = new GameObject("ShooterPlayModeViews");
-            Object.DontDestroyOnLoad(root);
+            if (Application.isPlaying)
+            {
+                Object.DontDestroyOnLoad(root);
+            }
             _viewRoot = root.transform;
             _hudBehaviour = root.AddComponent<HudBehaviour>();
             _hudBehaviour.Initialize(this);

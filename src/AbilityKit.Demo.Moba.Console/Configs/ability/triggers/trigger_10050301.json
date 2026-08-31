@@ -1,0 +1,29 @@
+{
+  "triggers": [
+    {
+      "id": 10050301,
+      "name": "妲己-女王崇拜-添加狐火状态",
+      "event": "",
+      "enabled": true,
+      "allowExternal": false,
+      "phase": "immediate",
+      "priority": 50,
+      "conditions": [],
+      "actions": [
+        {
+          "type": "add_buff",
+          "buffIds": [
+            10050301
+          ],
+          "target_self": true
+        },
+        {
+          "type": "debug_log",
+          "message": "妲己三技能女王崇拜：进入持续狐火状态",
+          "dump_args": false
+        }
+      ],
+      "scope": "owner"
+    }
+  ]
+}

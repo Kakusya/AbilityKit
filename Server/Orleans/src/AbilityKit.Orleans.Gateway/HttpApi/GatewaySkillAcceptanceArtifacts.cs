@@ -2,6 +2,7 @@ namespace AbilityKit.Orleans.Gateway.HttpApi;
 
 using System;
 using System.Collections.Generic;
+using System.Diagnostics;
 using System.IO;
 using System.Linq;
 using System.Text.Json.Nodes;
@@ -56,96 +57,57 @@ internal static class GatewaySkillAcceptanceArtifacts
     public static AdminSkillAcceptanceTemplateListHttpResponse GetTemplates()
     {
         return new AdminSkillAcceptanceTemplateListHttpResponse(
-            new[]
-            {
-                BuildTemplate(
-                    "single-skill-damage",
-                    "单技能伤害链路",
-                    "覆盖主动技能入口、条件判定、Effect 执行、伤害管线与断言。",
-                    new[] { "active-skill", "effect", "damage", "assertion" },
-                    skillId: 1002,
-                    effectId: 2001,
-                    projectileId: 0,
-                    areaId: 0,
-                    buffId: 0,
-                    shieldId: 5001,
-                    baseDamage: 120,
-                    mitigatedDamage: 96,
-                    shieldAbsorb: 60,
-                    hpDamage: 36,
-                    durationFrames: 12),
-                BuildTemplate(
-                    "projectile-area-buff",
-                    "投射物 / 区域 / Buff 生命周期",
-                    "覆盖投射物发射、区域命中、Buff 持续 Tick、护盾吸收和表现事件。",
-                    new[] { "projectile", "area", "buff", "shield", "damage", "presentation" },
-                    skillId: 1003,
-                    effectId: 2201,
-                    projectileId: 3001,
-                    areaId: 4001,
-                    buffId: 6001,
-                    shieldId: 5001,
-                    baseDamage: 180,
-                    mitigatedDamage: 144,
-                    shieldAbsorb: 0,
-                    hpDamage: 144,
-                    durationFrames: 36),
-                BuildTemplate(
-                    "movement-shield-counter",
-                    "位移 / 护盾 / 反击模板",
-                    "覆盖位移持续行为、护盾生命周期、触发动作与结果归因。",
-                    new[] { "movement", "shield", "trigger-action", "damage", "lifecycle" },
-                    skillId: 1004,
-                    effectId: 2301,
-                    projectileId: 0,
-                    areaId: 0,
-                    buffId: 6101,
-                    shieldId: 5201,
-                    baseDamage: 90,
-                    mitigatedDamage: 72,
-                    shieldAbsorb: 72,
-                    hpDamage: 0,
-                    durationFrames: 24)
-            },
+            ScenarioCatalog.Values
+                .OrderBy(scenario => scenario.DisplayName, StringComparer.Ordinal)
+                .Select(scenario => BuildScenarioTemplate(scenario))
+                .ToArray(),
             DateTime.UtcNow.Ticks);
     }
 
     public static IResult Run(AdminSkillAcceptanceRunRequest request)
     {
-        var directory = ResolveArtifactDirectory(request.ArtifactDirectory ?? "artifacts/admin-combat-analysis-runs");
+        if (string.IsNullOrWhiteSpace(request.TemplateId) || !ScenarioCatalog.TryGetValue(request.TemplateId, out var scenario))
+        {
+            return Results.BadRequest(BuildError("UnknownScenario", "templateId must name a server-side allow-listed DSL scenario.", "templateId"));
+        }
+
+        var operationId = $"admin-dsl-{Guid.NewGuid():N}";
+        var directory = ResolveArtifactDirectory(Path.Combine("artifacts/admin-combat-analysis-runs", operationId));
         if (!directory.IsAllowed)
         {
             return Results.BadRequest(BuildError("ArtifactDirectoryOutOfBounds", directory.ErrorMessage ?? "Artifact directory is outside the allowed artifact root.", "artifactDirectory"));
         }
 
         Directory.CreateDirectory(directory.FullPath);
-        var caseId = SanitizeCaseId(string.IsNullOrWhiteSpace(request.CaseId) ? $"admin_combat_{DateTime.UtcNow:yyyyMMdd_HHmmss}" : request.CaseId!);
-        if (string.IsNullOrWhiteSpace(caseId))
-        {
-            return Results.BadRequest(BuildError("InvalidCaseId", "caseId contains unsupported characters.", "caseId"));
-        }
-
-        var operationId = $"admin-combat-{Guid.NewGuid():N}";
-        var now = DateTime.UtcNow;
-        var summaryPath = Path.Combine(directory.FullPath, caseId + SummaryFileSuffix);
-        var tracePath = Path.Combine(directory.FullPath, caseId + TraceFileSuffix);
-        var traceRecords = BuildGeneratedTraceRecords(request, caseId, operationId);
-        var summary = BuildGeneratedSummary(request, caseId, operationId, summaryPath, tracePath, now, traceRecords);
-        File.WriteAllText(summaryPath, summary.ToJsonString());
-        File.WriteAllLines(tracePath, traceRecords.Select(record => record.ToJsonString()));
+        var warnings = new List<string>();
+        var execution = ExecuteScenario(scenario, directory, warnings);
+        var summaryPath = execution.SummaryPath;
+        var tracePath = execution.TracePath;
+        var caseId = ReadCaseId(summaryPath) ?? scenario.CaseId;
         WriteOrUpdateGeneratedBatch(directory.FullPath);
-
         var batch = GetBatch(directory.DisplayPath);
+        var success = execution.ExitCode == 0 && execution.Status == "passed" && batch.Cases.Any(item => item.CaseId == caseId && item.Passed == true);
+        if (!success && string.IsNullOrWhiteSpace(execution.Error)) warnings.Add("DSL execution did not produce a passing case. Inspect the Unity log and execution result for details.");
+        if (!string.IsNullOrWhiteSpace(execution.Error)) warnings.Add(execution.Error);
+
         return Results.Ok(new AdminSkillAcceptanceRunResponse(
-            true,
+            success,
             operationId,
             directory.DisplayPath,
             caseId,
-            NormalizePath(summaryPath),
-            NormalizePath(tracePath),
+            summaryPath ?? string.Empty,
+            tracePath ?? string.Empty,
             batch,
-            Array.Empty<string>(),
-            DateTime.UtcNow.Ticks));
+            warnings.ToArray(),
+            DateTime.UtcNow.Ticks,
+            scenario.Id,
+            execution.Status,
+            execution.ExitCode,
+            execution.LogPath ?? string.Empty,
+            execution.ResultPath ?? string.Empty,
+            execution.StartedAtUtc ?? string.Empty,
+            execution.EndedAtUtc ?? string.Empty,
+            execution.DurationMs));
     }
 
     public static IResult Delete(AdminSkillAcceptanceDeleteRequest request)
@@ -323,10 +285,10 @@ internal static class GatewaySkillAcceptanceArtifacts
         return new AdminSkillAcceptanceRunPlanHttpResponse(
             directory.IsAllowed,
             directory.IsAllowed
-                ? "AdminConsole 可发起受控的内置战斗分析模板导出；任意命令执行仍然禁止，Unity/CI 脚本仍作为正式回归入口。"
+                ? "AdminConsole 可运行服务端白名单内的 Unity DSL 场景；浏览器不能提交命令、路径或 DSL 内容。"
                 : directory.ErrorMessage ?? "Artifact directory is outside the allowed artifact root.",
             directory.DisplayPath,
-            "admin-built-in-export",
+            "unity-dsl-allow-list",
             directory.IsAllowed,
             BuildExecutionStrategies(),
             allowedScripts,
@@ -351,8 +313,8 @@ internal static class GatewaySkillAcceptanceArtifacts
             },
             new[]
             {
-                "Artifact browsing and controlled built-in export are available now.",
-                "Admin initiated export writes deterministic JSON/JSONL artifacts and does not execute arbitrary shell text.",
+                "Artifact browsing and real Unity DSL execution are available now.",
+                "The gateway invokes one fixed server-side script with a server-side scenario allow-list.",
                 "Scenario JSON remains the stable contract shared by Web, Unity Editor, CLI and CI.",
                 "The gateway must never execute arbitrary command text from the browser.",
                 $"Artifact browsing is constrained to the workspace {ArtifactRootDirectory}/ root."
@@ -360,49 +322,110 @@ internal static class GatewaySkillAcceptanceArtifacts
             DateTime.UtcNow.Ticks);
     }
 
-    private static AdminSkillAcceptanceTemplateHttpResponse BuildTemplate(
-        string id,
-        string displayName,
-        string description,
-        string[] covers,
-        int skillId,
-        int effectId,
-        int projectileId,
-        int areaId,
-        int buffId,
-        int shieldId,
-        int baseDamage,
-        int mitigatedDamage,
-        int shieldAbsorb,
-        int hpDamage,
-        int durationFrames)
+    private static AdminSkillAcceptanceTemplateHttpResponse BuildScenarioTemplate(SkillAcceptanceScenarioDefinition scenario)
     {
         return new AdminSkillAcceptanceTemplateHttpResponse(
-            id,
-            displayName,
-            description,
-            covers,
+            scenario.Id,
+            scenario.DisplayName,
+            scenario.Description,
+            scenario.Covers,
             new AdminSkillAcceptanceRunRequest(
                 null,
                 "artifacts/admin-combat-analysis-runs",
-                null,
-                description,
-                1,
-                2,
-                skillId,
-                effectId,
-                projectileId,
-                areaId,
-                buffId,
-                shieldId,
-                baseDamage,
-                mitigatedDamage,
-                shieldAbsorb,
-                hpDamage,
+                scenario.CaseId,
+                scenario.Description,
+                0,
+                0,
+                scenario.SkillId,
+                0,
+                0,
+                0,
+                0,
+                0,
+                0,
+                0,
+                0,
+                0,
                 30,
-                durationFrames,
-                id,
-                "后台战斗分析模板导出"));
+                0,
+                scenario.Id,
+                "运行白名单 DSL 场景"));
+    }
+
+    private static readonly IReadOnlyDictionary<string, SkillAcceptanceScenarioDefinition> ScenarioCatalog =
+        new Dictionary<string, SkillAcceptanceScenarioDefinition>(StringComparer.OrdinalIgnoreCase)
+        {
+            ["lianpo-skill1-dash"] = new("lianpo-skill1-dash", "廉颇一技能冲锋命中", "真实 DSL：冲锋、命中伤害与击飞动作。", "skill_10010101_scenario_dash_hit_damage_knockup", 10010101, new[] { "lianpo", "dash", "damage", "knockup" }),
+            ["lianpo-skill2-area"] = new("lianpo-skill2-area", "廉颇二技能护盾区域", "真实 DSL：护盾、延迟区域、伤害和减速。", "skill_10010201_scenario_shield_area_damage_slow", 10010201, new[] { "lianpo", "shield", "area", "buff" }),
+            ["lianpo-skill3-combo"] = new("lianpo-skill3-combo", "廉颇三技能三段连击", "真实 DSL：三段区域伤害与末段击飞。", "skill_10010301_scenario_three_stage_damage_knockup", 10010301, new[] { "lianpo", "area", "damage", "knockup" }),
+            ["xiaoqiao-skill1-projectile"] = new("xiaoqiao-skill1-projectile", "小乔一技能投射物", "真实 DSL：投射物沿施法方向命中目标。", "skill_10020101_scenario_damage", 10020101, new[] { "xiaoqiao", "projectile", "damage" }),
+            ["xiaoqiao-skill2-area"] = new("xiaoqiao-skill2-area", "小乔二技能目标点区域", "真实 DSL：延迟区域在目标点命中目标。", "skill_10020201_scenario_damage", 10020201, new[] { "xiaoqiao", "area", "damage" }),
+            ["xiaoqiao-skill3-ultimate"] = new("xiaoqiao-skill3-ultimate", "小乔三技能持续伤害", "真实 DSL：持续效果、重复命中与减伤。", "skill_10020301_scenario_interval_damage", 10020301, new[] { "xiaoqiao", "buff", "damage", "interval" })
+        };
+
+    private static ScenarioExecutionResult ExecuteScenario(SkillAcceptanceScenarioDefinition scenario, ArtifactDirectoryResolution directory, List<string> warnings)
+    {
+        var workspace = ResolveWorkspaceRoot();
+        var scriptPath = Path.Combine(workspace, "tools", "run_moba_skill_analysis.ps1");
+        var resultPath = Path.Combine(directory.FullPath, "execution-result.json");
+        if (!File.Exists(scriptPath)) return ScenarioExecutionResult.Failed("Fixed DSL runner script was not found.", resultPath);
+
+        var outputRelativePath = Path.GetRelativePath(workspace, directory.FullPath);
+        var startedAt = DateTime.UtcNow;
+        try
+        {
+            var startInfo = new ProcessStartInfo
+            {
+                FileName = "powershell.exe",
+                WorkingDirectory = workspace,
+                UseShellExecute = false,
+                CreateNoWindow = true
+            };
+            startInfo.ArgumentList.Add("-NoProfile");
+            startInfo.ArgumentList.Add("-ExecutionPolicy");
+            startInfo.ArgumentList.Add("Bypass");
+            startInfo.ArgumentList.Add("-File");
+            startInfo.ArgumentList.Add(scriptPath);
+            startInfo.ArgumentList.Add("-ScenarioId");
+            startInfo.ArgumentList.Add(scenario.Id);
+            startInfo.ArgumentList.Add("-OutputDirectory");
+            startInfo.ArgumentList.Add(outputRelativePath);
+
+            using var process = Process.Start(startInfo);
+            if (process is null) return ScenarioExecutionResult.Failed("Failed to start fixed DSL runner process.", resultPath, startedAt);
+            process.WaitForExit();
+            var completed = ReadExecutionResult(resultPath, process.ExitCode, startedAt, DateTime.UtcNow);
+            if (completed.ExitCode != 0) warnings.Add($"Unity DSL runner exited with code {completed.ExitCode}.");
+            return completed;
+        }
+        catch (Exception exception)
+        {
+            return ScenarioExecutionResult.Failed(exception.Message, resultPath, startedAt);
+        }
+    }
+
+    private static ScenarioExecutionResult ReadExecutionResult(string resultPath, int fallbackExitCode, DateTime startedAt, DateTime endedAt)
+    {
+        var warnings = new List<string>();
+        var result = ReadJsonNode(resultPath, warnings);
+        var status = ReadString(result, "status") ?? (fallbackExitCode == 0 ? "passed" : "failed");
+        return new ScenarioExecutionResult(
+            status,
+            ReadInt(result, "exitCode") is var exitCode && exitCode != 0 ? exitCode : fallbackExitCode,
+            ReadString(result, "summaryPath"),
+            ReadString(result, "tracePath"),
+            ReadString(result, "logPath"),
+            NormalizePath(resultPath),
+            ReadString(result, "startedAtUtc") ?? startedAt.ToString("O"),
+            ReadString(result, "endedAtUtc") ?? endedAt.ToString("O"),
+            ReadInt(result, "durationMs"),
+            ReadString(result, "error"));
+    }
+
+    private static string? ReadCaseId(string? summaryPath)
+    {
+        if (string.IsNullOrWhiteSpace(summaryPath) || !File.Exists(summaryPath)) return null;
+        return ReadString(ReadJsonNode(summaryPath, new List<string>()), "caseId");
     }
 
     private static AdminSkillAcceptanceExecutionStrategyHttpResponse[] BuildExecutionStrategies()
@@ -413,8 +436,8 @@ internal static class GatewaySkillAcceptanceArtifacts
                 "local-script",
                 "本机 allow-listed 脚本包装",
                 "AdminConsole may only request a predefined script id; raw command, arbitrary path and user supplied shell text stay forbidden.",
-                "planned",
-                "Use a server-side allow-list to launch a checked-in script that regenerates Scenario artifacts under the configured artifact directory."),
+                "available",
+                "A fixed server-side PowerShell wrapper invokes a Unity execute-method command for one allow-listed DSL scenario."),
             new AdminSkillAcceptanceExecutionStrategyHttpResponse(
                 "ci-job",
                 "CI Job 包装",
@@ -426,7 +449,7 @@ internal static class GatewaySkillAcceptanceArtifacts
                 "手动生成后刷新",
                 "Unity/unit-test/headless runner produces artifacts first; this API only reads the resulting JSON/JSONL files.",
                 "available",
-                "Current phase keeps the gateway read-only while preserving Scenario JSON as the stable contract.")
+                "Existing Unity, unit-test and CI artifacts can still be read without running a new scenario.")
         };
     }
 
@@ -436,11 +459,11 @@ internal static class GatewaySkillAcceptanceArtifacts
         {
             new SkillAcceptanceAllowedScriptDefinition(
                 "moba-acceptance-local",
-                "MOBA Scenario 本机验收",
-                "Unity/Packages/com.abilitykit.demo.moba.view.runtime/Runtime/Game/Test/UnitTest/MobaAcceptanceRunner.cs",
-                "unity-test-runner",
-                new[] { "--scenarioDir <checked-in-or-mounted-scenario-dir>", "--artifactDirectory " + NormalizePath(directory) },
-                new[] { BatchSummaryFileName, SummarySearchPattern, "*" + TraceFileSuffix }),
+                "MOBA DSL 本机验收",
+                "tools/run_moba_skill_analysis.ps1",
+                "powershell-fixed-wrapper",
+                new[] { "-ScenarioId <server allow-list>", "-OutputDirectory <server generated under artifacts/>" },
+                new[] { "execution-result.json", SummarySearchPattern, "*" + TraceFileSuffix }),
             new SkillAcceptanceAllowedScriptDefinition(
                 "moba-acceptance-ci",
                 "MOBA Scenario CI 验收",
@@ -879,6 +902,26 @@ internal static class GatewaySkillAcceptanceArtifacts
     private static string? ReadString(JsonNode? node, string name)
     {
         return node?[name]?.GetValue<string>();
+    }
+
+    private sealed record SkillAcceptanceScenarioDefinition(string Id, string DisplayName, string Description, string CaseId, int SkillId, string[] Covers);
+
+    private sealed record ScenarioExecutionResult(
+        string Status,
+        int ExitCode,
+        string? SummaryPath,
+        string? TracePath,
+        string? LogPath,
+        string? ResultPath,
+        string? StartedAtUtc,
+        string? EndedAtUtc,
+        int DurationMs,
+        string? Error)
+    {
+        public static ScenarioExecutionResult Failed(string error, string resultPath, DateTime? startedAt = null)
+        {
+            return new ScenarioExecutionResult("failed", -1, null, null, null, NormalizePath(resultPath), startedAt?.ToString("O"), DateTime.UtcNow.ToString("O"), 0, error);
+        }
     }
 
     private static int ReadInt(JsonNode? node, string name)

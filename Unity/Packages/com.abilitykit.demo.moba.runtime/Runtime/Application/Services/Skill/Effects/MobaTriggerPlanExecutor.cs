@@ -49,7 +49,8 @@ namespace AbilityKit.Demo.Moba.Services
 
         public bool ExecuteRulePlan(int triggerId, object args)
         {
-            if (_effects.ShouldRouteRulePlanThroughFormalEffectSession(out var currentEffects))
+            var routeThroughFormal = _effects.ShouldRouteRulePlanThroughFormalEffectSession(out var currentEffects);
+            if (routeThroughFormal)
             {
                 return currentEffects.ExecuteRulePlan(triggerId, args);
             }
@@ -72,7 +73,6 @@ namespace AbilityKit.Demo.Moba.Services
 
             var execCtx = _contextFactory.Create(ctrl);
             var hasExecutionRoot = _planDb.TryGetExecutionRootByTriggerId(triggerId, out var executionRoot);
-            Log.Warning($"[MobaTriggerPlanExecutor] execute triggerId={triggerId} hasExecutionRoot={hasExecutionRoot} executionRootType={executionRoot?.GetType().Name ?? "<null>"} actionCount={plan.Actions?.Length ?? 0} predicateMissIsSuccess={predicateMissIsSuccess} argsType={args?.GetType().Name ?? "<null>"}");
 
             try
             {

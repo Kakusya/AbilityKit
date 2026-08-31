@@ -9,19 +9,81 @@ using AbilityKit.Game.Battle.Requests;
 
 namespace AbilityKit.Game.Flow.Battle.Replay
 {
+    public interface IBattleReplayControl
+    {
+        bool IsReplaySession { get; }
+        bool IsPlaying { get; }
+        bool RenderPresentation { get; }
+        int CurrentFrame { get; }
+        int LastFrame { get; }
+        float PlaybackSpeed { get; set; }
+        string ReplayPath { get; }
+
+        bool TryLoad(string path, bool renderPresentation, out string error);
+        void Play();
+        void Pause();
+        bool StepForward();
+        bool StepBackward();
+        bool SeekToFrame(int frame);
+    }
+
+    public static class BattleReplayControlProvider
+    {
+        private static readonly object Gate = new object();
+        private static readonly Dictionary<string, IBattleReplayControl> ByScope =
+            new Dictionary<string, IBattleReplayControl>(StringComparer.Ordinal);
+
+        /// <summary>仅用于 development single-active 兼容；正式调用方应按 scope 查询。</summary>
+        public static IBattleReplayControl Current { get; internal set; }
+
+        public static bool TryGet(string scope, out IBattleReplayControl control)
+        {
+            control = null;
+            if (string.IsNullOrWhiteSpace(scope)) return false;
+            lock (Gate)
+            {
+                return ByScope.TryGetValue(scope, out control);
+            }
+        }
+
+        internal static void Publish(string scope, IBattleReplayControl control)
+        {
+            if (string.IsNullOrWhiteSpace(scope) || control == null) return;
+            lock (Gate)
+            {
+                ByScope[scope] = control;
+            }
+        }
+
+        internal static void Withdraw(string scope, IBattleReplayControl owner)
+        {
+            if (string.IsNullOrWhiteSpace(scope) || owner == null) return;
+            lock (Gate)
+            {
+                if (ByScope.TryGetValue(scope, out var current) &&
+                    ReferenceEquals(current, owner))
+                {
+                    ByScope.Remove(scope);
+                }
+            }
+        }
+    }
+
     public sealed class FrameReplayDriver
     {
         private readonly WorldId _worldId;
         private readonly List<FrameRecordInputFrame> _inputs;
         private readonly Dictionary<int, FrameRecordStateHashFrame> _expectedStateHashes;
+        private readonly int _lastFrame;
         private int _cursor;
         private bool _isPlaying;
         private bool _reportedHashMismatch;
+        private float _playbackSpeed = 1f;
 
         public FrameReplayDriver(WorldId worldId, FrameRecordFile file)
         {
             _worldId = worldId;
-            _inputs = file?.Inputs ?? new List<FrameRecordInputFrame>();
+            _inputs = CreateOrderedInputSnapshot(file?.Inputs);
             _expectedStateHashes = new Dictionary<int, FrameRecordStateHashFrame>(file?.StateHashes?.Count ?? 0);
             if (file?.StateHashes != null)
             {
@@ -32,15 +94,97 @@ namespace AbilityKit.Game.Flow.Battle.Replay
                     _expectedStateHashes[e.Frame] = e;
                 }
             }
+            _lastFrame = ResolveLastFrame(file);
             _cursor = 0;
             _isPlaying = true;
             _reportedHashMismatch = false;
         }
 
         public bool IsPlaying => _isPlaying;
+        public int LastFrame => _lastFrame;
+
+        public float PlaybackSpeed
+        {
+            get => _playbackSpeed;
+            set => _playbackSpeed = NormalizePlaybackSpeed(value);
+        }
 
         public void Play() => _isPlaying = true;
         public void Pause() => _isPlaying = false;
+
+        private static float NormalizePlaybackSpeed(float value)
+        {
+            if (float.IsNaN(value) || float.IsInfinity(value)) return 1f;
+            return Math.Max(0.1f, Math.Min(8f, value));
+        }
+
+        private static List<FrameRecordInputFrame> CreateOrderedInputSnapshot(
+            IList<FrameRecordInputFrame> inputs)
+        {
+            var ordered = new List<OrderedInput>(inputs?.Count ?? 0);
+            if (inputs == null) return new List<FrameRecordInputFrame>();
+
+            for (var i = 0; i < inputs.Count; i++)
+            {
+                var input = inputs[i];
+                if (input != null) ordered.Add(new OrderedInput(input, i));
+            }
+
+            ordered.Sort((left, right) =>
+            {
+                var frameOrder = left.Input.Frame.CompareTo(right.Input.Frame);
+                return frameOrder != 0 ? frameOrder : left.SourceIndex.CompareTo(right.SourceIndex);
+            });
+
+            var snapshot = new List<FrameRecordInputFrame>(ordered.Count);
+            for (var i = 0; i < ordered.Count; i++) snapshot.Add(ordered[i].Input);
+            return snapshot;
+        }
+
+        private readonly struct OrderedInput
+        {
+            public OrderedInput(FrameRecordInputFrame input, int sourceIndex)
+            {
+                Input = input;
+                SourceIndex = sourceIndex;
+            }
+
+            public FrameRecordInputFrame Input { get; }
+            public int SourceIndex { get; }
+        }
+
+        private static int ResolveLastFrame(FrameRecordFile file)
+        {
+            var lastFrame = 0;
+            if (file?.Inputs != null)
+            {
+                for (var i = 0; i < file.Inputs.Count; i++)
+                {
+                    var item = file.Inputs[i];
+                    if (item != null) lastFrame = Math.Max(lastFrame, item.Frame);
+                }
+            }
+
+            if (file?.StateHashes != null)
+            {
+                for (var i = 0; i < file.StateHashes.Count; i++)
+                {
+                    var item = file.StateHashes[i];
+                    if (item != null) lastFrame = Math.Max(lastFrame, item.Frame);
+                }
+            }
+
+            if (file?.Snapshots != null)
+            {
+                for (var i = 0; i < file.Snapshots.Count; i++)
+                {
+                    var item = file.Snapshots[i];
+                    if (item != null) lastFrame = Math.Max(lastFrame, item.Frame);
+                }
+            }
+
+            return lastFrame;
+        }
 
         public void SeekToStart()
         {
@@ -103,6 +247,11 @@ namespace AbilityKit.Game.Flow.Battle.Replay
         public void Pump(BattleLogicSession session, int targetFrame)
         {
             if (!_isPlaying) return;
+            PumpFrame(session, targetFrame);
+        }
+
+        internal void PumpFrame(BattleLogicSession session, int targetFrame)
+        {
             if (session == null) return;
 
             while (_cursor < _inputs.Count)

@@ -1,6 +1,7 @@
 using AbilityKit.Ability.Host;
 using AbilityKit.Core.Recording.FrameRecord;
 using AbilityKit.Protocol.Shooter;
+using AbilityKit.Protocol.Room;
 using AbilityKit.Ability.FrameSync;
 using Xunit;
 
@@ -72,5 +73,130 @@ public sealed class ShooterSmokeReplaySummaryTests
                 File.Delete(path);
             }
         }
+    }
+
+    [Fact]
+    public void ValidateInputStateReplayAppliesPureStateBaselineAndDelta()
+    {
+        var path = Path.Combine(Path.GetTempPath(), $"shooter-pure-state-replay-{Guid.NewGuid():N}.record.json");
+        try
+        {
+            using (var writer = FrameRecordCodecs.Current.CreateWriter(path, CreateInputStateMeta()))
+            {
+                AppendPureStateSnapshot(
+                    writer,
+                    frame: 10,
+                    snapshotKind: ShooterPureStateSnapshotKinds.FullBaseline,
+                    baselineFrame: 10,
+                    baselineHash: 0x10101010u,
+                    stateHash: 0x10101010u);
+                AppendPureStateSnapshot(
+                    writer,
+                    frame: 11,
+                    snapshotKind: ShooterPureStateSnapshotKinds.Delta,
+                    baselineFrame: 10,
+                    baselineHash: 0x10101010u,
+                    stateHash: 0x11111111u);
+            }
+
+            var result = ShooterSmokeReplayValidation.ValidateInputStateReplay(path);
+
+            Assert.True(result.Consumed);
+            Assert.Equal(2, result.SnapshotCount);
+            Assert.Equal(11, result.ReplayFrame);
+            Assert.Equal(0x11111111u, result.ReplayStateHash);
+            Assert.True(result.ReplayRoundTripMatched);
+            Assert.Equal(1, result.Summary.PureStateSnapshotCount);
+            Assert.Equal(1, result.Summary.PureStateDeltaSnapshotCount);
+        }
+        finally
+        {
+            if (File.Exists(path))
+            {
+                File.Delete(path);
+            }
+        }
+    }
+
+    [Fact]
+    public void ValidateInputStateReplayRejectsPureStateDeltaWithoutBaseline()
+    {
+        var path = Path.Combine(Path.GetTempPath(), $"shooter-pure-state-delta-only-{Guid.NewGuid():N}.record.json");
+        try
+        {
+            using (var writer = FrameRecordCodecs.Current.CreateWriter(path, CreateInputStateMeta()))
+            {
+                AppendPureStateSnapshot(
+                    writer,
+                    frame: 11,
+                    snapshotKind: ShooterPureStateSnapshotKinds.Delta,
+                    baselineFrame: 10,
+                    baselineHash: 0x10101010u,
+                    stateHash: 0x11111111u);
+            }
+
+            var exception = Assert.Throws<InvalidOperationException>(
+                () => ShooterSmokeReplayValidation.ValidateInputStateReplay(path));
+
+            Assert.Contains("applicable pure-state snapshot", exception.Message, StringComparison.Ordinal);
+        }
+        finally
+        {
+            if (File.Exists(path))
+            {
+                File.Delete(path);
+            }
+        }
+    }
+
+    private static FrameRecordMeta CreateInputStateMeta()
+    {
+        return new FrameRecordMeta
+        {
+            WorldId = "room-1:battle-1:42",
+            WorldType = ShooterSmokeReplayTypes.CreateInputStateWorldType(ShooterSmokeClientProcessMode.Create),
+            TickRate = 30,
+            PlayerId = "player-1",
+        };
+    }
+
+    private static void AppendPureStateSnapshot(
+        IFrameRecordWriter writer,
+        int frame,
+        int snapshotKind,
+        int baselineFrame,
+        uint baselineHash,
+        uint stateHash)
+    {
+        const ulong worldId = 42UL;
+        var pureState = new ShooterPureStateSnapshotPayload(
+            ShooterPureStateSyncCodec.CurrentVersion,
+            worldId,
+            frame,
+            frame * TimeSpan.TicksPerMillisecond,
+            snapshotKind,
+            baselineFrame,
+            baselineHash,
+            stateHash,
+            ShooterPureStateSyncSettings.Default,
+            Array.Empty<ShooterPureStateEntityDelta>(),
+            Array.Empty<ShooterPureStateVisibilityHint>());
+        var payloadOpCode = snapshotKind == ShooterPureStateSnapshotKinds.FullBaseline
+            ? ShooterOpCodes.Snapshot.PureState
+            : ShooterOpCodes.Snapshot.PureStateDelta;
+        var payload = ShooterPureStateSyncCodec.Serialize(in pureState);
+        var wire = new WireStateSyncSnapshotPush
+        {
+            WorldId = worldId,
+            Frame = frame,
+            Timestamp = 0d,
+            IsFullSnapshot = snapshotKind == ShooterPureStateSnapshotKinds.FullBaseline,
+            Actors = null,
+            PayloadOpCode = payloadOpCode,
+            Payload = payload,
+            ServerTicks = pureState.ServerTick,
+        };
+        var wirePayload = WireRoomGatewayBinary.Serialize(in wire).ToArray();
+        writer.AppendSnapshot(frame, payloadOpCode, wirePayload);
     }
 }

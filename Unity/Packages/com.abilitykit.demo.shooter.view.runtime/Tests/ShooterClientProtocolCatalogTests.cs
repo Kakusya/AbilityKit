@@ -12,18 +12,25 @@ namespace AbilityKit.Demo.Shooter.View.Tests
         {
             var spec = ShooterRoomLaunchSpec.CreateDefault("unity-test");
 
-            Assert.AreEqual(ShooterSyncTemplateIds.PredictRollbackAuthority, ShooterRoomLaunchSpec.DefaultSyncTemplateId);
-            Assert.AreEqual(ShooterSyncTemplateIds.PredictRollbackAuthority, spec.SyncTemplateId);
-            Assert.AreEqual((int)NetworkSyncModel.PredictRollback, spec.SyncModel);
+            Assert.AreEqual(ShooterSyncTemplateIds.MassBattleLodAoiSampleBlock, ShooterRoomLaunchSpec.DefaultSyncTemplateId);
+            Assert.AreEqual("ideal", ShooterRoomLaunchSpec.DefaultNetworkEnvironmentId);
+            Assert.AreEqual(ShooterSyncTemplateIds.MassBattleLodAoiSampleBlock, spec.SyncTemplateId);
+            Assert.AreEqual((int)NetworkSyncModel.MassBattleLodSync, spec.SyncModel);
+            Assert.AreEqual("ideal", spec.NetworkEnvironmentId);
+            Assert.AreEqual(ShooterInterpolationDemoHarnessCarrier.DefaultCarrierName, spec.CarrierName);
+            Assert.AreEqual("2", spec.Tags[ShooterRoomLaunchTagKeys.MinPlayers]);
+            Assert.AreEqual(2, spec.MaxPlayers);
         }
 
         [Test]
         public void CatalogContainsAllPublishedTemplateIds()
         {
+            AssertTemplate(ShooterSyncTemplateIds.StateSyncAuthority, NetworkSyncModel.AuthoritativeInterpolation);
             AssertTemplate(ShooterSyncTemplateIds.PredictRollbackAuthority, NetworkSyncModel.PredictRollback);
             AssertTemplate(ShooterSyncTemplateIds.AuthoritativeInterpolationPresentation, NetworkSyncModel.AuthoritativeInterpolation);
             AssertTemplate(ShooterSyncTemplateIds.BatchStateLowFrequency, NetworkSyncModel.BatchStateSync);
             AssertTemplate(ShooterSyncTemplateIds.MassBattleLodAoi, NetworkSyncModel.MassBattleLodSync);
+            AssertTemplate(ShooterSyncTemplateIds.MassBattleLodAoiSampleBlock, NetworkSyncModel.MassBattleLodSync);
             AssertTemplate(ShooterSyncTemplateIds.HybridHeroPrediction, NetworkSyncModel.HybridHeroPrediction);
             AssertTemplate(ShooterSyncTemplateIds.FastReconnectResume, NetworkSyncModel.FastReconnect);
         }
@@ -47,6 +54,28 @@ namespace AbilityKit.Demo.Shooter.View.Tests
             Assert.AreEqual(ShooterSyncTemplateIds.PredictRollbackAuthority, tags[ShooterRoomLaunchTagKeys.SyncTemplateId]);
             Assert.AreEqual(((int)NetworkSyncModel.PredictRollback).ToString(), tags[ShooterRoomLaunchTagKeys.SyncModel]);
             Assert.IsTrue(tags.ContainsKey(ShooterRoomLaunchTagKeys.DurationFrames));
+        }
+
+        [Test]
+        public void FrameworkSnapshotPipelineReusesGatewayPayloadBytes()
+        {
+            var payload = new byte[] { 1, 2, 3, 4 };
+            var snapshot = new ShooterGatewaySnapshot(
+                worldId: 7UL,
+                frame: 12,
+                timestamp: 1.5d,
+                serverTicks: 99L,
+                isFullSnapshot: true,
+                actors: Array.Empty<ShooterGatewayActorSnapshot>(),
+                payloadOpCode: 123,
+                payloadBytes: payload);
+
+            var packet = ShooterFrameworkSnapshotPipeline.ToFramePacket(in snapshot);
+
+            Assert.That(snapshot.PayloadBytes, Is.SameAs(payload));
+            Assert.That(packet.Snapshot.HasValue, Is.True);
+            Assert.That(packet.Snapshot.Value.Payload, Is.SameAs(payload),
+                "Gateway payload should enter SnapshotPipeline without a serialize/deserialize round trip.");
         }
 
         private static void AssertTemplate(string templateId, NetworkSyncModel expectedModel)

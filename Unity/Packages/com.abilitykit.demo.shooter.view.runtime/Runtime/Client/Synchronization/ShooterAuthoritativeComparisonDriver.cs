@@ -2,6 +2,7 @@
 
 using System;
 using System.Collections.Generic;
+using AbilityKit.Ability.StateSync.Aoi;
 using AbilityKit.Demo.Shooter.Runtime;
 using AbilityKit.Network.Runtime.Conditioning;
 using AbilityKit.Network.Runtime.Sync;
@@ -13,7 +14,7 @@ namespace AbilityKit.Demo.Shooter.View
     /// 负责验收会话中的权威世界推进、Carrier 快照发布和 LagComp 历史采集。
     /// <see cref="ShooterAcceptanceSession"/> 只保留会话门面职责，具体的权威侧编排集中在这里。
     /// </summary>
-    internal sealed class ShooterAuthoritativeComparisonDriver
+    internal sealed class ShooterAuthoritativeComparisonDriver : IDisposable
     {
         private readonly IShooterClientSyncController _controller;
         private readonly ShooterBattleRuntimePort _authoritativeWorld;
@@ -24,6 +25,7 @@ namespace AbilityKit.Demo.Shooter.View
         private readonly Queue<PendingAuthoritativeInput> _pendingInputs = new Queue<PendingAuthoritativeInput>();
         private readonly Random _inputRandom;
         private readonly ShooterAuthoritySnapshotPublishOptions _publishOptions;
+        private readonly AoiInterestSet? _aoiInterestSet;
         private ShooterCarrierNetworkLink _carrierNetworkLink;
         private NetworkConditionProfile _networkProfile;
         private SyncTimeAnchor _lastCarrierTimeAnchor;
@@ -47,6 +49,7 @@ namespace AbilityKit.Demo.Shooter.View
             _authoritativePresentation = authoritativePresentation;
             _networkProfile = networkProfile;
             _publishOptions = publishOptions;
+            _aoiInterestSet = publishOptions.UsesAoiScope ? new AoiInterestSet() : null;
             _inputRandom = new Random(networkSeed);
             _carrierNetworkLink = new ShooterCarrierNetworkLink(_controller, networkProfile, networkSeed);
         }
@@ -78,15 +81,24 @@ namespace AbilityKit.Demo.Shooter.View
  
         public void ApplyNetwork(NetworkConditionProfile profile)
         {
+            _carrierNetworkLink.Dispose();
             _networkProfile = profile;
             _pendingInputs.Clear();
             _lastDeliveredInputCount = 0;
             _lastPureStateBaselineFrame = 0;
             _lastPureStateBaselineHash = 0u;
+            _aoiInterestSet?.Clear();
             _carrierNetworkLink = new ShooterCarrierNetworkLink(_controller, profile);
             _lagCompensation.Clear();
             _lastCarrierTimeAnchor = default;
             _networkElapsedSeconds = 0d;
+        }
+
+        public void Dispose()
+        {
+            _carrierNetworkLink.Dispose();
+            _pendingInputs.Clear();
+            _driverHost.Stop();
         }
 
         public void EnqueueInput(int commandFrame, in ShooterPlayerCommand command)
@@ -121,7 +133,7 @@ namespace AbilityKit.Demo.Shooter.View
 
             if (_authoritativePresentation != null)
             {
-                var authoritySnapshot = _authoritativeWorld.GetSnapshot();
+                var authoritySnapshot = _authoritativeWorld.GetSnapshotTransient();
                 _authoritativePresentation.ApplyLocalAuthoritativeSnapshot(in authoritySnapshot);
             }
         }
@@ -169,13 +181,14 @@ namespace AbilityKit.Demo.Shooter.View
 
             var settings = sendPolicy.ToPureStateSettings();
             var interestScope = CreateInterestScope(sendPolicy);
-            var pureState = _authoritativeWorld.ExportPureStateSnapshot(
+            var pureState = _authoritativeWorld.ExportPureStateSnapshotTransient(
                 worldId: 1UL,
                 isFullBaseline: isFullBaseline,
                 settings: settings,
                 baselineFrame: _lastPureStateBaselineFrame,
                 baselineHash: _lastPureStateBaselineHash,
-                interestScope: interestScope);
+                interestScope: interestScope,
+                aoiInterestSet: _aoiInterestSet);
 
             if (isFullBaseline)
             {
@@ -203,8 +216,7 @@ namespace AbilityKit.Demo.Shooter.View
                 return null;
             }
 
-            var snapshot = _authoritativeWorld.GetSnapshot();
-            var players = snapshot.Players ?? Array.Empty<ShooterPlayerSnapshot>();
+            var players = _authoritativeWorld.GetPlayerSnapshotsTransient();
             if (players.Length > 0)
             {
                 var observer = players[0];
@@ -213,6 +225,7 @@ namespace AbilityKit.Demo.Shooter.View
                     observer.X,
                     observer.Y,
                     sendPolicy.AoiRadius,
+                    sendPolicy.AoiBoundaryRadius,
                     sendPolicy.ActiveEntityBudget);
             }
 
@@ -220,7 +233,8 @@ namespace AbilityKit.Demo.Shooter.View
                 observerPlayerId: 0,
                 centerX: 0f,
                 centerY: 0f,
-                radius: sendPolicy.AoiRadius,
+                visibleRadius: sendPolicy.AoiRadius,
+                boundaryRadius: sendPolicy.AoiBoundaryRadius,
                 maxEntities: sendPolicy.ActiveEntityBudget);
         }
 

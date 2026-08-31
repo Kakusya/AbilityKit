@@ -1,9 +1,9 @@
-﻿using System;
+using System;
 using System.Collections.Generic;
 using AbilityKit.Ability.World.DI;
 using AbilityKit.Ability.World.Services;
 using AbilityKit.Ability.World.Services.Attributes;
-using AbilityKit.Core.Continuous;
+using AbilityKit.Continuous;
 using AbilityKit.Core.Logging;
 using AbilityKit.Demo.Moba.Config.BattleDemo.MO;
 using AbilityKit.Demo.Moba.Config.Core;
@@ -156,13 +156,6 @@ namespace AbilityKit.Demo.Moba.Services
             return _continuous;
         }
 
-        private bool CanKeepActive(ContinuousProcessMO process, int actorId)
-        {
-            if (process == null) return false;
-            if (!process.RequireOutOfCombat) return true;
-            return _combatActivity != null && _combatActivity.IsOutOfCombat(actorId, process.OutOfCombatSeconds);
-        }
-
         private static bool ContainsProcessId(IReadOnlyCollection<int> processIds, int processId)
         {
             if (processIds == null || processId <= 0) return false;
@@ -180,6 +173,13 @@ namespace AbilityKit.Demo.Moba.Services
             return _tagTemplates != null && _tagTemplates.TryGet(process.ContinuousTagTemplateId, out var requirements) && requirements != null
                 ? requirements
                 : new ContinuousTagRequirements();
+        }
+
+        private bool CanKeepActive(ContinuousProcessMO process, int actorId)
+        {
+            if (process == null) return false;
+            if (!process.RequireOutOfCombat) return true;
+            return _combatActivity != null && _combatActivity.IsOutOfCombat(actorId, process.OutOfCombatSeconds);
         }
 
         private void EndProcess(ProcessKey key, ContinuousEndReason reason)

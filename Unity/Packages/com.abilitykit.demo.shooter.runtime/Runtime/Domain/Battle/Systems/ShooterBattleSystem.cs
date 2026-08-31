@@ -1,5 +1,6 @@
 using System;
 using System.Collections.Generic;
+using System.Diagnostics;
 using AbilityKit.World.Svelto;
 using Svelto.DataStructures;
 using Svelto.ECS;
@@ -12,6 +13,11 @@ namespace AbilityKit.Demo.Shooter.Runtime
         int Order { get; }
     }
 
+    internal interface IShooterBattleSubstageDiagnostics
+    {
+        Action<string, double>? StageTimingSink { get; set; }
+    }
+
     internal static class ShooterBattleSystemOrder
     {
         public const int BeginFrame = 0;
@@ -20,7 +26,11 @@ namespace AbilityKit.Demo.Shooter.Runtime
 
         public const int EnemyWaveSpawn = 150;
 
-        public const int EnemyWaveMovement = 175;
+        public const int EnemyMovementIntent = 170;
+
+        public const int EnemyRvoSolve = 175;
+
+        public const int EnemyMovementIntegration = 180;
 
         public const int Simulation = 200;
 
@@ -57,13 +67,52 @@ namespace AbilityKit.Demo.Shooter.Runtime
 
         public IReadOnlyList<IShooterBattleSystem> Systems => _systems;
 
+        private Action<string, double>? _stageTimingSink;
+
+        public Action<string, double>? StageTimingSink
+        {
+            get => _stageTimingSink;
+            set
+            {
+                // Delegate installation happens during battle setup. Ignore repeated
+                // assignments so callers cannot turn a diagnostics refresh into churn.
+                if (!ReferenceEquals(_stageTimingSink, value))
+                {
+                    _stageTimingSink = value;
+                    for (var i = 0; i < _systems.Count; i++)
+                    {
+                        if (_systems[i] is IShooterBattleSubstageDiagnostics diagnostics)
+                        {
+                            diagnostics.StageTimingSink = value;
+                        }
+                    }
+                }
+            }
+        }
+
         public IEnumerable<IEngine> engines => _engines;
 
         public void Step(in float deltaTime)
         {
             for (int i = 0; i < _systems.Count; i++)
             {
-                _systems[i].Step(in deltaTime);
+                var system = _systems[i];
+                var sink = StageTimingSink;
+                if (sink == null)
+                {
+                    system.Step(in deltaTime);
+                    continue;
+                }
+
+                var startedAt = Stopwatch.GetTimestamp();
+                try
+                {
+                    system.Step(in deltaTime);
+                }
+                finally
+                {
+                    sink(system.name, (Stopwatch.GetTimestamp() - startedAt) * 1000d / Stopwatch.Frequency);
+                }
             }
         }
     }
@@ -176,10 +225,26 @@ namespace AbilityKit.Demo.Shooter.Runtime
         }
     }
 
+    public sealed class ShooterMatchStateOptions
+    {
+        public static ShooterMatchStateOptions Default { get; } = new ShooterMatchStateOptions(false);
+
+        public static ShooterMatchStateOptions NonTerminatingDefeat { get; } =
+            new ShooterMatchStateOptions(true);
+
+        public ShooterMatchStateOptions(bool continueAfterAllPlayersDefeated)
+        {
+            ContinueAfterAllPlayersDefeated = continueAfterAllPlayersDefeated;
+        }
+
+        public bool ContinueAfterAllPlayersDefeated { get; }
+    }
+
     internal sealed class ShooterMatchStateBattleSystem : IShooterBattleSystem
     {
         private readonly ShooterBattleState _state;
         private readonly ISveltoWorldContext _context;
+        private readonly ShooterMatchStateOptions _options;
 
         public ShooterMatchStateBattleSystem(IShooterBattleServiceResolver services)
         {
@@ -187,6 +252,9 @@ namespace AbilityKit.Demo.Shooter.Runtime
 
             _state = services.Resolve<ShooterBattleState>();
             _context = services.Resolve<ISveltoWorldContext>();
+            _options = services.TryResolve<ShooterMatchStateOptions>(out var options) && options != null
+                ? options
+                : ShooterMatchStateOptions.Default;
         }
 
         public int Order => ShooterBattleSystemOrder.MatchState;
@@ -206,7 +274,7 @@ namespace AbilityKit.Demo.Shooter.Runtime
                 return;
             }
 
-            if (AreAllPlayersDefeated())
+            if (!_options.ContinueAfterAllPlayersDefeated && AreAllPlayersDefeated())
             {
                 _state.TryCompleteMatch(ShooterBattleMatchState.Defeat);
                 return;

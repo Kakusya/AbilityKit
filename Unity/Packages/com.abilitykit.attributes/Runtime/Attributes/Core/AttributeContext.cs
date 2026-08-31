@@ -135,7 +135,13 @@ namespace AbilityKit.Attributes.Core
         public void SetFloat(string key, float value)
         {
             if (string.IsNullOrEmpty(key)) return;
+
+            var changed = !_dataSlots.TryGetValue(key, out _) || Math.Abs(GetFloat(key) - value) > 0.00001f;
             _dataSlots[key] = value;
+            if (changed)
+            {
+                MarkContextFloatDependentsDirty(key);
+            }
         }
 
         /// <summary>
@@ -144,7 +150,13 @@ namespace AbilityKit.Attributes.Core
         public void SetInt(string key, int value)
         {
             if (string.IsNullOrEmpty(key)) return;
+
+            var changed = !_dataSlots.TryGetValue(key, out _) || Math.Abs(GetFloat(key) - value) > 0.00001f;
             _dataSlots[key] = value;
+            if (changed)
+            {
+                MarkContextFloatDependentsDirty(key);
+            }
         }
 
         /// <summary>
@@ -192,15 +204,19 @@ namespace AbilityKit.Attributes.Core
         {
             group ??= string.Empty;
             if (_groups.TryGetValue(group, out var g) && g != null) return g;
+            return CreateGroup(group);
+        }
 
-            g = new AttributeGroup(group, this);
-            g.AttributeChanged += (id, oldV, newV) =>
+        private AttributeGroup CreateGroup(string group)
+        {
+            var value = new AttributeGroup(group, this);
+            value.AttributeChanged += (id, oldV, newV) =>
             {
                 AttributeChanged?.Invoke(group, id, oldV, newV);
                 OnAttributeValueChanged(id);
             };
-            _groups[group] = g;
-            return g;
+            _groups[group] = value;
+            return value;
         }
 
         private void OnAttributeValueChanged(AttributeId id)
@@ -217,6 +233,14 @@ namespace AbilityKit.Attributes.Core
                 if (!dep.IsValid) continue;
                 var g = GetGroupFor(dep);
                 g?.MarkDirty(dep);
+            }
+        }
+
+        private void MarkContextFloatDependentsDirty(string key)
+        {
+            foreach (var group in _groups.Values)
+            {
+                group.MarkContextFloatDependentsDirty(key);
             }
         }
 

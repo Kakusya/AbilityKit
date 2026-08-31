@@ -1,4 +1,5 @@
 using AbilityKit.Demo.Moba.Components;
+using AbilityKit.Combat.Collision;
 using AbilityKit.Combat.MotionSystem.Collision;
 using AbilityKit.Combat.MotionSystem.Constraints;
 using AbilityKit.Combat.MotionSystem.Core;
@@ -15,7 +16,6 @@ namespace AbilityKit.Demo.Moba.Systems.Motion
     [WorldSystem(order: MobaSystemOrder.MotionInit, Phase = WorldSystemPhase.PreExecute)]
     public sealed class MobaMotionInitSystem : WorldSystemBase
     {
-        private const int CollisionLayerUnit = 1 << 0;
         private const float DefaultActorCollisionRadius = 0.5f;
 
         private global::Entitas.IGroup<global::ActorEntity> _group;
@@ -110,8 +110,11 @@ namespace AbilityKit.Demo.Moba.Systems.Motion
                 endOverlapPolicy: MotionEndOverlapPolicy.AllowInside,
                 radius: DefaultActorCollisionRadius,
                 skin: 0f,
-                obstacleMask: CollisionLayerUnit,
-                ignoreMask: 0);
+                obstacleMask: MobaCollisionLayers.WorldMask,
+                ignoreMask: 0,
+                slideAlongWalls: true,
+                maxSlideIterations: 2,
+                wallSlideSpeedRecovery: 1f);
 
             return new MotionConstraints(collision, MotionLeashConstraints.Disabled);
         }

@@ -12,6 +12,7 @@ namespace AbilityKit.Demo.Moba.Gameplay
     {
         [WorldInject(required: false)] private MobaConfigDatabase _configs = null;
         [WorldInject(required: false)] private MobaGameplayConfigSettings _settings = null;
+        [WorldInject(required: false)] private IWorldResolver _services = null;
 
         public int ResolveDefaultGameplayId()
         {
@@ -42,12 +43,28 @@ namespace AbilityKit.Demo.Moba.Gameplay
         public bool TryGetGameplay(int gameplayId, out GameplayMO gameplay)
         {
             gameplay = null;
-            if (gameplayId <= 0 || _configs == null)
+            if (gameplayId <= 0)
             {
                 return false;
             }
 
-            return _configs.TryGetGameplay(gameplayId, out gameplay);
+            var configs = ResolveConfigs();
+            return configs != null && configs.TryGetGameplay(gameplayId, out gameplay);
+        }
+
+        private MobaConfigDatabase ResolveConfigs()
+        {
+            if (_configs != null)
+            {
+                return _configs;
+            }
+
+            if (_services != null && _services.TryResolve<MobaConfigDatabase>(out var configs) && configs != null)
+            {
+                _configs = configs;
+            }
+
+            return _configs;
         }
 
         public void Dispose()

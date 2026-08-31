@@ -5,50 +5,90 @@ using System.Threading;
 using System.Threading.Tasks;
 using AbilityKit.Network.Abstractions;
 using AbilityKit.Network.Runtime;
+using AbilityKit.Network.Sdk;
 
 namespace AbilityKit.Demo.Shooter.View
 {
-    public sealed class ShooterRoomGatewayConnection : IShooterRoomGatewayRequestTransport, IDisposable
+    /// <summary>
+    /// Room-control request transport for the room gateway. After P2.2 this connection is ROOM-ONLY:
+    /// battle data (input submit + snapshot/event push + ack/resync) moved to the dedicated battle
+    /// <see cref="NetworkTransport"/> driven by <see cref="ShooterBattleDataPlane"/>. The battle-state
+    /// members (<see cref="CurrentSession"/>, <see cref="LastPushResult"/>, <see cref="SnapshotPushDispatched"/>)
+    /// are retained as a FACADE populated from the battle data plane, so existing
+    /// <c>GatewayConnection.X</c> consumers keep working. <see cref="OnServerPushReceived"/> no longer
+    /// applies battle snapshots (so room-connection battle pushes, if any, are not double-applied).
+    /// </summary>
+    public sealed class ShooterRoomGatewayConnection :
+        IShooterRoomGatewayRequestTransport,
+        IShooterRoomGatewayPushTransport,
+        IDisposable
     {
-        private readonly IConnection _connection;
-        private readonly RequestClient _requestClient;
+        private readonly Func<uint, ArraySegment<byte>, TimeSpan?, CancellationToken, Task<ArraySegment<byte>>> _sendRequestAsync;
+        private readonly Action<Action<uint, ArraySegment<byte>>> _unsubscribeServerPush;
+        private readonly NetworkSdkClient? _ownedSdkClient;
         private ShooterClientSession? _session;
-        private ShooterClientBattleHandle? _battle;
         private bool _disposed;
 
+        /// <summary>
+        /// Compatibility path for injected connections. The SDK owns the single request dispatcher
+        /// and the supplied connection for this facade's lifetime.
+        /// </summary>
         public ShooterRoomGatewayConnection(IConnection connection)
-            : this(connection, null)
+            : this(CreateOwnedSdkClient(connection), null, ownsSdkClient: true)
         {
         }
 
         public ShooterRoomGatewayConnection(IConnection connection, ShooterClientSession? session)
+            : this(CreateOwnedSdkClient(connection), session, ownsSdkClient: true)
         {
-            _connection = connection ?? throw new ArgumentNullException(nameof(connection));
-            _requestClient = new RequestClient(_connection);
+        }
+
+        public ShooterRoomGatewayConnection(NetworkSdkClient sdkClient)
+            : this(sdkClient, null, ownsSdkClient: false)
+        {
+        }
+
+        public ShooterRoomGatewayConnection(NetworkSdkClient sdkClient, ShooterClientSession? session)
+            : this(sdkClient, session, ownsSdkClient: false)
+        {
+        }
+
+        private ShooterRoomGatewayConnection(
+            NetworkSdkClient sdkClient,
+            ShooterClientSession? session,
+            bool ownsSdkClient)
+        {
+            if (sdkClient == null) throw new ArgumentNullException(nameof(sdkClient));
+
+            _sendRequestAsync = sdkClient.SendRawRequestAsync;
+            _unsubscribeServerPush = handler => sdkClient.ServerPushReceived -= handler;
+            _ownedSdkClient = ownsSdkClient ? sdkClient : null;
             _session = session;
-            _connection.ServerPushReceived += OnServerPushReceived;
+            sdkClient.ServerPushReceived += OnServerPushReceived;
         }
 
         public event Action<uint, ArraySegment<byte>, ShooterSnapshotApplyResult>? SnapshotPushDispatched;
 
+        public event Action<uint, ArraySegment<byte>>? ServerPushReceived;
+
         public ShooterSnapshotApplyResult LastPushResult { get; private set; } = ShooterSnapshotApplyResult.Ignored;
+
+        public ShooterClientSession? CurrentSession => _session;
 
         public void AttachSession(ShooterClientSession session)
         {
             _session = session ?? throw new ArgumentNullException(nameof(session));
-            _battle = null;
         }
 
         public void AttachBattle(ShooterClientBattleHandle battle)
         {
-            _battle = battle ?? throw new ArgumentNullException(nameof(battle));
-            _session = battle.Session;
+            _session = (battle ?? throw new ArgumentNullException(nameof(battle))).Session;
         }
 
         public Task<ArraySegment<byte>> SendRequestAsync(uint opCode, ArraySegment<byte> payload, TimeSpan? timeout = null, CancellationToken cancellationToken = default)
         {
             ThrowIfDisposed();
-            return _requestClient.SendRequestAsync(opCode, payload, timeout, cancellationToken);
+            return _sendRequestAsync(opCode, payload, timeout, cancellationToken);
         }
 
         private void OnServerPushReceived(uint opCode, ArraySegment<byte> payload)
@@ -58,37 +98,30 @@ namespace AbilityKit.Demo.Shooter.View
                 return;
             }
 
-            var session = _session;
-            var result = session == null
-                ? ShooterSnapshotApplyResult.Ignored
-                : session.ApplyGatewayPush(opCode, payload);
-
-            LastPushResult = result;
-            SnapshotPushDispatched?.Invoke(opCode, payload, result);
-            RequestFullSnapshotResyncIfNeededAsync();
+            // Room control plane only. Battle pushes are handled by ShooterBattleDataPlane on the
+            // dedicated battle connection; this connection no longer applies battle snapshots.
+            ServerPushReceived?.Invoke(opCode, payload);
         }
 
-        private void RequestFullSnapshotResyncIfNeededAsync()
+        /// <summary>Populates the battle-state facade from the battle data plane
+        /// (<see cref="LastPushResult"/> / <see cref="SnapshotPushDispatched"/>), so existing
+        /// <c>GatewayConnection.X</c> telemetry consumers keep working post-P2.2.</summary>
+        internal void NotifyBattlePushDispatched(uint opCode, ArraySegment<byte> payload, ShooterSnapshotApplyResult result)
         {
-            var battle = _battle;
-            if (battle == null)
+            if (_disposed)
             {
                 return;
             }
 
-            _ = RequestFullSnapshotResyncIfNeededAsync(battle);
+            LastPushResult = result;
+            SnapshotPushDispatched?.Invoke(opCode, payload, result);
         }
 
-        private async Task RequestFullSnapshotResyncIfNeededAsync(ShooterClientBattleHandle battle)
-        {
-            try
-            {
-                await battle.RequestFullSnapshotResyncIfNeededAsync().ConfigureAwait(false);
-            }
-            catch (ObjectDisposedException)
-            {
-            }
-        }
+        private static NetworkSdkClient CreateOwnedSdkClient(IConnection connection) =>
+            new NetworkSdkBuilder()
+                .UseOwnedConnectionFactory(
+                    () => connection ?? throw new ArgumentNullException(nameof(connection)))
+                .Build();
 
         private void ThrowIfDisposed()
         {
@@ -106,8 +139,8 @@ namespace AbilityKit.Demo.Shooter.View
             }
 
             _disposed = true;
-            _connection.ServerPushReceived -= OnServerPushReceived;
-            _requestClient.Dispose();
+            _unsubscribeServerPush(OnServerPushReceived);
+            _ownedSdkClient?.Dispose();
         }
     }
 }

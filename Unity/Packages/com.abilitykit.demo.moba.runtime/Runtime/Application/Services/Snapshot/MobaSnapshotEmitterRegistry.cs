@@ -28,8 +28,36 @@ namespace AbilityKit.Demo.Moba.Services
         public static MobaSnapshotEmitterRegistry CreateDefault()
         {
             MobaSnapshotEmitterRegistry registry = new MobaSnapshotEmitterRegistry();
-            MarkerScanner<MobaSnapshotEmitterAttribute>.ScanAll(registry);
+            if (RegisterGeneratedAndExternalEmitters(registry) == 0)
+            {
+                if (AppContext.TryGetSwitch(
+                        "AbilityKit.Moba.DisableSnapshotEmitterReflectionFallback",
+                        out var reflectionFallbackDisabled) && reflectionFallbackDisabled)
+                {
+                    throw new InvalidOperationException(
+                        "The generated MOBA snapshot emitter manifest is empty and reflection fallback is disabled.");
+                }
+
+                MarkerScanner<MobaSnapshotEmitterAttribute>.Scan(
+                    new[] { typeof(MobaSnapshotEmitterRegistry).Assembly },
+                    registry);
+                return registry;
+            }
+
             return registry;
+        }
+
+        private static int RegisterGeneratedAndExternalEmitters(MobaSnapshotEmitterRegistry registry)
+        {
+            var runtimeAssembly = typeof(MobaSnapshotEmitterRegistry).Assembly;
+            var generatedCount = MobaGeneratedSnapshotEmitterManifest.Register(registry);
+            var assemblies = MobaRegistryAssemblyDiscovery.GetExternalAssemblies(runtimeAssembly);
+            for (int i = 0; i < assemblies.Length; i++)
+            {
+                MarkerScanner<MobaSnapshotEmitterAttribute>.Scan(new[] { assemblies[i] }, registry);
+            }
+
+            return generatedCount;
         }
 
         /// <summary>
@@ -38,6 +66,25 @@ namespace AbilityKit.Demo.Moba.Services
         public void Register(int priority, Type implType)
         {
             TryRegister(key: priority, implType);
+        }
+
+        internal bool TryRegisterGenerated(int priority, Type implType)
+        {
+            return TryRegister(key: priority, implType);
+        }
+
+        internal bool ContainsRegistration(int priority, Type implType)
+        {
+            var entries = GetEntriesSnapshot(sortByKey: false);
+            for (int i = 0; i < entries.Count; i++)
+            {
+                if (entries[i].Key == priority && entries[i].ImplType == implType)
+                {
+                    return true;
+                }
+            }
+
+            return false;
         }
 
         /// <summary>

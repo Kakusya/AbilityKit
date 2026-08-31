@@ -35,6 +35,19 @@ namespace AbilityKit.Ability.World.DI
             return _map.ContainsKey(serviceType);
         }
 
+        public WorldServiceDescriptor GetDescriptor(Type serviceType)
+        {
+            if (serviceType == typeof(IWorldServiceContainer) || serviceType == typeof(WorldContainer))
+            {
+                return default;
+            }
+            if (_map.TryGetValue(serviceType, out var descriptor))
+            {
+                return descriptor;
+            }
+            return default;
+        }
+
         public WorldScope CreateScope()
         {
             ThrowIfDisposed();
@@ -108,10 +121,15 @@ namespace AbilityKit.Ability.World.DI
                     try
                     {
                         var created = descriptor.Factory(this);
-                        TryInit(created, this);
+                        if (descriptor.Ownership == WorldServiceOwnership.Container)
+                        {
+                            TryInit(created, this);
+                        }
                         _singletons[serviceType] = created;
 
-                        if (created != null && _singletonDisposeSet.Add(created))
+                        if (descriptor.Ownership == WorldServiceOwnership.Container &&
+                            created != null &&
+                            _singletonDisposeSet.Add(created))
                         {
                             _singletonDisposeOrder.Add(created);
                         }
@@ -181,14 +199,24 @@ namespace AbilityKit.Ability.World.DI
             ThrowIfDisposed();
 
             _resolveStack ??= new Stack<Type>(8);
+
+            if (!_map.TryGetValue(serviceType, out var descriptor))
+            {
+                throw new InvalidOperationException($"Service not registered: {serviceType.FullName}. Resolve chain: {FormatResolveChain()}");
+            }
+
+            // Attribute registration exposes contracts as aliases whose factories resolve the
+            // shared implementation type. Tracking that implementation here would make every
+            // alias resolve look like a self-cycle before its factory can create the instance.
+            // Service contracts are sufficient to identify real dependency cycles.
+            if (_resolveStack.Contains(serviceType))
+            {
+                throw new InvalidOperationException($"Circular dependency detected. Resolve chain: {FormatResolveChain()} -> {serviceType.FullName}");
+            }
+
             _resolveStack.Push(serviceType);
             try
             {
-                if (!_map.TryGetValue(serviceType, out var descriptor))
-                {
-                    throw new InvalidOperationException($"Service not registered: {serviceType.FullName}. Resolve chain: {FormatResolveChain()}");
-                }
-
                 switch (descriptor.Lifetime)
                 {
                     case WorldLifetime.Singleton:

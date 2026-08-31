@@ -237,8 +237,6 @@ namespace AbilityKit.Demo.Moba.Services.Triggering.PlanActions
         public ProjectileSourceContext CreateSourceContext(int sourceActorId, int targetActorId, int projectileConfigId)
         {
             var origin = _effect.BuildOrigin(sourceActorId, targetActorId, MobaTraceKind.ProjectileLaunch, projectileConfigId);
-            Log.Warning(
-                $"[AK_TRACE_DIAG] projectile source origin projectileConfigId={projectileConfigId} sourceActorId={sourceActorId} targetActorId={targetActorId} immediateContextId={origin.ImmediateContextId} parentContextId={origin.EffectiveParentContextId} rootContextId={origin.EffectiveRootContextId} ownerContextId={origin.OwnerContextId}");
             return ProjectileSourceContextBuilder.Create()
                 .WithActors(sourceActorId, targetActorId)
                 .WithProjectileConfig(projectileConfigId)

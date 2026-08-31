@@ -1,6 +1,6 @@
 # 5.4 配置系统
 
-> 基于真实源码说明 AbilityKit 的配置体系：通用 `AbilityKit.Ability.Config` 配置数据库、MOBA 运行时配置门面、Luban/JSON/字节混合加载、离线导表链路、TriggerPlan 与 ActionSchema 校验、Source Generator 自动注册，以及 Console/ET/Unity 多端接入方式。
+> 基于真实源码说明 AbilityKit 的配置体系：通用 `AbilityKit.Ability.Config` 配置数据库，以及 MOBA 示例围绕它扩展的表目录、生成清单、Luban/JSON/字节加载、业务校验和多端接入。两者处于不同所有权层级，不能合并声明为框架默认应用套件。
 
 ---
 
@@ -17,6 +17,8 @@
 9. [多端接入流程](#9-多端接入流程)
 10. [热重载与版本模型](#10-热重载与版本模型)
 11. [扩展指南](#11-扩展指南)
+12. [验证证据与已知限制](#12-验证证据与已知限制)
+13. [关联文档](#13-关联文档)
 
 ---
 
@@ -31,7 +33,7 @@ AbilityKit 的配置系统不是一个单一的 `JsonConfigLoader`，而是一�
 | 数据导入适配 | 支持 JSON 文本、字节、混合源、Luban 配置组、DTO Provider 与 Resources 文本加载 | `LubanConfigGroup`、`LubanConfigGroupLoader`、`LubanConfigGroupDeserializer` |
 | 行为配置 | 将配置中的触发计划、条件、动作与调度转换为运行时可执行计划 | `TriggerPlanConfig`、`ConfigToExecutableConverter`、`TriggerPlanJsonDatabase` |
 | Action 参数 Schema | 将配置中的具名参数转换为强类型 Action 参数，并用于启动校验 | `IActionSchema<TActionArgs, TCtx>`、`ActionSchemaRegistry`、`NamedArgsPlanActionModuleBase` |
-| 自动注册与代码生成 | 扫描 `AutoPlanAction` 子类，生成注册表、Schema 和 Action 委托注册代码 | `AutoPlanAction`、`IAutoPlanActionRegistration`、`AutoPlanActionGenerator` |
+| 自动注册与代码生成 | MOBA 编译期生成配置表、PlanAction 等项目清单；Triggering 仍保留 `AutoPlanAction` 运行时 fallback | `MobaGeneratedConfigTableManifest`、`MobaPlanActionManifestGenerator`、`AutoPlanAction` |
 | 运行时验证 | 在战斗启动前检查配置引用、触发计划、Action Schema、数值引用与事件绑定 | `MobaBattleConfigReferenceValidator`、`MobaTriggerPlanIntegrityValidator` |
 
 系统目标可以概括为：
@@ -41,6 +43,18 @@ AbilityKit 的配置系统不是一个单一的 `JsonConfigLoader`，而是一�
 - **多平台加载统一**：Unity Resources、Console 文件系统、ET 逻辑层和测试环境都通过相同配置数据库抽象接入。
 - **配置驱动行为**：TriggerPlan 将事件、条件、动作、调度和 Cue 配成数据，ActionSchema 保证动作参数可解析、可校验。
 - **可热重载与可观测**：配置库维护 `Version`，重载结果通过 `ConfigReloadBus` 发布，并携带全量/增量与变更 ID 信息。
+
+### 1.1 责任边界
+
+| 层级 | 应负责 | 不应由该层统一规定 |
+|------|--------|--------------------|
+| Ability Config 框架 | 表定义、加载源、DTO/Entry 候选构建、批次验证、原子提交、版本和重载结果 | 游戏有哪些表、资源路径、Luban schema、业务外键和数值规则 |
+| Host / 平台接入 | 文件、Resources、字节或远端源适配，启动顺序和热重载触发 | 改写表语义或绕过提交前验证 |
+| 项目应用层 | 表目录、DTO/MO、生成 factory、强类型查询、跨表校验、失败阻断和发布策略 | 要求其他游戏复用 MOBA 表结构或目录 |
+| Triggering / ActionSchema | 相邻的行为配置解析与执行契约 | 充当所有运行时数据的统一配置数据库 |
+| MOBA 示例 | 提供接入程度高的参考闭环 | 成为框架层开包即用的 Battle Application Runtime |
+
+配置内核的稳定价值是“如何加载、构建和提交”，不是“游戏应该配置什么”。项目专用清单保持在 Demo 包内，既提供可参考的完整接入，又避免把高度多变的战斗应用层冻结成公共 API。
 
 ---
 
@@ -78,7 +92,8 @@ AbilityKit 的配置系统不是一个单一的 `JsonConfigLoader`，而是一�
 | [ActionSchemaRegistry.cs](../../../Unity/Packages/com.abilitykit.triggering/Runtime/Plans/Execution/ActionSchemaRegistry.cs) | 全局 Action Schema 注册表，供配置解析与完整性校验使用。 |
 | [NamedArgsPlanActionModuleBase.cs](../../../Unity/Packages/com.abilitykit.triggering/Runtime/Plans/Execution/NamedArgsPlanActionModuleBase.cs) | 具名参数 Action 模块基类，注册 Action 委托和 Schema。 |
 | [AutoPlanAction.cs](../../../Unity/Packages/com.abilitykit.triggering/Runtime/Plans/Attributes/AutoPlanAction.cs) | 自动 PlanAction 基类，支持运行时注册和 Source Generator 注册。 |
-| [AutoPlanActionGenerator.cs](../../../Unity/Packages/com.abilitykit.codegen/DotNet~/AbilityKit.SourceGenerator/Generator/AutoPlanActionGenerator.cs) | Roslyn Source Generator，扫描 `AutoPlanAction` 子类并生成注册代码。 |
+| [MobaPlanActionManifestGenerator.cs](../../../Unity/Packages/com.abilitykit.demo.moba.codegen/DotNet~/AbilityKit.Demo.Moba.CodeGen/Generators/MobaPlanActionManifestGenerator.cs) | MOBA 专用 Roslyn 生成器，生成项目 PlanAction 模块清单；不是 Triggering 框架的通用自动注册器。 |
+| [MobaConfigTableManifestGenerator.cs](../../../Unity/Packages/com.abilitykit.demo.moba.codegen/DotNet~/AbilityKit.Demo.Moba.CodeGen/Generators/MobaConfigTableManifestGenerator.cs) | 为 MOBA 表生成强类型 factory 与 changed-ID collector。 |
 
 ### 2.4 验证与多端接入
 
@@ -138,6 +153,9 @@ flowchart TB
 | `DtoType` | 导入层 DTO 类型。 |
 | `EntryType` | 运行时使用的 MO/Entry 类型。 |
 | `GroupName` | 可选配置组名。 |
+| `DtoTableFactory` | 可选的强类型 DTO 表工厂；与 Entry factory 必须成对提供。 |
+| `EntryTableFactory` | 可选的强类型运行时表工厂，避免默认反射构表。 |
+| `ChangedIdCollector` | 可选的增量变更主键收集器。 |
 
 `IConfigTableRegistry` 提供 `Tables`、`GetTable(filePath)`、`TryGetTable(filePath, out definition)`，让配置数据库不依赖具体业务表集合。
 
@@ -189,13 +207,15 @@ sequenceDiagram
 构表时，数据库会：
 
 1. 根据 `DtoType` 反序列化出 DTO 数组。
-2. 使用 `CreateDtoTableFromDtos` 构建原始 DTO 表。
-3. 使用反射调用 `new EntryType(dto)` 构造运行时 Entry/MO。
+2. 使用 `DtoTableFactory` 构建强类型 DTO 表；未提供 factory 时才由 `CreateDtoTableFromDtos` 走反射兼容路径。
+3. 使用 `EntryTableFactory` 构建运行时 Entry/MO 表；未提供 factory 时才反射调用 `new EntryType(dto)`。
 4. 读取 DTO 的 `Id` 字段或属性作为主键；若没有 `Id`，则 fallback 到 Luban 常用的 `Code`。
 5. 写入 `IntKeyConfigTable<TEntry>`。
 6. 提交后递增 `Version` 并发布 `ConfigReloadResult`。
 
-`Reload` 的失败路径采用提交前构表策略：数据库在循环中先填充 `nextTables` 与 `nextDtoTables`，只有所有注册表都加载、反序列化和构表成功后才调用 `CommitTables(nextTables, nextDtoTables)`。strict 模式下任一表缺失会立即发布 `ConfigReloadResult.Fail` 并返回，此时旧 `_tables`、旧 `_dtoTables` 和旧 `Version` 都保持不变；非 strict 模式下缺失表会以空 DTO 数组补齐。
+`Reload` 的正常失败路径采用提交前构表策略：数据库在循环中先填充 `nextTables` 与 `nextDtoTables`，只有所有注册表都加载、反序列化和构表成功后才调用 `CommitTables(nextTables, nextDtoTables)`。strict 模式下任一表缺失会发布 `ConfigReloadResult.Fail` 并返回，此时旧 `_tables`、旧 `_dtoTables` 和旧 `Version` 都保持不变；非 strict 模式下缺失表会以空 DTO 数组补齐。
+
+这里的“失败结果”不能扩大成“不抛异常”。表 factory、MO 构造函数、`Add` 和其他未被当前分支捕获的异常可以在提交前直接向调用方传播，并且不会统一转换为 `ConfigReloadResult.Fail`，也不会统一发布失败事件。候选表仍保护了旧库状态，但调用方必须同时处理返回结果和异常两条失败通道。
 
 `TryLoadFromSource` 的查找顺序是 bytes、fullPath text、原始 `definition.FilePath` text。这个 fallback 让 `basePath` 和裸表名两种资源组织方式可以共存，但也意味着同一张表在多个路径同时存在时，bytes 优先级最高，随后才是带 `basePath` 的文本。
 
@@ -315,24 +335,27 @@ flowchart TB
 
 当前 `LubanConfigGroupDeserializer` 是 JSON 文本适配器：`DeserializeFromText` 解析 `JArray`，逐行映射到框架 DTO；`DeserializeFromBytes` 会抛出 `NotSupportedException`，因此 `LubanConfigGroup` 路径不要被理解为直接支持 Luban bytes。字节导表仍然走 `MobaConfigDatabase.ReloadFromBytes`、`ReloadFromMixed` 或注入的 `IMobaConfigDtoBytesDeserializer` 路径。
 
-### 6.3 离线导表链路
+### 6.3 权威源、离线生成与发布边界
 
-`LubanConfig/Moba` 下的脚本描述了配置进入运行时资源目录的离线链路：
+生产 MOBA JSON 的唯一权威源是 `Unity/Packages/com.abilitykit.demo.moba.view.runtime/Resources` 下的 `moba` 与 `ability` 目录。Unity 直接消费 package 资源；Console、纯 .NET 测试、训练器和 ET 示例消费 `src/AbilityKit.Demo.Moba.Console/Configs` 下的发布副本。禁止把 Console 副本或 `Unity/Assets/Resources` 当成生产内容源。
 
 ```mermaid
 flowchart LR
-    Excel["Luban Excel / conf"] --> Script["export_moba_configs.ps1"]
-    Script --> Json["Luban JSON stage"]
-    Script --> Code["C# cfg.Tables code stage"]
-    Json --> UnityRes["Unity Assets/Resources/moba"]
-    Json --> ConsoleCfg["Console Configs/luban"]
+    Excel["Luban Excel / conf"] --> Export["export_moba_configs.ps1"]
+    Export --> Candidate[".generated/json review candidate"]
+    Export --> Code["C# cfg.Tables code stage"]
+    Candidate --> Review["人工/工具审查并合入权威 JSON"]
+    Review --> Package["Package Resources/moba + ability"]
+    Package --> UnityRuntime["Unity Runtime"]
+    Package --> Publish["sync_moba_json_configs.ps1"]
+    Publish --> ConsoleCfg["Console Configs replica"]
+    ConsoleCfg --> DotNetRuntime["Console / tests / training / ET"]
     Code --> LubanGen["Runtime LubanGen"]
-    Runtime["Console/Unity Runtime"] --> UnityRes
-    Runtime --> ConsoleCfg
-    Runtime --> LubanGen
 ```
 
-`export_moba_configs.ps1` 读取 `MiniTemplate/luban.conf`，对 `all` target 运行 Luban JSON 导出和 `cs-newtonsoft-json` 代码生成，然后复制 JSON 到 Unity Resources 与 Console 配置目录，并复制生成代码到 runtime package 的 `LubanGen`。脚本参数里保留了 bytes 输出目录和复制步骤，但当前读到的命令只显式生成 JSON 数据与 C# 代码；是否真正产出 bytes 取决于后续脚本或 Luban 命令扩展。
+`export_moba_configs.ps1` 读取 `MiniTemplate/luban.conf`，对 `all` target 运行 Luban JSON 导出和 `cs-newtonsoft-json` 代码生成。由于当前 `MiniTemplate` 不能覆盖完整生产内容，JSON 只生成到 `.generated/json` 候选区，不直接双写 package 或 Console；评审后的数据必须先进入 package 权威目录。生成的 C# 代码仍复制到 runtime package 的 `LubanGen`。
+
+`tools/sync_moba_json_configs.ps1` 只拥有 `moba` 与 `ability` 两个发布面，默认或 `-Check` 只做语义 JSON 漂移审计，`-DryRun` 展示变更，只有显式 `-Apply` 才发布 package 到 Console。`-DeleteExtra` 也只作用于上述目录，因此不会删除 Console 独有配置。脚本拒绝非 package 权威源以及任何指向 Unity 的副本目标。
 
 Trigger 配置还有两条工具链：`convert_to_source_format.ps1` 把运行时 JSON 转成带 `$schema`、metadata、actions、conditions 的 authoring source 格式；`split_trigger_configs.ps1` 将聚合 Trigger JSON 拆成 `skills`、`buffs`、`passives`、`misc` 等目录下的单文件，并可选择输出 source 格式或运行时格式。
 
@@ -416,33 +439,33 @@ sequenceDiagram
 
 这使配置中的动作参数可以保持为具名数据，而业务执行时仍然获得强类型结构，例如伤害动作中的 `GiveDamageArgs`。
 
-### 7.4 AutoPlanAction 与 Source Generator
+### 7.4 AutoPlanAction 与项目生成清单
 
 `AutoPlanAction` 提供另一条低样板路径：
 
 1. 用户继承 `AutoPlanAction`。
 2. 重写 `ActionId` 与 `Execute(triggerArgs, ctx)`。
 3. 可选重写 `ParseFrom(namedArgs, ctx)` 与 `TryValidateArgs`。
-4. 运行时通过内置 `AutoSchemaImpl` 注册，或由 Source Generator 生成静态注册代码。
+4. 运行时通过内置 `AutoSchemaImpl` 完成 fallback 注册；项目也可以建立自己的编译期清单。
 
-`AutoPlanActionGenerator` 会扫描继承 `AutoPlanAction` 的类，并生成：
+当前仓库没有独立的通用 `com.abilitykit.codegen` 包，也没有仍在生效的通用 `AutoPlanActionGenerator`。MOBA 使用的是项目专用 `MobaPlanActionManifestGenerator`：它扫描满足 MOBA Attribute/模块基类契约的类型，生成排序后的 `MobaGeneratedPlanActionManifest` 描述符。它不会为整个 Triggering 框架定义统一注册目录。
 
-- `AutoPlanActionRegistry.RegisterAll(actions, services)`
-- 每个 Action 的 partial 注册实现
-- 每个 Action 的 Schema 类型
-- `NamedAction0/1/2` 委托注册
+这两条路径应分开理解：
+
+- `AutoPlanAction` 是 Triggering 包提供的运行时低样板机制，实例自己提供解析和验证语义。
+- `MobaGeneratedPlanActionManifest` 是 MOBA 应用层的编译期装配资产，用于减少项目扫描和手工清单。
+- 其他游戏可以采用显式模块注册、自己的生成器或其他 DI/manifest 方案，不需要依赖 MOBA 清单。
 
 ```mermaid
 flowchart TB
-    A["开发者编写 AutoPlanAction 子类"] --> B["Roslyn SyntaxReceiver 扫描"]
-    B --> C["提取 ActionId / Order"]
-    C --> D["生成 AutoPlanActionRegistry"]
-    D --> E["生成 partial class 注册方法"]
-    E --> F["注册 ActionSchema"]
-    E --> G["注册 NamedAction0/1/2"]
+    A["项目声明 MOBA PlanAction 模块"] --> B["MOBA Generator / Analyzer 共享契约"]
+    B --> C["筛选有效类型并按 order 排序"]
+    C --> D["生成 MobaGeneratedPlanActionManifest"]
+    D --> E["项目 bootstrap 消费 descriptors"]
+    F["Triggering AutoPlanAction"] --> G["运行时 fallback 注册"]
 ```
 
-生成器的职责边界要明确：它负责把 `AutoPlanAction` 子类发现出来，按 `Order` 排序，生成 `AutoPlanActionRegistry.RegisterAll(actions, services)`、partial 注册实现、Schema 类型和 `NamedAction0/1/2` 注册代码；但当前生成的 Schema `TryValidateArgs` 直接返回 `true`。如果某个自动 Action 需要严格参数校验，不能只依赖生成代码，应该在运行时 fallback 的 `AutoPlanAction.TryValidateArgs` 路径中实现校验，或改为显式 `IActionSchema<TActionArgs, TCtx>` + `NamedArgsPlanActionModuleBase`。
+生成清单只解决“发现和装配”，不会替项目定义 Action 参数的业务正确性。需要严格参数契约时，应在模块/Schema 中实现验证，并由启动完整性校验阻断错误配置；不能以生成成功替代业务验证。
 
 > 当前源码中的 `ActionSchemaRegistry.ParseArgs` 仍是保守占位，直接返回具名参数字典；实际强类型解析主要由 `NamedArgsPlanActionModuleBase` 调用具体 Schema 的 `ParseArgs` 完成，或由 `AutoPlanAction` 实例的 `ParseFrom` 完成。
 
@@ -575,7 +598,7 @@ flowchart TB
     F --> G["发布 ConfigReloadResult.Success(fullReload=true)"]
 ```
 
-这避免了加载过程中部分表成功、部分表失败导致运行时读到半更新状态。
+这避免了正常构表失败时运行时读到半更新状态，但不是完整事务保证：候选表创建期间的外部副作用不受数据库回滚；`CommitTables` 之后的同步通知异常发生时，表集合与 `Version` 已经更新，方法却可能没有正常返回成功结果。
 
 ### 10.2 增量重载
 
@@ -587,9 +610,17 @@ flowchart TB
 - 成功后 `Version++`，发布 `fullReload=false` 和 `changedIds`。
 - 删除表暂不支持直接增量删除，需要全量重载。
 
+一次增量请求中的所有 change 会先构建候选 DTO/Entry 表并完成验证，只有整个 change batch 成功才提交替换。任一被结构化处理的转换或验证失败时保留旧表和旧版本；“按表增量”不等于逐表立即写入。
+
+增量提交会把候选内容逐张替换进现有表实例，从而尽量保留已缓存的 `IConfigTable` 引用；全量提交则替换表对象。两种模式的对象身份语义不同。增量替换也不是不可失败的原子指针交换：若某张表的替换意外抛错，前面已经替换的表没有统一回滚。`All()` 暴露的还是字典 values live view，数据库本身没有读写锁，宿主必须把 reload 与读取串行化。
+
 ### 10.3 重载事件
 
-通用库使用 `ConfigReloadBus.Publish(result)` 发布结果，MOBA 门面会将内部结果转换为 `moba.config` 的业务级结果。监听方可以根据：
+通用库使用 `AbilityKit.Ability.HotReload.ConfigReloadBus.Publish(result)` 发布结果，MOBA 门面会将内部结果转换为 `moba.config` 的业务级结果。仓库中还存在 `AbilityKit.Ability.Config` 命名空间下的同名 `ConfigReloadResult` / `ConfigReloadBus`，它们不是同一个事件通道；接入方必须确认引用的具体类型，不能只按短类名订阅。
+
+发布是同步且没有订阅者异常隔离。成功全量重载的实际顺序是“提交表与版本 -> 发布通用 `config` 成功 -> MOBA 门面发布 `moba.config` 成功”。如果通用订阅者抛错，调用方会在状态已经提交后收到异常，MOBA 包装通知也可能根本没有机会发布。因此 Reload 事件适合做失效提示，不应承担提交事务、跨缓存回滚或强一致广播。
+
+监听方可以根据：
 
 - `Succeeded`
 - `Version`
@@ -606,8 +637,8 @@ flowchart TB
 ### 11.1 新增一张业务配置表
 
 1. 定义导入层 DTO，确保存在 int `Id` 或 `Code` 字段/属性。
-2. 定义运行时 MO，并提供 `MO(DTO dto)` 构造函数。
-3. 在 `MobaRuntimeConfigTableRegistry.Tables` 新增 `Entry(file, typeof(DTO), typeof(MO))`。
+2. 定义运行时 MO，并提供生成 factory 所需的公开 `MO(DTO dto)` 构造函数。
+3. 使用 MOBA 表特性进入 `MobaGeneratedConfigTableManifest`；`MobaRuntimeConfigTableRegistry.Tables` 从生成清单创建，只有清单为空时才使用反射 fallback。
 4. 如来自 Luban 且字段不一致，在 `LubanConfigGroupDeserializer.DeserializeItem` 增加专门映射。
 5. 在 `MobaConfigDatabase` 增加 `GetXxx` / `TryGetXxx` 业务访问方法。
 6. 在 `MobaBattleConfigReferenceValidator` 中补充跨表引用与数值范围校验。
@@ -638,7 +669,21 @@ flowchart TB
 
 ---
 
-## 12. 关联文档
+## 12. 验证证据与已知限制
+
+| 证据 | 等级与结论 |
+|------|------------|
+| Ability Config 与 MOBA Runtime 源码 | E0：可确认 factory-first、反射 fallback、候选构建和提交语义 |
+| MOBA Console、ET、Unity 消费者 | E2：证明项目配置门面已经进入多端接入路径，不等于通用内核所有模式均被验收 |
+| `MobaConfigTableManifestTests.cs` | E3：虽寄宿在 MOBA 测试工程，但直接覆盖 factory 成对约束、生成清单、反射 fallback、增量批次全成全败、版本递增和 deletion/full-reload 边界 |
+| `MobaSkillConfigurationContractTests.cs` 等 | E3：覆盖部分 MOBA 业务配置和消费者契约；不能替代其他加载源、全量 reload、事件和并发边界测试 |
+| 生产导表与 gate | 部分 E5 配置存在，是否自动触发及引用目标必须逐 gate 核对，不能由脚本存在外推为持续阻断 |
+
+当前没有独立的通用 Config 测试工程，但不能据此忽略上述寄宿测试的直接契约价值。其余已知限制包括：反射 fallback 仍可能隐藏缺失生成器；资源路径优先级可能选择到旧副本；`MobaConfigDatabase.ReloadFromJsonTexts(..., strict)` 当前没有把 `strict` 下传，实际总是走内部 strict 文本重载；MOBA 成功包装结果固定为 `fullReload=true`、`changedIds=null`；TriggerPlan/ActionSchema 是相邻行为配置而非统一数据库；热重载后的项目缓存刷新和副作用补偿仍由消费者负责。MOBA 的强类型门面与校验器可作为高接入参考，但不会被提升为所有游戏的公共应用层。
+
+---
+
+## 13. 关联文档
 
 - [事件系统](01-EventSystem.md) - 配置热重载与 TriggerPlan 执行都依赖事件/发布订阅能力。
 - [触发器系统](../08-GameplayModules/02-TriggeringSystem.md) - 深入理解 TriggerPlan 如何执行。
@@ -646,4 +691,6 @@ flowchart TB
 
 ---
 
-*文档版本：v2.1 | 最后更新：2026-07-04*
+文档类型：Canonical 设计 | 事实基线：2026-08-17 | 证据等级：E0 通用内核与项目实现、E2 多端消费者、E3 寄宿式 ConfigDatabase/MOBA 配置契约；独立通用测试工程与 E4/E5 未完整闭环
+
+*文档版本：v3.1 | 最后更新：2026-08-17*

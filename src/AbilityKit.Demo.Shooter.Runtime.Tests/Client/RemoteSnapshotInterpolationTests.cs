@@ -1,6 +1,8 @@
 using System;
 using System.Collections.Generic;
+using AbilityKit.Demo.Shooter.View;
 using AbilityKit.Network.Runtime;
+using AbilityKit.Protocol.Shooter;
 using Xunit;
 
 namespace AbilityKit.Demo.Shooter.Runtime.Tests;
@@ -18,6 +20,73 @@ public sealed class RemoteSnapshotInterpolationTests
         public long TimelineTicks { get; }
 
         public float Value { get; }
+    }
+
+    [Fact]
+    public void ShooterRemoteSampleExcludesActorWithoutCopyingRemainingOrder()
+    {
+        var actors = new[]
+        {
+            new ShooterGatewayActorSnapshot(1, 1f, 0f, 0f, 0f, 0f, 100f, 100f, 1),
+            new ShooterGatewayActorSnapshot(2, 2f, 0f, 0f, 0f, 0f, 100f, 100f, 1),
+            new ShooterGatewayActorSnapshot(3, 3f, 0f, 0f, 0f, 0f, 100f, 100f, 1)
+        };
+
+        var sample = new ShooterRemoteSnapshotSample(1ul, frame: 1, serverTicks: 100L, actors, excludedActorId: 2);
+
+        Assert.Same(sample, sample.Actors);
+        Assert.Equal(2, sample.Count);
+        Assert.Equal(1, sample[0].ActorId);
+        Assert.Equal(3, sample[1].ActorId);
+    }
+
+    [Fact]
+    public void ShooterProjectorPreservesPackedEnemyLifecycleForPresentation()
+    {
+        var enemyLifecycle = new ShooterPackedComponentChunk(
+            ShooterPackedComponentKinds.EntityLifecycle,
+            ShooterPackedEntityKinds.Enemy,
+            count: 1,
+            entityIds: new[] { 10001 },
+            valueX: Array.Empty<float>(),
+            valueY: Array.Empty<float>(),
+            valueZ: Array.Empty<float>(),
+            valueW: Array.Empty<float>(),
+            intValues: Array.Empty<int>(),
+            flags: new[] { ShooterPackedEntityFlags.Alive },
+            ownerIds: Array.Empty<int>(),
+            aux: Array.Empty<int>());
+        var packed = new ShooterPackedSnapshotPayload(
+            ShooterPackedSnapshotCodec.CurrentVersion,
+            worldId: 88ul,
+            frame: 6,
+            serverTick: 600L,
+            snapshotFlags: ShooterPackedSnapshotFlags.Full,
+            stateHash: 0x1234u,
+            entityCount: 1,
+            extensionPayload: Array.Empty<byte>(),
+            componentChunks: new[] { enemyLifecycle });
+        var sample = new ShooterRemoteSnapshotSample(
+            88ul,
+            frame: 6,
+            serverTicks: 600L,
+            Array.Empty<ShooterGatewayActorSnapshot>(),
+            packed);
+        var interpolation = new RemoteSnapshotInterpolation<ShooterRemoteSnapshotSample>(
+            sample,
+            sample,
+            alpha: 0f,
+            extrapolationTicks: 0L);
+
+        var projected = new ShooterRemoteSnapshotProjector().Project(in interpolation);
+        var batch = new ShooterSnapshotViewModelMapper().Map(in projected);
+
+        Assert.True(projected.IsFullSnapshot);
+        Assert.Equal(ShooterOpCodes.Snapshot.PackedState, projected.PayloadOpCode);
+        Assert.True(projected.PackedSnapshot.HasValue);
+        Assert.Same(packed.ComponentChunks, projected.PackedSnapshot.Value.ComponentChunks);
+        Assert.Contains(batch.EntityChanges, change =>
+            change.Kind == ShooterViewEntityKind.Enemy && change.EntityId == 10001);
     }
 
     [Fact]

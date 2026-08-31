@@ -1,31 +1,9 @@
 {
+  "authMode": "user-oauth",
   "appId": "cli_xxxxxxxxxxxxxxxx",
-  "appSecret": "replace-with-your-app-secret-in-tools-feishu-design-sync.local.json",
-  "apiBaseUrl": "https://open.feishu.cn/open-apis",
-  "exportDir": "artifacts/feishu-design-export",
-  "sourceDir": "Docs/design",
-  "syncStatePath": "artifacts/feishu-design-export/feishu-sync-state.local.json",
-  "defaultLanguage": "zh_cn",
-  "requestTimeoutSeconds": 120,
-  "pollIntervalSeconds": 3,
-  "maxPollSeconds": 180,
+  "appSecret": "replace-with-your-app-secret",
   "target": {
-    "mode": "drive_import",
-    "rootType": "folder",
-    "rootToken": "replace-with-writable-feishu-folder-or-wiki-node-token",
-    "spaceId": "optional-wiki-space-id-when-using-wiki",
-    "parentNodeToken": "optional-wiki-parent-node-token-when-using-wiki"
+    "rootToken": "replace-with-your-personal-folder-token"
   },
-  "import": {
-    "fileExtension": "md",
-    "sourceFormat": "markdown",
-    "targetFormat": "docx",
-    "replaceExisting": true,
-    "endpointPaths": {
-      "tenantAccessToken": "/auth/v3/tenant_access_token/internal",
-      "uploadAll": "/drive/v1/medias/upload_all",
-      "createImportTask": "/drive/v1/import_tasks",
-      "getImportTask": "/drive/v1/import_tasks/{ticket}"
-    }
-  }
+  "changedDocumentMode": "block"
 }

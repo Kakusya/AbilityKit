@@ -1,9 +1,9 @@
+using MemoryPack;
 using System;
 using System.Collections.Generic;
 using AbilityKit.Ability.FrameSync;
 using AbilityKit.Ability.FrameSync.Rollback;
 using AbilityKit.Core.Pooling;
-using AbilityKit.Core.Serialization;
 using AbilityKit.Core.Mathematics;
 using AbilityKit.Demo.Moba.Services;
 using AbilityKit.Demo.Moba.Services.StateSync;
@@ -14,8 +14,8 @@ namespace AbilityKit.Demo.Moba.Rollback
     {
         public const int DefaultKey = 10001;
 
-        private static readonly ObjectPool<List<Entry>> s_entryListPool = Pools.GetPool(
-            createFunc: () => new List<Entry>(16),
+        private static readonly ObjectPool<List<MobaActorTransformRollbackEntry>> s_entryListPool = Pools.GetPool(
+            createFunc: () => new List<MobaActorTransformRollbackEntry>(16),
             onRelease: list => list.Clear(),
             defaultCapacity: 8,
             maxSize: 64,
@@ -42,7 +42,7 @@ namespace AbilityKit.Demo.Moba.Rollback
             Import(frame, payload);
         }
 
-        public void AddStateHash(FrameIndex frame, MobaStateHashBuilder hash)
+        public void AddStateHash(FrameIndex frame, ref MobaStateHashBuilder hash)
         {
             var entries = s_entryListPool.Get();
             try
@@ -53,7 +53,7 @@ namespace AbilityKit.Demo.Moba.Rollback
                     var e = kv.Value;
                     if (e == null) continue;
                     if (!e.hasTransform) continue;
-                    entries.Add(new Entry(actorId, e.transform.Value));
+                    entries.Add(CreateEntry(actorId, e));
                 }
 
                 entries.Sort((a, b) => a.ActorId.CompareTo(b.ActorId));
@@ -63,7 +63,7 @@ namespace AbilityKit.Demo.Moba.Rollback
                 for (int i = 0; i < entries.Count; i++)
                 {
                     var it = entries[i];
-                    AddEntryHash(it, hash);
+                    AddEntryHash(it, ref hash);
                 }
             }
             finally
@@ -83,12 +83,12 @@ namespace AbilityKit.Demo.Moba.Rollback
                     var e = kv.Value;
                     if (e == null) continue;
                     if (!e.hasTransform) continue;
-                    entries.Add(new Entry(actorId, e.transform.Value));
+                    entries.Add(CreateEntry(actorId, e));
                 }
 
                 entries.Sort((a, b) => a.ActorId.CompareTo(b.ActorId));
-                var payloadEntries = entries.Count == 0 ? Array.Empty<Entry>() : entries.ToArray();
-                return BinaryObjectCodec.Encode(new Payload(1, payloadEntries));
+                var payloadEntries = entries.Count == 0 ? Array.Empty<MobaActorTransformRollbackEntry>() : entries.ToArray();
+                return MemoryPackSerializer.Serialize(new MobaActorTransformRollbackPayload(2, payloadEntries));
             }
             finally
             {
@@ -100,7 +100,7 @@ namespace AbilityKit.Demo.Moba.Rollback
         {
             if (payload == null || payload.Length == 0) return;
 
-            var p = BinaryObjectCodec.Decode<Payload>(payload);
+            var p = MemoryPackSerializer.Deserialize<MobaActorTransformRollbackPayload>(payload);
             if (p.Entries == null || p.Entries.Length == 0) return;
 
             for (int i = 0; i < p.Entries.Length; i++)
@@ -110,11 +110,47 @@ namespace AbilityKit.Demo.Moba.Rollback
                 {
                     e.ReplaceTransform(it.Transform);
                     SyncMotionState(e, it.Transform);
+                    if (p.Version >= 2)
+                    {
+                        SyncMoveInput(e, in it);
+                    }
                 }
             }
         }
 
-        private static void SyncMotionState(global::ActorEntity e, in Transform3 transform)
+        private static MobaActorTransformRollbackEntry CreateEntry(int actorId, global::ActorEntity entity)
+        {
+            var hasMoveInput = entity.hasMoveInput;
+            return new MobaActorTransformRollbackEntry(
+                actorId,
+                entity.transform.Value,
+                hasMoveInput,
+                hasMoveInput ? entity.moveInput.Dx : 0f,
+                hasMoveInput ? entity.moveInput.Dz : 0f);
+        }
+
+        private static void SyncMoveInput(
+            global::ActorEntity entity,
+            in MobaActorTransformRollbackEntry entry)
+        {
+            if (entry.HasMoveInput)
+            {
+                if (entity.hasMoveInput)
+                {
+                    entity.ReplaceMoveInput(entry.MoveDx, entry.MoveDz);
+                }
+                else
+                {
+                    entity.AddMoveInput(entry.MoveDx, entry.MoveDz);
+                }
+            }
+            else if (entity.hasMoveInput)
+            {
+                entity.RemoveMoveInput();
+            }
+        }
+
+        internal static void SyncMotionState(global::ActorEntity e, in Transform3 transform)
         {
             if (e == null || !e.hasMotion) return;
 
@@ -129,7 +165,7 @@ namespace AbilityKit.Demo.Moba.Rollback
             e.ReplaceMotion(m.Pipeline, state, output, m.Solver, m.Policy, m.Events, m.Initialized, m.HitTriggerRuntime);
         }
 
-        private static void AddEntryHash(in Entry entry, MobaStateHashBuilder hash)
+        private static void AddEntryHash(in MobaActorTransformRollbackEntry entry, ref MobaStateHashBuilder hash)
         {
             var t = entry.Transform;
             hash.AddInt(entry.ActorId);
@@ -144,29 +180,48 @@ namespace AbilityKit.Demo.Moba.Rollback
             hash.AddFloat(t.Scale.Y);
             hash.AddFloat(t.Scale.Z);
         }
+    }
 
-        public readonly struct Payload
+    [MemoryPackable]
+    public readonly partial struct MobaActorTransformRollbackPayload
+    {
+        [MemoryPackOrder(0)] public readonly int Version;
+        [MemoryPackOrder(1)] public readonly MobaActorTransformRollbackEntry[] Entries;
+
+        [MemoryPackConstructor]
+        public MobaActorTransformRollbackPayload(int version, MobaActorTransformRollbackEntry[] entries)
         {
-            [BinaryMember(0)] public readonly int Version;
-            [BinaryMember(1)] public readonly Entry[] Entries;
+            Version = version;
+            Entries = entries;
+        }
+    }
 
-            public Payload(int version, Entry[] entries)
-            {
-                Version = version;
-                Entries = entries;
-            }
+    [MemoryPackable]
+    public readonly partial struct MobaActorTransformRollbackEntry
+    {
+        [MemoryPackOrder(0)] public readonly int ActorId;
+        [MemoryPackOrder(1)] public readonly Transform3 Transform;
+        [MemoryPackOrder(2)] public readonly bool HasMoveInput;
+        [MemoryPackOrder(3)] public readonly float MoveDx;
+        [MemoryPackOrder(4)] public readonly float MoveDz;
+
+        public MobaActorTransformRollbackEntry(
+            int actorId,
+            Transform3 transform,
+            bool hasMoveInput,
+            float moveDx,
+            float moveDz)
+        {
+            ActorId = actorId;
+            Transform = transform;
+            HasMoveInput = hasMoveInput;
+            MoveDx = moveDx;
+            MoveDz = moveDz;
         }
 
-        public readonly struct Entry
+        public MobaActorTransformRollbackEntry(int actorId, Transform3 transform)
+            : this(actorId, transform, false, 0f, 0f)
         {
-            [BinaryMember(0)] public readonly int ActorId;
-            [BinaryMember(1)] public readonly Transform3 Transform;
-
-            public Entry(int actorId, Transform3 transform)
-            {
-                ActorId = actorId;
-                Transform = transform;
-            }
         }
     }
 }

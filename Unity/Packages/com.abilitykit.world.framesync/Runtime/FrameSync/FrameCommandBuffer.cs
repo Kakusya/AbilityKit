@@ -2,6 +2,7 @@
 
 using System;
 using System.Collections.Generic;
+using AbilityKit.Core.Collections;
 
 namespace AbilityKit.Ability.FrameSync
 {
@@ -15,8 +16,12 @@ namespace AbilityKit.Ability.FrameSync
     {
         private static readonly IReadOnlyDictionary<TKey, TCommand> EmptyFrameCommands = new Dictionary<TKey, TCommand>(0);
 
+        private readonly object _sync = new object();
         private readonly Dictionary<int, Dictionary<TKey, TCommand>> _frames = new Dictionary<int, Dictionary<TKey, TCommand>>();
+        private readonly SortedIntSet _frameNumbers;
         private readonly IComparer<TCommand>? _commandComparer;
+        // Pool of per-frame dictionaries retired by trim/clear; accessed only under _sync.
+        private readonly Stack<Dictionary<TKey, TCommand>> _frameCommandPool = new Stack<Dictionary<TKey, TCommand>>();
         private int _oldestRetainedFrame;
         private int _retainedFrameWindow;
         private int _latestFrame;
@@ -24,28 +29,49 @@ namespace AbilityKit.Ability.FrameSync
         public FrameCommandBuffer(int retainedFrameWindow = 120, IComparer<TCommand>? commandComparer = null)
         {
             _retainedFrameWindow = retainedFrameWindow < 1 ? 1 : retainedFrameWindow;
+            _frameNumbers = new SortedIntSet(_retainedFrameWindow);
             _commandComparer = commandComparer;
         }
 
-        public int OldestRetainedFrame => _oldestRetainedFrame;
+        public int OldestRetainedFrame
+        {
+            get { lock (_sync) return _oldestRetainedFrame; }
+        }
 
-        public int RetainedFrameWindow => _retainedFrameWindow;
+        public int RetainedFrameWindow
+        {
+            get { lock (_sync) return _retainedFrameWindow; }
+        }
 
-        public int LatestFrame => _latestFrame;
+        public int LatestFrame
+        {
+            get { lock (_sync) return _latestFrame; }
+        }
 
         public void Clear()
         {
-            _frames.Clear();
-            _oldestRetainedFrame = 0;
-            _latestFrame = 0;
+            lock (_sync)
+            {
+                foreach (var kv in _frames)
+                {
+                    RetireFrameCommands(kv.Value);
+                }
+                _frames.Clear();
+                _frameNumbers.Clear();
+                _oldestRetainedFrame = 0;
+                _latestFrame = 0;
+            }
         }
 
         public void SetRetainedFrameWindow(int frames, int anchorFrame = 0)
         {
-            _retainedFrameWindow = frames < 1 ? 1 : frames;
-            if (anchorFrame > 0)
+            lock (_sync)
             {
-                TrimBefore(Math.Max(_oldestRetainedFrame, anchorFrame - _retainedFrameWindow));
+                _retainedFrameWindow = frames < 1 ? 1 : frames;
+                if (anchorFrame > 0)
+                {
+                    TrimBeforeLocked(Math.Max(_oldestRetainedFrame, anchorFrame - _retainedFrameWindow));
+                }
             }
         }
 
@@ -56,45 +82,59 @@ namespace AbilityKit.Ability.FrameSync
 
         public void SubmitCommand(int frame, TKey key, in TCommand command)
         {
-            if (frame < _oldestRetainedFrame)
+            lock (_sync)
             {
-                frame = _oldestRetainedFrame;
-            }
+                if (frame < _oldestRetainedFrame)
+                {
+                    frame = _oldestRetainedFrame;
+                }
 
-            if (!_frames.TryGetValue(frame, out var commands))
-            {
-                commands = new Dictionary<TKey, TCommand>();
-                _frames[frame] = commands;
-            }
+                if (!_frames.TryGetValue(frame, out var commands))
+                {
+                    commands = _frameCommandPool.Count > 0
+                        ? _frameCommandPool.Pop()
+                        : new Dictionary<TKey, TCommand>();
+                    _frames[frame] = commands;
+                    _frameNumbers.Add(frame);
+                }
 
-            commands[key] = command;
-            if (frame > _latestFrame)
-            {
-                _latestFrame = frame;
+                commands[key] = command;
+                if (frame > _latestFrame) _latestFrame = frame;
             }
         }
 
         public bool TryGetCommand(int frame, TKey key, out TCommand command)
         {
-            command = default!;
-            return _frames.TryGetValue(frame, out var commands) && commands.TryGetValue(key, out command);
+            lock (_sync)
+            {
+                command = default!;
+                return _frames.TryGetValue(frame, out var commands) && commands.TryGetValue(key, out command);
+            }
         }
 
         public IReadOnlyDictionary<TKey, TCommand> GetFrameCommandsOrEmpty(int frame)
         {
-            return _frames.TryGetValue(frame, out var commands) ? commands : EmptyFrameCommands;
+            lock (_sync)
+            {
+                return _frames.TryGetValue(frame, out var commands)
+                    ? new Dictionary<TKey, TCommand>(commands)
+                    : EmptyFrameCommands;
+            }
         }
 
         public bool TryGetFrameCommands(int frame, out IReadOnlyDictionary<TKey, TCommand> commands)
         {
-            if (_frames.TryGetValue(frame, out var frameCommands))
+            lock (_sync)
             {
-                commands = frameCommands;
-                return true;
-            }
+                if (_frames.TryGetValue(frame, out var frameCommands))
+                {
+                    commands = new Dictionary<TKey, TCommand>(frameCommands);
+                    return true;
+                }
 
-            commands = EmptyFrameCommands;
-            return false;
+                commands = EmptyFrameCommands;
+                return false;
+            }
         }
 
         public int CopyFrameCommands(int frame, List<TCommand> destination)
@@ -102,14 +142,17 @@ namespace AbilityKit.Ability.FrameSync
             if (destination == null) throw new ArgumentNullException(nameof(destination));
 
             destination.Clear();
-            if (!_frames.TryGetValue(frame, out var commands))
+            lock (_sync)
             {
-                return 0;
-            }
+                if (!_frames.TryGetValue(frame, out var commands))
+                {
+                    return 0;
+                }
 
-            foreach (var kv in commands)
-            {
-                destination.Add(kv.Value);
+                foreach (var kv in commands)
+                {
+                    destination.Add(kv.Value);
+                }
             }
 
             if (_commandComparer != null)
@@ -125,45 +168,61 @@ namespace AbilityKit.Ability.FrameSync
             if (destination == null) throw new ArgumentNullException(nameof(destination));
 
             destination.Clear();
-            foreach (var kv in _frames)
+            lock (_sync)
             {
-                if (kv.Key >= startFrameInclusive && kv.Key < endFrameExclusive)
+                var endIndex = _frameNumbers.LowerBound(endFrameExclusive);
+                for (var index = _frameNumbers.LowerBound(startFrameInclusive); index < endIndex; index++)
                 {
-                    destination.Add(kv.Key);
+                    destination.Add(_frameNumbers[index]);
                 }
             }
 
-            destination.Sort();
             return destination.Count;
         }
 
         public void TrimBefore(int frame)
+        {
+            lock (_sync)
+            {
+                TrimBeforeLocked(frame);
+            }
+        }
+
+        public void TrimToWindow(int currentFrame)
+        {
+            lock (_sync)
+            {
+                TrimBeforeLocked(Math.Max(_oldestRetainedFrame, currentFrame - _retainedFrameWindow));
+            }
+        }
+
+        private void TrimBeforeLocked(int frame)
         {
             if (frame <= _oldestRetainedFrame)
             {
                 return;
             }
 
-            var removed = new List<int>();
-            foreach (var kv in _frames)
+            var removeCount = _frameNumbers.LowerBound(frame);
+            for (var index = 0; index < removeCount; index++)
             {
-                if (kv.Key < frame)
+                if (_frames.Remove(_frameNumbers[index], out var retired))
                 {
-                    removed.Add(kv.Key);
+                    RetireFrameCommands(retired);
                 }
             }
 
-            for (var i = 0; i < removed.Count; i++)
-            {
-                _frames.Remove(removed[i]);
-            }
+            if (removeCount > 0) _frameNumbers.RemoveRange(0, removeCount);
 
             _oldestRetainedFrame = frame;
         }
 
-        public void TrimToWindow(int currentFrame)
+        // Caller must hold _sync. Pooled dictionaries never escape: public reads hand out
+        // detached defensive copies, so retiring here cannot alias a live reader.
+        private void RetireFrameCommands(Dictionary<TKey, TCommand> commands)
         {
-            TrimBefore(Math.Max(_oldestRetainedFrame, currentFrame - _retainedFrameWindow));
+            commands.Clear();
+            _frameCommandPool.Push(commands);
         }
     }
 }

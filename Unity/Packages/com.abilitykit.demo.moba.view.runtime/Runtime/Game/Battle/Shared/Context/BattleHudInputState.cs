@@ -12,6 +12,8 @@ namespace AbilityKit.Game.Flow
         private int _skillAimSlot;
         private float _skillAimDx;
         private float _skillAimDz;
+        private bool _skillAimPreviewSubmitted;
+        private int _skillAimPreviewSubmissionVersion;
 
         private bool _skillAimSubmit;
         private int _skillAimSubmitSlot;
@@ -114,6 +116,19 @@ namespace AbilityKit.Game.Flow
             _skillAimSlot = slot;
             _skillAimDx = dx;
             _skillAimDz = dz;
+            if (aiming)
+            {
+                _skillAimPreviewSubmitted = false;
+            }
+        }
+
+        public void CancelSkillAim()
+        {
+            _skillAiming = false;
+            _skillAimSlot = 0;
+            _skillAimDx = 0f;
+            _skillAimDz = 0f;
+            _skillAimPreviewSubmitted = false;
         }
 
         public void SubmitSkillAim(
@@ -127,7 +142,12 @@ namespace AbilityKit.Game.Flow
             float aimDirY,
             float aimDirZ)
         {
-            SetSkillAim(slot, aimDx, aimDz, aiming: false);
+            _skillAiming = false;
+            _skillAimSlot = slot;
+            _skillAimDx = aimDx;
+            _skillAimDz = aimDz;
+            _skillAimPreviewSubmitted = true;
+            _skillAimPreviewSubmissionVersion++;
             _skillAimSubmit = true;
             _skillAimSubmitSlot = slot;
             _skillAimSubmitPosX = aimPosX;
@@ -138,19 +158,21 @@ namespace AbilityKit.Game.Flow
             _skillAimSubmitDirZ = aimDirZ;
         }
 
-        public bool TryReadSkillAim(out int slot, out float dx, out float dz)
+        public bool TryReadSkillAimPreview(out int slot, out float dx, out float dz, out int submissionVersion)
         {
-            if (_skillAiming)
+            if (_skillAiming || _skillAimPreviewSubmitted)
             {
                 slot = _skillAimSlot;
                 dx = _skillAimDx;
                 dz = _skillAimDz;
-                return true;
+                submissionVersion = _skillAimPreviewSubmitted ? _skillAimPreviewSubmissionVersion : 0;
+                return slot > 0;
             }
 
             slot = 0;
             dx = 0f;
             dz = 0f;
+            submissionVersion = 0;
             return false;
         }
 
@@ -165,6 +187,8 @@ namespace AbilityKit.Game.Flow
             _skillAimSlot = 0;
             _skillAimDx = 0f;
             _skillAimDz = 0f;
+            _skillAimPreviewSubmitted = false;
+            _skillAimPreviewSubmissionVersion = 0;
 
             _skillAimSubmit = false;
             _skillAimSubmitSlot = 0;

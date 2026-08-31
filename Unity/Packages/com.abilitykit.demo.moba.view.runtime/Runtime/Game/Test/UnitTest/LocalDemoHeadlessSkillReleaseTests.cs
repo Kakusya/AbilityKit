@@ -18,7 +18,6 @@ namespace AbilityKit.Game.Test.UnitTest
 {
     public sealed class LocalDemoHeadlessSkillReleaseTests
     {
-        private const string DemoScenePath = "Assets/Scenes/MobaDemoScene.unity";
         private const float FixedDeltaTime = 1f / 30f;
 
         [TearDown]
@@ -30,13 +29,14 @@ namespace AbilityKit.Game.Test.UnitTest
             }
 
             EditorSceneManager.NewScene(NewSceneSetup.EmptyScene, NewSceneMode.Single);
+            DemoGameplayTestLauncher.Clear();
         }
 
         [UnityTest]
-        public IEnumerator MobaDemoScene_LocalBattle_ReleasesLianPoSkill1AndMovesLocalActor()
+        public IEnumerator UnifiedGameplayScene_LocalBattle_ReleasesLianPoSkill1AndMovesLocalActor()
         {
-            var scene = EditorSceneManager.OpenScene(DemoScenePath, OpenSceneMode.Single);
-            Assert.IsTrue(scene.IsValid(), $"Demo scene should load from {DemoScenePath}.");
+            var scene = DemoGameplayTestLauncher.OpenMobaLocalAndCompose();
+            Assert.IsTrue(scene.IsValid(), "Unified gameplay scene should load for the local MOBA profile.");
 
             var entry = Object.FindObjectOfType<GameEntry>();
             Assert.IsNotNull(entry, "Demo scene must contain a GameEntry.");
@@ -72,10 +72,10 @@ namespace AbilityKit.Game.Test.UnitTest
         }
 
         [UnityTest]
-        public IEnumerator MobaDemoScene_LocalBattle_LianPoSkill3AimMovesAndJumpsToSelectedPoint()
+        public IEnumerator UnifiedGameplayScene_LocalBattle_LianPoSkill3AimMovesAndJumpsToSelectedPoint()
         {
-            var scene = EditorSceneManager.OpenScene(DemoScenePath, OpenSceneMode.Single);
-            Assert.IsTrue(scene.IsValid(), $"Demo scene should load from {DemoScenePath}.");
+            var scene = DemoGameplayTestLauncher.OpenMobaLocalAndCompose();
+            Assert.IsTrue(scene.IsValid(), "Unified gameplay scene should load for the local MOBA profile.");
 
             var entry = Object.FindObjectOfType<GameEntry>();
             Assert.IsNotNull(entry, "Demo scene must contain a GameEntry.");
@@ -134,10 +134,10 @@ namespace AbilityKit.Game.Test.UnitTest
         }
 
         [UnityTest]
-        public IEnumerator MobaDemoScene_LocalBattle_LianPoSkill3DoesNotPullBackAfterInsertedSkill1Dash()
+        public IEnumerator UnifiedGameplayScene_LocalBattle_LianPoSkill3DoesNotPullBackAfterInsertedSkill1Dash()
         {
-            var scene = EditorSceneManager.OpenScene(DemoScenePath, OpenSceneMode.Single);
-            Assert.IsTrue(scene.IsValid(), $"Demo scene should load from {DemoScenePath}.");
+            var scene = DemoGameplayTestLauncher.OpenMobaLocalAndCompose();
+            Assert.IsTrue(scene.IsValid(), "Unified gameplay scene should load for the local MOBA profile.");
 
             var entry = Object.FindObjectOfType<GameEntry>();
             Assert.IsNotNull(entry, "Demo scene must contain a GameEntry.");
@@ -198,10 +198,53 @@ namespace AbilityKit.Game.Test.UnitTest
         }
 
         [UnityTest]
-        public IEnumerator MobaDemoScene_LocalBattle_LianPoSkill2RefreshesSkill1CooldownWhenEnemyInRange()
+        public IEnumerator UnifiedGameplayScene_LocalBattle_CameraResolvesAndFollowsLocalActorWithoutSkillInput()
         {
-            var scene = EditorSceneManager.OpenScene(DemoScenePath, OpenSceneMode.Single);
-            Assert.IsTrue(scene.IsValid(), $"Demo scene should load from {DemoScenePath}.");
+            var scene = DemoGameplayTestLauncher.OpenMobaLocalAndCompose();
+            Assert.IsTrue(scene.IsValid(), "Unified gameplay scene should load for the local MOBA profile.");
+
+            var entry = Object.FindObjectOfType<GameEntry>();
+            Assert.IsNotNull(entry, "Demo scene must contain a GameEntry.");
+
+            InvokePrivate(entry, "Awake");
+            var flow = entry.Get<GameFlowDomain>();
+            Assert.IsNotNull(flow, "GameEntry must expose GameFlowDomain after Awake.");
+
+            flow.StartWithPersistentSettingsSync();
+            FlowTick(flow, 2);
+            flow.EnterBattle(new TestBattleBootstrapper());
+            yield return TickUntil(flow, () => flow.CurrentBattlePhase == MobaBattleState.InMatch, 240, "Battle flow did not reach InMatch.");
+
+            Assert.IsTrue(entry.TryGet(out BattleContext ctx), "BattleContext must be attached after entering battle.");
+            yield return TickUntil(flow, () => ctx.Session != null && ctx.EntityQuery != null, 240, DescribeContextWaitFailure(ctx));
+            Assert.IsTrue(TryResolveLocalActorId(ctx, out var actorId), "Local actor mapping and transform should be ready.");
+
+            ctx.LocalActorId = 0;
+            yield return TickUntil(
+                flow,
+                () => ctx.LocalActorId == actorId,
+                30,
+                "Camera follow should resolve the local actor after battle entities load without requiring skill input.");
+
+            var camera = Camera.main;
+            Assert.IsNotNull(camera, "Demo scene must provide a main camera.");
+            FlowTick(flow, 2);
+            var cameraStart = camera.transform.position;
+            Assert.IsTrue(ctx.EntityQuery.TryGetTransform(new BattleNetId(actorId), out var transform) && transform != null, "Local actor transform should be available before movement.");
+            Assert.IsTrue(TrySetActorPosition(ctx, actorId, transform.Position + new Vector3(4f, 0f, 0f)), "Local actor should be movable for camera follow validation.");
+
+            yield return TickUntil(
+                flow,
+                () => camera.transform.position.x > cameraStart.x + 0.1f,
+                30,
+                $"Camera should continuously follow normal actor movement. start={cameraStart}, current={camera.transform.position}");
+        }
+
+        [UnityTest]
+        public IEnumerator UnifiedGameplayScene_LocalBattle_LianPoSkill2RefreshesSkill1CooldownWhenEnemyInRange()
+        {
+            var scene = DemoGameplayTestLauncher.OpenMobaLocalAndCompose();
+            Assert.IsTrue(scene.IsValid(), "Unified gameplay scene should load for the local MOBA profile.");
 
             var entry = Object.FindObjectOfType<GameEntry>();
             Assert.IsNotNull(entry, "Demo scene must contain a GameEntry.");
@@ -227,6 +270,15 @@ namespace AbilityKit.Game.Test.UnitTest
             skill1Runtime.CooldownEndTimeMs = 5000;
             ctx.SubmitHudSkillClick(slot: 2);
             FlowTick(flow, 2);
+
+            yield return TickUntil(
+                flow,
+                () => TryFindActiveAreaRange(40010201, out _),
+                15,
+                "Lian Po skill 2 should display its warning damage area while charging.");
+            Assert.IsTrue(TryFindActiveAreaRange(40010201, out var range), "Lian Po skill 2 warning range should remain active during validation.");
+            Assert.AreEqual(7f, range.transform.localScale.x, 0.05f, "Lian Po skill 2 warning range diameter should match its configured 3.5 radius.");
+            Assert.AreEqual(7f, range.transform.localScale.z, 0.05f, "Lian Po skill 2 warning range diameter should match its configured 3.5 radius.");
 
             yield return TickUntil(
                 flow,
@@ -321,6 +373,24 @@ namespace AbilityKit.Game.Test.UnitTest
             var newPosition = ToVec3(position);
             entity.ReplaceTransform(new Transform3(in newPosition, in current.Rotation, in current.Scale));
             return true;
+        }
+
+        private static bool TryFindActiveAreaRange(int templateId, out GameObject range)
+        {
+            range = null;
+            var expectedName = $"AreaRange_{templateId}";
+            var transforms = Resources.FindObjectsOfTypeAll<Transform>();
+            for (var i = 0; i < transforms.Length; i++)
+            {
+                var candidate = transforms[i]?.gameObject;
+                if (candidate == null || !candidate.activeInHierarchy || candidate.name != expectedName) continue;
+                if (!candidate.scene.IsValid()) continue;
+
+                range = candidate;
+                return true;
+            }
+
+            return false;
         }
 
         private static bool TryGetActiveSkillRuntime(BattleContext ctx, int actorId, int skillSlot, int skillId, out ActiveSkillRuntime runtime)

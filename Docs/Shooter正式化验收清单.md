@@ -130,31 +130,49 @@ dotnet test Server\Orleans\src\AbilityKit.Orleans.ShooterSmoke.Tests\AbilityKit.
 ```
 
 ```powershell
-.\Server\Orleans\tools\run_shooter_multiprocess_smoke.ps1 -Configuration Debug -TcpPort 41001 -PayloadMode packed
+.\Server\Orleans\tools\run_shooter_multiprocess_smoke.ps1 -Configuration Debug -Profile minimal -PayloadMode packed
 ```
 
 ```powershell
-.\Server\Orleans\tools\run_shooter_multiprocess_smoke.ps1 -Configuration Debug -TcpPort 41001 -PayloadMode pure-state
+.\Server\Orleans\tools\run_shooter_multiprocess_smoke.ps1 -Configuration Debug -Profile full -PayloadMode pure-state
 ```
 
 ```powershell
-.\Server\Orleans\tools\run_shooter_multiprocess_smoke.ps1 -Configuration Debug -TcpPort 41001 -PayloadMode pure-state -ConditionLatencyMs 120 -ConditionJitterMs 30 -ConditionPacketLossRate 0.05
+.\Server\Orleans\tools\run_shooter_multiprocess_smoke.ps1 -Configuration Debug -Profile custom -Scenario reconnect-cycles -PayloadMode pure-state
 ```
 
 Replay 排障说明：
 
 - packed/pure-state multiprocess smoke 会输出 input-state replay 与 minimized replay 路径，并在 result 行暴露 `inputStateReplayFirstFrame`、`inputStateReplayLastFrame`、`inputStateReplaySnapshotOpCodes`、`inputStateReplayPureStateSnapshots`、`inputStateReplayPackedStateSnapshots`。
 - 单进程 smoke 会输出 input-logic replay 与 server-frame 兼容字段，并暴露 `InputLogicReplayFirstFrame`、`InputLogicReplayLastFrame`、`InputLogicReplayOpCodes`、`InputLogicReplaySnapshotOpCodes` 等摘要字段。
-- 若需要在测试中直接读取 artifact，可调用 ShooterSmoke replay summary 入口汇总 `.record.bin` 或 `.record.json`。
+- 多进程 manifest 会关联每个客户端的 replay、diagnostic、authoritative diff、日志、bytes 与 SHA-256；故障排查优先从 `firstDivergence`、fault timeline 和 process timeline 进入。
+- FrameRecord diff library 与 JSON CLI 已落地；多进程场景要求 authoritative diff 收敛，不能只检查 replay 文件存在。
+
+## 第四轮：多进程故障矩阵与收敛证据
+
+验收目标：在真实 server/create/join 独立进程中证明故障确实发生、正式恢复入口被执行、状态与可靠事件最终收敛，并留下可复现 artifact。
+
+已完成项：
+
+- fault matrix 支持 `minimal`、`full` 和 `custom` profile；full profile 覆盖 `slow-consumer`、`gateway-offline`、`recoverable-retry`、`reconnect-cycles`。
+- 每个子场景使用独立 TCP/Silo/Orleans Gateway 端口组与 run 目录，并写 schema version 2 manifest。
+- Gateway offline 使用 command ack、端口 closed/listening 探测和客户端 release gate，不依赖固定 sleep 猜测故障时序。
+- slow-consumer 在 256 B/s、32768 burst、queue length 1、queue age 100 ms、drain 250 ms 下产生 drop/coalesce 压力，并要求每客户端恢复 full baseline。
+- reconnect-cycles 对 join 客户端执行三轮真实 connection close；每轮正式恢复入口为 `Reconnect`，且 snapshot push 严格前进。
+- PureState 推进接受 delta、resync 或重复 full baseline，但最终仍独立要求 pending baseline 清除、reliable `needsResync=false`、同帧 hash 和 authoritative diff 收敛。
+- 每客户端完整/minimized replay 必须存在、非空并被消费；manifest 同时记录 diagnostic、diff、health、observer metrics、process/fault/assertion timeline 和 artifact hash。
+- server/create/join 必须正常退出，三个专用端口必须释放。
+
+2026-07-19 的 `reconnect-cycles + pure-state + replay` 真实运行完成三轮恢复，push 从 5 前进到 9；create/join diff 均为 `Identical`，reliable cursor 与 baseline 均收敛，四份 replay 文件有效，所有子进程以 0 退出且端口释放。完整设计见 `Docs/design/09-ImplementationExamples/Shooter/14-MultiprocessFaultMatrixAndConvergenceEvidence.md`。
 
 ## 当前剩余缺口
 
-以下内容未在本轮 P0-P4 内完全关闭，建议作为下一轮正式化优先级：
+以下内容尚未完全关闭，作为下一轮正式化优先级：
 
-1. Unity 侧自动化：补充可在 CI 或批处理环境执行的 PlayMode/Editor 验收入口。
-2. 长时压测：当前 small/medium/mass 预算入口偏快速回归，仍需独立的夜间长时压测策略。
-3. Replay CLI：当前 replay summary 已可被测试和 smoke 输出复用，后续可按需补独立命令行入口。
-4. 真实网络条件：继续在更复杂网络抖动、丢包与多客户端条件下扩大 resilience smoke 覆盖。
+1. Grain lifecycle：验证 deactivate/reactivate 后 observer、AOI、baseline、可靠事件 cursor 和队列恢复。
+2. 动态强杀：真实覆盖子 manifest 已进入 running 后，父 global timeout 的进程终止和 manifest 收口。
+3. 多 observer 长稳：补 30 分钟网络 profile 动态切换、容量、公平性和恢复时延分布。
+4. Unity Editor replay inspector：消费既有 FrameRecord diff/report API，提供双记录时间线与跳帧，不另建平行分析逻辑。
 
 ## 最小回归清单
 
@@ -189,9 +207,9 @@ dotnet test Server\Orleans\src\AbilityKit.Orleans.ShooterSmoke.Tests\AbilityKit.
 ```
 
 ```powershell
-.\Server\Orleans\tools\run_shooter_multiprocess_smoke.ps1 -Configuration Debug -TcpPort 41001 -PayloadMode packed
+.\Server\Orleans\tools\run_shooter_multiprocess_smoke.ps1 -Configuration Debug -Profile minimal -PayloadMode packed
 ```
 
 ```powershell
-.\Server\Orleans\tools\run_shooter_multiprocess_smoke.ps1 -Configuration Debug -TcpPort 41001 -PayloadMode pure-state
+.\Server\Orleans\tools\run_shooter_multiprocess_smoke.ps1 -Configuration Debug -Profile full -PayloadMode pure-state
 ```

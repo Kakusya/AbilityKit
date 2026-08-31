@@ -20,11 +20,13 @@ using ProjectileMO = AbilityKit.Demo.Moba.Config.BattleDemo.MO.ProjectileMO;
 using AoeMO = AbilityKit.Demo.Moba.Config.BattleDemo.MO.AoeMO;
 using EmitterMO = AbilityKit.Demo.Moba.Config.BattleDemo.MO.EmitterMO;
 using SummonMO = AbilityKit.Demo.Moba.Config.BattleDemo.MO.SummonMO;
+using SummonAttrInheritMO = AbilityKit.Demo.Moba.Config.BattleDemo.MO.SummonAttrInheritMO;
 using ComponentTemplateMO = AbilityKit.Demo.Moba.Config.BattleDemo.MO.ComponentTemplateMO;
 using SkillButtonTemplateMO = AbilityKit.Demo.Moba.Config.BattleDemo.MO.SkillButtonTemplateMO;
 using TagTemplateMO = AbilityKit.Demo.Moba.Config.BattleDemo.MO.TagTemplateMO;
 using ContinuousTagTemplateMO = AbilityKit.Demo.Moba.Config.BattleDemo.MO.ContinuousTagTemplateMO;
 using SearchQueryTemplateMO = AbilityKit.Demo.Moba.Config.BattleDemo.MO.SearchQueryTemplateMO;
+using BattleMapMO = AbilityKit.Demo.Moba.Config.BattleDemo.MO.BattleMapMO;
 using GameplayMO = AbilityKit.Demo.Moba.Config.BattleDemo.MO.GameplayMO;
 using MotionGroupMO = AbilityKit.Demo.Moba.Config.BattleDemo.MO.MotionGroupMO;
  
@@ -36,7 +38,7 @@ using MotionGroupMO = AbilityKit.Demo.Moba.Config.BattleDemo.MO.MotionGroupMO;
     /// </summary>
     public sealed class MobaConfigDatabase
     {
-        private const string ReloadConfigKey = "moba.config";
+        public const string ReloadConfigKey = "moba.config";
 
         private readonly ConfigDatabase _innerDb;
         private readonly IMobaConfigTableRegistry _registry;
@@ -471,6 +473,7 @@ using MotionGroupMO = AbilityKit.Demo.Moba.Config.BattleDemo.MO.MotionGroupMO;
         }
 
         public bool TryGetCharacter(int id, out CharacterMO mo) => GetTable<CharacterMO>().TryGet(id, out mo);
+        public IEnumerable<CharacterMO> GetAllCharacters() => GetTable<CharacterMO>().All();
         public bool TryGetSkill(int id, out SkillMO mo) => GetTable<SkillMO>().TryGet(id, out mo);
         public IEnumerable<SkillMO> GetAllSkills() => GetTable<SkillMO>().All();
         public bool TryGetPassiveSkill(int id, out PassiveSkillMO mo) => GetTable<PassiveSkillMO>().TryGet(id, out mo);
@@ -481,6 +484,7 @@ using MotionGroupMO = AbilityKit.Demo.Moba.Config.BattleDemo.MO.MotionGroupMO;
         public bool TryGetBuff(int id, out BuffMO mo) => GetTable<BuffMO>().TryGet(id, out mo);
         public bool TryGetContinuousProcess(int id, out ContinuousProcessMO mo) => GetTable<ContinuousProcessMO>().TryGet(id, out mo);
         public bool TryGetSummon(int id, out SummonMO mo) => GetTable<SummonMO>().TryGet(id, out mo);
+        public bool TryGetSummonAttrInherit(int id, out SummonAttrInheritMO mo) => GetTable<SummonAttrInheritMO>().TryGet(id, out mo);
         public bool TryGetComponentTemplate(int id, out ComponentTemplateMO mo) => GetTable<ComponentTemplateMO>().TryGet(id, out mo);
         public bool TryGetSkillButtonTemplate(int id, out SkillButtonTemplateMO mo) => GetTable<SkillButtonTemplateMO>().TryGet(id, out mo);
         public bool TryGetTagTemplate(int id, out TagTemplateMO mo) => GetTable<TagTemplateMO>().TryGet(id, out mo);
@@ -515,6 +519,9 @@ using MotionGroupMO = AbilityKit.Demo.Moba.Config.BattleDemo.MO.MotionGroupMO;
             return false;
         }
 
+        public BattleMapMO GetBattleMap(int id) => GetTable<BattleMapMO>().Get(id);
+        public bool TryGetBattleMap(int id, out BattleMapMO mo) => GetTable<BattleMapMO>().TryGet(id, out mo);
+        public IEnumerable<BattleMapMO> GetAllBattleMaps() => GetTable<BattleMapMO>().All();
         public bool TryGetProjectileLauncher(int id, out ProjectileLauncherMO mo) => GetTable<ProjectileLauncherMO>().TryGet(id, out mo);
         public bool TryGetProjectile(int id, out ProjectileMO mo) => GetTable<ProjectileMO>().TryGet(id, out mo);
         public bool TryGetAoe(int id, out AoeMO mo) => GetTable<AoeMO>().TryGet(id, out mo);

@@ -1,5 +1,8 @@
 # MOBA Trigger、Validation 与 Presentation Cue 深潜
 
+> 文档类型：MOBA 项目应用组合深潜
+> 事实基线：2026-08-16
+>
 > 本文补充 MOBA 示例中尚未单独展开的触发器执行网关、owner-bound 订阅、运行时校验、阶段触发、效果 Step 与表现 Cue。它解释“触发器如何从配置变成运行时订阅、如何被门控、如何被校验、如何把逻辑事件转成表现快照”。
 
 ## 1. 设计目标
@@ -78,7 +81,7 @@ flowchart TB
 |------|------|----------|
 | `ExecuteDirectTrigger<TPayload>` | 技能、阶段事件、投射物命中等一次性触发 | 校验 triggerId，记录 direct stats，调用 effect execution |
 | `ApplyOwnerBoundTriggers` | Buff、被动、光环等绑定到 owner 的触发计划 | 校验 ownerKey，记录 owner apply stats，调用订阅服务调和 |
-| `StopOwnerBoundTriggers` | owner 生命周期结束、Buff 移除、被动失效 | 停止 ownerKey 下全部订阅并统计 stop |
+| `StopOwnerBoundTriggers` | owner 生命周期结束、Buff 移除、被动失效 | 停止 ownerKey 下全部订阅并统计 stop；不因此获得结束同值 trace context 的权限 |
 | `CopyActiveOwnerKeys` | 诊断或校验当前活跃 owner-bound 触发器 | 从订阅服务复制活跃 ownerKey |
 
 执行网关还内建诊断计数：
@@ -131,6 +134,8 @@ sequenceDiagram
 7. `RemoveStaleRegistrations` 释放本次 desired 列表中不再出现的旧订阅；
 8. `OnDeinit` 停止全部 ownerKey，防止世界销毁后事件仍回调。
 
+`ownerKey` 是 subscription、gate 与 stop 的路由身份，不是 trace lifecycle ownership。数值相同也不能据此推断订阅服务或调用方拥有对应 trace；trace 只能由实际创建并持有其生命周期记录的服务结束。例如 `MobaPassiveSkillLifecycleService.ReleaseAllOwnedPassiveContexts` 只收集服务自身 `_ownerKeysByActor` 中追踪的 passive root，再结束这些已拥有上下文。
+
 ```mermaid
 flowchart TD
     A[ApplyTriggers ownerKey + triggerIds] --> B{triggerIds empty?}
@@ -168,7 +173,7 @@ flowchart TD
 - Execute 阶段再次防御，避免 Evaluate 与 Execute 之间状态变化；
 - Execute 成功后调用 `Complete`。
 
-这使 owner-bound 触发器适合表达“被动技能触发一次后进入内部状态”的规则，而不是把这类状态散落到 Action 模块里。
+这使 owner-bound 触发器适合表达“被动技能触发一次后进入内部状态”的规则，而不是把这类状态散落到 Action 模块里。`Complete` 只提交 gate 状态，不代表完成或结束 owner 对应的 trace。
 
 ## 6. Stage Trigger 与持续效果推进
 
@@ -338,6 +343,7 @@ MOBA Trigger、Validation 与 Presentation Cue 覆盖面较宽，以下主题适
 | owner-bound 订阅 | `Unity/Packages/com.abilitykit.demo.moba.runtime/Runtime/Application/Services/Triggering/MobaTriggerPlanSubscriptionService.cs` |
 | owner-bound gate | `Unity/Packages/com.abilitykit.demo.moba.runtime/Runtime/Application/Services/Triggering/MobaOwnerBoundTriggerGateService.cs` |
 | gate 接口 | `Unity/Packages/com.abilitykit.demo.moba.runtime/Runtime/Application/Services/Triggering/IMobaOwnerBoundTriggerGate.cs` |
+| passive trace ownership | `Unity/Packages/com.abilitykit.demo.moba.runtime/Runtime/Application/Services/Passive/MobaPassiveSkillLifecycleService.cs` |
 | stage trigger | `Unity/Packages/com.abilitykit.demo.moba.runtime/Runtime/Application/Services/Triggering/MobaStageTriggerService.cs` |
 | effects step system | `Unity/Packages/com.abilitykit.demo.moba.runtime/Runtime/Application/Systems/Effects/MobaEffectsStepSystem.cs` |
 | runtime validation | `Unity/Packages/com.abilitykit.demo.moba.runtime/Runtime/Application/Services/Validation/MobaRuntimeValidation.cs` |
@@ -345,3 +351,17 @@ MOBA Trigger、Validation 与 Presentation Cue 覆盖面较宽，以下主题适
 | context integrity validator | `Unity/Packages/com.abilitykit.demo.moba.runtime/Runtime/Application/Services/Validation/MobaContextIntegrityRuntimeValidator.cs` |
 | cue factory | `Unity/Packages/com.abilitykit.demo.moba.runtime/Runtime/Application/Services/Triggering/Cue/MobaPresentationCueFactory.cs` |
 | presentation cue | `Unity/Packages/com.abilitykit.demo.moba.runtime/Runtime/Application/Services/Triggering/Cue/MobaPresentationTriggerCue.cs` |
+
+## 13. Strict validation、当前阻断与证据边界
+
+`BootstrapStrict` 是 World 创建事务的一部分，而不是只写日志的 Editor 检查。当前 config-reference validator 会比较 SpawnArea 的 effective duration 与 delay；若区域在延迟触发前已经过期，则生成 blocking error 并拒绝启动。
+
+2026-08-16 实际运行 `AbilityKit.Demo.Moba.Tests` 得到 279/305：26 项共同失败于 `trigger 10060201 / action[2]`，其 `duration_ms = 300`、`delay_ms = 400`。这证明严格门禁正在生效，同时说明当前工作区的主 World 基线不可宣称通过。文档任务不修改该配置，也不通过降低 validation mode 绕过错误。
+
+独立通过的 View Runtime 147/147、Host 6/6、Acceptance 8/8 不创建同一完整 World，不能覆盖这一失败。本地 Unity ownership 9/9 artifact 只覆盖 runtime 所有权，不覆盖 TriggerPlan 全表完整性；`moba-smoke` 是另一层 E4/E5 编排，本批未运行。
+
+Trigger gateway、owner-bound subscription、MOBA validator 集合和 Cue schema 都是项目应用策略。框架可稳定提供 Triggering、ActionSchema、Snapshot 与 Validation 原语，但不能预置每个游戏的 event registry、PlanAction DSL、启动阻断规则或表现 Cue。
+
+---
+
+*文档版本：v3.0 | 最后更新：2026-08-16*

@@ -1,6 +1,8 @@
 using AbilityKit.Orleans.Contracts.Rooms;
 using AbilityKit.Orleans.Grains.Persistence;
 using Orleans;
+using ContractCreateRoomRequest = AbilityKit.Orleans.Contracts.Rooms.CreateRoomRequest;
+using ContractCreateRoomResponse = AbilityKit.Orleans.Contracts.Rooms.CreateRoomResponse;
 
 namespace AbilityKit.Orleans.Grains.Rooms;
 
@@ -13,7 +15,7 @@ public sealed class RoomDirectoryGrain : Grain, IRoomDirectoryGrain
         _roomStateStore = roomStateStore ?? throw new ArgumentNullException(nameof(roomStateStore));
     }
 
-    public async Task<CreateRoomResponse> CreateRoomAsync(CreateRoomRequest request)
+    public async Task<ContractCreateRoomResponse> CreateRoomAsync(ContractCreateRoomRequest request)
     {
         if (request is null) throw new ArgumentNullException(nameof(request));
         if (string.IsNullOrWhiteSpace(request.AccountId)) throw new ArgumentException("AccountId is required", nameof(request));
@@ -30,12 +32,13 @@ public sealed class RoomDirectoryGrain : Grain, IRoomDirectoryGrain
 
         var roomId = Guid.NewGuid().ToString("N");
         var createdAt = DateTimeOffset.UtcNow.ToUnixTimeMilliseconds();
+        var roomType = GameplayRoomTypes.Normalize(request.RoomType);
 
         var summary = new RoomSummary(
             request.Region,
             request.ServerId,
             roomId,
-            request.RoomType,
+            roomType,
             request.Title ?? string.Empty,
             request.IsPublic,
             request.MaxPlayers,
@@ -47,9 +50,10 @@ public sealed class RoomDirectoryGrain : Grain, IRoomDirectoryGrain
         var room = GrainFactory.GetGrain<IRoomGrain>(roomId);
         await room.InitializeAsync(summary, directoryKey);
 
-        await _roomStateStore.UpsertRoomAsync(directoryKey, summary);
+        var snapshot = await room.GetSnapshotAsync();
+        await _roomStateStore.UpsertRoomAsync(directoryKey, snapshot.Summary);
 
-        return new CreateRoomResponse(roomId);
+        return new ContractCreateRoomResponse(roomId);
     }
 
     public async Task<ListRoomsResponse> ListRoomsAsync(ListRoomsRequest request)
@@ -69,7 +73,11 @@ public sealed class RoomDirectoryGrain : Grain, IRoomDirectoryGrain
         IEnumerable<RoomSummary> query = await _roomStateStore.ListRoomsAsync(directoryKey);
         if (!string.IsNullOrWhiteSpace(request.RoomType))
         {
-            query = query.Where(r => string.Equals(r.RoomType, request.RoomType, StringComparison.Ordinal));
+            var roomType = GameplayRoomTypes.Normalize(request.RoomType);
+            query = query.Where(r => string.Equals(
+                GameplayRoomTypes.Normalize(r.RoomType),
+                roomType,
+                StringComparison.OrdinalIgnoreCase));
         }
 
         query = query.Where(r => r.IsPublic);

@@ -10,6 +10,14 @@ namespace AbilityKit.Demo.Shooter.Runtime
         private readonly ShooterBattleState _state;
         private readonly IShooterEntityManager _entities;
 
+        // 导入聚合容器（成员复用，避免每次 Import 新建 —— 高单位量下每次 ~30-80KB 临时分配）。
+        // 单线程战斗世界内使用；预测回滚的连续多次 Import 也共享。
+        private readonly Dictionary<int, ShooterSveltoPlayerComponent> _players = new();
+        private readonly Dictionary<int, ShooterSveltoProjectileComponent> _projectiles = new();
+        private readonly Dictionary<int, ImportedEnemy> _enemies = new();
+        private readonly HashSet<int> _removedProjectiles = new();
+        private readonly HashSet<int> _removedEnemies = new();
+
         public ShooterPackedSnapshotImporter(ShooterBattleState state, IShooterEntityManager entities)
         {
             _state = state ?? throw new ArgumentNullException(nameof(state));
@@ -27,7 +35,6 @@ namespace AbilityKit.Demo.Shooter.Runtime
             if (!isDelta)
             {
                 _state.Reset(default);
-                ClearImportedEntities();
             }
 
             _state.CurrentFrame = snapshot.Frame;
@@ -35,21 +42,38 @@ namespace AbilityKit.Demo.Shooter.Runtime
             var componentChunks = snapshot.ComponentChunks;
             if (componentChunks == null || componentChunks.Length == 0)
             {
-                return snapshot.EntityCount == 0;
+                var importedEmptySnapshot = snapshot.EntityCount == 0;
+                if (importedEmptySnapshot)
+                {
+                    _state.MarkSnapshotImported();
+                }
+
+                return importedEmptySnapshot;
             }
 
             ImportComponentChunks(componentChunks, isDelta);
 
-            return _entities.PlayerCount > 0 || snapshot.EntityCount == 0;
+            var imported = _entities.PlayerCount > 0 || snapshot.EntityCount == 0;
+            if (imported)
+            {
+                _state.MarkSnapshotImported();
+            }
+
+            return imported;
         }
 
         private void ImportComponentChunks(ShooterPackedComponentChunk[] componentChunks, bool isDelta = false)
         {
-            var players = new Dictionary<int, ShooterSveltoPlayerComponent>();
-            var projectiles = new Dictionary<int, ShooterSveltoProjectileComponent>();
-            var enemies = new Dictionary<int, ImportedEnemy>();
-            var removedProjectiles = new HashSet<int>();
-            var removedEnemies = new HashSet<int>();
+            var players = _players;
+            var projectiles = _projectiles;
+            var enemies = _enemies;
+            var removedProjectiles = _removedProjectiles;
+            var removedEnemies = _removedEnemies;
+            players.Clear();
+            projectiles.Clear();
+            enemies.Clear();
+            removedProjectiles.Clear();
+            removedEnemies.Clear();
 
             for (int i = 0; i < componentChunks.Length; i++)
             {
@@ -77,49 +101,57 @@ namespace AbilityKit.Demo.Shooter.Runtime
                 }
             }
 
-            foreach (var projectileId in removedProjectiles)
+            _entities.BeginStructuralChanges();
+            try
             {
-                projectiles.Remove(projectileId);
-                _entities.RemoveProjectile(projectileId);
-            }
-
-            foreach (var enemyId in removedEnemies)
-            {
-                enemies.Remove(enemyId);
-                _entities.RemoveEnemy(enemyId);
-            }
-
-            foreach (var player in players.Values)
-            {
-                var value = player;
-                if (isDelta && _entities.HasPlayer(value.PlayerId))
+                foreach (var projectileId in removedProjectiles)
                 {
-                    _entities.SetPlayer(in value);
-                }
-                else
-                {
-                    _entities.AddPlayer(in value);
-                }
-            }
-
-            foreach (var projectile in projectiles.Values)
-            {
-                var value = projectile;
-                if (isDelta && _entities.HasProjectile(value.BulletId))
-                {
-                    _entities.SetProjectile(in value);
-                }
-                else
-                {
-                    _entities.AddProjectile(in value);
+                    projectiles.Remove(projectileId);
+                    _entities.RemoveProjectile(projectileId);
                 }
 
-                _state.AdvanceBulletIdPast(value.BulletId);
-            }
+                foreach (var enemyId in removedEnemies)
+                {
+                    enemies.Remove(enemyId);
+                    _entities.RemoveEnemy(enemyId);
+                }
 
-            foreach (var enemy in enemies.Values)
+                foreach (var player in players.Values)
+                {
+                    var value = player;
+                    if (isDelta && _entities.HasPlayer(value.PlayerId))
+                    {
+                        _entities.SetPlayer(in value);
+                    }
+                    else
+                    {
+                        _entities.AddPlayer(in value);
+                    }
+                }
+
+                foreach (var projectile in projectiles.Values)
+                {
+                    var value = projectile;
+                    if (isDelta && _entities.HasProjectile(value.BulletId))
+                    {
+                        _entities.SetProjectile(in value);
+                    }
+                    else
+                    {
+                        _entities.AddProjectile(in value);
+                    }
+
+                    _state.AdvanceBulletIdPast(value.BulletId);
+                }
+
+                foreach (var enemy in enemies.Values)
+                {
+                    UpsertEnemy(in enemy);
+                }
+            }
+            finally
             {
-                UpsertEnemy(in enemy);
+                _entities.EndStructuralChanges();
             }
         }
 
@@ -239,6 +271,8 @@ namespace AbilityKit.Demo.Shooter.Runtime
                         DirectionX = ShooterPackedSnapshotChunkCodec.GetFloat(chunk.ValueZ, i, 1f),
                         DirectionY = ShooterPackedSnapshotChunkCodec.GetFloat(chunk.ValueW, i)
                     };
+                    enemy.Navigation.VelocityX = ShooterPackedSnapshotChunkCodec.GetPackedPairValue(chunk.Aux, i, 0);
+                    enemy.Navigation.VelocityY = ShooterPackedSnapshotChunkCodec.GetPackedPairValue(chunk.Aux, i, 1);
                     enemies[entityId] = enemy;
                 }
             }
@@ -311,11 +345,6 @@ namespace AbilityKit.Demo.Shooter.Runtime
             }
         }
 
-        private void ClearImportedEntities()
-        {
-            _entities.Clear();
-        }
-
         private void UpsertEnemy(in ImportedEnemy enemy)
         {
             if (enemy.EntityId <= 0)
@@ -326,10 +355,18 @@ namespace AbilityKit.Demo.Shooter.Runtime
             if (_entities.HasEnemy(enemy.EntityId))
             {
                 _entities.SetEnemy(enemy.EntityId, in enemy.Transform, in enemy.Health);
+            }
+            else
+            {
+                _entities.AddEnemy(enemy.EntityId, in enemy.Transform, in enemy.Health, in enemy.Navigation);
                 return;
             }
 
-            _entities.AddEnemy(enemy.EntityId, in enemy.Transform, in enemy.Health);
+            if (!_entities.SveltoContext.EntitiesDB.TryQueryMappedEntities<ShooterSveltoNavigationComponent>(
+                    ShooterSveltoGroups.GameplayTargets,
+                    out var navigationMapper)) return;
+
+            navigationMapper.Entity((uint)enemy.EntityId) = enemy.Navigation;
         }
 
         private struct ImportedEnemy
@@ -337,6 +374,7 @@ namespace AbilityKit.Demo.Shooter.Runtime
             public int EntityId;
             public ShooterSveltoTransformComponent Transform;
             public ShooterSveltoHealthComponent Health;
+            public ShooterSveltoNavigationComponent Navigation;
         }
     }
 }

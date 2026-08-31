@@ -1,9 +1,9 @@
-﻿using System;
+using System;
 using System.Collections.Generic;
 using AbilityKit.Ability.FrameSync;
 using AbilityKit.Ability.Triggering.Runtime;
 using AbilityKit.Ability.World.DI;
-using AbilityKit.Core.Continuous;
+using AbilityKit.Continuous;
 using AbilityKit.Demo.Moba.Config.BattleDemo.MO;
 using AbilityKit.Demo.Moba.Config.Core;
 using AbilityKit.Demo.Moba.Components;
@@ -15,6 +15,7 @@ using AbilityKit.Demo.Moba.Services.Buffs.Core;
 using AbilityKit.Demo.Moba.Services.Buffs.Runtime;
 using AbilityKit.Demo.Moba.Services.Buffs.Presentation;
 using AbilityKit.Demo.Moba.Services.Buffs.Tagging;
+using AbilityKit.Demo.Moba.Services.Observability;
 
 namespace AbilityKit.Demo.Moba.Services.Buffs.Lifecycle {
     /// <summary>
@@ -120,8 +121,7 @@ namespace AbilityKit.Demo.Moba.Services.Buffs.Lifecycle {
                 var runtime = list[i];
                 if (!key.Matches(runtime)) continue;
 
-                removed = true;
-                EndRuntime(target, list, i, runtime, request.SourceActorId > 0 ? request.SourceActorId : runtime.SourceId, normalizedReason);
+                removed |= EndRuntime(target, list, i, runtime, request.SourceActorId > 0 ? request.SourceActorId : runtime.SourceId, normalizedReason);
             }
 
             if (!removed) return Reject(BuffLifecycleRejectCode.RemoveRuntimeNotFound, $"buff runtime not found. target={request.TargetActorId} buffId={request.BuffId} source={request.SourceActorId} reason={request.Reason}.");
@@ -135,11 +135,11 @@ namespace AbilityKit.Demo.Moba.Services.Buffs.Lifecycle {
         }
 
         /// <summary>
-        /// 结束单个 Buff 运行时。顺序必须保持：先停持续行为/清 owner 绑定/发布事件，再从列表移除并回收到对象池。
+        /// 结束单个 Buff 运行时。先从仓库提交移除，再清理绑定、发布提交后事件并回收到对象池。
         /// </summary>
-        public void EndRuntime(global::ActorEntity target, List<BuffRuntime> list, int index, BuffRuntime runtime, int sourceActorId, TraceLifecycleReason reason)
+        public bool EndRuntime(global::ActorEntity target, List<BuffRuntime> list, int index, BuffRuntime runtime, int sourceActorId, TraceLifecycleReason reason)
         {
-            _endFlow.EndRuntime(target, list, index, runtime, sourceActorId, reason);
+            return _endFlow.EndRuntime(target, list, index, runtime, sourceActorId, reason);
         }
 
         private bool TryGetTarget(int actorId, out global::ActorEntity target)
@@ -179,6 +179,7 @@ namespace AbilityKit.Demo.Moba.Services.Buffs.Lifecycle {
             services.TryResolve(out MobaSkillCastRuntimeService skillRuntimes);
             services.TryResolve(out MobaPresentationCueSnapshotService cueSnapshots);
             services.TryResolve(out MobaRuntimeContextService runtimeContexts);
+            services.TryResolve(out IMobaBuffLifecycleHook observationHook);
   
             services.TryResolve(out AbilityKit.Demo.Moba.Services.Triggering.MobaTriggerPlanSubscriptionService triggerSubscriptions);
             services.TryResolve(out AbilityKit.Demo.Moba.Runtime.Application.Services.Triggering.MobaTriggerExecutionGateway triggerGateway);
@@ -191,7 +192,7 @@ namespace AbilityKit.Demo.Moba.Services.Buffs.Lifecycle {
             var stacking = new BuffStackingPolicyApplier();
             var presentationCues = new MobaBuffPresentationCueReporter(configs, cueSnapshots);
             var continuousBindings = new BuffContinuousBindingService(continuous, tags);
-            var notifier = new BuffLifecycleNotifier(events, stageEffects, presentationCues);
+            var notifier = new BuffLifecycleNotifier(events, stageEffects, presentationCues, observationHook);
 
             var lifecycleHooks = MobaRuntimeLifecycleHookFactory.CreateDefault(trace);
             var bindings = new BuffRuntimeBindingCoordinator(lifecycleHooks, continuousBindings, skillRuntimes);

@@ -13,26 +13,35 @@ namespace AbilityKit.Demo.Shooter.View
         public readonly int Frame;
         public readonly double Timestamp;
         public readonly long ServerTicks;
+        public readonly long EventWatermark;
         public readonly bool IsFullSnapshot;
         public readonly IReadOnlyList<ShooterGatewayActorSnapshot> Actors;
         public readonly int PayloadOpCode;
+        public readonly byte[] PayloadBytes;
         public readonly ShooterPackedSnapshotPayload? PackedSnapshot;
         public readonly ShooterPureStateSnapshotPayload? PureStateSnapshot;
 
         public ShooterGatewaySnapshot(ulong worldId, int frame, double timestamp, bool isFullSnapshot, IReadOnlyList<ShooterGatewayActorSnapshot> actors, int payloadOpCode = 0, ShooterPackedSnapshotPayload? packedSnapshot = null)
-            : this(worldId, frame, timestamp, 0L, isFullSnapshot, actors, payloadOpCode, packedSnapshot, null)
+            : this(worldId, frame, timestamp, 0L, 0L, isFullSnapshot, actors, payloadOpCode, packedSnapshot, null)
         {
         }
 
-        public ShooterGatewaySnapshot(ulong worldId, int frame, double timestamp, long serverTicks, bool isFullSnapshot, IReadOnlyList<ShooterGatewayActorSnapshot> actors, int payloadOpCode = 0, ShooterPackedSnapshotPayload? packedSnapshot = null, ShooterPureStateSnapshotPayload? pureStateSnapshot = null)
+        public ShooterGatewaySnapshot(ulong worldId, int frame, double timestamp, long serverTicks, bool isFullSnapshot, IReadOnlyList<ShooterGatewayActorSnapshot> actors, int payloadOpCode = 0, ShooterPackedSnapshotPayload? packedSnapshot = null, ShooterPureStateSnapshotPayload? pureStateSnapshot = null, byte[]? payloadBytes = null)
+            : this(worldId, frame, timestamp, serverTicks, 0L, isFullSnapshot, actors, payloadOpCode, packedSnapshot, pureStateSnapshot, payloadBytes)
+        {
+        }
+
+        public ShooterGatewaySnapshot(ulong worldId, int frame, double timestamp, long serverTicks, long eventWatermark, bool isFullSnapshot, IReadOnlyList<ShooterGatewayActorSnapshot> actors, int payloadOpCode = 0, ShooterPackedSnapshotPayload? packedSnapshot = null, ShooterPureStateSnapshotPayload? pureStateSnapshot = null, byte[]? payloadBytes = null)
         {
             WorldId = worldId;
             Frame = frame;
             Timestamp = timestamp;
             ServerTicks = serverTicks;
+            EventWatermark = eventWatermark;
             IsFullSnapshot = isFullSnapshot;
             Actors = actors ?? Array.Empty<ShooterGatewayActorSnapshot>();
             PayloadOpCode = payloadOpCode;
+            PayloadBytes = payloadBytes ?? Array.Empty<byte>();
             PackedSnapshot = packedSnapshot;
             PureStateSnapshot = pureStateSnapshot;
         }
@@ -68,8 +77,18 @@ namespace AbilityKit.Demo.Shooter.View
     {
         public static ShooterGatewaySnapshot ToGatewaySnapshot(in WireStateSyncSnapshotPush push)
         {
+            return ToGatewaySnapshot(in push, new ShooterPureStateSyncDecodeBuffer());
+        }
+
+        internal static ShooterGatewaySnapshot ToGatewaySnapshot(
+            in WireStateSyncSnapshotPush push,
+            ShooterPureStateSyncDecodeBuffer pureStateDecodeBuffer)
+        {
             var packedSnapshot = TryDecodePackedSnapshot(push.PayloadOpCode, push.Payload);
-            var pureStateSnapshot = TryDecodePureStateSnapshot(push.PayloadOpCode, push.Payload);
+            var pureStateSnapshot = TryDecodePureStateSnapshot(
+                push.PayloadOpCode,
+                push.Payload,
+                pureStateDecodeBuffer);
             var source = push.Actors;
             if (source == null || source.Count == 0)
             {
@@ -78,11 +97,13 @@ namespace AbilityKit.Demo.Shooter.View
                     push.Frame,
                     push.Timestamp,
                     push.ServerTicks,
+                    push.EventWatermark,
                     push.IsFullSnapshot,
                     Array.Empty<ShooterGatewayActorSnapshot>(),
                     push.PayloadOpCode,
                     packedSnapshot,
-                    pureStateSnapshot);
+                    pureStateSnapshot,
+                    push.Payload);
             }
 
             var actors = new ShooterGatewayActorSnapshot[source.Count];
@@ -106,11 +127,13 @@ namespace AbilityKit.Demo.Shooter.View
                 push.Frame,
                 push.Timestamp,
                 push.ServerTicks,
+                push.EventWatermark,
                 push.IsFullSnapshot,
                 actors,
                 push.PayloadOpCode,
                 packedSnapshot,
-                pureStateSnapshot);
+                pureStateSnapshot,
+                push.Payload);
         }
 
         private static ShooterPackedSnapshotPayload? TryDecodePackedSnapshot(int payloadOpCode, byte[]? payload)
@@ -128,7 +151,10 @@ namespace AbilityKit.Demo.Shooter.View
             return ShooterPackedSnapshotCodec.Deserialize(payload);
         }
 
-        private static ShooterPureStateSnapshotPayload? TryDecodePureStateSnapshot(int payloadOpCode, byte[]? payload)
+        private static ShooterPureStateSnapshotPayload? TryDecodePureStateSnapshot(
+            int payloadOpCode,
+            byte[]? payload,
+            ShooterPureStateSyncDecodeBuffer decodeBuffer)
         {
             if (payload == null || payload.Length == 0)
             {
@@ -140,7 +166,7 @@ namespace AbilityKit.Demo.Shooter.View
                 return null;
             }
 
-            return ShooterPureStateSyncCodec.Deserialize(payload);
+            return decodeBuffer.Decode(payload.AsSpan());
         }
     }
 }

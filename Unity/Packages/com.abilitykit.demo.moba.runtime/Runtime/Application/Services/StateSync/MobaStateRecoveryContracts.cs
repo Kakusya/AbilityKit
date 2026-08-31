@@ -1,6 +1,6 @@
 using System;
 using AbilityKit.Ability.FrameSync;
-using AbilityKit.Core.Serialization;
+using MemoryPack;
 
 namespace AbilityKit.Demo.Moba.Services.StateSync
 {
@@ -10,15 +10,27 @@ namespace AbilityKit.Demo.Moba.Services.StateSync
         string Name { get; }
         byte[] ExportState(FrameIndex frame);
         void ImportState(FrameIndex frame, byte[] payload);
-        void AddStateHash(FrameIndex frame, MobaStateHashBuilder hash);
+        void AddStateHash(FrameIndex frame, ref MobaStateHashBuilder hash);
     }
 
-    public readonly struct MobaStateRecoverySnapshot
+    /// <summary>
+    /// Optional recovery capability for providers that can validate an incoming payload
+    /// before any provider mutates live state, and validate their applied state afterwards.
+    /// </summary>
+    public interface IMobaStagedStateRecoveryProvider : IMobaStateRecoveryProvider
     {
-        [BinaryMember(0)] public readonly int Version;
-        [BinaryMember(1)] public readonly int Frame;
-        [BinaryMember(2)] public readonly MobaStateRecoveryEntry[] Entries;
+        void PrepareRestore(FrameIndex frame, byte[] payload);
+        void ValidateRestoredState(FrameIndex frame, byte[] payload);
+    }
 
+    [MemoryPackable]
+    public readonly partial struct MobaStateRecoverySnapshot
+    {
+        [MemoryPackOrder(0)] public readonly int Version;
+        [MemoryPackOrder(1)] public readonly int Frame;
+        [MemoryPackOrder(2)] public readonly MobaStateRecoveryEntry[] Entries;
+
+        [MemoryPackConstructor]
         public MobaStateRecoverySnapshot(int version, int frame, MobaStateRecoveryEntry[] entries)
         {
             Version = version;
@@ -27,11 +39,13 @@ namespace AbilityKit.Demo.Moba.Services.StateSync
         }
     }
 
-    public readonly struct MobaStateRecoveryEntry
+    [MemoryPackable]
+    public readonly partial struct MobaStateRecoveryEntry
     {
-        [BinaryMember(0)] public readonly int Key;
-        [BinaryMember(1)] public readonly byte[] Payload;
+        [MemoryPackOrder(0)] public readonly int Key;
+        [MemoryPackOrder(1)] public readonly byte[] Payload;
 
+        [MemoryPackConstructor]
         public MobaStateRecoveryEntry(int key, byte[] payload)
         {
             Key = key;

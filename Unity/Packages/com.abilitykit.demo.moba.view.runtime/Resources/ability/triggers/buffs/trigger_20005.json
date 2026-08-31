@@ -1,29 +1,31 @@
-﻿{
-    "conditions":  [
-
-                   ],
-    "id":  20005,
-    "enabled":  true,
-    "phase":  "immediate",
-    "event":  "",
-    "name":  "Trigger_20005",
-    "allowExternal":  false,
-    "actions":  [
-                    {
-                        "message":  "碰撞回调日志",
-                        "dump_args":  true,
-                        "type":  "debug_log"
-                    },
-                    {
-                        "damageType":  1,
-                        "type":  "give_damage",
-                        "reasonParam":  0,
-                        "queryTemplateId":  101,
-                        "value":  50.0,
-                        "log":  true,
-                        "crit":  0,
-                        "reasonKind":  1
-                    }
-                ],
-    "priority":  50
+{
+    "triggers": [
+        {
+            "id": 20005,
+            "name": "Trigger_20005",
+            "event": "",
+            "enabled": true,
+            "allowExternal": false,
+            "phase": "immediate",
+            "priority": 50,
+            "conditions": [],
+            "actions": [
+                {
+                    "message": "碰撞回调日志",
+                    "dump_args": true,
+                    "type": "debug_log"
+                },
+                {
+                    "damageType": 1,
+                    "type": "give_damage",
+                    "reasonParam": 0,
+                    "queryTemplateId": 101,
+                    "value": 50.0,
+                    "log": true,
+                    "crit": 0,
+                    "reasonKind": 1
+                }
+            ]
+        }
+    ]
 }

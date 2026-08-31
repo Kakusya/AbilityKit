@@ -8,6 +8,7 @@ namespace AbilityKit.Demo.Shooter.View
 {
     public static class ShooterRoomLaunchTagKeys
     {
+        public const string MinPlayers = "minPlayers";
         public const string SyncTemplateId = "syncTemplateId";
         public const string SyncModel = "syncModel";
         public const string NetworkEnvironmentId = "networkEnvironmentId";
@@ -17,15 +18,18 @@ namespace AbilityKit.Demo.Shooter.View
         public const string InputDelayFrames = "inputDelayFrames";
         public const string RandomSeed = "randomSeed";
         public const string DurationFrames = "durationFrames";
+        public const string EnemyBudget = "enemyBudget";
+        public const string VictoryTargetDefeats = "victoryTargetDefeats";
+        public const string ContinueAfterAllPlayersDefeated = "continueAfterAllPlayersDefeated";
     }
 
     public readonly struct ShooterRoomLaunchSpec
     {
         public const int DefaultOfflineTimeoutSeconds = 30 * 60;
-        public const string DefaultSyncTemplateId = ShooterSyncTemplateIds.PredictRollbackAuthority;
-        public const int DefaultSyncModel = (int)NetworkSyncModel.PredictRollback;
+        public const string DefaultSyncTemplateId = ShooterSyncTemplateIds.MassBattleLodAoiSampleBlock;
+        public const int DefaultSyncModel = (int)NetworkSyncModel.MassBattleLodSync;
         public const string DefaultNetworkEnvironmentId = "ideal";
-        public const string DefaultCarrierName = "server";
+        public const string DefaultCarrierName = ShooterInterpolationDemoHarnessCarrier.DefaultCarrierName;
 
         public readonly string Region;
         public readonly string ServerId;
@@ -104,8 +108,8 @@ namespace AbilityKit.Demo.Shooter.View
                 syncModel: DefaultSyncModel,
                 networkEnvironmentId: DefaultNetworkEnvironmentId,
                 carrierName: DefaultCarrierName,
-                enableAuthoritativeWorld: true,
-                interpolationEnabled: false,
+                enableAuthoritativeWorld: false,
+                interpolationEnabled: true,
                 inputDelayFrames: 0);
         }
 
@@ -115,6 +119,7 @@ namespace AbilityKit.Demo.Shooter.View
             {
                 [RoomTagKeys.Gameplay] = ShooterGameplay.RoomType,
                 [RoomTagKeys.WorldType] = ShooterGameplay.WorldType,
+                [ShooterRoomLaunchTagKeys.MinPlayers] = ShooterGameplay.DefaultMinPlayers.ToString(),
                 [RoomTagKeys.TickRate] = ShooterGameplay.DefaultTickRate.ToString(),
                 [RoomTagKeys.OfflineTimeoutSeconds] = DefaultOfflineTimeoutSeconds.ToString()
             };

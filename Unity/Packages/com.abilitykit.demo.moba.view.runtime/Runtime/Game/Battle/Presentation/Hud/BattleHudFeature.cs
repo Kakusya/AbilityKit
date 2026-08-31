@@ -20,10 +20,12 @@ namespace AbilityKit.Game.Flow
         private BattleHudCanvasController _canvasController;
         private BattleHudInputController _inputController;
         private BattleHudSnapshotController _snapshotController;
+        private BattleHudSkillFailurePresenter _skillFailurePresenter;
         private BattleHudEntityLifecycleBinding _entityLifecycle;
         private BattlePresentationSessionContext _presentation;
         private readonly BattlePresentationSessionResolver _presentationSessions = new BattlePresentationSessionResolver();
         private readonly BattleHudFeatureControllerFactory _controllers = new BattleHudFeatureControllerFactory();
+        private readonly BattleHudSessionModel _session = new BattleHudSessionModel();
 
         private BattleHudAimPreview _aimPreview;
 
@@ -35,6 +37,7 @@ namespace AbilityKit.Game.Flow
             _camera = Camera.main;
             _config = BattleHudConfig.Default;
             _presentation = _presentationSessions.Resolve(ctx);
+            SynchronizeSessionFromContext();
 
             if (_ctx != null && _ctx.EntityNode.IsValid)
             {
@@ -45,6 +48,8 @@ namespace AbilityKit.Game.Flow
             _canvasController.Create("BattleHudCanvas");
 
             _binder = _controllers.CreateBinder(_config, _canvasController.Root, _camera, _ctx);
+            _skillFailurePresenter = _controllers.CreateSkillFailures();
+            _skillFailurePresenter.Bind(_ctx, _canvasController.Root);
             CreateInputController();
             ApplyLaunchSpecSkillTemplates();
             SubscribeEntityLifecycle();
@@ -62,11 +67,15 @@ namespace AbilityKit.Game.Flow
             _binder?.Clear();
             _binder = null;
 
+            _skillFailurePresenter?.Dispose();
+            _skillFailurePresenter = null;
+
             _inputController?.Dispose();
             _inputController = null;
 
             _aimPreview?.Clear();
             _aimPreview = null;
+            _session.Reset();
 
             _canvasController?.Dispose();
             _canvasController = null;
@@ -84,10 +93,12 @@ namespace AbilityKit.Game.Flow
             if (_binder == null) return;
 
             EnsureSnapshotSubscription();
+            EnsureLocalControlSkillTemplates();
+            _skillFailurePresenter?.Tick(deltaTime);
             _binder.Tick(deltaTime);
             _aimPreview ??= _controllers.CreateAimPreview();
             _aimPreview.SetSkillSpecs(_inputController?.SkillSpecs);
-            _aimPreview.Tick(_ctx);
+            _aimPreview.Tick(_ctx, deltaTime);
         }
 
         private void CreateInputController()
@@ -104,7 +115,17 @@ namespace AbilityKit.Game.Flow
 
         public void RefreshLocalControlSkillTemplates()
         {
+            SynchronizeSessionFromContext();
             ApplyLaunchSpecSkillTemplates();
+        }
+
+        private void EnsureLocalControlSkillTemplates()
+        {
+            SynchronizeSessionFromContext();
+            if (_session.RequiresLoadoutBinding)
+            {
+                ApplyLaunchSpecSkillTemplates();
+            }
         }
 
         private void ApplyLaunchSpecSkillTemplates()
@@ -113,7 +134,6 @@ namespace AbilityKit.Game.Flow
             var launchSpec = _ctx.Plan.LaunchSpec;
             if (launchSpec.Players == null || launchSpec.Players.Length == 0) return;
 
-            var playerId = ResolveLocalPlayerId();
             var worldId = !string.IsNullOrEmpty(_ctx.Plan.World.WorldId)
                 ? _ctx.Plan.World.WorldId
                 : launchSpec.WorldId;
@@ -121,14 +141,13 @@ namespace AbilityKit.Game.Flow
             var res = new EnterMobaGameRes(
                 new WorldId(worldId),
                 launchSpec.LocalPlayerId,
-                _ctx.LocalActorId,
+                _session.LocalActorId,
                 launchSpec.RandomSeed,
                 launchSpec.TickRate,
                 launchSpec.InputDelayFrames,
-                playersLoadout: launchSpec.Players);
+                playersLoadout: _ctx.BuildEffectivePlayerLoadouts());
 
-            _inputController?.ApplySkillButtonTemplates(res, playerId);
-            _aimPreview?.SetSkillSpecs(_inputController?.SkillSpecs);
+            ApplySkillButtonTemplates(res);
         }
 
         private void SubscribeEntityLifecycle()
@@ -147,19 +166,37 @@ namespace AbilityKit.Game.Flow
         {
             if (_snapshotController == null || _snapshotController.IsBound) return;
 
-            _snapshotController.Bind(_ctx, OnEnterGameSnapshot, OnDamageEventSnapshot, OnSkillStateSnapshot);
+            _snapshotController.Bind(_ctx, OnEnterGameSnapshot, OnDamageEventSnapshot, OnSkillStateSnapshot, OnPresentationCueSnapshot);
         }
 
         private void OnEnterGameSnapshot(EnterMobaGameRes res)
         {
             if (_ctx == null) return;
-            if (res.LocalActorId > 0 && _ctx.LocalActorId <= 0)
+            SynchronizeSessionFromContext();
+            _session.ApplyEnterGameSnapshot(res.PlayerId.Value, res.LocalActorId);
+            PublishLocalActorId();
+
+            if (!_session.ShouldUseEnterGameLoadout(
+                    res.PlayerId.Value,
+                    !string.IsNullOrEmpty(_ctx.LocalControlPlayerId)))
             {
-                _ctx.LocalActorId = res.LocalActorId;
+                ApplyLaunchSpecSkillTemplates();
+                return;
             }
 
-            _inputController?.ApplySkillButtonTemplates(res, ResolveLocalPlayerId(res));
-            _aimPreview?.SetSkillSpecs(_inputController?.SkillSpecs);
+            ApplySkillButtonTemplates(res);
+        }
+
+        private void ApplySkillButtonTemplates(EnterMobaGameRes res)
+        {
+            if (_inputController == null ||
+                !_inputController.ApplySkillButtonTemplates(res, _session.LocalPlayerId))
+            {
+                return;
+            }
+
+            _session.MarkLoadoutBound();
+            _aimPreview?.SetSkillSpecs(_inputController.SkillSpecs);
         }
 
         private void OnDamageEventSnapshot(MobaDamageEventSnapshotEntry[] entries)
@@ -171,31 +208,42 @@ namespace AbilityKit.Game.Flow
         private void OnSkillStateSnapshot(MobaSkillStateSnapshotEntry[] entries)
         {
             if (_ctx == null || entries == null || entries.Length == 0) return;
-            var localActorId = ResolveLocalActorId(entries);
-            if (localActorId > 0 && _ctx.LocalActorId <= 0)
+            SynchronizeSessionFromContext();
+            System.Predicate<MobaSkillStateSnapshotEntry> matchesLoadout = null;
+            if (_inputController != null)
             {
-                _ctx.LocalActorId = localActorId;
+                matchesLoadout = _inputController.SkillStateMatchesTemplate;
             }
+
+            var localActorId = _session.ResolveLocalActorId(
+                entries,
+                matchesLoadout);
+            PublishLocalActorId();
 
             _inputController?.ApplySkillStates(entries, localActorId);
         }
 
-        private string ResolveLocalPlayerId(EnterMobaGameRes res = default)
+        private void OnPresentationCueSnapshot(MobaPresentationCueSnapshotEntry[] entries)
         {
-            if (_ctx == null) return string.Empty;
-            var controlledPlayerId = _ctx.ResolveLocalControlPlayerId();
-            if (!string.IsNullOrEmpty(controlledPlayerId)) return controlledPlayerId;
-            if (!string.IsNullOrEmpty(res.PlayerId.Value)) return res.PlayerId.Value;
-            return _ctx.Plan.LaunchSpec.LocalPlayerId.Value;
+            if (entries == null || entries.Length == 0) return;
+            _binder?.OnPresentationCues(entries);
         }
 
-        private int ResolveLocalActorId(MobaSkillStateSnapshotEntry[] entries)
+        private void SynchronizeSessionFromContext()
         {
-            if (_ctx == null) return 0;
-            if (_ctx.LocalActorId > 0) return _ctx.LocalActorId;
-            return _inputController != null
-                ? _inputController.ResolveActorIdFromSkillStates(entries)
-                : 0;
+            if (_ctx == null) return;
+            _session.Synchronize(
+                _ctx.ResolveLocalControlPlayerId(),
+                _ctx.LocalActorId,
+                _ctx.RuntimePlayerLoadoutRevision);
+        }
+
+        private void PublishLocalActorId()
+        {
+            if (_ctx != null && _ctx.LocalActorId <= 0 && _session.LocalActorId > 0)
+            {
+                _ctx.LocalActorId = _session.LocalActorId;
+            }
         }
 
     }
@@ -239,6 +287,11 @@ namespace AbilityKit.Game.Flow
         public BattleHudAimPreview CreateAimPreview()
         {
             return new BattleHudAimPreview();
+        }
+
+        public BattleHudSkillFailurePresenter CreateSkillFailures()
+        {
+            return new BattleHudSkillFailurePresenter();
         }
     }
 }

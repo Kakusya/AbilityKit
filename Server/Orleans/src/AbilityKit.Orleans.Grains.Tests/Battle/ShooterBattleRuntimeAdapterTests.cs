@@ -1,6 +1,8 @@
 ﻿using AbilityKit.Demo.Shooter;
+using AbilityKit.Demo.Shooter.Runtime;
 using AbilityKit.Network.Runtime.Conditioning;
 using AbilityKit.Orleans.Contracts.Battle;
+using AbilityKit.Orleans.Contracts.Shooter;
 using AbilityKit.Orleans.Grains.Battle;
 using AbilityKit.Orleans.Grains.Battle.Gameplay;
 using AbilityKit.Orleans.Grains.Gameplays.Shooter.Battle;
@@ -57,6 +59,16 @@ public sealed class ShooterBattleRuntimeAdapterTests
         Assert.Equal(1, accepted);
         Assert.True(session.Tick(frame: 1, tickRate: 30, deltaTime: 1f / 30f));
 
+        var reliableProducer = Assert.IsAssignableFrom<IReliableBattleEventProducer>(session);
+        var reliableEvents = reliableProducer.CaptureReliableEvents(frame: 1);
+        var fire = Assert.Single(reliableEvents);
+        Assert.Equal(1, fire.SourceFrame);
+        Assert.Equal((int)ShooterEventType.Fire, fire.EventType);
+        Assert.NotNull(fire.Payload);
+        var firePayload = ShooterStateSnapshotCodec.DeserializeEvent(fire.Payload!);
+        Assert.Equal((int)ShooterEventType.Fire, firePayload.EventType);
+        Assert.Equal(1, firePayload.SourcePlayerId);
+
         var snapshot = session.GetSnapshot(1);
         Assert.NotNull(snapshot);
         Assert.Equal(1, snapshot!.Frame);
@@ -72,6 +84,7 @@ public sealed class ShooterBattleRuntimeAdapterTests
         Assert.NotEmpty(push.Payload!);
 
         var packed = ShooterPackedSnapshotCodec.Deserialize(push.Payload!);
+        Assert.NotEqual(fire.Payload, push.Payload);
         Assert.Equal(initParams.WorldId, packed.WorldId);
         Assert.Equal(push.Frame, packed.Frame);
         Assert.Equal(4, packed.EntityCount);
@@ -80,13 +93,39 @@ public sealed class ShooterBattleRuntimeAdapterTests
     }
 
     [Fact]
-    public void SessionStart_WhenDurationFramesProvided_UsesDurationForShooterWorld()
+    public void WithoutLegacyEvents_RemovesFireAndHitWithoutChangingSnapshotState()
+    {
+        var snapshot = new ShooterStateSnapshotPayload
+        {
+            Frame = 7,
+            Players = new[]
+            {
+                new ShooterPlayerSnapshot(1, 2f, 3f, 1f, 0f, 90, 0, true)
+            },
+            Events = new[]
+            {
+                new ShooterEventSnapshot(ShooterEventType.Fire, 1, 0, 11, 2f, 3f, 0),
+                new ShooterEventSnapshot(ShooterEventType.Hit, 1, -1, 11, 4f, 3f, 10)
+            }
+        };
+
+        var projected = ShooterBattleRuntimeAdapter.WithoutLegacyEvents(snapshot);
+
+        Assert.Equal(7, projected.Frame);
+        Assert.Single(projected.Players);
+        Assert.Empty(projected.Events);
+        Assert.Equal(2, snapshot.Events.Length);
+    }
+
+    [Fact]
+    public void SessionStart_WhenBattleFlowOverridesProvided_UsesOverridesForShooterWorld()
     {
         using var worldManager = new ServerBattleWorldManager(NullLogger.Instance);
         var adapter = new ShooterBattleRuntimeAdapter(worldManager);
-        using var session = adapter.CreateSession("shooter-duration-override-test");
+        using var session = adapter.CreateSession("shooter-battle-flow-override-test");
         var initParams = CreateInitParams();
         initParams.DurationFrames = 3600;
+        initParams.VictoryTargetDefeats = 100000;
 
         var start = session.Start(initParams);
 
@@ -95,6 +134,70 @@ public sealed class ShooterBattleRuntimeAdapterTests
         Assert.NotNull(snapshot);
         Assert.Equal(3600, snapshot!.TimeLimitFrames);
         Assert.Equal(3600, snapshot.RemainingTimeFrames);
+        Assert.Equal(100000, snapshot.VictoryTargetDefeats);
+    }
+
+    [Fact]
+    public void SessionStart_WhenEnemyBudgetProvided_SpawnsRequestedEnemyCount()
+    {
+        const int enemyBudget = ShooterServerProtocol.DefaultEnemyBudget;
+        using var worldManager = new ServerBattleWorldManager(NullLogger.Instance);
+        var adapter = new ShooterBattleRuntimeAdapter(worldManager);
+        using var session = adapter.CreateSession("shooter-default-enemy-budget-test");
+        var initParams = CreateInitParams();
+        initParams.EnemyBudget = enemyBudget;
+
+        var start = session.Start(initParams);
+
+        Assert.True(start.Succeeded, start.Error);
+        var initialSnapshot = session.GetSnapshot(0);
+        Assert.NotNull(initialSnapshot);
+        Assert.Equal(enemyBudget, initialSnapshot!.VictoryTargetDefeats);
+        for (var frame = 1; frame <= 64; frame++)
+        {
+            Assert.True(session.Tick(frame, initParams.TickRate, 1f / initParams.TickRate));
+        }
+
+        var push = session.CreateStateSyncPush(initParams.WorldId, frame: 64, isFullSnapshot: true);
+        var packed = ShooterPackedSnapshotCodec.Deserialize(push.Payload!);
+        var enemyLifecycleChunk = FindPackedChunk(
+            packed,
+            ShooterPackedComponentKinds.EntityLifecycle,
+            ShooterPackedEntityKinds.Enemy);
+
+        Assert.NotNull(enemyLifecycleChunk);
+        Assert.Equal(enemyBudget, enemyLifecycleChunk.Value.Count);
+    }
+
+    [Fact]
+    public void SessionTick_WhenSoakLongevityOverridesProvided_AdvancesBeyondFrame5401()
+    {
+        using var worldManager = new ServerBattleWorldManager(NullLogger.Instance);
+        var adapter = new ShooterBattleRuntimeAdapter(worldManager);
+        using var session = adapter.CreateSession("shooter-battle-soak-longevity-test");
+        var initParams = CreateInitParams();
+        initParams.DurationFrames = 37200;
+        initParams.VictoryTargetDefeats = int.MaxValue;
+        initParams.ContinueAfterAllPlayersDefeated = true;
+
+        var start = session.Start(initParams);
+
+        Assert.True(start.Succeeded, start.Error);
+        for (var frame = 1; frame <= 5402; frame++)
+        {
+            var ticked = session.Tick(frame, initParams.TickRate, 1f / initParams.TickRate);
+            var current = session.GetSnapshot(frame);
+            Assert.True(
+                ticked,
+                $"Runtime stopped at requested frame {frame}; actual frame {current?.Frame}, match state {current?.MatchState}, time limit {current?.TimeLimitFrames}.");
+        }
+
+        var snapshot = session.GetSnapshot(5402);
+        Assert.NotNull(snapshot);
+        Assert.Equal(5402, snapshot!.Frame);
+        Assert.Equal((int)ShooterBattleMatchState.Running, snapshot.MatchState);
+        Assert.False(snapshot.MatchFinal);
+        Assert.Equal(37200, snapshot.TimeLimitFrames);
     }
 
     [Fact]
@@ -125,6 +228,51 @@ public sealed class ShooterBattleRuntimeAdapterTests
     }
 
     [Fact]
+    public void FullAuthoritySnapshots_RoundTripFromServerWorldDuringTwoPlayerCombat()
+    {
+        using var worldManager = new ServerBattleWorldManager(NullLogger.Instance);
+        var adapter = new ShooterBattleRuntimeAdapter(worldManager);
+        using var session = adapter.CreateSession("shooter-server-full-snapshot-roundtrip-test");
+        var initParams = CreateInitParams();
+        initParams.RandomSeed = 3901;
+        initParams.Players![1].PosX = 4f;
+        initParams.DurationFrames = 18000;
+        initParams.VictoryTargetDefeats = int.MaxValue;
+        initParams.ContinueAfterAllPlayersDefeated = true;
+        var target = new ShooterBattleRuntimePort();
+
+        var start = session.Start(initParams);
+        Assert.True(start.Succeeded, start.Error);
+
+        for (var frame = 1; frame <= 300; frame++)
+        {
+            var fire = frame is 75 or 81 or 194 or 217 or 223 or 260 or 272;
+            var accepted = session.SubmitInputs(
+                frame - 1,
+                new[]
+                {
+                    CreateInput(1, ShooterOpCodes.Input.PlayerCommand,
+                        new ShooterPlayerCommand(1, frame < 145 ? 1f : 0f, 0f, 1f, 0f, fire)),
+                    CreateInput(2, ShooterOpCodes.Input.PlayerCommand,
+                        new ShooterPlayerCommand(2, frame < 145 ? -1f : 0f, 0f, -1f, 0f, fire))
+                });
+            Assert.Equal(2, accepted);
+            Assert.True(session.Tick(frame, initParams.TickRate, 1f / initParams.TickRate));
+
+            var push = session.CreateStateSyncPush(initParams.WorldId, frame, isFullSnapshot: true);
+            var packed = ShooterPackedSnapshotCodec.Deserialize(push.Payload!);
+            Assert.True(target.ImportPackedSnapshot(in packed));
+
+            var importedHash = target.ComputeStateHash();
+            Assert.True(
+                packed.StateHash == importedHash,
+                $"Server full snapshot hash mismatch at frame {packed.Frame}; " +
+                $"entities={packed.EntityCount}, chunks={DescribePackedChunks(in packed)}, " +
+                $"expected=0x{packed.StateHash:X8}, actual=0x{importedHash:X8}.");
+        }
+    }
+
+    [Fact]
     public void CreateStateSyncPush_WhenPureStateEnabled_EmitsPureStateFullAndDeltaPayloads()
     {
         using var worldManager = new ServerBattleWorldManager(NullLogger.Instance);
@@ -141,7 +289,9 @@ public sealed class ShooterBattleRuntimeAdapterTests
         var fullPayload = ShooterPureStateSyncCodec.Deserialize(full.Payload!);
         Assert.Equal(ShooterOpCodes.Snapshot.PureState, full.PayloadOpCode);
         Assert.True(full.IsFullSnapshot);
+        Assert.Empty(full.Actors);
         Assert.Equal(ShooterPureStateSnapshotKinds.FullBaseline, fullPayload.SnapshotKind);
+        Assert.Equal(0, fullPayload.EffectiveFrameSampleCount);
         Assert.Equal(initParams.WorldId, fullPayload.WorldId);
         Assert.Equal(full.Frame, fullPayload.Frame);
         Assert.Equal(ShooterPureStateSyncSettings.Default.ActiveSyncBudget, fullPayload.Settings.ActiveSyncBudget);
@@ -167,9 +317,42 @@ public sealed class ShooterBattleRuntimeAdapterTests
         var deltaPayload = ShooterPureStateSyncCodec.Deserialize(delta.Payload!);
         Assert.Equal(ShooterOpCodes.Snapshot.PureStateDelta, delta.PayloadOpCode);
         Assert.False(delta.IsFullSnapshot);
+        Assert.Empty(delta.Actors);
         Assert.Equal(ShooterPureStateSnapshotKinds.Delta, deltaPayload.SnapshotKind);
         Assert.Equal(fullPayload.Frame, deltaPayload.BaselineFrame);
         Assert.Equal(fullPayload.StateHash, deltaPayload.BaselineHash);
+        Assert.Equal(0, deltaPayload.EffectiveFrameSampleCount);
+    }
+
+    [Fact]
+    public void CreateStateSyncPush_WhenSampleBlockEnabled_CarriesIntermediateTickTransforms()
+    {
+        using var worldManager = new ServerBattleWorldManager(NullLogger.Instance);
+        var adapter = new ShooterBattleRuntimeAdapter(
+            worldManager,
+            ShooterStateSyncPushOptions.PureState(
+                NetworkConditionProfile.Lan,
+                useObserverAoi: false,
+                playbackPayloadMode: ShooterPureStatePlaybackPayloadMode.MultiSampleBlock,
+                sampleBlockFrameCount: 3));
+        using var session = adapter.CreateSession("shooter-pure-state-sample-block-test");
+        var initParams = CreateInitParams();
+        var start = session.Start(initParams);
+        Assert.True(start.Succeeded, start.Error);
+        Assert.True(session.Tick(frame: 1, tickRate: 30, deltaTime: 1f / 30f));
+        Assert.True(session.Tick(frame: 2, tickRate: 30, deltaTime: 1f / 30f));
+        Assert.True(session.Tick(frame: 3, tickRate: 30, deltaTime: 1f / 30f));
+
+        var push = session.CreateStateSyncPush(initParams.WorldId, frame: 3, isFullSnapshot: true);
+        var payload = ShooterPureStateSyncCodec.Deserialize(push.Payload!);
+
+        Assert.Equal(3, payload.Frame);
+        Assert.Equal(2, payload.EffectiveFrameSampleCount);
+        Assert.Equal(1, payload.FrameSamples[0].Frame);
+        Assert.Equal(2, payload.FrameSamples[1].Frame);
+        Assert.True(payload.EffectiveTransformSampleCount >= 2);
+        Assert.All(payload.FrameSamples.Take(payload.EffectiveFrameSampleCount), sample =>
+            Assert.True(sample.TransformCount > 0));
     }
 
     [Theory]
@@ -214,6 +397,64 @@ public sealed class ShooterBattleRuntimeAdapterTests
         {
             Environment.SetEnvironmentVariable(ShooterStateSyncPushOptions.PayloadModeEnvironmentVariable, previous);
         }
+    }
+
+    [Fact]
+    public void ValidateInput_AcceptsSingleFiniteCommandForSubmittingPlayer()
+    {
+        using var session = CreateSession("shooter-valid-input-test");
+        var result = session.ValidateInput(CreateInput(
+            playerId: 1,
+            opCode: ShooterOpCodes.Input.PlayerCommand,
+            new ShooterPlayerCommand(1, 1f, 0f, 0f, 1f, true)));
+
+        Assert.True(result.Accepted, result.Message);
+    }
+
+    [Fact]
+    public void ValidateInput_RejectsUnsupportedOpcodeAndMalformedPayload()
+    {
+        using var session = CreateSession("shooter-invalid-encoding-test");
+
+        var invalidOpcode = session.ValidateInput(CreateInput(1, ShooterOpCodes.Input.PlayerCommand + 1,
+            new ShooterPlayerCommand(1, 0f, 0f, 1f, 0f, false)));
+        var malformed = session.ValidateInput(new BattleInputItem
+        {
+            PlayerId = 1,
+            OpCode = ShooterOpCodes.Input.PlayerCommand,
+            Payload = new byte[] { 1, 2, 3 }
+        });
+
+        Assert.False(invalidOpcode.Accepted);
+        Assert.Equal(BattleResultStatusCodes.RejectedInvalidOpCode, invalidOpcode.Status);
+        Assert.False(malformed.Accepted);
+        Assert.Equal(BattleResultStatusCodes.RejectedInvalidPayload, malformed.Status);
+    }
+
+    [Fact]
+    public void ValidateInput_RejectsEmptyMultipleMismatchedAndNonFiniteCommands()
+    {
+        using var session = CreateSession("shooter-invalid-command-test");
+        var empty = session.ValidateInput(CreateInput(1, ShooterOpCodes.Input.PlayerCommand));
+        var multiple = session.ValidateInput(CreateInput(
+            1,
+            ShooterOpCodes.Input.PlayerCommand,
+            new ShooterPlayerCommand(1, 0f, 0f, 1f, 0f, false),
+            new ShooterPlayerCommand(1, 0f, 0f, 1f, 0f, false)));
+        var mismatched = session.ValidateInput(CreateInput(
+            1,
+            ShooterOpCodes.Input.PlayerCommand,
+            new ShooterPlayerCommand(2, 0f, 0f, 1f, 0f, false)));
+        var nonFinite = session.ValidateInput(CreateInput(
+            1,
+            ShooterOpCodes.Input.PlayerCommand,
+            new ShooterPlayerCommand(1, float.NaN, 0f, float.PositiveInfinity, 0f, false)));
+
+        Assert.All(new[] { empty, multiple, mismatched, nonFinite }, result =>
+        {
+            Assert.False(result.Accepted);
+            Assert.Equal(BattleResultStatusCodes.RejectedInvalidPayload, result.Status);
+        });
     }
 
     [Fact]
@@ -265,6 +506,115 @@ public sealed class ShooterBattleRuntimeAdapterTests
         Assert.Equal(4, payload.Settings.DeltaIntervalFrames);
         Assert.Equal(30, payload.Settings.LowFrequencyIntervalFrames);
         Assert.Equal(6, payload.Settings.InterpolationDelayFrames);
+    }
+
+    [Fact]
+    public void DefaultAdapter_WhenMassBattleTemplateStarts_UsesTemplatePureStateAndAoiBudget()
+    {
+        var previous = Environment.GetEnvironmentVariable(ShooterStateSyncPushOptions.PayloadModeEnvironmentVariable);
+        try
+        {
+            Environment.SetEnvironmentVariable(ShooterStateSyncPushOptions.PayloadModeEnvironmentVariable, null);
+            using var worldManager = new ServerBattleWorldManager(NullLogger.Instance);
+            var adapter = new ShooterBattleRuntimeAdapter(worldManager);
+            using var session = adapter.CreateSession("shooter-mass-template-adapter-test");
+            var initParams = CreateInitParams();
+            initParams.SyncOptions = new BattleSyncStartOptions(
+                ShooterServerProtocol.MassBattleLodAoiTemplate,
+                SyncModel: 0,
+                NetworkEnvironmentId: "limitedbw",
+                CarrierName: null,
+                EnableAuthoritativeWorld: false,
+                InterpolationEnabled: true,
+                InputDelayFrames: 0);
+
+            var start = session.Start(initParams);
+            Assert.True(start.Succeeded, start.Error);
+            Assert.True(session.Tick(frame: 1, tickRate: 30, deltaTime: 1f / 30f));
+
+            var observerSession = Assert.IsAssignableFrom<IObserverAwareBattleRuntimeSession>(session);
+            var observer = new BattleStateSyncObserverContext("observer-1", "account-1", "room-1")
+            {
+                AcknowledgedCommands = new[] { new ShooterCommandAcknowledgement(1, 77ul) }
+            };
+            var push = observerSession.CreateStateSyncPush(
+                initParams.WorldId,
+                frame: 1,
+                isFullSnapshot: true,
+                in observer);
+            var payload = ShooterPureStateSyncCodec.Deserialize(push.Payload!);
+
+            Assert.Equal(ShooterOpCodes.Snapshot.PureState, push.PayloadOpCode);
+            Assert.Equal(20000, payload.Settings.MaxEntityCount);
+            Assert.Equal(2048, payload.Settings.ActiveSyncBudget);
+            Assert.Equal(450, payload.Settings.BaselineIntervalFrames);
+            Assert.Equal(3, payload.Settings.DeltaIntervalFrames);
+            Assert.Equal(3, payload.Settings.InterpolationDelayFrames);
+            Assert.Equal(3, payload.Settings.NearLodIntervalFrames);
+            Assert.Equal(9, payload.Settings.MidLodIntervalFrames);
+            Assert.Equal(30, payload.Settings.FarLodIntervalFrames);
+            var acknowledgement = Assert.Single(payload.AcknowledgedCommands);
+            Assert.Equal(1, acknowledgement.PlayerId);
+            Assert.Equal(77ul, acknowledgement.CommandSequence);
+        }
+        finally
+        {
+            Environment.SetEnvironmentVariable(ShooterStateSyncPushOptions.PayloadModeEnvironmentVariable, previous);
+        }
+    }
+
+    [Fact]
+    public void MassBattleAoi_WhenObserverIsResolved_ExcludesPlayerOutsideBoundaryFromFullBaseline()
+    {
+        using var worldManager = new ServerBattleWorldManager(NullLogger.Instance);
+        var adapter = new ShooterBattleRuntimeAdapter(worldManager);
+        using var session = adapter.CreateSession("shooter-mass-template-aoi-scope-test");
+        var initParams = CreateMassBattleAoiInitParams();
+        initParams.Players![1].PosX = 40f;
+
+        var start = session.Start(initParams);
+        Assert.True(start.Succeeded, start.Error);
+        var observerSession = Assert.IsAssignableFrom<IObserverAwareBattleRuntimeSession>(session);
+        var observer = new BattleStateSyncObserverContext("observer-1", "account-1", "room-1");
+
+        var push = observerSession.CreateStateSyncPush(
+            initParams.WorldId,
+            frame: 0,
+            isFullSnapshot: true,
+            in observer);
+        var payload = ShooterPureStateSyncCodec.Deserialize(push.Payload!);
+
+        Assert.Contains(payload.Entities.Take(payload.EffectiveEntityCount), entity =>
+            entity.EntityKind == ShooterPackedEntityKinds.Player && entity.EntityId == 1);
+        Assert.DoesNotContain(payload.Entities.Take(payload.EffectiveEntityCount), entity =>
+            entity.EntityKind == ShooterPackedEntityKinds.Player && entity.EntityId == 2);
+    }
+
+    [Theory]
+    [InlineData(null)]
+    [InlineData("unknown-account")]
+    public void MassBattleAoi_WhenObserverScopeCannotBeResolved_FailsClosed(string? accountId)
+    {
+        using var worldManager = new ServerBattleWorldManager(NullLogger.Instance);
+        var adapter = new ShooterBattleRuntimeAdapter(worldManager);
+        using var session = adapter.CreateSession("shooter-mass-template-aoi-fail-closed-test");
+        var initParams = CreateMassBattleAoiInitParams();
+        var start = session.Start(initParams);
+        Assert.True(start.Succeeded, start.Error);
+        var observerSession = Assert.IsAssignableFrom<IObserverAwareBattleRuntimeSession>(session);
+        var observer = new BattleStateSyncObserverContext("observer-unresolved", accountId ?? string.Empty, "room-1");
+
+        var push = observerSession.CreateStateSyncPush(
+            initParams.WorldId,
+            frame: 0,
+            isFullSnapshot: true,
+            in observer);
+        var payload = ShooterPureStateSyncCodec.Deserialize(push.Payload!);
+
+        Assert.Equal(initParams.WorldId, payload.WorldId);
+        Assert.Equal(ShooterPureStateSnapshotKinds.FullBaseline, payload.SnapshotKind);
+        Assert.Equal(0, payload.EffectiveEntityCount);
+        Assert.Equal(0, payload.EffectiveVisibilityHintCount);
     }
 
     private static void AssertPackedEnemiesVisible(in ShooterPackedSnapshotPayload packed)
@@ -328,6 +678,42 @@ public sealed class ShooterBattleRuntimeAdapterTests
         return null;
     }
 
+    private static string DescribePackedChunks(in ShooterPackedSnapshotPayload packed)
+    {
+        return string.Join(
+            ",",
+            packed.ComponentChunks.Select(chunk => $"{chunk.ComponentKind}:{chunk.EntityKind}={chunk.Count}"));
+    }
+
+    private static IBattleRuntimeSession CreateSession(string battleId)
+    {
+        var worldManager = new ServerBattleWorldManager(NullLogger.Instance);
+        var adapter = new ShooterBattleRuntimeAdapter(worldManager);
+        return adapter.CreateSession(battleId);
+    }
+
+    private static BattleInputItem CreateInput(uint playerId, int opCode, params ShooterPlayerCommand[] commands) =>
+        new()
+        {
+            PlayerId = playerId,
+            OpCode = opCode,
+            Payload = ShooterInputCodec.Serialize(commands)
+        };
+
+    private static BattleInitParams CreateMassBattleAoiInitParams()
+    {
+        var initParams = CreateInitParams();
+        initParams.SyncOptions = new BattleSyncStartOptions(
+            ShooterServerProtocol.MassBattleLodAoiTemplate,
+            SyncModel: 0,
+            NetworkEnvironmentId: "limitedbw",
+            CarrierName: null,
+            EnableAuthoritativeWorld: false,
+            InterpolationEnabled: true,
+            InputDelayFrames: 0);
+        return initParams;
+    }
+
     private static BattleInitParams CreateInitParams()
     {
         return new BattleInitParams
@@ -345,14 +731,16 @@ public sealed class ShooterBattleRuntimeAdapterTests
                     PlayerId = 1,
                     PosX = 0f,
                     PosZ = 0f,
-                    TeamId = 1
+                    TeamId = 1,
+                    AccountId = "account-1"
                 },
                 new PlayerInitInfo
                 {
                     PlayerId = 2,
                     PosX = 3f,
                     PosZ = 0f,
-                    TeamId = 2
+                    TeamId = 2,
+                    AccountId = "account-2"
                 }
             }
         };

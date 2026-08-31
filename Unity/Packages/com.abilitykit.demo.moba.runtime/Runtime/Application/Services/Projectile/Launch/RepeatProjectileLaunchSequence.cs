@@ -1,7 +1,7 @@
 using System;
 using AbilityKit.Core.Logging;
 using AbilityKit.Combat.Projectile;
-using AbilityKit.Core.Continuous;
+using AbilityKit.Continuous;
 using AbilityKit.Demo.Moba;
 
 namespace AbilityKit.Demo.Moba.Services.Projectile.Launch
@@ -26,6 +26,8 @@ namespace AbilityKit.Demo.Moba.Services.Projectile.Launch
 
             var patternProvider = new MobaModifierProjectileSpawnPatternProvider(
                 context.SkillParamModifiers,
+                context.Projectile,
+                context.Random,
                 context.Launcher.CountPerShot,
                 context.Launcher.FanAngleDeg,
                 context.BulletsPerShot,
@@ -37,12 +39,6 @@ namespace AbilityKit.Demo.Moba.Services.Projectile.Launch
             var schedule = context.RepeatCount == 1
                 ? ProjectileScheduleParams.Once(firstEmitFrame)
                 : ProjectileScheduleParams.Repeat(firstEmitFrame, context.IntervalFrames, context.RepeatCount);
-            var launcherSource = context.LauncherSource;
-            if (context.Links != null && launcherSource.IsValid)
-            {
-                context.Links.BindLauncherSource(context.LauncherActorId, in launcherSource);
-            }
-
             var baseSpawn = context.BaseSpawn;
             var scheduleId = context.Projectiles.ScheduleEmit(patternProvider, in baseSpawn, in schedule);
             context.LauncherEntity.AddProjectileLauncher(

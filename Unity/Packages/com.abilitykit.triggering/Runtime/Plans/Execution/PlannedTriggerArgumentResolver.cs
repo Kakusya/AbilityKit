@@ -20,15 +20,36 @@ namespace AbilityKit.Triggering.Runtime.Plan
                 return NamedArgsDict.Empty;
             }
 
-            var parsed = ActionSchemaRegistry.GetParsedArgs<TArgs, TCtx>(call.Id, arguments.NamedArgs, ctx);
-            return ConvertToNamedArgsDict(parsed, arguments.NamedArgs);
+            var resolvedArgs = new Dictionary<string, ActionArgValue>(arguments.NamedArgs.Count);
+            foreach (var pair in arguments.NamedArgs)
+            {
+                var argument = pair.Value;
+                if (argument.Kind == ActionArgKind.BlackboardTarget)
+                {
+                    resolvedArgs[pair.Key] = argument;
+                    continue;
+                }
+
+                if (argument.Kind == ActionArgKind.BooleanValue || argument.Kind == ActionArgKind.StringValue)
+                {
+                    resolvedArgs[pair.Key] = argument;
+                    continue;
+                }
+
+                var numericRef = argument.Ref;
+                var value = ResolveNumeric(in args, in numericRef, in ctx);
+                resolvedArgs[pair.Key] = ActionArgValue.OfConst(value, argument.Name);
+            }
+
+            var parsed = ActionSchemaRegistry.GetParsedArgs<TArgs, TCtx>(call.Id, resolvedArgs, ctx);
+            return ConvertToNamedArgsDict(parsed, resolvedArgs);
         }
 
         public static NamedArgsDict CreatePositionalArgs(double v0)
         {
             return new NamedArgsDict(new Dictionary<string, ActionArgValue>
             {
-                ["_0"] = ActionArgValue.OfConst(v0, "_0")
+                ["0"] = ActionArgValue.OfConst(v0, "0")
             });
         }
 
@@ -36,8 +57,8 @@ namespace AbilityKit.Triggering.Runtime.Plan
         {
             return new NamedArgsDict(new Dictionary<string, ActionArgValue>
             {
-                ["_0"] = ActionArgValue.OfConst(v0, "_0"),
-                ["_1"] = ActionArgValue.OfConst(v1, "_1")
+                ["0"] = ActionArgValue.OfConst(v0, "0"),
+                ["1"] = ActionArgValue.OfConst(v1, "1")
             });
         }
 

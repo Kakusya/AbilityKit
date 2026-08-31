@@ -12,6 +12,7 @@ using AbilityKit.Core.Logging;
 using AbilityKit.Core.Mathematics;
 using AbilityKit.Demo.Moba;
 using AbilityKit.Demo.Moba.Config.Core;
+using AbilityKit.Demo.Moba.Diagnostics;
 using AbilityKit.Protocol.Moba;
 using AbilityKit.Pipeline;
 using AbilityKit.Triggering.Eventing;
@@ -48,7 +49,6 @@ namespace AbilityKit.Demo.Moba.Services
     {
         private readonly IWorldResolver _services;
         private readonly IWorldClock _clock;
-        private readonly IFrameTime _time;
         private readonly AbilityKit.Triggering.Eventing.IEventBus _eventBus;
         private readonly IUnitResolver _units;
         private readonly MobaSkillLoadoutService _loadout;
@@ -92,7 +92,7 @@ namespace AbilityKit.Demo.Moba.Services
         {
             _services = services ?? throw new ArgumentNullException(nameof(services));
             _clock = clock ?? throw new ArgumentNullException(nameof(clock));
-            _time = time ?? throw new ArgumentNullException(nameof(time));
+            _ = time ?? throw new ArgumentNullException(nameof(time));
             _eventBus = eventBus;
             _units = units ?? throw new ArgumentNullException(nameof(units));
             _loadout = loadout ?? throw new ArgumentNullException(nameof(loadout));
@@ -100,7 +100,7 @@ namespace AbilityKit.Demo.Moba.Services
             _library = library ?? throw new ArgumentNullException(nameof(library));
             _preparation = new SkillCastPreparationService(_services, _eventBus, _units, _actors, _library);
             _policyResolver = new SkillCastPolicyResolver(_services);
-            _runnerRegistry = new SkillRunnerRegistry(diagnostics, exceptions, skillLogger ?? SkillLogger.Instance);
+            _runnerRegistry = new SkillRunnerRegistry(_clock, diagnostics, exceptions, skillLogger ?? SkillLogger.Instance);
         }
 
         public bool CastBySlot(int actorId, int slot)
@@ -119,7 +119,14 @@ namespace AbilityKit.Demo.Moba.Services
         {
             if (!_loadout.TryGetSkillId(actorId, slot, out var skillId))
             {
-                return MobaSkillCastResult.Failed("Skill not found in slot.");
+                var failure = new MobaSkillCastFailure(
+                    "Preparation",
+                    null,
+                    SkillFailureCodes.Cast.MissingSkill,
+                    "Skill not found in slot.");
+                var result = MobaSkillCastResult.Failed("Skill not found in slot.", in failure);
+                CollectSkillFailure(actorId, skillId: 0, slot, targetActorId: 0, in result);
+                return result;
             }
 
             return TryCastSkill(actorId, skillId, slot);
@@ -139,13 +146,26 @@ namespace AbilityKit.Demo.Moba.Services
 
         public MobaSkillInputHandleResult TryHandleInputResult(int actorId, in SkillInputEvent evt)
         {
-            var validation = ValidateSkillInput(actorId, in evt);
-            if (!validation.Success)
+            var result = ValidateSkillInput(actorId, in evt);
+            if (result.Success)
             {
-                return validation;
+                result = DispatchSkillInputPhase(actorId, in evt);
             }
 
-            return DispatchSkillInputPhase(actorId, in evt);
+            if (!result.Success &&
+                string.Equals(result.Failure.Source, "Input", StringComparison.Ordinal))
+            {
+                var failure = result.Failure;
+                CollectSkillFailure(
+                    actorId,
+                    ResolveSkillId(actorId, evt.Slot),
+                    evt.Slot,
+                    evt.TargetActorId,
+                    in failure,
+                    runtimeHandle: default);
+            }
+
+            return result;
         }
 
         private static MobaSkillInputHandleResult ValidateSkillInput(int actorId, in SkillInputEvent evt)
@@ -247,9 +267,14 @@ namespace AbilityKit.Demo.Moba.Services
         {
             if (!_loadout.TryGetSkillId(actorId, slot, out var skillId))
             {
-                return MobaSkillCastResult.Failed(
-                    "Skill not found in slot.",
-                    new MobaSkillCastFailure("Preparation", null, "skill.cast.slotNotFound", "Skill not found in slot."));
+                var failure = new MobaSkillCastFailure(
+                    "Preparation",
+                    null,
+                    SkillFailureCodes.Cast.MissingSkill,
+                    "Skill not found in slot.");
+                var result = MobaSkillCastResult.Failed("Skill not found in slot.", in failure);
+                CollectSkillFailure(actorId, skillId: 0, slot, targetActorId, in result);
+                return result;
             }
 
             return TryCastSkill(actorId, skillId, slot, in aimPos, in aimDir, targetActorId);
@@ -296,24 +321,136 @@ namespace AbilityKit.Demo.Moba.Services
 
         private MobaSkillCastResult CastSkillInternal(int actorId, int skillId, int slot, in Vec3 aimPos, in Vec3 aimDir, bool hasAim, int targetActorId = 0)
         {
-            var input = new SkillCastPreparationInput(actorId, skillId, slot, in aimPos, in aimDir, hasAim, targetActorId);
+            var resolvedSkillId = ResolveModifiedSkillId(actorId, skillId);
+            if (!TryValidateCombatRules(actorId, out var combatFailure, out var combatMessage))
+            {
+                var rejected = MobaSkillCastResult.Failed(combatMessage, in combatFailure);
+                CollectSkillFailure(actorId, resolvedSkillId, slot, targetActorId, in rejected);
+                return rejected;
+            }
+
+            var input = new SkillCastPreparationInput(actorId, resolvedSkillId, slot, in aimPos, in aimDir, hasAim, targetActorId);
             var prepared = _preparation.Prepare(in input);
+            MobaSkillCastResult result;
             if (!prepared.Success)
             {
                 var failure = prepared.Failure;
-                return MobaSkillCastResult.Failed(prepared.FailReason, in failure);
+                result = MobaSkillCastResult.Failed(prepared.FailReason, in failure);
+            }
+            else
+            {
+                result = StartPreparedCast(actorId, resolvedSkillId, in prepared);
             }
 
-            return StartPreparedCast(actorId, skillId, in prepared);
+            CollectSkillFailure(actorId, resolvedSkillId, slot, targetActorId, in result);
+            return result;
+        }
+
+        private int ResolveSkillId(int actorId, int slot)
+        {
+            return _loadout.TryGetSkillId(actorId, slot, out var skillId) ? skillId : 0;
+        }
+
+        private void CollectSkillFailure(
+            int actorId,
+            int skillId,
+            int slot,
+            int targetActorId,
+            in MobaSkillCastResult result)
+        {
+            if (result.Success) return;
+
+            var failure = result.Failure;
+            var runtimeHandle = result.RuntimeHandle;
+            CollectSkillFailure(
+                actorId,
+                skillId,
+                slot,
+                targetActorId,
+                in failure,
+                in runtimeHandle);
+        }
+
+        private void CollectSkillFailure(
+            int actorId,
+            int skillId,
+            int slot,
+            int targetActorId,
+            in MobaSkillCastFailure failure,
+            in MobaSkillCastRuntimeHandle runtimeHandle)
+        {
+            if (!failure.HasValue ||
+                _services == null ||
+                !_services.TryResolve<IMobaBattleDiagnosticEventSink>(out var sink) ||
+                sink == null)
+            {
+                return;
+            }
+
+            var payloadData = new BattleDiagnosticSkillFailurePayload(
+                slot,
+                failure.Source,
+                failure.Stage,
+                failure.Code,
+                failure.Message);
+            var payload = BattleDiagnosticEventPayload.FromSkillFailure(in payloadData);
+            var runtime = runtimeHandle.IsValid
+                ? new BattleDiagnosticRuntimeHandle(runtimeHandle.RuntimeId, runtimeHandle.Generation)
+                : default;
+            var rootContextId = runtimeHandle.IsValid ? runtimeHandle.RootTraceContextId : 0L;
+            var summary = $"code={payloadData.Code}, source={payloadData.Source}, stage={payloadData.Stage}, slot={slot}";
+            if (!string.IsNullOrEmpty(payloadData.Message)) summary += $", message={payloadData.Message}";
+            var draft = new MobaBattleDiagnosticEventDraft(
+                BattleDiagnosticEventKind.SkillFailure,
+                BattleDiagnosticEventChannel.Skill,
+                BattleDiagnosticEventOutcome.Failed,
+                actorId,
+                targetActorId,
+                skillId,
+                rootContextId,
+                rootContextId,
+                runtime,
+                payloadVersion: BattleDiagnosticSkillFailurePayload.CurrentSchemaVersion,
+                summary: summary,
+                payload: payload);
+            sink.TryCollect(in draft);
+        }
+
+        private int ResolveModifiedSkillId(int actorId, int skillId)
+        {
+            if (actorId <= 0 || skillId <= 0) return skillId;
+            if (!IsNormalAttackSkill(skillId)) return skillId;
+            if (_services == null || !_services.TryResolve<MobaSkillParamModifierService>(out var modifiers) || modifiers == null) return skillId;
+
+            var resolved = modifiers.Skill.ResolveSkillId(actorId, skillId);
+            return resolved > 0 ? resolved : skillId;
+        }
+
+        private bool IsNormalAttackSkill(int skillId)
+        {
+            if (skillId <= 0) return false;
+            if (_services == null || !_services.TryResolve<MobaConfigDatabase>(out var configs) || configs == null) return false;
+            if (!configs.TryGetSkill(skillId, out var skill) || skill == null) return false;
+
+            return skill.SkillType == SkillType.NormalAttack;
         }
 
         private MobaSkillCastResult StartPreparedCast(int actorId, int skillId, in SkillCastPreparationResult prepared)
         {
             var ctx = prepared.Context;
+
+            // Keep a post-preparation gate as a race-safe fallback. Any rejection after
+            // preparation must release the formal runtime, which owns the root trace.
+            if (!TryValidateCombatRules(actorId, out var combatFailure, out var combatMessage))
+            {
+                prepared.Runtimes.ForceTerminate(in ctx.RuntimeHandle, MobaSkillRuntimeEndReason.RollbackCleanup);
+                return new MobaSkillCastResult(false, combatMessage, in ctx.RuntimeHandle, in combatFailure);
+            }
+
             var req = prepared.Request;
             var runner = _runnerRegistry.GetOrCreate(actorId);
             var policy = _policyResolver.Resolve(skillId, _castPolicy);
-            var success = runner.Start(
+            var startResult = runner.TryStart(
                 prepared.PreCastConfig,
                 prepared.PreCastPhases,
                 prepared.CastConfig,
@@ -321,62 +458,41 @@ namespace AbilityKit.Demo.Moba.Services
                 abilityInstance: this,
                 in req,
                 ctx,
-                out var failReason,
-                policy: policy);
+                in policy);
             var failure = MobaSkillCastFailure.None;
-            if (success)
+            if (!startResult.Success)
             {
-                ApplyConfiguredCooldown(actorId, skillId, in prepared);
-            }
-            else
-            {
-                failure = SkillResultFactory.StartReject(runner, failReason);
-                if (!failure.HasValue)
-                {
-                    failure = SkillResultFactory.PipelineFailure(runner, failReason);
-                }
-
-                if (!failure.HasValue)
-                {
-                    failure = SkillResultFactory.UnknownCastFailure(failReason);
-                }
-
+                failure = SkillResultFactory.PipelineStartFailure(in startResult);
                 prepared.Runtimes.ForceTerminate(in ctx.RuntimeHandle, MobaSkillRuntimeEndReason.RollbackCleanup);
             }
 
-            return MobaSkillCastResult.From(success, failReason, in ctx.RuntimeHandle, in failure);
+            return MobaSkillCastResult.From(startResult.Success, startResult.FailReason, in ctx.RuntimeHandle, in failure);
         }
 
-        private void ApplyConfiguredCooldown(int actorId, int skillId, in SkillCastPreparationResult prepared)
+        private bool TryValidateCombatRules(
+            int actorId,
+            out MobaSkillCastFailure failure,
+            out string message)
         {
-            var slot = prepared.Request.SkillSlot;
-            if (slot <= 0) return;
-
-            var cooldownMs = ResolveConfiguredCooldownMs(skillId, prepared.Context?.SkillLevel ?? 0);
-            if (cooldownMs <= 0) return;
-
-            var now = MobaSkillRuntimeAccess.GetCurrentTimeMs(_time);
-            if (!MobaSkillRuntimeAccess.TrySetActiveSkillCooldown(_actors, actorId, slot, skillId, now + cooldownMs, cooldownMs))
+            failure = MobaSkillCastFailure.None;
+            message = null;
+            if (_services == null ||
+                !_services.TryResolve<MobaCombatRulesService>(out var combatRules) ||
+                combatRules == null)
             {
-                Log.Warning($"[SkillCastCoordinator] Failed to apply configured cooldown. actor={actorId}, slot={slot}, skillId={skillId}, cooldownMs={cooldownMs}.");
+                return true;
             }
-        }
 
-        private int ResolveConfiguredCooldownMs(int skillId, int skillLevel)
-        {
-            if (skillId <= 0) return 0;
-            if (_services == null || !_services.TryResolve<MobaConfigDatabase>(out var configs) || configs == null) return 0;
-            if (!configs.TryGetSkill(skillId, out var skill) || skill == null) return 0;
+            var result = combatRules.CanCastSkill(actorId);
+            if (result.Passed) return true;
 
-            var cooldownMs = Math.Max(0, skill.CooldownMs);
-            if (skill.LevelTableId <= 0 || skillLevel <= 0) return cooldownMs;
-            if (!configs.TryGetSkillLevelTable(skill.LevelTableId, out var table) || table == null) return cooldownMs;
-
-            var levels = table.Levels;
-            var index = skillLevel - 1;
-            if (levels == null || index < 0 || index >= levels.Count || levels[index] == null) return cooldownMs;
-
-            return levels[index].CooldownMs > 0 ? levels[index].CooldownMs : cooldownMs;
+            message = result.Message;
+            failure = new MobaSkillCastFailure(
+                "CombatRules",
+                "CastGate",
+                $"combat.{result.Failure}",
+                result.Message);
+            return false;
         }
 
         public bool TryGetRunningBySlot(int actorId, int slot, out SkillPipelineRunner.RunningSnapshot snapshot)
@@ -391,7 +507,13 @@ namespace AbilityKit.Demo.Moba.Services
 
         public void CancelAll(int actorId)
         {
-            _runnerRegistry.GetOrCreate(actorId).CancelAll();
+            _runnerRegistry.CancelAll(actorId);
+        }
+
+        public void RemoveActor(int actorId)
+        {
+            _runnerRegistry.CancelAndRemove(actorId, MobaSkillRuntimeEndReason.OwnerRemoved);
+            _preparation.RemoveActor(actorId);
         }
 
         public bool CancelBySlot(int actorId, int slot)

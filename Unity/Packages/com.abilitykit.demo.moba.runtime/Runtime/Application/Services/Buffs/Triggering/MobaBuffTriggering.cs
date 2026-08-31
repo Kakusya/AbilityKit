@@ -31,7 +31,7 @@ namespace AbilityKit.Demo.Moba.Services.Buffs.Triggering
             public const string EffectTick = "buff.effect_tick";
 
             /// <summary>
-            /// 生成某个具体效果的派生事件名，例如 buff.apply.1001。
+            /// 生成某个具体效果的派生事件名，例如 buff.apply.42。
             /// </summary>
             public static string WithEffect(string baseEventId, int effectId)
             {

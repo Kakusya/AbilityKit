@@ -1,0 +1,593 @@
+using System;
+using System.Buffers.Binary;
+using System.Collections.Generic;
+using AbilityKit.Game.Battle.Agent;
+using AbilityKit.Game.Flow;
+using AbilityKit.Demo.Common.Rooms;
+using AbilityKit.Network.Abstractions;
+using AbilityKit.Network.Runtime;
+using AbilityKit.Network.Runtime.TcpGateway;
+using AbilityKit.Protocol.Room;
+using NUnit.Framework;
+
+namespace AbilityKit.Game.Test.UnitTest
+{
+    public sealed class GatewayRoomClientLoadingTests
+    {
+        private sealed class MockConnection : IConnection
+        {
+            public ConnectionState State => ConnectionState.Connected;
+            public bool IsConnected => true;
+
+            public event Action Connected;
+            public event Action Disconnected;
+            public event Action<Exception> Error;
+            public event Action<uint, uint, ArraySegment<byte>> PacketReceived;
+            public event Action<uint, ArraySegment<byte>> ServerPushReceived;
+            public event Action<string, string> Kicked;
+
+            public uint LastOpCode;
+            public ArraySegment<byte> LastPayload;
+            public uint LastSeq;
+
+            public Func<uint, ArraySegment<byte>> Responder;
+
+            public void Open(string host, int port) { }
+            public void Close() { }
+            public void Tick(float deltaTime) { }
+
+            public void Send(uint opCode, ArraySegment<byte> payload, ushort flags = 0, uint seq = 0)
+            {
+                LastOpCode = opCode;
+                LastPayload = payload;
+                LastSeq = seq;
+
+                if (Responder != null)
+                {
+                    var responsePayload = Responder(opCode);
+                    var framed = FrameOk(responsePayload);
+                    PacketReceived?.Invoke(opCode, seq, framed);
+                }
+            }
+
+            public void Dispose() { }
+        }
+
+        private static ArraySegment<byte> FrameOk(ArraySegment<byte> payload)
+        {
+            // 4 字节 status (Ok=0, little-endian) + payload
+            var statusBytes = new byte[4];
+            BinaryPrimitives.WriteInt32LittleEndian(statusBytes, (int)TcpGatewayStatusCode.Ok);
+
+            var payloadCount = payload.Array == null ? 0 : payload.Count;
+            var result = new byte[4 + payloadCount];
+            Buffer.BlockCopy(statusBytes, 0, result, 0, 4);
+            if (payloadCount > 0)
+            {
+                Buffer.BlockCopy(payload.Array, payload.Offset, result, 4, payloadCount);
+            }
+
+            return new ArraySegment<byte>(result);
+        }
+
+        private static GatewayRoomClient CreateClient(MockConnection conn)
+        {
+            return new GatewayRoomClient(conn, GatewayRoomOpCodes.Default);
+        }
+
+        [Test]
+        public void CommonAccountLoginClient_UsesCanonicalGatewayProtocol()
+        {
+            var conn = new MockConnection();
+            var response = new WireRoomAccountLoginRes
+            {
+                Success = true,
+                SessionToken = "session-1",
+                AccountId = "account-1",
+                ExpireAtUnixMs = 1234,
+                Message = "ok"
+            };
+            conn.Responder = _ => WireRoomGatewayBinary.Serialize(in response);
+
+            DemoAccountLoginResult result;
+            using (var client = new DemoRoomGatewayAccountClient(conn))
+            {
+                result = client.AccountLoginAsync("account-1").Result;
+            }
+
+            Assert.AreEqual(RoomGatewayOpCodes.AccountLogin, conn.LastOpCode);
+            var request = WireRoomGatewayBinary.Deserialize<WireRoomAccountLoginReq>(conn.LastPayload);
+            Assert.AreEqual("account-1", request.AccountId);
+            Assert.IsTrue(request.KickExisting);
+            Assert.IsTrue(result.Success);
+            Assert.AreEqual("session-1", result.SessionToken);
+            Assert.AreEqual("account-1", result.AccountId);
+        }
+
+        [Test]
+        public void ListRoomsAsync_UsesCanonicalDirectoryProtocol()
+        {
+            var conn = new MockConnection();
+            var client = CreateClient(conn);
+            var response = new WireListRoomsRes
+            {
+                Success = true,
+                Rooms = new List<WireRoomSummary>
+                {
+                    new WireRoomSummary
+                    {
+                        RoomId = "room-1",
+                        RoomType = "moba",
+                        Title = "Ranked Room",
+                        PlayerCount = 1,
+                        MaxPlayers = 2
+                    }
+                },
+                NextOffset = 5,
+                Message = "ok"
+            };
+            conn.Responder = _ => WireRoomGatewayBinary.Serialize(in response);
+
+            var result = client.ListRoomsAsync(
+                new DemoRoomDirectoryQuery(
+                    "token-1",
+                    "dev",
+                    "local",
+                    "moba",
+                    offset: 0,
+                    limit: 10)).Result;
+
+            Assert.AreEqual(RoomGatewayOpCodes.ListRooms, conn.LastOpCode);
+            var request = WireRoomGatewayBinary.Deserialize<WireListRoomsReq>(conn.LastPayload);
+            Assert.AreEqual("token-1", request.SessionToken);
+            Assert.AreEqual("dev", request.Region);
+            Assert.AreEqual("local", request.ServerId);
+            Assert.AreEqual("moba", request.RoomType);
+            Assert.AreEqual(10, request.Limit);
+            Assert.IsTrue(result.Success);
+            Assert.AreEqual(1, result.Rooms.Count);
+            Assert.AreEqual("room-1", result.Rooms[0].RoomId);
+            Assert.AreEqual("Ranked Room", result.Rooms[0].DisplayName);
+            Assert.IsTrue(result.Rooms[0].HasOpenSlot);
+            Assert.AreEqual(5, result.NextOffset);
+        }
+
+        [Test]
+        public void JoinRoomAsync_PreservesAuthoritativePlayerIdentity()
+        {
+            var conn = new MockConnection();
+            var client = CreateClient(conn);
+            var response = new WireJoinRoomRes
+            {
+                Success = true,
+                RoomId = "room-1",
+                NumericRoomId = 101UL,
+                CurrentPlayerId = 17u,
+                ServerNowTicks = 500L,
+                Snapshot = new WireRoomSnapshot
+                {
+                    BattleId = "battle-1",
+                    WorldId = 201UL,
+                    CanStart = true
+                },
+                Message = "ok"
+            };
+            conn.Responder = _ => WireRoomGatewayBinary.Serialize(in response);
+
+            var result = client.JoinRoomAsync(
+                "token-1",
+                "dev",
+                "local",
+                "room-1").Result;
+
+            Assert.AreEqual(RoomGatewayOpCodes.JoinRoom, conn.LastOpCode);
+            var request = WireRoomGatewayBinary.Deserialize<WireJoinRoomReq>(conn.LastPayload);
+            Assert.AreEqual("token-1", request.SessionToken);
+            Assert.AreEqual("room-1", request.RoomId);
+            Assert.IsTrue(result.Success);
+            Assert.AreEqual("room-1", result.RoomId);
+            Assert.AreEqual(17u, result.CurrentPlayerId);
+            Assert.AreEqual("battle-1", result.BattleId);
+            Assert.AreEqual(201UL, result.WorldId);
+            Assert.IsTrue(result.CanStart);
+        }
+
+        [Test]
+        public void BeginLoadingAsync_SerializesAndDeserializes()
+        {
+            var conn = new MockConnection();
+            var client = CreateClient(conn);
+
+            var opRes = new WireRoomOperationRes
+            {
+                Success = true,
+                Applied = true,
+                ErrorCode = 0,
+                Message = "ok",
+                RoomRevision = 11L,
+                Snapshot = new WireRoomSnapshot
+                {
+                    Summary = new WireRoomSummary { RoomId = "room-1" },
+                    Phase = 1,
+                    RoomRevision = 11L
+                }
+            };
+            conn.Responder = _ => WireRoomGatewayBinary.Serialize(in opRes);
+
+            var result = client.BeginLoadingAsync("token-1", "room-1", 10L, "cmd-1").Result;
+
+            Assert.AreEqual(RoomGatewayOpCodes.BeginLoading, conn.LastOpCode);
+            var reqWire = WireRoomGatewayBinary.Deserialize<WireBeginLoadingReq>(conn.LastPayload);
+            Assert.AreEqual("token-1", reqWire.SessionToken);
+            Assert.AreEqual("room-1", reqWire.RoomId);
+            Assert.AreEqual(10L, reqWire.ExpectedRevision);
+            Assert.AreEqual("cmd-1", reqWire.CommandId);
+
+            Assert.IsTrue(result.Success);
+            Assert.IsTrue(result.Applied);
+            Assert.AreEqual(11L, result.RoomRevision);
+            Assert.IsNotNull(result.Snapshot);
+            Assert.AreEqual("room-1", result.Snapshot.RoomId);
+            Assert.AreEqual(ClientRoomPhase.Loading, result.Snapshot.Phase);
+        }
+
+        [Test]
+        public void ReportAssetsLoadedAsync_SerializesAndDeserializes()
+        {
+            var conn = new MockConnection();
+            var client = CreateClient(conn);
+
+            var opRes = new WireRoomOperationRes
+            {
+                Success = true,
+                Applied = true,
+                RoomRevision = 12L,
+                Snapshot = new WireRoomSnapshot
+                {
+                    Summary = new WireRoomSummary { RoomId = "room-2" },
+                    Phase = 1
+                }
+            };
+            conn.Responder = _ => WireRoomGatewayBinary.Serialize(in opRes);
+
+            var result = client.ReportAssetsLoadedAsync("token-2", "room-2", 5L, 3, "hash-x", "cmd-2").Result;
+
+            Assert.AreEqual(RoomGatewayOpCodes.ReportAssetsLoaded, conn.LastOpCode);
+            var reqWire = WireRoomGatewayBinary.Deserialize<WireReportAssetsLoadedReq>(conn.LastPayload);
+            Assert.AreEqual("token-2", reqWire.SessionToken);
+            Assert.AreEqual("room-2", reqWire.RoomId);
+            Assert.AreEqual(5L, reqWire.LaunchGeneration);
+            Assert.AreEqual(3, reqWire.ManifestVersion);
+            Assert.AreEqual("hash-x", reqWire.ManifestHash);
+            Assert.AreEqual("cmd-2", reqWire.CommandId);
+
+            Assert.IsTrue(result.Success);
+            Assert.AreEqual(12L, result.RoomRevision);
+        }
+
+        [Test]
+        public void LeaveRoomAsync_SerializesAndDeserializes()
+        {
+            var conn = new MockConnection();
+            var client = CreateClient(conn);
+            var opRes = new WireRoomOperationRes
+            {
+                Success = true,
+                Applied = true,
+                RoomRevision = 13L,
+                Message = "left"
+            };
+            conn.Responder = _ => WireRoomGatewayBinary.Serialize(in opRes);
+
+            var result = client.LeaveRoomAsync(
+                "token-leave",
+                "room-leave",
+                12L,
+                "cmd-leave").Result;
+
+            Assert.AreEqual(RoomGatewayOpCodes.LeaveRoom, conn.LastOpCode);
+            var req = WireRoomGatewayBinary.Deserialize<WireLeaveRoomReq>(conn.LastPayload);
+            Assert.AreEqual("token-leave", req.SessionToken);
+            Assert.AreEqual("room-leave", req.RoomId);
+            Assert.AreEqual(12L, req.ExpectedRevision);
+            Assert.AreEqual("cmd-leave", req.CommandId);
+            Assert.IsTrue(result.Success);
+            Assert.IsTrue(result.Applied);
+            Assert.AreEqual(13L, result.RoomRevision);
+            Assert.AreEqual("left", result.Message);
+        }
+
+        [Test]
+        public void GetSnapshotAsync_SerializesAndDeserializes()
+        {
+            var conn = new MockConnection();
+            var client = CreateClient(conn);
+
+            var snapRes = new WireRoomSnapshotRes
+            {
+                Success = true,
+                RoomId = "room-3",
+                NumericRoomId = 9001ul,
+                Snapshot = new WireRoomSnapshot
+                {
+                    Summary = new WireRoomSummary { RoomId = "room-3" },
+                    Phase = 3,
+                    BattleId = "battle-3",
+                    CanStart = true
+                },
+                Message = "ok"
+            };
+            conn.Responder = _ => WireRoomGatewayBinary.Serialize(in snapRes);
+
+            var result = client.GetSnapshotAsync("token-3", "room-3").Result;
+
+            Assert.AreEqual(RoomGatewayOpCodes.GetSnapshot, conn.LastOpCode);
+            var reqWire = WireRoomGatewayBinary.Deserialize<WireGetSnapshotReq>(conn.LastPayload);
+            Assert.AreEqual("token-3", reqWire.SessionToken);
+            Assert.AreEqual("room-3", reqWire.RoomId);
+
+            Assert.IsTrue(result.Success);
+            Assert.AreEqual("room-3", result.RoomId);
+            Assert.AreEqual(9001ul, result.NumericRoomId);
+            Assert.IsNotNull(result.Snapshot);
+            Assert.AreEqual(ClientRoomPhase.InBattle, result.Snapshot.Phase);
+            Assert.AreEqual("battle-3", result.Snapshot.BattleId);
+        }
+
+        [Test]
+        public void DeserializeRoomStateChangedPush_ParsesCorrectly()
+        {
+            var conn = new MockConnection();
+            var client = CreateClient(conn);
+
+            var push = new WireRoomStateChangedPush
+            {
+                RoomId = "room-4",
+                Snapshot = new WireRoomSnapshot
+                {
+                    Summary = new WireRoomSummary { RoomId = "room-4" },
+                    Phase = 2,
+                    RoomRevision = 20L,
+                    LastEventSequence = 20L
+                },
+                ServerNowTicks = 9999L
+            };
+            var payload = WireRoomGatewayBinary.Serialize(in push);
+
+            var snapshot = client.DeserializeRoomStateChangedPush(payload);
+
+            Assert.IsNotNull(snapshot);
+            Assert.AreEqual("room-4", snapshot.RoomId);
+            Assert.AreEqual(ClientRoomPhase.Starting, snapshot.Phase);
+            Assert.AreEqual(20L, snapshot.RoomRevision);
+        }
+
+        [Test]
+        public void RoomStatePushSynchronizer_OwnerLeavePromotesRemainingMemberWithoutRefresh()
+        {
+            var conn = new MockConnection();
+            var client = CreateClient(conn);
+            var store = new ClientRoomStore();
+            var refreshCalls = 0;
+            ClientRoomMembershipChange membershipChange = null;
+            store.OnMembershipChanged += change => membershipChange = change;
+            var synchronizer = new ClientRoomPushSynchronizer(
+                client,
+                store,
+                _ =>
+                {
+                    refreshCalls++;
+                    return System.Threading.Tasks.Task.CompletedTask;
+                });
+
+            var initial = new WireRoomStateChangedPush
+            {
+                RoomId = "room-owner-transfer",
+                Snapshot = new WireRoomSnapshot
+                {
+                    Summary = new WireRoomSummary
+                    {
+                        RoomId = "room-owner-transfer",
+                        OwnerAccountId = "account-owner",
+                        PlayerCount = 2,
+                        MaxPlayers = 2
+                    },
+                    Members = new List<string> { "account-owner", "account-member" },
+                    RoomRevision = 20,
+                    LastEventSequence = 20,
+                    Phase = 0
+                }
+            };
+            var transferred = new WireRoomStateChangedPush
+            {
+                RoomId = "room-owner-transfer",
+                Snapshot = new WireRoomSnapshot
+                {
+                    Summary = new WireRoomSummary
+                    {
+                        RoomId = "room-owner-transfer",
+                        OwnerAccountId = "account-member",
+                        PlayerCount = 1,
+                        MaxPlayers = 2
+                    },
+                    Members = new List<string> { "account-member" },
+                    RoomRevision = 21,
+                    LastEventSequence = 21,
+                    Phase = 0
+                }
+            };
+
+            var initialHandled = synchronizer.HandleServerPushAsync(
+                    RoomGatewayOpCodes.RoomStateChanged,
+                    WireRoomGatewayBinary.Serialize(in initial))
+                .GetAwaiter()
+                .GetResult();
+            var transferHandled = synchronizer.HandleServerPushAsync(
+                    RoomGatewayOpCodes.RoomStateChanged,
+                    WireRoomGatewayBinary.Serialize(in transferred))
+                .GetAwaiter()
+                .GetResult();
+
+            Assert.IsTrue(initialHandled);
+            Assert.IsTrue(transferHandled);
+            Assert.AreEqual(0, refreshCalls);
+            Assert.AreEqual(2, synchronizer.HandledPushCount);
+            Assert.AreEqual(2, synchronizer.AppliedPushCount);
+            Assert.AreEqual(0, synchronizer.RefreshFallbackCount);
+            Assert.AreEqual(21, synchronizer.LastPushRevision);
+            Assert.IsNotNull(synchronizer.LastPushUtc);
+            Assert.IsFalse(store.IsStale);
+            Assert.AreEqual(21, store.Current.RoomRevision);
+            Assert.AreEqual("account-member", store.Current.OwnerAccountId);
+            CollectionAssert.AreEqual(new[] { "account-member" }, store.Current.Members);
+            Assert.IsNotNull(membershipChange);
+            CollectionAssert.AreEqual(
+                new[] { "account-owner" },
+                membershipChange.LeftAccountIds);
+            Assert.AreEqual("account-owner", membershipChange.PreviousOwnerAccountId);
+            Assert.AreEqual("account-member", membershipChange.CurrentOwnerAccountId);
+        }
+
+        [Test]
+        public async System.Threading.Tasks.Task RoomStatePushSynchronizer_RefreshesAfterPushSilence()
+        {
+            var conn = new MockConnection();
+            var client = CreateClient(conn);
+            var store = new ClientRoomStore();
+            store.ApplySnapshot(new ClientRoomSnapshot
+            {
+                RoomId = "room-silent",
+                RoomRevision = 2,
+                LastEventSequence = 2
+            });
+            var refreshCalls = 0;
+            var synchronizer = new ClientRoomPushSynchronizer(
+                client,
+                store,
+                _ =>
+                {
+                    refreshCalls++;
+                    store.ApplySnapshot(new ClientRoomSnapshot
+                    {
+                        RoomId = "room-silent",
+                        RoomRevision = 5,
+                        LastEventSequence = 5
+                    });
+                    return System.Threading.Tasks.Task.CompletedTask;
+                });
+
+            var refreshed = await synchronizer.TryRefreshAfterSilenceAsync(TimeSpan.Zero);
+
+            Assert.IsTrue(refreshed);
+            Assert.AreEqual(1, refreshCalls);
+            Assert.AreEqual(1, synchronizer.RefreshFallbackCount);
+            Assert.AreEqual(5, store.Current.RoomRevision);
+        }
+
+        [Test]
+        public async System.Threading.Tasks.Task RoomStatePushSynchronizer_SilentRefreshIsSingleFlight()
+        {
+            var conn = new MockConnection();
+            var client = CreateClient(conn);
+            var store = new ClientRoomStore();
+            store.ApplySnapshot(new ClientRoomSnapshot
+            {
+                RoomId = "room-single-flight",
+                RoomRevision = 2,
+                LastEventSequence = 2
+            });
+            var refreshCompletion = new System.Threading.Tasks.TaskCompletionSource<bool>(
+                System.Threading.Tasks.TaskCreationOptions.RunContinuationsAsynchronously);
+            var refreshCalls = 0;
+            var synchronizer = new ClientRoomPushSynchronizer(
+                client,
+                store,
+                _ =>
+                {
+                    refreshCalls++;
+                    return refreshCompletion.Task;
+                });
+
+            var first = synchronizer.TryRefreshAfterSilenceAsync(TimeSpan.Zero);
+            var second = await synchronizer.TryRefreshAfterSilenceAsync(TimeSpan.Zero);
+            refreshCompletion.SetResult(true);
+
+            Assert.IsTrue(await first);
+            Assert.IsFalse(second);
+            Assert.AreEqual(1, refreshCalls);
+            Assert.AreEqual(1, synchronizer.RefreshFallbackCount);
+        }
+
+        [Test]
+        public void SubmitBattleInputAsync_UsesAuthoritativeProtocolAndPreservesResponse()
+        {
+            var conn = new MockConnection();
+            var client = CreateClient(conn);
+            var requests = new List<WireSubmitBattleInputReq>();
+            var response = new WireSubmitBattleInputRes
+            {
+                Success = false,
+                AcceptedFrame = 42,
+                CurrentFrame = 40,
+                Status = "RejectedTooFarFuture",
+                Message = "resync required",
+                ShouldResync = true,
+                ServerTicks = 123456L
+            };
+            conn.Responder = _ =>
+            {
+                requests.Add(WireRoomGatewayBinary.Deserialize<WireSubmitBattleInputReq>(conn.LastPayload));
+                return WireRoomGatewayBinary.Serialize(in response);
+            };
+
+            var first = client.SubmitBattleInputAsync(
+                "token-input",
+                "battle-input",
+                9001UL,
+                42,
+                7U,
+                100,
+                new byte[] { 1, 2, 3 }).Result;
+            var second = client.SubmitBattleInputAsync(
+                "token-input",
+                "battle-input",
+                9001UL,
+                43,
+                7U,
+                101,
+                Array.Empty<byte>()).Result;
+
+            Assert.AreEqual(RoomGatewayOpCodes.SubmitBattleInput, conn.LastOpCode);
+            Assert.AreEqual(2, requests.Count);
+            Assert.AreEqual("token-input", requests[0].SessionToken);
+            Assert.AreEqual("battle-input", requests[0].BattleId);
+            Assert.AreEqual(9001UL, requests[0].WorldId);
+            Assert.AreEqual(42, requests[0].Frame);
+            Assert.AreEqual(7U, requests[0].PlayerId);
+            Assert.AreEqual(100, requests[0].InputOpCode);
+            CollectionAssert.AreEqual(new byte[] { 1, 2, 3 }, requests[0].Payload);
+            Assert.AreEqual(1UL, requests[0].CommandSequence);
+            Assert.AreEqual(2UL, requests[1].CommandSequence);
+
+            Assert.IsFalse(first.Success);
+            Assert.AreEqual(42, first.AcceptedFrame);
+            Assert.AreEqual(40, first.CurrentFrame);
+            Assert.AreEqual("RejectedTooFarFuture", first.Status);
+            Assert.AreEqual("resync required", first.Message);
+            Assert.IsTrue(first.ShouldResync);
+            Assert.AreEqual(123456L, first.ServerTicks);
+            Assert.AreEqual(1UL, first.CommandSequence);
+            Assert.AreEqual(2UL, second.CommandSequence);
+        }
+
+        [Test]
+        public void IsRoomStateChangedPush_MatchesOpCode()
+        {
+            var conn = new MockConnection();
+            var client = CreateClient(conn);
+
+            Assert.IsTrue(client.IsRoomStateChangedPush(RoomGatewayOpCodes.RoomStateChanged));
+            Assert.IsFalse(client.IsRoomStateChangedPush(RoomGatewayOpCodes.GetSnapshot));
+        }
+    }
+}

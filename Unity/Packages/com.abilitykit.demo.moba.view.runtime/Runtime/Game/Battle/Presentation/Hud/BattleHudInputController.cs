@@ -51,14 +51,23 @@ namespace AbilityKit.Game.Flow
         }
 
         public IReadOnlyDictionary<int, BattleHudSkillPresentationSpec> SkillSpecs => _templateBinder.SkillSpecs;
+        internal BattleHudInputUi InputUi => _inputUi;
 
-        public void ApplySkillButtonTemplates(EnterMobaGameRes res, string playerId)
+        public bool ApplySkillButtonTemplates(EnterMobaGameRes res, string playerId)
         {
-            _templateBinder.TryApply(
-                res,
-                playerId,
-                _inputUi?.SkillViews);
+            if (!_templateBinder.TryResolveLoadout(res, playerId, out var loadout))
+            {
+                return false;
+            }
+
+            EnsureSkillButtonCount(_templateBinder.ResolveSkillButtonCount(loadout));
+            if (!_templateBinder.TryApply(loadout, _inputUi?.SkillViews))
+            {
+                return false;
+            }
+
             _inputEvents.SetSkillSpecs(_templateBinder.SkillSpecs);
+            return true;
         }
 
         public void ApplySkillStates(MobaSkillStateSnapshotEntry[] entries, int localActorId)
@@ -71,7 +80,7 @@ namespace AbilityKit.Game.Flow
                 for (int i = 0; i < entries.Length; i++)
                 {
                     var entry = entries[i];
-                    if (!ShouldApplySkillState(entry, localActorId, entries)) continue;
+                    if (!ShouldApplySkillState(entry, localActorId)) continue;
                     if (!TryResolveSkillView(entry.Slot, entry.SkillId, out var view)) continue;
 
                     view.ApplySkillState(entry);
@@ -85,67 +94,19 @@ namespace AbilityKit.Game.Flow
             }
         }
 
-        public int ResolveActorIdFromSkillStates(MobaSkillStateSnapshotEntry[] entries)
-        {
-            if (entries == null || entries.Length == 0) return 0;
-
-            var matchedActorId = 0;
-            for (int i = 0; i < entries.Length; i++)
-            {
-                var entry = entries[i];
-                if (entry.ActorId <= 0) continue;
-                if (!SkillStateMatchesTemplate(entry)) continue;
-
-                if (matchedActorId <= 0)
-                {
-                    matchedActorId = entry.ActorId;
-                    continue;
-                }
-
-                if (matchedActorId != entry.ActorId)
-                {
-                    return 0;
-                }
-            }
-
-            if (matchedActorId > 0) return matchedActorId;
-
-            var singleActorId = 0;
-            for (int i = 0; i < entries.Length; i++)
-            {
-                var actorId = entries[i].ActorId;
-                if (actorId <= 0) continue;
-                if (singleActorId <= 0)
-                {
-                    singleActorId = actorId;
-                    continue;
-                }
-
-                if (singleActorId != actorId)
-                {
-                    return 0;
-                }
-            }
-
-            return singleActorId;
-        }
-
         public void Dispose()
         {
             _inputEvents.ResetHudAim();
             DestroyInputUi();
         }
 
-        private bool ShouldApplySkillState(in MobaSkillStateSnapshotEntry entry, int localActorId, MobaSkillStateSnapshotEntry[] entries)
+        private static bool ShouldApplySkillState(in MobaSkillStateSnapshotEntry entry, int localActorId)
         {
             if (entry.ActorId <= 0) return false;
-            if (localActorId > 0) return entry.ActorId == localActorId;
-
-            var resolvedActorId = ResolveActorIdFromSkillStates(entries);
-            return resolvedActorId > 0 && entry.ActorId == resolvedActorId;
+            return localActorId > 0 && entry.ActorId == localActorId;
         }
 
-        private bool SkillStateMatchesTemplate(in MobaSkillStateSnapshotEntry entry)
+        internal bool SkillStateMatchesTemplate(MobaSkillStateSnapshotEntry entry)
         {
             if (entry.Slot <= 0) return false;
             if (!_templateBinder.SkillSpecs.TryGetValue(entry.Slot, out var spec)) return false;
@@ -165,7 +126,8 @@ namespace AbilityKit.Game.Flow
                 && spec.SkillId > 0
                 && spec.SkillId != skillId)
             {
-                AbilityKit.Core.Logging.Log.Warning($"[BattleHudInputController] apply skill state by slot despite skill id mismatch. slot={slot}, snapshotSkillId={skillId}, templateSkillId={spec.SkillId}");
+                AbilityKit.Core.Logging.Log.Warning($"[BattleHudInputController] reject skill state with mismatched presentation. slot={slot}, snapshotSkillId={skillId}, templateSkillId={spec.SkillId}");
+                return false;
             }
 
             view = _inputUi.SkillViews[index];
@@ -182,6 +144,17 @@ namespace AbilityKit.Game.Flow
                 if (appliedSlots != null && appliedSlots.Contains(slot)) continue;
                 _inputUi.SkillViews[i]?.ClearSkillState();
             }
+        }
+
+        private void EnsureSkillButtonCount(int skillButtonCount)
+        {
+            if (skillButtonCount <= 0) return;
+            if (_inputUi != null && _inputUi.SkillButtonCount == skillButtonCount) return;
+            if (_root == null || _hudInput == null) return;
+
+            DestroyInputUi();
+            _inputUi = _uiFactory.Create(_root, _canvas, _cameraTransform, OnInfoClick, skillButtonCount);
+            _inputEvents.Bind(_inputUi);
         }
 
         private void DestroyInputUi()

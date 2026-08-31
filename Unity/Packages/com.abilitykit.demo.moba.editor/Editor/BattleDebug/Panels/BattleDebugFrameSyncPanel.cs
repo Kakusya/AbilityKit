@@ -5,14 +5,21 @@ using UnityEngine;
 
 namespace AbilityKit.Game.Editor
 {
-    internal sealed class BattleDebugFrameSyncPanel : IBattleDebugPanel
+    [BattleDebugModule(
+        BattleDebugModuleIds.FrameSyncOverview,
+        "Frame Sync",
+        Sources = BattleDebugModuleSourceSupport.Live,
+        Selections = BattleDebugModuleSelectionSupport.None)]
+    internal sealed class BattleDebugFrameSyncPanel : IBattleDebugPanel, IBattleDebugPanelLayout
     {
         public string Name => "帧同步/总览";
         public int Order => 50;
+        public BattleDebugWorkspace Workspace => BattleDebugWorkspace.Diagnostics;
+        public bool OwnsScrollView => false;
 
         public bool IsVisible(in BattleDebugContext ctx)
         {
-            return EditorApplication.isPlaying && BattleFlowDebugProvider.Current != null;
+            return !ctx.IsOffline && EditorApplication.isPlaying && BattleFlowDebugProvider.Current != null;
         }
 
         public void Draw(in BattleDebugContext ctx)

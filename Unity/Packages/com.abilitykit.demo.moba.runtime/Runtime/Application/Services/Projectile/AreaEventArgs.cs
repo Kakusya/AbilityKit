@@ -14,6 +14,7 @@ namespace AbilityKit.Demo.Moba.Services.Projectile
         public long SourceContextId;
         public long RootContextId;
         public long OwnerContextId;
+        public MobaSkillCastRuntimeHandle SkillRuntimeHandle;
         public MobaTraceKind TraceKind;
 
         public Vec3 Center;
@@ -43,19 +44,16 @@ namespace AbilityKit.Demo.Moba.Services.Projectile
             var sourceContextId = SourceContextId;
             var rootContextId = RootContextId != 0 ? RootContextId : sourceContextId;
             var ownerContextId = OwnerContextId != 0 ? OwnerContextId : sourceContextId;
-            var isSpawn = string.Equals(EventId, "area.spawn", System.StringComparison.Ordinal);
-            var parentContextId = isSpawn
-                ? sourceContextId
-                : (rootContextId != 0L ? rootContextId : sourceContextId);
             origin = new MobaGameplayOrigin(
                 OwnerActorId,
                 TargetActorId,
                 traceKind,
                 TemplateId,
                 sourceContextId,
-                parentContextId,
+                sourceContextId,
                 rootContextId,
-                ownerContextId);
+                ownerContextId,
+                SkillRuntimeHandle);
             return origin.IsValid;
         }
 
@@ -96,6 +94,7 @@ namespace AbilityKit.Demo.Moba.Services.Projectile
                     in lineageContext,
                     MobaContextSourceResolveKind.DirectProvider,
                     MobaContextSourceBoundary.Snapshot,
+                    skillRuntimeHandle: SkillRuntimeHandle,
                     runtimeKind: MobaRuntimeKindNames.Area,
                     runtimeConfigId: TemplateId);
                 return source.IsValid;

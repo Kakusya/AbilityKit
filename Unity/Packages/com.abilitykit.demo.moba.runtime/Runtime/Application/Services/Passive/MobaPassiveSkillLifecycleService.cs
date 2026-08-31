@@ -1,4 +1,4 @@
-﻿using System;
+using System;
 using System.Collections.Generic;
 using AbilityKit.Ability.FrameSync;
 using AbilityKit.Ability.Triggering.Runtime;
@@ -12,6 +12,7 @@ using AbilityKit.Demo.Moba.Config.Core;
 using AbilityKit.Trace;
 using AbilityKit.Ability.World.Services;
 using AbilityKit.Ability.World.Services.Attributes;
+using AbilityKit.Demo.Moba.Rollback;
 
 namespace AbilityKit.Demo.Moba.Services.Passive
 {
@@ -19,7 +20,7 @@ namespace AbilityKit.Demo.Moba.Services.Passive
     /// 被动技能生命周期服务：集中维护被动技能的运行时 listener、source context 和常驻触发器计划。
     /// </summary>
     [WorldService(typeof(MobaPassiveSkillLifecycleService))]
-    public sealed class MobaPassiveSkillLifecycleService : IService, IMobaOwnerBoundTriggerGate, IMobaOwnerBoundTriggerExecutionSourceProvider
+    public sealed class MobaPassiveSkillLifecycleService : IService, IMobaOwnerBoundTriggerGate, IMobaOwnerBoundTriggerExecutionSourceProvider, IMobaOwnerKeySource
     {
         private static readonly ObjectPool<HashSet<long>> s_ownerKeySetPool = Pools.GetPool(
             createFunc: () => new HashSet<long>(),
@@ -28,18 +29,18 @@ namespace AbilityKit.Demo.Moba.Services.Passive
             maxSize: 512,
             collectionCheck: false);
 
+        private static readonly ObjectPool<HashSet<int>> s_passiveSkillIdSetPool = Pools.GetPool(
+            createFunc: () => new HashSet<int>(),
+            onRelease: set => set.Clear(),
+            defaultCapacity: 16,
+            maxSize: 256,
+            collectionCheck: false);
+
         private static readonly ObjectPool<Dictionary<int, long>> s_ownerKeyByPassiveSkillIdPool = Pools.GetPool(
             createFunc: () => new Dictionary<int, long>(),
             onRelease: dictionary => dictionary.Clear(),
             defaultCapacity: 16,
             maxSize: 256,
-            collectionCheck: false);
-
-        private static readonly ObjectPool<List<long>> s_ownerKeyListPool = Pools.GetPool(
-            createFunc: () => new List<long>(8),
-            onRelease: list => list.Clear(),
-            defaultCapacity: 32,
-            maxSize: 512,
             collectionCheck: false);
 
         private readonly MobaConfigDatabase _configs;
@@ -93,12 +94,33 @@ namespace AbilityKit.Demo.Moba.Services.Passive
         }
 
         /// <summary>
-        /// 世界关闭时释放服务内部缓存的 ownerKey 集合，避免对象池借出对象泄漏。
+        /// 世界关闭时结束仍由本服务持有的 passive root，并释放池化 ownerKey 集合。
         /// </summary>
-        public void ReleaseAllCachedOwnerKeys()
+        public void ReleaseAllOwnedPassiveContexts(int frame = 0)
         {
             if (_ownerKeysByActor.Count > 0)
             {
+                var ownedContextIds = s_ownerKeySetPool.Get();
+                try
+                {
+                    foreach (var kv in _ownerKeysByActor)
+                    {
+                        var actorOwnedContextIds = kv.Value;
+                        if (actorOwnedContextIds == null) continue;
+
+                        foreach (var contextId in actorOwnedContextIds)
+                        {
+                            if (contextId != 0) ownedContextIds.Add(contextId);
+                        }
+                    }
+
+                    EndOwnedPassiveContexts(ownedContextIds, frame);
+                }
+                finally
+                {
+                    s_ownerKeySetPool.Release(ownedContextIds);
+                }
+
                 foreach (var kv in _ownerKeysByActor)
                 {
                     if (kv.Value != null) s_ownerKeySetPool.Release(kv.Value);
@@ -113,6 +135,18 @@ namespace AbilityKit.Demo.Moba.Services.Passive
         public bool IsPassiveOwnerKey(long ownerKey)
         {
             return ownerKey != 0 && _passiveByOwnerKey.ContainsKey(ownerKey);
+        }
+
+        public string Name => "passive";
+
+        public void CopyActiveOwnerKeys(List<long> destination)
+        {
+            if (destination == null) return;
+            destination.Clear();
+            foreach (var ownerKey in _passiveByOwnerKey.Keys)
+            {
+                if (ownerKey != 0) destination.Add(ownerKey);
+            }
         }
 
         public bool IsMatch(long ownerKey, int triggerId)
@@ -170,7 +204,7 @@ namespace AbilityKit.Demo.Moba.Services.Passive
 
         public void Dispose()
         {
-            ReleaseAllCachedOwnerKeys();
+            ReleaseAllOwnedPassiveContexts();
         }
 
         private void SyncListeners(global::ActorEntity entity, List<PassiveSkillTriggerListenerRuntime> listeners, int frame)
@@ -215,13 +249,13 @@ namespace AbilityKit.Demo.Moba.Services.Passive
             }
             finally
             {
-                desired.Clear();
+                s_passiveSkillIdSetPool.Release(desired);
             }
         }
 
         private HashSet<int> BuildDesiredPassiveSkillIdSet(PassiveSkillRuntime[] passiveSkills)
         {
-            var desired = new HashSet<int>();
+            var desired = s_passiveSkillIdSetPool.Get();
             if (passiveSkills == null || passiveSkills.Length == 0) return desired;
 
             for (int i = 0; i < passiveSkills.Length; i++)
@@ -243,7 +277,7 @@ namespace AbilityKit.Demo.Moba.Services.Passive
         {
             if (listeners == null || listeners.Count == 0) return;
 
-            var ownerKeys = new HashSet<long>();
+            var ownedContextIds = s_ownerKeySetPool.Get();
             try
             {
                 for (int i = listeners.Count - 1; i >= 0; i--)
@@ -252,15 +286,15 @@ namespace AbilityKit.Demo.Moba.Services.Passive
                     if (listener == null) continue;
                     if (desired != null && desired.Contains(listener.PassiveSkillId)) continue;
 
-                    if (listener.SourceContextId != 0) ownerKeys.Add(listener.SourceContextId);
+                    if (listener.SourceContextId != 0) ownedContextIds.Add(listener.SourceContextId);
                     listeners.RemoveAt(i);
                 }
 
-                EndOwnerKeys(ownerKeys, frame);
+                EndOwnedPassiveContexts(ownedContextIds, frame);
             }
             finally
             {
-                ownerKeys.Clear();
+                s_ownerKeySetPool.Release(ownedContextIds);
             }
         }
 
@@ -271,48 +305,54 @@ namespace AbilityKit.Demo.Moba.Services.Passive
             var listeners = entity.passiveSkillTriggerListeners.Active;
             if (listeners == null || listeners.Count == 0) return;
 
-            var ownerKeys = new HashSet<long>();
+            var ownedContextIds = s_ownerKeySetPool.Get();
             try
             {
                 for (int i = listeners.Count - 1; i >= 0; i--)
                 {
                     var listener = listeners[i];
                     if (listener == null) continue;
-                    if (listener.SourceContextId != 0) ownerKeys.Add(listener.SourceContextId);
+                    if (listener.SourceContextId != 0) ownedContextIds.Add(listener.SourceContextId);
                     listeners.RemoveAt(i);
                 }
 
-                EndOwnerKeys(ownerKeys, frame);
+                EndOwnedPassiveContexts(ownedContextIds, frame);
             }
             finally
             {
-                ownerKeys.Clear();
+                s_ownerKeySetPool.Release(ownedContextIds);
             }
         }
 
-        private void EndOwnerKeys(HashSet<long> ownerKeys, int frame)
+        private void EndOwnedPassiveContexts(IEnumerable<long> ownedContextIds, int frame)
         {
-            if (ownerKeys == null || ownerKeys.Count == 0) return;
+            if (ownedContextIds == null) return;
 
-            foreach (var ownerKey in ownerKeys)
+            foreach (var ownedContextId in ownedContextIds)
             {
+                if (ownedContextId == 0) continue;
+
+                // This context is a passive root created by EnsurePassiveSkillContext.
+                // Its numeric value is also used as an owner routing key, but owner keys alone
+                // never grant permission to end a trace context.
                 try
                 {
-                    _continuousProcesses?.EndOwnerProcesses(ownerKey, AbilityKit.Core.Continuous.ContinuousEndReason.CleanedUp);
-                    _actionRunner?.CancelByOwnerKey(ownerKey);
+                    _continuousProcesses?.EndOwnerProcesses(ownedContextId, AbilityKit.Continuous.ContinuousEndReason.CleanedUp);
+                    _actionRunner?.CancelByOwnerKey(ownedContextId);
+                    _passiveByOwnerKey.Remove(ownedContextId);
                 }
                 catch (Exception ex)
                 {
-                    Log.Exception(ex, $"[MobaPassiveSkillLifecycleService] CancelByOwnerKey failed. ownerKey={ownerKey}");
+                    Log.Exception(ex, $"[MobaPassiveSkillLifecycleService] Owner runtime cleanup failed. ownerKey={ownedContextId}");
                 }
 
                 try
                 {
-                    _trace?.EndContext(ownerKey, TraceLifecycleReason.Cancelled);
+                    _trace?.EndContext(ownedContextId, TraceLifecycleReason.Cancelled);
                 }
                 catch (Exception ex)
                 {
-                    Log.Exception(ex, $"[MobaPassiveSkillLifecycleService] Trace.EndContext failed. ownerKey={ownerKey} frame={frame}");
+                    Log.Exception(ex, $"[MobaPassiveSkillLifecycleService] Trace.EndContext failed. ownedContextId={ownedContextId} frame={frame}");
                 }
             }
         }
@@ -375,10 +415,10 @@ namespace AbilityKit.Demo.Moba.Services.Passive
                     }
                 }
 
-                RemoveStaleOngoingTriggerPlans(entity, actorId, desiredOwnerKeys);
-                UpsertDesiredOngoingTriggerPlans(entity, ownerKeyByPassiveSkillId);
-                SyncPassiveTriggerIntervalContinuouses(entity, ownerKeyByPassiveSkillId, frame);
+                RemoveStaleOwnerRuntimeState(entity, actorId, desiredOwnerKeys);
                 SyncPassiveOwnerBindings(entity, ownerKeyByPassiveSkillId);
+                ApplyDesiredOngoingTriggerPlans(entity, ownerKeyByPassiveSkillId);
+                SyncPassiveTriggerIntervalContinuouses(entity, ownerKeyByPassiveSkillId, frame);
                 StorePreviousOwnerKeys(actorId, desiredOwnerKeys);
             }
             finally
@@ -388,24 +428,17 @@ namespace AbilityKit.Demo.Moba.Services.Passive
             }
         }
 
-        private void RemoveStaleOngoingTriggerPlans(global::ActorEntity entity, int actorId, HashSet<long> desiredOwnerKeys)
+        private void RemoveStaleOwnerRuntimeState(global::ActorEntity entity, int actorId, HashSet<long> desiredOwnerKeys)
         {
             var previous = GetPreviousOwnerKeys(actorId);
             if (previous == null || previous.Count == 0) return;
 
-            var removed = s_ownerKeyListPool.Get();
-            try
+            foreach (var ownerKey in previous)
             {
-                foreach (var ownerKey in previous)
-                {
-                    if (desiredOwnerKeys == null || !desiredOwnerKeys.Contains(ownerKey)) removed.Add(ownerKey);
-                }
+                if (desiredOwnerKeys != null && desiredOwnerKeys.Contains(ownerKey)) continue;
 
-                RemoveOngoingTriggerPlansByOwnerKeys(entity, removed);
-            }
-            finally
-            {
-                s_ownerKeyListPool.Release(removed);
+                _continuousProcesses?.EndOwnerProcesses(ownerKey, AbilityKit.Continuous.ContinuousEndReason.CleanedUp);
+                _passiveByOwnerKey.Remove(ownerKey);
             }
         }
 
@@ -461,7 +494,7 @@ namespace AbilityKit.Demo.Moba.Services.Passive
                 if (!_configs.TryGetPassiveSkill(passiveSkillId, out var passiveSkill) || passiveSkill == null) continue;
 
                 var processIds = passiveSkill.ContinuousProcessIds;
-                _continuousProcesses.EndMissingOwnerProcesses(ownerKey, processIds, AbilityKit.Core.Continuous.ContinuousEndReason.CleanedUp);
+                _continuousProcesses.EndMissingOwnerProcesses(ownerKey, processIds, AbilityKit.Continuous.ContinuousEndReason.CleanedUp);
                 if (processIds == null || processIds.Count == 0)
                 {
                     _continuousProcesses.ReconcileOwner(ownerKey);
@@ -498,36 +531,74 @@ namespace AbilityKit.Demo.Moba.Services.Passive
             }
         }
 
-        private void UpsertDesiredOngoingTriggerPlans(global::ActorEntity entity, Dictionary<int, long> ownerKeyByPassiveSkillId)
+        private void ApplyDesiredOngoingTriggerPlans(global::ActorEntity entity, Dictionary<int, long> ownerKeyByPassiveSkillId)
         {
-            if (ownerKeyByPassiveSkillId == null || ownerKeyByPassiveSkillId.Count == 0) return;
+            if (entity == null) return;
 
-            foreach (var kv in ownerKeyByPassiveSkillId)
+            var active = entity.hasOngoingTriggerPlans
+                ? entity.ongoingTriggerPlans.Active
+                : null;
+            var changed = false;
+
+            if (active != null)
             {
-                var passiveSkillId = kv.Key;
-                var ownerKey = kv.Value;
-                if (ownerKey == 0) continue;
-
-                if (!_configs.TryGetPassiveSkill(passiveSkillId, out var passiveSkill) || passiveSkill == null) continue;
-
-                var triggerIds = passiveSkill.TriggerIds;
-                if (triggerIds == null || triggerIds.Count == 0)
+                for (int i = active.Count - 1; i >= 0; i--)
                 {
-                    RemoveOngoingTriggerPlanByOwnerKey(entity, ownerKey);
-                    continue;
+                    var entry = active[i];
+                    if (entry != null && ContainsOwnerKey(ownerKeyByPassiveSkillId, entry.OwnerKey)) continue;
+
+                    active.RemoveAt(i);
+                    changed = true;
                 }
-
-                var ids = new int[triggerIds.Count];
-                for (int i = 0; i < triggerIds.Count; i++) ids[i] = triggerIds[i];
-
-                if (ContainsTriggerId(triggerIds, 10020000))
-                {
-                    var actorId = entity != null && entity.hasActorId ? entity.actorId.Value : 0;
-                    Log.Info($"[MobaPassiveSkillLifecycleService] XiaoQiao passive ongoing plan upsert. actor={actorId} passiveSkillId={passiveSkillId} ownerKey={ownerKey} triggerCount={ids.Length}");
-                }
-
-                UpsertOngoingTriggerPlansEntry(entity, ownerKey, ids);
             }
+
+            if (ownerKeyByPassiveSkillId != null)
+            {
+                foreach (var kv in ownerKeyByPassiveSkillId)
+                {
+                    var passiveSkillId = kv.Key;
+                    var ownerKey = kv.Value;
+                    if (ownerKey == 0) continue;
+                    if (!_configs.TryGetPassiveSkill(passiveSkillId, out var passiveSkill) || passiveSkill == null) continue;
+
+                    var triggerIds = passiveSkill.TriggerIds;
+                    if (triggerIds == null || triggerIds.Count == 0)
+                    {
+                        changed |= RemoveOngoingTriggerPlan(active, ownerKey);
+                        continue;
+                    }
+
+                    var entry = FindOngoingTriggerPlan(active, ownerKey);
+                    if (entry == null)
+                    {
+                        if (active == null) active = new List<OngoingTriggerPlanEntry>(ownerKeyByPassiveSkillId.Count);
+                        active.Add(new OngoingTriggerPlanEntry
+                        {
+                            OwnerKey = ownerKey,
+                            TriggerIds = CopyTriggerIds(triggerIds),
+                        });
+                        changed = true;
+                        continue;
+                    }
+
+                    if (AreTriggerIdsEqual(entry.TriggerIds, triggerIds)) continue;
+
+                    entry.TriggerIds = CopyTriggerIds(triggerIds);
+                    changed = true;
+                }
+            }
+
+            if (!changed) return;
+
+            if (active == null || active.Count == 0)
+            {
+                if (entity.hasOngoingTriggerPlans) entity.RemoveOngoingTriggerPlans();
+                return;
+            }
+
+            var revision = entity.hasOngoingTriggerPlans ? entity.ongoingTriggerPlans.Revision + 1 : 1;
+            if (entity.hasOngoingTriggerPlans) entity.ReplaceOngoingTriggerPlans(active, revision);
+            else entity.AddOngoingTriggerPlans(active, revision);
         }
 
         private List<PassiveSkillTriggerListenerRuntime> EnsureListenerContainer(global::ActorEntity entity)
@@ -563,58 +634,69 @@ namespace AbilityKit.Demo.Moba.Services.Passive
             return false;
         }
 
-        private static void UpsertOngoingTriggerPlansEntry(global::ActorEntity entity, long ownerKey, int[] triggerIds)
+        private static bool ContainsOwnerKey(Dictionary<int, long> ownerKeyByPassiveSkillId, long ownerKey)
         {
-            if (entity == null) return;
-            if (ownerKey == 0) return;
+            if (ownerKeyByPassiveSkillId == null || ownerKey == 0) return false;
 
-            var oldList = entity.hasOngoingTriggerPlans ? entity.ongoingTriggerPlans.Active : null;
-            var newList = oldList != null && oldList.Count > 0 ? new List<OngoingTriggerPlanEntry>(oldList.Count + 1) : new List<OngoingTriggerPlanEntry>(1);
-            var replaced = false;
-
-            if (oldList != null)
+            foreach (var candidate in ownerKeyByPassiveSkillId.Values)
             {
-                for (int i = 0; i < oldList.Count; i++)
-                {
-                    var item = oldList[i];
-                    if (item == null) continue;
-
-                    if (item.OwnerKey == ownerKey)
-                    {
-                        newList.Add(new OngoingTriggerPlanEntry { OwnerKey = ownerKey, TriggerIds = triggerIds });
-                        replaced = true;
-                    }
-                    else
-                    {
-                        newList.Add(new OngoingTriggerPlanEntry { OwnerKey = item.OwnerKey, TriggerIds = item.TriggerIds });
-                    }
-                }
+                if (candidate == ownerKey) return true;
             }
 
-            if (!replaced)
-            {
-                newList.Add(new OngoingTriggerPlanEntry { OwnerKey = ownerKey, TriggerIds = triggerIds });
-            }
-
-            var revision = entity.hasOngoingTriggerPlans ? entity.ongoingTriggerPlans.Revision + 1 : 1;
-            if (entity.hasOngoingTriggerPlans) entity.ReplaceOngoingTriggerPlans(newList, revision);
-            else entity.AddOngoingTriggerPlans(newList, revision);
+            return false;
         }
 
-        private void RemoveOngoingTriggerPlanByOwnerKey(global::ActorEntity entity, long ownerKey)
+        private static OngoingTriggerPlanEntry FindOngoingTriggerPlan(List<OngoingTriggerPlanEntry> active, long ownerKey)
         {
-            if (ownerKey == 0) return;
+            if (active == null || ownerKey == 0) return null;
 
-            var ownerKeys = s_ownerKeyListPool.Get();
-            try
+            for (int i = 0; i < active.Count; i++)
             {
-                ownerKeys.Add(ownerKey);
-                RemoveOngoingTriggerPlansByOwnerKeys(entity, ownerKeys);
+                var entry = active[i];
+                if (entry != null && entry.OwnerKey == ownerKey) return entry;
             }
-            finally
+
+            return null;
+        }
+
+        private static bool RemoveOngoingTriggerPlan(List<OngoingTriggerPlanEntry> active, long ownerKey)
+        {
+            if (active == null || ownerKey == 0) return false;
+
+            for (int i = active.Count - 1; i >= 0; i--)
             {
-                s_ownerKeyListPool.Release(ownerKeys);
+                var entry = active[i];
+                if (entry == null || entry.OwnerKey != ownerKey) continue;
+
+                active.RemoveAt(i);
+                return true;
             }
+
+            return false;
+        }
+
+        private static bool AreTriggerIdsEqual(int[] current, IReadOnlyList<int> desired)
+        {
+            var currentLength = current?.Length ?? 0;
+            var desiredCount = desired?.Count ?? 0;
+            if (currentLength != desiredCount) return false;
+
+            for (int i = 0; i < currentLength; i++)
+            {
+                if (current[i] != desired[i]) return false;
+            }
+
+            return true;
+        }
+
+        private static int[] CopyTriggerIds(IReadOnlyList<int> triggerIds)
+        {
+            var count = triggerIds?.Count ?? 0;
+            if (count == 0) return Array.Empty<int>();
+
+            var copy = new int[count];
+            for (int i = 0; i < count; i++) copy[i] = triggerIds[i];
+            return copy;
         }
 
         private void RemoveOngoingTriggerPlansByOwnerKeys(global::ActorEntity entity, IEnumerable<long> ownerKeys)
@@ -636,34 +718,28 @@ namespace AbilityKit.Demo.Moba.Services.Passive
 
                 if (toRemove.Count == 0) return;
 
-                var newList = new List<OngoingTriggerPlanEntry>(oldList.Count);
                 var removedAny = false;
 
-                for (int i = 0; i < oldList.Count; i++)
+                for (int i = oldList.Count - 1; i >= 0; i--)
                 {
                     var item = oldList[i];
-                    if (item == null) continue;
+                    if (item == null || !toRemove.Contains(item.OwnerKey)) continue;
 
-                    if (toRemove.Contains(item.OwnerKey))
-                    {
-                        removedAny = true;
-                        continue;
-                    }
-
-                    newList.Add(new OngoingTriggerPlanEntry { OwnerKey = item.OwnerKey, TriggerIds = item.TriggerIds });
+                    oldList.RemoveAt(i);
+                    removedAny = true;
                 }
 
                 if (!removedAny) return;
 
                 foreach (var ownerKey in toRemove)
                 {
-                    _continuousProcesses?.EndOwnerProcesses(ownerKey, AbilityKit.Core.Continuous.ContinuousEndReason.CleanedUp);
+                    _continuousProcesses?.EndOwnerProcesses(ownerKey, AbilityKit.Continuous.ContinuousEndReason.CleanedUp);
                     _passiveByOwnerKey.Remove(ownerKey);
                 }
 
                 var revision = entity.ongoingTriggerPlans.Revision + 1;
-                if (newList.Count == 0) entity.RemoveOngoingTriggerPlans();
-                else entity.ReplaceOngoingTriggerPlans(newList, revision);
+                if (oldList.Count == 0) entity.RemoveOngoingTriggerPlans();
+                else entity.ReplaceOngoingTriggerPlans(oldList, revision);
             }
             finally
             {
@@ -706,7 +782,7 @@ namespace AbilityKit.Demo.Moba.Services.Passive
 
             foreach (var ownerKey in set)
             {
-                _continuousProcesses?.EndOwnerProcesses(ownerKey, AbilityKit.Core.Continuous.ContinuousEndReason.CleanedUp);
+                _continuousProcesses?.EndOwnerProcesses(ownerKey, AbilityKit.Continuous.ContinuousEndReason.CleanedUp);
                 _passiveByOwnerKey.Remove(ownerKey);
             }
 
