@@ -1,0 +1,42 @@
+schema: spec-driven
+
+context: |
+  Language: zh-CN
+  All artifacts must be written in zh-CN.
+  Keep OpenSpec structural headings and SHALL/MUST keywords in English.
+  Before any workflow, including exploring, updating, proposing, designing, applying, syncing or archiving, read root AGENTS.md
+  and .codestable/attention.md. Search .codestable/lessons/ by the affected area
+  and read relevant matches. Read relevant openspec/specs/ and the active change's
+  proposal, delta specs, design (if present), and tasks. Read relevant ADR/decisions/
+  and Docs/design/ for architectural work. Do not invent an active change.
+  ADR/long-term-goals.md owns the product direction until concrete requirements
+  graduate into specs; goals are not evidence of implemented behavior.
+  Preserve one canonical owner per fact. attention stores pointers, lessons store
+  engineering findings, and .codestable/work/ stores only recovery/evidence pointers,
+  never a duplicate tasks list. Surface conflicting sources before proceeding.
+  OpenSpec exclusively owns feature development and product behavior changes.
+  CodeStable handles existing-contract bugs, equivalent refactors, documentation,
+  reviews and lessons, not feature delivery.
+  See ADR/reference/workflow-integration.md for ownership and graduation rules.
+
+# Per-artifact rules (optional)
+# Add custom rules for specific artifacts.
+# Example:
+#   rules:
+#     proposal:
+#       - Keep proposals under 500 words
+#       - Always include a "Non-goals" section
+#     tasks:
+#       - Break tasks into chunks of max 2 hours
+
+# Per-operation guidance (optional)
+# Add advisory guidance for how apply and archive work should be conducted.
+# This is separate from artifact rules above.
+# Example:
+#   operations:
+#     apply:
+#       guidance:
+#         - Keep test summaries concise
+#     archive:
+#       guidance:
+#         - Summarize the archive outcome before finishing
