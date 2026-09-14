@@ -6,6 +6,7 @@
 - 核心逻辑保持纯 C#；Unity 负责场景、资源、表现和编辑器。游戏规则、房间流程、网络权威策略由应用层拥有，不塞进通用框架。
 - `Server/` 是 Orleans 等宿主示例，不是游戏必须依赖的服务；当前 Coordinator 是精简契约包，不要假设存在旧 SessionCoordinator 或 Local/Remote/Hybrid 实现。
 - `Docs/design/` 是既有跨模块设计入口；协议变更先读 `Protocols/README.md`，测试策略先读 `Docs/AbilityKit测试门禁与批量回归规范.md`。
+- 做菜经营游戏的应用层技术路线唯一正文是 [`Docs/design/CookingGame/technical-roadmap.md`](Docs/design/CookingGame/technical-roadmap.md)；框架机制仍以 `Docs/design/` 既有 canonical 文档为准，不把路线或长期目标当作已实现能力。
 
 ## 构建与验证（仓库根目录）
 - .NET 项目使用 `net10.0`。README 提及 SDK 10.0.300，但本次检查根目录没有 `global.json`，不要宣称已固定 SDK。
@@ -29,6 +30,7 @@
 ## 工作分工
 - 新功能、功能改造和产品行为变更只使用 OpenSpec；不使用 CodeStable 开发功能或创建产品 Epic。
 - CodeStable 用于 bug 诊断修复、行为等价重构、文档维护、审查与工程经验管理。文档维护在原归属内进行，不建立第二份产品契约。
+- 做菜项目规划使用路线图作为优先级与技术方向指针；精确功能、协议和验收契约必须另行进入 `openspec/changes/`，毕业后进入 `openspec/specs/`。路线图不是 formal tasks，也不是完成证据。
 - 修复违背既有契约的 bug 可直接走 `cs-issue`；若需改变预期行为则转 OpenSpec。规格缺失且预期不明时先澄清，不把当前代码自动当作正确要求。
 - 以上项目职责覆盖技能上游的通用路由默认值。提案完成、任务勾选、归档与验证通过互不等价；分别报告证据，不由文档状态推断实现完成。
 
@@ -38,3 +40,5 @@
 - OpenSpec 本地 CLI：`powershell -ExecutionPolicy Bypass -File tools/openspec-cli/openspec.ps1 <参数>`。技能和命令模板中的裸 `openspec ...` 在本项目均替换为此入口，参数保持不变。依赖恢复用 `npm ci --prefix tools/openspec-cli`，版本由该目录锁文件固定；不要求全局安装。
 - `grilling` 位于 `.agents/skills/grilling/SKILL.md`：只把已回答的产品选择当成决策，不能替用户回答。安装/升级后当前会话目录可能仍旧，不能将磁盘验证当成宿主刷新成功。
 - 修改前检查 Git 状态，保留用户的解决方案与练习目录改动；不要把 `Unity/Assets/Practice/`、`src/AbilityKit.Demo.MyPractice/` 当作可清理的生成目录。
+
+- 做菜项目的阶段顺序与测试出口见 `Docs/design/CookingGame/delivery-plan.md`；实施时读取对应 OpenSpec change 的 proposal/specs/design/tasks。每项实现必须关联测试计划与实际验证证据，不能把计划中的测试当作已执行。

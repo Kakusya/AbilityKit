@@ -8,7 +8,7 @@
 - **OpenSpec 1.13.0**：本地 npm 依赖在 `tools/openspec-cli/`，版本及依赖树固定于 package-lock。运行官方 `init --tools zcode --profile core --language zh-CN`，生成的 6 个技能现已迁入 `.agents/skills/`和 `.zcode/commands/opsx/` 的 6 个命令，以及 `openspec/config.yaml`。
 - **grilling**：`.agents/skills/grilling/SKILL.md`，来源 `mattpocock/skills`，内容哈希见根锁文件。
 - **本地 CLI**：根目录执行 `powershell -ExecutionPolicy Bypass -File tools/openspec-cli/openspec.ps1 <参数>`；包装入口关闭遥测并恢复调用前的环境变量。技能模板中的裸 `openspec` 使用此入口替代。其他机器先执行 `npm ci --prefix tools/openspec-cli`。无全局安装。
-- 两个既有技能工程工具 `build-cs-skill`、`eval-cs-skill` 保留原样，不算 v2 运行时入口。
+- 两个既有技能工程工具 `build-cs-skill`、`eval-cs-skill` 保留，并适配项目维护路由；历史参考案例不代表已删除入口可用。
 
 ## 备份与升级边界
 
@@ -35,4 +35,8 @@ CodeStable 项目骨架仅为 `.codestable/attention.md`、`lessons/`、`work/`�
 
 2026-09-14 按用户确认移除 cs-feat/cs-epic，修改 cs 及 issue/refactor/review/onboard 的维护路由。完整修改前备份：`upstream/backups/role-split-20260914-145810/`。这些入口已是本项目适配版本，根 skills-lock 的上游哈希是安装基线，不代表本地适配后的内容哈希。
 
-今后不要无差别执行 CodeStable 全包覆盖更新，否则会恢复功能入口并覆盖路由。应先备份、比较上游变化、仅更新保留入口并保留项目分工。OpenSpec 更新优先使用 agents 适配，技能唯一安装在 `.agents/skills/`；不重新产生 `.zcode/skills/` 同名副本。ZCode 专用命令可从官方生成结果定向更新。
+今后不要无差别执行 CodeStable 全包覆盖更新，否则会恢复功能入口并覆盖路由。应先备份、比较上游变化、仅更新保留入口并保留项目分工。
+
+OpenSpec 更新必须使用 `powershell -ExecutionPolicy Bypass -File tools/openspec-cli/openspec.ps1 update`（可加 `--force`）。本地适配器 `update.mjs` 复用固定版本官方更新器，仅在当前进程将 ZCode 的技能根设置为 `.agents`；官方共享根仲裁负责只生成一份技能，命令仍在 `.zcode/commands/`。更新时通过临时 XDG 配置固定 core/both，结束恢复环境并清理临时配置，不改用户全局偏好。不使用裸官方 update/init 重建当前布局。
+
+回归命令：`node tools/openspec-cli/test-update.mjs`。在临时工作区连续执行两次官方更新，验证 6 个共享技能、6 个命令、没有 `.zcode/skills/`、维护技能不变及幂等性。升级 npm 依赖后必须重跑，因为适配器使用了固定版本的内部 API。`update` 是生成文件更新，不是 npm 包版本升级；执行前检查技能/命令自定义改动并备份。

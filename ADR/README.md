@@ -4,6 +4,8 @@
 - `decisions/`：只存真正的架构决策，按 `NNNN-short-name.md` 编号，使用 Proposed / Accepted / Superseded 状态。
 - [参考与版本](reference/README.md)：外部资料来源、获取状态和更新边界。
 - [工作流融合](reference/workflow-integration.md)：OpenSpec 与 CodeStable 的职责分工。
+- [做菜经营游戏技术路线](../Docs/design/CookingGame/technical-roadmap.md)：已确认的应用层路线唯一正文；不替代行为规格或实施任务。
+- [ADR-0002：权威固定 Tick 与首阶段状态同步](decisions/0002-authoritative-fixed-tick-state-sync.md)：已接受的应用架构取舍。
 
 本目录不替代 `Docs/design/` 的框架设计文档。涉及框架机制时引用既有设计，涉及本游戏产品方向时维护本目录，避免复制。
 

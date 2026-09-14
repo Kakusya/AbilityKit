@@ -239,6 +239,8 @@ Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "AbilityKit.Protocol.Catalog
 EndProject
 Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "AbilityKit.BehaviorTree.Cli", "AbilityKit.BehaviorTree.Cli\AbilityKit.BehaviorTree.Cli.csproj", "{8A3232C6-4466-4878-9DF3-E1E81D50EF4F}"
 EndProject
+Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "AbilityKit.Demo.MyPractice", "AbilityKit.Demo.MyPractice\AbilityKit.Demo.MyPractice.csproj", "{5D1288C0-7617-4CF7-A351-41AF0892D1E9}"
+EndProject
 Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "AbilityKit.Environment", "AbilityKit.Environment\AbilityKit.Environment.csproj", "{2E1E3005-D296-4DE6-BE9E-E5BF7A730A2A}"
 EndProject
 Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "AbilityKit.Environment.Tests", "AbilityKit.Environment.Tests\AbilityKit.Environment.Tests.csproj", "{D3A259DF-EA9B-4D58-ABD7-8C0C61EC6B4B}"
@@ -1689,6 +1691,18 @@ Global
 		{8A3232C6-4466-4878-9DF3-E1E81D50EF4F}.Release|x64.Build.0 = Release|Any CPU
 		{8A3232C6-4466-4878-9DF3-E1E81D50EF4F}.Release|x86.ActiveCfg = Release|Any CPU
 		{8A3232C6-4466-4878-9DF3-E1E81D50EF4F}.Release|x86.Build.0 = Release|Any CPU
+		{5D1288C0-7617-4CF7-A351-41AF0892D1E9}.Debug|Any CPU.ActiveCfg = Debug|Any CPU
+		{5D1288C0-7617-4CF7-A351-41AF0892D1E9}.Debug|Any CPU.Build.0 = Debug|Any CPU
+		{5D1288C0-7617-4CF7-A351-41AF0892D1E9}.Debug|x64.ActiveCfg = Debug|Any CPU
+		{5D1288C0-7617-4CF7-A351-41AF0892D1E9}.Debug|x64.Build.0 = Debug|Any CPU
+		{5D1288C0-7617-4CF7-A351-41AF0892D1E9}.Debug|x86.ActiveCfg = Debug|Any CPU
+		{5D1288C0-7617-4CF7-A351-41AF0892D1E9}.Debug|x86.Build.0 = Debug|Any CPU
+		{5D1288C0-7617-4CF7-A351-41AF0892D1E9}.Release|Any CPU.ActiveCfg = Release|Any CPU
+		{5D1288C0-7617-4CF7-A351-41AF0892D1E9}.Release|Any CPU.Build.0 = Release|Any CPU
+		{5D1288C0-7617-4CF7-A351-41AF0892D1E9}.Release|x64.ActiveCfg = Release|Any CPU
+		{5D1288C0-7617-4CF7-A351-41AF0892D1E9}.Release|x64.Build.0 = Release|Any CPU
+		{5D1288C0-7617-4CF7-A351-41AF0892D1E9}.Release|x86.ActiveCfg = Release|Any CPU
+		{5D1288C0-7617-4CF7-A351-41AF0892D1E9}.Release|x86.Build.0 = Release|Any CPU
 		{2E1E3005-D296-4DE6-BE9E-E5BF7A730A2A}.Debug|Any CPU.ActiveCfg = Debug|Any CPU
 		{2E1E3005-D296-4DE6-BE9E-E5BF7A730A2A}.Debug|Any CPU.Build.0 = Debug|Any CPU
 		{2E1E3005-D296-4DE6-BE9E-E5BF7A730A2A}.Debug|x64.ActiveCfg = Debug|Any CPU

@@ -18,6 +18,10 @@ context: |
   CodeStable handles existing-contract bugs, equivalent refactors, documentation,
   reviews and lessons, not feature delivery.
   See ADR/reference/workflow-integration.md for ownership and graduation rules.
+  For cooking-game planning, use the canonical application roadmap at
+  Docs/design/CookingGame/technical-roadmap.md as a non-contract priority pointer;
+  precise behavior, protocol, and acceptance contracts still belong in changes/
+  and specs/ rather than being copied into this configuration.
 
 # Per-artifact rules (optional)
 # Add custom rules for specific artifacts.

@@ -1,6 +1,6 @@
 ---
 name: build-cs-skill
-description: "CodeStable skill authoring protocol. Use when creating, refactoring, simplifying, or reviewing cs-* skills under plugins/codestable/skills or .claude/skills. Applies the prompt-as-code framework: classify the skill, define Spec/types/state machine, separate operator rules from references, add machine-checkable contracts, and design decision fixtures. Do not use for normal feature implementation; use cs-feat/cs-issue/cs-docs for product work and eval-cs-skill for full measured experiment loops."
+description: "CodeStable skill authoring protocol. Use when creating, refactoring, simplifying, or reviewing cs-* skills under .agents/skills or plugins/codestable/skills. Do not implement product features: use OpenSpec for features, cs-issue for bugs, cs for document maintenance, and eval-cs-skill for measured skill experiments."
 contracts:
   - grep: "selectRefactorDepth"
   - grep: "selectProcessProtocol"
@@ -14,6 +14,10 @@ contracts:
 
 # build-cs-skill
 
+## Workspace boundary
+
+Follow root `AGENTS.md` and `ADR/reference/workflow-integration.md`. This tool authors skills, not product features. OpenSpec exclusively owns feature development; CodeStable handles maintenance. Legacy feature/Epic examples in references are historical examples, not installed entry points or permission to restore them. Do not recreate removed workflows or duplicate product contracts. Use `.agents/skills/` for this project's skill edits and `cs` for ordinary document maintenance.
+
 ## Purpose
 
 Use this skill to turn a CodeStable skill into a small, recoverable, testable protocol. The output is either a new `SKILL.md` or a focused refactor plan for an existing `cs-*` skill.
@@ -25,7 +29,8 @@ The governing principle: **SKILL.md is prompt-as-code — its quality is measure
 Target skill roots:
 
 - `plugins/codestable/skills/<skill-name>/`
-- `.claude/skills/<local-skill-name>/`
+- `.agents/skills/<local-skill-name>/` (this workspace)
+- `.claude/skills/<local-skill-name>/` (other installations)
 
 Before changing a CodeStable skill, read the target `SKILL.md` and only the references needed for the current stage. Preserve user edits and existing compatibility entry points unless explicitly asked to remove them.
 
