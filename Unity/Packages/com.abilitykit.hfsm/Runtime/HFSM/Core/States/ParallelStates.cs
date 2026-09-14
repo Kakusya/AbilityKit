@@ -1,7 +1,7 @@
 using System;
 using System.Collections.Generic;
 
-namespace UnityHFSM
+namespace AbilityKit.HFSM
 {
 	/// <summary>
 	/// A state that can run multiple states in parallel.
@@ -191,6 +191,16 @@ namespace UnityHFSM
 			{
 				(state as IActionable<TEvent>)?.OnAction(trigger, data);
 			}
+		}
+
+		public bool HasAction(TEvent trigger)
+		{
+			foreach (var state in states)
+			{
+				if ((state as IActionable<TEvent>)?.HasAction(trigger) ?? false)
+					return true;
+			}
+			return false;
 		}
 
 		public void StateCanExit()

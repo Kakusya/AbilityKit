@@ -7,29 +7,29 @@ using System.Collections.Generic;
 using System.Text;
 using UnityEditor;
 using UnityEngine;
+using RunFilter = AbilityKit.Pipeline.Editor.PipelineDebuggerRunFilter;
+using DetailTab = AbilityKit.Pipeline.Editor.PipelineDebuggerDetailTab;
+using TraceFilter = AbilityKit.Pipeline.Editor.PipelineDebuggerTraceFilter;
 
 namespace AbilityKit.Pipeline.Editor
 {
     public sealed class PipelineRuntimeDebuggerWindow : EditorWindow
     {
-        private enum RunFilter { All, Active, History, Failed, Pinned }
-        private enum DetailTab { Overview, Phases, Trace, Context }
-        private enum TraceFilter { All, Lifecycle, Phases, Errors, Control }
         private const float MinRunPaneWidth = 220f;
         private const float MaxRunPaneWidth = 520f;
         private const float MinDetailPaneWidth = 360f;
-        private const float PhaseNodeWidth = 176f;
-        private const float PhaseNodeHeight = 68f;
-        private const float PhaseNodeGap = 34f;
-        private const float PhaseLevelGap = 54f;
 
+        private readonly PipelineDebuggerWorkspaceState _workspaceState = new PipelineDebuggerWorkspaceState();
+        private readonly PipelineDebuggerToolbarModel _toolbarModel = new PipelineDebuggerToolbarModel();
+        private readonly PipelineDebuggerRunListModel _runListModel = new PipelineDebuggerRunListModel();
+        private readonly PipelineDebuggerDetailsModel _detailsModel = new PipelineDebuggerDetailsModel();
+        private readonly PipelineDebuggerOverviewModel _overviewModel = new PipelineDebuggerOverviewModel();
+        private readonly PipelineDebuggerTraceModel _traceModel = new PipelineDebuggerTraceModel();
+        private readonly PipelineDebuggerContextModel _contextModel = new PipelineDebuggerContextModel();
+        private readonly PipelineDebuggerPhaseGraphModel _phaseGraphModel = new PipelineDebuggerPhaseGraphModel();
         private readonly Dictionary<string, bool> _phaseFoldouts = new Dictionary<string, bool>();
-        private readonly Dictionary<string, PipelinePhaseDebugState> _phaseStates = new Dictionary<string, PipelinePhaseDebugState>();
-        private readonly Dictionary<string, PipelinePhaseDebugNode> _phaseNodes = new Dictionary<string, PipelinePhaseDebugNode>();
-        private readonly Dictionary<string, Rect> _phaseNodeRects = new Dictionary<string, Rect>();
-        private readonly List<PipelinePhaseDebugNode> _phaseNodeOrder = new List<PipelinePhaseDebugNode>();
         private readonly List<EditorPipelineRegistry.DebugEntry> _visibleEntries = new List<EditorPipelineRegistry.DebugEntry>();
-        private readonly List<string> _contextNames = new List<string>();
+        private readonly List<PipelineDebuggerRunView> _runViews = new List<PipelineDebuggerRunView>();
 
         private Vector2 _runScroll;
         private Vector2 _detailScroll;
@@ -39,7 +39,6 @@ namespace AbilityKit.Pipeline.Editor
         private string _traceSearch = string.Empty;
         private string _contextSearch = string.Empty;
         private RunFilter _runFilter;
-        private DetailTab _detailTab;
         private TraceFilter _traceFilter;
         private bool _followLatest = true;
         private bool _relativeTraceTime = true;
@@ -51,17 +50,12 @@ namespace AbilityKit.Pipeline.Editor
         private bool _isPhaseGraphPanning;
         private float _runPaneWidth = 300f;
         private float _refreshIntervalSeconds = 0.1f;
-        private float _phaseGraphZoom = 1f;
-        private Vector2 _phaseGraphPan = new Vector2(24f, 24f);
         private Vector2 _phaseGraphDragMouse;
         private float _splitStartMouseX;
         private float _splitStartWidth;
         private int? _selectedRunId;
         private int? _selectedTraceSequence;
-        private string? _selectedPhaseNodeKey;
         private string? _phaseGraphFocusNodeKey;
-        private double _nextRefreshAt;
-        private volatile bool _registryChanged;
 
         private GUIStyle? _runTitleStyle;
         private GUIStyle? _mutedStyle;
@@ -99,16 +93,15 @@ namespace AbilityKit.Pipeline.Editor
 
         private void OnEditorUpdate()
         {
-            if (!_registryChanged && EditorApplication.timeSinceStartup < _nextRefreshAt) return;
-            _registryChanged = false;
-            _nextRefreshAt = EditorApplication.timeSinceStartup + _refreshIntervalSeconds;
+            _workspaceState.RefreshIntervalSeconds = _refreshIntervalSeconds;
+            if (!_workspaceState.TryBeginRefresh(EditorApplication.timeSinceStartup)) return;
             EditorPipelineRegistry.Instance.Refresh();
             Repaint();
         }
 
         private void OnRegistryChanged()
         {
-            _registryChanged = true;
+            _workspaceState.MarkRegistryChanged();
         }
 
         private void OnGUI()
@@ -129,38 +122,50 @@ namespace AbilityKit.Pipeline.Editor
         {
             var registry = EditorPipelineRegistry.Instance;
             var stats = registry.GetStats();
+            var state = PipelineDebuggerUserState.instance;
+            _toolbarModel.Rebuild(
+                stats,
+                registry.IsCaptureEnabled,
+                _followLatest,
+                _relativeTraceTime,
+                _confirmInterrupt,
+                state.HistoryCapacity,
+                state.TraceCapacity,
+                _refreshIntervalSeconds);
+
             EditorGUILayout.BeginHorizontal(EditorStyles.toolbar, GUILayout.Height(23f));
 
             bool captureEnabled = GUILayout.Toggle(
-                registry.IsCaptureEnabled,
+                _toolbarModel.CaptureEnabled,
                 IconText(
-                    registry.IsCaptureEnabled ? "d_Record On" : "d_Record Off",
+                    _toolbarModel.CaptureEnabled ? "d_Record On" : "d_Record Off",
                     "Capture",
                     "Capture newly started pipeline runs"),
                 EditorStyles.toolbarButton,
                 GUILayout.Width(78f));
-            if (captureEnabled != registry.IsCaptureEnabled)
+            if (_toolbarModel.SetCaptureEnabled(captureEnabled))
             {
-                registry.IsCaptureEnabled = captureEnabled;
-                PipelineDebuggerUserState.instance.CaptureEnabled = captureEnabled;
-                PipelineDebuggerUserState.instance.SaveNow();
+                registry.IsCaptureEnabled = _toolbarModel.CaptureEnabled;
+                state.CaptureEnabled = _toolbarModel.CaptureEnabled;
+                state.SaveNow();
             }
 
             GUILayout.Label(
-                $"Runs {stats.Total}  |  Active {stats.Active}  |  Failed {stats.Failed}  |  Pinned {stats.Pinned}",
+                _toolbarModel.StatsText,
                 EditorStyles.miniLabel,
                 GUILayout.MinWidth(220f));
             GUILayout.FlexibleSpace();
 
             bool follow = GUILayout.Toggle(
-                _followLatest,
+                _toolbarModel.FollowLatest,
                 IconText("Animation.Play", "Follow", "Select the newest matching run"),
                 EditorStyles.toolbarButton,
                 GUILayout.Width(68f));
-            if (follow != _followLatest)
+            if (_toolbarModel.SetFollowLatest(follow))
             {
-                _followLatest = follow;
-                if (_followLatest && _visibleEntries.Count > 0) SelectRun(_visibleEntries[0].OwnerId);
+                _followLatest = _toolbarModel.FollowLatest;
+                if (_followLatest && _visibleEntries.Count > 0)
+                    SelectRun(_visibleEntries[0].OwnerId);
             }
 
             if (GUILayout.Button(
@@ -171,7 +176,7 @@ namespace AbilityKit.Pipeline.Editor
                 ShowOptionsMenu();
             }
 
-            using (new EditorGUI.DisabledScope(stats.History == 0))
+            using (new EditorGUI.DisabledScope(!_toolbarModel.CanClearHistory))
             {
                 if (GUILayout.Button(
                         IconOnly("TreeEditor.Trash", "Clear unpinned completed runs"),
@@ -299,51 +304,52 @@ namespace AbilityKit.Pipeline.Editor
         private void BuildVisibleEntries()
         {
             _visibleEntries.Clear();
+            _runViews.Clear();
+
             var entries = EditorPipelineRegistry.Instance.GetEntries();
+            var entriesByRunId = new Dictionary<int, EditorPipelineRegistry.DebugEntry>(entries.Count);
             for (int i = 0; i < entries.Count; i++)
             {
-                var entry = entries[i];
-                if (MatchesRunFilter(entry) && MatchesRunSearch(entry)) _visibleEntries.Add(entry);
+                EditorPipelineRegistry.DebugEntry entry = entries[i];
+                _runViews.Add(ToRunView(entry));
+                entriesByRunId[entry.OwnerId] = entry;
             }
-            if (_runFilter == RunFilter.All)
+
+            _runListModel.Rebuild(
+                _runViews,
+                _runFilter,
+                _runSearch);
+
+            IReadOnlyList<PipelineDebuggerRunView> visibleRuns =
+                _runListModel.VisibleRuns;
+            for (int i = 0; i < visibleRuns.Count; i++)
             {
-                _visibleEntries.Sort((left, right) =>
+                if (entriesByRunId.TryGetValue(
+                        visibleRuns[i].RunId,
+                        out EditorPipelineRegistry.DebugEntry? entry))
                 {
-                    int groupOrder = GetRunGroup(left).CompareTo(GetRunGroup(right));
-                    return groupOrder != 0
-                        ? groupOrder
-                        : right.RegisteredAtUtc.CompareTo(left.RegisteredAtUtc);
-                });
+                    _visibleEntries.Add(entry);
+                }
             }
-        }
-
-        private bool MatchesRunFilter(EditorPipelineRegistry.DebugEntry entry)
-        {
-            return _runFilter switch
-            {
-                RunFilter.Active => entry.IsActive,
-                RunFilter.History => !entry.IsActive,
-                RunFilter.Failed => entry.LastState == EAbilityPipelineState.Failed,
-                RunFilter.Pinned => entry.IsPinned,
-                _ => true
-            };
-        }
-
-        private bool MatchesRunSearch(EditorPipelineRegistry.DebugEntry entry)
-        {
-            if (string.IsNullOrWhiteSpace(_runSearch)) return true;
-            return Contains(entry.OwnerName, _runSearch)
-                || Contains(entry.PipelineType, _runSearch)
-                || Contains(entry.ConfigType, _runSearch)
-                || Contains(entry.LastPhaseId.ToString(), _runSearch)
-                || entry.OwnerId.ToString().IndexOf(_runSearch, StringComparison.OrdinalIgnoreCase) >= 0;
         }
 
         private static int GetRunGroup(EditorPipelineRegistry.DebugEntry entry)
         {
-            if (entry.IsActive) return 0;
-            if (entry.IsPinned) return 1;
-            return 2;
+            return PipelineDebuggerViewPolicy.GetRunGroup(ToRunView(entry));
+        }
+
+        private static PipelineDebuggerRunView ToRunView(EditorPipelineRegistry.DebugEntry entry)
+        {
+            return new PipelineDebuggerRunView(
+                entry.OwnerId,
+                entry.RegisteredAtUtc,
+                entry.IsActive,
+                entry.IsPinned,
+                entry.LastState,
+                entry.OwnerName,
+                entry.PipelineType,
+                entry.ConfigType,
+                entry.LastPhaseId.ToString());
         }
 
         private void DrawRunGroupHeader(int group)
@@ -355,19 +361,6 @@ namespace AbilityKit.Pipeline.Editor
                 EditorGUI.DrawRect(rect, new Color(0f, 0f, 0f, 0.14f));
             }
             GUI.Label(new Rect(rect.x + 8f, rect.y + 2f, rect.width - 16f, 18f), title, EditorStyles.miniBoldLabel);
-        }
-
-        private int FindNewestVisibleRunId()
-        {
-            int runId = _visibleEntries[0].OwnerId;
-            DateTime newest = _visibleEntries[0].RegisteredAtUtc;
-            for (int i = 1; i < _visibleEntries.Count; i++)
-            {
-                if (_visibleEntries[i].RegisteredAtUtc <= newest) continue;
-                newest = _visibleEntries[i].RegisteredAtUtc;
-                runId = _visibleEntries[i].OwnerId;
-            }
-            return runId;
         }
 
         private void ShowRunContextMenu(EditorPipelineRegistry.DebugEntry entry)
@@ -389,31 +382,13 @@ namespace AbilityKit.Pipeline.Editor
 
         private void ResolveSelection()
         {
-            bool selectedVisible = false;
-            if (_selectedRunId.HasValue)
-            {
-                for (int i = 0; i < _visibleEntries.Count; i++)
-                {
-                    if (_visibleEntries[i].OwnerId != _selectedRunId.Value) continue;
-                    selectedVisible = true;
-                    break;
-                }
-            }
+            int? resolved = _runListModel.ResolveSelection(
+                _selectedRunId,
+                _followLatest,
+                EditorPipelineRegistry.Instance.SelectedRunId);
 
-            if (_followLatest && _visibleEntries.Count > 0)
-            {
-                int latestId = FindNewestVisibleRunId();
-                if (!_selectedRunId.HasValue
-                    || !selectedVisible
-                    || EditorPipelineRegistry.Instance.SelectedRunId == latestId)
-                {
-                    SelectRun(latestId);
-                }
-            }
-            else if (!selectedVisible)
-            {
-                SelectRun(_visibleEntries.Count > 0 ? _visibleEntries[0].OwnerId : (int?)null);
-            }
+            if (resolved != _selectedRunId)
+                SelectRun(resolved);
         }
 
         private void DrawRunRow(EditorPipelineRegistry.DebugEntry entry)
@@ -478,20 +453,19 @@ namespace AbilityKit.Pipeline.Editor
             bool compact = detailWidth < 540f;
             DrawDetailHeader(entry, compact);
             int traceCount = EditorPipelineRegistry.Instance.GetTraceSnapshot(entry.OwnerId).Count;
-            _detailTab = (DetailTab)GUILayout.Toolbar(
-                (int)_detailTab,
-                compact
-                    ? new[] { "Overview", "Phases", "Trace", "Context" }
-                    : new[]
-                    {
-                        "Overview",
-                        "Phases " + CountPhaseNodes(entry.PhaseTree),
-                        "Trace " + traceCount,
-                        "Context " + entry.ContextValues.Count
-                    },
+            IReadOnlyList<string> tabLabels = _detailsModel.BuildTabLabels(
+                compact,
+                CountPhaseNodes(entry.PhaseTree),
+                traceCount,
+                entry.ContextValues.Count);
+            DetailTab selectedTab = (DetailTab)GUILayout.Toolbar(
+                (int)_detailsModel.SelectedTab,
+                tabLabels as string[] ?? new List<string>(tabLabels).ToArray(),
                 EditorStyles.toolbarButton);
+            if (selectedTab != _detailsModel.SelectedTab)
+                SelectDetailTab(selectedTab);
 
-            switch (_detailTab)
+            switch (_detailsModel.SelectedTab)
             {
                 case DetailTab.Overview: DrawOverview(entry); break;
                 case DetailTab.Phases: DrawPhases(entry); break;
@@ -605,49 +579,68 @@ namespace AbilityKit.Pipeline.Editor
 
         private void DrawOverview(EditorPipelineRegistry.DebugEntry entry)
         {
+            IReadOnlyList<PipelineTraceEvent> trace =
+                EditorPipelineRegistry.Instance.GetTraceSnapshot(entry.OwnerId);
+            _overviewModel.Rebuild(ToOverviewSource(entry), trace);
+
             _detailScroll = EditorGUILayout.BeginScrollView(_detailScroll);
             GUILayout.Space(10f);
 
-            string? lastError = FindLastError(entry);
-            if (!string.IsNullOrEmpty(lastError))
+            if (!string.IsNullOrEmpty(_overviewModel.LastError))
             {
-                DrawFailureSummary(entry, lastError!);
+                DrawFailureSummary(entry, _overviewModel.LastError!);
                 GUILayout.Space(6f);
             }
 
             DrawSectionTitle("Run");
-            DrawKeyValue("Run ID", entry.OwnerId.ToString());
-            DrawKeyValue("State", entry.IsPaused ? "Executing (Paused)" : entry.LastState.ToString());
-            DrawKeyValue("Current phase", string.IsNullOrEmpty(entry.LastPhaseId.Value) ? "No phase" : entry.LastPhaseId.ToString());
-            DrawKeyValue("Elapsed time", entry.ElapsedTime.ToString("0.000") + " s");
-            DrawKeyValue("Wall duration", entry.WallDurationSeconds.ToString("0.000") + " s");
+            DrawKeyValue("Run ID", _overviewModel.RunId.ToString());
+            DrawKeyValue("State", _overviewModel.StateLabel);
+            DrawKeyValue("Current phase", _overviewModel.CurrentPhaseLabel);
+            DrawKeyValue("Elapsed time", _overviewModel.ElapsedTimeLabel);
+            DrawKeyValue("Wall duration", _overviewModel.WallDurationLabel);
 
             GUILayout.Space(12f);
             DrawSectionTitle("Active phases");
-            if (entry.ActivePhases.Count == 0)
+            if (_overviewModel.ActivePhaseLabels.Count == 0)
             {
                 GUILayout.Label("No active phase", _mutedStyle);
             }
             else
             {
-                for (int i = 0; i < entry.ActivePhases.Count; i++)
-                {
-                    GUILayout.Label(entry.ActivePhases[i].ToString(), _monoStyle);
-                }
+                for (int i = 0; i < _overviewModel.ActivePhaseLabels.Count; i++)
+                    GUILayout.Label(_overviewModel.ActivePhaseLabels[i], _monoStyle);
             }
 
             GUILayout.Space(12f);
             _showTechnicalDetails = EditorGUILayout.Foldout(_showTechnicalDetails, "Technical details", true);
             if (_showTechnicalDetails)
             {
-                DrawKeyValue("Started UTC", entry.RegisteredAtUtc.ToString("yyyy-MM-dd HH:mm:ss.fff"));
-                DrawKeyValue("Ended UTC", entry.EndedAtUtc?.ToString("yyyy-MM-dd HH:mm:ss.fff") ?? "Running");
-                DrawKeyValue("Pipeline", entry.PipelineType);
-                DrawKeyValue("Config", entry.ConfigType);
-                DrawKeyValue("Context", entry.ContextType);
+                DrawKeyValue("Started UTC", _overviewModel.StartedUtcLabel);
+                DrawKeyValue("Ended UTC", _overviewModel.EndedUtcLabel);
+                DrawKeyValue("Pipeline", _overviewModel.PipelineType);
+                DrawKeyValue("Config", _overviewModel.ConfigType);
+                DrawKeyValue("Context", _overviewModel.ContextType);
                 DrawLiveObjectSection(entry);
             }
             EditorGUILayout.EndScrollView();
+        }
+
+        private static PipelineDebuggerOverviewSource ToOverviewSource(
+            EditorPipelineRegistry.DebugEntry entry)
+        {
+            return new PipelineDebuggerOverviewSource(
+                entry.OwnerId,
+                entry.LastState,
+                entry.IsPaused,
+                entry.LastPhaseId,
+                entry.ElapsedTime,
+                entry.WallDurationSeconds,
+                entry.ActivePhases,
+                entry.RegisteredAtUtc,
+                entry.EndedAtUtc,
+                entry.PipelineType,
+                entry.ConfigType,
+                entry.ContextType);
         }
 
         private void DrawFailureSummary(EditorPipelineRegistry.DebugEntry entry, string message)
@@ -663,7 +656,7 @@ namespace AbilityKit.Pipeline.Editor
             EditorGUILayout.EndVertical();
             GUILayout.FlexibleSpace();
             if (GUILayout.Button("Trace", GUILayout.Width(52f))) GoToFailure(entry);
-            if (GUILayout.Button("Phase", GUILayout.Width(52f))) _detailTab = DetailTab.Phases;
+            if (GUILayout.Button("Phase", GUILayout.Width(52f))) SelectDetailTab(DetailTab.Phases);
             EditorGUILayout.EndHorizontal();
             float width = Mathf.Max(160f, position.width - _runPaneWidth - 42f);
             float height = Mathf.Clamp(
@@ -719,7 +712,6 @@ namespace AbilityKit.Pipeline.Editor
             }
 
             BuildPhaseStates(entry);
-            BuildPhaseGraphLayout(entry);
             DrawPhaseToolbar(entry);
             if (entry.HasGraphLayoutMismatch)
             {
@@ -777,7 +769,9 @@ namespace AbilityKit.Pipeline.Editor
             GUILayout.Label(new GUIContent(layoutLabel, entry.Graph.StructureId), EditorStyles.miniLabel);
             GUILayout.FlexibleSpace();
 
-            if (_selectedPhaseNodeKey != null && _phaseNodes.TryGetValue(_selectedPhaseNodeKey, out var selectedNode))
+            if (_phaseGraphModel.SelectedNodeKey != null
+                && _phaseGraphModel.TryGetNode(_phaseGraphModel.SelectedNodeKey, out var selectedNode)
+                && selectedNode != null)
             {
                 GUILayout.Label(selectedNode.PhaseId.ToString(), EditorStyles.miniLabel, GUILayout.MaxWidth(130f));
                 if (GUILayout.Button(new GUIContent("Trace", "Filter Trace by this phase"), EditorStyles.toolbarButton, GUILayout.Width(44f)))
@@ -790,11 +784,7 @@ namespace AbilityKit.Pipeline.Editor
 
         private void BuildPhaseStates(EditorPipelineRegistry.DebugEntry entry)
         {
-            _phaseStates.Clear();
-            for (int i = 0; i < entry.PhaseStates.Count; i++)
-            {
-                _phaseStates[entry.PhaseStates[i].NodeKey] = entry.PhaseStates[i];
-            }
+            _phaseGraphModel.Rebuild(entry.Graph, entry.GraphLayout, entry.PhaseStates);
         }
 
         private void DrawPhaseTree(EditorPipelineRegistry.DebugEntry entry)
@@ -903,71 +893,6 @@ namespace AbilityKit.Pipeline.Editor
             GUI.EndGroup();
         }
 
-        private void BuildPhaseGraphLayout(EditorPipelineRegistry.DebugEntry entry)
-        {
-            _phaseNodes.Clear();
-            _phaseNodeRects.Clear();
-            _phaseNodeOrder.Clear();
-
-            float cursorX = 24f;
-            for (int i = 0; i < entry.Graph.Roots.Count; i++)
-            {
-                var root = entry.Graph.Roots[i];
-                CollectPhaseNodes(root);
-                float width = GetPhaseSubtreeWidth(root);
-                LayoutPhaseSubtree(root, cursorX, 28f, width);
-                cursorX += width + PhaseNodeGap * 1.5f;
-            }
-
-            if (entry.GraphLayout == null) return;
-            for (int i = 0; i < entry.GraphLayout.Nodes.Count; i++)
-            {
-                var position = entry.GraphLayout.Nodes[i];
-                if (_phaseNodeRects.ContainsKey(position.NodeKey))
-                {
-                    _phaseNodeRects[position.NodeKey] = new Rect(position.X, position.Y, PhaseNodeWidth, PhaseNodeHeight);
-                }
-            }
-        }
-
-        private void CollectPhaseNodes(PipelinePhaseDebugNode node)
-        {
-            _phaseNodes[node.NodeKey] = node;
-            _phaseNodeOrder.Add(node);
-            for (int i = 0; i < node.Children.Count; i++) CollectPhaseNodes(node.Children[i]);
-        }
-
-        private float GetPhaseSubtreeWidth(PipelinePhaseDebugNode node)
-        {
-            if (node.Children.Count == 0) return PhaseNodeWidth;
-            float width = 0f;
-            for (int i = 0; i < node.Children.Count; i++)
-            {
-                if (i > 0) width += PhaseNodeGap;
-                width += GetPhaseSubtreeWidth(node.Children[i]);
-            }
-            return Mathf.Max(PhaseNodeWidth, width);
-        }
-
-        private void LayoutPhaseSubtree(PipelinePhaseDebugNode node, float left, float top, float width)
-        {
-            _phaseNodeRects[node.NodeKey] = new Rect(
-                left + (width - PhaseNodeWidth) * 0.5f,
-                top,
-                PhaseNodeWidth,
-                PhaseNodeHeight);
-            if (node.Children.Count == 0) return;
-
-            float childLeft = left;
-            float childTop = top + PhaseNodeHeight + PhaseLevelGap;
-            for (int i = 0; i < node.Children.Count; i++)
-            {
-                float childWidth = GetPhaseSubtreeWidth(node.Children[i]);
-                LayoutPhaseSubtree(node.Children[i], childLeft, childTop, childWidth);
-                childLeft += childWidth + PhaseNodeGap;
-            }
-        }
-
         private void HandlePhaseGraphInput(EditorPipelineRegistry.DebugEntry entry, Rect canvas)
         {
             var current = Event.current;
@@ -976,11 +901,8 @@ namespace AbilityKit.Pipeline.Editor
 
             if (inside && current.type == EventType.ScrollWheel)
             {
-                float oldZoom = _phaseGraphZoom;
                 float factor = Mathf.Pow(1.08f, -current.delta.y);
-                _phaseGraphZoom = Mathf.Clamp(oldZoom * factor, 0.45f, 1.6f);
-                Vector2 logical = (localMouse - _phaseGraphPan) / oldZoom;
-                _phaseGraphPan = localMouse - logical * _phaseGraphZoom;
+                _phaseGraphModel.ZoomAt(localMouse, factor);
                 current.Use();
                 Repaint();
                 return;
@@ -996,7 +918,7 @@ namespace AbilityKit.Pipeline.Editor
             }
             if (_isPhaseGraphPanning && current.type == EventType.MouseDrag)
             {
-                _phaseGraphPan += current.mousePosition - _phaseGraphDragMouse;
+                _phaseGraphModel.PanBy(current.mousePosition - _phaseGraphDragMouse);
                 _phaseGraphDragMouse = current.mousePosition;
                 current.Use();
                 Repaint();
@@ -1010,25 +932,21 @@ namespace AbilityKit.Pipeline.Editor
             }
 
             if (!inside || current.type != EventType.MouseDown || current.button != 0) return;
-            for (int i = _phaseNodeOrder.Count - 1; i >= 0; i--)
+            if (_phaseGraphModel.TrySelect(localMouse, out PipelinePhaseDebugNode? node)
+                && node != null
+                && current.clickCount == 2)
             {
-                var node = _phaseNodeOrder[i];
-                if (!TransformPhaseRect(_phaseNodeRects[node.NodeKey]).Contains(localMouse)) continue;
-                _selectedPhaseNodeKey = node.NodeKey;
-                if (current.clickCount == 2) GoToPhaseTrace(node);
-                current.Use();
-                Repaint();
-                return;
+                GoToPhaseTrace(node);
             }
-            _selectedPhaseNodeKey = null;
             current.Use();
+            Repaint();
         }
 
         private void DrawPhaseGraphGrid(Vector2 canvasSize)
         {
-            float step = Mathf.Max(12f, 24f * _phaseGraphZoom);
-            float startX = Mathf.Repeat(_phaseGraphPan.x, step);
-            float startY = Mathf.Repeat(_phaseGraphPan.y, step);
+            float step = Mathf.Max(12f, 24f * _phaseGraphModel.Zoom);
+            float startX = Mathf.Repeat(_phaseGraphModel.Pan.x, step);
+            float startY = Mathf.Repeat(_phaseGraphModel.Pan.y, step);
             Color color = EditorGUIUtility.isProSkin
                 ? new Color(1f, 1f, 1f, 0.045f)
                 : new Color(0f, 0f, 0f, 0.06f);
@@ -1045,10 +963,10 @@ namespace AbilityKit.Pipeline.Editor
             for (int i = 0; i < entry.Graph.Edges.Count; i++)
             {
                 var edge = entry.Graph.Edges[i];
-                if (!_phaseNodeRects.TryGetValue(edge.SourceNodeKey, out var sourceLogical)
-                    || !_phaseNodeRects.TryGetValue(edge.TargetNodeKey, out var targetLogical)) continue;
-                Rect source = TransformPhaseRect(sourceLogical);
-                Rect target = TransformPhaseRect(targetLogical);
+                if (!_phaseGraphModel.NodeRects.TryGetValue(edge.SourceNodeKey, out var sourceLogical)
+                    || !_phaseGraphModel.NodeRects.TryGetValue(edge.TargetNodeKey, out var targetLogical)) continue;
+                Rect source = _phaseGraphModel.Transform(sourceLogical);
+                Rect target = _phaseGraphModel.Transform(targetLogical);
                 bool flow = edge.Kind == EPipelineDebugEdgeKind.Flow;
                 Vector2 start = flow
                     ? new Vector2(source.xMax, source.center.y)
@@ -1066,7 +984,7 @@ namespace AbilityKit.Pipeline.Editor
                 Handles.DrawBezier(start, end, startTangent, endTangent, edgeColor, null, width);
                 DrawEdgeArrow(end, endTangent, edgeColor);
 
-                if (!string.IsNullOrEmpty(edge.Label) && _phaseGraphZoom >= 0.62f)
+                if (!string.IsNullOrEmpty(edge.Label) && _phaseGraphModel.Zoom >= 0.62f)
                 {
                     Vector2 center = (start + end) * 0.5f;
                     var label = new GUIContent(edge.Label, edge.Label);
@@ -1084,35 +1002,24 @@ namespace AbilityKit.Pipeline.Editor
 
         private Color ResolveEdgeColor(PipelinePhaseDebugEdge edge)
         {
-            if (_phaseStates.TryGetValue(edge.SourceNodeKey, out var source)
-                && edge.Kind == EPipelineDebugEdgeKind.Condition
-                && edge.ChildIndex >= 0)
+            return _phaseGraphModel.ResolveEdgeState(edge) switch
             {
-                if (source.SelectedChildIndex == edge.ChildIndex) return new Color(0.28f, 0.78f, 0.46f, 0.95f);
-                if (edge.ChildIndex < source.ChildConditions.Count
-                    && source.ChildConditions[edge.ChildIndex] == EPipelineDebugConditionResult.Rejected)
-                {
-                    return new Color(0.70f, 0.33f, 0.29f, 0.42f);
-                }
-            }
-            if (_phaseStates.TryGetValue(edge.TargetNodeKey, out var target)
-                && target.State == EPipelineDebugExecutionState.Active)
-            {
-                return new Color(0.93f, 0.66f, 0.20f, 0.95f);
-            }
-            return EditorGUIUtility.isProSkin
-                ? new Color(0.56f, 0.60f, 0.65f, 0.62f)
-                : new Color(0.28f, 0.31f, 0.35f, 0.65f);
+                PipelineDebuggerPhaseEdgeState.Selected => new Color(0.28f, 0.78f, 0.46f, 0.95f),
+                PipelineDebuggerPhaseEdgeState.Rejected => new Color(0.70f, 0.33f, 0.29f, 0.42f),
+                PipelineDebuggerPhaseEdgeState.Active => new Color(0.93f, 0.66f, 0.20f, 0.95f),
+                _ => EditorGUIUtility.isProSkin
+                    ? new Color(0.56f, 0.60f, 0.65f, 0.62f)
+                    : new Color(0.28f, 0.31f, 0.35f, 0.65f)
+            };
         }
 
         private float ResolveEdgeWidth(PipelinePhaseDebugEdge edge)
         {
-            if (_phaseStates.TryGetValue(edge.SourceNodeKey, out var source)
-                && edge.Kind == EPipelineDebugEdgeKind.Condition
-                && source.SelectedChildIndex == edge.ChildIndex) return 3f;
-            if (_phaseStates.TryGetValue(edge.TargetNodeKey, out var target)
-                && target.State == EPipelineDebugExecutionState.Active) return 3f;
-            return 1.5f;
+            PipelineDebuggerPhaseEdgeState state = _phaseGraphModel.ResolveEdgeState(edge);
+            return state == PipelineDebuggerPhaseEdgeState.Selected
+                   || state == PipelineDebuggerPhaseEdgeState.Active
+                ? 3f
+                : 1.5f;
         }
 
         private static void DrawEdgeArrow(Vector2 end, Vector2 tangent, Color color)
@@ -1129,10 +1036,10 @@ namespace AbilityKit.Pipeline.Editor
 
         private void DrawPhaseGraphNodes(EditorPipelineRegistry.DebugEntry entry, Vector2 canvasSize)
         {
-            for (int i = 0; i < _phaseNodeOrder.Count; i++)
+            for (int i = 0; i < _phaseGraphModel.NodeOrder.Count; i++)
             {
-                var node = _phaseNodeOrder[i];
-                Rect rect = TransformPhaseRect(_phaseNodeRects[node.NodeKey]);
+                var node = _phaseGraphModel.NodeOrder[i];
+                Rect rect = _phaseGraphModel.Transform(_phaseGraphModel.NodeRects[node.NodeKey]);
                 if (rect.xMax < 0f || rect.yMax < 0f || rect.xMin > canvasSize.x || rect.yMin > canvasSize.y) continue;
                 DrawPhaseGraphNode(entry, node, rect);
             }
@@ -1144,23 +1051,23 @@ namespace AbilityKit.Pipeline.Editor
             Rect rect)
         {
             EPipelineDebugExecutionState state = ResolvePhaseState(entry, node);
-            bool selected = _selectedPhaseNodeKey == node.NodeKey;
+            bool selected = _phaseGraphModel.SelectedNodeKey == node.NodeKey;
             Color background = EditorGUIUtility.isProSkin
                 ? new Color(0.18f, 0.19f, 0.21f, 0.98f)
                 : new Color(0.88f, 0.89f, 0.90f, 0.98f);
             EditorGUI.DrawRect(new Rect(rect.x + 2f, rect.y + 3f, rect.width, rect.height), new Color(0f, 0f, 0f, 0.28f));
             EditorGUI.DrawRect(rect, background);
-            float headerHeight = Mathf.Max(16f, 22f * _phaseGraphZoom);
+            float headerHeight = Mathf.Max(16f, 22f * _phaseGraphModel.Zoom);
             EditorGUI.DrawRect(new Rect(rect.x, rect.y, rect.width, headerHeight), KindColor(node.Kind));
-            EditorGUI.DrawRect(new Rect(rect.x, rect.y, Mathf.Max(3f, 4f * _phaseGraphZoom), rect.height), PhaseStateColor(state));
+            EditorGUI.DrawRect(new Rect(rect.x, rect.y, Mathf.Max(3f, 4f * _phaseGraphModel.Zoom), rect.height), PhaseStateColor(state));
 
             Color border = selected ? new Color(0.35f, 0.68f, 1f) : PhaseStateColor(state);
             float borderWidth = selected || state == EPipelineDebugExecutionState.Active || state == EPipelineDebugExecutionState.Failed ? 2f : 1f;
             DrawRectBorder(rect, border, borderWidth);
 
-            if (_phaseGraphZoom >= 0.58f)
+            if (_phaseGraphModel.Zoom >= 0.58f)
             {
-                float inset = Mathf.Max(6f, 8f * _phaseGraphZoom);
+                float inset = Mathf.Max(6f, 8f * _phaseGraphModel.Zoom);
                 DrawPhaseKindGlyph(node.Kind, new Rect(rect.x + inset, rect.y + 4f, 14f, headerHeight - 7f));
                 GUI.Label(
                     new Rect(rect.x + inset + 18f, rect.y + 2f, rect.width - inset - 74f, headerHeight - 3f),
@@ -1174,7 +1081,7 @@ namespace AbilityKit.Pipeline.Editor
                     new Rect(rect.x + inset, rect.y + headerHeight + 4f, rect.width - inset * 2f, 19f),
                     new GUIContent(node.PhaseId.ToString(), node.PhaseType),
                     _graphNodeTitleStyle);
-                if (_phaseGraphZoom >= 0.82f)
+                if (_phaseGraphModel.Zoom >= 0.82f)
                 {
                     GUI.Label(
                         new Rect(rect.x + inset, rect.y + headerHeight + 24f, rect.width - inset * 2f, 17f),
@@ -1217,95 +1124,29 @@ namespace AbilityKit.Pipeline.Editor
             Handles.EndGUI();
         }
 
-        private Rect TransformPhaseRect(Rect logical)
-        {
-            return new Rect(
-                _phaseGraphPan.x + logical.x * _phaseGraphZoom,
-                _phaseGraphPan.y + logical.y * _phaseGraphZoom,
-                logical.width * _phaseGraphZoom,
-                logical.height * _phaseGraphZoom);
-        }
-
         private void FitPhaseGraph(Vector2 canvasSize)
         {
-            if (!TryGetPhaseGraphBounds(out Rect bounds)) return;
-            float widthZoom = Mathf.Max(0.01f, (canvasSize.x - 56f) / bounds.width);
-            float heightZoom = Mathf.Max(0.01f, (canvasSize.y - 56f) / bounds.height);
-            _phaseGraphZoom = Mathf.Clamp(Mathf.Min(widthZoom, heightZoom), 0.45f, 1.15f);
-            _phaseGraphPan = canvasSize * 0.5f - bounds.center * _phaseGraphZoom;
+            _phaseGraphModel.Fit(canvasSize);
         }
 
         private void FocusPhaseNode(string nodeKey, Vector2 canvasSize)
         {
-            if (!_phaseNodeRects.TryGetValue(nodeKey, out var rect)) return;
-            _phaseGraphZoom = Mathf.Clamp(_phaseGraphZoom, 0.75f, 1.2f);
-            _phaseGraphPan = canvasSize * 0.5f - rect.center * _phaseGraphZoom;
-            _selectedPhaseNodeKey = nodeKey;
-        }
-
-        private bool TryGetPhaseGraphBounds(out Rect bounds)
-        {
-            bounds = default;
-            bool found = false;
-            foreach (var pair in _phaseNodeRects)
-            {
-                bounds = found ? UnionRect(bounds, pair.Value) : pair.Value;
-                found = true;
-            }
-            return found;
-        }
-
-        private static Rect UnionRect(Rect left, Rect right)
-        {
-            float xMin = Mathf.Min(left.xMin, right.xMin);
-            float yMin = Mathf.Min(left.yMin, right.yMin);
-            float xMax = Mathf.Max(left.xMax, right.xMax);
-            float yMax = Mathf.Max(left.yMax, right.yMax);
-            return Rect.MinMaxRect(xMin, yMin, xMax, yMax);
+            _phaseGraphModel.Focus(nodeKey, canvasSize);
         }
 
         private bool TryFindFocusPhaseNode(out string? nodeKey)
         {
-            foreach (var pair in _phaseStates)
-            {
-                if (pair.Value.State == EPipelineDebugExecutionState.Failed)
-                {
-                    nodeKey = pair.Key;
-                    return true;
-                }
-            }
-            foreach (var pair in _phaseStates)
-            {
-                if (pair.Value.State == EPipelineDebugExecutionState.Active)
-                {
-                    nodeKey = pair.Key;
-                    return true;
-                }
-            }
-            nodeKey = null;
-            return false;
+            return _phaseGraphModel.TryFindFocusNode(out nodeKey);
         }
 
         private EPipelineDebugExecutionState ResolvePhaseState(
             EditorPipelineRegistry.DebugEntry entry,
             PipelinePhaseDebugNode node)
         {
-            if (_phaseStates.TryGetValue(node.NodeKey, out var state)) return state.State;
-            for (int i = 0; i < entry.ActivePhases.Count; i++)
-            {
-                if (entry.ActivePhases[i] == node.PhaseId) return EPipelineDebugExecutionState.Active;
-            }
-
-            var trace = EditorPipelineRegistry.Instance.GetTraceSnapshot(entry.OwnerId);
-            EPipelineDebugExecutionState fallback = EPipelineDebugExecutionState.Pending;
-            for (int i = 0; i < trace.Count; i++)
-            {
-                if (trace[i].PhaseId != node.PhaseId) continue;
-                if (trace[i].Type == EPipelineTraceEventType.PhaseError) fallback = EPipelineDebugExecutionState.Failed;
-                else if (trace[i].Type == EPipelineTraceEventType.PhaseComplete
-                         && fallback != EPipelineDebugExecutionState.Failed) fallback = EPipelineDebugExecutionState.Completed;
-            }
-            return fallback;
+            return _phaseGraphModel.ResolveState(
+                node,
+                entry.ActivePhases,
+                EditorPipelineRegistry.Instance.GetTraceSnapshot(entry.OwnerId));
         }
 
         private static Color KindColor(EPipelineDebugNodeKind kind)
@@ -1345,7 +1186,7 @@ namespace AbilityKit.Pipeline.Editor
         {
             _traceSearch = node.PhaseId.ToString();
             _traceFilter = TraceFilter.Phases;
-            _detailTab = DetailTab.Trace;
+            SelectDetailTab(DetailTab.Trace);
             _traceScroll = Vector2.zero;
         }
 
@@ -1381,16 +1222,19 @@ namespace AbilityKit.Pipeline.Editor
             EditorGUILayout.EndHorizontal();
 
             var trace = EditorPipelineRegistry.Instance.GetTraceSnapshot(entry.OwnerId);
+            _traceModel.Rebuild(
+                trace,
+                _traceFilter,
+                _traceSearch,
+                entry.RegisteredAtUtc,
+                _relativeTraceTime);
             DrawTraceHeader();
             _traceScroll = EditorGUILayout.BeginScrollView(_traceScroll);
-            int visibleCount = 0;
-            for (int i = 0; i < trace.Count; i++)
+            for (int i = 0; i < _traceModel.VisibleRows.Count; i++)
             {
-                var item = trace[i];
-                if (!MatchesTraceFilter(item) || !MatchesTraceSearch(item)) continue;
-                DrawTraceRow(entry, item, visibleCount++);
+                DrawTraceRow(_traceModel.VisibleRows[i], i);
             }
-            if (visibleCount == 0)
+            if (_traceModel.VisibleRows.Count == 0)
             {
                 GUILayout.Space(18f);
                 GUILayout.Label("No matching trace events", _centeredMutedStyle);
@@ -1410,8 +1254,9 @@ namespace AbilityKit.Pipeline.Editor
             GUI.Label(new Rect(row.x + 352f, row.y + 2f, Mathf.Max(0f, row.width - 358f), 18f), "Message", EditorStyles.miniBoldLabel);
         }
 
-        private void DrawTraceRow(EditorPipelineRegistry.DebugEntry entry, PipelineTraceEvent item, int visibleIndex)
+        private void DrawTraceRow(PipelineDebuggerTraceRow traceRow, int visibleIndex)
         {
+            PipelineTraceEvent item = traceRow.TraceEvent;
             var row = GUILayoutUtility.GetRect(0f, 22f, GUILayout.ExpandWidth(true));
             bool selected = _selectedTraceSequence == item.Seq;
             if (Event.current.type == EventType.Repaint)
@@ -1426,11 +1271,8 @@ namespace AbilityKit.Pipeline.Editor
                 }
             }
 
-            string time = _relativeTraceTime
-                ? "+" + Math.Max(0d, (item.UtcTime - entry.RegisteredAtUtc).TotalSeconds).ToString("0.000")
-                : item.UtcTime.ToString("HH:mm:ss.fff");
             GUI.Label(new Rect(row.x + 6f, row.y + 2f, 42f, 18f), item.Seq.ToString(), _monoStyle);
-            GUI.Label(new Rect(row.x + 48f, row.y + 2f, 82f, 18f), time, _monoStyle);
+            GUI.Label(new Rect(row.x + 48f, row.y + 2f, 82f, 18f), traceRow.TimeLabel, _monoStyle);
             GUI.Label(new Rect(row.x + 130f, row.y + 2f, 92f, 18f), item.Type.ToString(), EditorStyles.miniLabel);
             GUI.Label(new Rect(row.x + 222f, row.y + 2f, 130f, 18f), item.PhaseId.ToString(), EditorStyles.miniLabel);
             GUI.Label(new Rect(row.x + 352f, row.y + 2f, Mathf.Max(0f, row.width - 358f), 18f), item.Message, EditorStyles.miniLabel);
@@ -1438,64 +1280,47 @@ namespace AbilityKit.Pipeline.Editor
             if (Event.current.type == EventType.MouseDown && row.Contains(Event.current.mousePosition))
             {
                 _selectedTraceSequence = item.Seq;
-                if (Event.current.clickCount == 2 && !string.IsNullOrEmpty(item.PhaseId.Value)) _detailTab = DetailTab.Phases;
+                if (Event.current.clickCount == 2 && !string.IsNullOrEmpty(item.PhaseId.Value))
+                    SelectDetailTab(DetailTab.Phases);
                 Event.current.Use();
             }
         }
 
         private void DrawSelectedTraceDetail(IReadOnlyList<PipelineTraceEvent> trace)
         {
-            if (!_selectedTraceSequence.HasValue) return;
-            for (int i = 0; i < trace.Count; i++)
+            if (!PipelineDebuggerTraceModel.TryGetSelected(
+                    _selectedTraceSequence,
+                    trace,
+                    out PipelineTraceEvent item))
             {
-                var item = trace[i];
-                if (item.Seq != _selectedTraceSequence.Value) continue;
-                EditorGUILayout.BeginVertical(EditorStyles.helpBox, GUILayout.MinHeight(58f));
-                EditorGUILayout.LabelField(
-                    "#" + item.Seq + "  " + item.Type + "  |  " + item.State + "  |  " + item.PhaseId,
-                    EditorStyles.miniBoldLabel);
-                var wrappedStyle = _wrappedValueStyle!;
-                float height = Mathf.Clamp(
-                    wrappedStyle.CalcHeight(new GUIContent(item.Message), Mathf.Max(120f, position.width - _runPaneWidth - 30f)),
-                    EditorGUIUtility.singleLineHeight,
-                    54f);
-                EditorGUILayout.SelectableLabel(item.Message, wrappedStyle, GUILayout.Height(height));
-                EditorGUILayout.EndVertical();
+                _selectedTraceSequence = PipelineDebuggerTraceModel.ResolveSelection(
+                    _selectedTraceSequence,
+                    trace);
                 return;
             }
-            _selectedTraceSequence = null;
-        }
 
-        private bool MatchesTraceFilter(PipelineTraceEvent item)
-        {
-            return _traceFilter switch
-            {
-                TraceFilter.Lifecycle => item.Type == EPipelineTraceEventType.RunStart || item.Type == EPipelineTraceEventType.RunEnd,
-                TraceFilter.Phases => item.Type == EPipelineTraceEventType.PhaseStart || item.Type == EPipelineTraceEventType.PhaseComplete || item.Type == EPipelineTraceEventType.PhaseError,
-                TraceFilter.Errors => item.Type == EPipelineTraceEventType.PhaseError || item.State == EAbilityPipelineState.Failed,
-                TraceFilter.Control => item.Type == EPipelineTraceEventType.Pause || item.Type == EPipelineTraceEventType.Resume || item.Type == EPipelineTraceEventType.Interrupt,
-                _ => true
-            };
-        }
-
-        private bool MatchesTraceSearch(PipelineTraceEvent item)
-        {
-            if (string.IsNullOrWhiteSpace(_traceSearch)) return true;
-            return Contains(item.PhaseId.ToString(), _traceSearch)
-                || Contains(item.Message, _traceSearch)
-                || Contains(item.State.ToString(), _traceSearch)
-                || Contains(item.Type.ToString(), _traceSearch);
+            EditorGUILayout.BeginVertical(EditorStyles.helpBox, GUILayout.MinHeight(58f));
+            EditorGUILayout.LabelField(
+                "#" + item.Seq + "  " + item.Type + "  |  " + item.State + "  |  " + item.PhaseId,
+                EditorStyles.miniBoldLabel);
+            var wrappedStyle = _wrappedValueStyle!;
+            float height = Mathf.Clamp(
+                wrappedStyle.CalcHeight(new GUIContent(item.Message), Mathf.Max(120f, position.width - _runPaneWidth - 30f)),
+                EditorGUIUtility.singleLineHeight,
+                54f);
+            EditorGUILayout.SelectableLabel(item.Message, wrappedStyle, GUILayout.Height(height));
+            EditorGUILayout.EndVertical();
         }
 
         private void CopySelectedTrace(EditorPipelineRegistry.DebugEntry entry)
         {
-            if (!_selectedTraceSequence.HasValue) return;
             var trace = EditorPipelineRegistry.Instance.GetTraceSnapshot(entry.OwnerId);
-            for (int i = 0; i < trace.Count; i++)
+            if (PipelineDebuggerTraceModel.TryGetSelected(
+                    _selectedTraceSequence,
+                    trace,
+                    out PipelineTraceEvent selected))
             {
-                if (trace[i].Seq != _selectedTraceSequence.Value) continue;
-                EditorGUIUtility.systemCopyBuffer = trace[i].ToString();
-                return;
+                EditorGUIUtility.systemCopyBuffer = selected.ToString();
             }
         }
 
@@ -1514,11 +1339,18 @@ namespace AbilityKit.Pipeline.Editor
                 new GUIContent("Changed", "Show fields whose value changed since run start"),
                 EditorStyles.toolbarButton,
                 GUILayout.Width(64f));
+
+            _contextModel.Rebuild(
+                entry.InitialContextValues,
+                entry.ContextValues,
+                _showOnlyChangedContext,
+                _contextSearch);
+
             using (new EditorGUI.DisabledScope(entry.ContextValues.Count == 0))
             {
                 if (GUILayout.Button(IconOnly("Clipboard", "Copy visible context values"), EditorStyles.toolbarButton, GUILayout.Width(28f)))
                 {
-                    CopyVisibleContext(entry);
+                    CopyVisibleContext();
                 }
             }
             EditorGUILayout.EndHorizontal();
@@ -1526,20 +1358,17 @@ namespace AbilityKit.Pipeline.Editor
             _contextScroll = EditorGUILayout.BeginScrollView(_contextScroll);
             GUILayout.Space(8f);
             DrawContextHeader(entry.ContextType);
-            int visibleCount = 0;
-            BuildContextNames(entry);
-            for (int i = 0; i < _contextNames.Count; i++)
+            for (int i = 0; i < _contextModel.VisibleRows.Count; i++)
             {
-                string name = _contextNames[i];
-                string initial = FindContextValue(entry.InitialContextValues, name, "<not captured>");
-                string current = FindContextValue(entry.ContextValues, name, "<removed>");
-                bool changed = initial != current;
-                if (_showOnlyChangedContext && !changed) continue;
-                if (!MatchesContextSearch(name, initial, current)) continue;
-                DrawContextRow(name, initial, current, changed, visibleCount);
-                visibleCount++;
+                PipelineDebuggerContextRow row = _contextModel.VisibleRows[i];
+                DrawContextRow(
+                    row.Name,
+                    row.InitialValue,
+                    row.CurrentValue,
+                    row.IsChanged,
+                    i);
             }
-            if (visibleCount == 0)
+            if (_contextModel.VisibleRows.Count == 0)
             {
                 GUILayout.Space(12f);
                 GUILayout.Label(
@@ -1549,60 +1378,9 @@ namespace AbilityKit.Pipeline.Editor
             EditorGUILayout.EndScrollView();
         }
 
-        private bool MatchesContextSearch(string name, string initial, string current)
+        private void CopyVisibleContext()
         {
-            return string.IsNullOrWhiteSpace(_contextSearch)
-                || Contains(name, _contextSearch)
-                || Contains(initial, _contextSearch)
-                || Contains(current, _contextSearch);
-        }
-
-        private void CopyVisibleContext(EditorPipelineRegistry.DebugEntry entry)
-        {
-            var builder = new StringBuilder();
-            BuildContextNames(entry);
-            for (int i = 0; i < _contextNames.Count; i++)
-            {
-                string name = _contextNames[i];
-                string initial = FindContextValue(entry.InitialContextValues, name, "<not captured>");
-                string current = FindContextValue(entry.ContextValues, name, "<removed>");
-                bool changed = initial != current;
-                if (_showOnlyChangedContext && !changed) continue;
-                if (!MatchesContextSearch(name, initial, current)) continue;
-                if (builder.Length > 0) builder.AppendLine();
-                builder.Append(name).Append(" = ");
-                if (changed) builder.Append(initial).Append(" -> ");
-                builder.Append(current);
-            }
-            EditorGUIUtility.systemCopyBuffer = builder.ToString();
-        }
-
-        private void BuildContextNames(EditorPipelineRegistry.DebugEntry entry)
-        {
-            _contextNames.Clear();
-            AddContextNames(entry.InitialContextValues);
-            AddContextNames(entry.ContextValues);
-            _contextNames.Sort(StringComparer.OrdinalIgnoreCase);
-        }
-
-        private void AddContextNames(IReadOnlyList<EditorPipelineRegistry.DebugValue> values)
-        {
-            for (int i = 0; i < values.Count; i++)
-            {
-                if (!_contextNames.Contains(values[i].Name)) _contextNames.Add(values[i].Name);
-            }
-        }
-
-        private static string FindContextValue(
-            IReadOnlyList<EditorPipelineRegistry.DebugValue> values,
-            string name,
-            string fallback)
-        {
-            for (int i = 0; i < values.Count; i++)
-            {
-                if (values[i].Name == name) return values[i].Value;
-            }
-            return fallback;
+            EditorGUIUtility.systemCopyBuffer = _contextModel.BuildVisibleText();
         }
 
         private void DrawContextHeader(string contextType)
@@ -1644,12 +1422,17 @@ namespace AbilityKit.Pipeline.Editor
                 _monoStyle);
         }
 
+        private void SelectDetailTab(DetailTab tab)
+        {
+            _detailsModel.Select(tab);
+        }
+
         private void SelectRun(int? runId)
         {
             if (_selectedRunId == runId) return;
             _selectedRunId = runId;
             _selectedTraceSequence = null;
-            _selectedPhaseNodeKey = null;
+            _phaseGraphModel.ClearSelection();
             _phaseGraphNeedsFit = true;
             _detailScroll = Vector2.zero;
             _traceScroll = Vector2.zero;
@@ -1697,7 +1480,8 @@ namespace AbilityKit.Pipeline.Editor
             builder.Append("Phase: ").Append(entry.LastPhaseId).AppendLine();
             builder.Append("Duration: ").Append(entry.WallDurationSeconds.ToString("0.000")).AppendLine(" s");
             builder.Append("Pipeline: ").Append(entry.PipelineType);
-            string? failure = FindLastError(entry);
+            string? failure = PipelineDebuggerOverviewModel.FindLastError(
+                EditorPipelineRegistry.Instance.GetTraceSnapshot(entry.OwnerId));
             if (!string.IsNullOrEmpty(failure)) builder.AppendLine().Append("Failure: ").Append(failure);
             EditorGUIUtility.systemCopyBuffer = builder.ToString();
         }
@@ -1714,41 +1498,38 @@ namespace AbilityKit.Pipeline.Editor
             }
             _traceFilter = TraceFilter.Errors;
             _traceSearch = string.Empty;
-            _detailTab = DetailTab.Trace;
+            SelectDetailTab(DetailTab.Trace);
             _traceScroll = Vector2.zero;
         }
 
         private void ShowOptionsMenu()
         {
-            var state = PipelineDebuggerUserState.instance;
             var menu = new GenericMenu();
-            AddCapacityOptions(menu, "History capacity/", new[] { 32, 128, 512, 2048 }, state.HistoryCapacity, value =>
-            {
-                state.HistoryCapacity = value;
-                EditorPipelineRegistry.Instance.ConfigureStorage(state.HistoryCapacity, state.TraceCapacity);
-                state.SaveNow();
-            });
-            AddCapacityOptions(menu, "Trace capacity (new runs)/", new[] { 512, 2048, 8192, 32768 }, state.TraceCapacity, value =>
-            {
-                state.TraceCapacity = value;
-                EditorPipelineRegistry.Instance.ConfigureStorage(state.HistoryCapacity, state.TraceCapacity);
-                state.SaveNow();
-            });
+            AddCapacityOptions(
+                menu,
+                "History capacity/",
+                _toolbarModel.HistoryCapacities,
+                _toolbarModel.HistoryCapacity,
+                SetHistoryCapacity);
+            AddCapacityOptions(
+                menu,
+                "Trace capacity (new runs)/",
+                _toolbarModel.TraceCapacities,
+                _toolbarModel.TraceCapacity,
+                SetTraceCapacity);
             menu.AddSeparator(string.Empty);
-            menu.AddItem(new GUIContent("Relative trace time"), _relativeTraceTime, () =>
+            menu.AddItem(new GUIContent("Relative trace time"), _toolbarModel.RelativeTraceTime, () =>
             {
-                _relativeTraceTime = !_relativeTraceTime;
+                _relativeTraceTime = _toolbarModel.ToggleRelativeTraceTime();
                 Repaint();
             });
-            menu.AddItem(new GUIContent("Confirm interrupt"), _confirmInterrupt, () =>
+            menu.AddItem(new GUIContent("Confirm interrupt"), _toolbarModel.ConfirmInterrupt, () =>
             {
-                _confirmInterrupt = !_confirmInterrupt;
+                _confirmInterrupt = _toolbarModel.ToggleConfirmInterrupt();
                 Repaint();
             });
             menu.AddSeparator(string.Empty);
-            menu.AddItem(new GUIContent("Refresh/20 fps"), Mathf.Approximately(_refreshIntervalSeconds, 0.05f), () => SetRefreshInterval(0.05f));
-            menu.AddItem(new GUIContent("Refresh/10 fps"), Mathf.Approximately(_refreshIntervalSeconds, 0.1f), () => SetRefreshInterval(0.1f));
-            menu.AddItem(new GUIContent("Refresh/4 fps"), Mathf.Approximately(_refreshIntervalSeconds, 0.25f), () => SetRefreshInterval(0.25f));
+            AddRefreshOptions(menu);
             menu.AddSeparator(string.Empty);
             menu.AddItem(new GUIContent("Reset window state"), false, ResetWindowState);
             menu.ShowAsContext();
@@ -1768,32 +1549,60 @@ namespace AbilityKit.Pipeline.Editor
             }
         }
 
+        private void AddRefreshOptions(GenericMenu menu)
+        {
+            IReadOnlyList<float> values = _toolbarModel.RefreshIntervals;
+            for (int i = 0; i < values.Count; i++)
+            {
+                float value = values[i];
+                int framesPerSecond = Mathf.RoundToInt(1f / value);
+                menu.AddItem(
+                    new GUIContent("Refresh/" + framesPerSecond + " fps"),
+                    _toolbarModel.IsRefreshIntervalSelected(value),
+                    () => SetRefreshInterval(value));
+            }
+        }
+
+        private void SetHistoryCapacity(int value)
+        {
+            _toolbarModel.SetHistoryCapacity(value);
+            var state = PipelineDebuggerUserState.instance;
+            state.HistoryCapacity = _toolbarModel.HistoryCapacity;
+            EditorPipelineRegistry.Instance.ConfigureStorage(
+                state.HistoryCapacity,
+                state.TraceCapacity);
+            state.SaveNow();
+        }
+
+        private void SetTraceCapacity(int value)
+        {
+            _toolbarModel.SetTraceCapacity(value);
+            var state = PipelineDebuggerUserState.instance;
+            state.TraceCapacity = _toolbarModel.TraceCapacity;
+            EditorPipelineRegistry.Instance.ConfigureStorage(
+                state.HistoryCapacity,
+                state.TraceCapacity);
+            state.SaveNow();
+        }
+
         private void SetRefreshInterval(float value)
         {
-            _refreshIntervalSeconds = value;
-            _nextRefreshAt = 0d;
+            _toolbarModel.SetRefreshInterval(value);
+            _workspaceState.RefreshIntervalSeconds = _toolbarModel.RefreshIntervalSeconds;
+            _workspaceState.ResetRefreshGate();
+            _refreshIntervalSeconds = _workspaceState.RefreshIntervalSeconds;
             PersistUserState();
         }
 
         private void ResetWindowState()
         {
-            _runSearch = string.Empty;
-            _traceSearch = string.Empty;
-            _contextSearch = string.Empty;
-            _runFilter = RunFilter.All;
-            _detailTab = DetailTab.Overview;
-            _traceFilter = TraceFilter.All;
-            _followLatest = true;
-            _relativeTraceTime = true;
-            _confirmInterrupt = true;
-            _showOnlyChangedContext = false;
-            _showPhaseGraph = true;
+            _workspaceState.Reset();
+            _toolbarModel.ResetOptions();
+            ApplyWorkspaceState();
             _phaseGraphNeedsFit = true;
-            _runPaneWidth = 300f;
-            _refreshIntervalSeconds = 0.1f;
             var state = PipelineDebuggerUserState.instance;
-            state.HistoryCapacity = 128;
-            state.TraceCapacity = 2048;
+            state.HistoryCapacity = _toolbarModel.HistoryCapacity;
+            state.TraceCapacity = _toolbarModel.TraceCapacity;
             EditorPipelineRegistry.Instance.ConfigureStorage(state.HistoryCapacity, state.TraceCapacity);
             PersistUserState();
             Repaint();
@@ -1802,19 +1611,8 @@ namespace AbilityKit.Pipeline.Editor
         private void RestoreUserState()
         {
             var state = PipelineDebuggerUserState.instance;
-            _followLatest = state.FollowLatest;
-            _relativeTraceTime = state.RelativeTraceTime;
-            _confirmInterrupt = state.ConfirmInterrupt;
-            _showOnlyChangedContext = state.ShowOnlyChangedContext;
-            _showPhaseGraph = state.ShowPhaseGraph;
-            _runFilter = Enum.IsDefined(typeof(RunFilter), state.RunFilter) ? (RunFilter)state.RunFilter : RunFilter.All;
-            _detailTab = Enum.IsDefined(typeof(DetailTab), state.DetailTab) ? (DetailTab)state.DetailTab : DetailTab.Overview;
-            _traceFilter = Enum.IsDefined(typeof(TraceFilter), state.TraceFilter) ? (TraceFilter)state.TraceFilter : TraceFilter.All;
-            _runSearch = state.RunSearch;
-            _traceSearch = state.TraceSearch;
-            _contextSearch = state.ContextSearch;
-            _runPaneWidth = state.RunPaneWidth;
-            _refreshIntervalSeconds = state.RefreshIntervalSeconds;
+            _workspaceState.Restore(state);
+            ApplyWorkspaceState();
 
             var registry = EditorPipelineRegistry.Instance;
             registry.IsCaptureEnabled = state.CaptureEnabled;
@@ -1825,33 +1623,43 @@ namespace AbilityKit.Pipeline.Editor
         {
             var state = PipelineDebuggerUserState.instance;
             state.CaptureEnabled = EditorPipelineRegistry.Instance.IsCaptureEnabled;
-            state.FollowLatest = _followLatest;
-            state.RelativeTraceTime = _relativeTraceTime;
-            state.ConfirmInterrupt = _confirmInterrupt;
-            state.ShowOnlyChangedContext = _showOnlyChangedContext;
-            state.ShowPhaseGraph = _showPhaseGraph;
-            state.RunFilter = (int)_runFilter;
-            state.DetailTab = (int)_detailTab;
-            state.TraceFilter = (int)_traceFilter;
-            state.RunSearch = _runSearch;
-            state.TraceSearch = _traceSearch;
-            state.ContextSearch = _contextSearch;
-            state.RunPaneWidth = _runPaneWidth;
-            state.RefreshIntervalSeconds = _refreshIntervalSeconds;
+            CaptureWorkspaceState();
+            _workspaceState.Persist(state);
             state.SaveNow();
         }
 
-        private string? FindLastError(EditorPipelineRegistry.DebugEntry entry)
+        private void ApplyWorkspaceState()
         {
-            var trace = EditorPipelineRegistry.Instance.GetTraceSnapshot(entry.OwnerId);
-            for (int i = trace.Count - 1; i >= 0; i--)
-            {
-                if (trace[i].State == EAbilityPipelineState.Failed && !string.IsNullOrEmpty(trace[i].Message))
-                {
-                    return trace[i].Message;
-                }
-            }
-            return null;
+            _followLatest = _workspaceState.FollowLatest;
+            _relativeTraceTime = _workspaceState.RelativeTraceTime;
+            _confirmInterrupt = _workspaceState.ConfirmInterrupt;
+            _showOnlyChangedContext = _workspaceState.ShowOnlyChangedContext;
+            _showPhaseGraph = _workspaceState.ShowPhaseGraph;
+            _runFilter = _workspaceState.RunFilter;
+            SelectDetailTab(_workspaceState.DetailTab);
+            _traceFilter = _workspaceState.TraceFilter;
+            _runSearch = _workspaceState.RunSearch;
+            _traceSearch = _workspaceState.TraceSearch;
+            _contextSearch = _workspaceState.ContextSearch;
+            _runPaneWidth = _workspaceState.RunPaneWidth;
+            _refreshIntervalSeconds = _workspaceState.RefreshIntervalSeconds;
+        }
+
+        private void CaptureWorkspaceState()
+        {
+            _workspaceState.FollowLatest = _followLatest;
+            _workspaceState.RelativeTraceTime = _relativeTraceTime;
+            _workspaceState.ConfirmInterrupt = _confirmInterrupt;
+            _workspaceState.ShowOnlyChangedContext = _showOnlyChangedContext;
+            _workspaceState.ShowPhaseGraph = _showPhaseGraph;
+            _workspaceState.RunFilter = _runFilter;
+            _workspaceState.DetailTab = _detailsModel.SelectedTab;
+            _workspaceState.TraceFilter = _traceFilter;
+            _workspaceState.RunSearch = _runSearch;
+            _workspaceState.TraceSearch = _traceSearch;
+            _workspaceState.ContextSearch = _contextSearch;
+            _workspaceState.RunPaneWidth = _runPaneWidth;
+            _workspaceState.RefreshIntervalSeconds = _refreshIntervalSeconds;
         }
 
         private void DrawSectionTitle(string title)
@@ -1982,10 +1790,6 @@ namespace AbilityKit.Pipeline.Editor
             return builder.ToString();
         }
 
-        private static bool Contains(string? value, string search)
-        {
-            return value != null && value.IndexOf(search, StringComparison.OrdinalIgnoreCase) >= 0;
-        }
     }
 }
 

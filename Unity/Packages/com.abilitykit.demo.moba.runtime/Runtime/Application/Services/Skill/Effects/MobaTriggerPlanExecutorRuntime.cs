@@ -7,6 +7,11 @@ using AbilityKit.Triggering.Registry;
 using AbilityKit.Triggering.Runtime;
 using AbilityKit.Triggering.Runtime.Context;
 using AbilityKit.Triggering.Runtime.Plan;
+using AbilityKit.Triggering.Collections;
+using AbilityKit.Triggering.Blackboard;
+using AbilityKit.Triggering.Variables.Numeric;
+using AbilityKit.Triggering.Variables.Numeric.Expression;
+using AbilityKit.Ability.World.Services;
 
 namespace AbilityKit.Demo.Moba.Services
 {
@@ -17,13 +22,21 @@ namespace AbilityKit.Demo.Moba.Services
             IEventBus eventBus,
             FunctionRegistry functions,
             ActionRegistry actions,
-            IPayloadAccessorRegistry payloads)
+            IPayloadAccessorRegistry payloads,
+            INumericVarDomainRegistry numericDomains = null,
+            INumericRpnFunctionRegistry numericFunctions = null,
+            ITriggerRandomSource randomSource = null,
+            ITriggerExecutionScheduler executionScheduler = null)
         {
             Services = services;
             EventBus = eventBus;
             Functions = functions;
             Actions = actions;
             Payloads = payloads;
+            NumericDomains = numericDomains;
+            NumericFunctions = numericFunctions;
+            RandomSource = randomSource;
+            ExecutionScheduler = executionScheduler;
         }
 
         public IWorldResolver Services { get; }
@@ -31,6 +44,10 @@ namespace AbilityKit.Demo.Moba.Services
         public FunctionRegistry Functions { get; }
         public ActionRegistry Actions { get; }
         public IPayloadAccessorRegistry Payloads { get; }
+        public INumericVarDomainRegistry NumericDomains { get; }
+        public INumericRpnFunctionRegistry NumericFunctions { get; }
+        public ITriggerRandomSource RandomSource { get; }
+        public ITriggerExecutionScheduler ExecutionScheduler { get; }
 
         public void ValidateForExecution(string ownerName, int triggerId)
         {
@@ -100,9 +117,35 @@ namespace AbilityKit.Demo.Moba.Services
             _effects = effects;
         }
 
-        public ExecCtx<IWorldResolver> Create(ExecutionControl control)
+        public ExecCtx<IWorldResolver> Create(
+            ExecutionControl control,
+            ITriggerCollectionResolver collections = null)
         {
             var currentEffects = _effects.Resolve();
+            if (collections == null && currentEffects != null)
+                currentEffects.TryGetCurrentTriggerCollections(out collections);
+            IBlackboardResolver blackboards = null;
+            if (currentEffects == null ||
+                !currentEffects.TryGetCurrentExecutionBlackboards(out blackboards))
+                _dependencies.Services?.TryResolve(out blackboards);
+            if (currentEffects != null &&
+                currentEffects.TryGetCurrentExecutionContext(out var executionContext) &&
+                executionContext.SkillRuntimeHandle.IsValid &&
+                _dependencies.Services != null &&
+                _dependencies.Services.TryResolve<MobaSkillCastRuntimeService>(out var runtimes) &&
+                runtimes != null &&
+                TryGetRuntimeBlackboard(runtimes, in executionContext, out var runtimeBlackboard))
+            {
+                var childContextId = executionContext.OwnerContextId != 0L
+                    ? executionContext.OwnerContextId
+                    : executionContext.ParentContextId;
+                blackboards = new Triggering.MobaSkillRuntimeBlackboardResolver(
+                    runtimeBlackboard,
+                    currentEffects.CurrentEffectContextId,
+                    executionContext.TargetActorId,
+                    childContextId,
+                    blackboards);
+            }
             var context = currentEffects != null
                 ? new CurrentEffectWorldResolver(_dependencies.Services, currentEffects)
                 : _dependencies.Services;
@@ -112,13 +155,25 @@ namespace AbilityKit.Demo.Moba.Services
                 eventBus: _dependencies.EventBus,
                 functions: _dependencies.Functions,
                 actions: _dependencies.Actions,
-                blackboards: null,
+                blackboards: blackboards,
                 payloads: _dependencies.Payloads,
                 idNames: null,
-                numericDomains: null,
-                numericFunctions: null,
+                numericDomains: _dependencies.NumericDomains,
+                numericFunctions: _dependencies.NumericFunctions,
                 policy: default,
-                control: control);
+                control: control,
+                collections: collections,
+                randomSource: _dependencies.RandomSource,
+                executionScheduler: _dependencies.ExecutionScheduler);
+        }
+
+        private static bool TryGetRuntimeBlackboard(
+            MobaSkillCastRuntimeService runtimes,
+            in MobaCombatExecutionContext executionContext,
+            out MobaSkillRuntimeBlackboard blackboard)
+        {
+            var handle = executionContext.SkillRuntimeHandle;
+            return runtimes.TryGetBlackboard(in handle, out blackboard);
         }
 
         private sealed class CurrentEffectWorldResolver : IWorldResolver

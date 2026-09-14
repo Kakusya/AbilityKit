@@ -1,5 +1,5 @@
 
-namespace UnityHFSM
+namespace AbilityKit.HFSM
 {
 	/// <summary>
 	/// Interface for states that support custom actions. Actions are like the
@@ -9,6 +9,7 @@ namespace UnityHFSM
 	{
 		void OnAction(TEvent trigger);
 		void OnAction<TData>(TEvent trigger, TData data);
+		bool HasAction(TEvent trigger);
 	}
 
 	/// <inheritdoc />

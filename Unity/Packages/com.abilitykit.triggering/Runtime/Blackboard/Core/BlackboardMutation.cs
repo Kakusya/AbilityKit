@@ -1,4 +1,5 @@
 using System;
+using AbilityKit.Triggering.Runtime;
 using AbilityKit.Triggering.Runtime.Plan;
 
 namespace AbilityKit.Triggering.Blackboard
@@ -122,8 +123,15 @@ namespace AbilityKit.Triggering.Blackboard
             }
             if (!board.TryGetDouble(target.KeyId, out var current))
             {
-                error = $"Blackboard key has no numeric value. boardId={target.BoardId} keyId={target.KeyId}.";
-                return false;
+                if (board is IDynamicBlackboardSchema)
+                {
+                    current = 0d;
+                }
+                else
+                {
+                    error = $"Blackboard key has no numeric value. boardId={target.BoardId} keyId={target.KeyId}.";
+                    return false;
+                }
             }
 
             return TrySetNumeric(resolver, in target, current + delta, out error);
@@ -142,10 +150,20 @@ namespace AbilityKit.Triggering.Blackboard
                 error = $"Blackboard was not found. boardId={target.BoardId}.";
                 return false;
             }
-            if (!(board is IBlackboardSchema schemaProvider) || !schemaProvider.TryGetKeySchema(target.KeyId, out var schema))
+            if (!(board is IBlackboardSchema schemaProvider))
             {
                 error = $"Blackboard key schema was not found. boardId={target.BoardId} keyId={target.KeyId}.";
                 return false;
+            }
+            if (!schemaProvider.TryGetKeySchema(target.KeyId, out var schema))
+            {
+                if (!(board is IDynamicBlackboardSchema dynamicSchema) ||
+                    !dynamicSchema.TryDefineKey(target.KeyId, target.KeyType) ||
+                    !schemaProvider.TryGetKeySchema(target.KeyId, out schema))
+                {
+                    error = $"Blackboard key schema was not found. boardId={target.BoardId} keyId={target.KeyId}.";
+                    return false;
+                }
             }
             if (!schema.CanWrite)
             {
@@ -159,6 +177,39 @@ namespace AbilityKit.Triggering.Blackboard
             }
             error = null;
             return true;
+        }
+    }
+
+    /// <summary>
+    /// Shared write-back entry point for action output parameters.
+    /// </summary>
+    public static class TriggerActionOutput
+    {
+        public static bool TryWrite<TCtx>(
+            in ExecCtx<TCtx> ctx,
+            in BlackboardWriteTarget target,
+            double value,
+            out string error)
+        {
+            return BlackboardMutation.TrySetNumeric(ctx.Blackboards, in target, value, out error);
+        }
+
+        public static bool TryWrite<TCtx>(
+            in ExecCtx<TCtx> ctx,
+            in BlackboardWriteTarget target,
+            bool value,
+            out string error)
+        {
+            return BlackboardMutation.TrySetBool(ctx.Blackboards, in target, value, out error);
+        }
+
+        public static bool TryWrite<TCtx>(
+            in ExecCtx<TCtx> ctx,
+            in BlackboardWriteTarget target,
+            string value,
+            out string error)
+        {
+            return BlackboardMutation.TrySetString(ctx.Blackboards, in target, value, out error);
         }
     }
 }

@@ -4,6 +4,7 @@ using System.IO;
 using AbilityKit.Ability.Config.Authoring;
 using AbilityKit.Ability.Editor.Utilities;
 using Newtonsoft.Json;
+using Newtonsoft.Json.Linq;
 using NUnit.Framework;
 
 namespace AbilityKit.Ability.Editor.Tests
@@ -74,9 +75,18 @@ namespace AbilityKit.Ability.Editor.Tests
             Assert.That(restored.Module.ModuleId, Is.EqualTo("module.codec_fixture"));
             Assert.That(restored.Module.Kind, Is.EqualTo(TriggerModuleKind.Buff));
             Assert.That(restored.Module.Triggers[0].Id, Is.EqualTo(7));
+            Assert.That(restored.Module.Triggers[0].GroupPath, Is.EqualTo("Combat/Reactions"));
+            Assert.That(restored.Module.Triggers[0].Tags, Is.EquivalentTo(new[] { "combat", "reaction" }));
             Assert.That(restored.Module.Triggers[0].Actions.Children[0].Arguments[0].Value.StringValue,
                 Is.EqualTo("hello"));
+            Assert.That(restored.Module.Triggers[0].Actions.Children[1].Condition.Type, Is.EqualTo("always_true"));
+            Assert.That(restored.Module.Triggers[0].Actions.Children[1].ElseChildren[0].Type, Is.EqualTo("debug_log"));
             Assert.That(restored.Module.Triggers[0].Condition.GroupReference, Is.EqualTo("condition_group_1"));
+            Assert.That(restored.Module.Triggers[0].CallableParameters, Has.Count.EqualTo(1));
+            Assert.That(restored.Module.Triggers[0].CallableParameters[0].Name, Is.EqualTo("amount"));
+            Assert.That(
+                restored.Module.Triggers[0].CallableParameters[0].Direction,
+                Is.EqualTo(TriggerCallableParameterDirection.Input));
         }
 
         [Test]
@@ -92,8 +102,23 @@ namespace AbilityKit.Ability.Editor.Tests
                 Is.EqualTo(TriggerSourceCanonical.ComputeContentHash(document)));
             Assert.That(restored.Template.TemplateId, Is.EqualTo("template.codec_fixture"));
             Assert.That(restored.Template.Parameters[0].Name, Is.EqualTo("message"));
-            Assert.That(restored.Template.Actions.Arguments[0].Value.Source,
-                Is.EqualTo(TriggerValueSource.TemplateParameter));
+            Assert.That(restored.Template.Definition.Actions.Arguments[0].Value.Source,
+                Is.EqualTo(TriggerValueSource.LocalBlackboard));
+            Assert.That(restored.Template.Definition.Actions.Arguments[0].Value.Path,
+                Is.EqualTo("trigger:message"));
+        }
+
+        [Test]
+        public void NewTemplateData_DefaultsToCallableFunctionWithActionRoot()
+        {
+            var template = new TriggerAuthoringTemplateData();
+
+            Assert.That(template.Definition, Is.Not.Null);
+            Assert.That(template.Definition.EntryMode, Is.EqualTo(TriggerEntryMode.Callable));
+            Assert.That(template.Definition.Event, Is.Empty);
+            Assert.That(template.Definition.Actions, Is.Not.Null);
+            Assert.That(template.Definition.Actions.Kind, Is.EqualTo(TriggerNodeKind.Action));
+            Assert.That(template.Definition.Actions.Type, Is.EqualTo("seq"));
         }
 
         [Test]
@@ -139,6 +164,56 @@ namespace AbilityKit.Ability.Editor.Tests
             Assert.That(
                 TriggerAuthoringSourceCodec.ComputeContentHash(restored),
                 Is.EqualTo(TriggerAuthoringSourceCodec.ComputeContentHash(document)));
+        }
+
+        [Test]
+        public void SourceSchema_SerializesModuleAndTemplateContracts()
+        {
+            var module = JObject.Parse(TriggerAuthoringSourceSchema.Serialize(TriggerAuthoringSourceSchemaKind.Module));
+            var template = JObject.Parse(TriggerAuthoringSourceSchema.Serialize(TriggerAuthoringSourceSchemaKind.Template));
+
+            Assert.That((string)module["$schema"], Is.EqualTo("http://json-schema.org/draft-07/schema#"));
+            Assert.That((string)module["properties"]["schema"]["const"], Is.EqualTo(TriggerAuthoringSchema.Id));
+            Assert.That((string)module["properties"]["version"]["const"], Is.EqualTo(TriggerAuthoringSchema.Version));
+            Assert.That(module["properties"]["module"], Is.Not.Null);
+            Assert.That(module["properties"]["template"], Is.Null);
+            Assert.That(
+                module["definitions"]["triggerAuthoringModule"]["properties"]["triggers"]["items"]["$ref"].ToString(),
+                Is.EqualTo("#/definitions/triggerDefinition"));
+            Assert.That(module["definitions"]["triggerDefinition"]["properties"]["groupPath"], Is.Not.Null);
+            Assert.That(module["definitions"]["triggerDefinition"]["properties"]["tags"], Is.Not.Null);
+            Assert.That(module["definitions"]["triggerNode"]["properties"]["condition"], Is.Not.Null);
+            Assert.That(module["definitions"]["triggerNode"]["properties"]["elseChildren"], Is.Not.Null);
+
+            Assert.That((string)template["properties"]["schema"]["const"], Is.EqualTo(TriggerAuthoringSchema.Id));
+            Assert.That((string)template["properties"]["version"]["const"], Is.EqualTo("2.2"));
+            Assert.That(template["properties"]["template"], Is.Not.Null);
+            Assert.That(template["properties"]["module"], Is.Null);
+            Assert.That(
+                template["definitions"]["triggerAuthoringTemplate"]["properties"]["parameters"]["items"]["$ref"].ToString(),
+                Is.EqualTo("#/definitions/templateParameter"));
+            Assert.That(
+                template["definitions"]["triggerAuthoringTemplate"]["properties"]["definition"]["$ref"].ToString(),
+                Is.EqualTo("#/definitions/triggerDefinition"));
+            Assert.That(
+                template["definitions"]["templateParameter"]["properties"]["localVariableKey"],
+                Is.Not.Null);
+        }
+
+        [Test]
+        public void SourceSchema_ExportsBothSchemasAtomically()
+        {
+            var result = TriggerAuthoringSourceSchema.ExportAll(_tempDirectory);
+
+            Assert.That(result.TotalCount, Is.EqualTo(2));
+            Assert.That(File.Exists(Path.Combine(_tempDirectory, TriggerAuthoringSourceSchema.ModuleSchemaFileName)), Is.True);
+            Assert.That(File.Exists(Path.Combine(_tempDirectory, TriggerAuthoringSourceSchema.TemplateSchemaFileName)), Is.True);
+            AssertNoAtomicArtifacts();
+
+            var second = TriggerAuthoringSourceSchema.ExportAll(_tempDirectory);
+            Assert.That(second.WrittenPaths, Is.Empty);
+            Assert.That(second.UnchangedPaths.Count, Is.EqualTo(2));
+            AssertNoAtomicArtifacts();
         }
 
         private static TriggerAuthoringSourceDocument BuildModuleDocument()
@@ -187,9 +262,28 @@ namespace AbilityKit.Ability.Editor.Tests
                         {
                             Id = 7,
                             Name = "Vengeance",
+                            GroupPath = "Combat/Reactions",
+                            Tags = { "combat", "reaction" },
                             Event = "combat.damage_taken",
                             Phase = "early",
                             Priority = 20,
+                            CallableParameters = new System.Collections.Generic.List<TriggerCallableParameterData>
+                            {
+                                new TriggerCallableParameterData
+                                {
+                                    Name = "amount",
+                                    LocalVariableKey = "amount",
+                                    Type = TriggerValueType.Number,
+                                    Direction = TriggerCallableParameterDirection.Input,
+                                    HasDefault = true,
+                                    DefaultValue = new TriggerValueRefData
+                                    {
+                                        Source = TriggerValueSource.Constant,
+                                        Type = TriggerValueType.Number,
+                                        NumberValue = 1d
+                                    }
+                                }
+                            },
                             Condition = new TriggerNodeData
                             {
                                 Kind = TriggerNodeKind.Condition,
@@ -218,6 +312,38 @@ namespace AbilityKit.Ability.Editor.Tests
                                                 }
                                             }
                                         }
+                                    },
+                                    new TriggerNodeData
+                                    {
+                                        Kind = TriggerNodeKind.Action,
+                                        Type = "conditional",
+                                        Condition = new TriggerNodeData
+                                        {
+                                            Kind = TriggerNodeKind.Condition,
+                                            Type = "always_true"
+                                        },
+                                        Children = { new TriggerNodeData { Kind = TriggerNodeKind.Action, Type = "end_game" } },
+                                        ElseChildren =
+                                        {
+                                            new TriggerNodeData
+                                            {
+                                                Kind = TriggerNodeKind.Action,
+                                                Type = "debug_log",
+                                                Arguments =
+                                                {
+                                                    new TriggerArgumentData
+                                                    {
+                                                        Name = "message",
+                                                        Value = new TriggerValueRefData
+                                                        {
+                                                            Source = TriggerValueSource.Constant,
+                                                            Type = TriggerValueType.String,
+                                                            StringValue = "else"
+                                                        }
+                                                    }
+                                                }
+                                            }
+                                        }
                                     }
                                 }
                             }
@@ -237,35 +363,55 @@ namespace AbilityKit.Ability.Editor.Tests
                     TemplateId = "template.codec_fixture",
                     TemplateVersion = "1.0.0",
                     DisplayName = "Codec Template",
-                    Event = "combat.damage_taken",
                     Parameters =
                     {
                         new TriggerAuthoringTemplateParameterData
                         {
                             Name = "message",
+                            LocalVariableKey = "message",
                             Type = TriggerValueType.String
                         }
                     },
-                    Actions = new TriggerNodeData
+                    Definition = new TriggerDefinitionData
                     {
-                        Kind = TriggerNodeKind.Action,
-                        Type = "debug_log",
-                        Arguments =
+                        Event = "combat.damage_taken",
+                        Actions = new TriggerNodeData
                         {
-                            new TriggerArgumentData
+                            Kind = TriggerNodeKind.Action,
+                            Type = "debug_log",
+                            Arguments =
                             {
-                                Name = "message",
-                                Value = new TriggerValueRefData
+                                new TriggerArgumentData
                                 {
-                                    Source = TriggerValueSource.TemplateParameter,
-                                    Type = TriggerValueType.String,
-                                    Path = "message"
+                                    Name = "message",
+                                    Value = new TriggerValueRefData
+                                    {
+                                        Source = TriggerValueSource.LocalBlackboard,
+                                        Type = TriggerValueType.String,
+                                        Path = "trigger:message"
+                                    }
                                 }
                             }
                         }
                     }
                 }
             };
+        }
+
+        private void AssertNoAtomicArtifacts()
+        {
+            Assert.That(
+                Directory.GetFiles(
+                    _tempDirectory,
+                    "*.abilitykit.tmp.*",
+                    SearchOption.AllDirectories),
+                Is.Empty);
+            Assert.That(
+                Directory.GetFiles(
+                    _tempDirectory,
+                    "*.abilitykit.bak.*",
+                    SearchOption.AllDirectories),
+                Is.Empty);
         }
 
         /// <summary>

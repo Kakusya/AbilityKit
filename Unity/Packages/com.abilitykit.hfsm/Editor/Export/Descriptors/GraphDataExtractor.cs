@@ -6,9 +6,9 @@
 using System;
 using System.Collections.Generic;
 using UnityEngine;
-using UnityHFSM.Graph.Descriptor;
+using AbilityKit.HFSM.Graph.Descriptor;
 
-namespace UnityHFSM.Editor.Export
+namespace AbilityKit.HFSM.Editor.Export
 {
     /// <summary>
     /// HFSM 数据提取器实现 - 使用描述器接口
@@ -16,7 +16,7 @@ namespace UnityHFSM.Editor.Export
     /// </summary>
     public class GraphDataExtractor : IGraphDataExtractor
     {
-        public string Name => "Default HFSM Extractor";
+        public string Name => "默认 HFSM 提取器";
 
         public ExportGraphData Extract(IGraphDescriptor graph, ExportOptions options)
         {
@@ -158,8 +158,11 @@ namespace UnityHFSM.Editor.Export
                 nodeType = "State",
                 needsExitTime = stateNode.NeedsExitTime,
                 isGhostState = stateNode.IsGhostState,
-                hasBehaviors = stateNode.HasBehaviors
+                hasBehaviors = stateNode.HasBehaviors,
+                nextBehaviorKey = stateNode.NextBehaviorKey,
+                nextParallelExitPolicy = stateNode.NextParallelExitPolicy.ToString()
             };
+            exported.nextParallelBehaviorKeys.AddRange(stateNode.GetNextParallelBehaviorKeys());
 
             if (opts.includeBehaviors && stateNode.HasBehaviors)
             {
@@ -175,7 +178,9 @@ namespace UnityHFSM.Editor.Export
             {
                 nodeType = "StateMachine",
                 defaultStateId = smNode.DefaultStateId,
-                rememberLastState = smNode.RememberLastState
+                rememberLastState = smNode.RememberLastState,
+                needsExitTime = smNode.NeedsExitTime,
+                isGhostState = smNode.IsGhostState
             };
 
             exported.childNodeIds.AddRange(smNode.GetChildNodeIds());

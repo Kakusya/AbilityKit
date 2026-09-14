@@ -1,6 +1,6 @@
 using System;
 
-namespace UnityHFSM
+namespace AbilityKit.HFSM
 {
 	/// <summary>
 	/// A class that allows you to run additional functions (companion code)
@@ -92,6 +92,11 @@ namespace UnityHFSM
         public void OnAction<TData>(TEvent trigger, TData data)
         {
         	(state as IActionable<TEvent>)?.OnAction<TData>(trigger, data);
+        }
+
+        public bool HasAction(TEvent trigger)
+        {
+			return (state as IActionable<TEvent>)?.HasAction(trigger) ?? false;
         }
 
         public override string GetActiveHierarchyPath()

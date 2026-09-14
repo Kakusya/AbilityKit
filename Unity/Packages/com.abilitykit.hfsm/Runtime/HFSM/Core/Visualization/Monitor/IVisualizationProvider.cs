@@ -6,7 +6,7 @@
 using System;
 using System.Collections.Generic;
 
-namespace UnityHFSM.Visualization
+namespace AbilityKit.HFSM.Visualization
 {
     /// <summary>
     /// 状态节点信息
@@ -75,6 +75,34 @@ namespace UnityHFSM.Visualization
     }
 
     /// <summary>
+    /// Runtime status of one action node inside a state behavior tree.
+    /// </summary>
+    public enum BehaviorNodeStatus
+    {
+        Inactive,
+        Running,
+        Success,
+        Failure,
+        Cancelled
+    }
+
+    /// <summary>
+    /// Debug information for a behavior node. StatePath identifies its owning HFSM state.
+    /// </summary>
+    public struct BehaviorNodeInfo
+    {
+        public string statePath;
+        public string id;
+        public string parentId;
+        public string name;
+        public string typeName;
+        public BehaviorNodeStatus status;
+        public bool isActive;
+        public int executionCount;
+        public float elapsedTime;
+    }
+
+    /// <summary>
     /// 转换/连线信息
     /// </summary>
     public struct TransitionInfo
@@ -93,6 +121,16 @@ namespace UnityHFSM.Visualization
         /// 条件描述
         /// </summary>
         public string conditionDescription;
+
+        /// <summary>
+        /// Whether this transition originates from the machine's any-state set.
+        /// </summary>
+        public bool isFromAny;
+
+        /// <summary>
+        /// Whether this transition bypasses the active state's exit-time requirement.
+        /// </summary>
+        public bool forceInstantly;
 
         /// <summary>
         /// 是否可以发生
@@ -221,9 +259,24 @@ namespace UnityHFSM.Visualization
         public List<string> activeStatePaths;
 
         /// <summary>
+        /// States that are waiting to be entered after their current machine grants exit.
+        /// </summary>
+        public List<string> pendingStatePaths;
+
+        /// <summary>
+        /// Active states whose machines currently have a delayed transition pending.
+        /// </summary>
+        public List<string> exitingStatePaths;
+
+        /// <summary>
         /// 转换历史
         /// </summary>
         public List<StateTransitionRecord> history;
+
+        /// <summary>
+        /// Runtime behavior tree node states.
+        /// </summary>
+        public List<BehaviorNodeInfo> behaviorNodes;
 
         /// <summary>
         /// 快照时间
@@ -236,7 +289,10 @@ namespace UnityHFSM.Visualization
             transitions = new List<TransitionInfo>();
             parameters = new List<ParameterInfo>();
             activeStatePaths = new List<string>();
+            pendingStatePaths = new List<string>();
+            exitingStatePaths = new List<string>();
             history = new List<StateTransitionRecord>();
+            behaviorNodes = new List<BehaviorNodeInfo>();
         }
 
         /// <summary>

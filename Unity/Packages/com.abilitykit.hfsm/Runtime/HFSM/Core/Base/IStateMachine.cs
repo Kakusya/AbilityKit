@@ -1,5 +1,5 @@
 
-namespace UnityHFSM
+namespace AbilityKit.HFSM
 {
 	/// <summary>
 	/// An abstraction layer that provides a subset of features that every parent
@@ -18,6 +18,12 @@ namespace UnityHFSM
 
 		/// <inheritdoc cref="PendingState"/>
 		TStateId PendingStateName { get; }
+
+		/// <summary>
+		/// Whether the pending delayed transition exits this machine vertically
+		/// instead of entering another state in this machine.
+		/// </summary>
+		bool IsPendingExitTransition { get; }
 
 		/// <summary>
 		/// The currently active state of the state machine.

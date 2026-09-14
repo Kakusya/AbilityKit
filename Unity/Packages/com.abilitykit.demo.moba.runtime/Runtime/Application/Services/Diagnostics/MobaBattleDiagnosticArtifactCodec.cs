@@ -147,6 +147,11 @@ namespace AbilityKit.Demo.Moba.Services
                     Summary = ToDto(snapshot.Objects.Summary),
                     EventCoverage = ToDto(snapshot.RuntimeObjectEventCoverage)
                 },
+                Definitions = new AnalysisBattleDiagnosticDefinitionTrack
+                {
+                    Revision = snapshot.Definitions.Revision,
+                    UnresolvedCount = snapshot.Definitions.UnresolvedCount
+                },
                 FrameMetrics = new AnalysisBattleDiagnosticMetricTrack
                 {
                     Revision = snapshot.FrameMetrics.Revision,
@@ -174,6 +179,7 @@ namespace AbilityKit.Demo.Moba.Services
             Copy(snapshot.Tags.Items, section.Tags.Items, ToDto);
             Copy(snapshot.Effects.Items, section.Effects.Items, ToDto);
             Copy(snapshot.Objects.Items, section.Objects.Items, ToDto);
+            Copy(snapshot.Definitions.Items, section.Definitions.Items, ToDto);
             Copy(snapshot.FrameMetrics.Samples, section.FrameMetrics.Items, ToDto);
             return section;
         }
@@ -201,6 +207,7 @@ namespace AbilityKit.Demo.Moba.Services
                 var tags = Convert(section.Tags.Items, item => FromDto(item, scope));
                 var effects = Convert(section.Effects.Items, item => FromDto(item, scope));
                 var objects = Convert(section.Objects.Items, FromDto);
+                var definitions = Convert(section.Definitions.Items, FromDto);
                 var frameMetricSamples = Convert(section.FrameMetrics.Items, item => FromDto(item, scope));
                 var frameMetricDto = section.FrameMetrics.Metrics;
                 var frameMetricMetrics = new BattleDiagnosticStoreMetrics(
@@ -212,7 +219,7 @@ namespace AbilityKit.Demo.Moba.Services
                     frameMetricDto.RejectedCount,
                     frameMetricDto.IsFrozen);
                 BattleDiagnosticWorldSummary? world = section.State.World == null ? (BattleDiagnosticWorldSummary?)null : FromDto(section.State.World, scope);
-                ValidateConsistency(section, scope, events, actors);
+                ValidateConsistency(section, scope, events, actors, definitions);
                 return new BattleDiagnosticSessionSnapshot(
                     in info,
                     section.CapturedAtTimestamp,
@@ -234,7 +241,11 @@ namespace AbilityKit.Demo.Moba.Services
                     new BattleDiagnosticMetricTrackSnapshot(
                         section.FrameMetrics.Revision,
                         in frameMetricMetrics,
-                        frameMetricSamples));
+                        frameMetricSamples),
+                    new BattleDiagnosticDefinitionCatalogSnapshot(
+                        scope,
+                        section.Definitions.Revision,
+                        definitions));
             }
             catch (MobaBattleDiagnosticArtifactException) { throw; }
             catch (Exception ex)
@@ -299,6 +310,16 @@ namespace AbilityKit.Demo.Moba.Services
             section.Objects.EventCoverage = section.Objects.EventCoverage ??
                                             new AnalysisBattleDiagnosticObjectEventCoverage();
             section.Objects.Items = section.Objects.Items ?? new List<AnalysisBattleDiagnosticRuntimeObject>();
+            section.Definitions = section.Definitions ?? new AnalysisBattleDiagnosticDefinitionTrack();
+            section.Definitions.Items = section.Definitions.Items ??
+                                        new List<AnalysisBattleDiagnosticDefinition>();
+            for (var i = 0; i < section.Definitions.Items.Count; i++)
+            {
+                var definition = section.Definitions.Items[i];
+                if (definition != null)
+                    definition.Metadata = definition.Metadata ??
+                                          new List<AnalysisBattleDiagnosticDefinitionMetadataEntry>();
+            }
             section.FrameMetrics = section.FrameMetrics ?? new AnalysisBattleDiagnosticMetricTrack();
             section.FrameMetrics.Metrics = section.FrameMetrics.Metrics ??
                                            new AnalysisBattleDiagnosticStoreMetrics();
@@ -309,7 +330,12 @@ namespace AbilityKit.Demo.Moba.Services
                                                         new List<AnalysisBattleDiagnosticMetricThreshold>();
         }
 
-        private static void ValidateConsistency(AnalysisBattleDiagnosticSection section, BattleDiagnosticSessionScope scope, List<BattleDiagnosticEvent> events, List<BattleDiagnosticActorSummary> actors)
+        private static void ValidateConsistency(
+            AnalysisBattleDiagnosticSection section,
+            BattleDiagnosticSessionScope scope,
+            List<BattleDiagnosticEvent> events,
+            List<BattleDiagnosticActorSummary> actors,
+            List<BattleDiagnosticDefinition> definitions)
         {
             if (!scope.IsValid) throw new MobaBattleDiagnosticArtifactException("BattleDiagnostics.Scope", "Battle diagnostics session scope is invalid.");
             if (section.CapturedAtTimestamp < 0) throw new MobaBattleDiagnosticArtifactException("BattleDiagnostics.Timestamp", "Captured timestamp cannot be negative.");
@@ -324,6 +350,13 @@ namespace AbilityKit.Demo.Moba.Services
                 throw new MobaBattleDiagnosticArtifactException(
                     "BattleDiagnostics.FrameMetricMetrics",
                     "Frame metric track revision/count does not match its metrics.");
+            var unresolvedCount = 0;
+            for (var i = 0; i < definitions.Count; i++)
+                if (!definitions[i].IsResolved) unresolvedCount++;
+            if (section.Definitions.UnresolvedCount != unresolvedCount)
+                throw new MobaBattleDiagnosticArtifactException(
+                    "BattleDiagnostics.DefinitionCount",
+                    "Definition track unresolved count does not match its items.");
         }
 
         private static AnalysisBattleDiagnosticEvent ToDto(BattleDiagnosticEvent item)
@@ -331,6 +364,7 @@ namespace AbilityKit.Demo.Moba.Services
             var result = new AnalysisBattleDiagnosticEvent { Frame = item.Frame, Sequence = item.Sequence, MonotonicTimestamp = item.MonotonicTimestamp, Kind = (int)item.Kind, Channel = (int)item.Channel, Outcome = (int)item.Outcome, SourceActorId = item.SourceActorId, TargetActorId = item.TargetActorId, SourceActorGeneration = item.SourceActor.Generation, TargetActorGeneration = item.TargetActor.Generation, SubjectObjectKind = (int)item.SubjectObject.Kind, SubjectRuntimeId = item.SubjectObject.RuntimeId, SubjectGeneration = item.SubjectObject.Generation, ConfigId = item.ConfigId, DefinitionKind = (int)item.DefinitionKind, RootContextId = item.RootContextId, ContextId = item.ContextId, SkillRuntimeId = item.SkillRuntime.RuntimeId, SkillRuntimeGeneration = item.SkillRuntime.Generation, AttackId = item.AttackId, PayloadVersion = item.PayloadVersion, Summary = item.Summary };
             if (item.Payload.TryGetSyncSnapshotReceived(out var payload)) result.Payload = new AnalysisBattleDiagnosticEventPayload { Kind = (int)item.Payload.Kind, SchemaVersion = item.Payload.SchemaVersion, AuthoritativeFrame = payload.AuthoritativeFrame, StateHash = payload.StateHash };
             else if (item.Payload.TryGetTriggerAnalysis(out var trigger)) result.Payload = new AnalysisBattleDiagnosticEventPayload { Kind = (int)item.Payload.Kind, SchemaVersion = item.Payload.SchemaVersion, TriggerId = trigger.TriggerId, TriggerContextKind = trigger.ContextKind, TriggerOriginKind = trigger.OriginKind, TriggerStage = (int)trigger.Stage, TriggerResult = (int)trigger.Result, TriggerDetailCode = trigger.DetailCode, TriggerCurrentDepth = trigger.CurrentDepth, TriggerCurrentFrameCount = trigger.CurrentFrameCount, TriggerCurrentRootCount = trigger.CurrentRootCount, TriggerCurrentSameTriggerCount = trigger.CurrentSameTriggerCount, TriggerFailureKey = trigger.FailureKey, TriggerReason = trigger.Reason };
+            else if (item.Payload.TryGetTriggerAnalysisAggregate(out var aggregate)) result.Payload = new AnalysisBattleDiagnosticEventPayload { Kind = (int)item.Payload.Kind, SchemaVersion = item.Payload.SchemaVersion, TriggerId = aggregate.TriggerId, TriggerContextKind = aggregate.ContextKind, TriggerOriginKind = aggregate.OriginKind, TriggerStage = (int)aggregate.Stage, TriggerResult = (int)aggregate.Result, TriggerDetailCode = aggregate.DetailCode, TriggerAggregateOccurrenceCount = aggregate.OccurrenceCount, TriggerAggregateFirstFrame = aggregate.FirstFrame, TriggerAggregateLastFrame = aggregate.LastFrame, TriggerAggregateFirstContextId = aggregate.FirstContextId, TriggerAggregateLastContextId = aggregate.LastContextId, TriggerAggregateFirstRootContextId = aggregate.FirstRootContextId, TriggerAggregateLastRootContextId = aggregate.LastRootContextId, TriggerFailureKey = aggregate.FailureKey, TriggerReason = aggregate.SampleReason };
             else if (item.Payload.TryGetSkillFailure(out var failure)) result.Payload = new AnalysisBattleDiagnosticEventPayload { Kind = (int)item.Payload.Kind, SchemaVersion = item.Payload.SchemaVersion, SkillFailureSlot = failure.Slot, SkillFailureSource = failure.Source, SkillFailureStage = failure.Stage, SkillFailureCode = failure.Code, SkillFailureMessage = failure.Message };
             else if (item.Payload.TryGetBuffLifecycle(out var buff)) result.Payload = new AnalysisBattleDiagnosticEventPayload { Kind = (int)item.Payload.Kind, SchemaVersion = item.Payload.SchemaVersion, BuffLifecycleStage = (int)buff.Stage, BuffLifecycleStackCount = buff.StackCount, BuffLifecyclePreviousStackCount = buff.PreviousStackCount, BuffLifecycleDurationMilliseconds = buff.DurationMilliseconds, BuffLifecycleRemainingMilliseconds = buff.RemainingMilliseconds, BuffLifecycleIntervalRemainingMilliseconds = buff.IntervalRemainingMilliseconds, BuffLifecycleMaxStacks = buff.MaxStacks, BuffLifecycleModifierBindingCount = buff.ModifierBindingCount, BuffLifecycleModifierSourceId = buff.ModifierSourceId, BuffLifecycleRemoveReason = buff.RemoveReason };
             return result;
@@ -362,6 +396,26 @@ namespace AbilityKit.Demo.Moba.Services
                         item.Payload.TriggerFailureKey,
                         item.Payload.TriggerReason);
                     payload = BattleDiagnosticEventPayload.FromTriggerAnalysis(in trigger);
+                }
+                else if (item.Payload.Kind == (int)BattleDiagnosticPayloadKind.TriggerAnalysisAggregate && item.Payload.SchemaVersion == BattleDiagnosticTriggerAnalysisAggregatePayload.CurrentSchemaVersion)
+                {
+                    var aggregate = new BattleDiagnosticTriggerAnalysisAggregatePayload(
+                        item.Payload.TriggerId,
+                        item.Payload.TriggerContextKind,
+                        item.Payload.TriggerOriginKind,
+                        (BattleDiagnosticTriggerAnalysisStage)item.Payload.TriggerStage,
+                        (BattleDiagnosticTriggerAnalysisResult)item.Payload.TriggerResult,
+                        item.Payload.TriggerDetailCode,
+                        item.Payload.TriggerAggregateOccurrenceCount,
+                        item.Payload.TriggerAggregateFirstFrame,
+                        item.Payload.TriggerAggregateLastFrame,
+                        item.Payload.TriggerAggregateFirstContextId,
+                        item.Payload.TriggerAggregateLastContextId,
+                        item.Payload.TriggerAggregateFirstRootContextId,
+                        item.Payload.TriggerAggregateLastRootContextId,
+                        item.Payload.TriggerFailureKey,
+                        item.Payload.TriggerReason);
+                    payload = BattleDiagnosticEventPayload.FromTriggerAnalysisAggregate(in aggregate);
                 }
                 else if (item.Payload.Kind == (int)BattleDiagnosticPayloadKind.BuffLifecycle && item.Payload.SchemaVersion == BattleDiagnosticBuffLifecyclePayload.CurrentSchemaVersion)
                 {
@@ -400,8 +454,171 @@ namespace AbilityKit.Demo.Moba.Services
         private static BattleDiagnosticWorldSummary FromDto(AnalysisBattleDiagnosticWorld x, BattleDiagnosticSessionScope s) => new BattleDiagnosticWorldSummary(s, x.Frame, x.MonotonicTimestamp, x.ActorCount, x.ActiveSkillRuntimeCount, x.ActiveTraceRootCount, x.StateHash);
         private static AnalysisBattleDiagnosticActor ToDto(BattleDiagnosticActorSummary x) => new AnalysisBattleDiagnosticActor { Frame = x.Frame, ActorId = x.ActorId, Kind = (int)x.Kind, ConfigId = x.ConfigId, TeamId = x.TeamId, PositionX = x.PositionX, PositionY = x.PositionY, PositionZ = x.PositionZ, Health = x.Health, MaximumHealth = x.MaximumHealth, IsAlive = x.IsAlive, DisplayName = x.DisplayName };
         private static BattleDiagnosticActorSummary FromDto(AnalysisBattleDiagnosticActor x, BattleDiagnosticSessionScope s) => new BattleDiagnosticActorSummary(s, x.Frame, x.ActorId, (BattleDiagnosticActorKind)x.Kind, x.ConfigId, x.TeamId, x.PositionX, x.PositionY, x.PositionZ, x.Health, x.MaximumHealth, x.IsAlive, x.DisplayName);
-        private static AnalysisBattleDiagnosticTraceNode ToDto(BattleDiagnosticTraceNodeSummary x) => new AnalysisBattleDiagnosticTraceNode { RootContextId = x.RootContextId, ContextId = x.ContextId, ParentContextId = x.ParentContextId, StartFrame = x.StartFrame, EndFrame = x.EndFrame, State = (int)x.State, ActorId = x.ActorId, ConfigId = x.ConfigId, Kind = x.Kind, EndReason = x.EndReason, SkillId = x.SkillId, CastFlowId = x.CastFlowId, PhaseId = x.PhaseId };
-        private static BattleDiagnosticTraceNodeSummary FromDto(AnalysisBattleDiagnosticTraceNode x, BattleDiagnosticSessionScope s) => new BattleDiagnosticTraceNodeSummary(s, x.RootContextId, x.ContextId, x.ParentContextId, x.StartFrame, x.EndFrame, (BattleDiagnosticTraceNodeState)x.State, x.ActorId, x.ConfigId, x.Kind, x.EndReason, x.SkillId, x.CastFlowId, x.PhaseId);
+        private static AnalysisBattleDiagnosticTraceNode ToDto(BattleDiagnosticTraceNodeSummary x)
+        {
+            return new AnalysisBattleDiagnosticTraceNode
+            {
+                RootContext = ToDto(x.RootContext),
+                Context = ToDto(x.Context),
+                ParentContext = ToDto(x.ParentContext),
+                SourceObject = ToDto(x.SourceObject),
+                TargetObject = ToDto(x.TargetObject),
+                Definition = ToDto(x.Definition),
+                TriggerDefinition = ToDto(x.TriggerDefinition),
+                SkillDefinition = ToDto(x.SkillDefinition),
+                RootContextId = x.RootContextId,
+                ContextId = x.ContextId,
+                ParentContextId = x.ParentContextId,
+                StartFrame = x.StartFrame,
+                EndFrame = x.EndFrame,
+                State = (int)x.State,
+                ActorId = x.ActorId,
+                SourceActorGeneration = x.SourceActorGeneration,
+                TargetActorId = x.TargetActorId,
+                TargetActorGeneration = x.TargetActorGeneration,
+                TriggerId = x.TriggerId,
+                ConfigId = x.ConfigId,
+                DefinitionKind = (int)x.DefinitionKind,
+                Kind = x.Kind,
+                EndReason = x.EndReason,
+                SkillId = x.SkillId,
+                CastFlowId = x.CastFlowId,
+                PhaseId = x.PhaseId
+            };
+        }
+
+        private static BattleDiagnosticTraceNodeSummary FromDto(
+            AnalysisBattleDiagnosticTraceNode x,
+            BattleDiagnosticSessionScope s)
+        {
+            var rootContext = FromDto(x.RootContext);
+            var context = FromDto(x.Context);
+            var parentContext = FromDto(x.ParentContext);
+            var sourceObject = FromDto(x.SourceObject);
+            var targetObject = FromDto(x.TargetObject);
+            var definition = FromDto(x.Definition);
+            var triggerDefinition = FromDto(x.TriggerDefinition);
+            var skillDefinition = FromDto(x.SkillDefinition);
+
+            var rootContextId = rootContext.IsValid ? rootContext.ContextId : x.RootContextId;
+            var contextId = context.IsValid ? context.ContextId : x.ContextId;
+            var parentContextId = parentContext.IsValid ? parentContext.ContextId : x.ParentContextId;
+            if (!sourceObject.HasRuntimeId)
+            {
+                sourceObject = BattleDiagnosticRuntimeObjectReference.Create(
+                    BattleDiagnosticRuntimeObjectKind.Actor,
+                    x.ActorId,
+                    x.SourceActorGeneration);
+            }
+            if (!targetObject.HasRuntimeId)
+            {
+                targetObject = BattleDiagnosticRuntimeObjectReference.Create(
+                    BattleDiagnosticRuntimeObjectKind.Actor,
+                    x.TargetActorId,
+                    x.TargetActorGeneration);
+            }
+            if (!definition.HasDefinitionId)
+            {
+                definition = BattleDiagnosticDefinitionReference.Create(
+                    (BattleDiagnosticDefinitionKind)x.DefinitionKind,
+                    x.ConfigId);
+            }
+            if (!triggerDefinition.HasDefinitionId)
+            {
+                triggerDefinition = BattleDiagnosticDefinitionReference.Create(
+                    BattleDiagnosticDefinitionKind.Trigger,
+                    x.TriggerId);
+            }
+            if (!skillDefinition.HasDefinitionId)
+            {
+                skillDefinition = BattleDiagnosticDefinitionReference.Create(
+                    BattleDiagnosticDefinitionKind.Skill,
+                    x.SkillId);
+            }
+
+            return new BattleDiagnosticTraceNodeSummary(
+                s,
+                rootContextId,
+                contextId,
+                parentContextId,
+                x.StartFrame,
+                x.EndFrame,
+                (BattleDiagnosticTraceNodeState)x.State,
+                sourceObject.RuntimeId,
+                definition.DefinitionId,
+                x.Kind,
+                x.EndReason,
+                skillDefinition.DefinitionId,
+                x.CastFlowId,
+                x.PhaseId,
+                targetObject.RuntimeId,
+                triggerDefinition.DefinitionId,
+                sourceObject.Generation,
+                targetObject.Generation,
+                definition.Kind);
+        }
+
+        private static AnalysisBattleDiagnosticTraceContextReference ToDto(
+            BattleDiagnosticTraceContextReference x)
+        {
+            return x.IsValid
+                ? new AnalysisBattleDiagnosticTraceContextReference { ContextId = x.ContextId }
+                : null;
+        }
+
+        private static BattleDiagnosticTraceContextReference FromDto(
+            AnalysisBattleDiagnosticTraceContextReference x)
+        {
+            return x == null
+                ? default
+                : BattleDiagnosticTraceContextReference.Create(x.ContextId);
+        }
+
+        private static AnalysisBattleDiagnosticRuntimeObjectReference ToDto(
+            BattleDiagnosticRuntimeObjectReference x)
+        {
+            return x.HasRuntimeId
+                ? new AnalysisBattleDiagnosticRuntimeObjectReference
+                {
+                    Kind = (int)x.Kind,
+                    RuntimeId = x.RuntimeId,
+                    Generation = x.Generation
+                }
+                : null;
+        }
+
+        private static BattleDiagnosticRuntimeObjectReference FromDto(
+            AnalysisBattleDiagnosticRuntimeObjectReference x)
+        {
+            return x == null
+                ? default
+                : BattleDiagnosticRuntimeObjectReference.Create(
+                    (BattleDiagnosticRuntimeObjectKind)x.Kind,
+                    x.RuntimeId,
+                    x.Generation);
+        }
+
+        private static AnalysisBattleDiagnosticDefinitionReference ToDto(
+            BattleDiagnosticDefinitionReference x)
+        {
+            return x.HasDefinitionId
+                ? new AnalysisBattleDiagnosticDefinitionReference
+                {
+                    Kind = (int)x.Kind,
+                    DefinitionId = x.DefinitionId
+                }
+                : null;
+        }
+
+        private static BattleDiagnosticDefinitionReference FromDto(
+            AnalysisBattleDiagnosticDefinitionReference x)
+        {
+            return x == null
+                ? default
+                : BattleDiagnosticDefinitionReference.Create(
+                    (BattleDiagnosticDefinitionKind)x.Kind,
+                    x.DefinitionId);
+        }
         private static AnalysisBattleDiagnosticAttribute ToDto(BattleDiagnosticActorAttribute x) => new AnalysisBattleDiagnosticAttribute { Frame = x.Frame, ActorId = x.ActorId, AttributeId = x.AttributeId, BaseValue = x.BaseValue, FinalValue = x.FinalValue, ModifierCount = x.ModifierCount, Name = x.Name };
         private static BattleDiagnosticActorAttribute FromDto(AnalysisBattleDiagnosticAttribute x, BattleDiagnosticSessionScope s) => new BattleDiagnosticActorAttribute(s, x.Frame, x.ActorId, x.AttributeId, x.BaseValue, x.FinalValue, x.ModifierCount, x.Name);
         private static AnalysisBattleDiagnosticAttributeModifier ToDto(BattleDiagnosticActorAttributeModifier x) => new AnalysisBattleDiagnosticAttributeModifier { Frame = x.Frame, ActorId = x.ActorId, AttributeId = x.AttributeId, Operation = x.Operation, Magnitude = x.Magnitude, Priority = x.Priority, SourceId = x.SourceId, MagnitudeType = x.MagnitudeType, DeclaredValue = x.DeclaredValue, StackedValue = x.StackedValue, ProjectedValue = x.ProjectedValue, CurrentValue = x.CurrentValue, HasCurrentValue = x.HasCurrentValue, CapturedValue = x.CapturedValue, HasCapturedValue = x.HasCapturedValue, EvaluationPolicy = x.EvaluationPolicy, StackCount = x.StackCount, CaptureMode = x.CaptureMode, Explanation = x.Explanation };
@@ -449,6 +666,61 @@ namespace AbilityKit.Demo.Moba.Services
         private static AnalysisBattleDiagnosticObjectSummary ToDto(BattleDiagnosticRuntimeObjectCatalogSummary x) => new AnalysisBattleDiagnosticObjectSummary { TotalCount = x.TotalCount, CompleteCount = x.CompleteCount, PartialCount = x.PartialCount, UnreliableCount = x.UnreliableCount, ActiveCount = x.ActiveCount, EndedCount = x.EndedCount, Completeness = (int)x.Completeness, Truncated = x.Truncated, BackfillAttemptCount = x.BackfillAttemptCount, BackfillFailureCount = x.BackfillFailureCount, LastBackfillFrame = x.LastBackfillFrame };
         private static AnalysisBattleDiagnosticObjectEventCoverage ToDto(BattleDiagnosticRuntimeObjectEventCoverageSummary x) => new AnalysisBattleDiagnosticObjectEventCoverage { EventCount = x.EventCount, ReferencedEventCount = x.ReferencedEventCount, CompleteEventCount = x.CompleteEventCount, PartialEventCount = x.PartialEventCount, UnreliableEventCount = x.UnreliableEventCount, TotalReferenceCount = x.TotalReferenceCount, ResolvedReferenceCount = x.ResolvedReferenceCount, UnresolvedReferenceCount = x.UnresolvedReferenceCount, ResolvedReferenceRatio = x.ResolvedReferenceRatio };
         private static BattleDiagnosticRuntimeObject FromDto(AnalysisBattleDiagnosticRuntimeObject x) => new BattleDiagnosticRuntimeObject((BattleDiagnosticRuntimeObjectKind)x.Kind, x.RuntimeId, x.Generation, (BattleDiagnosticDefinitionKind)x.DefinitionKind, x.DefinitionId, x.RelatedActorId, x.OwnerActorId, x.SourceActorId, x.TargetActorId, x.CreatedFrame, x.DestroyedFrame, x.RootContextId, x.ContextId, (BattleDiagnosticRuntimeObjectState)x.State, x.EndReason, x.DisplayName, (BattleDiagnosticRuntimeObjectDiscoveryKind)x.DiscoveryKind, x.BackfilledFrame);
+        private static AnalysisBattleDiagnosticDefinition ToDto(BattleDiagnosticDefinition x)
+        {
+            var result = new AnalysisBattleDiagnosticDefinition
+            {
+                Kind = (int)x.Kind,
+                DefinitionId = x.DefinitionId,
+                DisplayName = x.DisplayName,
+                Revision = x.Revision,
+                ContentHash = x.ContentHash,
+                SourcePath = x.SourcePath,
+                Resolution = (int)x.Resolution
+            };
+            Copy(x.Metadata, result.Metadata, ToDto);
+            return result;
+        }
+        private static AnalysisBattleDiagnosticDefinitionMetadataEntry ToDto(BattleDiagnosticDefinitionMetadataEntry x) => new AnalysisBattleDiagnosticDefinitionMetadataEntry { Key = x.Key, ValueKind = (int)x.ValueKind, StringValue = x.StringValue, IntegerValue = x.IntegerValue, NumberValue = x.NumberValue, BooleanValue = x.BooleanValue };
+        private static BattleDiagnosticDefinition FromDto(AnalysisBattleDiagnosticDefinition x)
+        {
+            if (x == null) throw new MobaBattleDiagnosticArtifactException(
+                "BattleDiagnostics.Definition",
+                "Definition catalog items cannot be null.");
+            var reference = BattleDiagnosticDefinitionReference.Create(
+                (BattleDiagnosticDefinitionKind)x.Kind,
+                x.DefinitionId);
+            var metadata = Convert(x.Metadata, FromDto);
+            return new BattleDiagnosticDefinition(
+                in reference,
+                x.DisplayName,
+                x.Revision,
+                x.ContentHash,
+                x.SourcePath,
+                (BattleDiagnosticDefinitionResolution)x.Resolution,
+                metadata);
+        }
+        private static BattleDiagnosticDefinitionMetadataEntry FromDto(AnalysisBattleDiagnosticDefinitionMetadataEntry x)
+        {
+            if (x == null) throw new MobaBattleDiagnosticArtifactException(
+                "BattleDiagnostics.DefinitionMetadata",
+                "Definition metadata items cannot be null.");
+            switch ((BattleDiagnosticDefinitionMetadataValueKind)x.ValueKind)
+            {
+                case BattleDiagnosticDefinitionMetadataValueKind.String:
+                    return BattleDiagnosticDefinitionMetadataEntry.String(x.Key, x.StringValue);
+                case BattleDiagnosticDefinitionMetadataValueKind.Integer:
+                    return BattleDiagnosticDefinitionMetadataEntry.Integer(x.Key, x.IntegerValue);
+                case BattleDiagnosticDefinitionMetadataValueKind.Number:
+                    return BattleDiagnosticDefinitionMetadataEntry.Number(x.Key, x.NumberValue);
+                case BattleDiagnosticDefinitionMetadataValueKind.Boolean:
+                    return BattleDiagnosticDefinitionMetadataEntry.Boolean(x.Key, x.BooleanValue);
+                default:
+                    throw new MobaBattleDiagnosticArtifactException(
+                        "BattleDiagnostics.DefinitionMetadataKind",
+                        "Definition metadata value kind is invalid: " + x.ValueKind);
+            }
+        }
 
         private static void Copy<TSource, TTarget>(IReadOnlyList<TSource> source, List<TTarget> target, Func<TSource, TTarget> convert)
         {

@@ -5,7 +5,9 @@ namespace AbilityKit.Demo.Moba.Diagnostics
 {
     public sealed class BattleDiagnosticOfflineSession :
         IBattleDiagnosticReadOnlySession,
+        IBattleDiagnosticTraceRootSession,
         IBattleDiagnosticRuntimeObjectCatalogSession,
+        IBattleDiagnosticDefinitionCatalogSession,
         IBattleDiagnosticMetricSession,
         IBattleDiagnosticMetricProfileSession,
         IDisposable
@@ -44,6 +46,7 @@ namespace AbilityKit.Demo.Moba.Diagnostics
         public long ActorTagStoreRevision => _snapshot.Tags.Revision;
         public long ActorEffectStoreRevision => _snapshot.Effects.Revision;
         public long RuntimeObjectStoreRevision => _snapshot.Objects.Revision;
+        public long DefinitionStoreRevision => _snapshot.Definitions.Revision;
         public long MetricStoreRevision => _snapshot.FrameMetrics.Revision;
         public BattleDiagnosticResolvedMetricProfile MetricProfile { get; }
         public long StoreRevision => EventStoreRevision;
@@ -180,6 +183,70 @@ namespace AbilityKit.Demo.Moba.Diagnostics
                     : "The runtime object was not captured.");
         }
 
+        public BattleDiagnosticQueryResult<BattleDiagnosticDefinition> QueryDefinition(
+            long requestId,
+            in BattleDiagnosticDefinitionReference reference)
+        {
+            ValidateRequest(requestId);
+            if (!reference.HasDefinitionId) throw new ArgumentException(
+                "A definition reference with an ID is required.",
+                nameof(reference));
+            if (!SessionInfo.Supports(BattleDiagnosticCapabilities.Definitions))
+                return Unavailable<BattleDiagnosticDefinition>(
+                    requestId,
+                    DefinitionStoreRevision,
+                    BattleDiagnosticDataAvailability.Unsupported,
+                    "This artifact does not provide a definition catalog.");
+            if (_snapshot.Definitions.TryResolve(in reference, out var definition))
+                return Ready(requestId, DefinitionStoreRevision, new[] { definition });
+
+            return Unavailable<BattleDiagnosticDefinition>(
+                requestId,
+                DefinitionStoreRevision,
+                BattleDiagnosticDataAvailability.NotCaptured,
+                "The definition was not captured.");
+        }
+
+        public BattleDiagnosticQueryResult<BattleDiagnosticDefinition> QueryDefinitions(
+            BattleDiagnosticDefinitionQuery query)
+        {
+            if (!SessionInfo.Supports(BattleDiagnosticCapabilities.Definitions))
+                return Unavailable<BattleDiagnosticDefinition>(
+                    query.RequestId,
+                    DefinitionStoreRevision,
+                    BattleDiagnosticDataAvailability.Unsupported,
+                    "This artifact does not provide a definition catalog.");
+            if (query.Page.StoreRevision > 0L &&
+                query.Page.StoreRevision != DefinitionStoreRevision)
+                return Unavailable<BattleDiagnosticDefinition>(
+                    query.RequestId,
+                    query.Page.StoreRevision,
+                    BattleDiagnosticDataAvailability.Evicted,
+                    "The requested definition catalog revision is not present in this artifact.");
+
+            var results = new List<BattleDiagnosticDefinition>(query.Page.Limit);
+            var skipped = 0;
+            var hasMore = false;
+            for (var i = 0; i < _snapshot.Definitions.Items.Count; i++)
+            {
+                var item = _snapshot.Definitions.Items[i];
+                if (!query.Filter.Matches(item)) continue;
+                if (skipped++ < query.Page.Offset) continue;
+                if (results.Count == query.Page.Limit)
+                {
+                    hasMore = true;
+                    break;
+                }
+                results.Add(item);
+            }
+
+            return BattleDiagnosticQueryResult<BattleDiagnosticDefinition>.FromItems(
+                query.RequestId,
+                DefinitionStoreRevision,
+                results,
+                hasMore);
+        }
+
         public BattleDiagnosticQueryResult<BattleDiagnosticRuntimeObject> QueryRuntimeObjects(
             BattleDiagnosticRuntimeObjectQuery query)
         {
@@ -260,6 +327,50 @@ namespace AbilityKit.Demo.Moba.Diagnostics
                     result);
             }
             return Ready(requestId, TraceStoreRevision, result);
+        }
+
+        public BattleDiagnosticQueryResult<BattleDiagnosticTraceRootSummary> QueryTraceRoots(
+            BattleDiagnosticTraceRootQuery query)
+        {
+            if (!SessionInfo.Supports(BattleDiagnosticCapabilities.Trace))
+                return Unavailable<BattleDiagnosticTraceRootSummary>(
+                    query.RequestId,
+                    TraceStoreRevision,
+                    BattleDiagnosticDataAvailability.Unsupported,
+                    "This artifact does not provide trace root discovery.");
+            if (query.Page.StoreRevision > 0L && query.Page.StoreRevision != TraceStoreRevision)
+                return Unavailable<BattleDiagnosticTraceRootSummary>(
+                    query.RequestId,
+                    query.Page.StoreRevision,
+                    BattleDiagnosticDataAvailability.Evicted,
+                    "The requested trace root index revision is not present in this artifact.");
+
+            var roots = BattleDiagnosticTraceRootProjection.Project(_snapshot.Trace.Nodes);
+            var items = new List<BattleDiagnosticTraceRootSummary>(
+                Math.Min(query.Page.Limit, roots.Count));
+            var end = Math.Min(roots.Count, query.Page.Offset + query.Page.Limit);
+            for (var i = query.Page.Offset; i < end; i++) items.Add(roots[i]);
+
+            if (_snapshot.Trace.Truncated || !_snapshot.Trace.IsStable)
+            {
+                var message = !_snapshot.Trace.IsStable
+                    ? "Trace capture changed while the artifact snapshot was created."
+                    : "Trace capture was truncated during export.";
+                return new BattleDiagnosticQueryResult<BattleDiagnosticTraceRootSummary>(
+                    BattleDiagnosticQueryStatus.Partial(
+                        query.RequestId,
+                        TraceStoreRevision,
+                        items.Count,
+                        BattleDiagnosticDataAvailability.Truncated,
+                        message),
+                    items);
+            }
+
+            return BattleDiagnosticQueryResult<BattleDiagnosticTraceRootSummary>.FromItems(
+                query.RequestId,
+                TraceStoreRevision,
+                items,
+                end < roots.Count);
         }
 
         public BattleDiagnosticQueryResult<BattleDiagnosticActorAttribute> QueryActorAttributes(long requestId, int frame, long actorId)
@@ -366,22 +477,45 @@ namespace AbilityKit.Demo.Moba.Diagnostics
             BattleDiagnosticFilter filter)
         {
             if (!filter.HasTriggerAnalysisFilter) return true;
-            if (!item.Payload.TryGetTriggerAnalysis(out var trigger)) return false;
-            if (filter.TriggerStage != BattleDiagnosticTriggerAnalysisStage.Unknown &&
-                trigger.Stage != filter.TriggerStage)
+            if (item.Payload.TryGetTriggerAnalysisAggregate(out var aggregate))
+            {
+                return MatchesTriggerFields(
+                    aggregate.Stage,
+                    aggregate.Result,
+                    aggregate.ContextKind,
+                    aggregate.OriginKind,
+                    filter);
+            }
+
+            if (!item.Payload.TryGetTriggerAnalysis(out var trigger))
+            {
+                return !filter.HasTriggerDetailFilter;
+            }
+            if (!filter.HasTriggerDetailFilter &&
+                filter.TriggerValue == BattleDiagnosticTriggerValueFilter.Valuable &&
+                !BattleDiagnosticTriggerValue.IsValuable(in trigger))
             {
                 return false;
             }
+            return MatchesTriggerFields(
+                trigger.Stage,
+                trigger.Result,
+                trigger.ContextKind,
+                trigger.OriginKind,
+                filter);
+        }
 
-            if (filter.TriggerResult != BattleDiagnosticTriggerAnalysisResult.Unknown &&
-                trigger.Result != filter.TriggerResult)
-            {
-                return false;
-            }
-
-            if (filter.TriggerContextKind != 0 && trigger.ContextKind != filter.TriggerContextKind) return false;
-            if (filter.TriggerOriginKind != 0 && trigger.OriginKind != filter.TriggerOriginKind) return false;
-            return true;
+        private static bool MatchesTriggerFields(
+            BattleDiagnosticTriggerAnalysisStage stage,
+            BattleDiagnosticTriggerAnalysisResult result,
+            int contextKind,
+            int originKind,
+            BattleDiagnosticFilter filter)
+        {
+            return (filter.TriggerStage == BattleDiagnosticTriggerAnalysisStage.Unknown || filter.TriggerStage == stage) &&
+                   (filter.TriggerResult == BattleDiagnosticTriggerAnalysisResult.Unknown || filter.TriggerResult == result) &&
+                   (filter.TriggerContextKind == 0 || filter.TriggerContextKind == contextKind) &&
+                   (filter.TriggerOriginKind == 0 || filter.TriggerOriginKind == originKind);
         }
 
         private static bool MatchesSearchText(in BattleDiagnosticEvent item, string searchText)
@@ -392,6 +526,12 @@ namespace AbilityKit.Demo.Moba.Diagnostics
             if (item.Outcome.ToString().IndexOf(searchText, StringComparison.OrdinalIgnoreCase) >= 0) return true;
             if (item.Payload.TryGetTriggerAnalysis(out var trigger) &&
                 MatchesTriggerSearch(in trigger, searchText))
+            {
+                return true;
+            }
+
+            if (item.Payload.TryGetTriggerAnalysisAggregate(out var aggregate) &&
+                MatchesTriggerAggregateSearch(in aggregate, searchText))
             {
                 return true;
             }
@@ -423,6 +563,26 @@ namespace AbilityKit.Demo.Moba.Diagnostics
                    MatchesNumber(trigger.CurrentFrameCount, searchText) ||
                    MatchesNumber(trigger.CurrentRootCount, searchText) ||
                    MatchesNumber(trigger.CurrentSameTriggerCount, searchText);
+        }
+
+        private static bool MatchesTriggerAggregateSearch(
+            in BattleDiagnosticTriggerAnalysisAggregatePayload aggregate,
+            string searchText)
+        {
+            return aggregate.Stage.ToString().IndexOf(searchText, StringComparison.OrdinalIgnoreCase) >= 0 ||
+                   aggregate.Result.ToString().IndexOf(searchText, StringComparison.OrdinalIgnoreCase) >= 0 ||
+                   aggregate.FailureKey.IndexOf(searchText, StringComparison.OrdinalIgnoreCase) >= 0 ||
+                   aggregate.SampleReason.IndexOf(searchText, StringComparison.OrdinalIgnoreCase) >= 0 ||
+                   MatchesNumber(aggregate.TriggerId, searchText) ||
+                   MatchesNumber(aggregate.ContextKind, searchText) ||
+                   MatchesNumber(aggregate.OriginKind, searchText) ||
+                   MatchesNumber(aggregate.OccurrenceCount, searchText) ||
+                   MatchesNumber(aggregate.FirstFrame, searchText) ||
+                   MatchesNumber(aggregate.LastFrame, searchText) ||
+                   MatchesNumber(aggregate.FirstContextId, searchText) ||
+                   MatchesNumber(aggregate.LastContextId, searchText) ||
+                   MatchesNumber(aggregate.FirstRootContextId, searchText) ||
+                   MatchesNumber(aggregate.LastRootContextId, searchText);
         }
 
         private static bool MatchesNumber(long value, string searchText)

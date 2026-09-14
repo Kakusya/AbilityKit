@@ -166,6 +166,39 @@ namespace AbilityKit.Demo.Moba.Diagnostics
             long rootContextId);
     }
 
+    public readonly struct BattleDiagnosticTraceRootQuery
+    {
+        public BattleDiagnosticTraceRootQuery(long requestId, BattleDiagnosticPageRequest page)
+        {
+            if (requestId <= 0L) throw new ArgumentOutOfRangeException(nameof(requestId));
+            if (page.Limit <= 0) throw new ArgumentException("A valid page request is required.", nameof(page));
+            RequestId = requestId;
+            Page = page;
+        }
+
+        public long RequestId { get; }
+        public BattleDiagnosticPageRequest Page { get; }
+    }
+
+    /// <summary>
+    /// Optional trace discovery surface. Keeping it separate preserves compatibility with existing
+    /// read-only sessions while allowing capable sessions to expose retained roots.
+    /// </summary>
+    public interface IBattleDiagnosticTraceRootReadStore
+    {
+        BattleDiagnosticSessionScope Scope { get; }
+        long Revision { get; }
+
+        BattleDiagnosticQueryResult<BattleDiagnosticTraceRootSummary> QueryTraceRoots(
+            BattleDiagnosticTraceRootQuery query);
+    }
+
+    public interface IBattleDiagnosticTraceRootSession
+    {
+        BattleDiagnosticQueryResult<BattleDiagnosticTraceRootSummary> QueryTraceRoots(
+            BattleDiagnosticTraceRootQuery query);
+    }
+
     public readonly struct BattleDiagnosticMetricQuery
     {
         public BattleDiagnosticMetricQuery(
@@ -477,6 +510,75 @@ namespace AbilityKit.Demo.Moba.Diagnostics
         BattleDiagnosticResolvedMetricProfile MetricProfile { get; }
     }
 
+    public readonly struct BattleDiagnosticDefinitionFilter :
+        IEquatable<BattleDiagnosticDefinitionFilter>
+    {
+        public BattleDiagnosticDefinitionFilter(
+            BattleDiagnosticDefinitionKind kind = BattleDiagnosticDefinitionKind.Unknown,
+            BattleDiagnosticDefinitionResolution resolution =
+                BattleDiagnosticDefinitionResolution.Unknown)
+        {
+            if (!Enum.IsDefined(typeof(BattleDiagnosticDefinitionKind), kind))
+                throw new ArgumentOutOfRangeException(nameof(kind));
+            if (!Enum.IsDefined(typeof(BattleDiagnosticDefinitionResolution), resolution))
+                throw new ArgumentOutOfRangeException(nameof(resolution));
+            Kind = kind;
+            Resolution = resolution;
+        }
+
+        public BattleDiagnosticDefinitionKind Kind { get; }
+        public BattleDiagnosticDefinitionResolution Resolution { get; }
+
+        public bool Matches(BattleDiagnosticDefinition item)
+        {
+            return item != null &&
+                   (Kind == BattleDiagnosticDefinitionKind.Unknown || item.Kind == Kind) &&
+                   (Resolution == BattleDiagnosticDefinitionResolution.Unknown ||
+                    item.Resolution == Resolution);
+        }
+
+        public bool Equals(BattleDiagnosticDefinitionFilter other) =>
+            Kind == other.Kind && Resolution == other.Resolution;
+
+        public override bool Equals(object obj) =>
+            obj is BattleDiagnosticDefinitionFilter other && Equals(other);
+
+        public override int GetHashCode() => ((int)Kind * 397) ^ (int)Resolution;
+    }
+
+    public readonly struct BattleDiagnosticDefinitionQuery
+    {
+        public BattleDiagnosticDefinitionQuery(
+            long requestId,
+            BattleDiagnosticDefinitionFilter filter,
+            BattleDiagnosticPageRequest page)
+        {
+            if (requestId <= 0L) throw new ArgumentOutOfRangeException(nameof(requestId));
+            if (page.Limit <= 0) throw new ArgumentException(
+                "A valid page request is required.",
+                nameof(page));
+            RequestId = requestId;
+            Filter = filter;
+            Page = page;
+        }
+
+        public long RequestId { get; }
+        public BattleDiagnosticDefinitionFilter Filter { get; }
+        public BattleDiagnosticPageRequest Page { get; }
+    }
+
+    public interface IBattleDiagnosticDefinitionCatalogSession
+    {
+        long DefinitionStoreRevision { get; }
+
+        BattleDiagnosticQueryResult<BattleDiagnosticDefinition> QueryDefinition(
+            long requestId,
+            in BattleDiagnosticDefinitionReference reference);
+
+        BattleDiagnosticQueryResult<BattleDiagnosticDefinition> QueryDefinitions(
+            BattleDiagnosticDefinitionQuery query);
+    }
+
     public interface IBattleDiagnosticRuntimeObjectReadStore
     {
         BattleDiagnosticSessionScope Scope { get; }
@@ -629,5 +731,99 @@ namespace AbilityKit.Demo.Moba.Diagnostics
             long requestId,
             int frame,
             long actorId);
+    }
+
+    public static class BattleDiagnosticTraceRootProjection
+    {
+        public static IReadOnlyList<BattleDiagnosticTraceRootSummary> Project(
+            IReadOnlyList<BattleDiagnosticTraceNodeSummary> nodes)
+        {
+            if (nodes == null || nodes.Count == 0)
+                return Array.Empty<BattleDiagnosticTraceRootSummary>();
+
+            var groups = new Dictionary<long, RootAccumulator>();
+            for (var i = 0; i < nodes.Count; i++)
+            {
+                var node = nodes[i];
+                if (!groups.TryGetValue(node.RootContextId, out var accumulator))
+                    accumulator = new RootAccumulator(in node);
+                accumulator.Add(in node);
+                groups[node.RootContextId] = accumulator;
+            }
+
+            var result = new List<BattleDiagnosticTraceRootSummary>(groups.Count);
+            foreach (var pair in groups) result.Add(pair.Value.Build());
+            result.Sort(CompareValueThenRecency);
+            return result;
+        }
+
+        private static int CompareValueThenRecency(
+            BattleDiagnosticTraceRootSummary left,
+            BattleDiagnosticTraceRootSummary right)
+        {
+            var comparison = right.HasIssues.CompareTo(left.HasIssues);
+            if (comparison != 0) return comparison;
+            comparison = right.IsActive.CompareTo(left.IsActive);
+            if (comparison != 0) return comparison;
+            comparison = (right.EffectCount + right.ActionCount)
+                .CompareTo(left.EffectCount + left.ActionCount);
+            if (comparison != 0) return comparison;
+            comparison = right.LastFrame.CompareTo(left.LastFrame);
+            return comparison != 0
+                ? comparison
+                : right.RootContextId.CompareTo(left.RootContextId);
+        }
+
+        private struct RootAccumulator
+        {
+            private BattleDiagnosticTraceNodeSummary _root;
+            private int _nodeCount;
+            private int _issueCount;
+            private int _activeCount;
+            private int _effectCount;
+            private int _actionCount;
+            private int _lastFrame;
+
+            public RootAccumulator(in BattleDiagnosticTraceNodeSummary first)
+            {
+                _root = first;
+                _nodeCount = 0;
+                _issueCount = 0;
+                _activeCount = 0;
+                _effectCount = 0;
+                _actionCount = 0;
+                _lastFrame = first.StartFrame;
+            }
+
+            public void Add(in BattleDiagnosticTraceNodeSummary node)
+            {
+                if (node.ContextId == node.RootContextId) _root = node;
+                _nodeCount++;
+                if (node.State == BattleDiagnosticTraceNodeState.Failed ||
+                    node.State == BattleDiagnosticTraceNodeState.ForceEnded)
+                    _issueCount++;
+                if (node.State == BattleDiagnosticTraceNodeState.Active) _activeCount++;
+                if (string.Equals(node.Kind, "SkillEffect", StringComparison.Ordinal) ||
+                    string.Equals(node.Kind, "EffectExecution", StringComparison.Ordinal))
+                    _effectCount++;
+                if (string.Equals(node.Kind, "EffectAction", StringComparison.Ordinal)) _actionCount++;
+
+                if (node.StartFrame > _lastFrame) _lastFrame = node.StartFrame;
+                if (BattleDiagnosticFrames.IsValid(node.EndFrame) && node.EndFrame > _lastFrame)
+                    _lastFrame = node.EndFrame;
+            }
+
+            public BattleDiagnosticTraceRootSummary Build()
+            {
+                return new BattleDiagnosticTraceRootSummary(
+                    in _root,
+                    _nodeCount,
+                    _issueCount,
+                    _activeCount,
+                    _effectCount,
+                    _actionCount,
+                    _lastFrame);
+            }
+        }
     }
 }

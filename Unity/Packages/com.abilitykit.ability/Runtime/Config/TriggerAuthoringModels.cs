@@ -25,6 +25,18 @@ namespace AbilityKit.Ability.Config.Authoring
         Action = 1
     }
 
+    public enum TriggerEntryMode
+    {
+        Event = 0,
+        Callable = 1
+    }
+
+    public enum TriggerCallableParameterDirection
+    {
+        Input = 0,
+        Output = 1
+    }
+
     public enum TriggerValueType
     {
         None = 0,
@@ -35,7 +47,8 @@ namespace AbilityKit.Ability.Config.Authoring
         Entity = 5,
         ObjectId = 6,
         IntegerList = 7,
-        Vector3 = 8
+        Vector3 = 8,
+        Object = 9
     }
 
     public enum TriggerValueSource
@@ -121,7 +134,10 @@ namespace AbilityKit.Ability.Config.Authoring
     {
         public int Id;
         public string Name;
+        public string GroupPath;
+        public List<string> Tags = new List<string>();
         public bool Enabled = true;
+        public TriggerEntryMode EntryMode;
         public string Event;
         public string Phase = "immediate";
         public int Priority;
@@ -135,18 +151,24 @@ namespace AbilityKit.Ability.Config.Authoring
         public TriggerNodeData Condition;
         public TriggerNodeData Actions;
         public List<TriggerBlackboardVariableData> Blackboard = new List<TriggerBlackboardVariableData>();
+        // Null keeps existing source documents stable until a callable contract is declared.
+        public List<TriggerCallableParameterData> CallableParameters;
         public string Note;
     }
 
     [Serializable]
     public sealed class TriggerNodeData
     {
+        public bool Enabled = true;
         public TriggerNodeKind Kind;
         public string GroupReference;
         public string Type;
         public string Note;
         public List<TriggerArgumentData> Arguments = new List<TriggerArgumentData>();
+        // Action flow nodes use an explicit predicate so it cannot be confused with child actions.
+        public TriggerNodeData Condition;
         public List<TriggerNodeData> Children = new List<TriggerNodeData>();
+        public List<TriggerNodeData> ElseChildren = new List<TriggerNodeData>();
     }
 
     [Serializable]
@@ -167,6 +189,7 @@ namespace AbilityKit.Ability.Config.Authoring
         public string StringValue;
         public List<long> IntegerListValue = new List<long>();
         public TriggerVector3Data Vector3Value = new TriggerVector3Data();
+        public List<TriggerArgumentData> Fields = new List<TriggerArgumentData>();
         public string Path;
         public string Expression;
     }
@@ -187,6 +210,19 @@ namespace AbilityKit.Ability.Config.Authoring
         public bool ReadOnly;
         public string Description;
         public TriggerValueRefData DefaultValue = new TriggerValueRefData();
+    }
+
+    [Serializable]
+    public sealed class TriggerCallableParameterData
+    {
+        public string Name;
+        public string LocalVariableKey;
+        public TriggerValueType Type;
+        public TriggerCallableParameterDirection Direction;
+        public bool Required = true;
+        public bool HasDefault;
+        public TriggerValueRefData DefaultValue = new TriggerValueRefData();
+        public string Description;
     }
 
     [Serializable]
@@ -240,17 +276,32 @@ namespace AbilityKit.Ability.Config.Authoring
         public string TemplateVersion = "1.0.0";
         public string DisplayName;
         public string Description;
-        public string Event;
         public List<TriggerAuthoringTemplateParameterData> Parameters =
             new List<TriggerAuthoringTemplateParameterData>();
-        public TriggerNodeData Condition;
-        public TriggerNodeData Actions;
+
+        // 模板与普通触发器共用同一份定义结构；默认作为可调用函数，不订阅 EventBus。
+        public TriggerDefinitionData Definition = CreateDefaultDefinition();
+
+        public static TriggerDefinitionData CreateDefaultDefinition()
+        {
+            return new TriggerDefinitionData
+            {
+                EntryMode = TriggerEntryMode.Callable,
+                Event = string.Empty,
+                Actions = new TriggerNodeData
+                {
+                    Kind = TriggerNodeKind.Action,
+                    Type = "seq"
+                }
+            };
+        }
     }
 
     [Serializable]
     public sealed class TriggerAuthoringTemplateParameterData
     {
         public string Name;
+        public string LocalVariableKey;
         public TriggerValueType Type;
         public bool Required = true;
         public TriggerTemplateValueSourceMask AllowedSources = TriggerTemplateValueSourceMask.InstanceBinding;
@@ -277,6 +328,9 @@ namespace AbilityKit.Ability.Config.Authoring
     [Serializable]
     public sealed class TriggerExecutionControlData
     {
+        public string Mode;
+        public int MaxExecutions;
+        public double CooldownMilliseconds;
         public string InterruptPolicy = "none";
         public bool StopPropagationOnSuccess;
         public bool StopPropagationOnFailure;

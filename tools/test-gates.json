@@ -247,6 +247,12 @@
           "kind": "dotnet-test",
           "project": "src/AbilityKit.Demo.Moba.Acceptance.Tests/AbilityKit.Demo.Moba.Acceptance.Tests.csproj",
           "filter": "Gate=MobaAcceptanceDotnet"
+        },
+        {
+          "name": "Battle flow regression",
+          "kind": "dotnet-test",
+          "project": "src/AbilityKit.Demo.Moba.Tests/AbilityKit.Demo.Moba.Tests.csproj",
+          "filter": "Gate=BattleFlow"
         }
       ]
     },
@@ -524,13 +530,17 @@
       "name": "foundation-units",
       "level": "P1",
       "owner": "Runtime Platform",
-      "description": "Foundation leaf-package unit contracts: timer scheduling semantics, gameplay tag hierarchy/query/persistence, diagnostics profiler data, flow engine contracts, and protocol wire serialization.",
+      "description": "Foundation leaf-package unit contracts: timer scheduling semantics, gameplay tag hierarchy/query/persistence, diagnostics profiler data, flow engine contracts, protocol wire serialization, environment profile mechanism, and the sample catalog golden baseline.",
       "scope": [
         "timer",
         "gameplaytags",
         "diagnostics",
         "flow",
-        "protocol"
+        "protocol",
+        "environment",
+        "scenario",
+        "battleflow",
+        "samples"
       ],
       "requiredBefore": [
         "merge-foundation-package-change",
@@ -568,6 +578,35 @@
           "name": "Protocol wire serialization tests",
           "kind": "dotnet-test",
           "project": "src/AbilityKit.Protocol.Tests/AbilityKit.Protocol.Tests.csproj"
+        },
+        {
+          "name": "Environment profile mechanism tests",
+          "kind": "dotnet-test",
+          "project": "src/AbilityKit.Environment.Tests/AbilityKit.Environment.Tests.csproj"
+        },
+        {
+          "name": "Scenario IR tests",
+          "kind": "dotnet-test",
+          "project": "src/AbilityKit.Scenario.Tests/AbilityKit.Scenario.Tests.csproj"
+        },
+        {
+          "name": "BattleFlow block model tests",
+          "kind": "dotnet-test",
+          "project": "src/AbilityKit.BattleFlow.Tests/AbilityKit.BattleFlow.Tests.csproj"
+        },
+        {
+          "name": "Build sample catalog host",
+          "kind": "dotnet-build",
+          "project": "src/AbilityKit.Samples/AbilityKit.Samples.csproj"
+        },
+        {
+          "name": "Sample catalog golden baseline",
+          "kind": "powershell-script",
+          "script": "tools/check_sample_baseline.ps1",
+          "arguments": [
+            "-NoBuild"
+          ],
+          "timeoutSeconds": 600
         }
       ]
     },

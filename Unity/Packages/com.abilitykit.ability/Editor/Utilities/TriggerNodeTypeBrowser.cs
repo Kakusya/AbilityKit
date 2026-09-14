@@ -54,6 +54,7 @@ namespace AbilityKit.Ability.Editor.Utilities
         private readonly Action<TriggerTypeDescriptor> _onSelectType;
         private readonly List<TriggerNodeGroupData> _groups;
         private readonly Action<string> _onSelectGroup;
+        private readonly TriggerTypeDescriptorCatalog _catalog;
         private readonly List<TriggerTypeDescriptor> _descriptors = new List<TriggerTypeDescriptor>();
         private readonly List<TriggerNodeGroupData> _resolvedGroups = new List<TriggerNodeGroupData>();
 
@@ -62,13 +63,15 @@ namespace AbilityKit.Ability.Editor.Utilities
             TriggerNodeKind kind,
             Action<TriggerTypeDescriptor> onSelectType,
             List<TriggerNodeGroupData> groups = null,
-            Action<string> onSelectGroup = null)
+            Action<string> onSelectGroup = null,
+            TriggerTypeDescriptorCatalog catalog = null)
             : base(state)
         {
             _kind = kind;
             _onSelectType = onSelectType;
             _groups = groups;
             _onSelectGroup = onSelectGroup;
+            _catalog = catalog;
         }
 
         protected override AdvancedDropdownItem BuildRoot()
@@ -76,7 +79,7 @@ namespace AbilityKit.Ability.Editor.Utilities
             _descriptors.Clear();
             _resolvedGroups.Clear();
             var root = new AdvancedDropdownItem(_kind == TriggerNodeKind.Condition ? "选择条件" : "选择行为");
-            var catalog = TriggerTypeDescriptorCatalog.CreateProjectDefaults();
+            var catalog = _catalog ?? TriggerTypeDescriptorCatalog.CreateForProject(null);
             var categories = new Dictionary<string, AdvancedDropdownItem>(StringComparer.Ordinal);
 
             var recent = TriggerNodeRecentUsage.GetRecent(_kind);
@@ -140,7 +143,12 @@ namespace AbilityKit.Ability.Editor.Utilities
 
         private AdvancedDropdownItem CreateTypeItem(TriggerTypeDescriptor descriptor)
         {
-            var item = new AdvancedDropdownItem(descriptor.DisplayName + "  [" + descriptor.Type + "]")
+            var capability = descriptor.Kind == TriggerNodeKind.Action && !descriptor.RuntimeSupported
+                ? "  [仅编辑器]"
+                : string.Empty;
+            var item = new AdvancedDropdownItem(
+                TriggerAuthoringEditorLabels.Node(descriptor.Type, descriptor.DisplayName) +
+                "  [" + descriptor.Type + "]" + capability)
             {
                 id = _descriptors.Count
             };
@@ -164,13 +172,43 @@ namespace AbilityKit.Ability.Editor.Utilities
                 prefix = prefix.Length == 0 ? parts[i] : prefix + "/" + parts[i];
                 if (!cache.TryGetValue(prefix, out var node))
                 {
-                    node = new AdvancedDropdownItem(parts[i]);
+                    node = new AdvancedDropdownItem(TranslateCategory(parts[i]));
                     parent.AddChild(node);
                     cache.Add(prefix, node);
                 }
                 parent = node;
             }
             return parent;
+        }
+
+        private static string TranslateCategory(string category)
+        {
+            switch (category)
+            {
+                case "Condition": return "条件";
+                case "Action": return "行为";
+                case "Composite": return "组合";
+                case "Constant": return "常量";
+                case "Compare": return "比较";
+                case "Combat": return "战斗";
+                case "Context": return "上下文";
+                case "Blackboard": return "黑板";
+                case "Flow": return "流程";
+                case "Debug": return "调试";
+                case "Variable": return "变量";
+                case "Attribute": return "属性";
+                case "Buff": return "增益效果";
+                case "Shield": return "护盾";
+                case "Resource": return "资源";
+                case "Projectile": return "投射物";
+                case "Summon": return "召唤物";
+                case "Area": return "区域";
+                case "Skill": return "技能";
+                case "Motion": return "位移";
+                case "Presentation": return "表现";
+                case "Gameplay": return "玩法";
+                default: return category;
+            }
         }
     }
 }

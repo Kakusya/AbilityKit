@@ -5,23 +5,66 @@
 #if HFSM_UNITY
 using System;
 using System.Collections.Generic;
+using System.Reflection;
 using UnityEngine;
-using UnityHFSM.Actions;
-using UnityHFSM.Actions.Runtime;
-using UnityHFSM.Graph;
+using AbilityKit.HFSM.Actions;
+using AbilityKit.HFSM.Actions.Runtime;
+using AbilityKit.HFSM.Graph;
+using AbilityKit.HFSM.Graph.Compilation;
+using AbilityKit.HFSM.Graph.Conditions;
 
-namespace UnityHFSM
+namespace AbilityKit.HFSM
 {
     /// <summary>
     /// 支持行为树执行的状态机。
-    /// 可以从 HfsmGraphAsset 初始化，并自动执行状态中的行为。
+    /// 可以从 GraphAsset 初始化，并自动执行状态中的行为。
     /// </summary>
-    public class ActionStateMachine<TStateId, TEvent> : StateMachine<TStateId, TEvent>, IActionable<TEvent>
+    public class ActionStateMachine<TStateId, TEvent> : StateMachine<TStateId, TEvent>, IActionable<TEvent>, Visualization.IVisualizationParameterSource
     {
         private ActionStorage<TEvent> actionStorage;
         private readonly Dictionary<string, BehaviorExecutor> behaviorExecutors = new Dictionary<string, BehaviorExecutor>();
         private MonoBehaviour monoBehaviour;
         private object userData;
+
+        public StateMachineGraphProgram GraphProgram { get; private set; }
+        public ParameterStore Parameters { get; } = new ParameterStore();
+
+        public IEnumerable<Visualization.ParameterInfo> GetVisualizationParameters()
+        {
+            if (GraphProgram == null || GraphProgram.Parameters == null)
+                yield break;
+
+            foreach (var parameter in GraphProgram.Parameters)
+            {
+                var info = new Visualization.ParameterInfo
+                {
+                    name = parameter.Name,
+                    isTrigger = parameter.ParameterType == ParameterValueType.Trigger,
+                    type = parameter.ParameterType == ParameterValueType.Bool
+                        ? Visualization.ParameterType.Bool
+                        : parameter.ParameterType == ParameterValueType.Int
+                            ? Visualization.ParameterType.Int
+                            : parameter.ParameterType == ParameterValueType.Float
+                                ? Visualization.ParameterType.Float
+                                : Visualization.ParameterType.Trigger
+                };
+
+                switch (parameter.ParameterType)
+                {
+                    case ParameterValueType.Bool:
+                        info.boolValue = Parameters.GetBool(parameter.Name);
+                        break;
+                    case ParameterValueType.Int:
+                        info.intValue = Parameters.GetInt(parameter.Name);
+                        break;
+                    case ParameterValueType.Float:
+                        info.floatValue = Parameters.GetFloat(parameter.Name);
+                        break;
+                }
+
+                yield return info;
+            }
+        }
 
         /// <summary>
         /// 行为完成时触发的事件（行为ID，状态ID，完成状态）
@@ -63,80 +106,230 @@ namespace UnityHFSM
         }
 
         /// <summary>
-        /// 从 HfsmGraphAsset 初始化状态机
+        /// 从 GraphAsset 初始化状态机
         /// </summary>
-        public void InitializeFromGraph(HfsmGraphAsset graph, MonoBehaviour mono)
+        public void InitializeFromGraph(GraphAsset graph, MonoBehaviour mono)
         {
             monoBehaviour = mono;
             InitializeFromGraph(graph);
         }
 
-        /// <summary>
-        /// 从 HfsmGraphAsset 初始化状态机（无 MonoBehaviour）
-        /// </summary>
-        public void InitializeFromGraph(HfsmGraphAsset graph)
+        public void InitializeFromGraph(
+            GraphAsset graph,
+            MonoBehaviour mono,
+            StateMachineGraphBinding<TStateId, TEvent> binding)
         {
-            if (graph == null)
-                return;
-
-            graph.Initialize();
-
-            var rootSM = graph.GetRootStateMachine();
-            if (rootSM != null)
-            {
-                BuildStateMachineFromNode(graph, rootSM, this);
-            }
+            monoBehaviour = mono;
+            InitializeFromGraph(graph, binding);
         }
 
-        private void BuildStateMachineFromNode(HfsmGraphAsset graph, HfsmStateMachineNode smNode, object parentFsm)
+        /// <summary>
+        /// 从 GraphAsset 初始化状态机（无 MonoBehaviour）
+        /// </summary>
+        public void InitializeFromGraph(GraphAsset graph)
         {
-            foreach (var childId in smNode.ChildNodeIds)
+            InitializeFromGraph(graph, StateMachineGraphBinding<TStateId, TEvent>.CreateNameBinding(Parameters));
+        }
+
+        public void InitializeFromGraph(
+            GraphAsset graph,
+            StateMachineGraphBinding<TStateId, TEvent> binding)
+        {
+            if (graph == null)
+                throw new ArgumentNullException(nameof(graph));
+
+            InitializeFromProgram(new StateMachineGraphCompiler().Compile(graph), binding);
+        }
+
+        public void InitializeFromProgram(
+            StateMachineGraphProgram program,
+            StateMachineGraphBinding<TStateId, TEvent> binding)
+        {
+            GraphProgram = program ?? throw new ArgumentNullException(nameof(program));
+            if (binding == null)
+                throw new ArgumentNullException(nameof(binding));
+
+            Parameters.LoadDefaults(program.Parameters);
+            var mappedStateIds = new Dictionary<string, TStateId>(StringComparer.Ordinal);
+            BuildMachine(program, program.RootMachine, this, binding, mappedStateIds);
+        }
+
+        private void BuildMachine(
+            StateMachineGraphProgram program,
+            MachineProgram machine,
+            StateMachine<TStateId, TStateId, TEvent> runtimeMachine,
+            StateMachineGraphBinding<TStateId, TEvent> binding,
+            IDictionary<string, TStateId> mappedStateIds)
+        {
+            var localIds = new HashSet<TStateId>(EqualityComparer<TStateId>.Default);
+            foreach (var childNodeId in machine.ChildNodeIds)
             {
-                var childNode = graph.GetNodeById(childId);
-                if (childNode == null)
-                    continue;
-
-                if (childNode is HfsmStateMachineNode childSMNode)
+                var child = program.GetNode(childNodeId);
+                var runtimeId = binding.StateIdSelector(child);
+                if (!localIds.Add(runtimeId))
                 {
-                    var subFsm = new HybridStateMachine<TStateId, TEvent>();
-                    AddState((TStateId)(object)childNode.GetName(), subFsm);
-
-                    BuildStateMachineFromNode(graph, childSMNode, subFsm);
-
-                    if (!string.IsNullOrEmpty(smNode.DefaultStateId) && smNode.DefaultStateId == childId)
-                    {
-                        SetStartState((TStateId)(object)childNode.GetName());
-                    }
+                    throw new InvalidOperationException(
+                        $"The graph binding maps more than one child of machine '{machine.RuntimeName}' to state ID '{runtimeId}'.");
                 }
-                else if (childNode is HfsmStateNode stateNode)
+
+                mappedStateIds.Add(childNodeId, runtimeId);
+                if (child is MachineProgram childMachine)
+                {
+                    var subMachine = new HybridStateMachine<TStateId, TEvent>(
+                        needsExitTime: childMachine.NeedsExitTime,
+                        isGhostState: childMachine.IsGhostState,
+                        rememberLastState: childMachine.RememberLastState);
+                    runtimeMachine.AddState(runtimeId, subMachine);
+                    BuildMachine(program, childMachine, subMachine, binding, mappedStateIds);
+                }
+                else if (child is StateProgram state)
                 {
                     var actionState = new ActionBehaviorState<TStateId, TEvent>(
-                        stateNode,
-                        stateNode.NeedsExitTime,
-                        stateNode.IsGhostState,
+                        state.Template,
+                        state.NeedsExitTime,
+                        state.IsGhostState,
                         monoBehaviour,
                         userData,
-                        this
+                        runtimeMachine
                     );
 
-                    AddState((TStateId)(object)stateNode.GetName(), actionState);
+                    runtimeMachine.AddState(runtimeId, actionState);
 
-                    if (stateNode.isDefault || (!string.IsNullOrEmpty(smNode.DefaultStateId) && smNode.DefaultStateId == childId))
-                    {
-                        SetStartState((TStateId)(object)stateNode.GetName());
-                    }
+                    Parameters.BindActionCompletion(state.SourceNodeId, () => actionState.BehaviorCompleted);
+                    Parameters.BindNodeElapsedTime(state.SourceNodeId, () => actionState.ElapsedTime);
 
                     actionState.OnBehaviorCompleted += (behaviorId, status) =>
                     {
-                        OnBehaviorCompleted?.Invoke(behaviorId, stateNode.GetName(), status);
+                        OnBehaviorCompleted?.Invoke(behaviorId, state.RuntimeName, status);
                     };
 
                     actionState.OnBehaviorFailed += (behaviorId) =>
                     {
-                        OnBehaviorFailed?.Invoke(behaviorId, stateNode.GetName());
+                        OnBehaviorFailed?.Invoke(behaviorId, state.RuntimeName);
                     };
                 }
             }
+
+            if (!string.IsNullOrEmpty(machine.DefaultChildNodeId))
+                runtimeMachine.SetStartState(mappedStateIds[machine.DefaultChildNodeId]);
+
+            Parameters.BindActiveState(machine.SourceNodeId, stateNodeId =>
+            {
+                if (!mappedStateIds.TryGetValue(stateNodeId, out var mappedStateId))
+                    return false;
+                try
+                {
+                    return EqualityComparer<TStateId>.Default.Equals(runtimeMachine.ActiveStateName, mappedStateId);
+                }
+                catch (InvalidOperationException)
+                {
+                    return false;
+                }
+            });
+
+            foreach (var transition in machine.Transitions)
+                AddCompiledTransition(runtimeMachine, transition, binding, mappedStateIds);
+        }
+
+        private static void AddCompiledTransition(
+            StateMachine<TStateId, TStateId, TEvent> runtimeMachine,
+            TransitionProgram program,
+            StateMachineGraphBinding<TStateId, TEvent> binding,
+            IDictionary<string, TStateId> mappedStateIds)
+        {
+            var from = program.IsFromAnyState || program.IsExitTransition && string.IsNullOrEmpty(program.SourceNodeId)
+                ? default
+                : mappedStateIds[program.SourceNodeId];
+            var to = program.IsExitTransition ? default : mappedStateIds[program.TargetNodeId];
+            var condition = CreateCondition(program, binding.EvaluationContext);
+            var action = ResolveTransitionAction(program, binding.TransitionActionResolver);
+            var transition = new Transition<TStateId>(
+                from,
+                to,
+                condition == null ? null : _ => condition(),
+                action == null ? null : _ => action(),
+                forceInstantly: program.ForceInstantly);
+
+            var hasTrigger = !string.IsNullOrEmpty(program.TriggerId);
+            var trigger = hasTrigger ? binding.EventIdSelector(program.TriggerId) : default;
+            if (program.IsExitTransition)
+            {
+                if (program.IsFromAnyState)
+                {
+                    if (hasTrigger)
+                        runtimeMachine.AddExitTriggerTransitionFromAny(trigger, transition);
+                    else
+                        runtimeMachine.AddExitTransitionFromAny(transition);
+                }
+                else if (hasTrigger)
+                    runtimeMachine.AddExitTriggerTransition(trigger, transition);
+                else
+                    runtimeMachine.AddExitTransition(transition);
+            }
+            else if (program.IsFromAnyState)
+            {
+                if (hasTrigger)
+                    runtimeMachine.AddTriggerTransitionFromAny(trigger, transition);
+                else
+                    runtimeMachine.AddTransitionFromAny(transition);
+            }
+            else if (hasTrigger)
+                runtimeMachine.AddTriggerTransition(trigger, transition);
+            else
+                runtimeMachine.AddTransition(transition);
+        }
+
+        private static Func<bool> CreateCondition(TransitionProgram program, IEvaluationContext context)
+        {
+            if (program.Conditions.Count == 0)
+                return null;
+            if (context == null)
+            {
+                throw new InvalidOperationException(
+                    $"Transition '{program.SourceEdgeId}' has conditions, but the graph binding has no evaluation context.");
+            }
+
+            if (program.UseAndLogic)
+            {
+                return () =>
+                {
+                    foreach (var condition in program.Conditions)
+                    {
+                        if (!condition.Evaluate(context))
+                            return false;
+                    }
+                    return true;
+                };
+            }
+
+            return () =>
+            {
+                foreach (var condition in program.Conditions)
+                {
+                    if (condition.Evaluate(context))
+                        return true;
+                }
+                return false;
+            };
+        }
+
+        private static Action ResolveTransitionAction(
+            TransitionProgram program,
+            Func<string, Action> resolver)
+        {
+            if (string.IsNullOrEmpty(program.ActionKey))
+                return null;
+            if (resolver == null)
+            {
+                throw new InvalidOperationException(
+                    $"Transition '{program.SourceEdgeId}' declares action key '{program.ActionKey}', " +
+                    "but the graph binding has no transition action resolver.");
+            }
+
+            var action = resolver(program.ActionKey);
+            if (action == null)
+                throw new InvalidOperationException($"No transition action is registered for key '{program.ActionKey}'.");
+            return action;
         }
 
         /// <summary>
@@ -199,22 +392,34 @@ namespace UnityHFSM
     /// <summary>
     /// 支持行为树执行的状态
     /// </summary>
-    public class ActionBehaviorState<TStateId, TEvent> : State<TStateId>, IActionable<TEvent>
+    public class ActionBehaviorState<TStateId, TEvent> : State<TStateId>, IActionable<TEvent>, IActionRuntimeStateProvider
     {
-        private readonly HfsmStateNode node;
+        private readonly StateNode node;
         private readonly MonoBehaviour mono;
         private readonly object userData;
         private readonly object parentFsm;
         private BehaviorExecutor executor;
         private ActionStorage<TEvent> actionStorage;
+        private readonly Dictionary<string, IActionRuntimeStateSource> runtimeStates =
+            new Dictionary<string, IActionRuntimeStateSource>(StringComparer.Ordinal);
         private string behaviorRootId;
         private bool behaviorCompleted;
+        private float elapsedTime;
+        private readonly Action[] entryActions;
+        private readonly Action[] logicActions;
+        private readonly Action[] exitActions;
+        private readonly Func<bool>[] canExitChecks;
+
+        public bool BehaviorCompleted => behaviorCompleted;
+        public float ElapsedTime => elapsedTime;
 
         public event Action<string, BehaviorStatus> OnBehaviorCompleted;
         public event Action<string> OnBehaviorFailed;
 
+        public IEnumerable<IActionRuntimeStateSource> GetActionRuntimeStates() => runtimeStates.Values;
+
         public ActionBehaviorState(
-            HfsmStateNode node,
+            StateNode node,
             bool needsExitTime,
             bool isGhostState,
             MonoBehaviour mono,
@@ -227,7 +432,92 @@ namespace UnityHFSM
             this.userData = userData;
             this.parentFsm = parentFsm;
 
+            entryActions = ResolveActions(node.EntryActionMethodNames, "entry");
+            logicActions = ResolveActions(node.LogicActionMethodNames, "logic");
+            exitActions = ResolveActions(node.ExitActionMethodNames, "exit");
+            canExitChecks = ResolveCanExitChecks(node.CanExitMethodNames);
             InitializeExecutor();
+        }
+
+        private Action[] ResolveActions(IReadOnlyList<string> methodNames, string phase)
+        {
+            if (methodNames == null || methodNames.Count == 0)
+                return Array.Empty<Action>();
+
+            EnsureLifecycleTarget(phase);
+            var actions = new Action[methodNames.Count];
+            for (var index = 0; index < methodNames.Count; index++)
+            {
+                var method = ResolveLifecycleMethod(methodNames[index], typeof(void), phase);
+                actions[index] = (Action)Delegate.CreateDelegate(typeof(Action), mono, method);
+            }
+            return actions;
+        }
+
+        private Func<bool>[] ResolveCanExitChecks(IReadOnlyList<string> methodNames)
+        {
+            if (methodNames == null || methodNames.Count == 0)
+                return Array.Empty<Func<bool>>();
+
+            EnsureLifecycleTarget("can-exit");
+            var checks = new Func<bool>[methodNames.Count];
+            for (var index = 0; index < methodNames.Count; index++)
+            {
+                var method = ResolveLifecycleMethod(methodNames[index], typeof(bool), "can-exit");
+                checks[index] = (Func<bool>)Delegate.CreateDelegate(typeof(Func<bool>), mono, method);
+            }
+            return checks;
+        }
+
+        private void EnsureLifecycleTarget(string phase)
+        {
+            if (mono == null)
+            {
+                throw new InvalidOperationException(
+                    $"State '{node.GetName()}' declares {phase} lifecycle methods, but no MonoBehaviour target was supplied.");
+            }
+        }
+
+        private MethodInfo ResolveLifecycleMethod(string methodName, Type returnType, string phase)
+        {
+            if (string.IsNullOrWhiteSpace(methodName))
+                throw new InvalidOperationException($"State '{node.GetName()}' contains an empty {phase} method name.");
+
+            var method = mono.GetType().GetMethod(
+                methodName,
+                BindingFlags.Instance | BindingFlags.Public | BindingFlags.NonPublic,
+                binder: null,
+                types: Type.EmptyTypes,
+                modifiers: null);
+            if (method == null || method.ReturnType != returnType)
+            {
+                throw new InvalidOperationException(
+                    $"State '{node.GetName()}' {phase} method '{methodName}' must be an instance method " +
+                    $"with no parameters and return '{returnType.Name}'.");
+            }
+            return method;
+        }
+
+        private static void InvokeAll(Action[] actions)
+        {
+            for (var index = 0; index < actions.Length; index++)
+                actions[index]();
+        }
+
+        private bool CanExitNow()
+        {
+            if (canExitChecks.Length == 0)
+                return behaviorCompleted;
+            for (var index = 0; index < canExitChecks.Length; index++)
+                if (!canExitChecks[index]())
+                    return false;
+            return true;
+        }
+
+        private void TryApproveExit()
+        {
+            if (needsExitTime && fsm != null && fsm.HasPendingTransition && CanExitNow())
+                fsm.StateCanExit();
         }
 
         private void InitializeExecutor()
@@ -247,7 +537,7 @@ namespace UnityHFSM
             }
         }
 
-        private IAction CreateActionTree(HfsmStateNode stateNode)
+        private IAction CreateActionTree(StateNode stateNode)
         {
             if (stateNode.BehaviorItems == null || stateNode.BehaviorItems.Count == 0)
                 return null;
@@ -255,19 +545,26 @@ namespace UnityHFSM
             var roots = stateNode.GetRootBehaviorItems();
             if (roots.Count == 1)
                 behaviorRootId = roots[0].id;
-            return BehaviorTreeBuilder.BuildFromEditorItems(stateNode.BehaviorItems);
+            return BehaviorTreeBuilder.BuildInstrumentedFromEditorItems(
+                stateNode.BehaviorItems,
+                roots.Count == 1 ? roots[0].id : null,
+                runtimeStates);
         }
 
         public override void OnEnter()
         {
             base.OnEnter();
             behaviorCompleted = false;
+            elapsedTime = 0f;
             executor?.Reset();
+            InvokeAll(entryActions);
         }
 
         public override void OnLogic()
         {
             base.OnLogic();
+            elapsedTime += Time.deltaTime;
+            InvokeAll(logicActions);
 
             if (executor != null && !behaviorCompleted)
             {
@@ -278,16 +575,22 @@ namespace UnityHFSM
                     OnBehaviorCompleted?.Invoke(behaviorRootId, status);
                     if (status == BehaviorStatus.Failure)
                         OnBehaviorFailed?.Invoke(behaviorRootId);
-                    if (needsExitTime)
-                        fsm?.StateCanExit();
                 }
             }
+
+            TryApproveExit();
+        }
+
+        public override void OnExitRequest()
+        {
+            TryApproveExit();
         }
 
         public override void OnExit()
         {
             behaviorCompleted = true;
             executor?.ForceEnd();
+            InvokeAll(exitActions);
             base.OnExit();
         }
 
@@ -304,6 +607,11 @@ namespace UnityHFSM
         public void OnAction<TData>(TEvent trigger, TData data)
         {
             actionStorage?.RunAction<TData>(trigger, data);
+        }
+
+        public bool HasAction(TEvent trigger)
+        {
+            return actionStorage?.HasAction(trigger) ?? false;
         }
 
         public ActionBehaviorState<TStateId, TEvent> AddAction(TEvent trigger, Action action)

@@ -5,6 +5,7 @@ using AbilityKit.Triggering.Payload;
 using AbilityKit.Triggering.Variables.Numeric;
 using AbilityKit.Triggering.Variables.Numeric.Expression;
 using AbilityKit.Triggering.Runtime.ActionScheduler;
+using AbilityKit.Triggering.Collections;
 
 namespace AbilityKit.Triggering.Runtime
 {
@@ -21,13 +22,16 @@ namespace AbilityKit.Triggering.Runtime
         public readonly INumericRpnFunctionRegistry NumericFunctions;
         public readonly ExecPolicy Policy;
         public readonly ExecutionControl Control;
+        public readonly ITriggerCollectionResolver Collections;
+        public readonly ITriggerRandomSource RandomSource;
+        public readonly ITriggerExecutionScheduler ExecutionScheduler;
 
         /// <summary>
         /// 强类型 Payload 访问器注册表（避免装箱开销）
         /// </summary>
         public readonly IStronglyTypedPayloadAccessorRegistry StronglyTypedPayloads;
 
-        public ExecCtx(TCtx context, IEventBus eventBus, FunctionRegistry functions, ActionRegistry actions, IBlackboardResolver blackboards, IPayloadAccessorRegistry payloads, IIdNameRegistry idNames, INumericVarDomainRegistry numericDomains, INumericRpnFunctionRegistry numericFunctions, ExecPolicy policy, ExecutionControl control, ActionSchedulerManager actionSchedulerManager = null)
+        public ExecCtx(TCtx context, IEventBus eventBus, FunctionRegistry functions, ActionRegistry actions, IBlackboardResolver blackboards, IPayloadAccessorRegistry payloads, IIdNameRegistry idNames, INumericVarDomainRegistry numericDomains, INumericRpnFunctionRegistry numericFunctions, ExecPolicy policy, ExecutionControl control, ActionSchedulerManager actionSchedulerManager = null, ITriggerCollectionResolver collections = null, ITriggerRandomSource randomSource = null, ITriggerExecutionScheduler executionScheduler = null)
         {
             Context = context;
             EventBus = eventBus;
@@ -42,9 +46,12 @@ namespace AbilityKit.Triggering.Runtime
             Control = control;
             StronglyTypedPayloads = null;
             ActionSchedulerManager = actionSchedulerManager;
+            Collections = collections;
+            RandomSource = randomSource;
+            ExecutionScheduler = executionScheduler;
         }
 
-        public ExecCtx(TCtx context, IEventBus eventBus, FunctionRegistry functions, ActionRegistry actions, IBlackboardResolver blackboards, IPayloadAccessorRegistry payloads, IStronglyTypedPayloadAccessorRegistry stronglyTypedPayloads, IIdNameRegistry idNames, INumericVarDomainRegistry numericDomains, INumericRpnFunctionRegistry numericFunctions, ExecPolicy policy, ExecutionControl control, ActionSchedulerManager actionSchedulerManager = null)
+        public ExecCtx(TCtx context, IEventBus eventBus, FunctionRegistry functions, ActionRegistry actions, IBlackboardResolver blackboards, IPayloadAccessorRegistry payloads, IStronglyTypedPayloadAccessorRegistry stronglyTypedPayloads, IIdNameRegistry idNames, INumericVarDomainRegistry numericDomains, INumericRpnFunctionRegistry numericFunctions, ExecPolicy policy, ExecutionControl control, ActionSchedulerManager actionSchedulerManager = null, ITriggerCollectionResolver collections = null, ITriggerRandomSource randomSource = null, ITriggerExecutionScheduler executionScheduler = null)
         {
             Context = context;
             EventBus = eventBus;
@@ -59,6 +66,9 @@ namespace AbilityKit.Triggering.Runtime
             Control = control;
             StronglyTypedPayloads = stronglyTypedPayloads;
             ActionSchedulerManager = actionSchedulerManager;
+            Collections = collections;
+            RandomSource = randomSource;
+            ExecutionScheduler = executionScheduler;
         }
 
         /// <summary>

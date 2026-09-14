@@ -1,6 +1,6 @@
 using System;
 
-namespace UnityHFSM
+namespace AbilityKit.HFSM
 {
 	/// <summary>
 	/// Base class of states that support custom actions.
@@ -67,6 +67,8 @@ namespace UnityHFSM
 		/// <typeparam name="TData">Type of the data parameter.</typeparam>
 		public void OnAction<TData>(TEvent trigger, TData data)
 			=> actionStorage?.RunAction<TData>(trigger, data);
+
+		public bool HasAction(TEvent trigger) => actionStorage?.HasAction(trigger) ?? false;
 	}
 
 	/// <inheritdoc />

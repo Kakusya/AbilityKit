@@ -1,3 +1,5 @@
+using System.Buffers.Binary;
+using System.Text;
 using AbilityKit.Protocol.Catalog;
 using AbilityKit.Protocol.Generated;
 using Xunit;
@@ -136,6 +138,151 @@ public sealed class ProtocolCatalogTests
         Assert.Equal("invalid payload", failed.Error);
         Assert.False(missing.Success);
         Assert.Equal("No payload decoder is registered.", missing.Error);
+        Assert.Equal(ProtocolDecodeFailureKind.DecoderException, failed.FailureKind);
+        Assert.Equal(ProtocolDecodeFailureKind.DecoderNotRegistered, missing.FailureKind);
+    }
+
+    [Fact]
+    public void DecoderRegistry_BoundedDecodeRejectsUnsupportedVersionAndOversizedPayload()
+    {
+        var registry = new ProtocolPayloadDecoderRegistry();
+        registry.Register("project-a.room", "login.response", payload => payload.Count);
+        var definition = new ProtocolMessageDefinition(
+            "login.response",
+            100,
+            ProtocolDirection.ServerToClient,
+            ProtocolPacketKind.Response,
+            "Payload",
+            "memorypack",
+            minimumSchemaVersion: 2,
+            maximumSchemaVersion: 3,
+            maximumPayloadBytes: 2);
+
+        var unsupported = registry.Decode(
+            "project-a.room",
+            definition,
+            new ArraySegment<byte>(new byte[] { 1 }),
+            schemaVersion: 1);
+        var oversized = registry.Decode(
+            "project-a.room",
+            definition,
+            new ArraySegment<byte>(new byte[] { 1, 2, 3 }),
+            schemaVersion: 2);
+        var decoded = registry.Decode(
+            "project-a.room",
+            definition,
+            new ArraySegment<byte>(new byte[] { 1, 2 }),
+            schemaVersion: 3);
+
+        Assert.False(unsupported.Success);
+        Assert.Equal(ProtocolDecodeFailureKind.UnsupportedSchemaVersion, unsupported.FailureKind);
+        Assert.False(oversized.Success);
+        Assert.Equal(ProtocolDecodeFailureKind.PayloadTooLarge, oversized.FailureKind);
+        Assert.True(decoded.Success);
+        Assert.Equal(2, decoded.Value);
+    }
+
+    [Fact]
+    public void CatalogRegistry_NegotiatesHighestCompatibleSchemaVersion()
+    {
+        var catalogs = new ProtocolCatalogRegistry();
+        catalogs.Register(new ProtocolCatalogDefinition(
+            "project-a.room",
+            "project-a",
+            "room",
+            1,
+            "memorypack",
+            new[]
+            {
+                new ProtocolMessageDefinition(
+                    "login.request",
+                    99,
+                    ProtocolDirection.ClientToServer,
+                    ProtocolPacketKind.Request,
+                    "Payload",
+                    "memorypack",
+                    responseId: "login.response",
+                    minimumSchemaVersion: 2,
+                    maximumSchemaVersion: 4),
+                new ProtocolMessageDefinition(
+                    "login.response",
+                    100,
+                    ProtocolDirection.ServerToClient,
+                    ProtocolPacketKind.Response,
+                    "Payload",
+                    "memorypack",
+                    minimumSchemaVersion: 2,
+                    maximumSchemaVersion: 4)
+            }));
+
+        Assert.True(catalogs.TryNegotiateSchemaVersion(
+            "project-a.room",
+            "login.response",
+            3,
+            6,
+            out var selected));
+        Assert.Equal(4, selected);
+        Assert.False(catalogs.TryNegotiateSchemaVersion(
+            "project-a.room",
+            "login.response",
+            5,
+            6,
+            out _));
+    }
+
+    [Fact]
+    public void CatalogNegotiator_SelectsCommonVersionsAndReportsIncompatibility()
+    {
+        var local = CreateNegotiationCatalog(2, 4);
+        var remote = CreateNegotiationCatalog(3, 5);
+
+        var result = ProtocolCatalogNegotiator.Negotiate(local, remote);
+        Assert.True(result.IsCompatible);
+        Assert.True(result.TryGetSchemaVersion("login.request", out var selected));
+        Assert.Equal(4, selected);
+
+        var incompatible = ProtocolCatalogNegotiator.Negotiate(
+            local,
+            CreateNegotiationCatalog(5, 6));
+        Assert.False(incompatible.IsCompatible);
+        Assert.Equal(
+            ProtocolCatalogNegotiationFailureKind.SchemaVersionMismatch,
+            incompatible.FailureKind);
+        Assert.Contains("login.request", incompatible.IncompatibleMessageIds);
+    }
+
+    [Fact]
+    public void CatalogNegotiationSession_ResetsPerConnectionAndStoresSelection()
+    {
+        var session = new ProtocolCatalogNegotiationSession(CreateNegotiationCatalog(1, 3));
+        Assert.Equal(ProtocolCatalogNegotiationState.Pending, session.State);
+        Assert.False(session.IsNegotiated);
+
+        var result = session.ApplyRemoteCatalog(CreateNegotiationCatalog(2, 4));
+        Assert.True(result.IsCompatible);
+        Assert.Equal(ProtocolCatalogNegotiationState.Negotiated, session.State);
+        Assert.Equal(3, session.Result!.SelectedSchemaVersions["login.request"]);
+
+        session.Reset(12);
+        Assert.Equal(ProtocolCatalogNegotiationState.Pending, session.State);
+        Assert.Equal(12, session.ConnectionGeneration);
+        Assert.Null(session.Result);
+    }
+
+    private static ProtocolCatalogDefinition CreateNegotiationCatalog(
+        int minimumSchemaVersion,
+        int maximumSchemaVersion)
+    {
+        return new ProtocolCatalogDefinition(
+            "project-a.room", "project-a", "room", 1, "memorypack",
+            new[]
+            {
+                new ProtocolMessageDefinition(
+                    "login.request", 99, ProtocolDirection.ClientToServer,
+                    ProtocolPacketKind.Request, "Payload", "memorypack",
+                    minimumSchemaVersion: minimumSchemaVersion,
+                    maximumSchemaVersion: maximumSchemaVersion)
+            });
     }
 
     [Fact]
@@ -160,6 +307,83 @@ public sealed class ProtocolCatalogTests
 
         Assert.True(result.IsValid);
         Assert.Empty(result.Diagnostics);
+    }
+
+    [Fact]
+    public void CatalogAdvertisementCodec_RoundTripsMultipleCatalogsDeterministically()
+    {
+        var advertisement = ProtocolCatalogAdvertisement.FromCatalogs(BuiltInProtocolCatalogs.All);
+
+        var encoded = ProtocolCatalogAdvertisementCodec.Encode(advertisement);
+        Assert.True(ProtocolCatalogAdvertisementCodec.TryDecode(encoded, out var decoded, out var error), error);
+        Assert.NotNull(decoded);
+        Assert.Equal(
+            advertisement.Catalogs.Select(catalog => catalog.CatalogId),
+            decoded!.Catalogs.Select(catalog => catalog.CatalogId));
+        Assert.Equal(encoded, ProtocolCatalogAdvertisementCodec.Encode(decoded));
+        Assert.Equal("abilitykit.system", decoded.Catalogs.Single(catalog => catalog.CatalogId == "abilitykit.system").CatalogId);
+    }
+
+    [Fact]
+    public void CatalogAdvertisementCodec_RejectsTruncationAndConfiguredBounds()
+    {
+        var advertisement = ProtocolCatalogAdvertisement.FromCatalogs(BuiltInProtocolCatalogs.All);
+        var encoded = ProtocolCatalogAdvertisementCodec.Encode(advertisement);
+
+        Assert.False(ProtocolCatalogAdvertisementCodec.TryDecode(
+            encoded.AsSpan(0, encoded.Length - 1), out _, out var truncatedError));
+        Assert.Contains("Truncated", truncatedError, StringComparison.OrdinalIgnoreCase);
+        Assert.False(ProtocolCatalogAdvertisementCodec.TryDecode(
+            encoded,
+            out _,
+            out var boundError,
+            new ProtocolCatalogAdvertisementDecodeOptions(maximumPayloadBytes: encoded.Length - 1)));
+        Assert.Contains("exceeds", boundError, StringComparison.OrdinalIgnoreCase);
+    }
+
+    [Fact]
+    public void CatalogAdvertisementCodec_DecodesVersion1PayloadWithDefaultedFields()
+    {
+        var advertisement = ProtocolCatalogAdvertisement.FromCatalogs(new[]
+        {
+            BuiltInProtocolCatalogs.All.Single(catalog => catalog.CatalogId == "abilitykit.room")
+        });
+
+        var legacyPayload = EncodeVersion1(advertisement);
+
+        Assert.True(ProtocolCatalogAdvertisementCodec.TryDecode(legacyPayload, out var decoded, out var error), error);
+        Assert.NotNull(decoded);
+
+        var source = advertisement.Catalogs.Single();
+        var restored = decoded!.Catalogs.Single();
+        Assert.Equal(source.CatalogId, restored.CatalogId);
+        Assert.Equal(source.ProjectId, restored.ProjectId);
+        Assert.Equal(source.Domain, restored.Domain);
+        Assert.Equal(source.Messages.Count, restored.Messages.Count);
+
+        // Version 1 carried no response id, capture sample rate or sensitive field list.
+        // They must come back defaulted rather than making the payload undecodable.
+        foreach (var message in restored.Messages)
+        {
+            Assert.Equal(string.Empty, message.ResponseId);
+            Assert.Equal(1d, message.CaptureSampleRate);
+            Assert.Empty(message.SensitiveFields);
+        }
+    }
+
+    [Fact]
+    public void CatalogRegistry_NegotiatesSharedCatalogsFromAdvertisement()
+    {
+        var registry = BuiltInProtocolCatalogs.CreateRegistry();
+        var remote = ProtocolCatalogAdvertisement.FromCatalogs(new[]
+        {
+            BuiltInProtocolCatalogs.All.Single(catalog => catalog.CatalogId == "abilitykit.room")
+        });
+
+        Assert.True(registry.TryNegotiateAdvertisement(remote, out var result));
+        Assert.NotNull(result);
+        Assert.True(result!.TryGetCatalogResult("abilitykit.room", out var roomResult));
+        Assert.True(roomResult!.IsCompatible);
     }
 
     [Fact]
@@ -411,4 +635,62 @@ public sealed class ProtocolCatalogTests
             ProtocolPacketKind.Event,
             "Payload",
             "protobuf");
+
+    /// <summary>
+    /// Writes the version 1 advertisement layout by hand, so the decoder's
+    /// backward-compatibility path stays covered after the version 2 bump.
+    /// Do not "simplify" this by calling the encoder - the encoder only emits the
+    /// current version, and a round trip through it would test nothing.
+    /// </summary>
+    private static byte[] EncodeVersion1(ProtocolCatalogAdvertisement advertisement)
+    {
+        var bytes = new List<byte>();
+        AppendUInt32(bytes, 0x41434B41u); // "AKCA"
+        AppendUInt16(bytes, 1);
+        AppendUInt16(bytes, (ushort)advertisement.Catalogs.Count);
+        foreach (var catalog in advertisement.Catalogs)
+        {
+            AppendString(bytes, catalog.CatalogId);
+            AppendString(bytes, catalog.ProjectId);
+            AppendString(bytes, catalog.Domain);
+            AppendUInt32(bytes, unchecked((uint)catalog.Revision));
+            AppendString(bytes, catalog.DefaultCodec);
+            AppendUInt16(bytes, (ushort)catalog.Messages.Count);
+            foreach (var message in catalog.Messages)
+            {
+                AppendString(bytes, message.Id);
+                AppendUInt32(bytes, message.OpCode);
+                bytes.Add((byte)message.Direction);
+                bytes.Add((byte)message.Kind);
+                AppendString(bytes, message.PayloadType);
+                AppendString(bytes, message.Codec);
+                bytes.Add((byte)message.Reliability);
+                AppendUInt32(bytes, unchecked((uint)message.MinimumSchemaVersion));
+                AppendUInt32(bytes, unchecked((uint)message.MaximumSchemaVersion));
+                AppendUInt32(bytes, unchecked((uint)message.MaximumPayloadBytes));
+            }
+        }
+        return bytes.ToArray();
+    }
+
+    private static void AppendString(List<byte> bytes, string value)
+    {
+        var encoded = Encoding.UTF8.GetBytes(value);
+        AppendUInt16(bytes, (ushort)encoded.Length);
+        bytes.AddRange(encoded);
+    }
+
+    private static void AppendUInt16(List<byte> bytes, ushort value)
+    {
+        Span<byte> buffer = stackalloc byte[2];
+        BinaryPrimitives.WriteUInt16LittleEndian(buffer, value);
+        bytes.AddRange(buffer.ToArray());
+    }
+
+    private static void AppendUInt32(List<byte> bytes, uint value)
+    {
+        Span<byte> buffer = stackalloc byte[4];
+        BinaryPrimitives.WriteUInt32LittleEndian(buffer, value);
+        bytes.AddRange(buffer.ToArray());
+    }
 }

@@ -116,9 +116,11 @@ namespace AbilityKit.Triggering.Runtime.Plan.Json
                 [ETriggerPlanExecutableKind.If] = new IfExecutionNodeConverter(),
                 [ETriggerPlanExecutableKind.Repeat] = new RepeatExecutionNodeConverter(),
                 [ETriggerPlanExecutableKind.Until] = new UntilExecutionNodeConverter(),
+                [ETriggerPlanExecutableKind.ForEach] = new ForEachExecutionNodeConverter(),
                 [ETriggerPlanExecutableKind.Invert] = new InvertExecutionNodeConverter(),
                 [ETriggerPlanExecutableKind.Succeed] = new SucceedExecutionNodeConverter(),
                 [ETriggerPlanExecutableKind.Fail] = new FailExecutionNodeConverter(),
+                [ETriggerPlanExecutableKind.Scheduled] = new ScheduledExecutionNodeConverter(),
                 [ETriggerPlanExecutableKind.Metadata] = new MetadataExecutionNodeConverter()
             };
         }
@@ -158,6 +160,9 @@ namespace AbilityKit.Triggering.Runtime.Plan.Json
                 case "repeat_until":
                 case "repeatuntil":
                     return nameof(ETriggerPlanExecutableKind.Until);
+                case "foreach":
+                case "for_each":
+                    return nameof(ETriggerPlanExecutableKind.ForEach);
                 case "invert":
                 case "not":
                     return nameof(ETriggerPlanExecutableKind.Invert);
@@ -171,6 +176,11 @@ namespace AbilityKit.Triggering.Runtime.Plan.Json
                 case "always_fail":
                 case "alwaysfail":
                     return nameof(ETriggerPlanExecutableKind.Fail);
+                case "scheduled":
+                case "schedule":
+                case "timed":
+                case "periodic":
+                    return nameof(ETriggerPlanExecutableKind.Scheduled);
                 case "metadata":
                 case "decorator":
                 case "tags":
@@ -323,6 +333,24 @@ namespace AbilityKit.Triggering.Runtime.Plan.Json
             }
         }
 
+        private sealed class ForEachExecutionNodeConverter : ExecutionNodeConverterBase
+        {
+            public override ITriggerPlanExecutable Convert(
+                TriggerPlanExecutionNodeConverter context,
+                TriggerPlanJsonDatabase.ExecutionNodeDto dto,
+                TriggerPlanJsonDatabase.TriggerPlanDatabaseDto databaseDto)
+            {
+                var target = context._context.ConvertExecutionBlackboardTarget(dto.ItemTarget, "itemTarget");
+                return new ForEachTriggerPlanExecutable(
+                    context._context.ConvertExecutionNumericValue(dto.Collection),
+                    in target,
+                    Branch(Children(context, dto, databaseDto)),
+                    dto.MaxIterations,
+                    Condition(context, dto),
+                    dto.Weight);
+            }
+        }
+
         private sealed class InvertExecutionNodeConverter : ExecutionNodeConverterBase
         {
             public override ITriggerPlanExecutable Convert(
@@ -403,6 +431,30 @@ namespace AbilityKit.Triggering.Runtime.Plan.Json
                 return Enum.TryParse<ETriggerPlanMetadataKind>(value, true, out var kind)
                     ? kind
                     : ETriggerPlanMetadataKind.Generic;
+            }
+        }
+
+        private sealed class ScheduledExecutionNodeConverter : ExecutionNodeConverterBase
+        {
+            public override ITriggerPlanExecutable Convert(
+                TriggerPlanExecutionNodeConverter context,
+                TriggerPlanJsonDatabase.ExecutionNodeDto dto,
+                TriggerPlanJsonDatabase.TriggerPlanDatabaseDto databaseDto)
+            {
+                var modeText = dto.ScheduleMode;
+                if (string.IsNullOrWhiteSpace(modeText))
+                    modeText = dto.Kind;
+                if (!System.Enum.TryParse<EScheduleMode>(modeText, true, out var mode))
+                    throw new InvalidOperationException($"Scheduled execution node mode not supported: {modeText}");
+
+                return new ScheduledTriggerPlanExecutable(
+                    Branch(Children(context, dto, databaseDto)),
+                    mode,
+                    dto.IntervalMs,
+                    dto.MaxExecutions,
+                    dto.CanBeInterrupted,
+                    Condition(context, dto),
+                    dto.Weight);
             }
         }
     }

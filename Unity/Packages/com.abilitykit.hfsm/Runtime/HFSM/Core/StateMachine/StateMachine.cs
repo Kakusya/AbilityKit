@@ -2,20 +2,16 @@ using System;
 using System.Collections.Generic;
 using System.Linq;
 using System.Runtime.CompilerServices;
-using UnityHFSM.Inspection;
-
-#if HFSM_UNITY || UNITY_EDITOR || UNITY_STANDALONE || UNITY_WEBGL || UNITY_ANDROID || UNITY_IOS || UNITY_SERVER
-using UnityHFSM.Visualization;
-#endif
+using AbilityKit.HFSM.Inspection;
 
 /**
  * Hierarchical Finite State Machine for Unity
  * by Inspiaaa and contributors
  *
- * Version: 2.2.0
+ * Version: 2.3.0
  */
 
-namespace UnityHFSM
+namespace AbilityKit.HFSM
 {
 	/// <summary>
 	/// Main finite state machine class. It can be used as a child state of another state machine
@@ -23,6 +19,7 @@ namespace UnityHFSM
 	/// </summary>
 	public class StateMachine<TOwnId, TStateId, TEvent> :
 		StateBase<TOwnId>,
+		IStateMachineInspectionSource,
 		ITriggerable<TEvent>,
 		IStateMachine<TStateId>,
 		IActionable<TEvent>
@@ -156,11 +153,19 @@ namespace UnityHFSM
 
 		public TStateId ActiveStateName => ActiveState.name;
 
-		public bool IsActive => activeState != null;
+		public bool IsInitialized => activeState != null;
+
+		/// <summary>Compatibility alias for <see cref="IsInitialized"/>.</summary>
+		public bool IsActive => IsInitialized;
 
 		public TStateId PendingStateName => pendingTransition.targetState;
-		public StateBase<TStateId> PendingState => GetState(PendingStateName);
+		public StateBase<TStateId> PendingState =>
+			pendingTransition.isPending && !pendingTransition.isExitTransition
+				? GetState(PendingStateName)
+				: null;
 		public bool HasPendingTransition => pendingTransition.isPending;
+		public bool IsPendingExitTransition =>
+			pendingTransition.isPending && pendingTransition.isExitTransition;
 
 		public IStateTimingManager ParentFsm => fsm;
 
@@ -195,7 +200,7 @@ namespace UnityHFSM
 		private void EnsureIsInitializedFor(string context)
 		{
 			if (activeState == null)
-				throw UnityHFSM.Exceptions.Common.NotInitialized(this, context);
+				throw AbilityKit.HFSM.Exceptions.Common.NotInitialized(this, context);
 		}
 
 		/// <summary>
@@ -251,7 +256,7 @@ namespace UnityHFSM
 
 			if (!stateBundlesByName.TryGetValue(name, out bundle) || bundle.state == null)
 			{
-				throw UnityHFSM.Exceptions.Common.StateNotFound(this, name.ToString(), context: "Switching states");
+				throw AbilityKit.HFSM.Exceptions.Common.StateNotFound(this, name.ToString(), context: "Switching states");
 			}
 
 			activeTransitions = bundle.transitions ?? noTransitions;
@@ -423,16 +428,14 @@ namespace UnityHFSM
 		/// </summary>
 		public override void OnEnter()
 		{
-			#if UNITY_EDITOR
 			if (IsRootFsm && RegisterForInspection)
 			{
-				HfsmLiveRegistry.AutoRegister(this);
+				AbilityKit.HFSM.Inspection.RuntimeInspectionHub.AutoRegister(this);
 			}
-			#endif
 
 			if (!startState.hasState)
 			{
-				throw UnityHFSM.Exceptions.Common.MissingStartState(this, context: "Initializing the state machine");
+				throw AbilityKit.HFSM.Exceptions.Common.MissingStartState(this, context: "Initializing the state machine");
 			}
 
 			// Clear any previous pending transition from the last run.
@@ -475,12 +478,10 @@ namespace UnityHFSM
 
 		public override void OnExit()
 		{
-			#if UNITY_EDITOR
 			if (IsRootFsm && RegisterForInspection)
 			{
-				HfsmLiveRegistry.Unregister(this);
+				AbilityKit.HFSM.Inspection.RuntimeInspectionHub.Unregister(this);
 			}
-			#endif
 
 			if (activeState == null)
 				return;
@@ -524,7 +525,7 @@ namespace UnityHFSM
 			if (!stateBundlesByName.TryGetValue(rememberedStartStateName, out rememberedBundle)
 				|| rememberedBundle.state == null)
 			{
-				throw UnityHFSM.Exceptions.Common.StateNotFound(
+				throw AbilityKit.HFSM.Exceptions.Common.StateNotFound(
 					this,
 					rememberedStartStateName?.ToString(),
 					context: "Restoring the remembered start state");
@@ -544,7 +545,7 @@ namespace UnityHFSM
 			StateBundle activeBundle;
 			if (!stateBundlesByName.TryGetValue(activeStateName, out activeBundle) || activeBundle.state == null)
 			{
-				throw UnityHFSM.Exceptions.Common.StateNotFound(
+				throw AbilityKit.HFSM.Exceptions.Common.StateNotFound(
 					this,
 					activeStateName?.ToString(),
 					context: "Restoring the active state");
@@ -851,13 +852,19 @@ namespace UnityHFSM
 			(activeState as IActionable<TEvent>)?.OnAction<TData>(trigger, data);
 		}
 
+		public virtual bool HasAction(TEvent trigger)
+		{
+			EnsureIsInitializedFor("Checking actions of the active state");
+			return (activeState as IActionable<TEvent>)?.HasAction(trigger) ?? false;
+		}
+
 		public StateBase<TStateId> GetState(TStateId name)
 		{
 			StateBundle bundle;
 
 			if (!stateBundlesByName.TryGetValue(name, out bundle) || bundle.state == null)
 			{
-				throw UnityHFSM.Exceptions.Common.StateNotFound(this, name.ToString(), context: "Getting a state");
+				throw AbilityKit.HFSM.Exceptions.Common.StateNotFound(this, name.ToString(), context: "Getting a state");
 			}
 
 			return bundle.state;
@@ -876,7 +883,7 @@ namespace UnityHFSM
 
 				if (subFsm == null)
 				{
-					throw UnityHFSM.Exceptions.Common.QuickIndexerMisusedForGettingState(this, name.ToString());
+					throw AbilityKit.HFSM.Exceptions.Common.QuickIndexerMisusedForGettingState(this, name.ToString());
 				}
 
 				return subFsm;
@@ -919,7 +926,7 @@ namespace UnityHFSM
 		{
 			if (!startState.hasState)
 			{
-				throw UnityHFSM.Exceptions.Common.MissingStartState(
+				throw AbilityKit.HFSM.Exceptions.Common.MissingStartState(
 					this,
 					context: "Getting the start state",
 					solution: "Make sure that there is at least one state in the state machine before running "

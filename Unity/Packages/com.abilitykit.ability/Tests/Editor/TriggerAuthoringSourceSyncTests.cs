@@ -59,6 +59,54 @@ namespace AbilityKit.Ability.Editor.Tests
         }
 
         [Test]
+        public void SampleFeatureShowcaseJson_ValidatesExportsAndImportsIntoAuthoringAsset()
+        {
+            var samplePath = GetFeatureShowcaseSamplePath();
+            Assert.That(File.Exists(samplePath), Is.True, samplePath);
+
+            var document = TriggerAuthoringSourceCodec.ReadFile(samplePath);
+            var context = new TriggerAuthoringValidationContext
+            {
+                Types = TriggerTypeDescriptorCatalog.CreateProjectDefaults(),
+                Events = new TriggerEventDescriptorCatalog(TriggerAuthoringProjectDefaults.CreateMobaEvents()),
+                GlobalBlackboard = new TriggerGlobalBlackboardDescriptorCatalog(
+                    TriggerAuthoringProjectDefaults.CreateMobaBlackboardKeys())
+            };
+            var diagnostics = TriggerAuthoringValidator.Validate(document.Module, context);
+            var runtime = TriggerAuthoringRuntimeExporter.Build(document.Module, context);
+
+            Assert.That(TriggerAuthoringValidator.HasErrors(diagnostics), Is.False, FormatDiagnostics(diagnostics));
+            Assert.That(runtime.Success, Is.True, runtime.BuildMessage());
+            Assert.That(document.Module.Triggers.Count, Is.EqualTo(5));
+            Assert.That(document.Module.ConditionGroups.Count, Is.EqualTo(1));
+            Assert.That(document.Module.ActionGroups.Count, Is.EqualTo(2));
+            Assert.That(document.Module.Triggers[0].Actions.Children.Exists(node => node != null && !node.Enabled), Is.True);
+            var ruleTreeDemo = document.Module.Triggers.Find(trigger => trigger != null && trigger.Id == 910010);
+            Assert.That(ruleTreeDemo, Is.Not.Null);
+            Assert.That(ruleTreeDemo.Condition.Type, Is.EqualTo("all"));
+            Assert.That(ruleTreeDemo.Actions.Type, Is.EqualTo("seq"));
+            var conditional = ruleTreeDemo.Actions.Children.Find(node =>
+                node != null && node.Type == "conditional");
+            Assert.That(conditional, Is.Not.Null);
+            Assert.That(TriggerAuthoringConditionalChain.TryGetElseIf(conditional, out var firstElseIf), Is.True);
+            Assert.That(TriggerAuthoringConditionalChain.TryGetElseIf(firstElseIf, out var secondElseIf), Is.True);
+            Assert.That(TriggerAuthoringConditionalChain.TryGetElseIf(secondElseIf, out _), Is.False);
+            Assert.That(TriggerAuthoringConditionalChain.GetFallbackActions(conditional)[0].Type, Is.EqualTo("debug_log"));
+            Assert.That(ruleTreeDemo.Actions.Children.Exists(node =>
+                TriggerAuthoringTriggerReuse.TryGetReferencedTriggerId(node, out var id) && id == 910005), Is.True);
+
+            _asset.Module = new TriggerAuthoringModuleData();
+            var imported = TriggerAuthoringSourceSync.Import(_asset, samplePath, force: true);
+
+            Assert.That(imported.Success, Is.True, imported.Message);
+            Assert.That(_asset.Module.ModuleId, Is.EqualTo("sample.trigger_editor.feature_showcase"));
+            Assert.That(_asset.Module.Triggers.Count, Is.EqualTo(5));
+            Assert.That(_asset.Module.Triggers[0].GroupPath, Is.EqualTo("AAA配置"));
+            Assert.That(_asset.Module.Triggers[0].Tags, Does.Contain("varnumber"));
+            Assert.That(_asset.SourceJsonPath.Replace('\\', '/'), Does.EndWith("trigger-editor-feature-showcase.trigger.json"));
+        }
+
+        [Test]
         public void Sync_ReportsAssetJsonAndConflictChanges()
         {
             var path = GetSourcePath();
@@ -94,6 +142,140 @@ namespace AbilityKit.Ability.Editor.Tests
         }
 
         [Test]
+        public void PreviewImport_SummarizesExternalJsonEditBeforeApplying()
+        {
+            var path = GetSourcePath();
+            Assert.That(TriggerAuthoringSourceSync.Export(_asset, path).Success, Is.True);
+
+            var source = TriggerAuthoringSourceCodec.ReadFile(path);
+            source.Module.DisplayName = "Previewed edit";
+            source.Module.Triggers.Add(new TriggerDefinitionData
+            {
+                Id = 1002,
+                Name = "Preview",
+                Event = "skill.cast",
+                Actions = CreateDebugLogNode("preview")
+            });
+            TriggerAuthoringSourceCodec.WriteFileAtomic(path, source);
+
+            var preview = TriggerAuthoringSourceSync.PreviewImport(_asset, path);
+
+            Assert.That(preview.CanImport, Is.True, preview.Message);
+            Assert.That(preview.RequiresForce, Is.False);
+            Assert.That(preview.State, Is.EqualTo(TriggerAuthoringSyncState.JsonChanged));
+            Assert.That(preview.AssetIdentity, Is.EqualTo("skill.fireball"));
+            Assert.That(preview.SourceIdentity, Is.EqualTo("skill.fireball"));
+            Assert.That(preview.AssetTriggerCount, Is.EqualTo(1));
+            Assert.That(preview.SourceTriggerCount, Is.EqualTo(2));
+            Assert.That(preview.Changes.Exists(change =>
+                    change.Kind == TriggerAuthoringSourceChangeKind.Modified &&
+                    change.Path == "module.displayName"),
+                Is.True);
+            Assert.That(preview.Changes.Exists(change =>
+                    change.Kind == TriggerAuthoringSourceChangeKind.Added &&
+                    change.Area == "Trigger" &&
+                    change.Path == "module.triggers[1002]"),
+                Is.True);
+            StringAssert.Contains("Triggers: 1 -> 2", preview.BuildDialogMessage());
+            StringAssert.Contains("Added Trigger", preview.BuildDialogMessage());
+        }
+
+        [Test]
+        public void PreviewImport_RequiresForceWhenAssetWouldBeOverwritten()
+        {
+            var path = GetSourcePath();
+            Assert.That(TriggerAuthoringSourceSync.Export(_asset, path).Success, Is.True);
+
+            _asset.Module.DisplayName = "Local edit";
+
+            var preview = TriggerAuthoringSourceSync.PreviewImport(_asset, path);
+
+            Assert.That(preview.CanImport, Is.True, preview.Message);
+            Assert.That(preview.RequiresForce, Is.True);
+            Assert.That(preview.State, Is.EqualTo(TriggerAuthoringSyncState.AssetChanged));
+        }
+
+        [Test]
+        public void PreviewImport_BlocksIdentityMismatch()
+        {
+            var path = GetSourcePath();
+            Assert.That(TriggerAuthoringSourceSync.Export(_asset, path).Success, Is.True);
+
+            var source = TriggerAuthoringSourceCodec.ReadFile(path);
+            source.Module.ModuleId = "skill.other";
+            TriggerAuthoringSourceCodec.WriteFileAtomic(path, source);
+
+            var preview = TriggerAuthoringSourceSync.PreviewImport(_asset, path);
+
+            Assert.That(preview.CanImport, Is.False);
+            StringAssert.Contains("Module identity mismatch", preview.Message);
+            Assert.That(preview.SourceIdentity, Is.EqualTo("skill.other"));
+        }
+
+        [Test]
+        public void PreviewImport_ReportsRenamedAndModifiedTrigger()
+        {
+            var path = GetSourcePath();
+            Assert.That(TriggerAuthoringSourceSync.Export(_asset, path).Success, Is.True);
+
+            var source = TriggerAuthoringSourceCodec.ReadFile(path);
+            source.Module.Triggers[0].Name = "Cast renamed";
+            source.Module.Triggers[0].Priority = 10;
+            TriggerAuthoringSourceCodec.WriteFileAtomic(path, source);
+
+            var preview = TriggerAuthoringSourceSync.PreviewImport(_asset, path);
+
+            Assert.That(preview.CanImport, Is.True, preview.Message);
+            Assert.That(preview.Changes.Exists(change =>
+                    change.Kind == TriggerAuthoringSourceChangeKind.Renamed &&
+                    change.Area == "Trigger" &&
+                    change.Before == "Cast log" &&
+                    change.After == "Cast renamed"),
+                Is.True);
+            Assert.That(preview.Changes.Exists(change =>
+                    change.Kind == TriggerAuthoringSourceChangeKind.Modified &&
+                    change.Area == "Trigger" &&
+                    change.Path == "module.triggers[1001]"),
+                Is.True);
+        }
+
+        [Test]
+        public void Inspect_TreatsIndependentlyConvergedContentAsInSync()
+        {
+            var path = GetSourcePath();
+            Assert.That(TriggerAuthoringSourceSync.Export(_asset, path).Success, Is.True);
+
+            _asset.Module.DisplayName = "Converged";
+            var source = TriggerAuthoringSourceCodec.ReadFile(path);
+            source.Module.DisplayName = "Converged";
+            TriggerAuthoringSourceCodec.WriteFileAtomic(path, source);
+
+            Assert.That(
+                TriggerAuthoringSourceSync.Inspect(_asset, path).State,
+                Is.EqualTo(TriggerAuthoringSyncState.InSync));
+        }
+
+        [Test]
+        public void Inspect_DistinguishesUntrackedMissingAndInvalidSources()
+        {
+            var path = GetSourcePath();
+            Assert.That(
+                TriggerAuthoringSourceSync.Inspect(_asset, path).State,
+                Is.EqualTo(TriggerAuthoringSyncState.Untracked));
+
+            Assert.That(TriggerAuthoringSourceSync.Export(_asset, path).Success, Is.True);
+            File.Delete(path);
+            Assert.That(
+                TriggerAuthoringSourceSync.Inspect(_asset, path).State,
+                Is.EqualTo(TriggerAuthoringSyncState.SourceMissing));
+
+            File.WriteAllText(path, "not-json");
+            Assert.That(
+                TriggerAuthoringSourceSync.Inspect(_asset, path).State,
+                Is.EqualTo(TriggerAuthoringSyncState.InvalidSource));
+        }
+
+        [Test]
         public void Export_DoesNotOverwriteUntrackedJsonWithoutForce()
         {
             var path = GetSourcePath();
@@ -103,6 +285,64 @@ namespace AbilityKit.Ability.Editor.Tests
 
             Assert.That(result.Success, Is.False);
             Assert.That(result.State, Is.EqualTo(TriggerAuthoringSyncState.InvalidSource));
+        }
+
+        [Test]
+        public void ForceExport_ResolvesConflictAndLeavesNoTemporaryFiles()
+        {
+            var path = GetSourcePath();
+            Assert.That(TriggerAuthoringSourceSync.Export(_asset, path).Success, Is.True);
+
+            _asset.Module.DisplayName = "Asset wins";
+            var source = TriggerAuthoringSourceCodec.ReadFile(path);
+            source.Metadata.Description = "Source loses";
+            TriggerAuthoringSourceCodec.WriteFileAtomic(path, source);
+            Assert.That(
+                TriggerAuthoringSourceSync.Inspect(_asset, path).State,
+                Is.EqualTo(TriggerAuthoringSyncState.Conflict));
+
+            var result = TriggerAuthoringSourceSync.Export(_asset, path, force: true);
+
+            Assert.That(result.Success, Is.True, result.Message);
+            Assert.That(
+                TriggerAuthoringSourceSync.Inspect(_asset, path).State,
+                Is.EqualTo(TriggerAuthoringSyncState.InSync));
+            Assert.That(
+                TriggerAuthoringSourceCodec.ReadFile(path).Module.DisplayName,
+                Is.EqualTo("Asset wins"));
+            AssertNoAtomicArtifacts();
+        }
+
+        [Test]
+        public void ForceImport_ResolvesConflictRecordsUndoAndLeavesNoTemporaryFiles()
+        {
+            var path = GetSourcePath();
+            Assert.That(TriggerAuthoringSourceSync.Export(_asset, path).Success, Is.True);
+
+            var originalDisplayName = _asset.Module.DisplayName;
+            _asset.Module.DisplayName = "Asset loses";
+            var source = TriggerAuthoringSourceCodec.ReadFile(path);
+            source.Module.DisplayName = "Source wins";
+            TriggerAuthoringSourceCodec.WriteFileAtomic(path, source);
+            Assert.That(
+                TriggerAuthoringSourceSync.Inspect(_asset, path).State,
+                Is.EqualTo(TriggerAuthoringSyncState.Conflict));
+
+            var result = TriggerAuthoringSourceSync.Import(_asset, path, force: true);
+
+            Assert.That(result.Success, Is.True, result.Message);
+            Assert.That(_asset.Module.DisplayName, Is.EqualTo("Source wins"));
+            Assert.That(EditorUtility.IsDirty(_asset), Is.True);
+            Assert.That(
+                TriggerAuthoringSourceSync.Inspect(_asset, path).State,
+                Is.EqualTo(TriggerAuthoringSyncState.InSync));
+            AssertNoAtomicArtifacts();
+
+            Undo.PerformUndo();
+            Assert.That(_asset.Module.DisplayName, Is.EqualTo("Asset loses"));
+            Undo.PerformRedo();
+            Assert.That(_asset.Module.DisplayName, Is.EqualTo("Source wins"));
+            Assert.That(originalDisplayName, Is.Not.EqualTo("Source wins"));
         }
 
         [Test]
@@ -221,6 +461,173 @@ namespace AbilityKit.Ability.Editor.Tests
 
             var diagnostics = TriggerAuthoringValidator.Validate(module, context);
             Assert.That(diagnostics.Exists(d => d.Code == "TRG1312"), Is.True, FormatDiagnostics(diagnostics));
+        }
+
+        [Test]
+        public void ValueRefEditorContext_FiltersBlackboardOptionsByTypeAndAccess()
+        {
+            var module = CreateValidModule();
+            module.Blackboard.Add(new TriggerBlackboardVariableData
+            {
+                Key = "module.count",
+                Type = TriggerValueType.Integer,
+                ReadOnly = true
+            });
+            module.Triggers[0].Blackboard.Add(new TriggerBlackboardVariableData
+            {
+                Key = "trigger.damage",
+                Type = TriggerValueType.Number
+            });
+            var context = new TriggerAuthoringValueRefEditorContext
+            {
+                Module = module,
+                Trigger = module.Triggers[0],
+                GlobalBlackboard = new TriggerGlobalBlackboardDescriptorCatalog(new[]
+                {
+                    new TriggerGlobalBlackboardKeyData
+                    {
+                        Key = "combat.damage",
+                        Domain = "combat",
+                        Type = TriggerValueType.Number,
+                        CanRead = true,
+                        CanWrite = true
+                    },
+                    new TriggerGlobalBlackboardKeyData
+                    {
+                        Key = "combat.readOnly",
+                        Domain = "combat",
+                        Type = TriggerValueType.Number,
+                        CanRead = true,
+                        CanWrite = false
+                    }
+                })
+            };
+
+            var localRead = TriggerAuthoringValueRefEditor.CollectPathOptions(
+                TriggerValueSource.LocalBlackboard,
+                TriggerValueType.Number,
+                TriggerParameterAccess.Read,
+                context);
+            var localWrite = TriggerAuthoringValueRefEditor.CollectPathOptions(
+                TriggerValueSource.LocalBlackboard,
+                TriggerValueType.Number,
+                TriggerParameterAccess.Write,
+                context);
+            var globalWrite = TriggerAuthoringValueRefEditor.CollectPathOptions(
+                TriggerValueSource.GlobalBlackboard,
+                TriggerValueType.Number,
+                TriggerParameterAccess.Write,
+                context);
+
+            Assert.That(localRead.Exists(option => option.Path == "module:module.count"), Is.True);
+            Assert.That(localRead.Exists(option => option.Path == "trigger:trigger.damage"), Is.True);
+            Assert.That(localWrite.Exists(option => option.Path == "module:module.count"), Is.False);
+            Assert.That(localWrite.Exists(option => option.Path == "trigger:trigger.damage"), Is.True);
+            Assert.That(globalWrite.Exists(option => option.Path == "combat.damage"), Is.True);
+            Assert.That(globalWrite.Exists(option => option.Path == "combat.readOnly"), Is.False);
+        }
+
+        [Test]
+        public void Validator_ResolvesExplicitLocalBlackboardScopes()
+        {
+            var module = CreateValidModule();
+            module.Blackboard.Add(new TriggerBlackboardVariableData
+            {
+                Key = "count",
+                Type = TriggerValueType.Integer
+            });
+            module.Triggers[0].Blackboard.Add(new TriggerBlackboardVariableData
+            {
+                Key = "count",
+                Type = TriggerValueType.Number
+            });
+            module.Triggers[0].Condition = new TriggerNodeData
+            {
+                Kind = TriggerNodeKind.Condition,
+                Type = "arg_eq",
+                Arguments =
+                {
+                    new TriggerArgumentData
+                    {
+                        Name = "left",
+                        Value = new TriggerValueRefData
+                        {
+                            Source = TriggerValueSource.LocalBlackboard,
+                            Type = TriggerValueType.Integer,
+                            Path = "module:count"
+                        }
+                    },
+                    new TriggerArgumentData
+                    {
+                        Name = "right",
+                        Value = new TriggerValueRefData
+                        {
+                            Source = TriggerValueSource.LocalBlackboard,
+                            Type = TriggerValueType.Number,
+                            Path = "trigger:count"
+                        }
+                    }
+                }
+            };
+
+            var diagnostics = TriggerAuthoringValidator.Validate(
+                module,
+                CreateValidationContext(new TriggerEventDefinitionData { Id = "skill.cast" }));
+
+            Assert.That(diagnostics.Exists(d => d.Code == "TRG1304"), Is.False, FormatDiagnostics(diagnostics));
+            Assert.That(diagnostics.Exists(d => d.Code == "TRG1309"), Is.False, FormatDiagnostics(diagnostics));
+        }
+
+        [Test]
+        public void ValueRefEditorContext_CollectsPayloadContextAndTemplateParameterOptions()
+        {
+            var module = CreateValidModule();
+            var context = new TriggerAuthoringValueRefEditorContext
+            {
+                Module = module,
+                Trigger = module.Triggers[0],
+                Events = new TriggerEventDescriptorCatalog(new[]
+                {
+                    new TriggerEventDefinitionData
+                    {
+                        Id = "skill.cast",
+                        PayloadFields =
+                        {
+                            new TriggerPayloadFieldData { Path = "target.actor_id", Type = TriggerValueType.Integer },
+                            new TriggerPayloadFieldData { Path = "aim.pos", Type = TriggerValueType.Vector3 }
+                        }
+                    }
+                }),
+                TemplateParameters = new[]
+                {
+                    new TriggerAuthoringTemplateParameterData
+                    {
+                        Name = "damage",
+                        Type = TriggerValueType.Number
+                    }
+                }
+            };
+
+            var payload = TriggerAuthoringValueRefEditor.CollectPathOptions(
+                TriggerValueSource.Payload,
+                TriggerValueType.Integer,
+                TriggerParameterAccess.Read,
+                context);
+            var contextOptions = TriggerAuthoringValueRefEditor.CollectPathOptions(
+                TriggerValueSource.Context,
+                TriggerValueType.Integer,
+                TriggerParameterAccess.Read,
+                context);
+            var template = TriggerAuthoringValueRefEditor.CollectPathOptions(
+                TriggerValueSource.TemplateParameter,
+                TriggerValueType.Number,
+                TriggerParameterAccess.Read,
+                context);
+
+            Assert.That(payload.Exists(option => option.Path == "target.actor_id"), Is.True);
+            Assert.That(payload.Exists(option => option.Path == "aim.pos"), Is.False);
+            Assert.That(contextOptions.Exists(option => option.Path == "query.id"), Is.True);
+            Assert.That(template.Exists(option => option.Path == "damage"), Is.True);
         }
 
         [Test]
@@ -591,10 +998,75 @@ namespace AbilityKit.Ability.Editor.Tests
                 Assert.That(restored.Version, Is.EqualTo("2.2"));
                 Assert.That(restored.Template.TemplateId, Is.EqualTo("template.log"));
                 Assert.That(restored.Template.Parameters[0].Name, Is.EqualTo("message"));
-                Assert.That(restored.Template.Actions.Arguments[0].Value.Source,
-                    Is.EqualTo(TriggerValueSource.TemplateParameter));
+                Assert.That(restored.Template.Definition.Actions.Arguments[0].Value.Source,
+                    Is.EqualTo(TriggerValueSource.LocalBlackboard));
+                Assert.That(restored.Template.Definition.Actions.Arguments[0].Value.Path,
+                    Is.EqualTo("trigger:message"));
                 StringAssert.DoesNotContain("instanceID", json);
                 StringAssert.DoesNotContain("assetGuid", json);
+            }
+            finally
+            {
+                UnityEngine.Object.DestroyImmediate(templateAsset);
+            }
+        }
+
+        [Test]
+        public void TemplatePreviewImport_SummarizesParameterChanges()
+        {
+            var templateAsset = ScriptableObject.CreateInstance<TriggerAuthoringTemplateAsset>();
+            try
+            {
+                templateAsset.Template = CreateLogTemplate("template.log", "1.0.0");
+                var path = Path.Combine(_temporaryDirectory, "template.log.json");
+                Assert.That(TriggerAuthoringTemplateSourceSync.Export(templateAsset, path).Success, Is.True);
+
+                var source = TriggerAuthoringTemplateSourceCodec.ReadFile(path);
+                source.Template.Parameters.Add(new TriggerAuthoringTemplateParameterData
+                {
+                    Name = "count",
+                    Type = TriggerValueType.Integer
+                });
+                TriggerAuthoringTemplateSourceCodec.WriteFileAtomic(path, source);
+
+                var preview = TriggerAuthoringTemplateSourceSync.PreviewImport(templateAsset, path);
+
+                Assert.That(preview.CanImport, Is.True, preview.Message);
+                Assert.That(preview.RequiresForce, Is.False);
+                Assert.That(preview.Kind, Is.EqualTo(TriggerAuthoringSourcePreviewKind.Template));
+                Assert.That(preview.AssetTemplateParameterCount, Is.EqualTo(1));
+                Assert.That(preview.SourceTemplateParameterCount, Is.EqualTo(2));
+                Assert.That(preview.Changes.Exists(change =>
+                        change.Kind == TriggerAuthoringSourceChangeKind.Added &&
+                        change.Area == "Parameter" &&
+                        change.Path == "template.parameters[count]"),
+                    Is.True);
+                StringAssert.Contains("Parameters: 1 -> 2", preview.BuildDialogMessage());
+            }
+            finally
+            {
+                UnityEngine.Object.DestroyImmediate(templateAsset);
+            }
+        }
+
+        [Test]
+        public void TemplateInspect_TreatsIndependentlyConvergedContentAsInSync()
+        {
+            var templateAsset = ScriptableObject.CreateInstance<TriggerAuthoringTemplateAsset>();
+            try
+            {
+                templateAsset.Template = CreateLogTemplate("template.log", "1.0.0");
+                var path = Path.Combine(_temporaryDirectory, "template.log.json");
+                Assert.That(TriggerAuthoringTemplateSourceSync.Export(templateAsset, path).Success, Is.True);
+
+                templateAsset.Template.DisplayName = "Converged Template";
+                var source = TriggerAuthoringTemplateSourceCodec.ReadFile(path);
+                source.Template.DisplayName = "Converged Template";
+                TriggerAuthoringTemplateSourceCodec.WriteFileAtomic(path, source);
+
+                Assert.That(
+                    TriggerAuthoringTemplateSourceSync.Inspect(templateAsset, path).State,
+                    Is.EqualTo(TriggerAuthoringSyncState.InSync));
             }
             finally
             {
@@ -650,11 +1122,35 @@ namespace AbilityKit.Ability.Editor.Tests
         public void Validator_RejectsUnknownTemplateParameterReference()
         {
             var template = CreateLogTemplate("template.log", "1.0.0");
-            template.Actions.Arguments[0].Value.Path = "missing";
+            template.Definition.Actions.Arguments[0].Value.Source = TriggerValueSource.TemplateParameter;
+            template.Definition.Actions.Arguments[0].Value.Path = "missing";
 
             var diagnostics = TriggerAuthoringTemplateValidator.Validate(template);
 
             Assert.That(diagnostics.Exists(d => d.Code == "TRG1618"), Is.True, FormatDiagnostics(diagnostics));
+            Assert.That(diagnostics.Exists(d => d.Path == "template.definition.actions.arguments[0].value.source"),
+                Is.True,
+                FormatDiagnostics(diagnostics));
+        }
+
+        [Test]
+        public void TemplateValidator_DoesNotRepeatMissingEntryAndActionDiagnostics()
+        {
+            var template = new TriggerAuthoringTemplateData
+            {
+                TemplateId = "template.invalid",
+                Definition = new TriggerDefinitionData
+                {
+                    EntryMode = TriggerEntryMode.Event
+                }
+            };
+
+            var diagnostics = TriggerAuthoringTemplateValidator.Validate(template);
+
+            Assert.That(diagnostics.Exists(d => d.Code == "TRG1612"), Is.True, FormatDiagnostics(diagnostics));
+            Assert.That(diagnostics.Exists(d => d.Code == "TRG1616"), Is.True, FormatDiagnostics(diagnostics));
+            Assert.That(diagnostics.Exists(d => d.Code == "TRG1005"), Is.False, FormatDiagnostics(diagnostics));
+            Assert.That(diagnostics.Exists(d => d.Code == "TRG1200"), Is.False, FormatDiagnostics(diagnostics));
         }
 
         [Test]
@@ -683,6 +1179,48 @@ namespace AbilityKit.Ability.Editor.Tests
         private string GetSourcePath()
         {
             return Path.Combine(_temporaryDirectory, "skill.fireball.json");
+        }
+
+        private static string GetFeatureShowcaseSamplePath()
+        {
+            var current = new DirectoryInfo(Directory.GetCurrentDirectory());
+            while (current != null)
+            {
+                var path = Path.Combine(
+                    current.FullName,
+                    "Unity",
+                    "Packages",
+                    "com.abilitykit.ability",
+                    "Samples~",
+                    "TriggerAuthoring",
+                    "trigger-editor-feature-showcase.trigger.json");
+                if (File.Exists(path)) return path;
+                current = current.Parent;
+            }
+
+            return Path.GetFullPath(Path.Combine(
+                "Unity",
+                "Packages",
+                "com.abilitykit.ability",
+                "Samples~",
+                "TriggerAuthoring",
+                "trigger-editor-feature-showcase.trigger.json"));
+        }
+
+        private void AssertNoAtomicArtifacts()
+        {
+            Assert.That(
+                Directory.GetFiles(
+                    _temporaryDirectory,
+                    "*.abilitykit.tmp.*",
+                    SearchOption.AllDirectories),
+                Is.Empty);
+            Assert.That(
+                Directory.GetFiles(
+                    _temporaryDirectory,
+                    "*.abilitykit.bak.*",
+                    SearchOption.AllDirectories),
+                Is.Empty);
         }
 
         private static TriggerAuthoringModuleData CreateValidModule()
@@ -750,31 +1288,35 @@ namespace AbilityKit.Ability.Editor.Tests
             {
                 TemplateId = id,
                 TemplateVersion = version,
-                Event = "skill.cast",
                 Parameters =
                 {
                     new TriggerAuthoringTemplateParameterData
                     {
                         Name = "message",
+                        LocalVariableKey = "message",
                         Type = TriggerValueType.String,
                         Required = true,
                         AllowedSources = TriggerTemplateValueSourceMask.Constant
                     }
                 },
-                Actions = new TriggerNodeData
+                Definition = new TriggerDefinitionData
                 {
-                    Kind = TriggerNodeKind.Action,
-                    Type = "debug_log",
-                    Arguments =
+                    Event = "skill.cast",
+                    Actions = new TriggerNodeData
                     {
-                        new TriggerArgumentData
+                        Kind = TriggerNodeKind.Action,
+                        Type = "debug_log",
+                        Arguments =
                         {
-                            Name = "message",
-                            Value = new TriggerValueRefData
+                            new TriggerArgumentData
                             {
-                                Source = TriggerValueSource.TemplateParameter,
-                                Type = TriggerValueType.String,
-                                Path = "message"
+                                Name = "message",
+                                Value = new TriggerValueRefData
+                                {
+                                    Source = TriggerValueSource.LocalBlackboard,
+                                    Type = TriggerValueType.String,
+                                    Path = "trigger:message"
+                                }
                             }
                         }
                     }

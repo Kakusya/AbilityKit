@@ -92,6 +92,15 @@
         "com.abilitykit.gameplaytags": "0.1.0"
       }
     },
+    "com.abilitykit.battleflow": {
+      "version": "file:com.abilitykit.battleflow",
+      "depth": 0,
+      "source": "embedded",
+      "dependencies": {
+        "com.abilitykit.scenario": "0.1.0",
+        "com.unity.nuget.newtonsoft-json": "3.2.1"
+      }
+    },
     "com.abilitykit.behavior": {
       "version": "file:com.abilitykit.behavior",
       "depth": 0,
@@ -191,6 +200,21 @@
         "com.abilitykit.core": "0.1.0"
       }
     },
+    "com.abilitykit.compute": {
+      "version": "file:com.abilitykit.compute",
+      "depth": 0,
+      "source": "embedded",
+      "dependencies": {}
+    },
+    "com.abilitykit.compute.unityjobs": {
+      "version": "file:com.abilitykit.compute.unityjobs",
+      "depth": 0,
+      "source": "embedded",
+      "dependencies": {
+        "com.abilitykit.compute": "0.1.0",
+        "com.unity.collections": "2.1.4"
+      }
+    },
     "com.abilitykit.context": {
       "version": "file:com.abilitykit.context",
       "depth": 0,
@@ -255,6 +279,7 @@
       "depth": 0,
       "source": "embedded",
       "dependencies": {
+        "com.abilitykit.ability": "0.1.0",
         "com.abilitykit.diagnostics": "0.1.0",
         "com.abilitykit.combat.navigation": "0.1.0",
         "com.abilitykit.continuous": "0.1.0",
@@ -264,6 +289,15 @@
         "com.abilitykit.world.entitas": "0.1.0",
         "com.abilitykit.host": "0.1.0",
         "com.abilitykit.hotreload": "0.1.0"
+      }
+    },
+    "com.abilitykit.demo.moba.environment": {
+      "version": "file:com.abilitykit.demo.moba.environment",
+      "depth": 0,
+      "source": "embedded",
+      "dependencies": {
+        "com.abilitykit.environment": "0.1.0",
+        "com.abilitykit.battleflow": "0.1.0"
       }
     },
     "com.abilitykit.demo.moba.host": {
@@ -329,7 +363,8 @@
         "com.abilitykit.world.networkfragments": "0.1.0",
         "com.abilitykit.world.statesync": "0.1.0",
         "com.cysharp.memorypack": "1.10.0",
-        "com.abilitykit.deterministic": "0.1.0"
+        "com.abilitykit.deterministic": "0.1.0",
+        "com.abilitykit.environment": "0.1.0"
       }
     },
     "com.abilitykit.demo.moba.share": {
@@ -436,6 +471,7 @@
       "depth": 0,
       "source": "embedded",
       "dependencies": {
+        "com.abilitykit.compute.unityjobs": "0.1.0",
         "com.abilitykit.demo.shooter.runtime": "0.0.1",
         "com.abilitykit.world.di": "0.1.0",
         "com.unity.burst": "1.8.21",
@@ -527,6 +563,12 @@
       "dependencies": {
         "com.abilitykit.core": "0.1.0"
       }
+    },
+    "com.abilitykit.environment": {
+      "version": "file:com.abilitykit.environment",
+      "depth": 0,
+      "source": "embedded",
+      "dependencies": {}
     },
     "com.abilitykit.excel-sync": {
       "version": "file:com.abilitykit.excel-sync",
@@ -705,7 +747,8 @@
       "depth": 0,
       "source": "embedded",
       "dependencies": {
-        "com.abilitykit.core": "0.1.0"
+        "com.abilitykit.core": "0.1.0",
+        "com.abilitykit.protocol": "0.1.0"
       }
     },
     "com.abilitykit.network.sdk": {
@@ -811,6 +854,49 @@
       "depth": 0,
       "source": "embedded",
       "dependencies": {}
+    },
+    "com.abilitykit.samples": {
+      "version": "file:com.abilitykit.samples",
+      "depth": 0,
+      "source": "embedded",
+      "dependencies": {
+        "com.abilitykit.behavior": "0.1.0",
+        "com.abilitykit.combat.collision.abstractions": "0.1.0",
+        "com.abilitykit.combat.damage": "0.1.0",
+        "com.abilitykit.combat.entitymanager": "0.1.0",
+        "com.abilitykit.combat.projectile": "0.1.0",
+        "com.abilitykit.combat.skilllibrary": "0.1.0",
+        "com.abilitykit.combat.targeting": "0.1.0",
+        "com.abilitykit.continuous": "0.1.0",
+        "com.abilitykit.core": "0.1.0",
+        "com.abilitykit.dataflow": "0.1.0",
+        "com.abilitykit.deterministic": "0.1.0",
+        "com.abilitykit.flow": "0.1.0",
+        "com.abilitykit.game.battle.runtime": "0.1.0",
+        "com.abilitykit.gameplaytags": "0.1.0",
+        "com.abilitykit.hfsm": "0.1.0",
+        "com.abilitykit.host": "0.1.0",
+        "com.abilitykit.host.extension": "0.1.0",
+        "com.abilitykit.modifiers": "0.1.0",
+        "com.abilitykit.network.runtime": "0.1.0",
+        "com.abilitykit.pipeline": "0.1.0",
+        "com.abilitykit.timer": "0.1.0",
+        "com.abilitykit.triggering": "0.1.0",
+        "com.abilitykit.world.di": "0.1.0",
+        "com.abilitykit.world.framesync": "0.1.0",
+        "com.abilitykit.world.networkfragments": "0.1.0",
+        "com.abilitykit.world.snapshot": "0.1.0",
+        "com.abilitykit.world.statesync": "0.1.0",
+        "com.unity.nuget.newtonsoft-json": "3.2.1"
+      }
+    },
+    "com.abilitykit.scenario": {
+      "version": "file:com.abilitykit.scenario",
+      "depth": 0,
+      "source": "embedded",
+      "dependencies": {
+        "com.unity.nuget.newtonsoft-json": "3.2.1"
+      }
     },
     "com.abilitykit.thirdparty.actioneditor": {
       "version": "file:com.abilitykit.thirdparty.actioneditor",
@@ -963,9 +1049,9 @@
       }
     },
     "com.coplaydev.unity-mcp": {
-      "version": "file:com.coplaydev.unity-mcp",
+      "version": "https://github.com/CoplayDev/unity-mcp.git?path=/MCPForUnity#main",
       "depth": 0,
-      "source": "embedded",
+      "source": "git",
       "dependencies": {
         "com.unity.modules.animation": "1.0.0",
         "com.unity.modules.imageconversion": "1.0.0",
@@ -976,7 +1062,8 @@
         "com.unity.modules.unitywebrequest": "1.0.0",
         "com.unity.nuget.newtonsoft-json": "3.0.2",
         "com.unity.test-framework": "1.1.31"
-      }
+      },
+      "hash": "30d22075093d1d35dfb0091c1c7550e9ad948577"
     },
     "com.cysharp.memorypack": {
       "version": "1.10.0",
@@ -1123,7 +1210,7 @@
       "url": "https://packages.unity.com"
     },
     "com.unity.textmeshpro": {
-      "version": "3.0.6",
+      "version": "3.0.7",
       "depth": 0,
       "source": "registry",
       "dependencies": {
@@ -1132,7 +1219,7 @@
       "url": "https://packages.unity.com"
     },
     "com.unity.timeline": {
-      "version": "1.7.6",
+      "version": "1.7.7",
       "depth": 0,
       "source": "registry",
       "dependencies": {

@@ -43,6 +43,25 @@ namespace AbilityKit.Demo.Moba.Diagnostics.Tests
             Assert.That(restored.State.World, Is.EqualTo(source.State.World));
             Assert.That(restored.State.Actors, Is.EqualTo(source.State.Actors));
             Assert.That(restored.Trace.Nodes, Is.EqualTo(source.Trace.Nodes));
+            Assert.That(restored.Trace.Nodes[0].TargetActorId, Is.EqualTo(2));
+            Assert.That(restored.Trace.Nodes[0].TriggerId, Is.EqualTo(701));
+            Assert.That(restored.Trace.Nodes[0].SourceObject.Kind,
+                Is.EqualTo(BattleDiagnosticRuntimeObjectKind.Actor));
+            Assert.That(restored.Trace.Nodes[0].SourceActorGeneration, Is.EqualTo(3));
+            Assert.That(restored.Trace.Nodes[0].TargetActorGeneration, Is.EqualTo(5));
+            Assert.That(restored.Trace.Nodes[0].Definition,
+                Is.EqualTo(new BattleDiagnosticDefinitionReference(
+                    BattleDiagnosticDefinitionKind.Skill,
+                    101)));
+            Assert.That(restored.Trace.Nodes[0].TriggerDefinition.Kind,
+                Is.EqualTo(BattleDiagnosticDefinitionKind.Trigger));
+            Assert.That(restored.Trace.Nodes[0].ParentContext.IsValid, Is.False);
+            StringAssert.Contains("\"targetActorId\": 2", json);
+            StringAssert.Contains("\"triggerId\": 701", json);
+            StringAssert.Contains("\"sourceObject\"", json);
+            StringAssert.Contains("\"generation\": 3", json);
+            StringAssert.Contains("\"definition\"", json);
+            StringAssert.Contains("\"definitionId\": 101", json);
             Assert.That(restored.Attributes.Attributes, Is.EqualTo(source.Attributes.Attributes));
             Assert.That(restored.Attributes.Modifiers, Is.EqualTo(source.Attributes.Modifiers));
             Assert.That(restored.Attributes.Modifiers.Single().HasExplanation, Is.True);
@@ -53,6 +72,15 @@ namespace AbilityKit.Demo.Moba.Diagnostics.Tests
             StringAssert.Contains("\"modifierSourceId\": 77", json);
             Assert.That(restored.Tags.Items, Is.EqualTo(source.Tags.Items));
             Assert.That(restored.Effects.Items, Is.EqualTo(source.Effects.Items));
+            Assert.That(restored.Definitions.Revision, Is.EqualTo(19));
+            Assert.That(restored.Definitions.Items.Count, Is.EqualTo(3));
+            Assert.That(restored.Definitions.UnresolvedCount, Is.EqualTo(1));
+            Assert.That(restored.Definitions.Items[0].ContentHash, Is.EqualTo("skill-hash"));
+            Assert.That(restored.Definitions.Items[0].Metadata[0].IntegerValue, Is.EqualTo(750));
+            Assert.That(restored.Definitions.Items[1].Kind, Is.EqualTo(BattleDiagnosticDefinitionKind.Trigger));
+            Assert.That(restored.Definitions.Items[1].DefinitionId, Is.EqualTo(101));
+            StringAssert.Contains("\"definitions\"", json);
+            StringAssert.Contains("\"contentHash\": \"skill-hash\"", json);
             Assert.That(restored.FrameMetrics.Metrics, Is.EqualTo(source.FrameMetrics.Metrics));
             Assert.That(restored.FrameMetrics.Samples, Is.EqualTo(source.FrameMetrics.Samples));
             StringAssert.Contains("\"frameMetrics\"", json);
@@ -131,6 +159,10 @@ namespace AbilityKit.Demo.Moba.Diagnostics.Tests
             Assert.That(restored.Events.Events[4].RootContextId, Is.EqualTo(900));
             Assert.That(restored.Events.Events[4].ContextId, Is.EqualTo(903));
             Assert.That(restored.Events.Events[4].SkillRuntime, Is.EqualTo(new BattleDiagnosticRuntimeHandle(700, 2)));
+            Assert.That(restored.Events.Events[5].Payload.TryGetTriggerAnalysisAggregate(out var triggerAggregate), Is.True);
+            Assert.That(triggerAggregate.OccurrenceCount, Is.EqualTo(59));
+            Assert.That(triggerAggregate.FirstFrame, Is.EqualTo(Frame - 58));
+            Assert.That(triggerAggregate.LastContextId, Is.EqualTo(962));
             StringAssert.Contains("\"buffLifecycleModifierSourceId\": 77", json);
             StringAssert.Contains("\"buffLifecycleRemoveReason\": 9", json);
         }
@@ -143,6 +175,40 @@ namespace AbilityKit.Demo.Moba.Diagnostics.Tests
             StringAssert.Contains("\"schemaVersion\": \"abilitykit-analysis.v1\"", json);
             StringAssert.Contains("\"battleDiagnostics\"", json);
             Assert.That(MobaBattleDiagnosticArtifactCodec.ImportSnapshot(json).State.Actors.Count, Is.EqualTo(2));
+        }
+
+        [Test]
+        public void ArtifactSerializer_UsesFormatNeutralByteBoundary()
+        {
+            IBattleDiagnosticArtifactSerializer serializer =
+                new MobaBattleDiagnosticJsonArtifactSerializer();
+
+            var bytes = serializer.Serialize(CreateSnapshot());
+            var restored = serializer.Deserialize(bytes);
+
+            Assert.That(serializer.FormatId,
+                Is.EqualTo(MobaBattleDiagnosticJsonArtifactSerializer.JsonFormatId));
+            Assert.That(serializer.MediaType, Is.EqualTo("application/json"));
+            Assert.That(bytes.Length, Is.GreaterThan(0));
+            Assert.That(restored.Definitions.Items.Count, Is.EqualTo(3));
+            Assert.That(restored.Definitions.Items[2].Resolution,
+                Is.EqualTo(BattleDiagnosticDefinitionResolution.Unresolved));
+        }
+
+        [Test]
+        public void ImportSnapshot_LegacyArtifactWithoutDefinitions_UsesEmptyCatalog()
+        {
+            var artifact = CreateArtifact(CreateSnapshot());
+            artifact.BattleDiagnostics.Definitions = null;
+            artifact.BattleDiagnostics.Session.Capabilities &=
+                ~(long)BattleDiagnosticCapabilities.Definitions;
+
+            var restored = MobaBattleDiagnosticArtifactCodec.ImportSnapshot(
+                MobaBattleDiagnosticArtifactCodec.ExportToString(artifact));
+
+            Assert.That(restored.Definitions.Items, Is.Empty);
+            Assert.That(restored.SessionInfo.Supports(BattleDiagnosticCapabilities.Definitions),
+                Is.False);
         }
 
         [Test]
@@ -305,6 +371,44 @@ namespace AbilityKit.Demo.Moba.Diagnostics.Tests
         }
 
         [Test]
+        public void FromSection_LegacyTraceFields_RebuildTypedReferences()
+        {
+            var section = MobaBattleDiagnosticArtifactCodec.ToSection(CreateSnapshot());
+            foreach (var node in section.Trace.Nodes)
+            {
+                node.RootContext = null;
+                node.Context = null;
+                node.ParentContext = null;
+                node.SourceObject = null;
+                node.TargetObject = null;
+                node.Definition = null;
+                node.TriggerDefinition = null;
+                node.SkillDefinition = null;
+                node.SourceActorGeneration = 0;
+                node.TargetActorGeneration = 0;
+                node.DefinitionKind = 0;
+            }
+
+            var restored = MobaBattleDiagnosticArtifactCodec.FromSection(section);
+            var first = restored.Trace.Nodes[0];
+            var second = restored.Trace.Nodes[1];
+
+            Assert.That(first.Context.ContextId, Is.EqualTo(900));
+            Assert.That(first.SourceObject.Kind,
+                Is.EqualTo(BattleDiagnosticRuntimeObjectKind.Actor));
+            Assert.That(first.SourceActorId, Is.EqualTo(1));
+            Assert.That(first.SourceActorGeneration, Is.Zero);
+            Assert.That(first.TargetActorId, Is.EqualTo(2));
+            Assert.That(first.TargetActorGeneration, Is.Zero);
+            Assert.That(first.Definition.DefinitionId, Is.EqualTo(101));
+            Assert.That(first.Definition.Kind,
+                Is.EqualTo(BattleDiagnosticDefinitionKind.Unknown));
+            Assert.That(first.TriggerDefinition.DefinitionId, Is.EqualTo(701));
+            Assert.That(first.SkillDefinition.DefinitionId, Is.EqualTo(101));
+            Assert.That(second.ParentContext.ContextId, Is.EqualTo(900));
+        }
+
+        [Test]
         public void ImportArtifact_LegacyArtifactWithoutBattleSection_RemainsValid()
         {
             const string json = "{\"schemaVersion\":\"abilitykit-analysis.v1\",\"futureRoot\":true}";
@@ -373,6 +477,19 @@ namespace AbilityKit.Demo.Moba.Diagnostics.Tests
                 Assert.That(session.ActorBuffStoreRevision, Is.EqualTo(15));
                 Assert.That(session.ActorTagStoreRevision, Is.EqualTo(16));
                 Assert.That(session.ActorEffectStoreRevision, Is.EqualTo(17));
+                Assert.That(session.DefinitionStoreRevision, Is.EqualTo(19));
+                var skill = session.QueryDefinition(
+                    100,
+                    new BattleDiagnosticDefinitionReference(
+                        BattleDiagnosticDefinitionKind.Skill,
+                        101));
+                var trigger = session.QueryDefinition(
+                    101,
+                    new BattleDiagnosticDefinitionReference(
+                        BattleDiagnosticDefinitionKind.Trigger,
+                        101));
+                Assert.That(skill.Items.Single().DisplayName, Is.EqualTo("Fire Strike"));
+                Assert.That(trigger.Items.Single().DisplayName, Is.EqualTo("On Fire Strike"));
             }
         }
 
@@ -432,8 +549,7 @@ namespace AbilityKit.Demo.Moba.Diagnostics.Tests
                     new BattleDiagnosticPageRequest(0, 0, 10)));
 
                 Assert.That(filtered.Status.Phase, Is.EqualTo(BattleDiagnosticQueryPhase.Ready));
-                Assert.That(filtered.Items.Count, Is.EqualTo(1));
-                Assert.That(filtered.Items[0].Sequence, Is.EqualTo(3));
+                Assert.That(filtered.Items.Select(item => item.Sequence), Is.EqualTo(new long[] { 3, 6 }));
             }
         }
 
@@ -533,6 +649,7 @@ namespace AbilityKit.Demo.Moba.Diagnostics.Tests
                 BattleDiagnosticCapabilities.ActorTags |
                 BattleDiagnosticCapabilities.ActorEffects |
                 BattleDiagnosticCapabilities.FrameMetrics |
+                BattleDiagnosticCapabilities.Definitions |
                 BattleDiagnosticCapabilities.Export,
                 BattleDiagnosticConnectionState.Connected,
                 BattleDiagnosticCaptureState.Capturing);
@@ -553,6 +670,23 @@ namespace AbilityKit.Demo.Moba.Diagnostics.Tests
                 failureKey: "missingMana",
                 reason: "Missing mana for trigger.");
             var triggerPayload = BattleDiagnosticEventPayload.FromTriggerAnalysis(in triggerData);
+            var triggerAggregateData = new BattleDiagnosticTriggerAnalysisAggregatePayload(
+                7001,
+                contextKind: 2,
+                originKind: 3,
+                BattleDiagnosticTriggerAnalysisStage.Conditions,
+                BattleDiagnosticTriggerAnalysisResult.Failed,
+                detailCode: 11,
+                occurrenceCount: 59,
+                firstFrame: Frame - 58,
+                lastFrame: Frame,
+                firstContextId: 904,
+                lastContextId: 962,
+                firstRootContextId: 900,
+                lastRootContextId: 960,
+                failureKey: "missingMana",
+                sampleReason: "Missing mana for trigger.");
+            var triggerAggregatePayload = BattleDiagnosticEventPayload.FromTriggerAnalysisAggregate(in triggerAggregateData);
             var failureData = new BattleDiagnosticSkillFailurePayload(
                 slot: 2,
                 source: "Cast",
@@ -651,7 +785,23 @@ namespace AbilityKit.Demo.Moba.Diagnostics.Tests
                     skillRuntime: new BattleDiagnosticRuntimeHandle(700, 2),
                     payloadVersion: BattleDiagnosticBuffLifecyclePayload.CurrentSchemaVersion,
                     summary: "Buff removed",
-                    payload: buffPayload)
+                    payload: buffPayload),
+                new BattleDiagnosticEvent(
+                    _scope,
+                    Frame,
+                    6,
+                    1035,
+                    BattleDiagnosticEventKind.TriggerAnalysisAggregate,
+                    BattleDiagnosticEventChannel.Trigger,
+                    BattleDiagnosticEventOutcome.Failed,
+                    sourceActorId: 1,
+                    targetActorId: 2,
+                    configId: 7001,
+                    rootContextId: 960,
+                    contextId: 962,
+                    payloadVersion: BattleDiagnosticTriggerAnalysisAggregatePayload.CurrentSchemaVersion,
+                    summary: "Repeated trigger condition miss.",
+                    payload: triggerAggregatePayload)
             };
             var metrics = new BattleDiagnosticStoreMetrics(8, events.Length, EventRevision, 2, 0, 1, true);
             var actors = new[]
@@ -661,7 +811,7 @@ namespace AbilityKit.Demo.Moba.Diagnostics.Tests
             };
             var traces = new[]
             {
-                new BattleDiagnosticTraceNodeSummary(_scope, 900, 900, 0, Frame - 2, Frame, BattleDiagnosticTraceNodeState.Ended, 1, 101, "SkillPhase", "Completed", 101, 7001, "cast.release"),
+                new BattleDiagnosticTraceNodeSummary(_scope, 900, 900, 0, Frame - 2, Frame, BattleDiagnosticTraceNodeState.Ended, 1, 101, "SkillPhase", "Completed", 101, 7001, "cast.release", 2, 701, 3, 5, BattleDiagnosticDefinitionKind.Skill),
                 new BattleDiagnosticTraceNodeSummary(_scope, 900, 901, 900, Frame - 1, Frame, BattleDiagnosticTraceNodeState.Ended, 2, 201, "Damage", "Failed")
             };
             var attributes = new[]
@@ -726,6 +876,46 @@ namespace AbilityKit.Demo.Moba.Diagnostics.Tests
                 0,
                 0,
                 true);
+            var skillReference = new BattleDiagnosticDefinitionReference(
+                BattleDiagnosticDefinitionKind.Skill,
+                101);
+            var triggerReference = new BattleDiagnosticDefinitionReference(
+                BattleDiagnosticDefinitionKind.Trigger,
+                101);
+            var unresolvedReference = new BattleDiagnosticDefinitionReference(
+                BattleDiagnosticDefinitionKind.Effect,
+                999);
+            var definitions = new BattleDiagnosticDefinitionCatalogSnapshot(
+                _scope,
+                19,
+                new[]
+                {
+                    new BattleDiagnosticDefinition(
+                        in skillReference,
+                        "Fire Strike",
+                        "config-7",
+                        "skill-hash",
+                        "moba.skills",
+                        BattleDiagnosticDefinitionResolution.Resolved,
+                        new[]
+                        {
+                            BattleDiagnosticDefinitionMetadataEntry.Integer("cooldownMs", 750),
+                            BattleDiagnosticDefinitionMetadataEntry.Number("range", 6.5d),
+                            BattleDiagnosticDefinitionMetadataEntry.Boolean("requiresTarget", true)
+                        }),
+                    new BattleDiagnosticDefinition(
+                        in triggerReference,
+                        "On Fire Strike",
+                        "trigger-3",
+                        "trigger-hash",
+                        "trigger-plans",
+                        BattleDiagnosticDefinitionResolution.Resolved,
+                        new[]
+                        {
+                            BattleDiagnosticDefinitionMetadataEntry.String("eventName", "skill.fire")
+                        }),
+                    BattleDiagnosticDefinition.Unresolved(in unresolvedReference)
+                });
 
             return new BattleDiagnosticSessionSnapshot(
                 in info,
@@ -740,7 +930,8 @@ namespace AbilityKit.Demo.Moba.Diagnostics.Tests
                 frameMetrics: new BattleDiagnosticMetricTrackSnapshot(
                     18,
                     in frameMetricStoreMetrics,
-                    frameMetricSamples));
+                    frameMetricSamples),
+                definitions: definitions);
         }
     }
 }

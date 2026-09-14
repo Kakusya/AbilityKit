@@ -1,15 +1,15 @@
 
-using UnityHFSM.Inspection;
+using AbilityKit.HFSM.Inspection;
 
-namespace UnityHFSM
+namespace AbilityKit.HFSM
 {
 	/// <summary>
 	/// The base class of all states.
 	/// </summary>
 	public class StateBase<TStateId> : IVisitableState
 	{
-		public readonly bool needsExitTime;
-		public readonly bool isGhostState;
+		public bool needsExitTime;
+		public bool isGhostState;
 		public TStateId name;
 
 		public IStateTimingManager fsm;

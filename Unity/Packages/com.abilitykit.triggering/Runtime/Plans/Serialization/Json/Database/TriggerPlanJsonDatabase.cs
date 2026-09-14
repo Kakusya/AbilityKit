@@ -229,12 +229,18 @@ namespace AbilityKit.Triggering.Runtime.Plan.Json
             public ActionCallPlanDto Action;
             public PredicatePlanDto Condition;
             public PredicatePlanDto UntilCondition;
+            public NumericValueRefDto Collection;
+            public NumericValueRefDto ItemTarget;
             public List<ExecutionNodeDto> Children;
             public List<ExecutionNodeDto> ElseChildren;
             public int Count = 1;
             public int MaxIterations = 1;
             public float Weight = 1f;
             public string Reason;
+            public string ScheduleMode;
+            public float IntervalMs;
+            public int MaxExecutions = -1;
+            public bool CanBeInterrupted = true;
             public string MetadataKind;
             public Dictionary<string, string> Values;
             public string SourceKind;

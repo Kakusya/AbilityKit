@@ -4,14 +4,17 @@ using AbilityKit.Ability.World.DI;
 using AbilityKit.Ability.World.Services;
 using AbilityKit.Ability.World.Services.Attributes;
 using AbilityKit.Demo.Moba.Diagnostics;
+using AbilityKit.Demo.Moba.Services.Observability;
 using AbilityKit.Trace;
 
 namespace AbilityKit.Demo.Moba.Services
 {
     [WorldService(typeof(IBattleDiagnosticTraceReadStore), WorldLifetime.Scoped)]
+    [WorldService(typeof(IBattleDiagnosticTraceRootReadStore), WorldLifetime.Scoped)]
     [WorldService(typeof(IBattleDiagnosticTraceSnapshotSource), WorldLifetime.Scoped)]
     public sealed class MobaBattleDiagnosticTraceReadStore :
         IBattleDiagnosticTraceReadStore,
+        IBattleDiagnosticTraceRootReadStore,
         IBattleDiagnosticTraceSnapshotSource,
         IService
     {
@@ -23,6 +26,9 @@ namespace AbilityKit.Demo.Moba.Services
             TraceExportOrder.TreePreOrder);
 
         private readonly MobaTraceRegistry _registry;
+
+        [WorldInject(required: false)]
+        private IMobaRuntimeObjectKeyResolver _runtimeObjectKeys = null;
 
         public MobaBattleDiagnosticTraceReadStore(
             MobaTraceRegistry registry,
@@ -120,9 +126,68 @@ namespace AbilityKit.Demo.Moba.Services
             }
         }
 
+        public BattleDiagnosticQueryResult<BattleDiagnosticTraceRootSummary> QueryTraceRoots(
+            BattleDiagnosticTraceRootQuery query)
+        {
+            var revision = Revision;
+            if (query.Page.StoreRevision > 0L && query.Page.StoreRevision != revision)
+            {
+                return BattleDiagnosticQueryResult<BattleDiagnosticTraceRootSummary>.Unavailable(
+                    query.RequestId,
+                    query.Page.StoreRevision,
+                    BattleDiagnosticDataAvailability.Evicted,
+                    "The requested trace root index revision is no longer retained.");
+            }
+
+            try
+            {
+                var snapshot = CaptureTraceSnapshot();
+                var roots = BattleDiagnosticTraceRootProjection.Project(snapshot.Nodes);
+                var items = new List<BattleDiagnosticTraceRootSummary>(
+                    Math.Min(query.Page.Limit, roots.Count));
+                var end = Math.Min(roots.Count, query.Page.Offset + query.Page.Limit);
+                for (var i = query.Page.Offset; i < end; i++) items.Add(roots[i]);
+
+                if (snapshot.Truncated || !snapshot.IsStable)
+                {
+                    var message = !snapshot.IsStable
+                        ? "Trace roots changed while the root index was captured."
+                        : "One or more trace roots were truncated during export.";
+                    return new BattleDiagnosticQueryResult<BattleDiagnosticTraceRootSummary>(
+                        BattleDiagnosticQueryStatus.Partial(
+                            query.RequestId,
+                            snapshot.Revision,
+                            items.Count,
+                            BattleDiagnosticDataAvailability.Truncated,
+                            message),
+                        items);
+                }
+
+                return BattleDiagnosticQueryResult<BattleDiagnosticTraceRootSummary>.FromItems(
+                    query.RequestId,
+                    snapshot.Revision,
+                    items,
+                    end < roots.Count);
+            }
+            catch (Exception ex)
+            {
+                return BattleDiagnosticQueryResult<BattleDiagnosticTraceRootSummary>.Failed(
+                    query.RequestId,
+                    revision,
+                    "QueryTraceRoots.Exception",
+                    ex.Message);
+            }
+        }
+
         private BattleDiagnosticTraceNodeSummary ToSummary(in TraceNodeExportDto node)
         {
             var metadata = node.Metadata as MobaTraceMetadata;
+            var sourceActor = ResolveActorReference(
+                metadata?.SourceActorId ?? 0L,
+                node.CreatedFrame);
+            var targetActor = ResolveActorReference(
+                metadata?.TargetActorId ?? 0L,
+                node.CreatedFrame);
             return new BattleDiagnosticTraceNodeSummary(
                 Scope,
                 node.RootId,
@@ -131,13 +196,41 @@ namespace AbilityKit.Demo.Moba.Services
                 node.CreatedFrame,
                 node.IsEnded ? node.EndedFrame : BattleDiagnosticFrames.Invalid,
                 ResolveState(node.IsEnded, node.EndReason),
-                metadata?.SourceActorId ?? 0,
+                sourceActor.RuntimeId,
                 metadata?.ConfigId ?? 0,
                 node.KindName ?? ((MobaTraceKind)node.Kind).ToString(),
                 node.IsEnded ? ResolveEndReason(node.EndReason) : string.Empty,
                 metadata?.SkillId ?? 0,
                 metadata?.CastFlowId ?? 0,
-                metadata?.PhaseId ?? string.Empty);
+                metadata?.PhaseId ?? string.Empty,
+                targetActor.RuntimeId,
+                metadata?.TriggerId ?? 0,
+                sourceActor.Generation,
+                targetActor.Generation,
+                MobaTraceRegistry.ResolveDefinitionKind(node.Kind));
+        }
+
+        private BattleDiagnosticRuntimeObjectReference ResolveActorReference(
+            long actorId,
+            int frame)
+        {
+            if (actorId == 0L) return default;
+
+            var generation = 0;
+            if (_runtimeObjectKeys != null &&
+                _runtimeObjectKeys.TryResolve(
+                    MobaRuntimeObjectKind.Actor,
+                    actorId,
+                    frame,
+                    out var key))
+            {
+                generation = key.Generation;
+            }
+
+            return BattleDiagnosticRuntimeObjectReference.Create(
+                BattleDiagnosticRuntimeObjectKind.Actor,
+                actorId,
+                generation);
         }
 
         private static BattleDiagnosticTraceNodeState ResolveState(bool isEnded, int reason)

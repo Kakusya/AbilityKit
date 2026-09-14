@@ -1,5 +1,5 @@
 
-namespace UnityHFSM
+namespace AbilityKit.HFSM
 {
 	/// <summary>
 	/// The base class of all transitions.
@@ -9,7 +9,7 @@ namespace UnityHFSM
 		public readonly TStateId from;
 		public readonly TStateId to;
 
-		public readonly bool forceInstantly;
+		public bool forceInstantly;
 		public bool isExitTransition;
 
 		public IStateMachine<TStateId> fsm;

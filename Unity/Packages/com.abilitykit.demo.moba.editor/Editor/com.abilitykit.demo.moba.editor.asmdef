@@ -33,7 +33,11 @@
     "AbilityKit.World.NetworkFragments",
     "AbilityKit.ExcelSync.Editor",
     "AbilityKit.Ability.Explain",
-    "AbilityKit.Ability.Explain.Editor"
+    "AbilityKit.Ability.Explain.Editor",
+    "AbilityKit.BattleFlow",
+    "AbilityKit.BattleFlow.Editor",
+    "AbilityKit.Scenario",
+    "AbilityKit.Demo.Moba.Environment"
   ],
   "includePlatforms": [
     "Editor"

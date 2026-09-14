@@ -16,10 +16,10 @@ namespace AbilityKit.Ability.Editor.Windows
         public static void Show(List<TriggerAuthoringReference> references, string title)
         {
             var window = GetWindow<TriggerAuthoringReferenceWindow>(utility: true);
-            window.titleContent = new GUIContent("Trigger References");
+            window.titleContent = new GUIContent("触发器引用");
             window._references.Clear();
             if (references != null) window._references.AddRange(references);
-            window._title = title ?? "References";
+            window._title = title ?? "引用";
             window.minSize = new Vector2(480f, 200f);
             window.Repaint();
         }
@@ -27,13 +27,13 @@ namespace AbilityKit.Ability.Editor.Windows
         private void OnGUI()
         {
             EditorGUILayout.LabelField(_title, EditorStyles.boldLabel);
-            EditorGUILayout.LabelField($"{_references.Count} reference(s)", EditorStyles.miniLabel);
+            EditorGUILayout.LabelField($"共 {_references.Count} 处引用", EditorStyles.miniLabel);
             GUILayout.Space(4f);
 
             _scroll = EditorGUILayout.BeginScrollView(_scroll);
             if (_references.Count == 0)
             {
-                EditorGUILayout.HelpBox("No references found in this project.", MessageType.Info);
+                EditorGUILayout.HelpBox(TriggerAuthoringEditorIntegration.T("no-references"), MessageType.Info);
             }
             for (var i = 0; i < _references.Count; i++)
             {
@@ -41,7 +41,7 @@ namespace AbilityKit.Ability.Editor.Windows
                 EditorGUILayout.BeginHorizontal(EditorStyles.helpBox);
                 GUILayout.Label(reference.BuildLabel(), EditorStyles.miniBoldLabel);
                 GUILayout.FlexibleSpace();
-                if (GUILayout.Button("Select", EditorStyles.miniButton, GUILayout.Width(52f)))
+                if (GUILayout.Button(TriggerAuthoringEditorIntegration.T("select"), EditorStyles.miniButton, GUILayout.Width(52f)))
                 {
                     Selection.activeObject = reference.Module;
                     EditorGUIUtility.PingObject(reference.Module);

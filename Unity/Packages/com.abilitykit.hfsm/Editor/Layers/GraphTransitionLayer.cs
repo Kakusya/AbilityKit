@@ -1,9 +1,10 @@
 using System;
 using UnityEditor;
 using UnityEngine;
-using UnityHFSM.Graph;
+using AbilityKit.HFSM.Graph;
+using AbilityKit.HFSM.Graph.Conditions;
 
-namespace UnityHFSM.Editor
+namespace AbilityKit.HFSM.Editor
 {
     /// <summary>
     /// Layer that renders and handles transition edges between states.
@@ -151,11 +152,11 @@ namespace UnityHFSM.Editor
             }
         }
 
-        private void ShowTransitionContextMenu(HfsmTransitionEdge edge, Vector2 position)
+        private void ShowTransitionContextMenu(TransitionEdge edge, Vector2 position)
         {
             GenericMenu menu = new GenericMenu();
 
-            menu.AddItem(new GUIContent("Delete"), false, () =>
+            menu.AddItem(new GUIContent("删除"), false, () =>
             {
                 Context.SelectEdge(edge);
                 Context.DeleteSelectedEdge();
@@ -164,7 +165,7 @@ namespace UnityHFSM.Editor
             menu.ShowAsContext();
         }
 
-        private bool IsMouseOverTransition(Vector2 mousePos, HfsmTransitionEdge edge)
+        private bool IsMouseOverTransition(Vector2 mousePos, TransitionEdge edge)
         {
             var sourceNode = Context.GraphAsset.GetNodeById(edge.SourceNodeId);
             var targetNode = Context.GraphAsset.GetNodeById(edge.TargetNodeId);
@@ -200,7 +201,7 @@ namespace UnityHFSM.Editor
             return Vector2.Distance(point, projection);
         }
 
-        private void DrawTransition(HfsmTransitionEdge edge)
+        private void DrawTransition(TransitionEdge edge)
         {
             var sourceNode = Context.GraphAsset.GetNodeById(edge.SourceNodeId);
             var targetNode = Context.GraphAsset.GetNodeById(edge.TargetNodeId);
@@ -244,7 +245,7 @@ namespace UnityHFSM.Editor
             DrawArrowLine(start, end, PreviewColor);
         }
 
-        private void CalculateEdgePositions(HfsmNodeBase source, HfsmNodeBase target, string sourceId, string targetId, out Vector2 start, out Vector2 end)
+        private void CalculateEdgePositions(NodeBase source, NodeBase target, string sourceId, string targetId, out Vector2 start, out Vector2 end)
         {
             Vector2 sourceCenter = GetNodeCenter(source);
             Vector2 targetCenter = GetNodeCenter(target);
@@ -270,12 +271,12 @@ namespace UnityHFSM.Editor
             }
         }
 
-        private Vector2 GetNodeCenter(HfsmNodeBase node)
+        private Vector2 GetNodeCenter(NodeBase node)
         {
             return node.Position + node.Size * 0.5f;
         }
 
-        private Vector2 GetNodeEdgePoint(HfsmNodeBase node, Vector2 targetPoint)
+        private Vector2 GetNodeEdgePoint(NodeBase node, Vector2 targetPoint)
         {
             Vector2 center = GetNodeCenter(node);
             Vector2 direction = (targetPoint - center).normalized;
@@ -333,7 +334,7 @@ namespace UnityHFSM.Editor
             Handles.DrawLine(new Vector2(p3.x, p3.y), p1);
         }
 
-        private void DrawConditionLabel(Vector2 from, Vector2 to, HfsmTransitionEdge edge, Color lineColor, bool isBidirectional, int edgeIndex)
+        private void DrawConditionLabel(Vector2 from, Vector2 to, TransitionEdge edge, Color lineColor, bool isBidirectional, int edgeIndex)
         {
             // Calculate midpoint
             Vector2 midPoint = Vector2.Lerp(from, to, 0.5f);
@@ -351,7 +352,7 @@ namespace UnityHFSM.Editor
             Vector2 labelOffset = perpendicular * ConditionLabelOffset * offsetMultiplier * Context.ZoomFactor;
 
             // Draw background for label
-            string labelText = edge.GetConditionSummary();
+            string labelText = GetConditionSummary(edge);
             GUIStyle labelStyle = new GUIStyle(GUI.skin.box)
             {
                 alignment = TextAnchor.MiddleCenter,
@@ -372,6 +373,47 @@ namespace UnityHFSM.Editor
 
             // Draw rotated label text using GUI.matrix
             DrawRotatedLabel(labelRect, angle, labelText, labelStyle);
+        }
+
+        private static string GetConditionSummary(TransitionEdge edge)
+        {
+            var conditions = edge.Conditions;
+            if (conditions == null || conditions.Count == 0)
+                return "始终";
+            if (conditions.Count > 1)
+                return $"{conditions.Count} 个条件（{(edge.UseAndLogic ? "AND" : "OR")}）";
+
+            var condition = conditions[0];
+            if (condition is ParameterCondition parameter)
+            {
+                if (parameter.ParameterType == ParameterValueType.Bool)
+                    return $"{parameter.ParameterName} = {(parameter.BoolValue ? "真" : "假")}";
+                if (parameter.ParameterType == ParameterValueType.Trigger)
+                    return $"{parameter.ParameterName} 已触发";
+                var value = parameter.ParameterType == ParameterValueType.Float
+                    ? parameter.FloatValue.ToString()
+                    : parameter.IntValue.ToString();
+                return $"{parameter.ParameterName} {GetOperatorSymbol(parameter.Operator)} {value}";
+            }
+            if (condition is TimeElapsedCondition elapsed)
+                return $"时间 {GetOperatorSymbol(elapsed.Operator)} {elapsed.Duration:F2} 秒";
+            if (condition is BehaviorCompleteCondition)
+                return "所有行为均已完成";
+            return condition.GetDescription();
+        }
+
+        private static string GetOperatorSymbol(CompareOperator value)
+        {
+            switch (value)
+            {
+                case CompareOperator.Equal: return "==";
+                case CompareOperator.NotEqual: return "!=";
+                case CompareOperator.GreaterThan: return ">";
+                case CompareOperator.LessThan: return "<";
+                case CompareOperator.GreaterOrEqual: return ">=";
+                case CompareOperator.LessOrEqual: return "<=";
+                default: return "?";
+            }
         }
 
         private Texture2D MakeTex(Color lineColor)

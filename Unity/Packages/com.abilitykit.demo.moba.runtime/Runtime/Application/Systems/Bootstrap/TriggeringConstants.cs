@@ -52,6 +52,8 @@ namespace AbilityKit.Demo.Moba.Systems
             public const string SetGameplayVar = "set_gameplay_var";
             public const string AddGameplayVar = "add_gameplay_var";
             public const string AdvanceGameplayCounter = "advance_gameplay_counter";
+            public const string ExecuteTrigger = "execute_trigger";
+            public const string QueryTargetCollection = "query_target_collection";
 
             // 位移类 Action。
             public const string Dash = "dash";
@@ -157,6 +159,8 @@ namespace AbilityKit.Demo.Moba.Systems
         public static ActionId SetGameplayVarId => GetActionId(Actions.SetGameplayVar);
         public static ActionId AddGameplayVarId => GetActionId(Actions.AddGameplayVar);
         public static ActionId AdvanceGameplayCounterId => GetActionId(Actions.AdvanceGameplayCounter);
+        public static ActionId ExecuteTriggerId => GetActionId(Actions.ExecuteTrigger);
+        public static ActionId QueryTargetCollectionId => GetActionId(Actions.QueryTargetCollection);
 
         // 位移类 Action ID。
         public static ActionId DashId => GetActionId(Actions.Dash);

@@ -4,61 +4,110 @@ using System.Collections.Generic;
 using System.IO;
 using AbilityKit.Ability.Config.Authoring;
 using AbilityKit.Ability.Editor.Inspectors;
+using AbilityKit.Ability.Editor.Packages;
 using AbilityKit.Ability.Editor.Utilities;
-using Sirenix.Utilities.Editor;
+using AbilityKit.Editor.Platform.Commands;
+using AbilityKit.Editor.Platform.Diagnostics;
+using AbilityKit.Editor.Platform.UI;
 using UnityEditor;
 using UnityEngine;
+using UnityEngine.Serialization;
 
 namespace AbilityKit.Ability.Editor.Windows
 {
     /// <summary>
-    /// 触发器编辑工作台（Y3 式三栏）：
-    /// 左栏 = 项目/模块树（含未挂载模块警示）；中栏 = 所选模块的完整编辑器（复用 Module Inspector）；
-    /// 右栏 = Source 同步状态卡 + 项目构建校验卡。
+    /// 触发器编辑工作台：资源管理、规则编辑和检查发布分别占用独立页面。
+    /// 默认进入规则编辑，避免项目资源树长期挤占核心编辑画布。
     /// </summary>
     internal sealed class TriggerAuthoringWorkspaceWindow : EditorWindow
     {
-        private const float LeftPaneWidth = 250f;
-        private const float RightPaneWidth = 262f;
-        private const float RightPaneThreshold = 960f;
+        private const float DefaultNavigationWidth = 270f;
+        private const string LastSelectedModulePreferencePrefix =
+            "AbilityKit.TriggerAuthoring.Workspace.LastSelectedModule.";
+
+        private enum WorkspacePage
+        {
+            Resources,
+            Editor,
+            Review
+        }
+
+        private enum ResourcePage
+        {
+            Modules,
+            Templates
+        }
+
+        private enum InspectorPage
+        {
+            Overview,
+            Source,
+            Validation
+        }
 
         private readonly List<TriggerAuthoringProjectAsset> _projects = new List<TriggerAuthoringProjectAsset>();
         private readonly List<TriggerAuthoringModuleAsset> _unassignedModules = new List<TriggerAuthoringModuleAsset>();
+        private readonly List<TriggerAuthoringTemplateAsset> _unassignedTemplates = new List<TriggerAuthoringTemplateAsset>();
+        private readonly EditorCommandRegistry _commands = new EditorCommandRegistry();
+        private readonly List<IDisposable> _commandRegistrations = new List<IDisposable>();
+        private readonly TriggerAuthoringProjectTreePanel _projectTreePanel = new TriggerAuthoringProjectTreePanel();
+        private readonly TriggerAuthoringTemplateTreePanel _templateTreePanel = new TriggerAuthoringTemplateTreePanel();
+        private readonly TriggerAuthoringModuleContentPanel _moduleContentPanel = new TriggerAuthoringModuleContentPanel();
+        private readonly TriggerAuthoringTemplateContentPanel _templateContentPanel = new TriggerAuthoringTemplateContentPanel();
+        private readonly TriggerAuthoringSourceSyncPanel _sourceSyncPanel = new TriggerAuthoringSourceSyncPanel();
+        private readonly TriggerAuthoringProjectValidationPanel _validationPanel = new TriggerAuthoringProjectValidationPanel();
 
         private TriggerAuthoringModuleAsset _selectedModule;
+        private TriggerAuthoringTemplateAsset _selectedTemplate;
         private TriggerAuthoringModuleDrawer _moduleDrawer;
-        private Vector2 _treeScroll;
-        private Vector2 _detailScroll;
         private Vector2 _rightScroll;
-        private string _search = string.Empty;
-        private TriggerAuthoringSyncInspection _syncInspection;
-        private double _nextSyncInspectionAt;
         private TriggerAuthoringProjectValidationResult _validation;
         private TriggerAuthoringProjectAsset _validationProject;
+        private EditorDiagnosticCollection _platformDiagnostics = new EditorDiagnosticCollection();
         private readonly Action _selectionChangedHandler;
+        [SerializeField] private float _navigationWidth = DefaultNavigationWidth;
+        [FormerlySerializedAs("_focusedPage")]
+        [SerializeField] private WorkspacePage _workspacePage = WorkspacePage.Editor;
+        [SerializeField] private InspectorPage _inspectorPage = InspectorPage.Overview;
+        [SerializeField] private ResourcePage _resourcePage = ResourcePage.Modules;
+        private bool _draggingNavigationSplitter;
 
         public TriggerAuthoringWorkspaceWindow()
         {
             _selectionChangedHandler = OnSelectionChanged;
         }
 
-        [MenuItem("Window/AbilityKit/Trigger Authoring Workspace")]
+        [MenuItem("Window/AbilityKit/触发器编辑工作台 %#t")]
         private static void Open()
         {
             var window = GetWindow<TriggerAuthoringWorkspaceWindow>();
-            window.titleContent = new GUIContent("Trigger Authoring");
+            window.titleContent = new GUIContent("触发器编辑器");
             window.minSize = new Vector2(720f, 480f);
         }
 
         private void OnEnable()
         {
+            RegisterCommands();
             RefreshProjects();
+            if (_selectedModule != null)
+                SelectModule(_selectedModule, false);
+            else
+            {
+                var restoredModule = LoadSelectedModulePreference(BuildSelectedModulePreferenceKey());
+                if (restoredModule != null) SelectModule(restoredModule, false);
+            }
+            if (_selectedTemplate != null) SelectTemplate(_selectedTemplate, false);
             Selection.selectionChanged += _selectionChangedHandler;
         }
 
         private void OnDisable()
         {
             Selection.selectionChanged -= _selectionChangedHandler;
+            DisposeModuleDrawer();
+            _templateContentPanel.Dispose();
+            for (var i = 0; i < _commandRegistrations.Count; i++)
+                _commandRegistrations[i].Dispose();
+            _commandRegistrations.Clear();
         }
 
         private void OnFocus()
@@ -70,240 +119,469 @@ namespace AbilityKit.Ability.Editor.Windows
         private void OnSelectionChanged()
         {
             var module = Selection.activeObject as TriggerAuthoringModuleAsset;
-            if (module == null || module == _selectedModule) return;
-            SelectModule(module, false);
+            if (module != null)
+            {
+                _resourcePage = ResourcePage.Modules;
+                if (module != _selectedModule) SelectModule(module, false);
+                Repaint();
+                return;
+            }
+
+            var template = Selection.activeObject as TriggerAuthoringTemplateAsset;
+            if (template == null) return;
+            _resourcePage = ResourcePage.Templates;
+            if (template != _selectedTemplate) SelectTemplate(template, false);
             Repaint();
         }
 
         private void OnGUI()
         {
+            HandleKeyboardShortcuts();
             DrawToolbar();
-            EditorGUILayout.BeginHorizontal();
-            DrawTree();
-            DrawCenter();
-            if (position.width >= RightPaneThreshold) DrawRightPane();
-            EditorGUILayout.EndHorizontal();
+            DrawContextHeader();
+            DrawWorkspacePages();
         }
 
         private void DrawToolbar()
         {
+            EditorImGuiControls.DrawCommandToolbar(
+                _commands,
+                TriggerAuthoringEditorIntegration.Localization,
+                new EditorCommandContext(this, CurrentSelection),
+                command => command.Id == TriggerAuthoringCommandIds.CreateProject ||
+                           command.Id == TriggerAuthoringCommandIds.ValidateAll ||
+                           command.Id == TriggerAuthoringCommandIds.Refresh);
+        }
+
+        private void DrawContextHeader()
+        {
             EditorGUILayout.BeginHorizontal(EditorStyles.toolbar);
-            GUILayout.Label("Trigger Authoring", EditorStyles.boldLabel);
-            GUILayout.FlexibleSpace();
-            if (GUILayout.Button(new GUIContent("Create Project", "Run the project setup wizard (catalogs + starter module)"), EditorStyles.toolbarButton))
-                EditorApplication.ExecuteMenuItem("Assets/AbilityKit/Trigger Authoring/Create MOBA Project Setup");
-            if (GUILayout.Button(new GUIContent("Validate All", "Validate every Trigger Authoring project"), EditorStyles.toolbarButton))
+            if (_resourcePage == ResourcePage.Templates)
             {
-                var failures = TriggerAuthoringProjectValidationMenu.ValidateAllProjects(true);
-                EditorUtility.DisplayDialog(
-                    "Trigger Authoring Project Validation",
-                    failures.Count == 0
-                        ? "All Trigger Authoring projects are valid."
-                        : string.Join(Environment.NewLine, failures.ToArray()),
-                    "OK");
+                DrawTemplateContextHeader();
+                EditorGUILayout.EndHorizontal();
+                return;
             }
-            if (GUILayout.Button("Refresh", EditorStyles.toolbarButton))
+
+            if (_selectedModule == null)
             {
-                RefreshProjects();
-                Repaint();
+                GUILayout.Label("未选择模块", EditorStyles.boldLabel);
+                GUILayout.FlexibleSpace();
+                GUILayout.Label(_projects.Count + " 个项目", EditorStyles.miniLabel);
+            GUILayout.Label(_unassignedModules.Count + " 个未归属内容包", EditorStyles.miniLabel);
+                EditorGUILayout.EndHorizontal();
+                return;
+            }
+
+            var module = _selectedModule.Module;
+            var project = _selectedModule.Project;
+            var title = module != null && !string.IsNullOrWhiteSpace(module.DisplayName)
+                ? module.DisplayName
+                : module != null && !string.IsNullOrWhiteSpace(module.ModuleId)
+                    ? module.ModuleId
+                    : _selectedModule.name;
+            GUILayout.Label(new GUIContent(title, AssetDatabase.GetAssetPath(_selectedModule)), EditorStyles.boldLabel);
+            if (module != null && !string.IsNullOrWhiteSpace(module.ModuleId) &&
+                !string.Equals(title, module.ModuleId, StringComparison.Ordinal))
+                GUILayout.Label(module.ModuleId, EditorStyles.miniLabel);
+            GUILayout.FlexibleSpace();
+            GUILayout.Label(project != null ? project.name : "未分配", EditorStyles.miniLabel);
+            GUILayout.Space(8f);
+            GUILayout.Label((module != null && module.Triggers != null ? module.Triggers.Count : 0) + " 个触发器", EditorStyles.miniLabel);
+            if (_moduleDrawer != null && (_moduleDrawer.DiagnosticErrorCount > 0 || _moduleDrawer.DiagnosticWarningCount > 0))
+            {
+                GUILayout.Space(8f);
+                var previousColor = GUI.color;
+                GUI.color = _moduleDrawer.DiagnosticErrorCount > 0
+                    ? new Color(1f, 0.48f, 0.44f)
+                    : new Color(1f, 0.75f, 0.3f);
+                GUILayout.Label(
+                    "E" + _moduleDrawer.DiagnosticErrorCount + "  W" + _moduleDrawer.DiagnosticWarningCount,
+                    EditorStyles.miniBoldLabel);
+                GUI.color = previousColor;
+            }
+            if (position.width >= TriggerAuthoringWorkspaceLayout.StandardWidthThreshold)
+            {
+                GUILayout.Space(8f);
+                using (new EditorGUI.DisabledScope(project == null))
+                {
+                    if (GUILayout.Button(new GUIContent("校验项目", "校验所选项目中的全部模块、模板和目录。"), EditorStyles.toolbarButton))
+                        ValidateSelectedProject();
+                    if (GUILayout.Button(new GUIContent("导出项目", "校验并导出所选项目中的全部 Runtime Plan。"), EditorStyles.toolbarButton))
+                        ExportSelectedProject();
+                }
             }
             EditorGUILayout.EndHorizontal();
         }
 
-        private void DrawTree()
+        private void DrawTemplateContextHeader()
         {
-            EditorGUILayout.BeginVertical(EditorStyles.helpBox, GUILayout.Width(LeftPaneWidth));
-            EditorGUILayout.BeginHorizontal();
-            _search = EditorGUILayout.TextField(_search ?? string.Empty, EditorStyles.toolbarSearchField);
-            if (GUILayout.Button("x", EditorStyles.toolbarButton, GUILayout.Width(20f)) &&
-                !string.IsNullOrEmpty(_search))
+            if (_selectedTemplate == null)
             {
-                _search = string.Empty;
-                GUI.FocusControl(null);
+                GUILayout.Label("未选择模板", EditorStyles.boldLabel);
+                GUILayout.FlexibleSpace();
+                GUILayout.Label(_projects.Count + " 个项目", EditorStyles.miniLabel);
+                GUILayout.Label(_unassignedTemplates.Count + " 个未分配模板", EditorStyles.miniLabel);
+                return;
             }
-            EditorGUILayout.EndHorizontal();
 
-            _treeScroll = EditorGUILayout.BeginScrollView(_treeScroll);
-            var filter = (_search ?? string.Empty).Trim();
-            for (var i = 0; i < _projects.Count; i++)
+            var template = _selectedTemplate.Template;
+            var project = _selectedTemplate.Project;
+            var title = template != null && !string.IsNullOrWhiteSpace(template.DisplayName)
+                ? template.DisplayName
+                : template != null && !string.IsNullOrWhiteSpace(template.TemplateId)
+                    ? template.TemplateId
+                    : _selectedTemplate.name;
+            GUILayout.Label(new GUIContent(title, AssetDatabase.GetAssetPath(_selectedTemplate)), EditorStyles.boldLabel);
+            if (template != null && !string.IsNullOrWhiteSpace(template.TemplateId) &&
+                !string.Equals(title, template.TemplateId, StringComparison.Ordinal))
+                GUILayout.Label(template.TemplateId, EditorStyles.miniLabel);
+            GUILayout.FlexibleSpace();
+            GUILayout.Label(project != null ? project.name : "未分配", EditorStyles.miniLabel);
+            GUILayout.Space(8f);
+            var parameterCount = template?.Parameters != null ? template.Parameters.Count : 0;
+            GUILayout.Label(parameterCount + " 个调用输入", EditorStyles.miniLabel);
+            DrawSharedHeaderCommands(project);
+        }
+
+        private void DrawSharedHeaderCommands(TriggerAuthoringProjectAsset project)
+        {
+            if (position.width >= TriggerAuthoringWorkspaceLayout.StandardWidthThreshold)
             {
-                var project = _projects[i];
-                if (project == null) continue;
-                GUILayout.Label(project.name, EditorStyles.boldLabel);
-                var modules = project.Modules;
-                for (var m = 0; m < modules.Count; m++)
+                GUILayout.Space(8f);
+                using (new EditorGUI.DisabledScope(project == null))
                 {
-                    if (modules[m] != null) DrawModuleRow(modules[m], filter);
+                    if (GUILayout.Button(new GUIContent("校验项目", "校验所选项目中的全部模块、模板和目录。"), EditorStyles.toolbarButton))
+                        ValidateSelectedProject();
+                    if (GUILayout.Button(new GUIContent("导出项目", "校验并导出所选项目中的全部 Runtime Plan。"), EditorStyles.toolbarButton))
+                        ExportSelectedProject();
                 }
             }
+        }
 
-            if (_unassignedModules.Count > 0)
+        private void HandleKeyboardShortcuts()
+        {
+            var current = Event.current;
+            if (current == null || current.type != EventType.KeyDown) return;
+            if (_workspacePage != WorkspacePage.Editor && current.keyCode == KeyCode.Escape)
             {
-                GUILayout.Space(4f);
-                GUILayout.Label($"Unassigned Modules ({_unassignedModules.Count})", EditorStyles.boldLabel);
-                EditorGUILayout.HelpBox(
-                    "These modules are not registered in any project; the build gate skips them.",
-                    MessageType.Warning);
-                for (var i = 0; i < _unassignedModules.Count; i++)
-                    DrawModuleRow(_unassignedModules[i], filter);
+                _workspacePage = WorkspacePage.Editor;
+                current.Use();
+                Repaint();
+                return;
+            }
+
+            if ((current.control || current.command) && current.shift && current.keyCode == KeyCode.F)
+            {
+                _workspacePage = _workspacePage == WorkspacePage.Editor
+                    ? WorkspacePage.Resources
+                    : WorkspacePage.Editor;
+                GUI.FocusControl(null);
+                current.Use();
+                Repaint();
+            }
+        }
+
+        private void DrawWorkspacePages()
+        {
+            var labels = new[] { "项目资源", "触发器编辑", "检查与发布" };
+            var nextPage = (WorkspacePage)GUILayout.Toolbar(
+                (int)_workspacePage,
+                labels,
+                EditorStyles.toolbarButton,
+                GUILayout.Height(25f));
+            if (nextPage != _workspacePage)
+            {
+                _workspacePage = nextPage;
+                if (_workspacePage == WorkspacePage.Review)
+                    _inspectorPage = InspectorPage.Validation;
+                GUI.FocusControl(null);
+            }
+
+            switch (_workspacePage)
+            {
+                case WorkspacePage.Resources:
+                    DrawResourceManagementPage();
+                    break;
+                case WorkspacePage.Review:
+                    DrawRightPane(position.width);
+                    break;
+                default:
+                    DrawCenter(position.width, true);
+                    break;
+            }
+        }
+
+        private void DrawResourceManagementPage()
+        {
+            _navigationWidth = TriggerAuthoringWorkspaceLayout.ClampNavigationWidth(
+                _navigationWidth,
+                position.width);
+            var detailsWidth = Mathf.Max(
+                320f,
+                position.width - _navigationWidth - TriggerAuthoringWorkspaceLayout.SplitterWidth);
+            EditorGUILayout.BeginHorizontal();
+            DrawTree(_navigationWidth);
+            DrawPaneSplitter(ref _navigationWidth, ref _draggingNavigationSplitter);
+            DrawRightPane(detailsWidth);
+            EditorGUILayout.EndHorizontal();
+        }
+
+        private void RegisterCommands()
+        {
+            if (_commandRegistrations.Count > 0) return;
+            var commands = TriggerAuthoringCommandFactory.CreateWorkspace(
+                () => EditorApplication.ExecuteMenuItem(
+                    "Assets/AbilityKit/触发器编辑/创建 MOBA 项目配置"),
+                ValidateAllProjects,
+                () =>
+                {
+                    RefreshProjects();
+                    Repaint();
+                },
+                ValidateSelectedProject,
+                ExportSelectedProject,
+                () => CurrentProject != null);
+            for (var i = 0; i < commands.Count; i++)
+                _commandRegistrations.Add(_commands.Register(commands[i]));
+        }
+
+        private static void ValidateAllProjects()
+        {
+            var failures = TriggerAuthoringProjectValidationMenu.ValidateAllProjects(true);
+            EditorUtility.DisplayDialog(
+                "触发器项目校验",
+                failures.Count == 0
+                    ? "全部触发器项目均已通过校验。"
+                    : string.Join(Environment.NewLine, failures.ToArray()),
+                "确定");
+        }
+
+        private void DrawTree(float width)
+        {
+            if (_resourcePage == ResourcePage.Templates)
+            {
+                _templateTreePanel.Draw(
+                    _projects,
+                    _unassignedTemplates,
+                    _selectedTemplate,
+                    template =>
+                    {
+                        SelectTemplate(template, true);
+                        _workspacePage = WorkspacePage.Editor;
+                    },
+                    CreateTemplateFromToolbar,
+                    CreateTemplate,
+                    () =>
+                    {
+                        _resourcePage = ResourcePage.Modules;
+                        Repaint();
+                    },
+                    width);
+                return;
+            }
+
+            _projectTreePanel.Draw(
+                _projects,
+                _unassignedModules,
+                _selectedModule,
+                module =>
+                {
+                    SelectModule(module, true);
+                    _workspacePage = WorkspacePage.Editor;
+                },
+                CreatePackage,
+                () =>
+                {
+                    _resourcePage = ResourcePage.Templates;
+                    Repaint();
+                },
+                width);
+        }
+
+        private void CreatePackage(TriggerAuthoringProjectAsset project, string domainId)
+        {
+            TriggerAuthoringPackageCreationWindow.Open(
+                project,
+                domainId,
+                package =>
+                {
+                    RefreshProjects();
+                    SelectModule(package, true);
+                    _workspacePage = WorkspacePage.Editor;
+                    Repaint();
+                });
+        }
+
+        private void DrawCenter(float width, bool showEmbeddedDiagnostics)
+        {
+            if (_resourcePage == ResourcePage.Templates)
+            {
+                _templateContentPanel.Draw(_selectedTemplate);
+                return;
+            }
+            _moduleContentPanel.Draw(_selectedModule, _moduleDrawer, width, showEmbeddedDiagnostics);
+        }
+
+        private void DrawRightPane(float width)
+        {
+            EditorGUILayout.BeginVertical(GUILayout.Width(width), GUILayout.ExpandHeight(true));
+            if (_resourcePage == ResourcePage.Templates)
+            {
+                _rightScroll = EditorGUILayout.BeginScrollView(_rightScroll);
+                DrawTemplateOverview();
+                EditorGUILayout.EndScrollView();
+                EditorGUILayout.EndVertical();
+                return;
+            }
+            _inspectorPage = (InspectorPage)GUILayout.Toolbar(
+                (int)_inspectorPage,
+                new[] { "概览", "源同步", "校验" },
+                EditorStyles.toolbarButton);
+            _rightScroll = EditorGUILayout.BeginScrollView(_rightScroll);
+            switch (_inspectorPage)
+            {
+                case InspectorPage.Source:
+                    DrawSyncCard();
+                    break;
+                case InspectorPage.Validation:
+                    DrawValidationCard();
+                    break;
+                default:
+                    DrawOverview();
+                    break;
             }
             EditorGUILayout.EndScrollView();
             EditorGUILayout.EndVertical();
         }
 
-        private void DrawModuleRow(TriggerAuthoringModuleAsset module, string filter)
-        {
-            var moduleId = module.Module != null ? module.Module.ModuleId : null;
-            var summary = string.IsNullOrWhiteSpace(moduleId) ? module.name : moduleId;
-            var triggerCount = module.Module != null && module.Module.Triggers != null
-                ? module.Module.Triggers.Count
-                : 0;
-            var label = summary + "  (" + triggerCount + ")";
-            if (filter.Length > 0 &&
-                label.IndexOf(filter, StringComparison.OrdinalIgnoreCase) < 0 &&
-                module.name.IndexOf(filter, StringComparison.OrdinalIgnoreCase) < 0)
-                return;
-
-            var oldBackground = GUI.backgroundColor;
-            if (module == _selectedModule) GUI.backgroundColor = new Color(0.42f, 0.66f, 0.92f);
-            if (GUILayout.Button(label, EditorStyles.miniButton, GUILayout.Height(24f)))
-                SelectModule(module, true);
-            GUI.backgroundColor = oldBackground;
-        }
-
-        private void DrawCenter()
+        private void DrawTemplateOverview()
         {
             EditorGUILayout.BeginVertical(EditorStyles.helpBox);
-            if (_selectedModule == null)
+            GUILayout.Label("模板概览", EditorStyles.boldLabel);
+            if (_selectedTemplate == null)
             {
-                EditorGUILayout.HelpBox(
-                    "Select a module on the left to start editing.\n" +
-                    "No project yet? Use Create Project in the toolbar (catalogs + starter module).",
-                    MessageType.Info);
-                GUILayout.FlexibleSpace();
+                EditorGUILayout.HelpBox("请选择一个模板。", MessageType.Info);
                 EditorGUILayout.EndVertical();
                 return;
             }
 
-            _detailScroll = EditorGUILayout.BeginScrollView(_detailScroll);
-            if (_moduleDrawer != null) _moduleDrawer.Draw();
-            EditorGUILayout.EndScrollView();
+            var template = _selectedTemplate.Template;
+            var definition = TriggerAuthoringTemplateDefinition.Get(template);
+            DrawOverviewMetric("所属项目", _selectedTemplate.Project != null ? _selectedTemplate.Project.name : "未分配");
+            DrawOverviewMetric("模板 ID", template != null ? template.TemplateId : string.Empty);
+            DrawOverviewMetric("版本", template != null ? template.TemplateVersion : string.Empty);
+            DrawOverviewMetric("入口模式", definition != null && definition.EntryMode == TriggerEntryMode.Callable ? "仅供调用" : "事件触发");
+            DrawOverviewMetric("触发事件", definition != null ? definition.Event : string.Empty);
+            DrawOverviewMetric("LocalVar", definition?.Blackboard != null ? definition.Blackboard.Count.ToString() : "0");
+            var parameters = template?.Parameters;
+            DrawOverviewMetric("调用输入", parameters != null ? parameters.Count.ToString() : "0");
+            DrawOverviewMetric("必填输入", CountRequiredTemplateInputs(parameters).ToString());
+            var referenceCount = template != null && _selectedTemplate.Project != null
+                ? TriggerAuthoringReferenceFinder.FindTemplateReferences(_selectedTemplate.Project, template.TemplateId).Count
+                : 0;
+            DrawOverviewMetric("引用次数", referenceCount.ToString());
+            GUILayout.Space(4f);
+            if (GUILayout.Button("在 Project 中定位", EditorStyles.miniButton))
+                EditorGUIUtility.PingObject(_selectedTemplate);
             EditorGUILayout.EndVertical();
         }
 
-        private void DrawRightPane()
+        private void DrawOverview()
         {
-            EditorGUILayout.BeginVertical(EditorStyles.helpBox, GUILayout.Width(RightPaneWidth));
-            _rightScroll = EditorGUILayout.BeginScrollView(_rightScroll);
-            DrawSyncCard();
-            GUILayout.Space(6f);
-            DrawValidationCard();
-            EditorGUILayout.EndScrollView();
+            EditorGUILayout.BeginVertical(EditorStyles.helpBox);
+            GUILayout.Label("内容包状态", EditorStyles.boldLabel);
+            if (_selectedModule == null)
+            {
+                EditorGUILayout.HelpBox("请选择一个内容包以检查其构建就绪状态。", MessageType.Info);
+                EditorGUILayout.EndVertical();
+                return;
+            }
+
+            var module = _selectedModule.Module;
+            var project = _selectedModule.Project;
+            DrawOverviewMetric("所属项目", project != null ? project.name : "未分配");
+            DrawOverviewMetric("内容包 ID", module != null ? module.ModuleId : string.Empty);
+            DrawOverviewMetric("业务域", TriggerAuthoringPackageCatalog.ResolveDomainId(_selectedModule));
+            DrawOverviewMetric("内容标识", _selectedModule.PackageMetadata.ContentKey);
+            DrawOverviewMetric("运行时类型", module != null ? TriggerAuthoringEditorLabels.ModuleKind(module.Kind) : "未知");
+            DrawOverviewMetric("触发器", module != null && module.Triggers != null ? module.Triggers.Count.ToString() : "0");
+            DrawOverviewMetric("源文件", _selectedModule.SourceJsonPath ?? string.Empty);
+            GUILayout.Space(4f);
+
+            if (project == null)
+                EditorGUILayout.HelpBox("此内容包尚未分配到项目，在完成分配前不会参与项目校验和运行时导出。", MessageType.Warning);
+            else if (_validation == null || _validationProject != project)
+                EditorGUILayout.HelpBox("当前工作台会话中尚未执行项目校验。", MessageType.Info);
+            else
+                EditorGUILayout.HelpBox(
+                    _platformDiagnostics.ErrorCount == 0
+                        ? "项目校验已通过，包含 " + _platformDiagnostics.WarningCount + " 个警告。"
+                        : "项目校验发现 " + _platformDiagnostics.ErrorCount + " 个错误和 " + _platformDiagnostics.WarningCount + " 个警告。",
+                    _platformDiagnostics.ErrorCount == 0 ? MessageType.Info : MessageType.Error);
+
+            using (new EditorGUI.DisabledScope(project == null))
+            {
+                EditorGUILayout.BeginHorizontal();
+                if (GUILayout.Button("校验", EditorStyles.miniButtonLeft)) ValidateSelectedProject();
+                if (GUILayout.Button("导出运行时", EditorStyles.miniButtonRight)) ExportSelectedProject();
+                EditorGUILayout.EndHorizontal();
+            }
             EditorGUILayout.EndVertical();
+        }
+
+        private static void DrawOverviewMetric(string label, string value)
+        {
+            EditorGUILayout.BeginHorizontal();
+            GUILayout.Label(label, EditorStyles.miniLabel, GUILayout.Width(72f));
+            GUILayout.Label(string.IsNullOrWhiteSpace(value) ? "-" : value, EditorStyles.wordWrappedMiniLabel);
+            EditorGUILayout.EndHorizontal();
+        }
+
+        private void DrawPaneSplitter(ref float paneWidth, ref bool dragging)
+        {
+            var rect = GUILayoutUtility.GetRect(
+                TriggerAuthoringWorkspaceLayout.SplitterWidth,
+                TriggerAuthoringWorkspaceLayout.SplitterWidth,
+                GUILayout.Width(TriggerAuthoringWorkspaceLayout.SplitterWidth),
+                GUILayout.ExpandHeight(true));
+            EditorGUIUtility.AddCursorRect(rect, MouseCursor.ResizeHorizontal);
+            if (Event.current.type == EventType.Repaint)
+                EditorGUI.DrawRect(rect, new Color(0f, 0f, 0f, 0.22f));
+
+            if (Event.current.type == EventType.MouseDown && Event.current.button == 0 && rect.Contains(Event.current.mousePosition))
+            {
+                dragging = true;
+                Event.current.Use();
+            }
+            else if (dragging && Event.current.type == EventType.MouseDrag)
+            {
+                paneWidth += Event.current.delta.x;
+                paneWidth = TriggerAuthoringWorkspaceLayout.ClampNavigationWidth(paneWidth, position.width);
+                Repaint();
+                Event.current.Use();
+            }
+            else if (dragging && Event.current.rawType == EventType.MouseUp)
+            {
+                dragging = false;
+                Event.current.Use();
+            }
         }
 
         private void DrawSyncCard()
         {
-            SirenixEditorGUI.BeginBox("Source Sync");
-            if (_selectedModule == null)
-            {
-                EditorGUILayout.LabelField("No module selected.", EditorStyles.miniLabel);
-                SirenixEditorGUI.EndBox();
-                return;
-            }
-
-            if (_syncInspection == null || _nextSyncInspectionAt <= EditorApplication.timeSinceStartup)
-            {
-                _syncInspection = TriggerAuthoringSourceSync.Inspect(_selectedModule);
-                _nextSyncInspectionAt = EditorApplication.timeSinceStartup + 0.5d;
-            }
-
-            var inspection = _syncInspection;
-            var oldColor = GUI.color;
-            GUI.color = GetSyncColor(inspection.State);
-            GUILayout.Label(inspection.State.ToString(), EditorStyles.boldLabel);
-            GUI.color = oldColor;
-            if (inspection.State == TriggerAuthoringSyncState.JsonChanged)
-                EditorGUILayout.HelpBox("External changes detected. Use Import to apply.", MessageType.Warning);
-            EditorGUILayout.LabelField(
-                "Path",
-                string.IsNullOrEmpty(inspection.SourcePath) ? "<unbound>" : inspection.SourcePath,
-                EditorStyles.miniLabel);
-
-            EditorGUILayout.BeginHorizontal();
-            if (GUILayout.Button("Import", EditorStyles.miniButtonLeft)) ImportSource();
-            if (GUILayout.Button("Export", EditorStyles.miniButtonRight)) ExportSource();
-            EditorGUILayout.EndHorizontal();
-
-            EditorGUILayout.BeginHorizontal();
-            using (new EditorGUI.DisabledScope(string.IsNullOrEmpty(inspection.SourcePath)))
-            {
-                if (GUILayout.Button("Copy Path", EditorStyles.miniButtonLeft))
-                    EditorGUIUtility.systemCopyBuffer = inspection.SourcePath ?? string.Empty;
-                if (GUILayout.Button("Reveal", EditorStyles.miniButtonRight))
-                    EditorUtility.RevealInFinder(inspection.SourcePath);
-            }
-            EditorGUILayout.EndHorizontal();
-            SirenixEditorGUI.EndBox();
+            _sourceSyncPanel.Draw(_selectedModule, ImportSource, ExportSource);
         }
 
         private void DrawValidationCard()
         {
-            SirenixEditorGUI.BeginBox("Project Validation");
-            var project = _selectedModule != null ? _selectedModule.Project : null;
-            if (project == null)
-            {
-                EditorGUILayout.HelpBox("The selected module is not registered in a project.", MessageType.Warning);
-                SirenixEditorGUI.EndBox();
-                return;
-            }
-
-            EditorGUILayout.LabelField(project.name, EditorStyles.miniBoldLabel);
-            EditorGUILayout.BeginHorizontal();
-            if (GUILayout.Button("Validate", EditorStyles.miniButtonLeft))
-            {
-                _validation = TriggerAuthoringProjectValidator.Validate(project);
-                _validationProject = project;
-            }
-            if (GUILayout.Button("Export Runtime", EditorStyles.miniButtonRight))
-            {
-                var result = TriggerAuthoringProjectExport.ExportAll(project);
-                var message = "[TriggerAuthoring] Project runtime export " +
-                              (result.Success ? "succeeded. " : "failed. ") + result.BuildMessage();
-                if (result.Success) Debug.Log(message, project);
-                else Debug.LogError(message, project);
-                EditorUtility.DisplayDialog("Project Runtime Export", result.BuildMessage(), "OK");
-            }
-            EditorGUILayout.EndHorizontal();
-
-            if (_validation != null && _validationProject == project)
-            {
-                var errors = 0;
-                var warnings = 0;
-                for (var i = 0; i < _validation.Diagnostics.Count; i++)
-                {
-                    if (_validation.Diagnostics[i].Severity == TriggerAuthoringDiagnosticSeverity.Error) errors++;
-                    else if (_validation.Diagnostics[i].Severity == TriggerAuthoringDiagnosticSeverity.Warning) warnings++;
-                }
-
-                EditorGUILayout.LabelField(
-                    $"{_validation.ModuleCount} modules, {_validation.TemplateCount} templates  (E{errors} W{warnings})",
-                    EditorStyles.miniLabel);
-                for (var i = 0; i < _validation.Diagnostics.Count; i++)
-                {
-                    var diagnostic = _validation.Diagnostics[i];
-                    EditorGUILayout.HelpBox(
-                        diagnostic.Code + " " + diagnostic.Path + ": " + diagnostic.Message,
-                        diagnostic.Severity == TriggerAuthoringDiagnosticSeverity.Error
-                            ? MessageType.Error
-                            : MessageType.Warning);
-                }
-            }
-            else
-            {
-                EditorGUILayout.LabelField("Not validated yet.", EditorStyles.miniLabel);
-            }
-            SirenixEditorGUI.EndBox();
+            _validationPanel.Draw(
+                _selectedModule,
+                _validation,
+                _validationProject,
+                _platformDiagnostics,
+                _commands,
+                this);
         }
 
         private void ImportSource()
@@ -314,30 +592,33 @@ namespace AbilityKit.Ability.Editor.Windows
             if (string.IsNullOrWhiteSpace(path) || !File.Exists(path))
             {
                 path = EditorUtility.OpenFilePanel(
-                    "Import Trigger Source JSON",
+                    "导入触发器 Source JSON",
                     Application.dataPath,
                     TriggerSourceCodecs.ModuleDefault.FileExtension);
                 if (string.IsNullOrWhiteSpace(path)) return;
             }
 
-            var result = TriggerAuthoringSourceSync.Import(asset, path);
+            var preview = TriggerAuthoringSourceSync.PreviewImport(asset, path);
+            if (!TriggerAuthoringSourceImportPreviewDialog.Confirm(preview)) return;
+
+            var result = TriggerAuthoringSourceSync.Import(asset, path, preview.RequiresForce);
             if (!result.Success && result.CanForce && EditorUtility.DisplayDialog(
-                    "Trigger Asset Conflict",
-                    result.Message + "\n\nForce import and overwrite Asset content?",
-                    "Force Import",
-                    "Cancel"))
+                    "触发器资产冲突",
+                    result.Message + "\n\n是否强制导入并覆盖资产内容？",
+                    "强制导入",
+                    "取消"))
                 result = TriggerAuthoringSourceSync.Import(asset, path, true);
 
             if (result.Success)
             {
                 AssetDatabase.SaveAssets();
-                ShowNotification(new GUIContent("Import succeeded"));
+                ShowNotification(new GUIContent("导入成功"));
             }
             else
             {
-                EditorUtility.DisplayDialog("Trigger Source Import Failed", result.Message, "OK");
+                EditorUtility.DisplayDialog("触发器源文件导入失败", result.Message, "确定");
             }
-            _nextSyncInspectionAt = 0d;
+            _sourceSyncPanel.Invalidate();
             Repaint();
         }
 
@@ -352,7 +633,7 @@ namespace AbilityKit.Ability.Editor.Windows
                     ? asset.Module.ModuleId
                     : asset.name;
                 path = EditorUtility.SaveFilePanel(
-                    "Export Trigger Source JSON",
+                    "导出触发器 Source JSON",
                     Application.dataPath,
                     defaultName,
                     TriggerSourceCodecs.ModuleDefault.FileExtension);
@@ -361,34 +642,120 @@ namespace AbilityKit.Ability.Editor.Windows
 
             var result = TriggerAuthoringSourceSync.Export(asset, path);
             if (!result.Success && result.CanForce && EditorUtility.DisplayDialog(
-                    "Trigger Source Conflict",
-                    result.Message + "\n\nForce export and overwrite Source JSON?",
-                    "Force Export",
-                    "Cancel"))
+                    "触发器源文件冲突",
+                    result.Message + "\n\n是否强制导出并覆盖 Source JSON？",
+                    "强制导出",
+                    "取消"))
                 result = TriggerAuthoringSourceSync.Export(asset, path, true);
 
             if (result.Success)
             {
                 AssetDatabase.SaveAssets();
-                ShowNotification(new GUIContent("Export succeeded"));
+                ShowNotification(new GUIContent("导出成功"));
             }
             else
             {
-                EditorUtility.DisplayDialog("Trigger Source Export Failed", result.Message, "OK");
+                EditorUtility.DisplayDialog("触发器源文件导出失败", result.Message, "确定");
             }
-            _nextSyncInspectionAt = 0d;
+            _sourceSyncPanel.Invalidate();
             Repaint();
+        }
+
+        private void ValidateSelectedProject()
+        {
+            var project = CurrentProject;
+            if (project == null) return;
+            _validation = TriggerAuthoringProjectValidator.Validate(project);
+            _validationProject = project;
+            _platformDiagnostics = TriggerAuthoringDiagnosticAdapter.Adapt(
+                _validation.Diagnostics,
+                project,
+                LocateProjectDiagnostic);
+            Repaint();
+        }
+
+        private void ExportSelectedProject()
+        {
+            var project = CurrentProject;
+            if (project == null) return;
+            var result = TriggerAuthoringProjectExport.ExportAll(project);
+            var message = "[TriggerAuthoring] Project runtime export " +
+                          (result.Success ? "succeeded. " : "failed. ") + result.BuildMessage();
+            if (result.Success) Debug.Log(message, project);
+            else Debug.LogError(message, project);
+            EditorUtility.DisplayDialog("项目运行时导出", result.BuildMessage(), "确定");
+        }
+
+        private void LocateProjectDiagnostic(string path)
+        {
+            if (_validationProject == null) return;
+
+            UnityEngine.Object target = _validationProject;
+            if (TryReadPathIndex(path, "project.modules[", out var moduleIndex) &&
+                moduleIndex >= 0 &&
+                moduleIndex < _validationProject.Modules.Count &&
+                _validationProject.Modules[moduleIndex] != null)
+            {
+                target = _validationProject.Modules[moduleIndex];
+            }
+            else if (TryReadPathIndex(path, "project.templates[", out var templateIndex) &&
+                     _validationProject.TemplateCatalog != null &&
+                     templateIndex >= 0 &&
+                     templateIndex < _validationProject.TemplateCatalog.Templates.Count &&
+                     _validationProject.TemplateCatalog.Templates[templateIndex] != null)
+            {
+                target = _validationProject.TemplateCatalog.Templates[templateIndex];
+            }
+            else if (!string.IsNullOrEmpty(path) &&
+                     path.StartsWith("project.eventCatalog", StringComparison.Ordinal) &&
+                     _validationProject.EventCatalog != null)
+            {
+                target = _validationProject.EventCatalog;
+            }
+            else if (!string.IsNullOrEmpty(path) &&
+                     path.StartsWith("project.globalBlackboardCatalog", StringComparison.Ordinal) &&
+                     _validationProject.GlobalBlackboardCatalog != null)
+            {
+                target = _validationProject.GlobalBlackboardCatalog;
+            }
+            else if (!string.IsNullOrEmpty(path) &&
+                     path.StartsWith("project.templateCatalog", StringComparison.Ordinal) &&
+                     _validationProject.TemplateCatalog != null)
+            {
+                target = _validationProject.TemplateCatalog;
+            }
+
+            Selection.activeObject = target;
+            EditorGUIUtility.PingObject(target);
+        }
+
+        private static bool TryReadPathIndex(
+            string path,
+            string prefix,
+            out int index)
+        {
+            index = -1;
+            if (string.IsNullOrEmpty(path)) return false;
+            var start = path.IndexOf(prefix, StringComparison.Ordinal);
+            if (start < 0) return false;
+            start += prefix.Length;
+            var end = path.IndexOf(']', start);
+            return end > start &&
+                   int.TryParse(path.Substring(start, end - start), out index);
         }
 
         private void SelectModule(TriggerAuthoringModuleAsset module, bool syncSelection)
         {
-            if (module == _selectedModule)
+            _resourcePage = ResourcePage.Modules;
+            if (module == _selectedModule && _moduleDrawer != null)
             {
+                SaveSelectedModulePreference(module, BuildSelectedModulePreferenceKey());
                 if (syncSelection) Selection.activeObject = module;
                 return;
             }
 
             _selectedModule = module;
+            SaveSelectedModulePreference(module, BuildSelectedModulePreferenceKey());
             if (_moduleDrawer == null)
             {
                 _moduleDrawer = new TriggerAuthoringModuleDrawer(module);
@@ -401,9 +768,89 @@ namespace AbilityKit.Ability.Editor.Windows
 
             _validation = null;
             _validationProject = null;
-            _syncInspection = null;
-            _nextSyncInspectionAt = 0d;
+            _platformDiagnostics.Clear();
+            _sourceSyncPanel.Invalidate();
             if (syncSelection) Selection.activeObject = module;
+        }
+
+        private void SelectTemplate(TriggerAuthoringTemplateAsset template, bool syncSelection)
+        {
+            _resourcePage = ResourcePage.Templates;
+            _selectedTemplate = template;
+            _validation = null;
+            _validationProject = null;
+            _platformDiagnostics.Clear();
+            if (syncSelection) Selection.activeObject = template;
+        }
+
+        private void CreateTemplate(TriggerAuthoringProjectAsset project)
+        {
+            var template = TriggerAuthoringProjectSetup.CreateTemplateForProject(project);
+            if (template == null) return;
+            RefreshProjects();
+            SelectTemplate(template, true);
+            _workspacePage = WorkspacePage.Editor;
+            Repaint();
+        }
+
+        private void CreateTemplateFromToolbar()
+        {
+            var availableProjects = new List<TriggerAuthoringProjectAsset>();
+            for (var i = 0; i < _projects.Count; i++)
+            {
+                var project = _projects[i];
+                if (project != null && project.TemplateCatalog != null)
+                    availableProjects.Add(project);
+            }
+
+            if (availableProjects.Count == 0)
+            {
+                if (_projects.Count > 0)
+                {
+                    EditorUtility.DisplayDialog(
+                        "创建触发器模板",
+                        "当前项目均未配置模板目录，请先在项目资产中配置模板目录。",
+                        "确定");
+                    return;
+                }
+
+                if (!EditorUtility.DisplayDialog(
+                        "创建触发器模板",
+                        "当前没有触发器项目。创建模板前需要先创建项目，是否现在创建？",
+                        "创建项目",
+                        "取消"))
+                    return;
+
+                EditorApplication.ExecuteMenuItem("Assets/AbilityKit/触发器编辑/创建 MOBA 项目配置");
+                RefreshProjects();
+                Repaint();
+                return;
+            }
+
+            if (availableProjects.Count == 1)
+            {
+                CreateTemplate(availableProjects[0]);
+                return;
+            }
+
+            var menu = new GenericMenu();
+            for (var i = 0; i < availableProjects.Count; i++)
+            {
+                var project = availableProjects[i];
+                menu.AddItem(
+                    new GUIContent(project.name),
+                    false,
+                    () => CreateTemplate(project));
+            }
+            menu.ShowAsContext();
+        }
+
+        private void DisposeModuleDrawer()
+        {
+            if (_moduleDrawer == null) return;
+            _moduleDrawer.RepaintRequested -= Repaint;
+            _moduleDrawer.Dispose();
+            _moduleDrawer = null;
         }
 
         private void RefreshProjects()
@@ -436,6 +883,51 @@ namespace AbilityKit.Ability.Editor.Windows
                     AssetDatabase.GUIDToAssetPath(moduleGuids[i]));
                 if (module != null && !assigned.Contains(module)) _unassignedModules.Add(module);
             }
+
+            _unassignedTemplates.Clear();
+            var assignedTemplates = new HashSet<TriggerAuthoringTemplateAsset>();
+            for (var i = 0; i < _projects.Count; i++)
+            {
+                var templates = _projects[i].TemplateCatalog != null
+                    ? _projects[i].TemplateCatalog.Templates
+                    : null;
+                if (templates == null) continue;
+                for (var t = 0; t < templates.Count; t++)
+                    if (templates[t] != null) assignedTemplates.Add(templates[t]);
+            }
+
+            var templateGuids = AssetDatabase.FindAssets("t:TriggerAuthoringTemplateAsset");
+            Array.Sort(templateGuids, StringComparer.Ordinal);
+            for (var i = 0; i < templateGuids.Length; i++)
+            {
+                var template = AssetDatabase.LoadAssetAtPath<TriggerAuthoringTemplateAsset>(
+                    AssetDatabase.GUIDToAssetPath(templateGuids[i]));
+                if (template != null && !assignedTemplates.Contains(template)) _unassignedTemplates.Add(template);
+            }
+
+            // Domain reload may preserve the selected asset while disposing the non-serialized drawer.
+            if (_selectedModule != null && _moduleDrawer == null)
+                SelectModule(_selectedModule, false);
+        }
+
+        private TriggerAuthoringProjectAsset CurrentProject =>
+            _resourcePage == ResourcePage.Templates
+                ? _selectedTemplate != null ? _selectedTemplate.Project : null
+                : _selectedModule != null ? _selectedModule.Project : null;
+
+        private object CurrentSelection =>
+            _resourcePage == ResourcePage.Templates
+                ? (object)_selectedTemplate
+                : _selectedModule;
+
+        private static int CountRequiredTemplateInputs(
+            IReadOnlyList<TriggerAuthoringTemplateParameterData> parameters)
+        {
+            if (parameters == null) return 0;
+            var count = 0;
+            for (var i = 0; i < parameters.Count; i++)
+                if (parameters[i] != null && parameters[i].Required && !parameters[i].HasDefault) count++;
+            return count;
         }
 
         private static string ResolveSourcePath(TriggerAuthoringModuleAsset asset)
@@ -446,17 +938,40 @@ namespace AbilityKit.Ability.Editor.Windows
             return Path.GetFullPath(Path.Combine(projectRoot, asset.SourceJsonPath));
         }
 
-        private static Color GetSyncColor(TriggerAuthoringSyncState state)
+        private static string BuildSelectedModulePreferenceKey()
         {
-            switch (state)
+            var projectPath = Path.GetFullPath(Application.dataPath)
+                .Replace('\\', '/')
+                .TrimEnd('/')
+                .ToLowerInvariant();
+            return LastSelectedModulePreferencePrefix + Hash128.Compute(projectPath);
+        }
+
+        internal static void SaveSelectedModulePreference(
+            TriggerAuthoringModuleAsset module,
+            string preferenceKey)
+        {
+            if (string.IsNullOrWhiteSpace(preferenceKey)) return;
+            var path = module != null ? AssetDatabase.GetAssetPath(module) : string.Empty;
+            var guid = string.IsNullOrWhiteSpace(path) ? string.Empty : AssetDatabase.AssetPathToGUID(path);
+            if (string.IsNullOrWhiteSpace(guid))
             {
-                case TriggerAuthoringSyncState.InSync: return new Color(0.55f, 0.9f, 0.62f);
-                case TriggerAuthoringSyncState.AssetChanged:
-                case TriggerAuthoringSyncState.JsonChanged: return new Color(1f, 0.82f, 0.38f);
-                case TriggerAuthoringSyncState.Conflict:
-                case TriggerAuthoringSyncState.InvalidSource: return new Color(1f, 0.48f, 0.44f);
-                default: return Color.white;
+                EditorPrefs.DeleteKey(preferenceKey);
+                return;
             }
+            EditorPrefs.SetString(preferenceKey, guid);
+        }
+
+        internal static TriggerAuthoringModuleAsset LoadSelectedModulePreference(string preferenceKey)
+        {
+            if (string.IsNullOrWhiteSpace(preferenceKey) || !EditorPrefs.HasKey(preferenceKey)) return null;
+            var guid = EditorPrefs.GetString(preferenceKey, string.Empty);
+            var path = string.IsNullOrWhiteSpace(guid) ? string.Empty : AssetDatabase.GUIDToAssetPath(guid);
+            var module = string.IsNullOrWhiteSpace(path)
+                ? null
+                : AssetDatabase.LoadAssetAtPath<TriggerAuthoringModuleAsset>(path);
+            if (module == null) EditorPrefs.DeleteKey(preferenceKey);
+            return module;
         }
     }
 }

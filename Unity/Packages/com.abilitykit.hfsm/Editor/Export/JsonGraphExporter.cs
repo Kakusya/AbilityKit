@@ -4,9 +4,9 @@
 
 using System;
 using System.Diagnostics;
-using UnityHFSM.Graph.Descriptor;
+using AbilityKit.HFSM.Graph.Descriptor;
 
-namespace UnityHFSM.Editor.Export
+namespace AbilityKit.HFSM.Editor.Export
 {
     /// <summary>
     /// JSON 导出器 - 使用描述器接口
@@ -33,7 +33,7 @@ namespace UnityHFSM.Editor.Export
         public ExportResult Export(IGraphDescriptor graph, ExportOptions options)
         {
             if (graph == null)
-                return ExportResult.Fail("Graph is null");
+                return ExportResult.Fail("状态机图为空");
 
             var stopwatch = Stopwatch.StartNew();
 
@@ -49,7 +49,7 @@ namespace UnityHFSM.Editor.Export
             catch (Exception ex)
             {
                 stopwatch.Stop();
-                return ExportResult.Fail($"Export failed: {ex.Message}");
+                return ExportResult.Fail($"导出失败：{ex.Message}");
             }
         }
     }
