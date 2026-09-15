@@ -1,12 +1,12 @@
 # P3 数据配置验证
 
-## 迁移状态
+## 当前实施状态
 
-- Trellis task status：`planning`；迁移元数据：`blocked`。
-- 该任务尚未开始实施，原有未勾选项、future 测试、Draft/Blocked 决策门全部保持原状。
-- 依赖：P2 的实际 Recipe/Process/Appliance/Level 数据类型。
-- 阻塞：旧 config/snapshot 迁移策略与相关 owner 决策尚未确认。
-- 规划验证：C01-C08（均为 future 规划，尚未执行）
+- Trellis task status：`in_progress`；完整 P3 迁移元数据仍为 `blocked`。
+- 已实现并验证受限的纯 .NET definition 配置批次：`CookingItemDefinition`、`CookingApplianceDefinition`、`CookingRecipeDefinition` 与 `CookingContainerDefinition` 的候选构建、全量诊断、原子提交、definition-only identity/hash 和未批准 schema migration 的显式 blocked 结果。
+- 已实际通过 C01、C02、C04、C05、C07（仅 blocked/rejected 行为）与 C08 的当前可表达部分；结果不代表正式菜谱、完整 P3 或联机验收完成。
+- 依赖：当前 P2 实际 fixture 定义。Process 图、Level 表、正式内容/订单/结算 owner、C03 图拓扑与 C06 host/client binding 仍未落地。
+- 阻塞：旧 config/snapshot 的实际迁移策略与相关 owner 决策尚未确认；本轮不会转换旧数据。
 
 ## 来源与可追溯性
 

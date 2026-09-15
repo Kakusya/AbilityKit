@@ -2,8 +2,8 @@
   "id": "cooking-config-validation",
   "name": "cooking-config-validation",
   "title": "Cooking configuration validation",
-  "description": "P3 数据配置验证 的未实施迁移计划。不得因迁移而视为已启动、已验证或已完成。",
-  "status": "planning",
+  "description": "P3 数据配置验证：已实施受限的纯 .NET definition registry/validation/hash 增量；完整 P3 仍 blocked，不能因迁移或本轮证据视为已完成。",
+  "status": "in_progress",
   "dev_type": null,
   "scope": null,
   "package": null,
@@ -12,7 +12,7 @@
   "assignee": "Li He",
   "createdAt": "2026-09-15",
   "completedAt": null,
-  "branch": null,
+  "branch": "chore/workflow-knowledge-integration",
   "base_branch": "master",
   "worktree_path": null,
   "commit": null,
@@ -32,7 +32,7 @@
     "migration_status": "blocked",
     "legacy_source": ".trellis/migration/legacy-cooking-changes/add-cooking-config-validation",
     "phase": "P3",
-    "planned_verification": "C01-C08（均为 future 规划，尚未执行）",
+    "planned_verification": "C01、C02、C04、C05、C07（blocked branch）与 C08 当前 definition 范围已实际验证；C03/C06 及完整 P3 exit 仍 blocked",
     "source_revision": "5f1417b5a48b71ee273dc5beb15f488b63eae832"
   }
 }

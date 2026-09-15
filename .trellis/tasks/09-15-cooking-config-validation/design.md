@@ -2,6 +2,12 @@
 
 > 本文件是遗留规划的设计迁移，不表示设计已经批准或代码已经实现。
 
+## 当前受限实施记录
+
+本任务已开始一轮受限的纯 .NET 实施。当前已存在 P2 fixture 形状仅含 ItemDefinition、Appliance、Recipe、Container 与单一 `ProcessId` 引用，因而实现了应用层 `CookingConfigurationRegistry`：候选批次先执行全量 definition/reference/capability/容量诊断，全部通过后才将不可变快照替换为当前配置；失败候选保留旧快照及 identity。identity 采用显式 schema、稳定表/记录/字段排序的 canonical JSON 与 SHA-256，不包含 runtime instance、Match、订单进度或 runtime snapshot。
+
+实际覆盖 C01、C02、C04、C05、C08 以及 C07 的“无批准迁移只返回 blocked、绝不转换”分支。C03 仍 blocked：当前没有 Process graph、拓扑边或 Level 形状，不能为补齐矩阵而虚构 schema。C06 仍 blocked：P1 只有 transport-neutral session seam，本轮没有接入 real host/client gameplay binding 或 LAN。正式内容、工具格式、Unity、通用 ConfigDatabase、生产 transport 与旧数据实际迁移均不在本轮范围。
+
 ## Context
 
 见 [proposal.md](proposal.md) 与 [spec](specs/cooking-config-validation/spec.md)。现有 `ConfigDatabase` 支持多表加载、构表、提交前失败保护与版本递增；业务表目录、跨表规则和启动策略属于应用层。阶段 3/P2 的实际 Recipe/Process/Appliance 数据类型是本 change 的输入，当前尚无 cooking 实现或 durable spec。

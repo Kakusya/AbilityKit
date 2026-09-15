@@ -9,6 +9,21 @@
 - 规划验证：C01-C08（均为 future 规划，尚未执行）
 - 实施前将 `.trellis/spec/abilitykit/index.md`、`.trellis/spec/abilitykit/validation.md` 与本任务对应 cooking spec 加入 context manifests。
 
+## 当前受限实施状态
+
+- [x] 1.1 已复核当前 P2 实际定义并在 `src/AbilityKit.Game.Cooking/` 新建应用层 registry；未改动通用 ConfigDatabase、Unity `.asmdef`、自动生成 `.csproj` 或 Orleans。
+- [x] 1.2 已实现候选批次、重复/必填字段检查、全量结构化诊断与原子提交；C01/C02 当前定义层范围已实际通过。
+- [x] 2.1 已实现现有类型可表达的 Item 引用、Appliance capability 与 Container 容量验证；Item/Ingredient/Process/Level 的完整表关系仍需真实 schema。
+- [x] 2.3 已以第二 Recipe/Appliance 数据 fixture 实际验证同一规则路径（C04/C05 当前范围）；这不是正式内容批准，也不替代 P2/P3 完整出口。
+- [x] 3.1 已实现 definition-only canonical identity/hash 与加载顺序无关的 C08 回归；不使用 runtime snapshot hash。
+- [x] 3.3 已实现 schema 不一致的显式 blocked 结果（C07 的无迁移分支）；没有实现、选择或暗示旧 config/snapshot 转换。
+- [ ] 2.2 C03 Process 图循环、断裂和不可达终点：**blocked**，当前 P2 没有 Process graph 或 Level 数据形状。
+- [ ] 3.2 C06 host/client binding compatibility：**blocked**，未接入 real transport/LAN；P1 D1-D4 和 LAN 门仍有效。
+- [ ] 4.1 Unity EditMode/加载 smoke：**not run / future**，本轮无 Unity Cooking 宿主。
+- [ ] 4.2 LAN 分层 host/client 验收：**blocked/not run**，不以 in-process 或当前 config identity 替代。
+- [ ] 4.3 全局 `runtime-contracts`/`core-stability`：**not run**，现有 gate 未覆盖独立 Cooking 项目；实际 .NET build/test 与 `git diff --check` 在 check evidence 记录。
+- [ ] 4.4 P4 准备条件：完整 P3 尚 blocked，不能解除后续任务阻塞。
+
 ## 迁移的原实施清单
 
 ## 规划状态
