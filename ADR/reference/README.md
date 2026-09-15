@@ -1,42 +1,32 @@
-# 参考资料与安装记录
+# 参考资料与 Trellis 安装记录
 
-更新：2026-09-14。参考源码在被 Git 忽略的 `upstream/`，实际技能位于宿主发现目录，二者不混用。
+更新：2026-09-15。Trellis 是本仓库唯一的活动 AI 工程工作流；项目共享配置由 Git 跟踪，开发者身份、runtime session 和本机缓存遵循 `.trellis/.gitignore`。旧工具镜像、备份与无关的 skill 均已清理。
 
 ## 实际安装
 
-- **CodeStable v2**：由 `npx --yes skills add codestable/CodeStable/plugins/codestable --skill '*' --agent codex -y` 安装到 `.agents/skills/`。本项目保留 7 个入口（含 `cs-code-review` 兼容入口），已移除 `cs-feat` 与 `cs-epic`；来源及内容哈希见根 `skills-lock.json`。
-- **OpenSpec 1.13.0**：本地 npm 依赖在 `tools/openspec-cli/`，版本及依赖树固定于 package-lock。运行官方 `init --tools zcode --profile core --language zh-CN`，生成的 6 个技能现已迁入 `.agents/skills/`和 `.zcode/commands/opsx/` 的 6 个命令，以及 `openspec/config.yaml`。
-- **grilling**：`.agents/skills/grilling/SKILL.md`，来源 `mattpocock/skills`，内容哈希见根锁文件。
-- **本地 CLI**：根目录执行 `powershell -ExecutionPolicy Bypass -File tools/openspec-cli/openspec.ps1 <参数>`；包装入口关闭遥测并恢复调用前的环境变量。技能模板中的裸 `openspec` 使用此入口替代。其他机器先执行 `npm ci --prefix tools/openspec-cli`。无全局安装。
-- 两个既有技能工程工具 `build-cs-skill`、`eval-cs-skill` 保留，并适配项目维护路由；历史参考案例不代表已删除入口可用。
+- **Trellis 0.6.17**：官方包 `@mindfoldhq/trellis@0.6.17`，来源 <https://github.com/mindfold-ai/Trellis>。已使用 `npm install -g @mindfoldhq/trellis@0.6.17` 安装，并在仓库根目录执行 `trellis init --zcode --codex --user "Li He" --yes --no-monorepo` 初始化。
+- **前置条件**：Node.js `>=18`、Python `>=3.9`。本次初始化实际检测到 Node `v24.18.0` 与 Python `3.12.10`。
+- **项目共享内容**：`.trellis/config.yaml`、`workflow.md`、`spec/`、`tasks/`、`scripts/`、Trellis 生成的 `.agents/skills/trellis-*`、`.zcode/` 与 `.codex/` 集成文件。
+- **本地运行态**：`.trellis/.developer`、`.trellis/.runtime/`、Python cache、局部 agent/session 文件等由 `.trellis/.gitignore` 排除；不要宽泛忽略整个 `.trellis/`。
+- **升级**：先检查 Git 状态并审阅自定义的 `.trellis/workflow.md`、`config.yaml`、spec 和 task；CLI 使用 `trellis upgrade`，项目模板使用 `trellis update`，需要模板迁移时使用 `trellis update --migrate`。升级后审阅 diff 和重新验证 hooks/任务 context，不能假设生成内容保持不变。
 
-## 备份与升级边界
+## 做菜规划迁移
 
-升级前完整备份 `.agents/skills/`、`skills-lock.json`、`AGENTS.md` 并记录 SHA-256，位置：`upstream/backups/20260914-143537/`。官方列出的 24 个退役入口已移至该备份的 `retired/`，不再被技能目录扫描；旧内容没有销毁。恢复时应先核对备份清单及当前改动，不直接覆盖整个工作区。
+七份尚未实施的做菜规划已从旧流程迁移：
 
-CodeStable 项目骨架仅为 `.codestable/attention.md`、`lessons/`、`work/`，没有安装退役的 v1 runtime。OpenSpec specs/changes 暂为空，没有虚构已实现功能或批准游戏实施计划。
+- 活动规范索引：[`.trellis/spec/cooking/index.md`](../../.trellis/spec/cooking/index.md)。
+- 活动任务：`.trellis/tasks/09-15-cooking-*/`，均保持 `planning`；其 `migration_status`、依赖、阻塞项和 future 验证说明保存在 metadata、PRD、design、implement 中。
+- 只读来源快照与 SHA-256 清单：[`.trellis/migration/legacy-cooking-changes/README.md`](../../.trellis/migration/legacy-cooking-changes/README.md)。快照用于追溯，不是活动任务或验收状态来源。
 
-## 参考来源
+迁移不代表任何规划已经启动、实现、验证、完成或归档。开始实施前必须按 `.trellis/workflow.md` 重新审阅对应任务及其 context manifests。
 
-| 资料 | 来源与参考提交 |
-|---|---|
-| OpenSpec 源码 | https://github.com/Fission-AI/OpenSpec — `9d4e5974e5c0d9a09b9c6c1e1eb0975e80ec4461` |
-| CodeStable 源码 | https://github.com/codestable/CodeStable — `19c796de5990973a9e5d44aa9536d90513e37b5c` |
-| grilling | https://github.com/mattpocock/skills ，`skills/productivity/grilling` |
-| 用户分享 | https://chatgpt.com/share/6aa78930-7c50-83ee-9185-280d67d139ec |
+## 宿主集成与验证边界
 
-分享 URL 之前连接超时，但用户已在后续消息粘贴正文；其统一入口、双向读取、唯一事实源和 attention 指针要求已落实到根 AGENTS、OpenSpec config 与 CodeStable attention。所引旧版 OpenSpec 文件布局不直接照搬，以实际 1.13.0 初始化结果为准。
+- ZCode hooks 由 `.zcode/config.json` 配置；如果宿主禁用了项目 hooks，需按 Trellis 初始化输出提示安装 bridge 并新开会话。磁盘文件存在不等于宿主已加载或 hook 已获授权。
+- Codex hooks 需要在用户级 `~/.codex/config.toml` 启用 `features.hooks = true`，并在支持的版本中完成 `/hooks` 批准；未启用时仍可手动读取 `.trellis/` task/spec，但自动注入不可视为已生效。
+- Trellis check 编排检查，不替代项目测试结果。实际命令、通过、失败、受阻和跳过原因必须如实记录；Unity 环境不全或另一 Editor 占用项目不算通过。
+- 当前会话的宿主技能列表不会因磁盘变更自动热刷新；需要新开会话加载新入口。
 
-## 验证边界
+## 清理边界
 
-本地 CLI 版本和空变更查询成功；技能列表同时列出 CodeStable、grilling 与 OpenSpec 的实际安装路径。`validate --all` 返回没有可验证项目，不是产品测试通过。当前会话的宿主工具列表是否已热刷新没有证据，必要时新开会话加载新入口。参考和备份不属于激活技能。
-
-## 本项目裁剪与更新注意
-
-2026-09-14 按用户确认移除 cs-feat/cs-epic，修改 cs 及 issue/refactor/review/onboard 的维护路由。完整修改前备份：`upstream/backups/role-split-20260914-145810/`。这些入口已是本项目适配版本，根 skills-lock 的上游哈希是安装基线，不代表本地适配后的内容哈希。
-
-今后不要无差别执行 CodeStable 全包覆盖更新，否则会恢复功能入口并覆盖路由。应先备份、比较上游变化、仅更新保留入口并保留项目分工。
-
-OpenSpec 更新必须使用 `powershell -ExecutionPolicy Bypass -File tools/openspec-cli/openspec.ps1 update`（可加 `--force`）。本地适配器 `update.mjs` 复用固定版本官方更新器，仅在当前进程将 ZCode 的技能根设置为 `.agents`；官方共享根仲裁负责只生成一份技能，命令仍在 `.zcode/commands/`。更新时通过临时 XDG 配置固定 core/both，结束恢复环境并清理临时配置，不改用户全局偏好。不使用裸官方 update/init 重建当前布局。
-
-回归命令：`node tools/openspec-cli/test-update.mjs`。在临时工作区连续执行两次官方更新，验证 6 个共享技能、6 个命令、没有 `.zcode/skills/`、维护技能不变及幂等性。升级 npm 依赖后必须重跑，因为适配器使用了固定版本的内部 API。`update` 是生成文件更新，不是 npm 包版本升级；执行前检查技能/命令自定义改动并备份。
+旧的 OpenSpec、CodeStable、grilling、历史技能镜像和备份均已从工作区清理。仍保留的历史规划只有 [`.trellis/migration/legacy-cooking-changes/`](../../.trellis/migration/legacy-cooking-changes/)，其中保存七个做菜 change 的只读快照与哈希清单，供 Trellis 活动 tasks 追溯；它不包含旧工具或活动 skill。

@@ -1,0 +1,6 @@
+{"file": ".trellis/spec/abilitykit/index.md", "reason": "实施前必须遵守 AbilityKit 项目边界。"}
+{"file": ".trellis/spec/abilitykit/validation.md", "reason": "记录实际 .NET、Unity 与协议检查结果，不能将计划写为通过。"}
+{"file": ".trellis/spec/cooking/cooking-interaction-foundation.md", "reason": "对应阶段的行为草案、依赖、延期 Unity 边界和验收场景。"}
+{"file": ".trellis/tasks/09-15-cooking-interaction-foundation/research/migration-source.md", "reason": "保留遗留规划来源和迁移状态。"}
+{"file": "src/AbilityKit.Game.Cooking/AbilityKit.Game.Cooking.csproj", "reason": "首期纯 .NET 应用层项目。"}
+{"file": "src/AbilityKit.Game.Cooking.Tests/AbilityKit.Game.Cooking.Tests.csproj", "reason": "T01-T08 的实际 xUnit 验收宿主与 JSONL 工件生成入口。"}

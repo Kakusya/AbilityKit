@@ -18,7 +18,7 @@
 4. 30Hz 只作为原型候选值，必须由响应性、负载、网络和玩法测量决定，不是锁定要求。
 5. 逻辑 Tick 独立于渲染帧；烹饪计时依赖模拟 Tick/逻辑时钟，不依赖动画回调或墙钟。
 
-本决策不定义具体配置表、配方、人数、平台、存档归属、房主退出、断线恢复或主机迁移语义；这些属于应用需求，须在未来 OpenSpec change 中形成精确契约。
+本决策不定义具体配置表、配方、人数、平台、存档归属、房主退出、断线恢复或主机迁移语义；这些属于应用需求，须在对应 Trellis task 的 PRD、design、implement 和检查证据中形成可审阅的边界。
 
 ## 替代方案
 
@@ -38,4 +38,4 @@
 - [ADR-0001：主机同时作为服务器与玩家](0001-player-host.md)。
 - [长期目标](../long-term-goals.md)。
 - [AbilityKit 框架设计索引](../../Docs/design/00-index.md)。
-- 行为与验收契约待未来进入 `openspec/specs/`；当前没有活动 change 或已毕业规格。
+- 待审阅的行为草案、验收设想和实施任务见 [`.trellis/spec/cooking/index.md`](../../.trellis/spec/cooking/index.md) 与关联 Trellis tasks；它们均不代表已实施或已验证。

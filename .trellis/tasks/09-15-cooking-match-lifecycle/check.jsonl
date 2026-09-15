@@ -1,0 +1,4 @@
+{"file": ".trellis/spec/abilitykit/index.md", "reason": "实施前必须遵守 AbilityKit 项目边界。"}
+{"file": ".trellis/spec/abilitykit/validation.md", "reason": "记录实际 .NET、Unity 与协议检查结果，不能将计划写为通过。"}
+{"file": ".trellis/spec/cooking/cooking-match-lifecycle.md", "reason": "对应阶段的迁移行为草案、依赖和阻塞边界。"}
+{"file": ".trellis/tasks/09-15-cooking-match-lifecycle/research/migration-source.md", "reason": "保留遗留规划来源和迁移状态。"}

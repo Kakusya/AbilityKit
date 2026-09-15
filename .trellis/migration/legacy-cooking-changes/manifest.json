@@ -1,0 +1,279 @@
+{
+  "format": 1,
+  "createdAt": "2026-09-15",
+  "sourceRevision": "5f1417b5a48b71ee273dc5beb15f488b63eae832",
+  "purpose": "将已删除的旧工作流规划保留为可核验的只读来源快照，并映射到仍未实施的 Trellis tasks 与 specs。",
+  "constraints": [
+    "迁移本身不代表任何任务已启动、已验证、已完成或已归档。",
+    "来源快照不是活动任务系统；活动工作只在 .trellis/tasks 和 .trellis/spec 中继续。",
+    "Trellis 没有旧工作流的 delta-spec/graduation 语义；任务 PRD/design/implement 与检查证据共同承载后续审阅。"
+  ],
+  "changes": [
+    {
+      "legacyChange": "add-cooking-interaction-foundation",
+      "sourceGitRevision": "5f1417b5a48b71ee273dc5beb15f488b63eae832",
+      "sourceStatus": "all implementation checkboxes unchecked; planning only",
+      "trellisTask": ".trellis/tasks/09-15-cooking-interaction-foundation",
+      "trellisSpec": ".trellis/spec/cooking/cooking-interaction-foundation.md",
+      "migrationStatus": "planned",
+      "phase": "P0 交互基础",
+      "dependencies": "最小配置/layout/snapshot 生命周期 seam；不依赖真实网络。",
+      "blockers": "未来测试项目与程序集路径须在实施时确认；不得将路线示例写成已实现能力。",
+      "plannedVerification": "T01-T10（均为 future 规划，尚未执行）",
+      "files": [
+        {
+          "path": "add-cooking-interaction-foundation/design.md",
+          "snapshotSha256": "a04bb0257a8956c595be7f0917d60bc065a87b959428ea0059380e60a939fbdd",
+          "legacyGitBlobSha256": "a04bb0257a8956c595be7f0917d60bc065a87b959428ea0059380e60a939fbdd",
+          "contentMatchesAfterNewlineNormalization": true
+        },
+        {
+          "path": "add-cooking-interaction-foundation/proposal.md",
+          "snapshotSha256": "ef9f12bf67668928d2ed524c55aed6771aae71ee1bfbe2969ad7f539624b320e",
+          "legacyGitBlobSha256": "ef9f12bf67668928d2ed524c55aed6771aae71ee1bfbe2969ad7f539624b320e",
+          "contentMatchesAfterNewlineNormalization": true
+        },
+        {
+          "path": "add-cooking-interaction-foundation/specs/cooking-interaction-foundation/spec.md",
+          "snapshotSha256": "1110c431483403773e88b735579416cfd19864e956bea8497d1384f36cb3f4d3",
+          "legacyGitBlobSha256": "be0cf5221a328503d1f65df317fcfa691c0056bc155ec19f3e67ae2394fa8c26",
+          "contentMatchesAfterNewlineNormalization": true
+        },
+        {
+          "path": "add-cooking-interaction-foundation/tasks.md",
+          "snapshotSha256": "08c95fca2088175c049cf131099df8dd94778e34efa16696e005125bc5f1cf9f",
+          "legacyGitBlobSha256": "afbf22a816f07fe096702649a723a981f96272668e976274766411b260d59e67",
+          "contentMatchesAfterNewlineNormalization": true
+        }
+      ]
+    },
+    {
+      "legacyChange": "add-cooking-lan-session",
+      "sourceGitRevision": "5f1417b5a48b71ee273dc5beb15f488b63eae832",
+      "sourceStatus": "all implementation checkboxes unchecked; planning only",
+      "trellisTask": ".trellis/tasks/09-15-cooking-lan-session",
+      "trellisSpec": ".trellis/spec/cooking/cooking-lan-session.md",
+      "migrationStatus": "blocked",
+      "phase": "P1 LAN listen host/client",
+      "dependencies": "P0 实施及测试证据；配置/layout/snapshot 生命周期 seam。",
+      "blockers": "D1 transport、D2 连接入口、D3 host/disconnect/exit、D4 benchmark targets 均待 owner 确认。",
+      "plannedVerification": "L01-L12（均为 future 规划，尚未执行）",
+      "files": [
+        {
+          "path": "add-cooking-lan-session/design.md",
+          "snapshotSha256": "daf5ea02224beb42e03805db35ca22d161408663349201362bdb3c6b4b525987",
+          "legacyGitBlobSha256": "daf5ea02224beb42e03805db35ca22d161408663349201362bdb3c6b4b525987",
+          "contentMatchesAfterNewlineNormalization": true
+        },
+        {
+          "path": "add-cooking-lan-session/proposal.md",
+          "snapshotSha256": "07a27ee2cb2a617edd7980af5eb4287209c74cc2a1f587b1874613ec3a27a1f6",
+          "legacyGitBlobSha256": "07a27ee2cb2a617edd7980af5eb4287209c74cc2a1f587b1874613ec3a27a1f6",
+          "contentMatchesAfterNewlineNormalization": true
+        },
+        {
+          "path": "add-cooking-lan-session/specs/cooking-lan-session/spec.md",
+          "snapshotSha256": "0b834f21a33164da0ba29823f97a1b838260b797a42d953927f4d08ff41633d0",
+          "legacyGitBlobSha256": "0b834f21a33164da0ba29823f97a1b838260b797a42d953927f4d08ff41633d0",
+          "contentMatchesAfterNewlineNormalization": true
+        },
+        {
+          "path": "add-cooking-lan-session/tasks.md",
+          "snapshotSha256": "6d0d716ead80fc4222535d3a6104012b7be14c96c2bd96ac5b03beb107b51260",
+          "legacyGitBlobSha256": "6d0d716ead80fc4222535d3a6104012b7be14c96c2bd96ac5b03beb107b51260",
+          "contentMatchesAfterNewlineNormalization": true
+        }
+      ]
+    },
+    {
+      "legacyChange": "add-cooking-recipe-loop",
+      "sourceGitRevision": "5f1417b5a48b71ee273dc5beb15f488b63eae832",
+      "sourceStatus": "all implementation checkboxes unchecked; planning only",
+      "trellisTask": ".trellis/tasks/09-15-cooking-recipe-loop",
+      "trellisSpec": ".trellis/spec/cooking/cooking-recipe-loop.md",
+      "migrationStatus": "blocked",
+      "phase": "P2 一条完整配方",
+      "dependencies": "P0；联机验收时还依赖 P1 的稳定 session。",
+      "blockers": "正式配方、订单/结算 owner、评分与失败处理均待确认。",
+      "plannedVerification": "R01-R07（均为 future 规划，尚未执行）",
+      "files": [
+        {
+          "path": "add-cooking-recipe-loop/design.md",
+          "snapshotSha256": "e06b7144a93cd8960aa2e2b7fe52caa504ddc6ec96270435fc37e1d904365c67",
+          "legacyGitBlobSha256": "e06b7144a93cd8960aa2e2b7fe52caa504ddc6ec96270435fc37e1d904365c67",
+          "contentMatchesAfterNewlineNormalization": true
+        },
+        {
+          "path": "add-cooking-recipe-loop/proposal.md",
+          "snapshotSha256": "4eb770b6dc516d68d37db721f9717160c4c1b683bb9b8e68719734c5aed52055",
+          "legacyGitBlobSha256": "4eb770b6dc516d68d37db721f9717160c4c1b683bb9b8e68719734c5aed52055",
+          "contentMatchesAfterNewlineNormalization": true
+        },
+        {
+          "path": "add-cooking-recipe-loop/specs/cooking-recipe-loop/spec.md",
+          "snapshotSha256": "882a8b12214d7d21cc630663b840eed76fb655b8ac1ab3dc19ef138eadadfa64",
+          "legacyGitBlobSha256": "882a8b12214d7d21cc630663b840eed76fb655b8ac1ab3dc19ef138eadadfa64",
+          "contentMatchesAfterNewlineNormalization": true
+        },
+        {
+          "path": "add-cooking-recipe-loop/tasks.md",
+          "snapshotSha256": "83346a088bf0e63cea887f9afa0e0df7eca269f33bbb572d92d93d66dca2ef54",
+          "legacyGitBlobSha256": "83346a088bf0e63cea887f9afa0e0df7eca269f33bbb572d92d93d66dca2ef54",
+          "contentMatchesAfterNewlineNormalization": true
+        }
+      ]
+    },
+    {
+      "legacyChange": "add-cooking-config-validation",
+      "sourceGitRevision": "5f1417b5a48b71ee273dc5beb15f488b63eae832",
+      "sourceStatus": "all implementation checkboxes unchecked; planning only",
+      "trellisTask": ".trellis/tasks/09-15-cooking-config-validation",
+      "trellisSpec": ".trellis/spec/cooking/cooking-config-validation.md",
+      "migrationStatus": "blocked",
+      "phase": "P3 数据配置验证",
+      "dependencies": "P2 的实际 Recipe/Process/Appliance/Level 数据类型。",
+      "blockers": "旧 config/snapshot 迁移策略与相关 owner 决策尚未确认。",
+      "plannedVerification": "C01-C08（均为 future 规划，尚未执行）",
+      "files": [
+        {
+          "path": "add-cooking-config-validation/design.md",
+          "snapshotSha256": "cfba570a07df4f52e9f93b9cdf68de553c037f39651cd524fa78ed63c7e17359",
+          "legacyGitBlobSha256": "cfba570a07df4f52e9f93b9cdf68de553c037f39651cd524fa78ed63c7e17359",
+          "contentMatchesAfterNewlineNormalization": true
+        },
+        {
+          "path": "add-cooking-config-validation/proposal.md",
+          "snapshotSha256": "6cb9d44576430ee3eb3b7a2e1966b0d3f4e99b43b30e79eb75e083f5fccb3cfe",
+          "legacyGitBlobSha256": "6cb9d44576430ee3eb3b7a2e1966b0d3f4e99b43b30e79eb75e083f5fccb3cfe",
+          "contentMatchesAfterNewlineNormalization": true
+        },
+        {
+          "path": "add-cooking-config-validation/specs/cooking-config-validation/spec.md",
+          "snapshotSha256": "88f0dd992e6ca1f74de3cd5bbe8d2f6e97942ee52d2b568f01bfd3cf802d18cc",
+          "legacyGitBlobSha256": "88f0dd992e6ca1f74de3cd5bbe8d2f6e97942ee52d2b568f01bfd3cf802d18cc",
+          "contentMatchesAfterNewlineNormalization": true
+        },
+        {
+          "path": "add-cooking-config-validation/tasks.md",
+          "snapshotSha256": "563a7b601a279de267a517884308d738a5a6d45b90979dbfd24a94690fdeff31",
+          "legacyGitBlobSha256": "563a7b601a279de267a517884308d738a5a6d45b90979dbfd24a94690fdeff31",
+          "contentMatchesAfterNewlineNormalization": true
+        }
+      ]
+    },
+    {
+      "legacyChange": "add-cooking-match-lifecycle",
+      "sourceGitRevision": "5f1417b5a48b71ee273dc5beb15f488b63eae832",
+      "sourceStatus": "all implementation checkboxes unchecked; planning only",
+      "trellisTask": ".trellis/tasks/09-15-cooking-match-lifecycle",
+      "trellisSpec": ".trellis/spec/cooking/cooking-match-lifecycle.md",
+      "migrationStatus": "blocked",
+      "phase": "P4 关卡/地图/Match 生命周期",
+      "dependencies": "P0 identity/location/lifecycle、P1 session、P3 config/layout 校验。",
+      "blockers": "房间人数、房主退出、断线恢复和主机迁移仍待产品决策。",
+      "plannedVerification": "M01-M08（均为 future 规划，尚未执行）",
+      "files": [
+        {
+          "path": "add-cooking-match-lifecycle/design.md",
+          "snapshotSha256": "4058f8781149d5aa16e8883c3dcf3d7cbab00c6da51fd5e973cfea16a5eef2d7",
+          "legacyGitBlobSha256": "4058f8781149d5aa16e8883c3dcf3d7cbab00c6da51fd5e973cfea16a5eef2d7",
+          "contentMatchesAfterNewlineNormalization": true
+        },
+        {
+          "path": "add-cooking-match-lifecycle/proposal.md",
+          "snapshotSha256": "4de49e08e8a0cdd79ee1ec9bd697c3483a00348b98faf7a22cac83528ff71388",
+          "legacyGitBlobSha256": "4de49e08e8a0cdd79ee1ec9bd697c3483a00348b98faf7a22cac83528ff71388",
+          "contentMatchesAfterNewlineNormalization": true
+        },
+        {
+          "path": "add-cooking-match-lifecycle/specs/cooking-match-lifecycle/spec.md",
+          "snapshotSha256": "00acc161b56e77ff240266f32bb16a4dcef034b3b65eaf208fe1e7e83ad7eca1",
+          "legacyGitBlobSha256": "00acc161b56e77ff240266f32bb16a4dcef034b3b65eaf208fe1e7e83ad7eca1",
+          "contentMatchesAfterNewlineNormalization": true
+        },
+        {
+          "path": "add-cooking-match-lifecycle/tasks.md",
+          "snapshotSha256": "695b23a52c97789d980c5e2d78f016e2d3e9d609c9c003a92c4064246b1c82d3",
+          "legacyGitBlobSha256": "695b23a52c97789d980c5e2d78f016e2d3e9d609c9c003a92c4064246b1c82d3",
+          "contentMatchesAfterNewlineNormalization": true
+        }
+      ]
+    },
+    {
+      "legacyChange": "add-cooking-persistence-management",
+      "sourceGitRevision": "5f1417b5a48b71ee273dc5beb15f488b63eae832",
+      "sourceStatus": "all implementation checkboxes unchecked; planning only",
+      "trellisTask": ".trellis/tasks/09-15-cooking-persistence-management",
+      "trellisSpec": ".trellis/spec/cooking/cooking-persistence-management.md",
+      "migrationStatus": "blocked",
+      "phase": "P5 持久化经营管理",
+      "dependencies": "P4 的 Round/Match 与长期状态边界。",
+      "blockers": "存档归属、保存时机、退出与迁移/恢复语义均待 owner 确认。",
+      "plannedVerification": "P01-P07（均为 future 规划，尚未执行）",
+      "files": [
+        {
+          "path": "add-cooking-persistence-management/design.md",
+          "snapshotSha256": "331a4ca8068b511ada46637c9ae33fc6fa72d6ee72482bbd41e4fcda1054a259",
+          "legacyGitBlobSha256": "331a4ca8068b511ada46637c9ae33fc6fa72d6ee72482bbd41e4fcda1054a259",
+          "contentMatchesAfterNewlineNormalization": true
+        },
+        {
+          "path": "add-cooking-persistence-management/proposal.md",
+          "snapshotSha256": "711264652cf8639f86289f13c2b22c02f0a372429ce6098450d5552be96132f1",
+          "legacyGitBlobSha256": "711264652cf8639f86289f13c2b22c02f0a372429ce6098450d5552be96132f1",
+          "contentMatchesAfterNewlineNormalization": true
+        },
+        {
+          "path": "add-cooking-persistence-management/specs/cooking-persistence-management/spec.md",
+          "snapshotSha256": "d12d1ef5f386db85d4fa0194fff402513027ec3c4265a4b9045ddcca9c06233f",
+          "legacyGitBlobSha256": "d12d1ef5f386db85d4fa0194fff402513027ec3c4265a4b9045ddcca9c06233f",
+          "contentMatchesAfterNewlineNormalization": true
+        },
+        {
+          "path": "add-cooking-persistence-management/tasks.md",
+          "snapshotSha256": "1b5205ed32c654c228999c0e353bf7040f48e4c9e955cabe59b92434d67922b1",
+          "legacyGitBlobSha256": "1b5205ed32c654c228999c0e353bf7040f48e4c9e955cabe59b92434d67922b1",
+          "contentMatchesAfterNewlineNormalization": true
+        }
+      ]
+    },
+    {
+      "legacyChange": "add-cooking-network-measurement",
+      "sourceGitRevision": "5f1417b5a48b71ee273dc5beb15f488b63eae832",
+      "sourceStatus": "all implementation checkboxes unchecked; planning only",
+      "trellisTask": ".trellis/tasks/09-15-cooking-network-measurement",
+      "trellisSpec": ".trellis/spec/cooking/cooking-network-measurement.md",
+      "migrationStatus": "blocked",
+      "phase": "P6 响应性与网络测量",
+      "dependencies": "P1-P5 的可运行纵向链路与真实测量 harness。",
+      "blockers": "性能目标、插值/预测与重连是否启用均待批准；不得用同机证据替代真实两 PC LAN。",
+      "plannedVerification": "N01-N08（均为 future 规划，尚未执行）",
+      "files": [
+        {
+          "path": "add-cooking-network-measurement/design.md",
+          "snapshotSha256": "33e7df81188f78331fef70c58fae0e088379f4548cd9aaa96a4fe4d9be84eb3d",
+          "legacyGitBlobSha256": "33e7df81188f78331fef70c58fae0e088379f4548cd9aaa96a4fe4d9be84eb3d",
+          "contentMatchesAfterNewlineNormalization": true
+        },
+        {
+          "path": "add-cooking-network-measurement/proposal.md",
+          "snapshotSha256": "cb9e404a6c598a77852bc7ff5c52e6db8fa19fb6365ae5da428219ebfe3f14d8",
+          "legacyGitBlobSha256": "cb9e404a6c598a77852bc7ff5c52e6db8fa19fb6365ae5da428219ebfe3f14d8",
+          "contentMatchesAfterNewlineNormalization": true
+        },
+        {
+          "path": "add-cooking-network-measurement/specs/cooking-network-measurement/spec.md",
+          "snapshotSha256": "4e90b2698ee8cf6685a84704c198a2b8380de627784b8d519f1a72a1153f6df4",
+          "legacyGitBlobSha256": "4e90b2698ee8cf6685a84704c198a2b8380de627784b8d519f1a72a1153f6df4",
+          "contentMatchesAfterNewlineNormalization": true
+        },
+        {
+          "path": "add-cooking-network-measurement/tasks.md",
+          "snapshotSha256": "98e617fe7eece542667cf4751470e00e57bd4bc2388d8a2033c57d542ad8e40c",
+          "legacyGitBlobSha256": "98e617fe7eece542667cf4751470e00e57bd4bc2388d8a2033c57d542ad8e40c",
+          "contentMatchesAfterNewlineNormalization": true
+        }
+      ]
+    }
+  ]
+}

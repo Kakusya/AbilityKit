@@ -1,0 +1,38 @@
+{
+  "id": "cooking-network-measurement",
+  "name": "cooking-network-measurement",
+  "title": "Cooking network measurement",
+  "description": "P6 响应性与网络测量 的未实施迁移计划。不得因迁移而视为已启动、已验证或已完成。",
+  "status": "planning",
+  "dev_type": null,
+  "scope": null,
+  "package": null,
+  "priority": "P3",
+  "creator": "Li He",
+  "assignee": "Li He",
+  "createdAt": "2026-09-15",
+  "completedAt": null,
+  "branch": null,
+  "base_branch": "master",
+  "worktree_path": null,
+  "commit": null,
+  "pr_url": null,
+  "subtasks": [],
+  "children": [],
+  "parent": null,
+  "relatedFiles": [
+    ".trellis/spec/cooking/cooking-network-measurement.md",
+    ".trellis/migration/legacy-cooking-changes/add-cooking-network-measurement/",
+    "Docs/design/CookingGame/technical-roadmap.md",
+    "Docs/design/CookingGame/delivery-plan.md"
+  ],
+  "notes": "迁移状态：blocked。性能目标、插值/预测与重连是否启用均待批准；不得用同机证据替代真实两 PC LAN。",
+  "meta": {
+    "legacy_change": "add-cooking-network-measurement",
+    "migration_status": "blocked",
+    "legacy_source": ".trellis/migration/legacy-cooking-changes/add-cooking-network-measurement",
+    "phase": "P6",
+    "planned_verification": "N01-N08（均为 future 规划，尚未执行）",
+    "source_revision": "5f1417b5a48b71ee273dc5beb15f488b63eae832"
+  }
+}

@@ -1,0 +1,38 @@
+{
+  "id": "cooking-match-lifecycle",
+  "name": "cooking-match-lifecycle",
+  "title": "Cooking match lifecycle",
+  "description": "P4 关卡/地图/Match 生命周期 的未实施迁移计划。不得因迁移而视为已启动、已验证或已完成。",
+  "status": "planning",
+  "dev_type": null,
+  "scope": null,
+  "package": null,
+  "priority": "P2",
+  "creator": "Li He",
+  "assignee": "Li He",
+  "createdAt": "2026-09-15",
+  "completedAt": null,
+  "branch": null,
+  "base_branch": "master",
+  "worktree_path": null,
+  "commit": null,
+  "pr_url": null,
+  "subtasks": [],
+  "children": [],
+  "parent": null,
+  "relatedFiles": [
+    ".trellis/spec/cooking/cooking-match-lifecycle.md",
+    ".trellis/migration/legacy-cooking-changes/add-cooking-match-lifecycle/",
+    "Docs/design/CookingGame/technical-roadmap.md",
+    "Docs/design/CookingGame/delivery-plan.md"
+  ],
+  "notes": "迁移状态：blocked。房间人数、房主退出、断线恢复和主机迁移仍待产品决策。",
+  "meta": {
+    "legacy_change": "add-cooking-match-lifecycle",
+    "migration_status": "blocked",
+    "legacy_source": ".trellis/migration/legacy-cooking-changes/add-cooking-match-lifecycle",
+    "phase": "P4",
+    "planned_verification": "M01-M08（均为 future 规划，尚未执行）",
+    "source_revision": "5f1417b5a48b71ee273dc5beb15f488b63eae832"
+  }
+}

@@ -1,10 +1,10 @@
 # 做菜经营游戏技术路线
 
-> 文档类型：应用层技术路线图（roadmap），不是 AbilityKit 框架规范、OpenSpec 行为契约或实施任务清单。
+> 文档类型：应用层技术路线图（roadmap），不是 AbilityKit 框架规范、Trellis 行为草案或实施任务清单。
 >
 > 状态：路线已获用户确认；截至 2026-09-14 尚未实现、尚未测试。近期优先局域网合作，公网连接后置；主机同时作为服务器和玩家的角色决策见 [ADR-0001](../../../ADR/decisions/0001-player-host.md)。
 >
-> 归属：本文件是做菜经营游戏应用技术路线的唯一正文；框架机制仍以 [`Docs/design/`](../00-index.md) 及其 canonical 文档为准，具体功能和验收契约在未来进入 OpenSpec。
+> 归属：本文件是做菜经营游戏应用技术路线的唯一正文；框架机制仍以 [`Docs/design/`](../00-index.md) 及其 canonical 文档为准，待审阅的功能边界、验证设想和实施计划位于 `.trellis/spec/cooking/` 与 `.trellis/tasks/`。
 
 ## 1. 路线边界与分层
 
@@ -112,7 +112,7 @@ Round/Match 状态（当前订单、实例位置、加工进度、计时器、�
 6. 长期经营和持久化管理。
 7. 以实测结果推进响应性、插值/预测和网络优化。
 
-每个切片的精确行为、协议、验收场景和测试门禁，未来通过 OpenSpec change 定义；当前首个交互基础 change 已形成规划，主规格尚未毕业，因此本路线不应被提升为已实现的主规格。阶段及测试出口见 [交付计划](delivery-plan.md)，具体任务只在对应 change 维护。
+每个切片的待审阅行为、协议、验收场景和测试门禁记录在对应 Trellis task 的 PRD、design、implement 与检查证据中；迁移后的阶段规范见 [`.trellis/spec/cooking/index.md`](../../../.trellis/spec/cooking/index.md)。这些规划仍未实施，路线和任务文档不得被提升为已实现或已通过的主规格。阶段及测试出口见 [交付计划](delivery-plan.md)。
 
 ## 7. 关联入口
 
@@ -120,4 +120,4 @@ Round/Match 状态（当前订单、实例位置、加工进度、计时器、�
 - [ADR-0001：主机同时作为服务器与玩家](../../../ADR/decisions/0001-player-host.md)：listen host 角色决策。
 - [长期目标](../../../ADR/long-term-goals.md)：产品方向、近期 LAN 和未决范围。
 - [AbilityKit 框架设计索引](../00-index.md)：World、Config、HFSM、FrameSync、StateSync、Snapshot 等既有机制的 canonical 入口。
-- [OpenSpec 配置](../../../openspec/config.yaml)：未来产品行为变更的工作流指针。
+- [做菜 Trellis 规范与任务索引](../../../.trellis/spec/cooking/index.md)：迁移后的待审阅规划入口；不代表已启动、实现或验证。
