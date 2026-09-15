@@ -128,6 +128,7 @@ public enum CookingRecipeRejectionReason
     ProductAlreadyConsumed,
     ProductNotPlated,
     OrderRejected,
+    LifecycleClosed,
     CommandIdentityConflict,
 }
 
@@ -204,6 +205,7 @@ public sealed class CookingRecipeSimulation
     private long _eventSequence;
     private long _nextProcessId;
     private long _nextProductId;
+    private bool _lifecycleClosed;
 
     public CookingRecipeSimulation(CookingRecipeFixture fixture, ICookingOrderPort orderPort)
     {
@@ -248,6 +250,8 @@ public sealed class CookingRecipeSimulation
 
     public void AddIngredient(ItemId id, DefinitionId definition, PlayerId player, int version = 1)
     {
+        if (_lifecycleClosed)
+            throw new InvalidOperationException("The recipe simulation is closed by its match lifecycle.");
         if (!_fixture.Items.ContainsKey(definition))
             throw new ArgumentException($"Unknown item definition '{definition}'.", nameof(definition));
         if (!_fixture.Players.ContainsKey(player))
@@ -263,9 +267,13 @@ public sealed class CookingRecipeSimulation
         _hands[player] = id;
     }
 
+    public void CloseLifecycle() => _lifecycleClosed = true;
+
     public CookingRecipeCommandResult Submit(CookingRecipeCommand command)
     {
         ArgumentNullException.ThrowIfNull(command);
+        if (_lifecycleClosed)
+            return CookingRecipeCommandResult.Reject(CookingRecipeRejectionReason.LifecycleClosed, _stateVersion);
         var key = new RecipeCommandKey(command.Scope.Session, command.Player, command.Command);
         var fingerprint = JsonSerializer.Serialize(command, CanonicalJsonOptions);
         if (_processedCommands.TryGetValue(key, out var processed))

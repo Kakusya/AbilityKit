@@ -2,8 +2,8 @@
   "id": "cooking-match-lifecycle",
   "name": "cooking-match-lifecycle",
   "title": "Cooking match lifecycle",
-  "description": "P4 关卡/地图/Match 生命周期 的未实施迁移计划。不得因迁移而视为已启动、已验证或已完成。",
-  "status": "planning",
+  "description": "P4 关卡/地图/Match 生命周期：已实施受限的纯 .NET fixture lifecycle/snapshot 增量；完整 P4 仍 blocked，不能因迁移或本轮证据视为已完成。",
+  "status": "in_progress",
   "dev_type": null,
   "scope": null,
   "package": null,
@@ -12,7 +12,7 @@
   "assignee": "Li He",
   "createdAt": "2026-09-15",
   "completedAt": null,
-  "branch": null,
+  "branch": "chore/workflow-knowledge-integration",
   "base_branch": "master",
   "worktree_path": null,
   "commit": null,
@@ -32,7 +32,7 @@
     "migration_status": "blocked",
     "legacy_source": ".trellis/migration/legacy-cooking-changes/add-cooking-match-lifecycle",
     "phase": "P4",
-    "planned_verification": "M01-M08（均为 future 规划，尚未执行）",
+    "planned_verification": "M01-M06 与 M07 的 fixture-only pure .NET 范围已实际验证；正式 schema、Unity、M08/M09 与完整 P4 exit 仍 blocked",
     "source_revision": "5f1417b5a48b71ee273dc5beb15f488b63eae832"
   }
 }

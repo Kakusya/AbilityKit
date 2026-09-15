@@ -9,6 +9,20 @@
 - 规划验证：M01-M08（均为 future 规划，尚未执行）
 - 实施前将 `.trellis/spec/abilitykit/index.md`、`.trellis/spec/abilitykit/validation.md` 与本任务对应 cooking spec 加入 context manifests。
 
+## 当前受限实施状态
+
+- [x] 1.2 已实现 fixture-only config/layout/session preparation 与原子结果；M01/M02 当前纯 .NET 范围已通过。未实现 Unity authoring→layout export，也没有选择正式 Level/Map schema。
+- [x] 2.1 已实现 `Preparing → Ready → Started → Ended`、结构化拒绝和事件；M03/M04 实际通过，Ended 会关闭已创建的 P2 gameplay instance。
+- [x] 2.2 已实现 Ended 后新 MatchId/递增 epoch 的隔离重开；M03/M06 当前 scope/epoch/snapshot 分支已通过。
+- [x] 2.3 已以独立注入的 P2 recipe simulations 验证多 Match 的 tick、process、hash 与状态隔离（M05）。
+- [x] 3.1 已实现带 scope/epoch/config/layout/state/version 的 lifecycle snapshot 和严格连续 watermark applier；M07 纯 .NET 顺序、duplicate/stale/gap/unknown/非法跳转当前范围已通过。
+- [x] 已为 host exit、remote loss、reconnect、migration、save/settlement 返回 `BlockedByOwnerDecision`，未默认实现策略。
+- [ ] 1.1、3.2 Unity authoring/layout export/projection/EditMode：**not run / future**，本轮没有 Unity Cooking host。
+- [ ] 4.1 完整 M01-M07：**partially blocked**，真实 Level/Map/Process graph schema 尚未存在；已运行 fixture-only pure .NET 部分。
+- [ ] 4.2 M08/M09 host/client 与两 PC LAN：**blocked/not run**，P1 D1-D4、production transport 和 LAN 门未满足。
+- [ ] 4.3 全局 `runtime-contracts`/`core-stability`：**not run**，现有 gate 未覆盖独立 Cooking 项目；实际 build/test、task validation 与 `git diff --check` 在 check evidence 记录。
+- [ ] 4.4 后续 P5/P6：完整 P4 仍 blocked，不能解除后续任务阻塞。
+
 ## 迁移的原实施清单
 
 ## 规划状态

@@ -2,6 +2,12 @@
 
 > 本文件是遗留规划的设计迁移，不表示设计已经批准或代码已经实现。
 
+## 当前受限实施记录
+
+本任务已开始受限的纯 .NET 实施。`CookingMatchLifecycle` 使用 fixture-only `LevelId`/`MapId`/`LayoutId` 和逻辑 station/container 引用进行准备，不选择正式配置表、Unity authoring 格式或 GameObject identity。准备会校验当前 P3 configuration identity、重复逻辑引用及 appliance/container 引用，失败保持 Preparing 且不会调用 gameplay factory。有效流程原子地经历 `Preparing → Ready → Started → Ended`；结束会关闭已注入的 P2 recipe simulation，重开只能以新 MatchId 和递增 epoch 创建隔离实例。
+
+本轮还实现应用层 lifecycle snapshot/applier，snapshots 带 scope、epoch、config identity、level/map/layout、state 与 version；applier 仅接受相同 scope/epoch/identity 且符合 `Ready → Started → Ended` 的连续版本，旧、重复、gap、未知或非法跳转均不改变 watermark。已覆盖 M01-M06 与 M07 的纯 .NET 部分。P3 未提供 approved Level/Map/Process graph schema；P1 未提供真实 LAN lifecycle。因此 Unity projection、正式 layout export、M08/M09 和全部未决 owner 行为仍 blocked。
+
 ## Context
 
 见 [proposal.md](proposal.md) 与 [spec](specs/cooking-match-lifecycle/spec.md)。阶段 1/P0 规划了 identity/location/lifecycle seam，阶段 2/P1 规划了 session、epoch 和快照边界，阶段 4/P3 规划了配置与逻辑布局校验；这些 change 仍是规划，当前没有 cooking 实现或 durable specs。现有 StateSync 设计表明业务层负责快照内容和导入导出，不能把通用 `WorldStateSnapshot` 直接当成完整业务状态。

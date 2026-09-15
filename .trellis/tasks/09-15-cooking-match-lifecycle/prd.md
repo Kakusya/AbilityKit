@@ -1,12 +1,12 @@
 # P4 关卡/地图/Match 生命周期
 
-## 迁移状态
+## 当前实施状态
 
-- Trellis task status：`planning`；迁移元数据：`blocked`。
-- 该任务尚未开始实施，原有未勾选项、future 测试、Draft/Blocked 决策门全部保持原状。
-- 依赖：P0 identity/location/lifecycle、P1 session、P3 config/layout 校验。
-- 阻塞：房间人数、房主退出、断线恢复和主机迁移仍待产品决策。
-- 规划验证：M01-M08（均为 future 规划，尚未执行）
+- Trellis task status：`in_progress`；完整 P4 迁移元数据仍为 `blocked`。
+- 已实现并验证受限的纯 .NET fixture-only logical Level/Map/Layout preparation、`Preparing → Ready → Started → Ended` 状态机、新 MatchId/epoch 重开、P2 gameplay instance 隔离与 lifecycle snapshot watermark contract。
+- 已实际通过 M01、M02、M03、M04、M05、M06 及 M07 的纯 .NET snapshot 顺序部分；这不代表正式 Level/Map schema、Unity authoring/projection、P1 LAN 或完整 P4 已完成。
+- 当前依赖为已提交的 P3 definition configuration identity；Process graph/Level 表、正式内容、真实 P1 session/LAN 和 Unity layout export 未落地。
+- 阻塞：房间人数、房主退出、断线恢复、主机迁移、保存与结算 owner 未确认；本轮只返回 blocked，不推导策略。
 
 ## 来源与可追溯性
 
