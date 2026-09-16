@@ -10,6 +10,9 @@ namespace AbilityKit.Game.Cooking;
 public enum CookingNetworkMeasurementTopology
 {
     InProcess,
+    UdpLoopback,
+    UdpSameMachine,
+    UdpTwoPcLan,
 }
 
 public enum CookingNetworkEndpointRole

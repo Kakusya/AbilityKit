@@ -54,6 +54,7 @@ public enum CookingConnectionOrigin
 {
     HostLocal,
     RemoteInProcess,
+    RemoteUdp,
 }
 
 public enum CookingConnectionState
@@ -285,6 +286,8 @@ public sealed class CookingSessionAuthority : IDisposable
     public int DeduplicationCount => _dedupCount;
 
     public IReadOnlyList<CookingSessionDiagnostic> Diagnostics => _diagnostics;
+
+    public CookingSnapshot Snapshot() => _simulation.Snapshot();
 
     public bool OpenConnection(ConnectionId connection, CookingConnectionOrigin origin, string correlationId)
     {

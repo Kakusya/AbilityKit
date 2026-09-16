@@ -1,0 +1,6 @@
+{"file":"ADR/decisions/0001-player-host.md","reason":"Accepted listen-host role decision: host must also participate as a player."}
+{"file":"ADR/decisions/0002-authoritative-fixed-tick-state-sync.md","reason":"Accepted authority and state synchronization boundaries for Cooking networking."}
+{"file":".trellis/spec/cooking/cooking-lan-session.md","reason":"Stable Cooking P1 authority, handshake, ingress, sequence and transport-loss requirements."}
+{"file":".trellis/spec/cooking/cooking-network-measurement.md","reason":"Topology separation, diagnostics and optimization-gating requirements."}
+{"file":"Docs/design/CookingGame/progress.md","reason":"Current verified scope versus real LAN completion boundary."}
+{"file":"Docs/design/CookingGame/successor-backlog.md","reason":"Authorized non-Unity successor scope and two-PC evidence requirements."}

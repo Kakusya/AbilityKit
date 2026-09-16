@@ -257,6 +257,38 @@
       ]
     },
     {
+      "name": "cooking-udp",
+      "level": "P1",
+      "owner": "Cooking Game Networking",
+      "description": "Pure .NET Cooking LiteNetLib reliable-UDP protocol, authority-dispatch and real loopback contracts. Same-machine and two-PC harness evidence remain manual exits.",
+      "scope": [
+        "cooking",
+        "udp",
+        "listen-host",
+        "state-sync",
+        "network-measurement"
+      ],
+      "requiredBefore": [
+        "merge-cooking-udp-protocol-or-adapter-change",
+        "claim-cooking-udp-loopback-contract"
+      ],
+      "failurePolicy": "Block Cooking UDP protocol or adapter changes until codec, authority-dispatch, compatibility and real loopback tests pass. Do not substitute this gate for same-machine or two-PC LAN evidence.",
+      "ciPolicy": {
+        "runOnPullRequest": false,
+        "runOnPush": false,
+        "runOnSchedule": false,
+        "artifactRequired": true
+      },
+      "steps": [
+        {
+          "name": "Cooking UDP protocol and loopback tests",
+          "kind": "dotnet-test",
+          "project": "src/AbilityKit.Game.Cooking.Udp.Tests/AbilityKit.Game.Cooking.Udp.Tests.csproj",
+          "filter": "Gate=CookingUdp"
+        }
+      ]
+    },
+    {
       "name": "network-sdk",
       "level": "P1",
       "owner": "Network SDK Platform",
