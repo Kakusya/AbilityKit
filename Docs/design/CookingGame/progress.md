@@ -1,102 +1,55 @@
 # Cooking Game 当前工程进度
 
-> 文档类型：跨阶段执行状态入口，不是行为规格、实施清单或完成证明。
->
-> 证据归属：行为契约以 [`.trellis/spec/cooking/`](../../../.trellis/spec/cooking/index.md) 为准；当前任务范围以对应 Trellis task 的 PRD、design 与 implement 为准；实际执行结果以各 task 的 `check.jsonl` 为准。本文只汇总状态并提供指针，来源冲突时不得用本文覆盖原始证据。
+> 文档类型：跨阶段状态入口，不是行为规格或新的完成证明。行为契约以 [`.trellis/spec/cooking/`](../../../.trellis/spec/cooking/index.md) 为准；历史命令与结果以七个 task 的 `check.jsonl` 为准。
 
-## 1. 当前基线
+## 1. 2026-09-16 治理结论
 
-- 最后更新：2026-09-15。
-- 最近的 Cooking 实现提交：`472fa7ec feat: add cooking network measurement baseline`。
-- 最近的会话规划记录提交：`6694c112 docs: record cooking measurement plan`。
-- 当前阶段结论：P0–P6 均已完成一轮获批的纯 .NET 受限增量，并有实际 build/test 证据；七个 task 仍为 `in_progress`，完整产品出口均未完成或未归档。
-- 当前产品形态：可运行、可测试的无界面纯 C# 业务纵向原型；不是 Unity 可玩版本，不是真实 LAN 联机版本，也不是生产级存档版本。
-- 路线中没有 P7。后续工作是补齐 P0–P6 的完整出口，而不是自行创建一个未规划的新阶段。
+Owner 已批准把过去混在同一阶段 task 中的状态拆为三类：
 
-本文使用以下状态词：
+1. **Archived verified delivery**：P0–P6 各自已有 `check.jsonl` 支持的纯 .NET 受限增量，按 `completed-limited-scope` 语义归档。
+2. **Non-Unity successor backlog**：P1–P6 仍可能有价值但未启动、未批准、无时间表的产品化工作，统一见 [successor backlog](successor-backlog.md)；P0 无 successor。
+3. **Prohibited Unity future scope**：Cooking Unity package、asmdef、scene、authoring、projection、UI、EditMode 与 scene smoke 长期禁止、不可领取、非 blocker，统一见 [future scope](future-scope.md)。
 
-- `verified-limited-scope`：获批的受限增量已经实现并执行验证，但不等于阶段完整完成。
-- `blocked`：完整出口依赖尚未批准的产品决策、缺失宿主或缺失真实环境证据。
-- `not-run`：对应命令或环境验收没有实际执行，不能记为通过。
+`archived`/`completed` 只修饰重划后的有限纯 .NET 交付，不表示完整 P0–P6 产品出口、Unity 可玩版本、production transport、真实两 PC LAN 或 durable storage 已完成。
 
-## 2. P0–P6 执行状态
+## 2. Archived verified delivery
 
-| 阶段 | 当前状态 | 已实现的受限范围 | 实际验证 | 完整出口主要 blocker |
-|---|---|---|---|---|
-| **P0 交互基础** | `verified-limited-scope` | 纯 .NET 权威拾取/放下、唯一位置、稳定排序、原子校验提交、命令幂等与 canonical snapshot/hash | `10/10`；8 个 JSONL 文件、21 条记录；[check evidence](../../../.trellis/tasks/09-15-cooking-interaction-foundation/check.jsonl)；提交 `7c85bdf9` | Unity projection、最小场景 fixture、EditMode T09–T10：`not-run` |
-| **P1 会话权威** | `verified-limited-scope` | transport-neutral connection binding、handshake、bounded ingress、baseline/delta、epoch/sequence、dedup、transport-loss diagnostics | build 0 warning/error，完整当时回归 `20/20`；6 个诊断文件、50 条记录；[check evidence](../../../.trellis/tasks/09-15-cooking-lan-session/check.jsonl)；提交 `7c85bdf9` | D1–D4 owner decisions、production transport/adapter、正式 wire codec、Unity、同机 socket 与真实两 PC LAN、L10–L12 |
-| **P2 配方循环** | `verified-limited-scope` | 单输入/单工序/3 tick fixture、product、plate、注入式 order accept/reject、幂等与 in-process equivalence | 当时完整回归 `27/27`；5 个 JSONL 文件、19 条记录；[check evidence](../../../.trellis/tasks/09-15-cooking-recipe-loop/check.jsonl)；提交 `7c85bdf9` | 正式配方和订单内容、order owner、score/settlement、失败 UX、Unity/config integration、真实 LAN R07 |
-| **P3 配置校验** | `verified-limited-scope` | definition batch 全错误诊断、原子替换、不可变 snapshot、canonical identity/hash、schema migration blocked result | focused `6/6`，当时完整回归 `34/34`；[check evidence](../../../.trellis/tasks/09-15-cooking-config-validation/check.jsonl)；提交 `abaeac49` | Process graph、Level/Map schema、正式内容、host/client binding C06、旧配置/快照 migration policy |
-| **P4 Match 生命周期** | `verified-limited-scope` | fixture `Preparing → Ready → Started → Ended`、restart 新 Match/epoch、gameplay isolation/closure、snapshot 顺序与合法状态迁移 | focused `6/6`，当时完整回归 `40/40`；10 条生命周期证据；[check evidence](../../../.trellis/tasks/09-15-cooking-match-lifecycle/check.jsonl)；提交 `0e6a57ab` | 正式 Level/Map/Process schema、Unity authoring/projection、真实 host/client 与两 PC LAN、M08/M09、房主退出/恢复/迁移/保存决策 |
-| **P5 持久化技术合同** | `verified-limited-scope` | 长期 progress、confirmed settlement、幂等 ledger、integrity envelope、`prepare → commit → read` in-memory fault store、validated restart | focused `12/12`，当时完整回归 `52/52`；7 条 JSONL 证据；[check evidence](../../../.trellis/tasks/09-15-cooking-persistence-management/check.jsonl)；提交 `3a388b69` | 真实文件/数据库/云 store、process-crash durability、存档 owner/时机、退出/断电、migration/backup/recovery、encryption、Unity/host integration |
-| **P6 网络测量基线** | `verified-limited-scope` | 显式 `InProcess` workload/report、ingress-to-commit、queue/throughput/p50/p95/p99/allocation、逐 invocation state hash、logical fault trace、optimization prerequisite blockers | focused `5/5`，最新完整 Cooking 回归 `57/57`，build 0 warning/error；JSON/CSV/JSONL；[check evidence](../../../.trellis/tasks/09-15-cooking-network-measurement/check.jsonl)；提交 `472fa7ec` | production transport、socket/stream decoder、真实两 PC LAN、批准 workload/threshold/topology、interpolation/prediction/correction/rollback runtime、reconnect、Unity projection |
+| 阶段 | 已验证并收口的受限交付 | 历史 evidence |
+|---|---|---|
+| **P0 交互基础** | 纯 .NET 权威拾取/放下、唯一位置、稳定排序、原子校验提交、命令幂等与 canonical snapshot/hash | `10/10`；8 个 JSONL、21 条记录；[check](../../../.trellis/tasks/archive/2026-09/09-15-cooking-interaction-foundation/check.jsonl) |
+| **P1 会话权威** | transport-neutral binding、handshake、bounded ingress、baseline/delta、epoch/sequence、dedup 与 transport-loss diagnostics | build 0 warning/error；权威摘要 `20/20`；6 个 JSONL、50 条记录；[check](../../../.trellis/tasks/archive/2026-09/09-15-cooking-lan-session/check.jsonl) |
+| **P2 配方循环** | 单输入/单工序/3 tick fixture、product、plate、注入式 order accept/reject、幂等与 in-process equivalence | 当时完整回归 `27/27`；5 个 JSONL、19 条记录；[check](../../../.trellis/tasks/archive/2026-09/09-15-cooking-recipe-loop/check.jsonl) |
+| **P3 配置校验** | definition batch 全错误诊断、原子替换、不可变 snapshot、canonical identity/hash、schema migration blocked result | focused `6/6`，当时完整回归 `34/34`；[check](../../../.trellis/tasks/archive/2026-09/09-15-cooking-config-validation/check.jsonl) |
+| **P4 Match 生命周期** | fixture `Preparing → Ready → Started → Ended`、restart 新 Match/epoch、隔离、snapshot watermark | focused `6/6`，当时完整回归 `40/40`；10 条 evidence；[check](../../../.trellis/tasks/archive/2026-09/09-15-cooking-match-lifecycle/check.jsonl) |
+| **P5 持久化技术合同** | 长期 progress、confirmed settlement、幂等 ledger、integrity envelope、in-memory `prepare → commit → read` 与 validated restart | focused `12/12`，当时完整回归 `52/52`；7 条 evidence；[check](../../../.trellis/tasks/archive/2026-09/09-15-cooking-persistence-management/check.jsonl) |
+| **P6 网络测量基线** | 显式 `InProcess` workload/report、ingress-to-commit、queue/throughput/p50/p95/p99/allocation、fault trace 与 optimization blocker | focused `5/5`，完整回归 `57/57`；JSON/CSV/JSONL；[check](../../../.trellis/tasks/archive/2026-09/09-15-cooking-network-measurement/check.jsonl) |
 
-### 证据解释
-
-- P1 的权威 `check.jsonl` 记录为 `20/20`。若其他旧 metadata 或摘要仍写 `19/19`，必须标为计数漂移并以实际 check evidence 为准，不能静默改写历史证据。
-- 表中的“当时完整回归”表示该增量提交时，独立 Cooking 测试项目中的全部测试数量；后续新增测试会使总数增长，不应据此认为旧记录失效。
-- P6 最新完整回归为 `57/57`。测试数量从此前记录发生变化，是因为 N10 的多个 theory case 合并为一个覆盖全部 prerequisite 的合同测试，不是能力回退。
-- `artifacts/cooking-*/` 是实际运行生成且受忽略规则保护的证据目录。是否在当前工作区仍保留生成物，不改变 `check.jsonl` 对当次命令结果的记录。
+P1 旧 metadata 曾写 `19/19`，属于摘要漂移；原始权威 check event 为 `20/20`，本次不改写该历史事件，只修正摘要。P0 的运行时 artifact 目录仍可在 check event/evidence 文字中引用，但不再作为 manifest `file` context。
 
 ## 3. 当前可运行纵向链路
 
-纯 .NET fixture 已能演示以下无界面流程：
+纯 .NET fixture 已能无界面地创建 scope 与实例、完成 in-process handshake、执行权威交互、运行最小配方、推进 Match、应用 settlement/progress，并生成 InProcess 测量诊断。它证明有限领域合同和技术边界可以运行；不证明 Unity 表现、真实网络 I/O、物理两机 LAN 或 durable storage。
 
-1. 创建 Session/World/Match scope、玩家、物品与 station fixture。
-2. 建立进程内 connection 并完成协议、配置与 capability handshake。
-3. 通过同一 authority ingress 执行拾取、放置、竞争仲裁和幂等命令。
-4. 运行单输入、单工序、3 tick 的最小加工循环，生成产品并装盘。
-5. 通过注入式 order port 接受或拒绝产品。
-6. 推进 Match 生命周期，结束后关闭旧 gameplay admission，并以新 MatchId/epoch restart。
-7. 将 confirmed settlement 幂等应用到长期 progress，并模拟 prepare/commit/read 故障与 restart read-back。
-8. 生成明确标记为 `InProcess` 的 JSON/CSV/JSONL 测量与 logical fault diagnostics。
+## 4. 未完成范围
 
-该链路证明领域合同和技术边界可以运行；它不证明 Unity 表现、真实网络 I/O、物理两机 LAN 或 durable storage 已经完成。
+### Non-Unity successor backlog
 
-## 4. 跨阶段完整出口 blocker
+P1–P6 尚可另行审议的工作包括 production transport/wire、真实两 PC LAN、正式 recipe/order/content/schema、Room/Match 产品语义、durable store、process-crash 恢复、批准 workload/threshold 和非 Unity 优化验证。它们均未启动、未批准、没有时间表，详见 [successor backlog](successor-backlog.md)。
 
-### Unity 与内容
+### Prohibited Unity scope
 
-- 尚未建立 Cooking Unity 应用层、场景投影、authoring/export、UI、动画和 EditMode/scene smoke。
-- Level、Map、Process graph、正式配方、订单、评分与失败体验尚未形成完整批准 schema 和产品规则。
+Cooking Unity 应用层、场景、authoring/export、projection、UI、动画、EditMode 与 scene smoke 长期禁止实施，不再作为旧 task、successor 或完整出口的当前 blocker。其历史来源、跨宿主 authority/identity/stale-input 不变量和重新授权条件见 [future scope](future-scope.md)。
 
-### 网络与房间
+## 5. 后续读取顺序
 
-- 尚未选择并实现 production transport、listen/connect adapter 与正式 wire codec。
-- 没有同机真实 socket 集成和两台物理 PC 的网卡、地址、防火墙、发现/连接证据。
-- 房间人数、host exit、disconnect recovery、reconnect 和 host migration 仍需 owner 决策。
-
-### 持久化与经营
-
-- 当前只有 in-memory fault-injection store，不是文件、数据库或云端 durable store。
-- 存档 owner、保存时机、退出/断电/cancel、备份、隔离、恢复、migration 与 encryption/key policy 尚未批准或实现。
-
-### 性能与同步优化
-
-- workload 规模、采样窗口、拓扑覆盖及延迟、吞吐、队列、内存、分配等阈值仍为 `UNSET`。
-- interpolation、local prediction、correction 与 rollback runtime 未获批准且未实现。
-- 同机 `InProcess` 数据只能作为诊断基线，不能充当 LAN 性能通过证据。
-
-## 5. 恢复工作时的读取顺序
-
-1. 读取本文，确认当前执行基线、最后实现提交和完整出口 blocker。
-2. 读取 [技术路线](technical-roadmap.md) 与 [交付计划](delivery-plan.md)，确认阶段顺序和产品边界；其中早期“尚未实现”描述若与本文冲突，应继续核对 task 实际 evidence，而不能直接选择任一摘要。
-3. 读取准备继续的 `.trellis/tasks/09-15-cooking-*/`：
-   - `task.json`
-   - `prd.md`
-   - `design.md`
-   - `implement.md`
-   - `research/`
-   - `check.jsonl`
-4. 读取对应的 [Cooking 规范索引](../../../.trellis/spec/cooking/index.md) 和行为草案。
-5. 核对 Git 状态与本文记录的基线提交；不要覆盖用户未提交改动。
-6. 开始新实现前重新审议完整出口、owner decisions 和实际环境，不从 `verified-limited-scope` 推导阶段已完成。
-7. 每完成一个获批增量后：实际执行验证、更新 task `check.jsonl`、创建提交，再更新本文的基线、状态和 blocker 指针。
+1. 读取本文确认三类状态。
+2. 读取 [技术路线](technical-roadmap.md)、[交付计划](delivery-plan.md) 与 [Cooking spec index](../../../.trellis/spec/cooking/index.md)。
+3. 需要历史证据时读取归档后的 task PRD/design/implement/check；不得因归档推导完整产品完成。
+4. 只有 owner 明确批准新范围后才新建 Trellis task；不要恢复七个旧 task。
+5. Unity 重新授权必须满足 [future scope](future-scope.md) 的独立条件；non-Unity 后续从 [successor backlog](successor-backlog.md) 选择并重新审议。
 
 ## 6. 维护规则
 
-- 本文只维护跨阶段状态摘要与链接，不复制行为契约、测试矩阵或 task checklist。
-- 行为变化写入 `.trellis/spec/cooking/`；当前变更的目标与设计写入对应 task；实际命令结果写入 `check.jsonl`。
-- 计划测试、文档 checkbox、task `in_progress`、migration status、提交存在和测试通过彼此不等价。
-- 未实际运行的 Unity、LAN、protocol 或 global gate 必须保留 `not-run` 或 `blocked`，不得推断为通过。
-- 完整出口解除后，先更新原 task/spec/ADR 的权威事实，再更新本文的摘要；本文与来源冲突时修复本文，不建立第二套事实。
+- 本文只汇总状态与链接，不复制行为契约、测试矩阵或未来 checklist。
+- 未实际运行的 Unity、LAN、protocol、durability 或 global gate 继续是 not-run/未完成，不能因 task archive 记为通过。
+- `.trellis/migration/legacy-cooking-changes/` 保持只读。

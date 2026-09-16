@@ -1,16 +1,22 @@
 # P0 交互基础：cooking-interaction-foundation
+## 2026-09-16 收口状态
 
-> 迁移状态：**planned**。本规范由只读来源快照 `.trellis/migration/legacy-cooking-changes/add-cooking-interaction-foundation/specs/cooking-interaction-foundation/spec.md` 转换；原始 SHA-256 见 [迁移清单](../../migration/legacy-cooking-changes/manifest.json)。
+- T01-T08 纯 .NET authority/interaction contract 已验证并作为 limited delivery 收口；P0 无 non-Unity successor。
+- 对应 `09-15-cooking-*` task 已按 `completed-limited-scope` 语义归档；`completed` 不表示完整 P0 或完整 P0-P6 产品出口。
+- Cooking Unity package、asmdef、scene、authoring、projection、UI、EditMode 与 scene smoke 长期禁止实施；原 Unity 场景及宿主无关不变量统一见 [`future-scope.md`](../../../Docs/design/CookingGame/future-scope.md)。
+- 本文以下 authority、identity、atomicity、sequence、stale-input、persistence 或 measurement 行为不变量继续有效；未完成的非 Unity 范围不得写成已实现，P1-P6 入口见 [`successor-backlog.md`](../../../Docs/design/CookingGame/successor-backlog.md)。
+
+> 交付状态：**completed-limited-scope**；原迁移状态为 `planned`。本规范由只读来源快照 `.trellis/migration/legacy-cooking-changes/add-cooking-interaction-foundation/specs/cooking-interaction-foundation/spec.md` 转换；原始 SHA-256 见 [迁移清单](../../migration/legacy-cooking-changes/manifest.json)。
 >
-> 实施状态：T01-T08 的纯 .NET 权威业务闭环已在 `src/AbilityKit.Game.Cooking*` 实现并实际验证；T09-T10（Unity projection/fixture/EditMode）明确 `deferred`，未实施、未运行、未验证。完整命令与 JSONL 证据见对应 [Trellis task](../../tasks/09-15-cooking-interaction-foundation/prd.md)。
+> 实施状态：T01-T08 的纯 .NET 权威业务闭环已在 `src/AbilityKit.Game.Cooking*` 实现并实际验证；T09-T10（Unity projection/fixture/EditMode）为 `prohibited / not-run`，未实施、未运行、未验证。完整命令与 JSONL 证据见对应 [归档 Trellis task](../../tasks/archive/2026-09/09-15-cooking-interaction-foundation/prd.md)。
 >
-> 其余未实现范围不会因 T01-T08 通过而自动关闭；开始后续 Unity 实施前仍必须审阅对应 Trellis task 的 PRD、design 和 implement checklist。
+> T01-T08 是本历史 task 的最终归档边界。Unity 后续实施长期禁止；重新授权条件见统一 future scope，不能恢复旧 task 直接实施。
 
 ## 迁移边界
 
 - 依赖：最小配置/layout/snapshot 生命周期 seam；不依赖真实网络。
 - 阻塞：未来测试项目与程序集路径须在实施时确认；不得将路线示例写成已实现能力。
-- 实施验证：T01-T08 已运行并通过；T09-T10 为 deferred，尚未执行。实际命令、通过结果和 JSONL 工件路径记录在对应 Trellis task 的 `check.jsonl`，不能由本规范代替。
+- 实施验证：T01-T08 已运行并通过；T09-T10 未执行并已移入 prohibited Unity future scope。实际命令、通过结果和 JSONL 工件路径记录在对应 Trellis task 的 `check.jsonl`，不能由本规范代替。
 
 ## 迁移的行为草案
 
@@ -65,10 +71,10 @@
 - **THEN** 重复命令至多产生一次提交，稳定排序后最终状态与事件序列相同，拒绝项不产生部分变更
 
 ### Requirement: Projection is non-authoritative
-Unity 投影 MUST 根据权威快照/事件将 Item instance、位置和所有权映射到表现对象；投影缺失、重复、过期或乱序输入 MUST 不回写权威模拟，且 MUST 可被后续有效快照纠正。最小 smoke fixture MUST 至少包含一个可移动物品、手槽、站点槽和两名逻辑玩家，但不定义完整玩法容量。
+仅在 owner 重新授权 Unity 后，投影 MUST 根据权威快照/事件将 Item instance、位置和所有权映射到表现对象；投影缺失、重复、过期或乱序输入 MUST 不回写权威模拟，且 MUST 可被后续有效快照纠正。最小 smoke fixture MUST 至少包含一个可移动物品、手槽、站点槽和两名逻辑玩家，但不定义完整玩法容量。
 
 #### Scenario: Projection follows a newer authoritative state
-- **WHEN** Unity EditMode projection 收到同一 Item instance 的较新有效状态
+- **WHEN** owner 已重新授权的 Unity EditMode projection 收到同一 Item instance 的较新有效状态
 - **THEN** 表现对象移动到该状态指定的位置/槽位，且不会创建第二个权威物品或改变纯 C# 状态
 
 #### Scenario: Stale projection input is ignored without authority mutation

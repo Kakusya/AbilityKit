@@ -1,0 +1,30 @@
+{
+  "id": "close-cooking-limited-scope",
+  "name": "close-cooking-limited-scope",
+  "title": "Close Cooking limited-scope changes",
+  "description": "Re-scope and archive the seven verified Cooking pure-.NET increments, move prohibited Unity execution into a non-active future-scope record, and preserve remaining non-Unity work as successor backlog without claiming full product completion.",
+  "status": "completed",
+  "dev_type": null,
+  "scope": null,
+  "package": null,
+  "priority": "P1",
+  "creator": "Li He",
+  "assignee": "Li He",
+  "createdAt": "2026-09-16",
+  "completedAt": "2026-09-16",
+  "branch": "master",
+  "base_branch": "master",
+  "worktree_path": null,
+  "commit": null,
+  "pr_url": null,
+  "subtasks": [],
+  "children": [],
+  "parent": null,
+  "relatedFiles": [],
+  "notes": "",
+  "meta": {
+    "decision": "owner-approved",
+    "unity_policy": "prohibited-long-term",
+    "scope": "task-governance-and-documentation"
+  }
+}

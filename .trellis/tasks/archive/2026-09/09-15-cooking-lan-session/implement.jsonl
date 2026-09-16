@@ -1,0 +1,7 @@
+{"file": ".trellis/spec/abilitykit/index.md", "reason": "纯 .NET 应用层边界；不得把 cooking session 规则写入通用 AbilityKit、Unity 或 Server。"}
+{"file": ".trellis/spec/abilitykit/validation.md", "reason": "未来 contract/spike 必须记录真实 pass/fail/blocked/skip；日志不能代替命令结果。"}
+{"file": ".trellis/spec/cooking/cooking-interaction-foundation.md", "reason": "P0 T01-T08 已验证的 authority/command/snapshot seam；T09-T10 对本准备范围 deferred。"}
+{"file": ".trellis/spec/cooking/cooking-lan-session.md", "reason": "P1 transport-neutral contract、diagnostics、D1 spike 与完整 LAN blockers。"}
+{"file": ".trellis/tasks/09-15-cooking-lan-session/research/migration-source.md", "reason": "保留遗留来源；当前归档范围与 successor/future 分流以 closure 文档为准。"}
+{"file": "Docs/design/CookingGame/delivery-plan.md", "reason": "阶段顺序；scoped planning 不解除完整 P1 exit 或下游依赖。"}
+{"file": "Docs/design/CookingGame/progress.md", "reason": "Stable pointer to archived P0-P6 limited-delivery evidence; direct archived check links are maintained there."}

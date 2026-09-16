@@ -12,13 +12,14 @@
 
 ## 做菜规划迁移
 
-七份尚未实施的做菜规划已从旧流程迁移：
+七份做菜规划曾从旧流程迁移，并于 2026-09-16 经 owner 按已有 evidence 重划为纯 .NET `completed-limited-scope` 交付：
 
-- 活动规范索引：[`.trellis/spec/cooking/index.md`](../../.trellis/spec/cooking/index.md)。
-- 活动任务：`.trellis/tasks/09-15-cooking-*/`，均保持 `planning`；其 `migration_status`、依赖、阻塞项和 future 验证说明保存在 metadata、PRD、design、implement 中。
+- 规范与状态索引：[`.trellis/spec/cooking/index.md`](../../.trellis/spec/cooking/index.md)。
+- 七个历史任务按已有 `check.jsonl` 支持的 pure .NET limited delivery 归档；完整产品、真实 LAN、durable storage 均未因此完成。非 Unity 后续见 `Docs/design/CookingGame/successor-backlog.md`。
+- Cooking Unity 执行长期禁止；历史条目与重新授权条件见 `Docs/design/CookingGame/future-scope.md`。
 - 只读来源快照与 SHA-256 清单：[`.trellis/migration/legacy-cooking-changes/README.md`](../../.trellis/migration/legacy-cooking-changes/README.md)。快照用于追溯，不是活动任务或验收状态来源。
 
-迁移不代表任何规划已经启动、实现、验证、完成或归档。开始实施前必须按 `.trellis/workflow.md` 重新审阅对应任务及其 context manifests。
+迁移本身不代表实施或验证；后续代码与归档状态来自各 task 的实际 check evidence 和 2026-09-16 owner closure。若 successor 获批，必须新建 task 重新审议；不得恢复旧 task 或从归档推导完整阶段已完成。
 
 ## 宿主集成与验证边界
 

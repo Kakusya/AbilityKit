@@ -1,16 +1,22 @@
 # P1 LAN listen host/client：cooking-lan-session
+## 2026-09-16 收口状态
 
-> 完整 P1 迁移状态：**blocked**。本规范由只读来源快照 `.trellis/migration/legacy-cooking-changes/add-cooking-lan-session/specs/cooking-lan-session/spec.md` 转换；原始 SHA-256 见 [迁移清单](../../migration/legacy-cooking-changes/manifest.json)。
+- L01-L09 transport-neutral 纯 .NET session contract 已验证并作为 limited delivery 收口；production transport、真实 LAN 等仍未启动，见 successor backlog。
+- 对应 `09-15-cooking-*` task 已按 `completed-limited-scope` 语义归档；`completed` 不表示完整 P1 或完整 P0-P6 产品出口。
+- Cooking Unity package、asmdef、scene、authoring、projection、UI、EditMode 与 scene smoke 长期禁止实施；原 Unity 场景及宿主无关不变量统一见 [`future-scope.md`](../../../Docs/design/CookingGame/future-scope.md)。
+- 本文以下 authority、identity、atomicity、sequence、stale-input、persistence 或 measurement 行为不变量继续有效；未完成的非 Unity 范围不得写成已实现，P1-P6 入口见 [`successor-backlog.md`](../../../Docs/design/CookingGame/successor-backlog.md)。
+
+> 交付状态：**completed-limited-scope**；原完整 P1 迁移状态为 `blocked`。本规范由只读来源快照 `.trellis/migration/legacy-cooking-changes/add-cooking-lan-session/specs/cooking-lan-session/spec.md` 转换；原始 SHA-256 见 [迁移清单](../../migration/legacy-cooking-changes/manifest.json)。
 >
-> 当前有一个已实施并验证的受限范围：transport-neutral 纯 .NET session contract（L01-L09 focused tests）。D1 仅有 non-decisional transport spike report model，候选比较仍未运行。以上不解除完整 P1 的 blocked 状态，也不会解锁下游阶段；开始后续实现前仍必须审阅对应 Trellis task 的 PRD、design 和 implement checklist。
+> 当前有一个已实施并验证的受限范围：transport-neutral 纯 .NET session contract（L01-L09 focused tests）。D1 仅有 non-decisional transport spike report model，候选比较仍未运行。以上不表示完整 P1 产品出口完成，也不会解锁完整下游出口；任何 non-Unity 后续必须从 successor backlog 新建 task。
 
 ## 当前边界
 
 - 可用前置：P0 T01-T08 的纯 .NET authority/command/snapshot 与实际证据。
 - 已验证的纯 .NET contract：L01-L09，覆盖 connection binding、compatibility handshake、shared authority queue、baseline/epoch/sequence、bounded ingress/dedup/cancel/close/dispose、JSONL diagnostics 和 application-level transport loss。
 - D1 candidate spike：仅 report model，**not run**。
-- P0 Unity T09-T10：对已完成的纯 .NET contract 不适用；对完整 Unity/LAN integration exit 仍为未满足前置。
-- 完整 P1：D1 production choice、D2 连接入口、D3 host/disconnect/exit 产品语义、D4 benchmark thresholds、production adapter、Unity、L10-L12 和 two-PC LAN 仍为 blocked/deferred。
+- P0 Unity T09-T10：未执行并已移入 prohibited Unity future scope，不是 LAN successor 的前置或 blocker。
+- 未完成的 non-Unity P1：D1 production choice、D2 连接入口、D3 host/disconnect/exit 产品语义、D4 benchmark thresholds、production adapter、L10-L12 和 two-PC LAN 均未启动，见 successor backlog；Unity 见 future scope。
 
 ## Purpose
 

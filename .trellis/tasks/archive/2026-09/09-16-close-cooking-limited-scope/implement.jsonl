@@ -1,0 +1,4 @@
+{"file":".trellis/spec/cooking/index.md","reason":"Cooking task/spec 状态、迁移语义与阶段入口"}
+{"file":"Docs/design/CookingGame/progress.md","reason":"P0-P6 当前执行基线与验证指针"}
+{"file":"Docs/design/CookingGame/technical-roadmap.md","reason":"长期架构边界与 Unity/纯 C# 分层"}
+{"file":"ADR/long-term-goals.md","reason":"产品方向、Unity 边界与未决范围"}

@@ -1,23 +1,24 @@
 # 做菜经营游戏交付计划
 
-> 本文是路线顺序与测试验收 INDEX，不是第二份行为草案，也不是实现任务清单。各阶段的待审阅边界、依赖、实施清单与后续检查证据位于 [做菜 Trellis 索引](../../../.trellis/spec/cooking/index.md) 与对应 `.trellis/tasks/09-15-cooking-*/`。截至 2026-09-15，以下能力均为计划，不代表已实现、已启动或已测试；不虚构截止日期。
+> 本文是历史阶段顺序与状态 INDEX，不是第二份行为草案或 active 实施清单。2026-09-16 起，七个纯 .NET 受限增量按已有 check evidence 作为 `completed-limited-scope` 归档；剩余范围按 [当前进度](progress.md) 拆分为 [non-Unity successor backlog](successor-backlog.md) 与 [prohibited Unity future scope](future-scope.md)。不虚构日期，也不宣称完整 P0–P6 产品出口完成。
 
 ## 总览
 
-| 阶段 | 依赖与前置 | Trellis 规划入口 | 成功测试 | 失败测试与出口条件 | 未决项/门禁 |
-|---|---|---|---|---|---|
-| **P0 交互基础** | 最小配置/layout/snapshot 生命周期 seam；无真实网络 | [`cooking-interaction-foundation`](../../../.trellis/tasks/09-15-cooking-interaction-foundation/prd.md)：纯 C# 拾取/放下、唯一所有权、稳定排序/幂等、host/remote in-process 同路径、Unity projection 与最小 fixture | T01-T10：.NET 单测、两消费者 in-process 集成、Unity EditMode/projection/scene smoke | stale/跨 session ID、越界/无资格、满槽、双玩家争抢、重复/乱序、旧 projection 必须 mutation-free；全部待审阅场景与受影响门禁通过 | 不选 transport、帧率、lockstep、LAN；future 测试项目路径须实施时确认；评估 `core-stability`/`runtime-contracts` |
-| **P1 LAN listen host/client** | P0 T01-T08 的纯 .NET authority/command/snapshot 证据；L01-L09 transport-neutral session contract 已实现并验证；完整 P1 仍受 P0 Unity T09-T10（对 Unity/LAN integration）、D1 production choice、D2-D4 阻塞 | [`cooking-lan-session`](../../../.trellis/tasks/09-15-cooking-lan-session/prd.md)（完整 exit blocked）：已验证 connection binding、protocol/config handshake、baseline-before-delta、epoch/sequence、bounded ingress、diagnostics 和 application-level loss contract；真实 host/client、transport spike 与 LAN 集成仍为 future | L01-L09 focused pure .NET contract tests 已实际通过；完整 L10-L12 仍包括同机多实例、真实两 PC LAN、TCP stream framing 与应用 fault injection 分层、benchmark 产物，均未执行 | 不得因 L01-L09、P0 .NET 通过或 D1 report model 而宣称 LAN；D1-D4 未确认、production adapter/Unity 未实现、真实 transport/握手、消息重复/重排、权限越界、服务端关闭或 host exit UI/save 语义未决时完整 exit 阻塞；不得以同机通过替代两 PC LAN | 不含 WAN/NAT/relay、严格 lockstep、save、自动重连、主机迁移或人数上限；D1 spike 不自动作出 transport owner 决策；无完整 P1 evidence 不得进入 P2 |
-| **P2 一条完整配方** | P0 T01-T08 纯 .NET authority evidence；R01-R06 pure .NET fixture loop 已验证；联机验收仍依赖完整 P1 LAN | [`cooking-recipe-loop`](../../../.trellis/tasks/09-15-cooking-recipe-loop/prd.md)：已验证单输入/单工序/3 Tick、product、container slot、injected accept/reject order port、idempotency 与 in-process equivalence；正式内容与 LAN integration 仍 future | R01-R06 focused pure .NET tests 已实际通过；R07 two-PC LAN 未执行 | 缺定义/能力/range/availability、未完成 process、order reject、重复/已消费 product、container slot collision 均有 contract coverage；不得将 fixture order/recipe、R06 或 P1 pure .NET contract 宣称为正式内容或 LAN；任何部分提交仍阻止完整 exit | 正式配方、order owner、score/settlement、failure UX、真实 LAN、Unity/配置/内容门禁仍待 owner/evidence；无完整 P1/P2 evidence 不得解锁后续联机出口 |
-| **P3 数据配置验证** | P2 的实际数据类型；早期最小 config/layout/snapshot lifecycle 不得推迟到此阶段才建立 | [`cooking-config-validation`](../../../.trellis/tasks/09-15-cooking-config-validation/prd.md)：Item/Ingredient/Appliance/Process/Recipe/Level 等配置校验、引用检查和启动 config hash 兼容判断 | 合法表加载、外键/能力/拓扑/等级引用通过，host/client 同 hash 启动 | 缺外键、循环/非法拓扑、能力不匹配、hash mismatch、旧 snapshot/config 拒绝或迁移策略未满足；错误必须可诊断且不启动不兼容会话 | 版本迁移策略、旧快照保留范围、工具格式与 owner；`moba-content-contracts` 不可直接代替游戏门禁，需新建/指定覆盖 |
-| **P4 关卡/地图/Match 生命周期** | P0 identity/location/lifecycle；P1 session；P3 config/layout 校验 | [`cooking-match-lifecycle`](../../../.trellis/tasks/09-15-cooking-match-lifecycle/prd.md)：Unity authoring 到逻辑 layout、Level/Map/Match/Room 生命周期、snapshot 接入 | 最小地图加载、创建/开始/结束 Match、多实例隔离、snapshot 版本顺序和重放/恢复到批准边界 | 缺引用、重复实例、旧/乱序 snapshot、非法状态迁移、跨 Match ID 污染；不得用场景对象绕过 authority | 房间人数、房主退出、断线恢复、主机迁移仍需产品决策；Unity compile/EditMode、`runtime-contracts` |
-| **P5 持久化经营管理** | P4 明确 Round/Match 与长期状态边界；先取得 save/exit owner 决策 | [`cooking-persistence-management`](../../../.trellis/tasks/09-15-cooking-persistence-management/prd.md)：解锁/升级/货币/经营进度等长期状态与 match 结算的持久化管理 | 成功结算、保存/读取、幂等奖励、版本兼容和显式退出流程 | 中断写入、重复结算、旧存档、退出未保存/取消保存、损坏数据；默认 host exit 不得自行发明 | 存档归属、保存时机、退出必需性、迁移/恢复 owner 未批准则阻塞；安全与数据格式门禁 |
-| **P6 响应性与网络测量** | P1-P5 的可运行垂直链路、真实测量 harness；不是玩法正确性的前置替代 | [`cooking-network-measurement`](../../../.trellis/tasks/09-15-cooking-network-measurement/prd.md)：measured responsiveness/负载/网络报告，基于证据决定插值、预测、tick 与优化 | 同机多实例与真实两台 PC LAN 分开验收：前者验证流程/协议，后者验证真实网卡、发现/连接和网络条件；记录 p50/p95 等实际指标但不预设目标 | 延迟、丢包、抖动、重复/乱序、负载、断线（仅在已批准重连时）失败场景；未达批准目标或数据不足不得宣称优化完成 | 30Hz 非锁定；WAN/NAT/中继/账号平台不在本阶段；性能目标、插值/预测和重连是否启用须以批准决策为门 |
+| 阶段 | archived verified delivery | non-Unity successor（未启动/未批准） | prohibited Unity scope |
+|---|---|---|---|
+| **P0 交互基础** | T01-T08：纯 .NET pickup/drop authority、identity/location、稳定排序、原子失败、幂等与 snapshot；`10/10` | 无 successor | T09-T10 projection、scene/config fixture、EditMode |
+| **P1 会话权威** | L01-L09：transport-neutral binding/handshake/ingress/baseline/sequence/diagnostics；权威摘要 `20/20` | D1-D4、production transport/wire、同机 socket、真实两 PC LAN、正式 benchmark | projection/scene/asmdef、连接 UI 与 Unity cross-host 验证 |
+| **P2 配方循环** | R01-R06：单输入/单工序/3 Tick fixture、plate、injected order port、幂等；`27/27` | 正式 recipe/order/score/settlement/failure UX、production session 与真实 LAN R07 | scene/projection/UI/EditMode |
+| **P3 配置校验** | 当前 definition 范围：候选批次、全量诊断、原子提交、canonical identity/hash；focused `6/6`、当时完整 `34/34` | Process graph、Level/Map schema、正式内容、host/client compatibility、migration policy | Unity 加载与 EditMode smoke |
+| **P4 Match 生命周期** | fixture-only `Preparing → Ready → Started → Ended`、restart/epoch、隔离、snapshot watermark；focused `6/6`、当时完整 `40/40` | 正式 Room/Level/Map、房间/退出/恢复/迁移/保存决策、production session 与真实 LAN | authoring→layout export、projection、scene smoke |
+| **P5 持久化技术合同** | in-memory settlement/progress/ledger/integrity/staged-store/restart；focused `12/12`、当时完整 `52/52` | durable file/database/cloud store、process-crash proof、存档 owner/timing/exit/migration/recovery/encryption | Unity/app-host restart smoke |
+| **P6 网络测量基线** | `InProcess` workload/report、queue/throughput/percentiles/allocation、logical fault trace 与 blocked optimization gate；focused `5/5`、完整 `57/57` | production network measurement、stream decoder、真实两 PC LAN、批准 workload/threshold、非 Unity 优化与 fallback | Unity projection 及表现侧 interpolation/prediction/correction 验证 |
 
 ## 验收边界
 
-- **同机多实例 ≠ 真两 PC LAN**：同机测试覆盖 adapter、进程隔离和 listen host/client 流程；不能替代两台物理电脑的网络、发现、地址、网卡与防火墙验收。P1 必须分别列出两类证据，不能把首次真实 LAN 验收推迟到 P6；P6 在此基线上扩展性能测量。
-- 每个阶段同时覆盖成功与失败路径：输入、动作、状态/事件断言、runner、产物和退出条件必须在对应 Trellis task 的设计、实施清单与检查记录中维护。未实现阶段的测试名称和项目路径只能标为 future，不得当作现有项目或已通过门禁。
-- 后续阶段不能把最小 config、layout、snapshot、identity 和 lifecycle 前置条件拖到最后才补；阶段可以扩展它们，但不能绕过它们。
-- 主机退出、存档、重连、迁移、人数、首发平台和经营/动作比例是未决产品选择；未获批准前保持 blocker，不用默认值填空。
-- 本文不固定渲染帧率、模拟 Tick、严格 lockstep 或 WAN 范围。每项阶段工作须先在 Trellis `planning` task 中审阅并获实施批准；task 文档、check 状态和测试通过互不等价。
+- 归档只说明表中 `archived verified delivery` 已由历史 `check.jsonl` 支持；未运行项目不因 scope 重划变成 pass。
+- **同机或 InProcess ≠ 真实两 PC LAN**。真实网卡、地址、防火墙和双方日志仍不存在；若 owner 将来选择该工作，必须从 successor backlog 新建 task。
+- **in-memory staged store ≠ durable storage**。没有真实介质或 process-crash durability 证明。
+- **fixture/schema subset ≠ 正式内容**。正式 Recipe/Process/Level/Map/Order、评分、结算与失败 UX 尚未批准或完成。
+- Cooking Unity 执行长期禁止、不可领取、非 blocker；只有 owner 明确重新授权并新建 task 后才可重新审议。
+- 后续工作不得恢复七个归档 task；必须重新读取当时契约、当前环境和 owner 决定，并记录新的真实验证结果。

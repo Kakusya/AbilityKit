@@ -1,6 +1,6 @@
 # 做菜经营游戏：长期目标
 
-更新：2026-09-15。来源：用户 /init 目标及后续纠正。状态：方向已明确，尚未开始游戏功能实现。
+更新：2026-09-16。来源：用户 /init 目标及后续纠正。状态：P0–P6 各有已验证并已按受限范围归档的纯 .NET 增量；完整游戏产品出口仍未完成。Cooking Unity 实施在可预见的长期内禁止，非 Unity 后续未启动且须另行批准。
 
 ## 已确认的方向
 
@@ -8,7 +8,7 @@
 2. **局域网合作是近期主要目标；公网连接是远期目标**，不纳入近期联机验收。
 3. 创建房间的电脑同时运行服务器并允许本机玩家参与；其他电脑作为客户端加入。角色决策的唯一归属为 [ADR-0001](decisions/0001-player-host.md)。
 4. 本地持续维护长期目标、架构决策和参考资料；Trellis 任务在开始工作时读取相关 ADR、设计文档和项目规范，未确认产品选择必须由 owner 明确。
-5. 已确认的做菜经营游戏应用技术路线与优先级见[技术路线图](../Docs/design/CookingGame/technical-roadmap.md)；迁移后的待审阅规划见[做菜 Trellis 索引](../.trellis/spec/cooking/index.md)。二者都不是已实现功能或测试证据。
+5. 已确认的做菜经营游戏应用技术路线与优先级见[技术路线图](../Docs/design/CookingGame/technical-roadmap.md)；当前受限交付、非 Unity 后续与禁止的 Unity 范围见[当前进度](../Docs/design/CookingGame/progress.md)。路线不等于完整产品已实现，successor backlog 也不是实施批准。
 
 ## 未确认的范围
 
@@ -18,7 +18,7 @@
 
 ## 工程建议（不是批准决策）
 
-- 离线与联机尽量复用领域规则；Unity 表现与模拟分离。
+- 纯 .NET 领域规则继续保持与表现宿主分离。Cooking Unity package、场景、authoring、projection、UI 与 EditMode 当前长期禁止；重新授权条件见 [`future-scope.md`](../Docs/design/CookingGame/future-scope.md)。
 - 先验证最小做菜经营闭环，再验证主机玩家与局域网客户端共同参与；具体玩法、验收场景和实施证据在对应 Trellis task 中审阅、执行和记录。
 - Orleans 只是仓库现有宿主示例，不能替代网络技术选型。
 

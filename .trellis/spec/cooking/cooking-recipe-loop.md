@@ -1,20 +1,26 @@
 # P2 一条完整配方：cooking-recipe-loop
+## 2026-09-16 收口状态
 
-> 完整能力迁移状态：**blocked**。本规范由只读来源快照 `.trellis/migration/legacy-cooking-changes/add-cooking-recipe-loop/specs/cooking-recipe-loop/spec.md` 转换；原始 SHA-256 见 [迁移清单](../../migration/legacy-cooking-changes/manifest.json)。
+- R01-R06 纯 .NET fixture loop 已验证并作为 limited delivery 收口；正式内容、订单/结算和真实 LAN 等仍未启动，见 successor backlog。
+- 对应 `09-15-cooking-*` task 已按 `completed-limited-scope` 语义归档；`completed` 不表示完整 P2 或完整 P0-P6 产品出口。
+- Cooking Unity package、asmdef、scene、authoring、projection、UI、EditMode 与 scene smoke 长期禁止实施；原 Unity 场景及宿主无关不变量统一见 [`future-scope.md`](../../../Docs/design/CookingGame/future-scope.md)。
+- 本文以下 authority、identity、atomicity、sequence、stale-input、persistence 或 measurement 行为不变量继续有效；未完成的非 Unity 范围不得写成已实现，P1-P6 入口见 [`successor-backlog.md`](../../../Docs/design/CookingGame/successor-backlog.md)。
+
+> 交付状态：**completed-limited-scope**；原完整能力迁移状态为 `blocked`。本规范由只读来源快照 `.trellis/migration/legacy-cooking-changes/add-cooking-recipe-loop/specs/cooking-recipe-loop/spec.md` 转换；原始 SHA-256 见 [迁移清单](../../migration/legacy-cooking-changes/manifest.json)。
 >
-> 当前已实现并验证受限 pure .NET fixture：单输入/单工序/3 Tick、container slot、注入式 accept/reject order port，覆盖 R01-R06。它不使正式 recipe/order/settlement/score/Unity/真实 LAN 或完整 P2 exit 变为已完成；R07 仍 blocked。
+> 当前已实现并验证受限 pure .NET fixture：单输入/单工序/3 Tick、container slot、注入式 accept/reject order port，覆盖 R01-R06。正式 recipe/order/settlement/score 与真实 LAN R07 是 successor backlog 中未启动、未批准的 non-Unity 范围；Unity 是 prohibited/not-run future scope。
 
 ## 当前边界
 
 - 已验证：R01-R06 pure .NET fixture contract；实际命令和 JSONL evidence 见 P2 task `check.jsonl`。
 - Fixture：单 input、单 process、3 logical ticks、injected accept/reject order port；不代表正式 content 或产品 timing。
-- 联机 R07、正式 content/order/settlement/score/failure UX、Unity、production transport、two-PC LAN、benchmark 与完整 P2 exit：blocked or not run。
+- 联机 R07、正式 content/order/settlement/score/failure UX、production transport、two-PC LAN、benchmark 与完整 P2 exit：未完成并进入 successor backlog；Unity 未运行并进入 future scope。
 
 ## 迁移边界
 
 - 依赖：P0；联机验收时还依赖 P1 的稳定 session。
 - 阻塞：正式配方、订单/结算 owner、评分与失败处理均待确认。
-- 规划验证状态：R01-R06 已实现并通过 focused pure .NET tests；R07 two-PC LAN 仍为 future/blocked，尚未执行。
+- 验证状态：R01-R06 已实现并通过 focused pure .NET tests；R07 two-PC LAN 与正式内容属于 successor backlog，未启动、未批准、未执行。
 
 ## 迁移的行为草案
 
@@ -77,7 +83,7 @@
 - **THEN** 系统 SHALL 允许以 fixture 验证结构和原子性，但交付状态保持 Draft / Blocked，不得宣称正式内容或结算已接受
 
 ### Requirement: 联机验收必须依赖稳定阶段 2 会话
-阶段 3 的纯 C# 领域闭环 SHALL 可在阶段 1 identity/location/lifecycle 证据后推进；若验收声称 host/client 联机一致性，则 MUST 依赖阶段 2 稳定 session、共享 command path、snapshot seam 及 LAN 集成证据。阶段出口仍 MUST 遵守阶段 2 D1-D4 决策门。
+阶段 3 的纯 C# 领域闭环已按 limited scope 验证。若 successor 将来声称 host/client 联机一致性，则 MUST 新建 task，并依赖稳定 session、共享 command path、snapshot seam、LAN 集成证据及 D1-D4 决策。
 
 #### Scenario: 纯 C# 闭环验收
 - **WHEN** 阶段 1 证据齐全且执行最小 fixture 的取料、加工、装盘流程
@@ -85,4 +91,4 @@
 
 #### Scenario: 联机闭环验收前置缺失
 - **WHEN** 阶段 2 session 或 LAN 集成证据、transport/D4 决策门尚未满足
-- **THEN** 系统 MUST 将联机验收标记为 blocked，不得以同机或 in-process 结果替代真实 LAN 出口
+- **THEN** 系统 MUST 将该 successor 验收标记为未获批准/未执行，不得以同机或 in-process 结果替代真实 LAN 出口

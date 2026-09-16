@@ -1,8 +1,14 @@
 # P3 数据配置验证：cooking-config-validation
+## 2026-09-16 收口状态
 
-> 迁移状态：**blocked**。本规范由只读来源快照 `.trellis/migration/legacy-cooking-changes/add-cooking-config-validation/specs/cooking-config-validation/spec.md` 转换；原始 SHA-256 见 [迁移清单](../../migration/legacy-cooking-changes/manifest.json)。
+- 当前 definition 范围的纯 .NET registry/validation/hash 增量已验证并作为 limited delivery 收口；正式 schema、compatibility 与 migration policy 等仍未启动，见 successor backlog。
+- 对应 `09-15-cooking-*` task 已按 `completed-limited-scope` 语义归档；`completed` 不表示完整 P3 或完整 P0-P6 产品出口。
+- Cooking Unity package、asmdef、scene、authoring、projection、UI、EditMode 与 scene smoke 长期禁止实施；原 Unity 场景及宿主无关不变量统一见 [`future-scope.md`](../../../Docs/design/CookingGame/future-scope.md)。
+- 本文以下 authority、identity、atomicity、sequence、stale-input、persistence 或 measurement 行为不变量继续有效；未完成的非 Unity 范围不得写成已实现，P1-P6 入口见 [`successor-backlog.md`](../../../Docs/design/CookingGame/successor-backlog.md)。
+
+> 交付状态：**completed-limited-scope**；原完整能力迁移状态为 `blocked`。本规范由只读来源快照 `.trellis/migration/legacy-cooking-changes/add-cooking-config-validation/specs/cooking-config-validation/spec.md` 转换；原始 SHA-256 见 [迁移清单](../../migration/legacy-cooking-changes/manifest.json)。
 >
-> 本文件保留待审阅的规则和验收场景，但不使它们自动成为实施批准、测试通过或已归档的事实。开始实现前必须审阅对应 Trellis task 的 PRD、design 和 implement checklist。
+> 本文件保留行为规则与历史场景；只有顶部列明的 pure .NET limited delivery 已验证。未完成 non-Unity 工作见 successor backlog，Unity 见 prohibited future scope。
 
 ## 迁移边界
 

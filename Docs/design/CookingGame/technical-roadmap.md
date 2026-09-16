@@ -2,7 +2,7 @@
 
 > 文档类型：应用层技术路线图（roadmap），不是 AbilityKit 框架规范、Trellis 行为草案或实施任务清单。
 >
-> 状态：路线已获用户确认；截至 2026-09-14 尚未实现、尚未测试。近期优先局域网合作，公网连接后置；主机同时作为服务器和玩家的角色决策见 [ADR-0001](../../../ADR/decisions/0001-player-host.md)。
+> 状态：路线保留长期分层与行为方向；截至 2026-09-16，P0–P6 各有一份已验证并完成归档的纯 .NET 受限交付，但完整产品出口仍未完成。Cooking Unity 执行长期禁止；非 Unity 后续未启动、未批准、无时间表。详见 [当前进度](progress.md)、[future scope](future-scope.md) 与 [successor backlog](successor-backlog.md)。近期 LAN 仍只是产品方向，不表示 production transport 或真实 LAN 已交付；主机角色决策见 [ADR-0001](../../../ADR/decisions/0001-player-host.md)。
 >
 > 归属：本文件是做菜经营游戏应用技术路线的唯一正文；框架机制仍以 [`Docs/design/`](../00-index.md) 及其 canonical 文档为准，待审阅的功能边界、验证设想和实施计划位于 `.trellis/spec/cooking/` 与 `.trellis/tasks/`。
 
@@ -11,13 +11,14 @@
 AbilityKit 提供可复用的 World、ECS、Host、Config、Luban、HFSM、FrameSync、StateSync、Snapshot、Record 等机制；本游戏负责组合这些机制，并自行建设烹饪领域模型、局域网 listen session、wire codec 与业务状态导出。不要假设仓库已经存在旧的 `SessionCoordinator` 或 `Local/Remote/Hybrid` 实现；Orleans 只是可选宿主示例，不是本游戏必需依赖。
 
 ```text
-Unity Authoring/View          Pure C# Simulation            Host/Network
-Layout, Assets, UI  ------->  Rules, Entities, Tick  <---->  Server / Client
-        ^                             |
-        +-------- Snapshots / Events -+
+Prohibited Unity Host        Pure C# Simulation            Host/Network
+(no current implementation)  Rules, Entities, Tick  <---->  adapters / clients
+                                      |
+                              Snapshots / Events
 ```
 
-- Unity 编辑器负责地图空间 authoring；运行时消费可序列化的逻辑布局，规则与模拟保持纯 C#。
+- 当前禁止实施 Cooking Unity authoring/view/runtime；历史 Unity 条目与重新授权条件统一见 [future scope](future-scope.md)。
+- 若将来重新授权，Unity 编辑器只可负责地图空间 authoring，运行时消费可序列化逻辑布局，规则与模拟保持纯 C#。
 - 配置表保存定义、规则和引用，不保存某一局的实例状态。
 - `DefinitionId` 标识跨局复用的配置定义；`InstanceId` 标识当前 Level/Match 中的运行时实例，二者不可混用。
 - 地图定义空间布局；关卡引用地图并配置订单、时限、目标与可用内容；Match/World 是实际运行的一局。同一张地图可被多个关卡复用，同一关卡也可创建多次独立对局，三者不是一一对应关系。
@@ -28,7 +29,7 @@ Layout, Assets, UI  ------->  Rules, Entities, Tick  <---->  Server / Client
 
 建议的配置目录包含 `Item`、`Ingredient`、`Appliance`、`Process`、`Recipe`、`Level`、`Order` 等表。配置加载后应在开局前校验：外键存在性、器具能力与工序要求、配方拓扑、等级/关卡引用以及启动配置 hash；客户端与主机的配置 hash 不兼容时阻断加入或启动。表描述定义和规则，容器、物品、订单进度、计时器、玩家持有物等属于运行时实例状态。
 
-地图空间 authoring（Unity 编辑器）输出逻辑布局。逻辑布局至少表达处理站、可携带容器（如锅、盘）、手持工具、食材/菜品和放置槽等逻辑类别；不把 Unity `GameObject` 身份当作网络或模拟身份。
+地图空间 authoring 曾规划由 Unity 编辑器输出逻辑布局，但当前属于长期禁止的 future scope。宿主无关约束仍保留：逻辑布局至少表达处理站、可携带容器（如锅、盘）、手持工具、食材/菜品和放置槽等逻辑类别；任何将来获准的宿主都不得把 Unity `GameObject` 身份当作网络或模拟身份。
 
 ### 2.2 位置与所有权不变量
 
@@ -102,7 +103,7 @@ Round/Match 状态（当前订单、实例位置、加工进度、计时器、�
 
 ## 6. 推荐验证顺序（不是正式 tasks）
 
-这是用于降低风险的垂直切片顺序，不表示任务已创建或功能已完成：
+P0–P6 已各完成并验证一个纯 .NET 受限增量，详细边界与历史证据见 [当前进度](progress.md) 和对应归档 task；这不等于下列产品切片完整出口已完成。未完成的 P1–P6 非 Unity 工作统一进入 [successor backlog](successor-backlog.md)，不是 active task；Unity 执行统一进入 [future scope](future-scope.md)，长期禁止且不是 blocker。
 
 1. 逻辑拾取/放下与唯一所有权。
 2. 两个局域网实例的争抢与仲裁。
@@ -112,7 +113,7 @@ Round/Match 状态（当前订单、实例位置、加工进度、计时器、�
 6. 长期经营和持久化管理。
 7. 以实测结果推进响应性、插值/预测和网络优化。
 
-每个切片的待审阅行为、协议、验收场景和测试门禁记录在对应 Trellis task 的 PRD、design、implement 与检查证据中；迁移后的阶段规范见 [`.trellis/spec/cooking/index.md`](../../../.trellis/spec/cooking/index.md)。这些规划仍未实施，路线和任务文档不得被提升为已实现或已通过的主规格。阶段及测试出口见 [交付计划](delivery-plan.md)。
+每个切片的稳定行为契约见 [`.trellis/spec/cooking/index.md`](../../../.trellis/spec/cooking/index.md)，历史实现与命令证据见对应归档 task。归档只说明重划后的 pure .NET limited delivery 完成；正式内容、production transport、真实 LAN、durable storage 与完整产品出口仍是缺口。阶段及状态入口见 [交付计划](delivery-plan.md)。
 
 ## 7. 关联入口
 
@@ -120,4 +121,4 @@ Round/Match 状态（当前订单、实例位置、加工进度、计时器、�
 - [ADR-0001：主机同时作为服务器与玩家](../../../ADR/decisions/0001-player-host.md)：listen host 角色决策。
 - [长期目标](../../../ADR/long-term-goals.md)：产品方向、近期 LAN 和未决范围。
 - [AbilityKit 框架设计索引](../00-index.md)：World、Config、HFSM、FrameSync、StateSync、Snapshot 等既有机制的 canonical 入口。
-- [做菜 Trellis 规范与任务索引](../../../.trellis/spec/cooking/index.md)：迁移后的待审阅规划入口；不代表已启动、实现或验证。
+- [做菜 Trellis 规范与归档交付索引](../../../.trellis/spec/cooking/index.md)：已验证 pure .NET limited delivery、non-Unity successor backlog 与 prohibited Unity future scope 的统一入口；不表示完整产品出口完成。

@@ -4,7 +4,7 @@
 - `decisions/`：只存真正的架构决策，按 `NNNN-short-name.md` 编号，使用 Proposed / Accepted / Superseded 状态。
 - [参考与安装](reference/README.md)：Trellis 的来源、版本、项目集成与遗留资料边界。
 - [做菜经营游戏技术路线](../Docs/design/CookingGame/technical-roadmap.md)：已确认的应用层路线唯一正文；不替代行为草案或实施任务。
-- [做菜规划 Trellis 索引](../.trellis/spec/cooking/index.md)：从旧规划迁移的待审阅阶段规范与任务入口；全部仍未实施。
+- [做菜规划 Trellis 索引](../.trellis/spec/cooking/index.md)：七个 pure .NET limited delivery、非 Unity successor backlog 与 prohibited Unity future scope 的规范入口；归档不表示完整产品出口完成。
 - [ADR-0002：权威固定 Tick 与首阶段状态同步](decisions/0002-authoritative-fixed-tick-state-sync.md)：已接受的应用架构取舍。
 
 本目录不替代 `Docs/design/` 的框架设计文档。涉及框架机制时引用既有设计，涉及本游戏产品方向时维护本目录，避免复制。
