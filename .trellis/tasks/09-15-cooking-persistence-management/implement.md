@@ -9,6 +9,24 @@
 - 规划验证：P01-P07（均为 future 规划，尚未执行）
 - 实施前将 `.trellis/spec/abilitykit/index.md`、`.trellis/spec/abilitykit/validation.md` 与本任务对应 cooking spec 加入 context manifests。
 
+## 当前受限实施状态
+
+- [x] 1.1 已复核 P0–P4 的实际 pure .NET evidence 与完整 exit blockers；P5 只使用当前 Match/config identity seam，不把前序 partial evidence 当毕业。
+- [ ] 1.2 owner artifact：**blocked**。存档 owner、save timing、exit/power-loss/cancel、host exit、migration/backup/recovery、encryption/key policy 尚未确认。
+- [x] 2.1 已在 `src/AbilityKit.Game.Cooking/` 建立 unlock/upgrade/currency/business progress/revision/ledger 的长期 progress 合同，明确排除 Match 临时状态。
+- [x] 2.2 已建立 confirmed settlement→progress mutation 边界，校验 confirmation、owner/match scope、settlement ID、progress version/config identity；无效输入 mutation-free。
+- [x] 2.3 已实现 settlement fingerprint/idempotence/conflict；无 notification/outbox/跨进程 exactly-once 声明。
+- [x] 2.4 已在单个 in-memory next-state envelope 中表达 ledger + progress 逻辑 commit；P04/P05 验证故障/重试合同，但不等同真实 durable store 或 process crash 证据。
+- [x] 3.1 已实现 format/progress version、owner/config identity、revision、integrity hash 和 record length seam。
+- [x] 3.2 已实现 transport-neutral staged in-memory store fault double；未选择文件/数据库/原子替换机制。
+- [x] 3.3 已验证 duplicate settlement/revision read-back 不产生第二个逻辑 commit。
+- [x] 4.1/4.2 已验证 restart 的 long-term-only read-back、tampered/truncated/unknown-format/owner/config mismatch 分类且不安装无效记录；不实施 migration/backup/quarantine/recovery action。
+- [x] 4.3 已为未决 lifecycle policies 返回 `BlockedByOwnerDecision`；不由 End/Dispose/connection close 推导保存。
+- [x] 5.1 已实际运行 P01–P10 对应的 pure .NET contract tests 和 JSONL evidence。遗留 P01-P07 计划范围与 design P01-P10 的冲突已在 PRD 协调；完整矩阵采用 P01-P10。
+- [ ] 5.2 Unity/app-host restart smoke：**not run / future**，本轮无 Unity Cooking host。
+- [ ] 5.3 全局 `runtime-contracts`/`core-stability`：**not run**，现有 gate 未覆盖独立 Cooking 项目；实际 build/test、task validation、`git diff --check` 在 check evidence 记录。
+- [ ] 5.4 完整 P5 exit/owner integration：**blocked**，不可归档或解锁后续完整出口。
+
 ## 迁移的原实施清单
 
 ## 1. 前置证据与决策门

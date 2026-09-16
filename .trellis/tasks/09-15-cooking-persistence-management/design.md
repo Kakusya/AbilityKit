@@ -2,6 +2,14 @@
 
 > 本文件是遗留规划的设计迁移，不表示设计已经批准或代码已经实现。
 
+## 当前受限实施记录
+
+本任务已开始受限的纯 .NET 技术实施。`CookingProgressPersistence` 仅接受带 owner scope、Match scope、settlement identity、confirmation、target progress version、config identity 与 reward lines 的 immutable settlement；它维护 unlock、upgrade、currency、business progress、revision 和 applied-settlement ledger，并明确不序列化 Match、layout、entity、position、recipe process、order 或 tick。相同 settlement identity 以全量 fingerprint 幂等；不同 identity 即便同值 reward 也独立进入 ledger。
+
+提交使用 `prepare → commit → read` 的 in-memory fault-injection seam。首次 settlement 的 progress mutation 与 ledger entry 被编码为同一个 envelope，读写以 format version、progress version、owner、config identity、revision、长度上限和 SHA-256 integrity 进行 validate-before-install。pre-commit failure、post-commit response loss、truncation、tamper、unknown format、owner/config mismatch 都只产生结构化结果。此 double 只能验证逻辑 staging/重试合同，绝不作为文件/数据库 durability 或真实 process crash 证据。
+
+本轮实际覆盖 P01–P09 的 in-memory technical subset 与 P10 `BlockedByOwnerDecision`。存档 owner、save timing、exit/power loss/cancel/host exit、migration/backup/quarantine/recovery、encryption/key policy、Unity/host integration 和真实 durable store 均未选择或实现，完整 P5 保持 blocked。
+
 ## Context
 
 动机与范围见 [proposal.md](proposal.md)，行为契约见 [spec](specs/cooking-persistence-management/spec.md)。路线要求将 Round/Match 状态与长期状态分离并保证结算幂等；当前没有已确认的做菜存档 owner、保存时机、退出语义或迁移/损坏恢复策略。框架已有 Record/codec、状态存储和快照设计可作边界参考，但不能替应用决定存档所有权或产品流程。

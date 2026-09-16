@@ -1,12 +1,13 @@
 # P5 持久化经营管理
 
-## 迁移状态
+## 当前实施状态与验收矩阵协调
 
-- Trellis task status：`planning`；迁移元数据：`blocked`。
-- 该任务尚未开始实施，原有未勾选项、future 测试、Draft/Blocked 决策门全部保持原状。
-- 依赖：P4 的 Round/Match 与长期状态边界。
-- 阻塞：存档归属、保存时机、退出与迁移/恢复语义均待 owner 确认。
-- 规划验证：P01-P07（均为 future 规划，尚未执行）
+- Trellis task status：`in_progress`；完整 P5 迁移元数据仍为 `blocked`。
+- 已实施并验证受限纯 .NET settlement/progress、integrity envelope、staged in-memory fault store 与 validated restart contract；它不选择真实文件、数据库、云端介质或保存生命周期策略。
+- **验收矩阵协调：**遗留 task metadata/PRD 的 P01–P07 与 implement/design 的 P01–P10 不一致。当前以 design 的 **P01–P10** 作为完整矩阵：P01–P09 是可分层验证的技术合同，P10 是 owner decision gate。此协调不代表完整 P5 exit 已满足。
+- 已实际通过 P01–P09 的 in-memory technical subset 与 P10 的 explicit blocked result；不代表真实 durable write/process-crash、产品存档或 owner integration 已通过。
+- 前置事实：P0–P4 均有受限 pure .NET evidence，但各自完整 Unity/LAN/schema/owner exits 仍 blocked。P5 不会把前序 partial evidence 误写为毕业。
+- 阻塞：存档归属、保存时机、退出/断电/取消、host exit、migration/backup/recovery、encryption/key policy 均待 owner 决策。
 
 ## 来源与可追溯性
 

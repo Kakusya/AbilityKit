@@ -2,8 +2,8 @@
   "id": "cooking-persistence-management",
   "name": "cooking-persistence-management",
   "title": "Cooking persistence management",
-  "description": "P5 持久化经营管理 的未实施迁移计划。不得因迁移而视为已启动、已验证或已完成。",
-  "status": "planning",
+  "description": "P5 持久化经营管理：已实施受限纯 .NET settlement/progress/staged-store 技术合同；完整 P5 仍 blocked，不能因迁移或 in-memory evidence 视为已完成。",
+  "status": "in_progress",
   "dev_type": null,
   "scope": null,
   "package": null,
@@ -12,7 +12,7 @@
   "assignee": "Li He",
   "createdAt": "2026-09-15",
   "completedAt": null,
-  "branch": null,
+  "branch": "chore/workflow-knowledge-integration",
   "base_branch": "master",
   "worktree_path": null,
   "commit": null,
@@ -32,7 +32,7 @@
     "migration_status": "blocked",
     "legacy_source": ".trellis/migration/legacy-cooking-changes/add-cooking-persistence-management",
     "phase": "P5",
-    "planned_verification": "P01-P07（均为 future 规划，尚未执行）",
+    "planned_verification": "P01-P10 已协调为完整矩阵；P01-P09 in-memory technical subset 与 P10 blocked gate 已实际验证，真实 durable/owner integration 与完整 P5 exit 仍 blocked",
     "source_revision": "5f1417b5a48b71ee273dc5beb15f488b63eae832"
   }
 }
