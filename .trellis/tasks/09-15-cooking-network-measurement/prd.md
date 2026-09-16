@@ -1,9 +1,15 @@
 # P6 响应性与网络测量
 
-## 迁移状态
+## 当前受限实施状态与验收矩阵协调
 
-- Trellis task status：`planning`；迁移元数据：`blocked`。
-- 该任务尚未开始实施，原有未勾选项、future 测试、Draft/Blocked 决策门全部保持原状。
+- Trellis task status：`in_progress`；完整 P6 迁移元数据持续为 `blocked`。
+- 本轮已实施且将验证的仅是纯 .NET、显式 `InProcess` 的 baseline measurement contract：immutable workload/hash、authority ingress-to-commit/queue/throughput/p50-p95-p99/allocation/state-hash 报告、逻辑 application-fault trace（delay/jitter/loss/duplicate/reorder/disconnect）、JSON/CSV/JSONL artifacts 与 optimization `Blocked` gate。
+- 它消费现有 P1 `CookingSessionAuthority` 的 handshake、queue、baseline/delta、epoch/sequence 和 transport-loss 合同；不修改 P1，也不创建 socket、stream decoder、production adapter 或两 PC LAN runner。
+- **验收矩阵协调：**N01–N08 是 task/spec/迁移元数据中的 canonical future matrix；design/implement 的 N09/N10 是 supplemental future gates。本轮仅运行 N01/N04/N05 的受限 in-process subset，以及 N10 `UNSET`/unapproved blocked result；未声称 N02/N03/N06–N09 已执行。
+- P0–P5 的 pure .NET contract evidence 可作为本轮 API 前置，但它们及 P6 的 Unity、真实 LAN、内容/schema、owner/product exits 仍未毕业。
+- 阻塞：production transport、真实两 PC LAN、workload/采样窗口/拓扑覆盖/性能阈值、插值/预测/纠正范围和回退规则、reconnect semantics 均未获 owner 决策；任何阈值保持 `UNSET`。
+
+- 完整迁移任务仍为 Draft/Blocked；原有未决项、future 测试和 owner 决策门保持未完成。
 - 依赖：P1-P5 的可运行纵向链路与真实测量 harness。
 - 阻塞：性能目标、插值/预测与重连是否启用均待批准；不得用同机证据替代真实两 PC LAN。
 - 规划验证：N01-N08（均为 future 规划，尚未执行）

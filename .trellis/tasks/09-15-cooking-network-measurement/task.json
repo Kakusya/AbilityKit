@@ -2,8 +2,8 @@
   "id": "cooking-network-measurement",
   "name": "cooking-network-measurement",
   "title": "Cooking network measurement",
-  "description": "P6 响应性与网络测量 的未实施迁移计划。不得因迁移而视为已启动、已验证或已完成。",
-  "status": "planning",
+  "description": "P6 响应性与网络测量正在实施受限纯 .NET 基线诊断合同。不得将该进程内证据视为生产 transport、两 PC LAN、优化启用或完整完成。",
+  "status": "in_progress",
   "dev_type": null,
   "scope": null,
   "package": null,
@@ -12,7 +12,7 @@
   "assignee": "Li He",
   "createdAt": "2026-09-15",
   "completedAt": null,
-  "branch": null,
+  "branch": "chore/workflow-knowledge-integration",
   "base_branch": "master",
   "worktree_path": null,
   "commit": null,
@@ -32,7 +32,7 @@
     "migration_status": "blocked",
     "legacy_source": ".trellis/migration/legacy-cooking-changes/add-cooking-network-measurement",
     "phase": "P6",
-    "planned_verification": "N01-N08（均为 future 规划，尚未执行）",
+    "planned_verification": "N01-N08 是遗留 canonical future matrix；N09-N10 是设计中的 supplemental future gates。本轮仅实际执行受限 in-process N01/N04/N05/N10，完整 P6 仍 blocked",
     "source_revision": "5f1417b5a48b71ee273dc5beb15f488b63eae832"
   }
 }

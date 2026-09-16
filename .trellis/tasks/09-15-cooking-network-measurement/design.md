@@ -2,7 +2,13 @@
 
 > 本文件是遗留规划的设计迁移，不表示设计已经批准或代码已经实现。
 
-## Context
+## 当前受限实施记录
+
+本轮在 `src/AbilityKit.Game.Cooking/` 建立 transport-neutral、baseline-only 的纯 .NET measurement layer。`CookingNetworkWorkload` 以 canonical JSON/SHA-256 固化版本、config/protocol identity 和 sampling window；report 明确标为 `InProcess`、NIC/address/firewall 为 `not-applicable`，阈值为 `UNSET`，输出 ingress-to-commit、queue peak、throughput、p50/p95/p99、current-thread allocation、authority state hash、JSON/CSV 和 JSONL trace。它只调用现有 `CookingSessionAuthority`，不增加 socket、transport、TCP framing 或 Unity dependency。
+
+`CookingNetworkFaultMeasurementRunner` 是 application-message fake channel：仅以 logical ticks 安排 delay/jitter/loss/duplicate/reorder/disconnect，并记录每个 delta 的 epoch/sequence/baseline result。只有可见 sequence/baseline 连续性失败才按 P1 合同得到 `Unsynchronized`；若消息丢失但没有后续可观察 sequence，则不会伪造失同步断言。断线调用既有 `ReportTransportLoss`，停止后续 delivery，不表示 reconnect。测量层不提交 command、不写 Match settlement 或 long-term progress。
+
+本轮实际测试范围是 N01、N04、N05 的受限进程内技术子集，以及 N10 对 threshold、owner approval、真实 LAN evidence、fallback policy 和 optimization runtime 的显式 blocked gate。N01–N08 仍是迁移 metadata 的 canonical future matrix；N09/N10 仅是 design 的 supplemental future gates。N02、N03、N06–N09、production transport、两 PC LAN 和 Unity projection 保持未实施/blocked。
 
 动机与范围见 [proposal.md](proposal.md)，行为契约见 [spec](specs/cooking-network-measurement/spec.md)。阶段 7 位于 LAN session、配方、配置、Match 生命周期和持久化之后，测量不能替代这些前置能力的正确性证据。
 

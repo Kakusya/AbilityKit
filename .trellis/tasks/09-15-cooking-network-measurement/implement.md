@@ -9,7 +9,24 @@
 - 规划验证：N01-N08（均为 future 规划，尚未执行）
 - 实施前将 `.trellis/spec/abilitykit/index.md`、`.trellis/spec/abilitykit/validation.md` 与本任务对应 cooking spec 加入 context manifests。
 
-## 迁移的原实施清单
+## 当前受限实施状态
+
+- [x] 1.1 已复核 P0–P5 的实际 pure .NET evidence、P1 baseline/delta/epoch/sequence/transport-loss API 与完整 exit blockers；本轮不把前序 limited evidence 写成 LAN 或产品毕业。
+- [ ] 1.2 owner artifact：**blocked**。workload scale、sampling window、topology coverage、thresholds、interpolation/prediction/correction scope、fallback 和 reconnect 语义均未批准，所有 thresholds 仍为 `UNSET`。
+- [x] 1.3/2.1 已实现受限 command ingress-to-commit baseline：immutable workload/hash、version/config/protocol/sampling/topology/environment/fault metadata，及 queue peak、throughput、p50/p95/p99、current-thread allocation 和逐 invocation authority state hash。snapshot byte decode/apply、网络 error-rate 和 process/native memory 仍为 future，不由本轮报告覆盖。
+- [x] 2.2 已实现显式 `InProcess` fixture runner 和 JSON/CSV/JSONL artifacts；它不声称 socket、NIC、address/firewall 或真实两 PC LAN。
+- [ ] 2.3 两 PC physical LAN runner：**blocked / future**。
+- [ ] 2.4 stream segmentation/coalescing decoder：**blocked / future**；本轮 application fault 不表示 TCP framing。
+- [x] 2.5 已实现 deterministic logical-tick application fake channel，覆盖 delay/jitter/loss/duplicate/reorder/disconnect；沿用 P1 baseline/sequence 结果，不产生 authority command mutation。
+- [x] 3.1 已实现 baseline-only diagnostic report；不含 interpolation/prediction/rollback、settlement 或 progress writes。
+- [x] 3.2 已实现 baseline permitted 与 interpolation/local-prediction/correction 的显式 prerequisite gate：threshold、owner approval、真实 LAN evidence、fallback policy 和 runtime 任一缺失均保持 `Blocked`；不包含优化启用逻辑。
+- [ ] 3.3-3.5 interpolation/local prediction/evidence-gated reconciliation：**blocked / future**。
+- [ ] 4.1-4.3 optimization A/B、authority-pollution diff、runtime fallback：**blocked / future**。
+- [x] 4.4 已验证 `UNSET` threshold、缺失 owner approval/真实 LAN evidence/fallback policy 或未实现 optimization runtime 时只可输出 blocked result，optimization gate 不可通过。
+- [x] 5.1 已确认 Cooking .NET project boundary；没有 Unity/asmdef/generated csproj 修改。
+- [x] 5.2 已实际生成 N01/N04/N05 JSON/CSV/JSONL evidence，N10 在 focused contract tests 中验证 blocked result。N01–N08 仍是 canonical migration matrix；N09/N10 为 design supplemental gates，完整 P6 未执行。
+- [ ] 5.3 Unity、两 PC、global gates 与 protocol wire check：**not run**，本轮未更改其范围；实际 Cooking build/test/task validation/`git diff --check` 见 check evidence。
+- [ ] 5.4 完整 P6 exit/archive：**blocked**。不得以本轮 report、同机或 logical faults 声称 LAN 或 optimization completion。
 
 ## 1. 前置证据与测量基线
 
