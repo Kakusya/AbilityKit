@@ -8,6 +8,7 @@
 - `Server/` 是 Orleans 等宿主示例，不是游戏必须依赖的服务；当前 Coordinator 是精简契约包，不要假设存在旧 SessionCoordinator 或 Local/Remote/Hybrid 实现。
 - `Docs/design/` 是既有跨模块设计入口；协议变更先读 `Protocols/README.md`，测试策略先读 `Docs/AbilityKit测试门禁与批量回归规范.md`。
 - 做菜经营游戏的应用层技术路线唯一正文是 [`Docs/design/CookingGame/technical-roadmap.md`](Docs/design/CookingGame/technical-roadmap.md)；其迁移规划入口是 [`.trellis/spec/cooking/index.md`](.trellis/spec/cooking/index.md)。两者均不把路线或未执行计划表述为已实现能力。
+- 恢复或审议做菜项目工作前，先读 [`Docs/design/CookingGame/progress.md`](Docs/design/CookingGame/progress.md) 确认当前执行基线、实际验证指针和完整出口 blocker。该文件只做跨阶段汇总；行为契约与验证证据仍分别以 `.trellis/spec/cooking/` 和对应 task 的 `check.jsonl` 为准。
 
 ## 构建与验证（仓库根目录）
 

@@ -2,6 +2,10 @@
 
 > 这些文件由 2026-09-15 前的七份未实施规划迁移而来。它们记录待审阅的行为、边界、依赖与验收设想，**不证明功能已实现、任务已启动或测试已通过**。
 
+## 当前执行状态
+
+- [Cooking Game 当前工程进度](../../../Docs/design/CookingGame/progress.md)：P0–P6 执行基线、实际验证指针、跨阶段 blocker 与恢复读取顺序。它是状态汇总，不替代本目录的行为草案或各 task 的 `check.jsonl`。
+
 ## 使用方式
 
 - 开始某项工作前，先读取对应 `.trellis/tasks/09-15-cooking-*/prd.md`、`design.md` 和 `implement.md`。
