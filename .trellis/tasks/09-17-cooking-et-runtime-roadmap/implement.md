@@ -14,17 +14,18 @@
 
 ## 短期施工顺序与出口
 
-1. 独立内核提炼：完整核对源码、生成器、许可证与编译闭包；建立不依赖 DemoEntry/反射 Fiber 的可测试启动与释放入口。验证真正的 System 注册/执行、单 Tick、清理、实例代际、跨阶段存活与多实例隔离。当前 Share/App 引用不是最终包边界，不能直接宣布完成阶段二。
-2. Cooking 纵切：保留唯一权威状态与既有主机/远端统一输入合同。实现前细化成功延续、失败供应、扩建冲突和存档 checkpoint；尚未确认的业务不自行选默认值。完整快照需覆盖处理进度、订单、阶段、引用与 epoch/命令水位；当前物品投影不具备恢复能力。
+1. [x] 独立内核提炼（2026-09-17 完成）：`Unity/Packages/com.abilitykit.et.runtime`（原 ET core Share 70 文件 + sourcegenerator 标注，剥离 MongoDB/MemoryPack/CommandLineParser 标注，ET License 内部使用）+ `src/AbilityKit.ET.Runtime`（net10，Compile Include，无外部依赖）+ `EtRuntimeHost`（单宿主/单 owner 线程/显式 Tick/显式销毁）。测试 8/8（显式 Tick、销毁停止、队列隔离与递归销毁、池代际、阶段延续、上下文作用域、重启、拒绝重复宿主/重 id/重入/跨线程、ETTask 帧末恢复）。验证见 research/validation.md 第五轮；Unity 侧编译未验证（本机无 Editor，跳过不计通过）。
+2. [~] Cooking 纵切最小接点（2026-09-17）：新增独立应用项目 `AbilityKit.Game.Cooking.EtRuntime`；`CookingRecipeTickHost.Enqueue` 只入队，ET `UpdateSystem` 在显式 Tick 内调用既有 `CookingRecipeSimulation.Submit`。已覆盖拾取、开始加工、推进加工、产物、装盘、订单与重复命令幂等。尚未实现完整 MatchLifecycle、自动固定处理时钟、UDP 身份绑定、checkpoint 恢复、成功延续/失败供应、工位升级迁移和成功结算持久化，因此不记阶段三完成。
 3. 回归：修改 UDP 时运行 cooking-udp；核心/同步改动运行 core-stability；宿主装配改动运行 runtime-contracts；大范围迁移运行 regression。两物理 PC LAN 单独人工验收。
 4. 清退：验证完成、依赖清零、测试迁移后分批提交删除范围。Moba/Shooter/Samples 后续单独处置，不作为当前探针 blocker；不删测试换通过，不在本轮删除 ECS。
 
-## 当前探针边界
+## 当前交付边界
 
-- 仅接收同一 scope、上游已验证、按应用顺序到达的可信完整物品快照；不是直接消费网络包的客户端投影。
-- ET Id 自动生成，领域 ItemId 单独保存；Location 是关系数据，不通过树移动物品来模拟持有。
-- CookingSimulation 仍为权威 owner，没有新增 Tick、协议、加工、存档或 Unity 实现。
-- 依赖完整 Demo 初始化，尚未完成独立提炼；已知旧快照、跨 scope、非法输入、对象池复用、重建继续运行等未验证，不用于生产装配。
+- `CookingRecipeSimulation` 仍是唯一权威 owner；ET Entity/System 只负责调度，不复制 Cooking 规则状态。
+- 当前 host 是 owner-thread FIFO 队列，不是可从网络回调线程直接调用的并发入口，也没有实现 stable-batch 排序。
+- 加工时钟仍由既有 `AdvanceTicks` 命令推进；空 ET Tick 不会自动推进加工。
+- 未提供通用 checkpoint restore；当前 snapshot 不覆盖全部去重账本、tombstone、计数器与 lifecycle closed 状态。
+- Unity asmdef 已与 unsafe 源码配置对齐，但本轮没有 Unity Editor 编译证据。
 
 ## 实际验证
 
@@ -32,4 +33,4 @@
 
 ## Rollback and scope
 
-不自动提交、清理用户工作区、改防火墙或解除 Cooking Unity 禁止。构建触碰的既有 DLL 单独记录，避免与业务源码改动混淆。本轮收口为 Demo 依赖下的集成探针；完整四阶段路线保留为后续未完成工作。已调用 finish-work，但任务源码尚未提交，按该流程不能归档或运行自动提交。未获得 Git 提交授权，归档受阻，不伪造 completed/archived 状态。
+本轮已按用户授权提交代码；构建触碰的三个既有生成 DLL 已恢复，没有进入提交。任务归档仅表示本轮 ET runtime 提炼和最小 Tick 调度接点收口，不表示完整四阶段路线完成；后续阶段三/四应以新任务或 successor task 继续。

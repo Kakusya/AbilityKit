@@ -1,6 +1,6 @@
 # Cooking 技术路线：ET 主干与 ECS 退役规划
 
-> 状态：规划已完成并经用户批准继续施工（2026-09-17）。implement.jsonl/check.jsonl 已填入真实条目；验证证据见 research/validation.md。
+> 状态：本轮实施已收口，阶段一、阶段二和最小 ET Tick 命令接点已有验证；完整阶段三与阶段四未完成。验证证据见 research/validation.md。
 
 ## Goal
 
@@ -13,9 +13,11 @@
 3. 升级、增加菜单、扩建在小关之间进行。
 4. 成功进入下一小关时，食材、半成品、加工进度保留。
 5. 准备阶段暂停加工，下一小关恢复；订单按本小关结算、不延续。
-6. 失败重试保留成长、清空现场、重开本小关；重新供应规则尚未确定。
-7. 用户选择小关完成时写盘、营业中不保存。失败是否属于写盘事件，以及准备阶段修改的保存点仍待明确，不能把助手此前推断当批准。
-8. 继续遵守 ADR-0001/0002：listen host、本机与远端统一权威输入路径、固定模拟 Tick、首阶段状态同步/快照。
+6. 失败重试保留成长、清空现场、重开本小关。2026-09-17 用户确认：重开时按关卡定义做标准初始供应（等同首次进入本小关），不恢复失败前现场。
+7. 用户选择小关完成时写盘、营业中不保存。2026-09-17 用户确认：写盘事件仅限"小关成功完成"；失败重开、准备阶段改动都不写盘，中断最多损失当前小关进度。
+8. （2026-09-17 新增确认）小关之间升级/扩建时，目标工位若有上一小关延续的未完成加工：进度自动迁移到升级后的工位，玩家无感；不隐式丢失进度。
+9. （2026-09-17 新增确认）首个纵切不包含玩家断线/房主退出处理，断线恢复单独立项。
+9. 继续遵守 ADR-0001/0002：listen host、本机与远端统一权威输入路径、固定模拟 Tick、首阶段状态同步/快照。
 
 ## Scope and requirements
 
@@ -31,18 +33,17 @@
 - [x] R2/R3：设计包含同步适配、身份/生命周期、确定性、退役门槛及依赖证据范围。
 - [x] R4：57 项既有 Cooking 领域测试通过，原始 TRX 与结果说明可追踪；见 research/validation.md。
 - [x] R5：design.md、implement.md、ADR 草案与 context manifests 已建立，验证记录见 research/validation.md。
-- [ ] 新运行时实施前：详细设计审阅、以下阻塞决策解决，以及所选迁移范围的完整反向依赖核实。
+- [x] 新运行时实施前：详细设计与所选编译闭包已核对；确认的失败供应、成功写盘、升级进度迁移和断线范围已记录。
 
-## Blocking decisions for implementation
+## Remaining implementation decisions
 
-- 小关完成存档的精确边界：成功/失败、准备阶段修改、启动下一关时的 checkpoint。
-- 失败清空现场后的初始供应、玩家断线或房主退出，以及存档归属和恢复语义。
-- 新菜单/升级/扩建如何处理既存工位、食材与未完成加工；不能随父节点删除误销毁进度。
-- 需要迁移或隔离哪些旧调用方，如何维持未迁移项目的构建与测试。内部 API 可变更不等于任意删测试。
+- 完整 checkpoint 必须覆盖哪些命令水位、去重账本、计数器和 tombstone，才能支持重建后继续运行。
+- 如何把既有 UDP host/remote 身份绑定与 ET owner-thread 队列接合，并维持单一权威输入路径。
+- 如何迁移或隔离旧调用方，并在不删除测试的前提下完成 world.entitas/world.ecs 依赖清零。
 
 ## Out of scope
 
-当前探针不修改 Cooking 规则、不删除 ECS、不提交 Git。独立 ET 提炼属于已批准后续阶段，但尚未完成；不得以本探针替代其验收。不解除 Cooking Unity 禁止、不接 Orleans、不实现严格 lockstep/rollback、不声称真实两 PC LAN 或 durable storage 已完成。Moba/Shooter/Samples 按批准计划后续单独处置，不作为探针 blocker；清退仍须完整核实消费者。
+当前交付不删除 ECS，也不解除 Cooking Unity 禁止范围；不接 Orleans、不实现严格 lockstep/rollback、不声称真实两 PC LAN 或 durable storage 已完成。独立 ET runtime 和最小 Cooking ET Tick 命令接点已经实现并聚焦验证，但完整 Cooking 生命周期、checkpoint 恢复、成功结算持久化、升级迁移和 ECS 清退仍是后续范围。Moba/Shooter/Samples 单独处置，清退仍须完整核实消费者。
 
 ## Evidence and ownership
 

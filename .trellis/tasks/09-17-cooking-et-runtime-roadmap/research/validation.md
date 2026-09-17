@@ -84,3 +84,63 @@ UDP gate、同机跨进程 harness、两物理 PC LAN、core-stability、runtime
 依赖告警仍在：MongoDB.Driver 2.17.1（NU1903）、SharpCompress 0.30.1（NU1902），以及 Entitas 版本回退/旧 Framework 兼容性告警。未静默升级或抑制。本轮未再跑 regression/core-stability/runtime-contracts/cooking-udp/Unity/两机 LAN；之前 regression 的 HFSM 2/47 失败仍未解决，不能把聚焦通过当全局门禁通过。
 
 本轮构建再次触碰三个既有生成 DLL；未擅自还原未知二进制状态，保留并在交付说明披露。未提交代码；finish-work 因任务源码未提交而阻止归档，避免脚本自动提交越权。
+
+
+## 追加：第 2 步独立 ET 运行时提炼（第五轮）
+
+范围：新建 `Unity/Packages/com.abilitykit.et.runtime/`（共享 UPM 源 + `THIRD-PARTY-NOTICES.md`、ET-Core/ET-SourceGenerator LICENSE 副本）与 `src/AbilityKit.ET.Runtime`（net10.0，Compile Include 共享源）、`src/AbilityKit.ET.Runtime.Tests`。不修改 vendored ET、Demo、Cooking、HFSM、ECS、协议或 Unity 生成工程。
+
+### 提炼边界（实际执行）
+
+- 复制 `cn.etetet.core@3.0.3/Scripts/Core/Share` 的 70 个文件（Entity 树、EntitySystem、Fiber/主调度、World 单例链、ETTask、日志、对象池）与 `cn.etetet.sourcegenerator@3.0.1/Runtime` 的 10 个标注文件；逐文件剥离 MongoDB/MemoryPack/CommandLineParser 的 using、`[Bson*]`/`[MemoryPack*]`/`[Option]` 标注；`Object.cs` 序列化方法裁剪为空基类；`Fiber.cs` 移除 Mailboxes/ActorId/LogInvoker，改由 Logger 取日志；未引入任何假 shim 或重写实现。
+- 依赖核对：`typeof(Entity).Assembly.GetReferencedAssemblies()` 断言仅 System/netstandard；测试断言进程中无 AbilityKit.Demo 程序集。
+- 许可：ET License 为限制传播许可（允许自用/任职公司使用与商用，禁止私下传播修改版；上线前需通知）。包内保留原 LICENSE 与声明文件；提炼结果标记为内部使用，不做公开发布。
+- 曾生成一版重写式 EtRuntime.cs（TaskCompletionSource 伪 ETTask），经审查不符合"保留真实 ET 源码"的要求，已整体删除替换为原源码提取。
+
+### 实际通过
+
+- `dotnet build src/AbilityKit.ET.Runtime/AbilityKit.ET.Runtime.csproj`：exit 0，0 警告 0 错误。
+- `dotnet test src/AbilityKit.ET.Runtime.Tests/AbilityKit.ET.Runtime.Tests.csproj --logger "trx;LogFileName=runtime-step2.trx" --results-directory artifacts/cooking-et-roadmap/runtime`：exit 0，8/8 通过（失败: 0，通过: 8，已跳过: 0）。TRX：`artifacts/cooking-et-roadmap/runtime/runtime-step2.trx`。
+- 覆盖：显式 Tick 驱动 Awake/Update/LateUpdate、销毁后不再推进、EntityRef 失效、未注册实体不入更新队列；双 Scene 队列隔离与递归销毁所有权；对象池复用 + InstanceId 代际失效与队列重挂；跨阶段实体延续与"暂停≠销毁"；宿主 Run/Tick 内 Fiber.Instance 与 SynchronizationContext 作用域切换并恢复；Shutdown/Restart 后旧回调不执行、新 Fiber 回调执行、单例静态清空、Dispose 后调用抛 ObjectDisposedException；同进程重复宿主、重复场景 id、Tick 重入、跨线程操作被拒绝；真实 ETTask `WaitFrameFinish` 在显式 Tick 帧末恢复。
+- `precheck` 门禁 exit 0（P0 通过，`local/Logs/test-gates/20260917-143608-precheck`，10/10 smoke）。
+
+### 失败与修正（记录）
+
+- 编译迭代：缺 `/unsafe`（SortedSet）→ csproj AllowUnsafeBlocks；缺 SceneTypeSingleton → 补入；两个源文件级裁剪错误（CS0310/CS0272）来自被替换的重写稿，替换为原源码后消失。
+- 测试修正：`ETTask.Coroutine()` 不存在 → 直接持有 ETTask；未标 `[EntitySystem]` 的派生系统仍被注册——经核实为 ET 原生继承式扫描语义（`UpdateSystem<T>` 基类自带标注），非提炼缺陷；测试改为断言未实现 IUpdate 的实体不入队列。
+
+### 门禁补充
+
+- `core-stability` exit 1：仅 `HFSM deterministic runtime contract tests` 2/47 失败（既有 DefinitionJsonTests 换行/isGhostState 问题，与本轮无关）；其余 24 步全部通过（含 Core 141、BehaviorTree 166、Network 223、World StateSync/FrameSync、Host、Analyzer、Triggering 等）。本轮不记该门禁为通过，HFSM 修复建议单独立项。
+
+### 结论限制
+
+- 第 2 步验收成立：独立于 Demo（无 DemoEntry/反射 Fiber/Share 引用）、无外部 NuGet/项目依赖、单进程单宿主、显式 Tick、显式销毁与重启均有测试证据。
+- 未验证：Unity 侧编译（本机无 Unity Editor，`run-unity-compile-check.ps1` 会跳过且不算通过）、asmdef 引用联动、Cooking 纵切、多宿主进程、并发宿主访问（宿主强制 owner-thread）。
+- 已知限制：单进程仅一个宿主（World/FiberManager 静态单例决定，测试已断言拒绝第二个宿主）；ET License 限制包外传播，仅供内部使用。
+
+## 追加：最小 Cooking ET Tick 命令接点（第六轮）
+
+提交：`38d822271 feat(cooking): dispatch recipe commands through ET tick`。
+
+### 实际实现
+
+- 新增纯 .NET 应用项目 `src/AbilityKit.Game.Cooking.EtRuntime`，引用独立 ET runtime 与既有 Cooking 领域项目；通用 ET runtime 不反向引用 Cooking。
+- `CookingRecipeTickHost.Enqueue` 只把 `CookingRecipeCommand` 放入 owner-thread FIFO 队列，不直接改变权威模拟。
+- ET Scene 中注册的 `CookingRecipeDriverUpdate : UpdateSystem<CookingRecipeDriver>` 在显式 `Tick` 内串行调用 `CookingRecipeSimulation.Submit`。
+- ET 系统层会捕获异常，因此 host 显式保存 authority failure，并由 `Tick` 抛出 faulted 错误，避免错误报告成功。
+- 回归覆盖拾取、开始加工、推进三 Tick、产物生成、装盘、提交订单、重复命令幂等、空 Tick 无结果与 Dispose 后拒绝调用。
+
+### 红绿与最终验证
+
+- 红测：临时空实现的 `Tick()` 返回空集合，精确测试 `Et_tick_drains_recipe_commands_through_the_authoritative_simulation` 按预期失败：`Assert.Single() Failure: The collection was empty`。证据：`artifacts/cooking-et-roadmap/step3/recipe-et-red.trx`。
+- 真实 `UpdateSystem` 调度实现后，同一精确测试连续三次通过；收窄掉无关 Pickup 冒烟后再次通过；提交后 `--no-build` 再次通过。最终证据：`artifacts/cooking-et-roadmap/step3/recipe-et-final-focus.trx`。
+- `dotnet build src/AbilityKit.Game.Cooking.EtRuntime/AbilityKit.Game.Cooking.EtRuntime.csproj --no-incremental`：exit 0，0 警告，0 错误。
+- `dotnet test src/AbilityKit.ET.Runtime.Tests/AbilityKit.ET.Runtime.Tests.csproj`：exit 0，9/9 通过。证据：`artifacts/cooking-et-roadmap/step3/runtime-single-fix-final.trx`。
+- `powershell -ExecutionPolicy Bypass -File tools/run_test_gate.ps1 -Gate cooking-udp`：23/23 通过；这只证明既有 UDP 回归，没有证明 ET 与 UDP 已接合或两物理 PC LAN。
+- `powershell -ExecutionPolicy Bypass -File tools/run_test_gate.ps1 -Gate precheck`：exit 0；Moba console build 0 errors（32 个既有兼容/依赖告警），Moba smoke 通过。日志：`artifacts/cooking-et-roadmap/step3/precheck.log`，门禁目录 `local/Logs/test-gates/20260917-153838-precheck`。
+- 构建触碰的 Analyzer、Moba CodeGen、ET SourceGenerator 三个已跟踪 DLL 已恢复，未进入提交。
+
+### 结论限制
+
+本轮只完成独立 ET runtime 与最小 Cooking 权威命令 Tick 调度接点。完整阶段三仍缺 MatchLifecycle 编排、自动单时钟加工、UDP host/remote 身份绑定、checkpoint 重建继续、成功延续、失败标准供应、升级进度迁移和成功结算持久化；阶段四 ECS 清退未开始。Unity Editor 编译、同机 ET 跨进程、两物理 PC LAN 和 durable storage 均未验证，不记为通过。
