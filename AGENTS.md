@@ -8,7 +8,7 @@
 - `Server/` 是 Orleans 等宿主示例，不是游戏必须依赖的服务；当前 Coordinator 是精简契约包，不要假设存在旧 SessionCoordinator 或 Local/Remote/Hybrid 实现。
 - `Docs/design/` 是既有跨模块设计入口；协议变更先读 `Protocols/README.md`，测试策略先读 `Docs/AbilityKit测试门禁与批量回归规范.md`。
 - 做菜经营游戏的应用层技术路线唯一正文是 [`Docs/design/CookingGame/technical-roadmap.md`](Docs/design/CookingGame/technical-roadmap.md)；其迁移规划入口是 [`.trellis/spec/cooking/index.md`](.trellis/spec/cooking/index.md)。两者均不把路线或未执行计划表述为已实现能力。
-- 当前 ET 已介入到哪里、下一批实施顺序与不可宣称边界统一从 [`Todo.md`](Todo.md) 进入。开始新的 ET/Cooking 实施任务前先读该文件，再以 `Docs/design/CookingGame/technical-roadmap.md`、`.trellis/spec/cooking/` 和对应 Trellis task/check 证据核实；`Todo.md` 是交接待办入口，不替代这些权威来源。
+- 项目级待办事项统一记录在 [`Docs/Todo.md`](Docs/Todo.md)。该文件用于汇总尚未完成、待审议或待验证的工作；开始实施时仍须按本节的唯一归属规则读取对应 ADR、设计、spec 与 Trellis task/check 证据。
 - 恢复或审议做菜项目工作前，先读 [`Docs/design/CookingGame/progress.md`](Docs/design/CookingGame/progress.md) 确认当前执行基线、实际验证指针和完整出口 blocker。该文件只做跨阶段汇总；行为契约与验证证据仍分别以 `.trellis/spec/cooking/` 和对应 task 的 `check.jsonl` 为准。
 
 ## 构建与验证（仓库根目录）

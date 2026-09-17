@@ -1,27 +1,72 @@
-# AbilityKit 剩余待优化点优先级清单
+# AbilityKit 项目待办事项
 
-## 1. 整理目标
+## 1. 文件定位
 
-本清单用于把多个阶段性设计文档中残留的“待补齐、缺口、下一阶段、P0/P1/P2”事项合并成一个统一 backlog，避免不同文档各自维护优先级导致后续推进分散。
+本文件记录 AbilityKit 工作区当前已知的项目级待办事项，汇总各模块尚未完成、需要继续审议或等待验证的工作，避免待办散落在阶段性文档中后无人跟进。
+
+本文件只记录待办、优先级、完成条件和权威来源，不替代以下内容：
+
+- 产品方向与范围决定：`ADR/long-term-goals.md`
+- 架构决策：`ADR/decisions/`
+- 框架与应用设计：`Docs/design/`
+- 稳定工程规则与 Cooking 行为合同：`.trellis/spec/`
+- 已启动工作的目标、设计、实施与检查证据：`.trellis/tasks/`
+
+待办进入实施前仍需创建或恢复对应 Trellis task；勾选完成必须引用真实实现和验证证据，不能只依据路线文档或计划描述。
 
 当前排序原则：
 
-1. 先处理会影响主链路正确性、恢复能力、同步能力正式化的事项。
-2. 再处理会显著提升大规模示例说服力和框架抽象稳定性的事项。
+1. 先处理会影响主链路正确性、恢复能力、权威时钟和正式同步能力的事项。
+2. 再处理会显著提升产品纵切完整性、大规模示例说服力和框架抽象稳定性的事项。
 3. 最后处理文档校正、体验增强和结构拆分类事项。
 
 ## 2. 总体判断
 
-当前最高优先级不再是“把 Shooter 示例跑起来”，而是把它从已有运行链路推进到“多同步能力正式展柜”：
+当前存在两条需要重点推进的 P0 主线：
 
-- Shooter 同步主干、Room Gateway、LateJoin/Reconnect、FullSnapshot、输入诊断、基础 smoke 已经形成阶段基线。
-- 纯状态同步已经有 exporter/port、预算、低频输出和 visibility hint 的 runtime 起点，但还缺 AOI、字段级 diff、客户端插值消费和远程服务端推送预算闭环。
-- 网络同步框架已经开始从 `NetworkSyncModel` 单枚举转向 `NetworkSyncProfile` / policy / capability matrix，但 `BatchSnapshot`、`MassBattleLodSync`、`AOI slice recovery` 等仍缺真实 runtime 消费链。
-- MOBA 与 Client Flow 文档中的待办属于另一条“正式项目结构收敛”主线，优先级应低于当前 Shooter 同步闭环，但其中的主流程失败语义和完整 build 阻塞项需要提前处理。
+- **Cooking ET 应用运行时主线**：独立 ET runtime 和最小权威命令 Tick 接点已经完成，但正式 Match 宿主、单一加工时钟、checkpoint、跨小关规则、UDP ingress 与 ECS 清退尚未完成。
+- **Shooter 同步正式化主线**：已有同步主干和 pure-state runtime 起点，但仍缺客户端消费、AOI、delta/keyframe/resync 和远程服务端预算闭环。
+
+MOBA、Client Flow、Presentation 与通用工程治理属于后续正式化主线，其中完整 build 阻塞和主流程失败语义仍应优先处理。
 
 ## 3. P0：必须优先处理
 
-### P0-1：补齐纯状态同步客户端消费闭环
+### P0-C1：完成 Cooking ET 应用运行时纵切
+
+**当前基线**：独立 ET runtime 已从 Demo 中提炼，`CookingRecipeTickHost` 已通过真实 ET `UpdateSystem` 在显式 Tick 内调用 `CookingRecipeSimulation.Submit`。ET 当前只负责生命周期底座、owner-thread 约束和命令调度；Cooking 领域模拟仍是唯一权威状态 owner。对应提交为 `38d822271`，验证记录见 [归档任务](../.trellis/tasks/archive/2026-09/09-17-cooking-et-runtime-roadmap/research/validation.md)。
+
+**待办**：
+
+- [ ] 在 `AbilityKit.Game.Cooking.EtRuntime` 建立正式 Match host，编排 `CookingMatchLifecycle`、当前 simulation、ET Scene、命令 ingress 和结果输出。
+- [ ] 明确 Restaurant 长生命周期与 Stage/Match 短生命周期的 ET 所有权结构；ET Entity 只承载生命周期/投影，不复制 Cooking 权威规则状态。
+- [ ] 建立单一固定加工时钟：每个权威帧全局 `LogicalTick` 只推进一次，批量推进全部加工；Preparing 暂停，Started 恢复，同 Tick 完成顺序稳定。
+- [ ] 区分同步 snapshot 与恢复 checkpoint；checkpoint 覆盖物品/tombstone、加工、容器、订单、逻辑 Tick、命令水位、去重账本、事件序列、ID 计数器、Match/epoch/config identity 和 lifecycle 状态。
+- [ ] 验证“导出 checkpoint -> 销毁 host -> 重建 -> 继续运行”与不中断基线产生相同最终 hash、ID、版本、去重结果和订单提交次数。
+- [ ] 落实成功进入下一小关：保留食材、半成品和未完成加工；清理本关订单；准备阶段暂停并在下一小关恢复。
+- [ ] 落实失败重开：关闭失败 Match，创建新 MatchId/更高 epoch，清空失败现场，按关卡定义生成标准初始供应；失败和准备阶段修改不写盘。
+- [ ] 落实工位升级迁移：使用显式领域操作迁移未完成加工并保留进度，不通过销毁父 Entity 隐式丢失 Process。
+- [ ] 只在小关成功完成时应用 confirmed settlement；durable storage、进程崩溃恢复和磁盘原子性必须有真实实现与测试。
+- [ ] 将 UDP 接入 ET owner-thread ingress：LiteNetLib 回调只解码/验证/入线程安全队列，ET Tick 取稳定批次；本地主机玩家与远端玩家走同一权威入口。
+- [ ] 校验 connection 到 PlayerId 的绑定以及 scope、MatchId、epoch、config identity；重复、乱序、过期命令不得重复推进或重复提交订单。
+- [ ] 在允许范围内补 Unity compile evidence；未获重新授权前不实施 Cooking Unity 应用层、场景、authoring、projection 或 UI。
+- [ ] 只有消费者迁移、依赖清零、等价测试迁移和适用门禁通过后，才分批退役 `world.entitas` 与 `world.ecs`；不删除测试换取通过。
+
+**架构约束**：
+
+- 不在 ET Entity 与 `CookingRecipeSimulation` 中维护两份可独立修改的权威状态。
+- ET EntityId 不作为网络身份或存档稳定身份。
+- Cooking 规则、房间流程和网络权威策略不进入通用 `AbilityKit.ET.Runtime` 包。
+- `cooking-udp` 回归通过不等于 ET/UDP 已接合，也不等于两台物理 PC LAN 已通过。
+- Unity、两 PC LAN、durable storage、checkpoint 恢复和 ECS 清退没有真实证据前不得宣称完成。
+
+**权威来源**：
+
+- [Cooking 技术路线](design/CookingGame/technical-roadmap.md)
+- [Cooking 当前工程进度](design/CookingGame/progress.md)
+- [Cooking spec index](../.trellis/spec/cooking/index.md)
+- [ET/Cooking 路线归档验证记录](../.trellis/tasks/archive/2026-09/09-17-cooking-et-runtime-roadmap/research/validation.md)
+
+### P0-S1：补齐纯状态同步客户端消费闭环
 
 **问题**：Shooter pure-state exporter 已能输出 `FullBaseline` / `Delta` / `LowFrequency`，但客户端尚未形成正式 import、插值 buffer、延迟播放、低频补间和关键本地实体预测标记消费链。
 
@@ -38,7 +83,7 @@
 - [Shooter 大规模纯状态同步方案](Shooter大规模纯状态同步方案.md)
 - [Shooter 示例定位与完成度阶段性分析](Shooter示例定位与完成度阶段性分析.md)
 
-### P0-2：实现 AOI slice 与兴趣管理预算
+### P0-S2：实现 AOI slice 与兴趣管理预算
 
 **问题**：当前 pure-state exporter 已有全局 `MaxEntityCount` / `ActiveSyncBudget`，但还没有按客户端视点、兴趣区块、队伍、距离或优先级生成 per-client AOI slice。
 
@@ -55,7 +100,7 @@
 - [Shooter 大规模纯状态同步方案](Shooter大规模纯状态同步方案.md)
 - [网络同步抽象审计与能力矩阵](网络同步抽象审计与能力矩阵.md)
 
-### P0-3：补齐 delta / keyframe / resync 的正式恢复语义
+### P0-S3：补齐 delta / keyframe / resync 的正式恢复语义
 
 **问题**：当前 full snapshot 主链路较稳定，但 delta import、keyframe 恢复、`ShouldResync` 自动恢复和专用 resync 请求还没有完整闭环。
 
@@ -73,7 +118,7 @@
 - [Shooter 客户端漂移检测与强同步恢复方案](Shooter客户端漂移检测与强同步恢复方案.md)
 - [网络同步抽象审计与能力矩阵](网络同步抽象审计与能力矩阵.md)
 
-### P0-4：远程服务器链路接入 lag compensation 与 sync health
+### P0-S4：远程服务器链路接入 lag compensation 与 sync health
 
 **问题**：本地 runtime → host diagnostics 已能观察 lag compensation evaluation，但远程 Orleans/Gateway 链路、健康事件和验收场景仍需接入。
 
@@ -89,7 +134,7 @@
 - [Shooter 示例定位与完成度阶段性分析](Shooter示例定位与完成度阶段性分析.md)
 - [网络同步抽象审计与能力矩阵](网络同步抽象审计与能力矩阵.md)
 
-### P0-5：恢复全仓完整 build 绿色
+### P0-E1：恢复全仓完整 build 绿色
 
 **问题**：Shooter smoke 自身通过，但文档记录完整依赖 build 曾被 MOBA 代码阻塞。进入更大范围重构前，完整 build 绿色是 CI 信心前提。
 
@@ -300,19 +345,21 @@
 
 ## 7. 建议执行顺序
 
-推荐按以下顺序推进：
+推荐按以下顺序推进；P0-C 与 P0-S 是并列产品主线，实际开工仍以 owner 批准的 Trellis task 为准：
 
-1. P0-5：先恢复完整 build 绿色，避免后续同步/文档调整被无关编译错误干扰。
-2. P0-1：补 pure-state 客户端消费闭环，让纯状态同步真正可演示。
-3. P0-2：补 AOI slice / interest budget，支撑上万实体论证。
-4. P0-3：补 delta/keyframe/resync，解决恢复链路正式性。
-5. P0-4：把 lag compensation 接入远程服务器链路与 health event。
-6. P1-1：把服务端 pure-state push 和网络条件/预算联动。
-7. P1-2：校正 DemoHarness capability matrix，让多同步策略展示不再依赖名字匹配。
-8. P1-3 / P1-4：补协议版本策略与远程房间恢复闭环。
-9. P1-5 / P2-1 / P2-2：推进 MOBA 主链路治理，作为第二大型示例的正式化支撑。
-10. P2-3 / P2-4：校准 Client Flow 与 Presentation 边界。
-11. P3：清理陈旧文档、结构工具化和体验增强。
+1. P0-E1：先恢复完整 build 绿色，避免后续 Cooking、同步或文档调整被无关编译错误干扰。
+2. P0-C1：把已验证的 ET Tick 接点扩展为正式 Cooking Match 宿主与单一加工时钟。
+3. P0-C1：随后完成 checkpoint、跨小关成功/失败/升级规则与成功 settlement，再接入 UDP owner-thread ingress。
+4. P0-S1：补 pure-state 客户端消费闭环，让纯状态同步真正可演示。
+5. P0-S2：补 AOI slice / interest budget，支撑上万实体论证。
+6. P0-S3：补 delta/keyframe/resync，解决恢复链路正式性。
+7. P0-S4：把 lag compensation 接入远程服务器链路与 health event。
+8. P1-1：把服务端 pure-state push 和网络条件/预算联动。
+9. P1-2：校正 DemoHarness capability matrix，让多同步策略展示不再依赖名字匹配。
+10. P1-3 / P1-4：补协议版本策略与远程房间恢复闭环。
+11. P1-5 / P2-1 / P2-2：推进 MOBA 主链路治理，作为第二大型示例的正式化支撑。
+12. P2-3 / P2-4：校准 Client Flow 与 Presentation 边界。
+13. P3：清理陈旧文档、结构工具化和体验增强。
 
 ## 8. 已关闭但需要回写口径的事项
 
@@ -325,4 +372,4 @@
 
 ## 9. 结论
 
-下一阶段最应集中火力的不是继续增加示例玩法，而是把“框架同步能力展柜”的关键链路补完整：纯状态客户端消费、AOI/预算、delta/keyframe/resync、远程 lag compensation、网络条件预算联动。MOBA 和 Client Flow 的待办应作为第二优先级正式化主线推进，重点是收紧失败语义、建立不可变计划/契约、校准包边界，而不是先做大规模功能扩张。
+当前项目待办不再只围绕同步展柜：Cooking ET 应用运行时和 Shooter 同步正式化是两条并列 P0 主线。前者重点是正式 Match 宿主、单一加工时钟、可恢复 checkpoint、跨小关规则、UDP ingress 与最终 ECS 清退；后者重点是纯状态客户端消费、AOI/预算、delta/keyframe/resync、远程 lag compensation 与网络条件预算联动。MOBA 和 Client Flow 作为后续正式化主线，重点是收紧失败语义、建立不可变计划/契约、校准包边界，而不是先做大规模功能扩张。
