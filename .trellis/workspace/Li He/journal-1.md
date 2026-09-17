@@ -48,3 +48,26 @@ Delivered and verified a pure .NET LiteNetLib reliable-UDP Cooking listen-host/c
 ### Status
 
 [OK] **Completed**
+
+
+## Session 3: Cooking ET runtime extraction and tick dispatch
+<!-- trellis-session: v=2 fp=cde0444e831d4c03 -->
+
+**Date**: 2026-09-17
+**Task**: Cooking ET runtime extraction and tick dispatch
+**Branch**: `feat/et-share-bootstrap`
+
+### Summary
+
+Extracted and verified the internal ET runtime, added a minimal Cooking recipe command queue dispatched by a real ET UpdateSystem, recorded red-green and regression evidence, preserved incomplete phase-three/four boundaries, and archived the roadmap task.
+
+### Git Commits
+
+| Hash | Message |
+|------|---------|
+| `38d822271` | feat(cooking): dispatch recipe commands through ET tick |
+| `43eafce25` | docs(cooking): record ET runtime delivery boundary |
+
+### Status
+
+[OK] **Completed**

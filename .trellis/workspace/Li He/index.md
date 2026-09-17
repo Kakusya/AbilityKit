@@ -8,8 +8,8 @@
 
 <!-- @@@auto:current-status -->
 - **Active File**: `journal-1.md`
-- **Total Sessions**: 2
-- **Last Active**: 2026-09-16
+- **Total Sessions**: 3
+- **Last Active**: 2026-09-17
 <!-- @@@/auto:current-status -->
 
 ---
@@ -19,7 +19,7 @@
 <!-- @@@auto:active-documents -->
 | File | Lines | Status |
 |------|-------|--------|
-| `journal-1.md` | ~50 | Active |
+| `journal-1.md` | ~73 | Active |
 <!-- @@@/auto:active-documents -->
 
 ---
@@ -29,6 +29,7 @@
 <!-- @@@auto:session-history -->
 | # | Date | Title | Commits | Branch |
 |---|------|-------|---------|--------|
+| 3 | 2026-09-17 | Cooking ET runtime extraction and tick dispatch | `38d822271`, `43eafce25` | `feat/et-share-bootstrap` |
 | 2 | 2026-09-16 | Cooking UDP LAN minimum slice | `0a788e65a` | `master` |
 | 1 | 2026-09-16 | Archive Cooking limited-scope tasks | `a76c05686` | `chore/archive-cooking-limited-scope` |
 <!-- @@@/auto:session-history -->
