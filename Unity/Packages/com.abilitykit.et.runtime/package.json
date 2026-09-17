@@ -1,0 +1,8 @@
+{
+  "name": "com.abilitykit.et.runtime",
+  "version": "0.1.0",
+  "displayName": "AbilityKit ET Runtime (Internal)",
+  "description": "Internal standalone ET entity runtime.",
+  "unity": "2022.3",
+  "author": { "name": "AbilityKit" }
+}
