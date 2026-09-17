@@ -1,0 +1,11 @@
+{"file":"Docs/Todo.md","reason":"项目级 P0-C1 待办与优先级来源；本任务只领取正式 Match host 与单一固定加工时钟子范围。"}
+{"file":"ADR/decisions/0002-authoritative-fixed-tick-state-sync.md","reason":"权威固定 Tick、稳定命令顺序、网络线程只入队与逻辑 Tick 独立于渲染的已接受决策。"}
+{"file":"Docs/design/CookingGame/technical-roadmap.md","reason":"Cooking 应用层命令路径、固定 Tick、状态同步与分层边界的唯一路线正文。"}
+{"file":"Docs/design/CookingGame/progress.md","reason":"当前有限交付、未完成范围和禁止 Unity scope 的跨阶段状态入口。"}
+{"file":".trellis/spec/cooking/cooking-match-lifecycle.md","reason":"Preparing/Ready/Started/Ended、Match/epoch 隔离和旧输入拒绝的稳定行为合同。"}
+{"file":".trellis/spec/cooking/cooking-recipe-loop.md","reason":"加工由逻辑 Tick 驱动、原子完成和幂等的稳定领域合同。"}
+{"file":".trellis/spec/cooking/cooking-lan-session.md","reason":"有界 ingress、最小 SimulationBatch 执行、连接关闭取消和结构化 admission 的既有会话合同。"}
+{"file":".trellis/spec/cooking/cooking-interaction-foundation.md","reason":"封闭批次稳定排序、命令身份幂等与到达顺序无关的权威交互合同。"}
+{"file":".trellis/spec/guides/cross-layer-thinking-guide.md","reason":"宿主、ET 调度与领域固定时钟跨层数据流和单一合同检查。"}
+{"file":".trellis/tasks/archive/2026-09/09-17-cooking-et-runtime-roadmap/design.md","reason":"ET 仅作宿主入口、单一权威 owner/时钟/释放方和快照边界的已审议设计。"}
+{"file":".trellis/tasks/archive/2026-09/09-17-cooking-et-runtime-roadmap/research/validation.md","reason":"独立 ET runtime 与最小 Tick 接点的真实通过证据和已知限制。"}
