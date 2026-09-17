@@ -1,7 +1,0 @@
-{"file":"ADR/decisions/0002-authoritative-fixed-tick-state-sync.md","reason":"检查实现是否保持每个权威帧单一逻辑 Tick、稳定命令提交和非墙钟驱动。"}
-{"file":".trellis/spec/cooking/cooking-match-lifecycle.md","reason":"检查生命周期准入、End/Restart、新 Match/epoch 与旧输入隔离。"}
-{"file":".trellis/spec/cooking/cooking-recipe-loop.md","reason":"检查固定加工步进、一次性完成、原子产物与现有幂等合同。"}
-{"file":".trellis/spec/cooking/cooking-lan-session.md","reason":"检查有界 admission、每帧最小 batch、pending 取消结果和旧 UDP/session 兼容边界。"}
-{"file":".trellis/spec/cooking/cooking-interaction-foundation.md","reason":"检查相同批次稳定排序、duplicate/conflict 与到达顺序无关。"}
-{"file":"Docs/design/CookingGame/progress.md","reason":"检查交付表述没有越过 limited pure .NET、Unity 禁止和未完成出口边界。"}
-{"file":".trellis/tasks/archive/2026-09/09-17-cooking-et-runtime-roadmap/research/validation.md","reason":"回归独立 ET runtime 的 owner-thread、单宿主、异常捕获与既有验证边界。"}

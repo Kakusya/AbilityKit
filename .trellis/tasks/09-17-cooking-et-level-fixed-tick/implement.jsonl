@@ -1,0 +1,17 @@
+{"file":"Docs/Todo.md","reason":"项目级 P0-C1 待办与优先级来源；本任务只领取 canonical Level lifecycle、兼容 facade、最小 ET Component seam 与单一固定 Tick。"}
+{"file":"ADR/decisions/0002-authoritative-fixed-tick-state-sync.md","reason":"权威固定 Tick、稳定命令顺序、网络线程只入队与逻辑 Tick 独立于渲染的已接受决策。"}
+{"file":"Docs/design/CookingGame/technical-roadmap.md","reason":"Cooking 应用层命令路径、固定 Tick、局内/长期状态分层和状态同步边界的唯一路线正文。"}
+{"file":"Docs/design/CookingGame/progress.md","reason":"当前 limited delivery、禁止 Unity scope 与未完成出口的跨阶段状态入口。"}
+{"file":"Docs/design/CookingGame/reference/README.md","reason":"Cooking 设计参考目录的性质、来源优先级和状态标记。"}
+{"file":"Docs/design/CookingGame/reference/product-lifetimes.md","reason":"已确认 Match/Runtime/Kitchen/Level 语义、canonical Level identity/state/Pause/Retry 规则和兼容迁移策略。"}
+{"file":"Docs/design/CookingGame/reference/et-entity-tree.md","reason":"ComponentOf/ChildOf 命名、唯一 Component/多实例 Entity、typed Registry、Phase A seam、ID/System/DTO/Dispose 规则。"}
+{"file":"Docs/design/CookingGame/reference/save-storage.md","reason":"存档/claim/platform 参考边界；本任务明确不实现这些后置能力。"}
+{"file": ".trellis/spec/cooking/cooking-match-lifecycle.md","reason":"旧 fixture-only Match-named lifecycle 的历史兼容行为合同；本任务以 obsolete facade 保留其 evidence，不把它当 canonical 产品 Match。"}
+{"file":".trellis/spec/cooking/cooking-recipe-loop.md","reason":"加工由逻辑 Tick 驱动、原子完成、一次性消费和幂等领域合同。"}
+{"file":".trellis/spec/cooking/cooking-lan-session.md","reason":"有界 ingress、最小 SimulationBatch、连接关闭取消与结构化 admission 的兼容原则。"}
+{"file":".trellis/spec/cooking/cooking-interaction-foundation.md","reason":"封闭批次稳定排序、命令身份幂等、冲突处理与到达顺序无关。"}
+{"file":".trellis/spec/guides/cross-layer-thinking-guide.md","reason":"Lifecycle host、ET driver、simulation fixed tick 与 DTO exporter 的跨层数据流检查。"}
+{"file":"tools/test-gates.json","reason":"实现并注册 cooking-et-level-runtime 专用验收 gate。"}
+{"file":"Docs/AbilityKit测试门禁与批量回归规范.md","reason":"同步新增专用 Cooking Level/ET gate 的层级、责任域和执行入口。"}
+{"file":".trellis/tasks/archive/2026-09/09-17-cooking-et-runtime-roadmap/design.md","reason":"ET 仅作最小宿主入口、单一权威 owner/时钟/释放方和迁移边界的已审议设计。"}
+{"file":".trellis/tasks/archive/2026-09/09-17-cooking-et-runtime-roadmap/research/validation.md","reason":"独立 ET runtime 和现有 Tick seam 的真实通过证据、单宿主/owner-thread/异常捕获限制。"}

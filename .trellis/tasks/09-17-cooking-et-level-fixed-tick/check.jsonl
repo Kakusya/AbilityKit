@@ -1,0 +1,11 @@
+{"file":"Docs/design/CookingGame/reference/product-lifetimes.md","reason":"检查 LevelScope、七状态+Outcome、Pause queue preservation、retry/successor identity 与 Match/Runtime 边界。"}
+{"file":"Docs/design/CookingGame/reference/et-entity-tree.md","reason":"检查唯一 Component/多实例 Entity、正确 Attribute/后缀、Phase A 单权威、root batch driver、DTO/Checkpoint 与 Dispose。"}
+{"file":"ADR/decisions/0002-authoritative-fixed-tick-state-sync.md","reason":"检查每个 Running 权威帧一个逻辑 Tick、稳定命令提交和非墙钟驱动。"}
+{"file":".trellis/spec/cooking/cooking-match-lifecycle.md","reason":"检查 obsolete Match facade 保留历史 Prepare/Start/End/Restart、snapshot 和旧输入隔离 evidence。"}
+{"file":".trellis/spec/cooking/cooking-recipe-loop.md","reason":"检查 fixed-step 加工、原子产物、一次性消费和 legacy AdvanceTicks 兼容。"}
+{"file":".trellis/spec/cooking/cooking-lan-session.md","reason":"检查有界 admission、每帧最小 batch、pending disposition 与 legacy UDP/session 兼容边界。"}
+{"file":".trellis/spec/cooking/cooking-interaction-foundation.md","reason":"检查同 batch 稳定排序、duplicate collapse、conflict group rejection 与到达顺序无关。"}
+{"file":"tools/test-gates.json","reason":"检查新增 cooking-et-level-runtime gate 完整执行两个测试项目，cooking-udp 只作为兼容证据。"}
+{"file":"Docs/AbilityKit测试门禁与批量回归规范.md","reason":"检查专用 Cooking Level/ET gate 已进入门禁清单、责任域和阻断点。"}
+{"file":"Docs/design/CookingGame/progress.md","reason":"检查交付表述未越过 pure .NET limited scope、Unity 禁止和未完成产品出口。"}
+{"file":".trellis/tasks/archive/2026-09/09-17-cooking-et-runtime-roadmap/research/validation.md","reason":"回归 EtRuntimeHost 的单实例、owner-thread、异常捕获与现有测试基线。"}
