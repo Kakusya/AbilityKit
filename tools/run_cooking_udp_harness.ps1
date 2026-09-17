@@ -4,16 +4,21 @@ param(
     [string]$Topology = 'SameMachine',
     [string]$ResultsDirectory = 'artifacts/cooking-udp',
     [int]$StartupTimeoutSeconds = 10,
-    [int]$ScenarioTimeoutSeconds = 15
+    [int]$ScenarioTimeoutSeconds = 15,
+    [int]$SuccessRetention = 10,
+    [switch]$KeepArtifacts
 )
 
 $ErrorActionPreference = 'Stop'
-$root = [IO.Path]::GetFullPath((Join-Path $ResultsDirectory ("same-machine-" + [guid]::NewGuid().ToString('N'))))
-New-Item -ItemType Directory -Force -Path $root | Out-Null
-$hostLog = Join-Path $root 'host.stdout.log'
-$hostError = Join-Path $root 'host.stderr.log'
-$clientLog = Join-Path $root 'client.stdout.log'
-$clientError = Join-Path $root 'client.stderr.log'
+if ($SuccessRetention -lt 0) { throw '-SuccessRetention must be zero or greater.' }
+$runId = [guid]::NewGuid().ToString('N')
+$root = [IO.Path]::GetFullPath((Join-Path $ResultsDirectory ("same-machine-" + $runId)))
+$hostDirectory = Join-Path $root 'host'
+$clientDirectory = Join-Path $root 'client'
+New-Item -ItemType Directory -Force -Path $hostDirectory, $clientDirectory | Out-Null
+if ($hostDirectory -eq $clientDirectory -or $clientDirectory.StartsWith($hostDirectory + [IO.Path]::DirectorySeparatorChar) -or $hostDirectory.StartsWith($clientDirectory + [IO.Path]::DirectorySeparatorChar)) {
+    throw 'Role artifact directories must be distinct and non-nested.'
+}
 $harnessProject = 'src/AbilityKit.Game.Cooking.UdpHarness/AbilityKit.Game.Cooking.UdpHarness.csproj'
 
 function Get-FreeUdpPort {
@@ -22,68 +27,87 @@ function Get-FreeUdpPort {
     finally { $udp.Dispose() }
 }
 
+function Write-AtomicJson([string]$Path, [object]$Value) {
+    $temporary = "$Path.$([guid]::NewGuid().ToString('N')).tmp"
+    $Value | ConvertTo-Json -Depth 16 | Set-Content -Encoding utf8 -NoNewline $temporary
+    Move-Item -Force $temporary $Path
+}
+
+function Test-Acceptance([string]$Root, [string]$ExpectedRunId) {
+    $acceptanceProject = 'src/AbilityKit.Game.Cooking.UdpHarness/AbilityKit.Game.Cooking.UdpHarness.csproj'
+    $arguments = @('run', '--no-build', '--project', $acceptanceProject, '--', '--acceptance-root', $Root, '--run-id', $ExpectedRunId)
+    $output = & dotnet @arguments
+    if ($LASTEXITCODE -ne 0) { throw "Streaming acceptance reducer failed for $Root." }
+    return $output | ConvertFrom-Json
+}
+
+function Remove-SurplusSuccessfulRuns([string]$RootDirectory, [string]$CurrentRun, [int]$KeepCount) {
+    $successful = Get-ChildItem -LiteralPath $RootDirectory -Directory -Filter 'same-machine-*' -ErrorAction SilentlyContinue | ForEach-Object {
+        $summary = Join-Path $_.FullName 'acceptance-summary.json'
+        if (Test-Path -LiteralPath $summary) {
+            try {
+                $parsed = Get-Content -Raw -LiteralPath $summary | ConvertFrom-Json
+                if ($parsed.status -eq 'passed' -and -not $parsed.keepArtifacts -and $_.FullName -ne $CurrentRun) { $_ }
+            } catch { }
+        }
+    } | Sort-Object LastWriteTimeUtc -Descending
+    # KeepCount is the total allowed successful retention, including the current successful run.
+    $successful | Select-Object -Skip ([Math]::Max(0, $KeepCount - 1)) | Remove-Item -Recurse -Force
+}
+
 $port = Get-FreeUdpPort
 $manifest = [ordered]@{
-    schema = 'abilitykit.cooking-udp-harness.v1'
-    topology = 'same-machine-udp'
-    startedAtUtc = [DateTimeOffset]::UtcNow.ToString('O')
-    port = $port
-    status = 'running'
-    hostProcessId = $null
-    clientProcessId = $null
-    twoPcLanAcceptance = 'not-run; this artifact is same-machine only'
+    schema = 'abilitykit.cooking-harness-manifest.v1'; runId = $runId; topology = 'same-machine-udp'; startedAtUtc = [DateTimeOffset]::UtcNow.ToString('O');
+    port = $port; status = 'running'; keepArtifacts = [bool]$KeepArtifacts; successRetention = $SuccessRetention;
+    hostDirectory = 'host'; clientDirectory = 'client'; twoPcLanAcceptance = 'not-run; same-machine UDP fixture only';
 }
-$manifestPath = Join-Path $root 'manifest.json'
-$manifest | ConvertTo-Json -Depth 8 | Set-Content -Encoding utf8 $manifestPath
-
+$manifestPath = Join-Path $root 'manifest.live.json'
+Write-AtomicJson $manifestPath $manifest
+$passed = $false
 try {
     dotnet build $harnessProject --nologo | Out-Host
-    $hostArguments = @('run', '--no-build', '--project', $harnessProject, '--', '--role', 'host', '--port', "$port", '--topology', 'udp-same-machine', '--nic-identity', 'loopback', '--nic-status', 'not-applicable', '--firewall-status', 'local-process', '--artifact-directory', $root, '--duration-seconds', "$ScenarioTimeoutSeconds")
-    $hostProcess = Start-Process -FilePath 'dotnet' -ArgumentList $hostArguments -RedirectStandardOutput $hostLog -RedirectStandardError $hostError -PassThru
+    $hostArguments = @('run', '--no-build', '--project', $harnessProject, '--', '--role', 'host', '--run-id', $runId, '--port', "$port", '--topology', 'udp-same-machine', '--artifact-directory', $hostDirectory, '--timeout-seconds', "$ScenarioTimeoutSeconds")
+    $hostProcess = Start-Process -FilePath 'dotnet' -ArgumentList $hostArguments -RedirectStandardOutput (Join-Path $hostDirectory 'stdout.log') -RedirectStandardError (Join-Path $hostDirectory 'stderr.log') -PassThru
     $manifest.hostProcessId = $hostProcess.Id
-    $manifest | ConvertTo-Json -Depth 8 | Set-Content -Encoding utf8 $manifestPath
-
-    $ready = Join-Path $root 'host-ready.json'
+    Write-AtomicJson $manifestPath $manifest
+    $ready = Join-Path $hostDirectory 'ready.json'
     $deadline = [DateTimeOffset]::UtcNow.AddSeconds($StartupTimeoutSeconds)
-    while (-not (Test-Path $ready) -and [DateTimeOffset]::UtcNow -lt $deadline) { Start-Sleep -Milliseconds 100 }
-    if (-not (Test-Path $ready)) { throw "Host did not produce readiness artifact within $StartupTimeoutSeconds seconds." }
+    while (-not (Test-Path -LiteralPath $ready) -and [DateTimeOffset]::UtcNow -lt $deadline) { Start-Sleep -Milliseconds 100 }
+    if (-not (Test-Path -LiteralPath $ready)) { throw "Host did not produce readiness artifact within $StartupTimeoutSeconds seconds." }
 
-    $clientArguments = @('run', '--no-build', '--project', $harnessProject, '--', '--role', 'client', '--peer', '127.0.0.1', '--port', "$port", '--topology', 'udp-same-machine', '--nic-identity', 'loopback', '--nic-status', 'not-applicable', '--firewall-status', 'local-process', '--artifact-directory', $root, '--timeout-seconds', "$StartupTimeoutSeconds")
-    $client = Start-Process -FilePath 'dotnet' -ArgumentList $clientArguments -RedirectStandardOutput $clientLog -RedirectStandardError $clientError -PassThru
-    $manifest.clientProcessId = $client.Id
-    $manifest | ConvertTo-Json -Depth 8 | Set-Content -Encoding utf8 $manifestPath
-
-    if (-not $client.WaitForExit($ScenarioTimeoutSeconds * 1000) -or -not $client.HasExited) { throw "Client exceeded scenario timeout of $ScenarioTimeoutSeconds seconds." }
-    $client.Refresh()
-    if (-not (Test-Path (Join-Path $root 'client-result.json'))) { throw 'Client completed without client-result.json.' }
-    if (Test-Path (Join-Path $root 'failure.json')) { throw 'Client or host produced failure.json.' }
-
-    if (-not $hostProcess.WaitForExit(($ScenarioTimeoutSeconds + 5) * 1000) -or -not $hostProcess.HasExited) { throw 'Host did not stop within its bounded lifetime.' }
+    $clientArguments = @('run', '--no-build', '--project', $harnessProject, '--', '--role', 'client', '--run-id', $runId, '--peer', '127.0.0.1', '--port', "$port", '--topology', 'udp-same-machine', '--artifact-directory', $clientDirectory, '--timeout-seconds', "$ScenarioTimeoutSeconds")
+    $clientProcess = Start-Process -FilePath 'dotnet' -ArgumentList $clientArguments -RedirectStandardOutput (Join-Path $clientDirectory 'stdout.log') -RedirectStandardError (Join-Path $clientDirectory 'stderr.log') -PassThru
+    $manifest.clientProcessId = $clientProcess.Id
+    Write-AtomicJson $manifestPath $manifest
+    if (-not $clientProcess.WaitForExit($ScenarioTimeoutSeconds * 1000) -or -not $clientProcess.HasExited) { throw 'Client exceeded bounded scenario timeout.' }
+    $clientProcess.Refresh()
+    if (-not $hostProcess.WaitForExit(($ScenarioTimeoutSeconds + 5) * 1000) -or -not $hostProcess.HasExited) { throw 'Host did not stop within bounded lifetime.' }
     $hostProcess.Refresh()
-    if (-not (Test-Path (Join-Path $root 'host-result.json'))) { throw 'Host completed without host-result.json.' }
-    $clientResult = Get-Content -Raw (Join-Path $root 'client-result.json') | ConvertFrom-Json
-    $hostResult = Get-Content -Raw (Join-Path $root 'host-result.json') | ConvertFrom-Json
-    if ($clientResult.topology -ne 'udp-same-machine' -or $hostResult.topology -ne 'udp-same-machine') { throw 'Harness result topology is not udp-same-machine.' }
-    if ($clientResult.command.AuthorityResult.Outcome -ne 0) { throw 'Client command was not authoritatively accepted.' }
-    if (-not $clientResult.synchronization.Accepted) { throw 'Client synchronization result was not accepted.' }
-    if ([string]::IsNullOrWhiteSpace($clientResult.stateHash) -or $clientResult.stateHash -ne $hostResult.stateHash) { throw 'Host and client state hashes do not match.' }
-    if ([string]::IsNullOrWhiteSpace($clientResult.workload.id) -or $clientResult.workload.configIdentity -ne $hostResult.workload.configIdentity) { throw 'Harness workload metadata is missing or incompatible.' }
-
-    $manifest.status = 'passed'
+    $acceptance = Test-Acceptance $root $runId
+    $passed = $true
 }
 catch {
-    $manifest.status = 'failed'
     $manifest.failure = $_.Exception.Message
     throw
 }
 finally {
     foreach ($processId in @($manifest.clientProcessId, $manifest.hostProcessId)) {
-        if ($null -eq $processId) { continue }
-        $process = Get-Process -Id $processId -ErrorAction SilentlyContinue
-        if ($null -ne $process -and -not $process.HasExited) { Stop-Process -Id $processId -Force }
+        if ($null -ne $processId) {
+            $process = Get-Process -Id $processId -ErrorAction SilentlyContinue
+            if ($null -ne $process -and -not $process.HasExited) { Stop-Process -Id $processId -Force }
+        }
     }
+    $manifest.status = if ($passed) { 'passed' } else { 'failed' }
     $manifest.finishedAtUtc = [DateTimeOffset]::UtcNow.ToString('O')
-    $manifest | ConvertTo-Json -Depth 8 | Set-Content -Encoding utf8 $manifestPath
+    $summary = [ordered]@{
+        schema = 'abilitykit.cooking-harness-acceptance.v1'; runId = $runId; topology = 'same-machine-udp'; status = $manifest.status;
+        keepArtifacts = [bool]$KeepArtifacts; hostDirectory = 'host'; clientDirectory = 'client'; finishedAtUtc = $manifest.finishedAtUtc;
+        failure = $manifest.failure; evidence = if ($passed) { $acceptance } else { $null };
+    }
+    # Final files are not observable until both child roles have exited and acceptance has reached its terminal result.
+    Write-AtomicJson (Join-Path $root 'manifest.json') $manifest
+    Write-AtomicJson (Join-Path $root 'acceptance-summary.json') $summary
+    Remove-Item -LiteralPath $manifestPath -Force -ErrorAction SilentlyContinue
+    if ($passed -and -not $KeepArtifacts) { Remove-SurplusSuccessfulRuns ([IO.Path]::GetFullPath($ResultsDirectory)) $root $SuccessRetention }
 }
-
 Write-Host "Cooking UDP same-machine artifacts: $root"

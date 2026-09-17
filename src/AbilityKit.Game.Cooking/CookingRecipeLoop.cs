@@ -93,6 +93,7 @@ public sealed record CookingRecipeFixture
 
 public enum CookingRecipeOperation
 {
+    Pickup,
     StartProcess,
     AdvanceTicks,
     Plate,
@@ -127,9 +128,12 @@ public enum CookingRecipeRejectionReason
     ProductNotFound,
     ProductAlreadyConsumed,
     ProductNotPlated,
+    IngredientAlreadyCollected,
     OrderRejected,
     LifecycleClosed,
     CommandIdentityConflict,
+    MalformedCommand,
+    QueueFull,
 }
 
 public sealed record CookingRecipeCommand(
@@ -167,6 +171,49 @@ public sealed record CookingRecipeCommandResult(
 {
     public static CookingRecipeCommandResult Reject(CookingRecipeRejectionReason reason, long stateVersion) =>
         new(CookingRecipeOutcome.Rejected, reason, stateVersion, false, Array.Empty<CookingRecipeEvent>());
+}
+
+/// <summary>
+/// Validates the complete, wire-facing shape of a recipe command before it reaches a simulation.
+/// Domain validation still decides whether the referenced fixture state permits the command.
+/// </summary>
+public static class CookingRecipeCommandValidation
+{
+    public const int MaximumExpectedItemVersion = 1_000_000;
+    public const int MaximumTickCount = 1_000;
+
+    public static bool IsWellFormed(CookingRecipeCommand? command)
+    {
+        if (command is null || command.Scope is null || string.IsNullOrWhiteSpace(command.Scope.Session.Value) ||
+            string.IsNullOrWhiteSpace(command.Scope.World.Value) || string.IsNullOrWhiteSpace(command.Scope.Match.Value) ||
+            command.SimulationBatch <= 0 || string.IsNullOrWhiteSpace(command.Player.Value) ||
+            string.IsNullOrWhiteSpace(command.Command.Value) || !Enum.IsDefined(command.Operation))
+        {
+            return false;
+        }
+
+        return command.Operation switch
+        {
+            CookingRecipeOperation.Pickup => HasIdentifier(command.Item) && IsExpectedVersion(command.ExpectedItemVersion) && command.TickCount == 0,
+            CookingRecipeOperation.StartProcess => HasIdentifier(command.Recipe) && HasIdentifier(command.Item) &&
+                HasIdentifier(command.Station) && IsExpectedVersion(command.ExpectedItemVersion) && command.TickCount == 0,
+            CookingRecipeOperation.AdvanceTicks => HasIdentifier(command.Process) && command.ExpectedItemVersion == 0 &&
+                command.TickCount is > 0 and <= MaximumTickCount,
+            CookingRecipeOperation.Plate => HasIdentifier(command.Item) && HasIdentifier(command.Container) &&
+                IsExpectedVersion(command.ExpectedItemVersion) && command.TickCount == 0,
+            CookingRecipeOperation.SubmitOrder => HasIdentifier(command.Item) && HasIdentifier(command.Order) &&
+                IsExpectedVersion(command.ExpectedItemVersion) && command.TickCount == 0,
+            _ => false,
+        };
+    }
+
+    private static bool IsExpectedVersion(int version) => version is > 0 and <= MaximumExpectedItemVersion;
+    private static bool HasIdentifier(ItemId? value) => value is { Value: { } id } && !string.IsNullOrWhiteSpace(id);
+    private static bool HasIdentifier(RecipeId? value) => value is { Value: { } id } && !string.IsNullOrWhiteSpace(id);
+    private static bool HasIdentifier(ProcessId? value) => value is { Value: { } id } && !string.IsNullOrWhiteSpace(id);
+    private static bool HasIdentifier(StationSlotId? value) => value is { Value: { } id } && !string.IsNullOrWhiteSpace(id);
+    private static bool HasIdentifier(ContainerId? value) => value is { Value: { } id } && !string.IsNullOrWhiteSpace(id);
+    private static bool HasIdentifier(OrderId? value) => value is { Value: { } id } && !string.IsNullOrWhiteSpace(id);
 }
 
 public sealed record CookingOrderSubmission(
@@ -250,21 +297,34 @@ public sealed class CookingRecipeSimulation
 
     public void AddIngredient(ItemId id, DefinitionId definition, PlayerId player, int version = 1)
     {
+        AddItem(id, definition, ItemLocation.Hand(player), version);
+    }
+
+    public void AddWorldIngredient(ItemId id, DefinitionId definition, string location, int version = 1) =>
+        AddItem(id, definition, ItemLocation.World(location), version);
+
+    private void AddItem(ItemId id, DefinitionId definition, ItemLocation location, int version)
+    {
         if (_lifecycleClosed)
             throw new InvalidOperationException("The recipe simulation is closed by its match lifecycle.");
         if (!_fixture.Items.ContainsKey(definition))
             throw new ArgumentException($"Unknown item definition '{definition}'.", nameof(definition));
-        if (!_fixture.Players.ContainsKey(player))
-            throw new ArgumentException($"Unknown player '{player}'.", nameof(player));
         if (_items.ContainsKey(id))
             throw new ArgumentException($"Item '{id}' already exists.", nameof(id));
         if (version <= 0)
             throw new ArgumentOutOfRangeException(nameof(version));
-        if (_hands[player] is not null)
-            throw new InvalidOperationException($"Player '{player}' already holds an item.");
+        if (location.Kind == LocationKind.PlayerHand && location.OwnerId is { } owner)
+        {
+            var player = new PlayerId(owner);
+            if (!_fixture.Players.ContainsKey(player))
+                throw new ArgumentException($"Unknown player '{player}'.", nameof(location));
+            if (_hands[player] is not null)
+                throw new InvalidOperationException($"Player '{player}' already holds an item.");
+        }
 
-        _items.Add(id, new ItemState(definition, version, ItemLocation.Hand(player), false, null, false, null));
-        _hands[player] = id;
+        _items.Add(id, new ItemState(definition, version, location, false, null, false, null));
+        if (location.Kind == LocationKind.PlayerHand)
+            _hands[new PlayerId(location.OwnerId!)] = id;
     }
 
     public void CloseLifecycle() => _lifecycleClosed = true;
@@ -272,6 +332,8 @@ public sealed class CookingRecipeSimulation
     public CookingRecipeCommandResult Submit(CookingRecipeCommand command)
     {
         ArgumentNullException.ThrowIfNull(command);
+        if (!CookingRecipeCommandValidation.IsWellFormed(command))
+            return CookingRecipeCommandResult.Reject(CookingRecipeRejectionReason.MalformedCommand, _stateVersion);
         if (_lifecycleClosed)
             return CookingRecipeCommandResult.Reject(CookingRecipeRejectionReason.LifecycleClosed, _stateVersion);
         var key = new RecipeCommandKey(command.Scope.Session, command.Player, command.Command);
@@ -285,6 +347,7 @@ public sealed class CookingRecipeSimulation
 
         var result = command.Operation switch
         {
+            CookingRecipeOperation.Pickup => Pickup(command),
             CookingRecipeOperation.StartProcess => StartProcess(command),
             CookingRecipeOperation.AdvanceTicks => AdvanceTicks(command),
             CookingRecipeOperation.Plate => Plate(command),
@@ -293,6 +356,26 @@ public sealed class CookingRecipeSimulation
         };
         _processedCommands.Add(key, new ProcessedCommand(fingerprint, result));
         return result;
+    }
+
+    private CookingRecipeCommandResult Pickup(CookingRecipeCommand command)
+    {
+        if (!TryValidateCommandScopeAndPlayer(command, out _, out var rejection))
+            return Reject(rejection);
+        if (command.Item is not { } itemId || !_items.TryGetValue(itemId, out var item) || item.Removed)
+            return Reject(CookingRecipeRejectionReason.ItemNotFound);
+        if (item.Version != command.ExpectedItemVersion)
+            return Reject(CookingRecipeRejectionReason.ItemStale);
+        if (item.Location.Kind != LocationKind.WorldPosition)
+            return Reject(CookingRecipeRejectionReason.IngredientAlreadyCollected);
+        if (_hands[command.Player] is not null)
+            return Reject(CookingRecipeRejectionReason.IngredientAlreadyCollected);
+        if (!_fixture.Items[item.Definition].AllowedPlayerCapabilities.Overlaps(_fixture.Players[command.Player].Capabilities))
+            return Reject(CookingRecipeRejectionReason.PlayerIneligible);
+
+        _items[itemId] = item with { Location = ItemLocation.Hand(command.Player), Version = item.Version + 1 };
+        _hands[command.Player] = itemId;
+        return Commit(command, null, null, itemId, "ingredient-picked-up");
     }
 
     private CookingRecipeCommandResult StartProcess(CookingRecipeCommand command)

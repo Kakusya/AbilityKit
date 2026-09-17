@@ -1,0 +1,3 @@
+{"file": ".trellis/spec/cooking/cooking-recipe-loop.md", "reason": "Existing recipe/order fixture invariants, fixed-tick flow, atomicity, deduplication, and explicit fixture-only boundary."}
+{"file": ".trellis/spec/cooking/cooking-lan-session.md", "reason": "Shared authority queue, binding, baseline/sequence, bounded ingress, and transport-loss invariants for host-local and remote commands."}
+{"file": ".trellis/tasks/archive/2026-09/09-16-cooking-udp-lan-harness/design.md", "reason": "Existing LiteNetLib UDP adapter, dispatcher, wire, lifecycle, and same-machine artifact architecture to extend without duplicating."}

@@ -13,6 +13,16 @@ public sealed record CookingUdpHostOptions(string ConnectionKey, int Port, Playe
     public const string DefaultConnectionKey = "abilitykit-cooking-test";
 }
 
+public sealed record CookingUdpRecipeHostOptions(
+    string ConnectionKey,
+    int Port,
+    PlayerId HostLocalPlayer,
+    Func<ConnectionId, PlayerId> RemotePlayerAssignment,
+    int InboundQueueCapacity = 64)
+{
+    public const string DefaultConnectionKey = "abilitykit-cooking-test";
+}
+
 public sealed record CookingUdpClientOptions(string ConnectionKey, string Host, int Port);
 
 public sealed record CookingUdpTransportDiagnostic(string EventType, string CorrelationId, string? ConnectionId, string Detail,

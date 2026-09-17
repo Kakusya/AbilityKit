@@ -13,6 +13,10 @@ public enum CookingUdpMessageKind
     Delta,
     SynchronizationRejected,
     TransportClosed,
+    RecipeBaseline,
+    RecipeCommand,
+    RecipeCommandResult,
+    RecipeDelta,
 }
 
 public sealed record CookingUdpScope(string SessionId, string WorldId, string MatchId)
@@ -41,6 +45,11 @@ public sealed record CookingUdpCommandResultMessage(CookingSessionCommandDisposi
     int QueueDepth, bool IsDuplicate, CommandResult? AuthorityResult);
 public sealed record CookingUdpSynchronizationRejected(CookingSessionReason Reason, long? ExpectedSequence, long? BaselineReference);
 public sealed record CookingUdpTransportClosed(string Reason);
+public sealed record CookingUdpRecipeSnapshotMessage(long Sequence, long BaselineReference, string SnapshotHash,
+    CookingRecipeSnapshot Snapshot);
+public sealed record CookingUdpRecipeCommandMessage(CookingRecipeCommand Command);
+public sealed record CookingUdpRecipeCommandResultMessage(CookingRecipeOutcome Outcome, CookingRecipeRejectionReason Reason,
+    long StateVersion, bool IsDuplicate, IReadOnlyList<CookingRecipeEvent> Events);
 
 public static class CookingUdpCodec
 {
@@ -143,6 +152,45 @@ public sealed class CookingUdpClientProjection
     public CookingSnapshot? Snapshot { get; private set; }
     public CookingSynchronizationState State { get; private set; } = CookingSynchronizationState.WaitingForBaseline;
     public long Sequence => _sequence;
+    public long? BaselineReference => _baselineReference == 0 ? null : _baselineReference;
+
+    public CookingRecipeSnapshot? RecipeSnapshot { get; private set; }
+
+    public CookingSynchronizationResult InstallRecipeBaseline(CookingUdpRecipeSnapshotMessage message)
+    {
+        if (!ValidateRecipeSnapshot(message, out var reason))
+            return Reject(reason);
+        if (message.BaselineReference != message.Sequence)
+            return Reject(CookingSessionReason.BaselineReferenceMismatch);
+        if (message.Sequence <= 0 || message.Sequence < _sequence)
+            return Reject(CookingSessionReason.SnapshotSequenceStale);
+
+        RecipeSnapshot = message.Snapshot;
+        _sequence = message.Sequence;
+        _baselineReference = message.Sequence;
+        State = CookingSynchronizationState.Synchronized;
+        return new(true, CookingSessionReason.None, State, _sequence, _baselineReference);
+    }
+
+    public CookingSynchronizationResult ApplyRecipeDelta(CookingUdpRecipeSnapshotMessage message)
+    {
+        if (!ValidateRecipeSnapshot(message, out var reason))
+            return Reject(reason);
+        if (State != CookingSynchronizationState.Synchronized)
+            return Reject(CookingSessionReason.BaselineRequired);
+        if (message.BaselineReference != _baselineReference)
+            return Reject(CookingSessionReason.BaselineReferenceMismatch);
+        if (message.Sequence == _sequence)
+            return Reject(CookingSessionReason.SnapshotSequenceDuplicate);
+        if (message.Sequence < _sequence)
+            return Reject(CookingSessionReason.SnapshotSequenceStale);
+        if (message.Sequence > _sequence + 1)
+            return Reject(CookingSessionReason.SnapshotSequenceGap);
+
+        RecipeSnapshot = message.Snapshot;
+        _sequence = message.Sequence;
+        return new(true, CookingSessionReason.None, State, _sequence, _baselineReference);
+    }
 
     public CookingSynchronizationResult InstallBaseline(CookingUdpSnapshotMessage message)
     {
@@ -183,6 +231,27 @@ public sealed class CookingUdpClientProjection
     public void ReportTransportLoss()
     {
         State = CookingSynchronizationState.Unsynchronized;
+    }
+
+    private bool ValidateRecipeSnapshot(CookingUdpRecipeSnapshotMessage message, out CookingSessionReason reason)
+    {
+        if (message is null || message.Snapshot is null || message.Sequence <= 0 || string.IsNullOrWhiteSpace(message.SnapshotHash))
+        {
+            reason = CookingSessionReason.InvalidBaseline;
+            return false;
+        }
+        if (!Equals(message.Snapshot.Scope, _scope))
+        {
+            reason = CookingSessionReason.ScopeMismatch;
+            return false;
+        }
+        if (!StringComparer.Ordinal.Equals(message.Snapshot.Sha256(), message.SnapshotHash))
+        {
+            reason = CookingSessionReason.AuthoritySnapshotMismatch;
+            return false;
+        }
+        reason = CookingSessionReason.None;
+        return true;
     }
 
     private bool ValidateSnapshot(CookingUdpSnapshotMessage message, bool requireBaseline, out CookingSessionReason reason)
