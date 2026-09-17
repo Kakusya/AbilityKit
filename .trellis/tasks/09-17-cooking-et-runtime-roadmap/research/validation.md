@@ -40,9 +40,28 @@ UDP gate、同机跨进程 harness、两物理 PC LAN、core-stability、runtime
 - 误操作说明：stash 复原时三个生成 DLL（Analyzer.Plugin、Moba.CodeGen、ET.SourceGenerator）被构建触碰，已 `git checkout` 还原为已提交状态。
 - 未运行：cooking-udp gate（未改 UDP 代码）、Unity 编译/EditMode（未改 Unity 资产与共享 UPM 源，且本机无 Editor 环境验证）、Moba/Shooter 专项门禁。
 
+## 追加：第 1 步 System 执行与生命周期闭环（第四轮）
+
+范围：仅扩展现有 `src/AbilityKit.ET.Share.Tests`，不修改 ET 源码、Cooking、Unity、协议或存档。
+
+### 实际通过
+
+- `dotnet test src/AbilityKit.ET.Share.Tests/AbilityKit.ET.Share.Tests.csproj --logger "trx;LogFileName=share-systems-step1-final.trx" --results-directory artifacts/cooking-et-roadmap/share`：exit 0，5/5 通过（含既有 2 条公开生命周期 + 3 条新测试），TRX Counters total=5 executed=5 passed=5 failed=0。
+- 覆盖：Awake 注册一次；`Thread.Sleep(30)`+仅 LateUpdate 不推进 Update；`manager.Update()` 每次 Tick 恰好 +1；实体 `Dispose()` 幂等、Destroy 恰好一次、EntityRef 失效、已销毁实体不再收到后续 Update；双 Fiber 队列互不串扰、Remove 一个 Fiber 后另一个继续 Tick 且各自记录 Fiber.Id；`World.Dispose()` 后全部单例实例清空、实体 Destroy、旧引用失效；重建 World 后全新单例/队列/实体，旧实体状态不变，新 Fiber 上下文回调可执行而旧回调计数保持 0（仅证明新调度器未承接旧队列，非框架主动取消旧回调）。
+
+### 失败与边界
+
+- `core-stability` 门禁 exit 1：`HFSM deterministic runtime contract tests` 2/47 失败（DefinitionJsonTests：CRLF/LF 换行差异；v1 迁移 `isGhostState` 未知属性）。与第四轮改动无关、本轮未修复 HFSM；ET 聚焦测试的通过不能代表门禁通过。
+- 已知测试自证限制：`Fiber.Instance` 与 SynchronizationContext 由测试宿主在 finally 中显式恢复，不据此宣称框架自动还原；旧回调非执行不能等价于取消。
+- 构建再次触碰三个既有生成 DLL，已 `git checkout` 还原；规划文档本轮未改动。
+
+### 结论
+
+第 1 步验收成立：不依赖 DemoEntry、不反射构造 Fiber，可完成"启动—注册—显式 Tick—销毁—重启"闭环，System 按 `[EntitySystem]` 扫描注册、按宿主显式 `Update` 推进。独立内核提炼（第 2 步）、Cooking 纵切（第 3 步）与清退（第 4 步）仍未开始。
+
 ## 追加：Demo 依赖下的 Cooking 集成探针（第三轮）
 
-本节为当前结果；前述“仅规划/ET 未运行”只描述第一轮。当前范围已明确收敛为 Demo 宿主集成探针，不是独立 ET 内核或完整 Cooking 迁移。
+本节为第三轮结果；前述“仅规划/ET 未运行”只描述第一轮。当前范围已明确收敛为 Demo 宿主集成探针，不是独立 ET 内核或完整 Cooking 迁移。第四轮见上方。
 
 ### 实际通过
 
