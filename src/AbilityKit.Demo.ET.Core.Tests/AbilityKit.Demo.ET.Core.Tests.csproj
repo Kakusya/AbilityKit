@@ -1,0 +1,19 @@
+<Project Sdk="Microsoft.NET.Sdk">
+  <PropertyGroup>
+    <TargetFramework>net10.0</TargetFramework>
+    <ImplicitUsings>enable</ImplicitUsings>
+    <Nullable>disable</Nullable>
+    <RootNamespace>AbilityKit.Demo.ET.Core.Tests</RootNamespace>
+    <IsPackable>false</IsPackable>
+  </PropertyGroup>
+  <ItemGroup>
+    <ProjectReference Include="..\AbilityKit.Demo.ET.Share\AbilityKit.Demo.ET.Share.csproj" />
+    <ProjectReference Include="..\AbilityKit.Demo.ET.Logic\AbilityKit.Demo.ET.Logic.csproj" />
+    <ProjectReference Include="..\AbilityKit.Demo.ET.App\AbilityKit.Demo.ET.App.csproj" />
+    <PackageReference Include="Microsoft.NET.Test.Sdk" Version="17.12.0" />
+    <PackageReference Include="xunit" Version="2.9.2" />
+    <PackageReference Include="xunit.runner.visualstudio" Version="2.8.2">
+      <PrivateAssets>all</PrivateAssets>
+    </PackageReference>
+  </ItemGroup>
+</Project>

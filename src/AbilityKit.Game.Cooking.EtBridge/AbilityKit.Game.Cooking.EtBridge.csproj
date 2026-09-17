@@ -1,0 +1,13 @@
+<Project Sdk="Microsoft.NET.Sdk">
+  <PropertyGroup>
+    <TargetFramework>net10.0</TargetFramework>
+    <ImplicitUsings>enable</ImplicitUsings>
+    <Nullable>enable</Nullable>
+    <RootNamespace>AbilityKit.Game.Cooking.EtBridge</RootNamespace>
+    <IsPackable>false</IsPackable>
+  </PropertyGroup>
+  <ItemGroup>
+    <ProjectReference Include="..\AbilityKit.Game.Cooking\AbilityKit.Game.Cooking.csproj" />
+    <ProjectReference Include="..\AbilityKit.Demo.ET.Share\AbilityKit.Demo.ET.Share.csproj" />
+  </ItemGroup>
+</Project>
