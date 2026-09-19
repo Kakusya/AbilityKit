@@ -3,7 +3,7 @@
   "name": "cooking-et-level-fixed-tick",
   "title": "Cooking Level ET 生命周期与单一固定加工时钟",
   "description": "新增 canonical Cooking Level 生命周期与 obsolete Match 兼容层，以最小 ET Component seam 驱动每个权威帧一次的原子固定加工 Tick。",
-  "status": "in_progress",
+  "status": "completed",
   "dev_type": null,
   "scope": "cooking-level-lifecycle-et-fixed-tick",
   "package": null,
@@ -11,11 +11,11 @@
   "creator": "Li He",
   "assignee": "Li He",
   "createdAt": "2026-09-17",
-  "completedAt": null,
+  "completedAt": "2026-09-19",
   "branch": "feat/et-share-bootstrap",
   "base_branch": "master",
   "worktree_path": null,
-  "commit": null,
+  "commit": "29bc685cc777751b246cd5d5ade23c3021e3aecc",
   "pr_url": null,
   "subtasks": [],
   "children": [],
@@ -41,8 +41,8 @@
     "acceptance_gate": "cooking-et-level-runtime",
     "authority_phase": "Phase A: CookingRecipeSimulation remains sole gameplay authority",
     "unity_scope": "prohibited",
-    "migration_status": "in_progress",
-    "migration_reason": "implementation and task-specific gates are complete; changes are committed pending task finish/archive",
+    "migration_status": "completed",
+    "migration_reason": "approved Phase A implementation and task-specific gates completed; implementation committed and task archived",
     "evidence_contract": "full Cooking and ET test projects with TRX artifacts; dedicated gate added before delivery"
   }
 }
