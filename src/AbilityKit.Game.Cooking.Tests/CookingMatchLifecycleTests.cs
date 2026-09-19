@@ -3,6 +3,7 @@ using Xunit;
 
 namespace AbilityKit.Game.Cooking.Tests;
 
+#pragma warning disable CS0618 // This fixture intentionally verifies the obsolete compatibility facade.
 [Trait("Gate", "CookingMatchLifecycle")]
 public sealed class CookingMatchLifecycleTests
 {
@@ -111,6 +112,9 @@ public sealed class CookingMatchLifecycleTests
         Assert.Equal(2, next.Epoch);
         Assert.Equal(CookingMatchState.Preparing, next.State);
         Assert.False(lifecycle.IsGameplayAdmissionOpen);
+        AssertAccepted(next.Prepare(Preparation(CurrentIdentity(next))), CookingMatchState.Ready);
+        AssertAccepted(next.Start(), CookingMatchState.Started);
+        Assert.True(next.TryGetGameplay(out _));
         AssertEvidence(evidence.Path, "M03-M04", 5);
     }
 
@@ -321,3 +325,4 @@ public sealed class CookingMatchLifecycleTests
 
     private static EvidenceScope CreateEvidence(string testId) => new(testId);
 }
+#pragma warning restore CS0618

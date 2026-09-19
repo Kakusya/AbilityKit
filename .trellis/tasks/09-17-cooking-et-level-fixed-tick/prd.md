@@ -1,6 +1,6 @@
 # Cooking Level ET 生命周期与单一固定加工时钟
 
-> 状态：`planning`，等待 owner 对本次重写后的最终范围重新审阅。本文与 `design.md`、`implement.md` 只描述拟实施范围，不代表能力已实现或已验证。
+> 状态：`in_progress`。Owner 已批准并完成本轮 Phase A 实现；task-specific build/tests/gate 证据见 `research/validation.md`。实现已纳入本次提交，task 尚未执行 finish/archive。
 
 ## Goal
 
@@ -190,20 +190,20 @@ CookingRecipeTickResult AdvanceFixedTick(
 
 ## Acceptance Criteria
 
-- [ ] AC1：新增 canonical `CookingLevelLifecycle`、LevelScope、LevelState、LevelOutcome、result/event/snapshot contracts；状态转换、非法转换和 scope/epoch rejection 有聚焦测试。
-- [ ] AC2：旧 `CookingMatchLifecycle*` facade 标记 obsolete 并委托 canonical Level lifecycle；旧 lifecycle tests 保持通过，且不存在第二套状态机或第二个 gameplay owner。
-- [ ] AC3：ET seam 使用正确 Attribute/后缀：Application/Runtime/Kitchen/Level/Driver 为 Component，Match 为 Registry 下 Entity；Prepare/Start 安装失败不会留下 Running lifecycle 或半初始化 driver。
-- [ ] AC4：Running 连续 Tick 三次时 LogicalTick 精确从 0 到 3；空帧也每帧只增加 1。
-- [ ] AC5：单帧只执行最小 SimulationBatch，future batch 保留；`batch <= committed watermark` 拒绝；capacity 按 unique pending identity；canonical fingerprint golden tests、stable representative、duplicate collapse、conflicting group terminal rejection 和 dispositions 均与到达排列无关。
-- [ ] AC6：当帧成功 StartProcess 后，同帧 fixed Tick 令 elapsed=1；RequiredTicks=3 时第三个 Running Tick 恰好完成并生成一个产品。
-- [ ] AC7：多 Process 同帧推进/完成时 LogicalTick/Version 各只加 1；结果、产品 ID、command/tick event sequence 和 snapshot hash 可重复。
-- [ ] AC8：通过 injected fixed product allocator 在无 accepted mutating commands 的帧触发 preflight collision；fixed-step state/hash/counter/event 和 HostFrameSequence 全部不变，host 进入 faulted，ET System 不得吞掉异常。
-- [ ] AC9：Paused 拒绝新命令、不推进 Tick、保留旧 queue 和全部水位；Resume 后旧命令继续正常仲裁。Pause/Resume 不改变 LevelEpoch。
-- [ ] AC10：Failed retry 复用 LevelId、增加 Epoch、取消旧 Epoch 全部 pending/frozen commands、重置 Level-local watermarks，HostFrameSequence 保持单调，旧命令不污染新代际。
-- [ ] AC11：Success successor 使用新 LevelId/更高 Epoch；旧 Level generation、simulation 和 driver 已关闭/移除。
-- [ ] AC12：新 host 拒绝外部 `AdvanceTicks` 且不占容量；旧 simulation direct behavior 由现有 regression 继续覆盖。
-- [ ] AC13：owner-thread、reentry、capacity、fault、Dispose 和 FinalDispositionHistory 有聚焦测试。
-- [ ] AC14：权威 task-local 证据为两个完整项目测试及落盘 TRX：`AbilityKit.Game.Cooking.Tests` 与 `AbilityKit.ET.Runtime.Tests`，任何失败均阻断交付；focused `Gate=CookingLevelRuntime` Trait 仅作分类/诊断。实现必须在交付前注册并通过 `cooking-et-level-runtime` gate（同样完整执行两个项目），`cooking-udp` 只作为 legacy compatibility evidence。
+- [x] AC1：新增 canonical `CookingLevelLifecycle`、LevelScope、LevelState、LevelOutcome、result/event/snapshot contracts；状态转换、非法转换和 scope/epoch rejection 有聚焦测试。
+- [x] AC2：旧 `CookingMatchLifecycle*` facade 标记 obsolete 并委托 canonical Level lifecycle；旧 lifecycle tests 保持通过，且不存在第二套状态机或第二个 gameplay owner。
+- [x] AC3：ET seam 使用正确 Attribute/后缀：Application/Runtime/Kitchen/Level/Driver 为 Component，Match 为 Registry 下 Entity；Prepare/Start 安装失败不会留下 Running lifecycle 或半初始化 driver。
+- [x] AC4：Running 连续 Tick 三次时 LogicalTick 精确从 0 到 3；空帧也每帧只增加 1。
+- [x] AC5：单帧只执行最小 SimulationBatch，future batch 保留；`batch <= committed watermark` 拒绝；capacity 按 unique pending identity；canonical fingerprint golden tests、stable representative、duplicate collapse、conflicting group terminal rejection 和 dispositions 均与到达排列无关。
+- [x] AC6：当帧成功 StartProcess 后，同帧 fixed Tick 令 elapsed=1；RequiredTicks=3 时第三个 Running Tick 恰好完成并生成一个产品。
+- [x] AC7：多 Process 同帧推进/完成时 LogicalTick/Version 各只加 1；结果、产品 ID、command/tick event sequence 和 snapshot hash 可重复。
+- [x] AC8：通过 injected fixed product allocator 在无 accepted mutating commands 的帧触发 preflight collision；fixed-step state/hash/counter/event 和 HostFrameSequence 全部不变，host 进入 faulted，ET System 不得吞掉异常。
+- [x] AC9：Paused 拒绝新命令、不推进 Tick、保留旧 queue 和全部水位；Resume 后旧命令继续正常仲裁。Pause/Resume 不改变 LevelEpoch。
+- [x] AC10：Failed retry 复用 LevelId、增加 Epoch、取消旧 Epoch 全部 pending/frozen commands、重置 Level-local watermarks，HostFrameSequence 保持单调，旧命令不污染新代际。
+- [x] AC11：Success successor 使用新 LevelId/更高 Epoch；旧 Level generation、simulation 和 driver 已关闭/移除。
+- [x] AC12：新 host 拒绝外部 `AdvanceTicks` 且不占容量；旧 simulation direct behavior 由现有 regression 继续覆盖。
+- [x] AC13：owner-thread、reentry、capacity、fault、Dispose 和 FinalDispositionHistory 有聚焦测试。
+- [x] AC14：权威 task-local 证据为两个完整项目测试及落盘 TRX：`AbilityKit.Game.Cooking.Tests` 与 `AbilityKit.ET.Runtime.Tests`，任何失败均阻断交付；focused `Gate=CookingLevelRuntime` Trait 仅作分类/诊断。实现必须在交付前注册并通过 `cooking-et-level-runtime` gate（同样完整执行两个项目），`cooking-udp` 只作为 legacy compatibility evidence。
 
 ## Out of scope
 
@@ -234,4 +234,4 @@ CookingRecipeTickResult AdvanceFixedTick(
 
 ## Blocking open questions
 
-无。本文、`design.md` 和 `implement.md` 完成一致性重写并通过 planning review 后，需要 owner 对最终摘要作一次新的明确批准，任务才能从 `planning` 进入实现。
+无。Owner 已批准本范围并完成实现；实际验证见 `research/validation.md`。

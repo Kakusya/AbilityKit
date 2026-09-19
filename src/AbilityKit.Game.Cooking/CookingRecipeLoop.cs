@@ -173,6 +173,38 @@ public sealed record CookingRecipeCommandResult(
         new(CookingRecipeOutcome.Rejected, reason, stateVersion, false, Array.Empty<CookingRecipeEvent>());
 }
 
+public sealed record CookingRecipeProcessTickResult(
+    ProcessId Process,
+    RecipeId Recipe,
+    PlayerId Player,
+    ItemId Input,
+    StationSlotId Station,
+    int BeforeElapsedTicks,
+    int AfterElapsedTicks,
+    int RequiredTicks,
+    bool Completed,
+    ItemId? Product);
+
+public sealed record CookingRecipeTickEvent(
+    long Sequence,
+    CookingLevelScope LevelScope,
+    long HostFrameSequence,
+    long BeforeLogicalTick,
+    long AfterLogicalTick,
+    long BeforeStateVersion,
+    long AfterStateVersion,
+    IReadOnlyList<CookingRecipeProcessTickResult> Processes);
+
+public sealed record CookingRecipeTickResult(
+    CookingLevelScope LevelScope,
+    long HostFrameSequence,
+    long BeforeLogicalTick,
+    long AfterLogicalTick,
+    long BeforeStateVersion,
+    long AfterStateVersion,
+    IReadOnlyList<CookingRecipeProcessTickResult> Processes,
+    CookingRecipeTickEvent Event);
+
 /// <summary>
 /// Validates the complete, wire-facing shape of a recipe command before it reaches a simulation.
 /// Domain validation still decides whether the referenced fixture state permits the command.
@@ -229,6 +261,37 @@ public interface ICookingOrderPort
     CookingOrderAcceptance Submit(CookingOrderSubmission submission);
 }
 
+public interface ICookingProductIdAllocator
+{
+    ItemId GetProductId(long productSequence);
+}
+
+internal interface ICookingRecipeLifecycleGate
+{
+    bool IsGameplayMutationOpen { get; }
+}
+
+internal interface ICookingRecipeAuthorityGate
+{
+    bool IsAuthorityMutationOpen { get; }
+}
+
+public sealed class SequentialCookingProductIdAllocator : ICookingProductIdAllocator
+{
+    public static SequentialCookingProductIdAllocator Instance { get; } = new();
+
+    private SequentialCookingProductIdAllocator()
+    {
+    }
+
+    public ItemId GetProductId(long productSequence)
+    {
+        if (productSequence <= 0)
+            throw new ArgumentOutOfRangeException(nameof(productSequence));
+        return new ItemId($"product-{productSequence}");
+    }
+}
+
 public sealed class CookingRecipeSimulation
 {
     private static readonly JsonSerializerOptions CanonicalJsonOptions = new()
@@ -239,25 +302,34 @@ public sealed class CookingRecipeSimulation
 
     private readonly CookingRecipeFixture _fixture;
     private readonly ICookingOrderPort _orderPort;
-    private readonly Dictionary<ItemId, ItemState> _items = new();
+    private readonly ICookingProductIdAllocator _productIdAllocator;
+    private Dictionary<ItemId, ItemState> _items = new();
     private readonly Dictionary<PlayerId, ItemId?> _hands = new();
-    private readonly Dictionary<StationSlotId, ProcessState> _processesByStation = new();
-    private readonly Dictionary<ProcessId, StationSlotId> _stationsByProcess = new();
+    private Dictionary<StationSlotId, ProcessState> _processesByStation = new();
+    private Dictionary<ProcessId, StationSlotId> _stationsByProcess = new();
     private readonly Dictionary<ContainerId, List<ItemId>> _containerItems = new();
     private readonly HashSet<ItemId> _consumedProducts = new();
     private readonly HashSet<OrderId> _acceptedOrders = new();
     private readonly Dictionary<RecipeCommandKey, ProcessedCommand> _processedCommands = new();
     private readonly List<CookingRecipeEvent> _events = new();
+    private List<CookingRecipeTickEvent> _tickEvents = new();
     private long _stateVersion;
     private long _eventSequence;
     private long _nextProcessId;
     private long _nextProductId;
     private bool _lifecycleClosed;
+    private bool _mutationInProgress;
+    private ICookingRecipeLifecycleGate? _lifecycleGate;
+    private ICookingRecipeAuthorityGate? _authorityGate;
 
-    public CookingRecipeSimulation(CookingRecipeFixture fixture, ICookingOrderPort orderPort)
+    public CookingRecipeSimulation(
+        CookingRecipeFixture fixture,
+        ICookingOrderPort orderPort,
+        ICookingProductIdAllocator? productIdAllocator = null)
     {
         _fixture = fixture ?? throw new ArgumentNullException(nameof(fixture));
         _orderPort = orderPort ?? throw new ArgumentNullException(nameof(orderPort));
+        _productIdAllocator = productIdAllocator ?? SequentialCookingProductIdAllocator.Instance;
         foreach (var player in fixture.Players.Keys)
             _hands.Add(player, null);
         foreach (var container in fixture.Containers.Keys)
@@ -267,6 +339,8 @@ public sealed class CookingRecipeSimulation
     public long LogicalTick { get; private set; }
 
     public IReadOnlyList<CookingRecipeEvent> EventHistory => _events;
+
+    public IReadOnlyList<CookingRecipeTickEvent> TickEventHistory => _tickEvents.AsReadOnly();
 
     public ItemId? ItemInHand(PlayerId player) => _hands.TryGetValue(player, out var item) ? item : null;
 
@@ -305,8 +379,7 @@ public sealed class CookingRecipeSimulation
 
     private void AddItem(ItemId id, DefinitionId definition, ItemLocation location, int version)
     {
-        if (_lifecycleClosed)
-            throw new InvalidOperationException("The recipe simulation is closed by its match lifecycle.");
+        EnsureGameplayMutationOpen();
         if (!_fixture.Items.ContainsKey(definition))
             throw new ArgumentException($"Unknown item definition '{definition}'.", nameof(definition));
         if (_items.ContainsKey(id))
@@ -327,15 +400,58 @@ public sealed class CookingRecipeSimulation
             _hands[new PlayerId(location.OwnerId!)] = id;
     }
 
-    public void CloseLifecycle() => _lifecycleClosed = true;
+    internal void CloseLifecycle() => _lifecycleClosed = true;
+
+    private bool IsGameplayMutationOpen =>
+        !_lifecycleClosed && (_lifecycleGate?.IsGameplayMutationOpen ?? true);
+
+    private bool IsAuthorityMutationOpen => _authorityGate?.IsAuthorityMutationOpen ?? true;
+
+    private void EnsureGameplayMutationOpen()
+    {
+        if (!IsGameplayMutationOpen || !IsAuthorityMutationOpen || _mutationInProgress)
+            throw new InvalidOperationException("The recipe simulation is not open for authoritative mutation.");
+    }
+
+    internal void BindLifecycleGate(ICookingRecipeLifecycleGate lifecycleGate)
+    {
+        ArgumentNullException.ThrowIfNull(lifecycleGate);
+        if (_lifecycleClosed)
+            throw new InvalidOperationException("A closed recipe simulation cannot be bound to a level lifecycle.");
+        if (_lifecycleGate is not null && !ReferenceEquals(_lifecycleGate, lifecycleGate))
+            throw new InvalidOperationException("The recipe simulation is already bound to a different level lifecycle.");
+        _lifecycleGate = lifecycleGate;
+    }
+
+    internal void BindAuthorityGate(ICookingRecipeAuthorityGate authorityGate)
+    {
+        ArgumentNullException.ThrowIfNull(authorityGate);
+        if (_authorityGate is not null && !ReferenceEquals(_authorityGate, authorityGate))
+            throw new InvalidOperationException("The recipe simulation is already bound to a different authority gate.");
+        _authorityGate = authorityGate;
+    }
 
     public CookingRecipeCommandResult Submit(CookingRecipeCommand command)
     {
         ArgumentNullException.ThrowIfNull(command);
         if (!CookingRecipeCommandValidation.IsWellFormed(command))
             return CookingRecipeCommandResult.Reject(CookingRecipeRejectionReason.MalformedCommand, _stateVersion);
-        if (_lifecycleClosed)
+        if (!IsGameplayMutationOpen || !IsAuthorityMutationOpen || _mutationInProgress)
             return CookingRecipeCommandResult.Reject(CookingRecipeRejectionReason.LifecycleClosed, _stateVersion);
+
+        _mutationInProgress = true;
+        try
+        {
+            return SubmitCore(command);
+        }
+        finally
+        {
+            _mutationInProgress = false;
+        }
+    }
+
+    private CookingRecipeCommandResult SubmitCore(CookingRecipeCommand command)
+    {
         var key = new RecipeCommandKey(command.Scope.Session, command.Player, command.Command);
         var fingerprint = JsonSerializer.Serialize(command, CanonicalJsonOptions);
         if (_processedCommands.TryGetValue(key, out var processed))
@@ -356,6 +472,190 @@ public sealed class CookingRecipeSimulation
         };
         _processedCommands.Add(key, new ProcessedCommand(fingerprint, result));
         return result;
+    }
+
+    public CookingRecipeTickResult AdvanceFixedTick(CookingLevelScope levelScope, long hostFrameSequence)
+    {
+        ArgumentNullException.ThrowIfNull(levelScope);
+        EnsureGameplayMutationOpen();
+        if (_mutationInProgress)
+            throw new InvalidOperationException("The recipe simulation mutation cannot be reentered.");
+        if (hostFrameSequence <= 0)
+            throw new ArgumentOutOfRangeException(nameof(hostFrameSequence));
+        if (!Equals(levelScope.MatchScope, _fixture.Scope))
+            throw new ArgumentException("The level scope does not match the recipe simulation scope.", nameof(levelScope));
+
+        _mutationInProgress = true;
+        try
+        {
+            var plan = BuildFixedTickPlan(levelScope, hostFrameSequence);
+            CommitFixedTick(plan);
+            return plan.Result;
+        }
+        finally
+        {
+            _mutationInProgress = false;
+        }
+    }
+
+    private FixedTickPlan BuildFixedTickPlan(CookingLevelScope levelScope, long hostFrameSequence)
+    {
+        var beforeLogicalTick = LogicalTick;
+        var afterLogicalTick = checked(beforeLogicalTick + 1);
+        var beforeStateVersion = _stateVersion;
+        var afterStateVersion = checked(beforeStateVersion + 1);
+        var afterEventSequence = checked(_eventSequence + 1);
+        var nextProductSequence = _nextProductId;
+        var replacementItems = new Dictionary<ItemId, ItemState>(_items);
+        var replacementProcessesByStation = new Dictionary<StationSlotId, ProcessState>(_processesByStation);
+        var replacementStationsByProcess = new Dictionary<ProcessId, StationSlotId>(_stationsByProcess);
+        var processResults = new List<CookingRecipeProcessTickResult>();
+
+        ValidateProcessIndexesForFixedTick();
+        foreach (var process in _processesByStation.Values.OrderBy(value => value.Id.Value, StringComparer.Ordinal))
+        {
+            ValidateProcessForFixedTick(process);
+            var afterElapsedTicks = checked(process.ElapsedTicks + 1);
+            if (afterElapsedTicks < process.RequiredTicks)
+            {
+                var progressed = process with { ElapsedTicks = afterElapsedTicks };
+                replacementProcessesByStation[process.Station] = progressed;
+                processResults.Add(new CookingRecipeProcessTickResult(
+                    process.Id,
+                    process.Recipe,
+                    process.Player,
+                    process.Input,
+                    process.Station,
+                    process.ElapsedTicks,
+                    afterElapsedTicks,
+                    process.RequiredTicks,
+                    false,
+                    null));
+                continue;
+            }
+
+            var recipe = _fixture.Recipes[process.Recipe];
+            var input = _items[process.Input];
+            var productSequence = checked(nextProductSequence + 1);
+            var productId = _productIdAllocator.GetProductId(productSequence);
+            if (string.IsNullOrWhiteSpace(productId.Value))
+                throw new InvalidOperationException($"Product allocator returned a blank identity for sequence '{productSequence}'.");
+            if (replacementItems.ContainsKey(productId))
+                throw new InvalidOperationException($"Product allocator returned duplicate item identity '{productId}'.");
+
+            nextProductSequence = productSequence;
+            replacementItems[process.Input] = input with { Removed = true, Version = checked(input.Version + 1) };
+            replacementItems.Add(productId, new ItemState(
+                recipe.ProductDefinition,
+                1,
+                ItemLocation.Station(process.Station),
+                false,
+                recipe.Id,
+                true,
+                process.Station));
+            if (!replacementProcessesByStation.Remove(process.Station) ||
+                !replacementStationsByProcess.Remove(process.Id))
+            {
+                throw new InvalidOperationException($"Process '{process.Id}' could not be staged for completion.");
+            }
+            processResults.Add(new CookingRecipeProcessTickResult(
+                process.Id,
+                process.Recipe,
+                process.Player,
+                process.Input,
+                process.Station,
+                process.ElapsedTicks,
+                afterElapsedTicks,
+                process.RequiredTicks,
+                true,
+                productId));
+        }
+
+        var immutableResults = Array.AsReadOnly(processResults.ToArray());
+        var tickEvent = new CookingRecipeTickEvent(
+            afterEventSequence,
+            levelScope,
+            hostFrameSequence,
+            beforeLogicalTick,
+            afterLogicalTick,
+            beforeStateVersion,
+            afterStateVersion,
+            immutableResults);
+        var replacementTickEvents = new List<CookingRecipeTickEvent>(_tickEvents.Count + 1);
+        replacementTickEvents.AddRange(_tickEvents);
+        replacementTickEvents.Add(tickEvent);
+        var result = new CookingRecipeTickResult(
+            levelScope,
+            hostFrameSequence,
+            beforeLogicalTick,
+            afterLogicalTick,
+            beforeStateVersion,
+            afterStateVersion,
+            immutableResults,
+            tickEvent);
+        return new FixedTickPlan(
+            beforeLogicalTick,
+            afterLogicalTick,
+            beforeStateVersion,
+            afterStateVersion,
+            afterEventSequence,
+            nextProductSequence,
+            replacementItems,
+            replacementProcessesByStation,
+            replacementStationsByProcess,
+            replacementTickEvents,
+            immutableResults,
+            tickEvent,
+            result);
+    }
+
+    private void ValidateProcessIndexesForFixedTick()
+    {
+        if (_stationsByProcess.Count != _processesByStation.Count)
+            throw new InvalidOperationException("The process reverse index count does not match the station process count.");
+
+        foreach (var (processId, stationId) in _stationsByProcess)
+        {
+            if (!_processesByStation.TryGetValue(stationId, out var process) ||
+                process.Id != processId ||
+                process.Station != stationId)
+            {
+                throw new InvalidOperationException(
+                    $"Process reverse index '{processId}' -> '{stationId}' does not match an authoritative station process.");
+            }
+        }
+    }
+
+    private void ValidateProcessForFixedTick(ProcessState process)
+    {
+        if (string.IsNullOrWhiteSpace(process.Id.Value))
+            throw new InvalidOperationException("An active process has a blank identity.");
+        if (!_stationsByProcess.TryGetValue(process.Id, out var indexedStation) || indexedStation != process.Station)
+            throw new InvalidOperationException($"Process '{process.Id}' has inconsistent station indexes.");
+        if (!_processesByStation.TryGetValue(process.Station, out var indexedProcess) || indexedProcess != process)
+            throw new InvalidOperationException($"Process '{process.Id}' is not the authoritative station process.");
+        if (!_fixture.Appliances.ContainsKey(process.Station))
+            throw new InvalidOperationException($"Process '{process.Id}' references unknown station '{process.Station}'.");
+        if (!_fixture.Recipes.TryGetValue(process.Recipe, out var recipe))
+            throw new InvalidOperationException($"Process '{process.Id}' references unknown recipe '{process.Recipe}'.");
+        if (process.RequiredTicks != recipe.RequiredTicks || process.ElapsedTicks < 0 || process.ElapsedTicks >= process.RequiredTicks)
+            throw new InvalidOperationException($"Process '{process.Id}' has invalid progress invariants.");
+        if (!_items.TryGetValue(process.Input, out var input) || input.Removed)
+            throw new InvalidOperationException($"Process '{process.Id}' references unavailable input '{process.Input}'.");
+        if (input.Definition != recipe.InputDefinition || input.Location != ItemLocation.Station(process.Station))
+            throw new InvalidOperationException($"Process '{process.Id}' input state is inconsistent with its recipe and station.");
+    }
+
+    private void CommitFixedTick(FixedTickPlan plan)
+    {
+        _items = plan.ReplacementItems;
+        _processesByStation = plan.ReplacementProcessesByStation;
+        _stationsByProcess = plan.ReplacementStationsByProcess;
+        _tickEvents = plan.ReplacementTickEvents;
+        LogicalTick = plan.AfterLogicalTick;
+        _stateVersion = plan.AfterStateVersion;
+        _eventSequence = plan.AfterEventSequence;
+        _nextProductId = plan.NextProductSequence;
     }
 
     private CookingRecipeCommandResult Pickup(CookingRecipeCommand command)
@@ -552,6 +852,27 @@ public sealed class CookingRecipeSimulation
     private CookingRecipeCommandResult Reject(CookingRecipeRejectionReason reason) =>
         CookingRecipeCommandResult.Reject(reason, _stateVersion);
 
+    internal void SetFixedTickCountersForTesting(
+        long logicalTick,
+        long stateVersion,
+        long eventSequence,
+        long productSequence)
+    {
+        LogicalTick = logicalTick;
+        _stateVersion = stateVersion;
+        _eventSequence = eventSequence;
+        _nextProductId = productSequence;
+    }
+
+    internal void AddFixedTickReverseIndexEntryForTesting(ProcessId process, StationSlotId station) =>
+        _stationsByProcess.Add(process, station);
+
+    internal void SetFixedTickReverseIndexEntryForTesting(ProcessId process, StationSlotId station) =>
+        _stationsByProcess[process] = station;
+
+    internal bool ContainsFixedTickReverseIndexForTesting(ProcessId process) =>
+        _stationsByProcess.ContainsKey(process);
+
     private sealed record ItemState(
         DefinitionId Definition,
         int Version,
@@ -569,6 +890,21 @@ public sealed class CookingRecipeSimulation
         StationSlotId Station,
         int ElapsedTicks,
         int RequiredTicks);
+
+    private sealed record FixedTickPlan(
+        long BeforeLogicalTick,
+        long AfterLogicalTick,
+        long BeforeStateVersion,
+        long AfterStateVersion,
+        long AfterEventSequence,
+        long NextProductSequence,
+        Dictionary<ItemId, ItemState> ReplacementItems,
+        Dictionary<StationSlotId, ProcessState> ReplacementProcessesByStation,
+        Dictionary<ProcessId, StationSlotId> ReplacementStationsByProcess,
+        List<CookingRecipeTickEvent> ReplacementTickEvents,
+        IReadOnlyList<CookingRecipeProcessTickResult> ProcessResults,
+        CookingRecipeTickEvent TickEvent,
+        CookingRecipeTickResult Result);
 
     private sealed record RecipeCommandKey(SessionId Session, PlayerId Player, RecipeCommandId Command);
 

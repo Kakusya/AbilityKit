@@ -37,9 +37,9 @@ MOBA、Client Flow、Presentation 与通用工程治理属于后续正式化主�
 
 **待办**：
 
-- [ ] 在 `AbilityKit.Game.Cooking.EtRuntime` 建立正式 Match host，编排 `CookingMatchLifecycle`、当前 simulation、ET Scene、命令 ingress 和结果输出。
-- [ ] 明确 Restaurant 长生命周期与 Stage/Match 短生命周期的 ET 所有权结构；ET Entity 只承载生命周期/投影，不复制 Cooking 权威规则状态。
-- [ ] 建立单一固定加工时钟：每个权威帧全局 `LogicalTick` 只推进一次，批量推进全部加工；Preparing 暂停，Started 恢复，同 Tick 完成顺序稳定。
+- [x] 在 `AbilityKit.Game.Cooking.EtRuntime` 建立 canonical Level Phase A host seam，编排 `CookingLevelLifecycle`、当前 simulation、ET Scene、命令 ingress 和 frame/disposition 输出；旧 `CookingMatchLifecycle` 仅保留 obsolete 兼容 facade。证据见 [当前 task](../.trellis/tasks/09-17-cooking-et-level-fixed-tick/research/validation.md)。
+- [x] 明确最小 Match/RestaurantRuntime/Kitchen/Level ET 所有权结构；ET 只承载生命周期与 driver seam，不复制 Cooking gameplay 权威状态；精确 parent 由窄范围 Roslyn relation analyzer 与运行时树测试共同验证。
+- [x] 建立单一固定加工时钟：每个 Running 权威帧全局 `LogicalTick` 只推进一次，批量稳定推进全部加工；Paused 停止 Tick/新命令，Resume 延续；fixed-step delta 原子提交。
 - [ ] 区分同步 snapshot 与恢复 checkpoint；checkpoint 覆盖物品/tombstone、加工、容器、订单、逻辑 Tick、命令水位、去重账本、事件序列、ID 计数器、Match/epoch/config identity 和 lifecycle 状态。
 - [ ] 验证“导出 checkpoint -> 销毁 host -> 重建 -> 继续运行”与不中断基线产生相同最终 hash、ID、版本、去重结果和订单提交次数。
 - [ ] 落实成功进入下一小关：保留食材、半成品和未完成加工；清理本关订单；准备阶段暂停并在下一小关恢复。

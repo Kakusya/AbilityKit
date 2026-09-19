@@ -3,7 +3,7 @@
   "name": "cooking-et-level-fixed-tick",
   "title": "Cooking Level ET 生命周期与单一固定加工时钟",
   "description": "新增 canonical Cooking Level 生命周期与 obsolete Match 兼容层，以最小 ET Component seam 驱动每个权威帧一次的原子固定加工 Tick。",
-  "status": "planning",
+  "status": "in_progress",
   "dev_type": null,
   "scope": "cooking-level-lifecycle-et-fixed-tick",
   "package": null,
@@ -30,6 +30,8 @@
     "src/AbilityKit.Game.Cooking.Tests/CookingLevelLifecycleTests.cs",
     "src/AbilityKit.Game.Cooking.Tests/CookingRecipeLoopTests.cs",
     "src/AbilityKit.ET.Runtime.Tests/CookingLevelEtHostTests.cs",
+    "src/AbilityKit.ET.Runtime.Tests/EtRelationAnalyzerTests.cs",
+    "src/AbilityKit.ET.RelationAnalyzer/",
     "tools/test-gates.json",
     "Docs/AbilityKit测试门禁与批量回归规范.md",
     "Docs/design/CookingGame/reference/"
@@ -39,8 +41,8 @@
     "acceptance_gate": "cooking-et-level-runtime",
     "authority_phase": "Phase A: CookingRecipeSimulation remains sole gameplay authority",
     "unity_scope": "prohibited",
-    "migration_status": "planned",
-    "migration_reason": "canonical Level lifecycle planning complete; awaiting owner reapproval before task start",
+    "migration_status": "in_progress",
+    "migration_reason": "implementation and task-specific gates are complete; changes are committed pending task finish/archive",
     "evidence_contract": "full Cooking and ET test projects with TRX artifacts; dedicated gate added before delivery"
   }
 }

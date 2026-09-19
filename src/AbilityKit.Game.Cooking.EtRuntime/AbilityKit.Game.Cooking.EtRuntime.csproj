@@ -6,7 +6,13 @@
     <IsPackable>false</IsPackable>
   </PropertyGroup>
   <ItemGroup>
+    <InternalsVisibleTo Include="AbilityKit.ET.Runtime.Tests" />
+  </ItemGroup>
+  <ItemGroup>
     <ProjectReference Include="../AbilityKit.ET.Runtime/AbilityKit.ET.Runtime.csproj" />
     <ProjectReference Include="../AbilityKit.Game.Cooking/AbilityKit.Game.Cooking.csproj" />
+    <ProjectReference Include="../AbilityKit.ET.RelationAnalyzer/AbilityKit.ET.RelationAnalyzer.csproj"
+                      OutputItemType="Analyzer"
+                      ReferenceOutputAssembly="false" />
   </ItemGroup>
 </Project>

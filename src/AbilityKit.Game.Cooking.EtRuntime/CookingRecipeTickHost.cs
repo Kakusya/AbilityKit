@@ -17,15 +17,25 @@ public sealed class CookingRecipeTickHost : IDisposable
     public CookingRecipeTickHost(CookingRecipeSimulation simulation)
     {
         _simulation = simulation ?? throw new ArgumentNullException(nameof(simulation));
-        _runtime = new EtRuntimeHost(typeof(CookingRecipeTickHost).Assembly);
+        CookingSimulationHostOwnership.Acquire(_simulation, this);
+        try
+        {
+            _runtime = new EtRuntimeHost(typeof(CookingRecipeTickHost).Assembly);
+        }
+        catch
+        {
+            CookingSimulationHostOwnership.Release(_simulation, this);
+            throw;
+        }
         try
         {
             _runtime.CreateScene(1, "cooking-recipe");
-            _runtime.Run(1, scene => scene.AddChild<CookingRecipeDriver>().Host = this);
+            _runtime.Run(1, scene => scene.AddChild<CookingRecipeDriverEntity>().Host = this);
         }
         catch
         {
             _runtime.Dispose();
+            CookingSimulationHostOwnership.Release(_simulation, this);
             throw;
         }
     }
@@ -89,18 +99,20 @@ public sealed class CookingRecipeTickHost : IDisposable
             throw new InvalidOperationException("Dispose requires the idle owner thread.");
         _runtime.Dispose();
         _simulation.CloseLifecycle();
+        CookingSimulationHostOwnership.Release(_simulation, this);
         _pending.Clear();
         _disposed = true;
     }
 }
 
-internal sealed class CookingRecipeDriver : Entity, IAwake, IUpdate
+[ChildOf(typeof(Scene))]
+internal sealed class CookingRecipeDriverEntity : Entity, IAwake, IUpdate
 {
     public CookingRecipeTickHost Host { get; set; } = null!;
 }
 
 [EntitySystem]
-internal sealed class CookingRecipeDriverUpdate : UpdateSystem<CookingRecipeDriver>
+internal sealed class CookingRecipeDriverUpdate : UpdateSystem<CookingRecipeDriverEntity>
 {
-    protected override void Update(CookingRecipeDriver self) => self.Host.ExecutePending();
+    protected override void Update(CookingRecipeDriverEntity self) => self.Host.ExecutePending();
 }

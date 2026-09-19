@@ -8,6 +8,8 @@
   <ItemGroup>
     <ProjectReference Include="../AbilityKit.ET.Runtime/AbilityKit.ET.Runtime.csproj" />
     <ProjectReference Include="../AbilityKit.Game.Cooking.EtRuntime/AbilityKit.Game.Cooking.EtRuntime.csproj" />
+    <ProjectReference Include="../AbilityKit.ET.RelationAnalyzer/AbilityKit.ET.RelationAnalyzer.csproj" />
+    <PackageReference Include="Microsoft.CodeAnalysis.CSharp" Version="4.0.1" />
     <PackageReference Include="Microsoft.NET.Test.Sdk" Version="17.12.0" />
     <PackageReference Include="xunit" Version="2.9.2" />
     <PackageReference Include="xunit.runner.visualstudio" Version="2.8.2"><PrivateAssets>all</PrivateAssets></PackageReference>

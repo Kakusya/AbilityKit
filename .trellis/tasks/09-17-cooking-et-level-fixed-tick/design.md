@@ -1,6 +1,6 @@
 # Design：Cooking Level ET 生命周期与单一固定加工时钟
 
-> 状态：planning。本文描述推荐实现设计，不授权开始编码。
+> 状态：implemented / checked for the approved Phase A scope。实际实现、通过、失败、跳过与限制见 `research/validation.md`；实现已纳入本次提交，task 尚未执行 finish/archive。
 
 ## 1. Design goals
 
@@ -195,7 +195,7 @@ level.AddComponent<CookingLevelDriverComponent>()
 
 Because current `MatchId` is a string-valued legacy contract and global identity migration is out of scope, Phase A does **not** force `CookingMatchEntity.Id == MatchId`. ET allocates the process-local Match Entity Id; `CookingMatchIdentityComponent` stores the legacy `CookingScope`. That ET Id never enters domain/wire/save DTOs. Future strong-long identity migration follows the reference design under a separate task.
 
-Analyzer acceptance must verify each exact Attribute parent, not only suffixes. Runtime tests must verify direct parent/component lookup and recursive release.
+Analyzer acceptance is implemented by the assembly-name-independent `AbilityKit.ET.RelationAnalyzer`: it validates exact `[ComponentOf]`/`[ChildOf]` parents for real ET Entity relation calls and has positive/negative compilation tests. Runtime tests separately verify direct parent/component lookup and recursive release.
 
 ### 5.1 Installation sequence
 
@@ -567,7 +567,7 @@ Pending | Executed | Conflicted | Cancelled | Stale
 
 ## 14. Planned gates
 
-Before the dedicated gate exists, the authoritative task-local evidence contract is:
+The authoritative task-local evidence contract is:
 
 ```text
 artifacts/cooking-et-level-fixed-tick/cooking-level-fixed-tick.trx
@@ -577,7 +577,7 @@ artifacts/cooking-et-level-fixed-tick/et-level-fixed-tick.trx
   <- complete AbilityKit.ET.Runtime.Tests project
 ```
 
-Both full-project runs are mandatory and any failed test blocks delivery. Focused `Trait("Gate", "CookingLevelRuntime")` filters are supplemental diagnostics only. Implementation must add the P1 gate below before final delivery; after registration the gate becomes the canonical repeatable entry and executes the same two complete projects.
+Both full-project runs are mandatory and any failed test blocks delivery. Focused `Trait("Gate", "CookingLevelRuntime")` filters are supplemental diagnostics only. The registered P1 gate below is the canonical repeatable entry and also proves the relation analyzer and analyzed Cooking ET project build cleanly.
 
 Implementation gate definition:
 
@@ -587,6 +587,8 @@ owner: Cooking Game Runtime
 scope: cooking, et-runtime, level-lifecycle, fixed-tick
 requiredBefore: merge-cooking-level-lifecycle-or-et-runtime-change
 steps:
+  dotnet-build src/AbilityKit.ET.RelationAnalyzer/AbilityKit.ET.RelationAnalyzer.csproj
+  dotnet-build src/AbilityKit.Game.Cooking.EtRuntime/AbilityKit.Game.Cooking.EtRuntime.csproj
   dotnet-test src/AbilityKit.Game.Cooking.Tests/AbilityKit.Game.Cooking.Tests.csproj
   dotnet-test src/AbilityKit.ET.Runtime.Tests/AbilityKit.ET.Runtime.Tests.csproj
 ```
@@ -599,7 +601,6 @@ dotnet test src/AbilityKit.Game.Cooking.Tests/AbilityKit.Game.Cooking.Tests.cspr
 dotnet test src/AbilityKit.ET.Runtime.Tests/AbilityKit.ET.Runtime.Tests.csproj
 powershell -ExecutionPolicy Bypass -File tools/run_test_gate.ps1 -Gate cooking-et-level-runtime
 powershell -ExecutionPolicy Bypass -File tools/run_test_gate.ps1 -Gate cooking-udp
-powershell -ExecutionPolicy Bypass -File tools/run_test_gate.ps1 -Gate precheck
 ```
 
-`cooking-udp` is legacy compatibility evidence only. Unity compile is not acceptance because Cooking Unity remains prohibited. Run `core-stability` only if shared runtime/core behavior changes. Report skipped/blocked/failing gates truthfully.
+`cooking-udp` is legacy compatibility evidence only. `precheck` belongs to Core/MOBA Runtime and is not an acceptance gate for this Cooking task. Unity compile is not acceptance because Cooking Unity remains prohibited. Run `core-stability` only if shared runtime/core behavior changes. Report skipped/blocked/failing applicable gates truthfully.

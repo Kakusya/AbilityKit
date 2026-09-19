@@ -8,4 +8,8 @@
     <AssemblyName>AbilityKit.Game.Cooking</AssemblyName>
     <IsPackable>false</IsPackable>
   </PropertyGroup>
+  <ItemGroup>
+    <InternalsVisibleTo Include="AbilityKit.Game.Cooking.Tests" />
+    <InternalsVisibleTo Include="AbilityKit.Game.Cooking.EtRuntime" />
+  </ItemGroup>
 </Project>

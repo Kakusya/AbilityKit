@@ -223,6 +223,327 @@ public sealed class CookingRecipeLoopTests
         Assert.Equal(localPort.Submissions, remotePort.Submissions);
     }
 
+    [Fact]
+    [Trait("Gate", "CookingLevelRuntime")]
+    public void FixedTick_empty_frame_advances_tick_version_and_event_once()
+    {
+        var orderPort = new RecordingOrderPort(accepted: true);
+        var simulation = CreateSimulation(Recipe, RawIngredient, Product, "heat", orderPort);
+
+        var result = simulation.AdvanceFixedTick(LevelScope(), hostFrameSequence: 1);
+
+        Assert.Equal(0, result.BeforeLogicalTick);
+        Assert.Equal(1, result.AfterLogicalTick);
+        Assert.Equal(0, result.BeforeStateVersion);
+        Assert.Equal(1, result.AfterStateVersion);
+        Assert.Empty(result.Processes);
+        Assert.Equal(1, simulation.LogicalTick);
+        Assert.Equal(1, simulation.Snapshot().Version);
+        Assert.Empty(simulation.EventHistory);
+        Assert.Equal(result.Event, Assert.Single(simulation.TickEventHistory));
+        Assert.Equal(1, result.Event.Sequence);
+        Assert.Empty(orderPort.Submissions);
+    }
+
+    [Fact]
+    [Trait("Gate", "CookingLevelRuntime")]
+    public void FixedTick_single_process_progresses_once_per_frame_and_completes_on_third_tick()
+    {
+        var orderPort = new RecordingOrderPort(accepted: true);
+        var simulation = CreateSimulation(Recipe, RawIngredient, Product, "heat", orderPort);
+        var input = new ItemId("ingredient-fixed");
+        simulation.AddIngredient(input, RawIngredient, Player);
+        AssertAccepted(simulation.Submit(Command(CookingRecipeOperation.StartProcess, "fixed-start", recipe: Recipe,
+            item: input, station: Station, expectedVersion: 1)));
+
+        var first = simulation.AdvanceFixedTick(LevelScope(), 1);
+        var second = simulation.AdvanceFixedTick(LevelScope(), 2);
+        var third = simulation.AdvanceFixedTick(LevelScope(), 3);
+
+        Assert.Equal(1, Assert.Single(first.Processes).AfterElapsedTicks);
+        Assert.False(first.Processes[0].Completed);
+        Assert.Equal(2, Assert.Single(second.Processes).AfterElapsedTicks);
+        Assert.False(second.Processes[0].Completed);
+        var completion = Assert.Single(third.Processes);
+        Assert.Equal(3, completion.AfterElapsedTicks);
+        Assert.True(completion.Completed);
+        Assert.Equal(new ItemId("product-1"), completion.Product);
+        Assert.Equal(3, simulation.LogicalTick);
+        Assert.Equal(4, simulation.Snapshot().Version);
+        Assert.Empty(simulation.Snapshot().Processes);
+        Assert.Equal(new ItemId("product-1"), Assert.Single(simulation.Snapshot().Items, item => item.IsProduct).Id);
+        Assert.Equal(new long[] { 2, 3, 4 }, simulation.TickEventHistory.Select(@event => @event.Sequence));
+        Assert.Empty(orderPort.Submissions);
+    }
+
+    [Fact]
+    [Trait("Gate", "CookingLevelRuntime")]
+    public void FixedTick_multiple_processes_complete_in_process_id_order_with_stable_products_and_one_version()
+    {
+        var firstAllocator = new RecordingProductIdAllocator();
+        var secondAllocator = new RecordingProductIdAllocator();
+        var first = CreateMultiProcessSimulation(processCount: 10, firstAllocator);
+        var second = CreateMultiProcessSimulation(processCount: 10, secondAllocator);
+        StartProcesses(first, processCount: 10);
+        StartProcesses(second, processCount: 10);
+
+        var firstResult = first.AdvanceFixedTick(LevelScope(), 1);
+        var secondResult = second.AdvanceFixedTick(LevelScope(), 1);
+
+        Assert.Equal(
+            new[] { "process-1", "process-10", "process-2", "process-3", "process-4", "process-5", "process-6", "process-7", "process-8", "process-9" },
+            firstResult.Processes.Select(result => result.Process.Value));
+        Assert.Equal(
+            new[] { "product-1", "product-2", "product-3", "product-4", "product-5", "product-6", "product-7", "product-8", "product-9", "product-10" },
+            firstResult.Processes.Select(result => result.Product?.Value));
+        Assert.All(firstResult.Processes, result => Assert.True(result.Completed));
+        Assert.Equal(Enumerable.Range(1, 10).Select(value => (long)value), firstAllocator.Requests);
+        Assert.Equal(1, first.LogicalTick);
+        Assert.Equal(11, first.Snapshot().Version);
+        Assert.Empty(first.Snapshot().Processes);
+        Assert.Equal(first.Snapshot().CanonicalText(), second.Snapshot().CanonicalText());
+        Assert.Equal(
+            firstResult.Processes.Select(result => (result.Process, result.Product, result.Completed)),
+            secondResult.Processes.Select(result => (result.Process, result.Product, result.Completed)));
+        Assert.Equal(
+            first.TickEventHistory.Select(@event => (@event.Sequence, @event.HostFrameSequence, @event.BeforeLogicalTick,
+                @event.AfterLogicalTick, @event.BeforeStateVersion, @event.AfterStateVersion)),
+            second.TickEventHistory.Select(@event => (@event.Sequence, @event.HostFrameSequence, @event.BeforeLogicalTick,
+                @event.AfterLogicalTick, @event.BeforeStateVersion, @event.AfterStateVersion)));
+        Assert.Equal(firstAllocator.Requests, secondAllocator.Requests);
+        Assert.Equal(11, firstResult.Event.Sequence);
+    }
+
+    [Fact]
+    [Trait("Gate", "CookingLevelRuntime")]
+    public void FixedTick_allocator_collision_is_mutation_safe_and_does_not_advance_product_sequence()
+    {
+        var allocator = new FixedProductIdAllocator(new ItemId("ingredient-collision"));
+        var orderPort = new RecordingOrderPort(accepted: true);
+        var simulation = CreateSimulation(Recipe, RawIngredient, Product, "heat", orderPort, requiredTicks: 1,
+            productIdAllocator: allocator);
+        var input = new ItemId("ingredient-collision");
+        simulation.AddIngredient(input, RawIngredient, Player);
+        AssertAccepted(simulation.Submit(Command(CookingRecipeOperation.StartProcess, "collision-start", recipe: Recipe,
+            item: input, station: Station, expectedVersion: 1)));
+        var before = simulation.Snapshot().CanonicalText();
+        var commandEventsBefore = simulation.EventHistory.ToArray();
+
+        var error = Assert.Throws<InvalidOperationException>(() => simulation.AdvanceFixedTick(LevelScope(), 1));
+
+        Assert.Contains("duplicate item identity", error.Message, StringComparison.Ordinal);
+        Assert.Equal(before, simulation.Snapshot().CanonicalText());
+        Assert.Equal(commandEventsBefore, simulation.EventHistory);
+        Assert.Empty(simulation.TickEventHistory);
+        Assert.Equal(new long[] { 1 }, allocator.Requests);
+        Assert.Empty(orderPort.Submissions);
+
+        Assert.Throws<InvalidOperationException>(() => simulation.AdvanceFixedTick(LevelScope(), 1));
+        Assert.Equal(new long[] { 1, 1 }, allocator.Requests);
+        Assert.Equal(before, simulation.Snapshot().CanonicalText());
+    }
+
+    [Fact]
+    [Trait("Gate", "CookingLevelRuntime")]
+    public void FixedTick_staged_duplicate_product_ids_are_mutation_safe()
+    {
+        var allocator = new FixedProductIdAllocator(new ItemId("staged-product"));
+        var simulation = CreateMultiProcessSimulation(processCount: 2, allocator);
+        StartProcesses(simulation, processCount: 2);
+        var before = simulation.Snapshot().CanonicalText();
+        var commandEventsBefore = simulation.EventHistory.ToArray();
+
+        var error = Assert.Throws<InvalidOperationException>(() => simulation.AdvanceFixedTick(LevelScope(), 1));
+
+        Assert.Contains("duplicate item identity", error.Message, StringComparison.Ordinal);
+        Assert.Equal(before, simulation.Snapshot().CanonicalText());
+        Assert.Equal(commandEventsBefore, simulation.EventHistory);
+        Assert.Empty(simulation.TickEventHistory);
+        Assert.Equal(new long[] { 1, 2 }, allocator.Requests);
+    }
+
+    [Fact]
+    [Trait("Gate", "CookingLevelRuntime")]
+    public void FixedTick_blank_allocator_output_is_mutation_safe()
+    {
+        var allocator = new FixedProductIdAllocator(new ItemId("   "));
+        var simulation = CreateSimulation(Recipe, RawIngredient, Product, "heat", new RecordingOrderPort(accepted: true),
+            requiredTicks: 1, productIdAllocator: allocator);
+        StartSingleProcess(simulation, "blank");
+        var before = simulation.Snapshot().CanonicalText();
+        var commandEventsBefore = simulation.EventHistory.ToArray();
+
+        var error = Assert.Throws<InvalidOperationException>(() => simulation.AdvanceFixedTick(LevelScope(), 1));
+
+        Assert.Contains("blank identity", error.Message, StringComparison.Ordinal);
+        Assert.Equal(before, simulation.Snapshot().CanonicalText());
+        Assert.Equal(commandEventsBefore, simulation.EventHistory);
+        Assert.Empty(simulation.TickEventHistory);
+        Assert.Equal(new long[] { 1 }, allocator.Requests);
+    }
+
+    [Fact]
+    [Trait("Gate", "CookingLevelRuntime")]
+    public void FixedTick_allocator_exception_is_mutation_safe()
+    {
+        var allocator = new ThrowingProductIdAllocator();
+        var simulation = CreateSimulation(Recipe, RawIngredient, Product, "heat", new RecordingOrderPort(accepted: true),
+            requiredTicks: 1, productIdAllocator: allocator);
+        StartSingleProcess(simulation, "allocator-fault");
+        var before = simulation.Snapshot().CanonicalText();
+        var commandEventsBefore = simulation.EventHistory.ToArray();
+
+        var error = Assert.Throws<InvalidOperationException>(() => simulation.AdvanceFixedTick(LevelScope(), 1));
+
+        Assert.Equal("allocator-fault", error.Message);
+        Assert.Equal(before, simulation.Snapshot().CanonicalText());
+        Assert.Equal(commandEventsBefore, simulation.EventHistory);
+        Assert.Empty(simulation.TickEventHistory);
+        Assert.Equal(new long[] { 1 }, allocator.Requests);
+    }
+
+    [Fact]
+    [Trait("Gate", "CookingLevelRuntime")]
+    public void FixedTick_checked_overflow_is_mutation_safe()
+    {
+        var allocator = new RecordingProductIdAllocator();
+        var simulation = CreateSimulation(Recipe, RawIngredient, Product, "heat", new RecordingOrderPort(accepted: true),
+            requiredTicks: 1, productIdAllocator: allocator);
+        StartSingleProcess(simulation, "overflow");
+        simulation.SetFixedTickCountersForTesting(logicalTick: 0, stateVersion: 1, eventSequence: 1,
+            productSequence: long.MaxValue);
+        var before = simulation.Snapshot().CanonicalText();
+        var commandEventsBefore = simulation.EventHistory.ToArray();
+        var tickEventsBefore = simulation.TickEventHistory.ToArray();
+
+        Assert.Throws<OverflowException>(() => simulation.AdvanceFixedTick(LevelScope(), 1));
+
+        Assert.Equal(before, simulation.Snapshot().CanonicalText());
+        Assert.Equal(commandEventsBefore, simulation.EventHistory);
+        Assert.Equal(tickEventsBefore, simulation.TickEventHistory);
+        Assert.Empty(allocator.Requests);
+    }
+
+    [Fact]
+    [Trait("Gate", "CookingLevelRuntime")]
+    public void FixedTick_reverse_index_orphan_is_rejected_without_mutation()
+    {
+        var simulation = CreateSimulation(Recipe, RawIngredient, Product, "heat", new RecordingOrderPort(accepted: true));
+        simulation.AddFixedTickReverseIndexEntryForTesting(new ProcessId("orphan-process"), new StationSlotId("orphan-station"));
+        var before = simulation.Snapshot().CanonicalText();
+
+        var error = Assert.Throws<InvalidOperationException>(() => simulation.AdvanceFixedTick(LevelScope(), 1));
+
+        Assert.Contains("reverse index count", error.Message, StringComparison.Ordinal);
+        Assert.Equal(before, simulation.Snapshot().CanonicalText());
+        Assert.Empty(simulation.TickEventHistory);
+    }
+
+    [Fact]
+    [Trait("Gate", "CookingLevelRuntime")]
+    public void FixedTick_reverse_index_mismatch_is_rejected_without_mutation()
+    {
+        var simulation = CreateSimulation(Recipe, RawIngredient, Product, "heat", new RecordingOrderPort(accepted: true));
+        var process = StartSingleProcess(simulation, "index-mismatch");
+        simulation.SetFixedTickReverseIndexEntryForTesting(process, new StationSlotId("wrong-station"));
+        var before = simulation.Snapshot().CanonicalText();
+        var commandEventsBefore = simulation.EventHistory.ToArray();
+
+        var error = Assert.Throws<InvalidOperationException>(() => simulation.AdvanceFixedTick(LevelScope(), 1));
+
+        Assert.Contains("does not match an authoritative station process", error.Message, StringComparison.Ordinal);
+        Assert.Equal(before, simulation.Snapshot().CanonicalText());
+        Assert.Equal(commandEventsBefore, simulation.EventHistory);
+        Assert.Empty(simulation.TickEventHistory);
+    }
+
+    [Fact]
+    [Trait("Gate", "CookingLevelRuntime")]
+    public void FixedTick_completion_removes_indexes_releases_station_and_old_process_is_not_found()
+    {
+        var simulation = CreateSimulation(Recipe, RawIngredient, Product, "heat", new RecordingOrderPort(accepted: true),
+            requiredTicks: 1);
+        var oldProcess = StartSingleProcess(simulation, "first");
+
+        var completed = simulation.AdvanceFixedTick(LevelScope(), 1);
+
+        Assert.True(Assert.Single(completed.Processes).Completed);
+        Assert.False(simulation.ContainsFixedTickReverseIndexForTesting(oldProcess));
+        Assert.Empty(simulation.Snapshot().Processes);
+
+        var secondInput = new ItemId("ingredient-reuse");
+        simulation.AddIngredient(secondInput, RawIngredient, Player);
+        var restarted = simulation.Submit(Command(CookingRecipeOperation.StartProcess, "reuse-station", recipe: Recipe,
+            item: secondInput, station: Station, expectedVersion: 1));
+        AssertAccepted(restarted);
+        var newProcess = Assert.Single(simulation.Snapshot().Processes).Id;
+        Assert.NotEqual(oldProcess, newProcess);
+
+        var oldProcessResult = simulation.Submit(Command(CookingRecipeOperation.AdvanceTicks, "old-process",
+            process: oldProcess, ticks: 1));
+        AssertRejected(oldProcessResult, CookingRecipeRejectionReason.ProcessNotFound);
+        Assert.Equal(newProcess, Assert.Single(simulation.Snapshot().Processes).Id);
+    }
+
+    [Fact]
+    [Trait("Gate", "CookingLevelRuntime")]
+    public void FixedTick_never_calls_external_order_port()
+    {
+        var simulation = CreateSimulation(Recipe, RawIngredient, Product, "heat", new ThrowingOrderPort(), requiredTicks: 1);
+        var input = new ItemId("ingredient-no-port");
+        simulation.AddIngredient(input, RawIngredient, Player);
+        AssertAccepted(simulation.Submit(Command(CookingRecipeOperation.StartProcess, "no-port-start", recipe: Recipe,
+            item: input, station: Station, expectedVersion: 1)));
+
+        var result = simulation.AdvanceFixedTick(LevelScope(), 1);
+
+        Assert.True(Assert.Single(result.Processes).Completed);
+        Assert.Single(simulation.Snapshot().Items, item => item.IsProduct);
+    }
+
+    [Fact]
+    [Trait("Gate", "CookingLevelRuntime")]
+    public void FixedTick_wrong_scope_and_closed_lifecycle_reject_without_mutation()
+    {
+        var simulation = CreateSimulation(Recipe, RawIngredient, Product, "heat", new RecordingOrderPort(accepted: true));
+        var before = simulation.Snapshot().CanonicalText();
+        var wrongScope = new CookingLevelScope(
+            new CookingScope(Session, World, new MatchId("other-match")),
+            new RestaurantRuntimeId(1),
+            new LevelId("fixture-level"),
+            1);
+
+        Assert.Throws<ArgumentException>(() => simulation.AdvanceFixedTick(wrongScope, 1));
+        Assert.Equal(before, simulation.Snapshot().CanonicalText());
+        Assert.Empty(simulation.TickEventHistory);
+
+        simulation.CloseLifecycle();
+        Assert.Throws<InvalidOperationException>(() => simulation.AdvanceFixedTick(LevelScope(), 1));
+        Assert.Equal(before, simulation.Snapshot().CanonicalText());
+        Assert.Empty(simulation.TickEventHistory);
+    }
+
+    [Fact]
+    [Trait("Gate", "CookingLevelRuntime")]
+    public void Direct_AdvanceTicks_retains_legacy_multi_tick_command_behavior()
+    {
+        var simulation = CreateSimulation(Recipe, RawIngredient, Product, "heat", new RecordingOrderPort(accepted: true));
+        var input = new ItemId("ingredient-direct-regression");
+        simulation.AddIngredient(input, RawIngredient, Player);
+        AssertAccepted(simulation.Submit(Command(CookingRecipeOperation.StartProcess, "direct-start", recipe: Recipe,
+            item: input, station: Station, expectedVersion: 1)));
+        var process = Assert.Single(simulation.Snapshot().Processes);
+
+        var completed = simulation.Submit(Command(CookingRecipeOperation.AdvanceTicks, "direct-complete", process: process.Id, ticks: 3));
+
+        AssertAccepted(completed);
+        Assert.Equal(3, simulation.LogicalTick);
+        Assert.Empty(simulation.Snapshot().Processes);
+        Assert.Equal(new ItemId("product-1"), Assert.Single(simulation.Snapshot().Items, item => item.IsProduct).Id);
+        Assert.Empty(simulation.TickEventHistory);
+        Assert.Equal(2, simulation.EventHistory.Count);
+    }
+
     private static CookingRecipeSimulation CompleteAndPlate(RecordingOrderPort orderPort, out ItemId product, int containerCapacity = 1)
     {
         var simulation = CreateSimulation(Recipe, RawIngredient, Product, "heat", orderPort, containerCapacity: containerCapacity);
@@ -250,9 +571,9 @@ public sealed class CookingRecipeLoopTests
     }
 
     private static CookingRecipeSimulation CreateSimulation(RecipeId recipe, DefinitionId input, DefinitionId product,
-        string applianceCapability, RecordingOrderPort orderPort, int requiredTicks = 3,
+        string applianceCapability, ICookingOrderPort orderPort, int requiredTicks = 3,
         IReadOnlySet<string>? applianceCapabilities = null, IReadOnlySet<string>? reachable = null, bool applianceAvailable = true,
-        int containerCapacity = 1)
+        int containerCapacity = 1, ICookingProductIdAllocator? productIdAllocator = null)
     {
         var scope = new CookingScope(Session, World, Match);
         var players = new Dictionary<PlayerId, CookingPlayerConfig>
@@ -274,7 +595,80 @@ public sealed class CookingRecipeLoopTests
             [recipe] = new(recipe, input, product, new ProcessId($"{recipe.Value}-process"), applianceCapability, requiredTicks),
         };
         var containers = new Dictionary<ContainerId, CookingContainerDefinition> { [Plate] = new(Plate, containerCapacity) };
-        return new CookingRecipeSimulation(new CookingRecipeFixture(scope, players, items, appliances, recipes, containers), orderPort);
+        return new CookingRecipeSimulation(new CookingRecipeFixture(scope, players, items, appliances, recipes, containers),
+            orderPort, productIdAllocator);
+    }
+
+    private static CookingLevelScope LevelScope() => new(
+        new CookingScope(Session, World, Match),
+        new RestaurantRuntimeId(1),
+        new LevelId("fixture-level"),
+        1);
+
+    private static CookingRecipeSimulation CreateMultiProcessSimulation(int processCount, ICookingProductIdAllocator allocator)
+    {
+        var scope = new CookingScope(Session, World, Match);
+        var players = new Dictionary<PlayerId, CookingPlayerConfig>();
+        var appliances = new Dictionary<StationSlotId, CookingApplianceDefinition>();
+        for (var index = 1; index <= processCount; index++)
+        {
+            var player = new PlayerId($"chef-{index:D2}");
+            var station = new StationSlotId($"stove-{index:D2}");
+            players.Add(player, new CookingPlayerConfig(
+                player,
+                new HashSet<string>(StringComparer.Ordinal) { "cook" },
+                new HashSet<string>(StringComparer.Ordinal) { station.Value }));
+            appliances.Add(station, new CookingApplianceDefinition(
+                station,
+                new HashSet<string>(StringComparer.Ordinal) { "heat" }));
+        }
+
+        var items = new Dictionary<DefinitionId, CookingItemDefinition>
+        {
+            [RawIngredient] = new(RawIngredient, new HashSet<string>(StringComparer.Ordinal) { "cook" }),
+            [Product] = new(Product, new HashSet<string>(StringComparer.Ordinal) { "cook" }),
+        };
+        var recipes = new Dictionary<RecipeId, CookingRecipeDefinition>
+        {
+            [Recipe] = new(Recipe, RawIngredient, Product, new ProcessId("fixture-process"), "heat", 1),
+        };
+        var containers = new Dictionary<ContainerId, CookingContainerDefinition> { [Plate] = new(Plate, processCount) };
+        return new CookingRecipeSimulation(new CookingRecipeFixture(scope, players, items, appliances, recipes, containers),
+            new RecordingOrderPort(accepted: true), allocator);
+    }
+
+    private static ProcessId StartSingleProcess(CookingRecipeSimulation simulation, string suffix)
+    {
+        var input = new ItemId($"ingredient-{suffix}");
+        simulation.AddIngredient(input, RawIngredient, Player);
+        AssertAccepted(simulation.Submit(Command(CookingRecipeOperation.StartProcess, $"start-{suffix}", recipe: Recipe,
+            item: input, station: Station, expectedVersion: 1)));
+        return Assert.Single(simulation.Snapshot().Processes).Id;
+    }
+
+    private static void StartProcesses(CookingRecipeSimulation simulation, int processCount)
+    {
+        for (var index = 1; index <= processCount; index++)
+        {
+            var player = new PlayerId($"chef-{index:D2}");
+            var station = new StationSlotId($"stove-{index:D2}");
+            var input = new ItemId($"ingredient-{index:D2}");
+            simulation.AddIngredient(input, RawIngredient, player);
+            AssertAccepted(simulation.Submit(new CookingRecipeCommand(
+                new CookingScope(Session, World, Match),
+                10,
+                player,
+                new RecipeCommandId($"start-{index:D2}"),
+                CookingRecipeOperation.StartProcess,
+                Recipe,
+                null,
+                input,
+                station,
+                null,
+                null,
+                1,
+                0)));
+        }
     }
 
     private static CookingRecipeCommand Command(CookingRecipeOperation operation, string commandId, RecipeId? recipe = null,
@@ -333,6 +727,45 @@ public sealed class CookingRecipeLoopTests
         {
             Submissions.Add(submission);
             return new CookingOrderAcceptance(accepted, accepted ? "fixture-accepted" : "fixture-rejected");
+        }
+    }
+
+    private sealed class ThrowingOrderPort : ICookingOrderPort
+    {
+        public CookingOrderAcceptance Submit(CookingOrderSubmission submission) =>
+            throw new InvalidOperationException("Fixed Tick must not call the external order port.");
+    }
+
+    private sealed class RecordingProductIdAllocator : ICookingProductIdAllocator
+    {
+        public List<long> Requests { get; } = new();
+
+        public ItemId GetProductId(long productSequence)
+        {
+            Requests.Add(productSequence);
+            return new ItemId($"product-{productSequence}");
+        }
+    }
+
+    private sealed class FixedProductIdAllocator(ItemId productId) : ICookingProductIdAllocator
+    {
+        public List<long> Requests { get; } = new();
+
+        public ItemId GetProductId(long productSequence)
+        {
+            Requests.Add(productSequence);
+            return productId;
+        }
+    }
+
+    private sealed class ThrowingProductIdAllocator : ICookingProductIdAllocator
+    {
+        public List<long> Requests { get; } = new();
+
+        public ItemId GetProductId(long productSequence)
+        {
+            Requests.Add(productSequence);
+            throw new InvalidOperationException("allocator-fault");
         }
     }
 
