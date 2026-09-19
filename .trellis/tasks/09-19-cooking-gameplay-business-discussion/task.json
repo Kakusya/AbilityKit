@@ -1,0 +1,37 @@
+{
+  "id": "cooking-gameplay-business-discussion",
+  "name": "cooking-gameplay-business-discussion",
+  "title": "Cooking 局内做菜业务讨论",
+  "description": "持续记录并收敛大关递进、小关做菜、装修优化、道具、Buff 与小关成功检查点的产品规则；仅规划，不授权实现。",
+  "status": "planning",
+  "dev_type": null,
+  "scope": "cooking-gameplay-business-discussion",
+  "package": null,
+  "priority": "P0",
+  "creator": "Li He",
+  "assignee": "Li He",
+  "createdAt": "2026-09-19",
+  "completedAt": null,
+  "branch": null,
+  "base_branch": "master",
+  "worktree_path": null,
+  "commit": null,
+  "pr_url": null,
+  "subtasks": [],
+  "children": [],
+  "parent": null,
+  "relatedFiles": [
+    "Docs/design/CookingGame/technical-roadmap.md",
+    "Docs/design/CookingGame/progress.md",
+    "Docs/design/CookingGame/reference/product-lifetimes.md",
+    "Docs/design/CookingGame/reference/et-entity-tree.md",
+    ".trellis/tasks/archive/2026-09/09-17-cooking-et-level-fixed-tick/"
+  ],
+  "notes": "仅用于业务讨论和需求收敛，不授权实现。后续讨论从 research/discussion-notes.md 延伸。",
+  "meta": {
+    "planning_only": true,
+    "implementation_authorized": false,
+    "discussion_entry": "research/discussion-notes.md",
+    "language": "默认中文；代码标识符和必要专有名词保留原文"
+  }
+}

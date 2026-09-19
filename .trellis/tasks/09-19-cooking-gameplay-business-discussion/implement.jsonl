@@ -1,0 +1,5 @@
+{"file":"Docs/design/CookingGame/technical-roadmap.md","reason":"局内做菜固定时钟、权威交互、配置与状态同步的长期路线。"}
+{"file":"Docs/design/CookingGame/progress.md","reason":"确认 Cooking 当前真实工程基线、已完成能力与未完成范围。"}
+{"file":"Docs/design/CookingGame/reference/product-lifetimes.md","reason":"大关持续餐厅、小关生命周期、Kitchen 跨关延续、失败重建与存档语义参考。"}
+{"file":"Docs/design/CookingGame/reference/et-entity-tree.md","reason":"当前 ET Phase A 权威边界、Kitchen/Level 所有权与检查点稳定 DTO 约束。"}
+{"file":".trellis/tasks/09-19-cooking-gameplay-business-discussion/research/discussion-notes.md","reason":"本规划任务持续更新的业务讨论纪要和决定脉络。"}
