@@ -12,9 +12,11 @@
 
 ## P1 会话与真实网络
 
+> 2026-09-21 修订：原 LiteNetLib 同机 UDP 开发基线与 harness 已放弃并退役（见 [当前进度](progress.md)）；传输计划改用 KCP，本条目的 transport spike、adapter 与 socket 集成都必须按 KCP 方向重新审议，不得恢复已退役的 UDP 实现。两 PC LAN 验收的前提也随之改变。
+
 - 运行 D1 候选 transport spike，记录 framing、listen/connect、关闭/cancellation、backpressure、诊断、配置、平台/license 与 host cost；由 owner 单独决定 production choice。
 - 定义 D2 连接入口/地址或发现策略，D3 host/disconnect/exit/save/leave/settlement/reconnect 产品语义，D4 workload 与 benchmark thresholds。
-- 实现 production transport adapter、正式 wire codec/schema、同机真实 socket 集成和分层诊断。
+- 实现 production transport adapter、正式 wire codec/schema、真实 socket 集成和分层诊断。
 - 在两台物理 PC 上执行 LAN 验收，记录机器、网卡、地址、防火墙、双方日志和 message trace；不得由 in-process 或同机证据替代。
 
 ## P2 正式配方与订单

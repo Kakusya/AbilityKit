@@ -1,6 +1,8 @@
 # 做菜经营游戏交付计划
 
 > 本文是历史阶段顺序与状态 INDEX，不是第二份行为草案或 active 实施清单。2026-09-16 起，七个纯 .NET 受限增量按已有 check evidence 作为 `completed-limited-scope` 归档；剩余范围按 [当前进度](progress.md) 拆分为 [non-Unity successor backlog](successor-backlog.md) 与 [prohibited Unity future scope](future-scope.md)。不虚构日期，也不宣称完整 P0–P6 产品出口完成。
+>
+> 2026-09-21 修订：owner 决定当前范围收敛为单机，原同机 UDP 经营闭环方向放弃（`cooking-udp` gate 与 Cooking UDP 三项目退出构建范围，源码与 evidence 保留），传输计划改用 KCP（未启动、未批准、无时间表）。下表 P1 及以后各行的网络类 successor 条目因此须按 KCP 方向重新审议，权威状态以 [当前进度](progress.md) 与 [successor backlog](successor-backlog.md) 为准。
 
 ## 总览
 

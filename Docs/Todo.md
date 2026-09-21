@@ -24,7 +24,7 @@
 
 当前存在两条需要重点推进的 P0 主线：
 
-- **Cooking ET 应用运行时主线**：独立 ET runtime 和最小权威命令 Tick 接点已经完成，但正式 Match 宿主、单一加工时钟、checkpoint、跨小关规则、UDP ingress 与 ECS 清退尚未完成。
+- **Cooking ET 应用运行时主线**：独立 ET runtime 和最小权威命令 Tick 接点已经完成，但正式 Match 宿主、单一加工时钟、checkpoint、跨小关规则与 ECS 清退尚未完成。原 UDP ingress 方向已于 2026-09-21 放弃（传输计划改用 KCP，属未启动后续工作），不再计入本主线待办。
 - **Shooter 同步正式化主线**：已有同步主干和 pure-state runtime 起点，但仍缺客户端消费、AOI、delta/keyframe/resync 和远程服务端预算闭环。
 
 MOBA、Client Flow、Presentation 与通用工程治理属于后续正式化主线，其中完整 build 阻塞和主流程失败语义仍应优先处理。
@@ -46,7 +46,7 @@ MOBA、Client Flow、Presentation 与通用工程治理属于后续正式化主�
 - [ ] 落实失败重开：关闭失败 Match，创建新 MatchId/更高 epoch，清空失败现场，按关卡定义生成标准初始供应；失败和准备阶段修改不写盘。
 - [ ] 落实工位升级迁移：使用显式领域操作迁移未完成加工并保留进度，不通过销毁父 Entity 隐式丢失 Process。
 - [ ] 只在小关成功完成时应用 confirmed settlement；durable storage、进程崩溃恢复和磁盘原子性必须有真实实现与测试。
-- [ ] 将 UDP 接入 ET owner-thread ingress：LiteNetLib 回调只解码/验证/入线程安全队列，ET Tick 取稳定批次；本地主机玩家与远端玩家走同一权威入口。
+- [ ] ~~将 UDP 接入 ET owner-thread ingress~~：已于 2026-09-21 放弃（owner 决定传输改用 KCP），不在当前范围；若将来立项 KCP，必须重新审议回调解码/入队、ET Tick 取稳定批次与本地/远端同一权威入口的契约。
 - [ ] 校验 connection 到 PlayerId 的绑定以及 scope、MatchId、epoch、config identity；重复、乱序、过期命令不得重复推进或重复提交订单。
 - [ ] 在允许范围内补 Unity compile evidence；未获重新授权前不实施 Cooking Unity 应用层、场景、authoring、projection 或 UI。
 - [ ] 只有消费者迁移、依赖清零、等价测试迁移和适用门禁通过后，才分批退役 `world.entitas` 与 `world.ecs`；不删除测试换取通过。
@@ -56,7 +56,7 @@ MOBA、Client Flow、Presentation 与通用工程治理属于后续正式化主�
 - 不在 ET Entity 与 `CookingRecipeSimulation` 中维护两份可独立修改的权威状态。
 - ET EntityId 不作为网络身份或存档稳定身份。
 - Cooking 规则、房间流程和网络权威策略不进入通用 `AbilityKit.ET.Runtime` 包。
-- `cooking-udp` 回归通过不等于 ET/UDP 已接合，也不等于两台物理 PC LAN 已通过。
+- ~~`cooking-udp` 回归通过不等于 ET/UDP 已接合~~：该 gate 已随 UDP 方向放弃而退役；任何将来传输 gate 的通过同样不等于权威入口已接合或两 PC LAN 已通过。
 - Unity、两 PC LAN、durable storage、checkpoint 恢复和 ECS 清退没有真实证据前不得宣称完成。
 
 **权威来源**：
@@ -349,7 +349,7 @@ MOBA、Client Flow、Presentation 与通用工程治理属于后续正式化主�
 
 1. P0-E1：先恢复完整 build 绿色，避免后续 Cooking、同步或文档调整被无关编译错误干扰。
 2. P0-C1：把已验证的 ET Tick 接点扩展为正式 Cooking Match 宿主与单一加工时钟。
-3. P0-C1：随后完成 checkpoint、跨小关成功/失败/升级规则与成功 settlement，再接入 UDP owner-thread ingress。
+3. P0-C1：随后完成 checkpoint、跨小关成功/失败/升级规则与成功 settlement；原 UDP owner-thread ingress 已放弃，传输接入待 KCP 方向另行立项。
 4. P0-S1：补 pure-state 客户端消费闭环，让纯状态同步真正可演示。
 5. P0-S2：补 AOI slice / interest budget，支撑上万实体论证。
 6. P0-S3：补 delta/keyframe/resync，解决恢复链路正式性。
@@ -372,4 +372,4 @@ MOBA、Client Flow、Presentation 与通用工程治理属于后续正式化主�
 
 ## 9. 结论
 
-当前项目待办不再只围绕同步展柜：Cooking ET 应用运行时和 Shooter 同步正式化是两条并列 P0 主线。前者重点是正式 Match 宿主、单一加工时钟、可恢复 checkpoint、跨小关规则、UDP ingress 与最终 ECS 清退；后者重点是纯状态客户端消费、AOI/预算、delta/keyframe/resync、远程 lag compensation 与网络条件预算联动。MOBA 和 Client Flow 作为后续正式化主线，重点是收紧失败语义、建立不可变计划/契约、校准包边界，而不是先做大规模功能扩张。
+当前项目待办不再只围绕同步展柜：Cooking ET 应用运行时和 Shooter 同步正式化是两条并列 P0 主线。前者重点是正式 Match 宿主、单一加工时钟、可恢复 checkpoint、跨小关规则与最终 ECS 清退（UDP ingress 已于 2026-09-21 放弃，传输改用 KCP 属后续未启动工作）；后者重点是纯状态客户端消费、AOI/预算、delta/keyframe/resync、远程 lag compensation 与网络条件预算联动。MOBA 和 Client Flow 作为后续正式化主线，重点是收紧失败语义、建立不可变计划/契约、校准包边界，而不是先做大规模功能扩张。

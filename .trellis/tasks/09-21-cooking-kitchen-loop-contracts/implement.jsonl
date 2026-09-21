@@ -1,0 +1,10 @@
+{"file":".trellis/tasks/09-19-cooking-gameplay-business-discussion/prd.md","reason":"厨房闭环全部 owner 已确认决定的唯一需求来源。"}
+{"file":".trellis/tasks/09-19-cooking-gameplay-business-discussion/research/discussion-notes.md","reason":"第 11、12 节按轮次记录的决定脉络与未决项，用于核对需求归属。"}
+{"file":".trellis/spec/cooking/cooking-recipe-loop.md","reason":"待修约的完成语义与幂等契约现行文本。"}
+{"file":".trellis/spec/cooking/cooking-interaction-foundation.md","reason":"待修约的位置枚举、唯一位置与无包含环不变量现行文本。"}
+{"file":".trellis/spec/cooking/cooking-config-validation.md","reason":"配置校验、canonical identity/hash 与版本边界现行契约。"}
+{"file":".trellis/spec/cooking/index.md","reason":"阶段状态入口与“必须重新审议当时契约”的程序性条款。"}
+{"file":"Docs/design/CookingGame/reference/et-entity-tree.md","reason":"Phase A 单权威边界、ET 指纹与 driver 约定，确认不提前制造双权威。"}
+{"file":"ADR/decisions/0002-authoritative-fixed-tick-state-sync.md","reason":"权威固定 tick、稳定仲裁与整帧原子性约束。"}
+{"file":"Docs/AbilityKit测试门禁与批量回归规范.md","reason":"门禁选择、证据与真实验证结果记录规则。"}
+{"file":"tools/test-gates.json","reason":"验收 gate cooking-et-level-runtime 的定义与 cooking-udp 退役后的门禁清单。"}

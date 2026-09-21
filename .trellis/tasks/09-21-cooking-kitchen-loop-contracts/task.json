@@ -1,0 +1,32 @@
+{
+  "id": "cooking-kitchen-loop-contracts",
+  "name": "cooking-kitchen-loop-contracts",
+  "title": "Cooking 厨房闭环契约层",
+  "description": "单机范围内收敛厨房闭环的配置 schema v2、多输入配方命令形状、两套命令指纹与 spec 修约，为容器即物品与七项动作的仿真规则改造提供稳定契约。",
+  "status": "planning",
+  "dev_type": null,
+  "scope": null,
+  "package": null,
+  "priority": "P0",
+  "creator": "Li He",
+  "assignee": "Li He",
+  "createdAt": "2026-09-21",
+  "completedAt": null,
+  "branch": null,
+  "base_branch": "master",
+  "worktree_path": null,
+  "commit": null,
+  "pr_url": null,
+  "subtasks": [],
+  "children": [],
+  "parent": null,
+  "relatedFiles": [],
+  "notes": "",
+  "meta": {
+    "acceptance_gate": "cooking-et-level-runtime",
+    "unity_scope": "prohibited",
+    "requirements_source": ".trellis/tasks/09-19-cooking-gameplay-business-discussion/",
+    "scope_note": "契约层 only；容器即物品与七项动作属后续任务",
+    "authority_phase": "Phase A: CookingRecipeSimulation remains the sole mutable gameplay authority"
+  }
+}

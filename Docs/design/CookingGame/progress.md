@@ -28,13 +28,13 @@ P1 旧 metadata 曾写 `19/19`，属于摘要漂移；原始权威 check event �
 
 ## 3. 当前可运行纵向链路
 
-纯 .NET fixture 已能无界面地创建 scope 与实例、完成 in-process handshake、执行权威交互、运行最小配方、推进 Match、应用 settlement/progress，并生成 InProcess 测量诊断。另有一个未归档的 pure .NET Cooking UDP task，已验证 LiteNetLib reliable-UDP loopback 和同机双进程 listen-host/client 最小链路；真实 artifact 仍将其标为 same-machine，且两台物理 PC LAN 未运行。以上证明有限领域合同、测试 transport 边界和同机真实 socket 可以运行；不证明 Unity 表现、物理两机 LAN 或 durable storage。
+纯 .NET fixture 已能无界面地创建 scope 与实例、完成 in-process handshake、执行权威交互、运行最小配方、推进 Match、应用 settlement/progress，并生成 InProcess 测量诊断。此外曾有 pure .NET Cooking UDP 链路（LiteNetLib reliable-UDP loopback 与同机双进程 listen-host/client），其 task 已于 2026-09-21 因 owner 决定放弃并归档；三个 Cooking UDP 项目退出当前构建范围，源码与 artifact 证据保留，不得据此宣称能力被删除或从未存在。真实 artifact 仍将其标为 same-machine，且两台物理 PC LAN 未运行。以上证明有限领域合同、测试 transport 边界和同机真实 socket 曾经可以运行；不证明 Unity 表现、物理两机 LAN 或 durable storage，也不证明当前范围包含网络内容。
 
 ## 4. 未完成范围
 
 ### Non-Unity successor backlog
 
-P1–P6 尚可另行审议的工作包括两台物理 PC LAN 验收、正式 recipe/order/content/schema、Room/Match 产品语义、durable store、process-crash 恢复、批准 workload/threshold 和非 Unity 优化验证。当前 UDP task 已提供 LiteNetLib minimal wire/adapter、loopback 与 same-machine harness，但未替代上述两 PC 证据，也未解决完整 production transport 的认证、安全、重连或产品生命周期语义；其两机执行入口见 [UDP two-PC LAN acceptance](udp-two-pc-lan-acceptance.md)。其余工作均未启动、未批准、没有时间表，详见 [successor backlog](successor-backlog.md)。
+P1–P6 尚可另行审议的工作包括两台物理 PC LAN 验收、正式 recipe/order/content/schema、Room/Match 产品语义、durable store、process-crash 恢复、批准 workload/threshold 和非 Unity 优化验证。原 UDP task 曾提供 LiteNetLib minimal wire/adapter、loopback 与 same-machine harness，但未替代两 PC 证据，也未解决完整 production transport 的认证、安全、重连或产品生命周期语义；该方向已于 2026-09-21 放弃，传输计划改用 KCP，属未启动、未批准、无时间表的后续工作。其两机执行入口见 [UDP two-PC LAN acceptance](udp-two-pc-lan-acceptance.md)（已退役，仅作历史参考）。其余工作均未启动、未批准、没有时间表，详见 [successor backlog](successor-backlog.md)。
 
 ### Prohibited Unity scope
 

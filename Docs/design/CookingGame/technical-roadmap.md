@@ -2,7 +2,7 @@
 
 > 文档类型：应用层技术路线图（roadmap），不是 AbilityKit 框架规范、Trellis 行为草案或实施任务清单。
 >
-> 状态：路线保留长期分层与行为方向；截至 2026-09-16，P0–P6 各有一份已验证并完成归档的纯 .NET 受限交付，但完整产品出口仍未完成。Cooking Unity 执行长期禁止；非 Unity 后续未启动、未批准、无时间表。详见 [当前进度](progress.md)、[future scope](future-scope.md) 与 [successor backlog](successor-backlog.md)。近期 LAN 仍只是产品方向，不表示 production transport 或真实 LAN 已交付；主机角色决策见 [ADR-0001](../../../ADR/decisions/0001-player-host.md)。
+> 状态：路线保留长期分层与行为方向；截至 2026-09-16，P0–P6 各有一份已验证并完成归档的纯 .NET 受限交付，但完整产品出口仍未完成。Cooking Unity 执行长期禁止；非 Unity 后续未启动、未批准、无时间表。详见 [当前进度](progress.md)、[future scope](future-scope.md) 与 [successor backlog](successor-backlog.md)。截至 2026-09-21，owner 决定当前范围收敛为单机，原同机 UDP 经营闭环方向放弃，传输计划改用 KCP（未启动、未批准、无时间表）；LAN 仍是长期产品方向，不表示 production transport 或真实 LAN 已交付。主机角色决策见 [ADR-0001](../../../ADR/decisions/0001-player-host.md)。
 >
 > 归属：本文件是做菜经营游戏应用技术路线的唯一正文；框架机制仍以 [`Docs/design/`](../00-index.md) 及其 canonical 文档为准，待审阅的功能边界、验证设想和实施计划位于 `.trellis/spec/cooking/` 与 `.trellis/tasks/`。
 
@@ -119,6 +119,6 @@ P0–P6 已各完成并验证一个纯 .NET 受限增量，详细边界与历史
 
 - [ADR-0002：权威固定 Tick 与首阶段状态同步](../../../ADR/decisions/0002-authoritative-fixed-tick-state-sync.md)：已接受的结构性取舍与边界。
 - [ADR-0001：主机同时作为服务器与玩家](../../../ADR/decisions/0001-player-host.md)：listen host 角色决策。
-- [长期目标](../../../ADR/long-term-goals.md)：产品方向、近期 LAN 和未决范围。
+- [长期目标](../../../ADR/long-term-goals.md)：产品方向、当前单机范围与联机远期方向、未决范围。
 - [AbilityKit 框架设计索引](../00-index.md)：World、Config、HFSM、FrameSync、StateSync、Snapshot 等既有机制的 canonical 入口。
 - [做菜 Trellis 规范与归档交付索引](../../../.trellis/spec/cooking/index.md)：已验证 pure .NET limited delivery、non-Unity successor backlog 与 prohibited Unity future scope 的统一入口；不表示完整产品出口完成。

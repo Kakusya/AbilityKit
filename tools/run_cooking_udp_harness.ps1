@@ -1,3 +1,6 @@
+# 已退役：owner 于 2026-09-21 决定当前范围收敛为单机，传输方向改用 KCP。
+# 本脚本与 AbilityKit.Game.Cooking.UdpHarness 项目退出当前构建范围；源码保留供参考，不作删除声明。
+# KCP 接入是后续独立任务，需重新审议传输契约、身份、快照与门禁，届时再决定本脚本去留。
 [CmdletBinding()]
 param(
     [ValidateSet('SameMachine')]
