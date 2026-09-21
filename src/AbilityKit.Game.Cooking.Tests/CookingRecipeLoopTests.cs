@@ -12,7 +12,9 @@ public sealed class CookingRecipeLoopTests
     private static readonly PlayerId Player = new("chef-a");
     private static readonly PlayerId OtherPlayer = new("chef-b");
     private static readonly StationSlotId Station = new("stove-a");
-    private static readonly ContainerId Plate = new("plate-a");
+    private static readonly StationSlotId Counter = new("counter-a");
+    private static readonly ItemId Plate = new("plate-a");
+    private static readonly DefinitionId PlateDefinition = new("plate");
     private static readonly OrderId Order = new("fixture-order-a");
     private static readonly DefinitionId RawIngredient = new("fixture-raw");
     private static readonly DefinitionId Product = new("fixture-product");
@@ -25,7 +27,7 @@ public sealed class CookingRecipeLoopTests
         var orderPort = new RecordingOrderPort(accepted: true);
         var simulation = CreateSimulation(Recipe, RawIngredient, Product, "heat", orderPort);
         var input = new ItemId("ingredient-a");
-        simulation.AddIngredient(input, RawIngredient, Player);
+        simulation.AddItem(input, RawIngredient, ItemLocation.Station(Station));
 
         var started = Submit(simulation, evidence, "R01", Command(CookingRecipeOperation.StartProcess, "start", recipe: Recipe,
             item: input, station: Station, expectedVersion: 1), "start locks the held input into the appliance process");
@@ -55,21 +57,25 @@ public sealed class CookingRecipeLoopTests
         Assert.Equal(Product, product.Definition);
         Assert.Equal(ItemLocation.Station(Station), product.Location);
 
-        var plated = Submit(simulation, evidence, "R01", Command(CookingRecipeOperation.Plate, "plate", item: product.Id,
-            container: Plate, expectedVersion: product.Version), "completed product is placed into the independent plate state");
-        AssertAccepted(plated);
+        var picked = Submit(simulation, evidence, "R01", Command(CookingRecipeOperation.Pickup, "pickup", item: product.Id,
+            expectedVersion: product.Version), "completed product is picked up from the appliance station");
+        AssertAccepted(picked);
+        Assert.Equal(product.Id, simulation.ItemInHand(Player));
+        var putIn = Submit(simulation, evidence, "R01", Command(CookingRecipeOperation.PutIn, "put-in", item: product.Id,
+            container: Plate, expectedVersion: product.Version + 1), "held product is put into the bowl container item");
+        AssertAccepted(putIn);
         var platedProduct = Assert.Single(simulation.Snapshot().Items, item => item.Id == product.Id);
-        Assert.Equal(ItemLocation.Container(new ItemId(Plate.Value), "slot-0"), platedProduct.Location);
+        Assert.Equal(ItemLocation.Container(Plate, "slot-0"), platedProduct.Location);
         Assert.Equal(new[] { product.Id }, simulation.ItemsInContainer(Plate));
 
         var submitted = Submit(simulation, evidence, "R01", Command(CookingRecipeOperation.SubmitOrder, "submit", item: product.Id,
             order: Order, expectedVersion: platedProduct.Version), "accepted fixture order consumes the plated product exactly once");
         AssertAccepted(submitted);
-        Assert.Empty(simulation.Snapshot().Items);
+        Assert.Equal(new[] { Plate }, simulation.Snapshot().Items.Select(item => item.Id).ToArray());
         Assert.Empty(simulation.ItemsInContainer(Plate));
         Assert.Equal(new[] { Order }, simulation.Snapshot().AcceptedOrders);
         Assert.Single(orderPort.Submissions);
-        AssertEvidence(evidence.Path, "R01", 6);
+        AssertEvidence(evidence.Path, "R01", 7);
     }
 
     [Fact]
@@ -83,26 +89,26 @@ public sealed class CookingRecipeLoopTests
             item: input, station: Station, expectedVersion: 1), "missing input rejects without process"), CookingRecipeRejectionReason.ItemNotFound);
 
         var wrongCapability = CreateSimulation(Recipe, RawIngredient, Product, "heat", new RecordingOrderPort(true), applianceCapabilities: new HashSet<string>());
-        wrongCapability.AddIngredient(input, RawIngredient, Player);
+        wrongCapability.AddItem(input, RawIngredient, ItemLocation.Station(Station));
         AssertRejected(Submit(wrongCapability, evidence, "R02", Command(CookingRecipeOperation.StartProcess, "wrong-capability", recipe: Recipe,
             item: input, station: Station, expectedVersion: 1), "appliance capability mismatch is mutation-free"), CookingRecipeRejectionReason.ApplianceCapabilityMismatch);
 
         var unreachable = CreateSimulation(Recipe, RawIngredient, Product, "heat", new RecordingOrderPort(true), reachable: new HashSet<string>());
-        unreachable.AddIngredient(input, RawIngredient, Player);
+        unreachable.AddItem(input, RawIngredient, ItemLocation.Station(Station));
         AssertRejected(Submit(unreachable, evidence, "R02", Command(CookingRecipeOperation.StartProcess, "unreachable", recipe: Recipe,
             item: input, station: Station, expectedVersion: 1), "unreachable appliance is mutation-free"), CookingRecipeRejectionReason.TargetOutOfRange);
 
         var unavailable = CreateSimulation(Recipe, RawIngredient, Product, "heat", new RecordingOrderPort(true), applianceAvailable: false);
-        unavailable.AddIngredient(input, RawIngredient, Player);
+        unavailable.AddItem(input, RawIngredient, ItemLocation.Station(Station));
         AssertRejected(Submit(unavailable, evidence, "R02", Command(CookingRecipeOperation.StartProcess, "unavailable", recipe: Recipe,
             item: input, station: Station, expectedVersion: 1), "unavailable appliance is mutation-free"), CookingRecipeRejectionReason.ApplianceUnavailable);
 
         var incomplete = CreateSimulation(Recipe, RawIngredient, Product, "heat", new RecordingOrderPort(true));
-        incomplete.AddIngredient(input, RawIngredient, Player);
+        incomplete.AddItem(input, RawIngredient, ItemLocation.Station(Station));
         AssertAccepted(incomplete.Submit(Command(CookingRecipeOperation.StartProcess, "setup", recipe: Recipe, item: input, station: Station, expectedVersion: 1)));
         var process = incomplete.Snapshot().Processes.Single();
-        AssertRejected(Submit(incomplete, evidence, "R02", Command(CookingRecipeOperation.Plate, "incomplete-plate", item: input,
-            container: Plate, expectedVersion: 2), "processing input cannot be plated as completed product"), CookingRecipeRejectionReason.ProductNotFound);
+        AssertRejected(Submit(incomplete, evidence, "R02", Command(CookingRecipeOperation.PutIn, "incomplete-put-in", item: input,
+            container: Plate, expectedVersion: 2), "an input locked by an active process cannot be moved into a container"), CookingRecipeRejectionReason.ItemStale);
         Assert.Equal(process.Id, incomplete.Snapshot().Processes.Single().Id);
         AssertEvidence(evidence.Path, "R02", 5);
     }
@@ -138,14 +144,16 @@ public sealed class CookingRecipeLoopTests
         Assert.Equal(before, simulation.Snapshot().Sha256());
 
         var secondInput = new ItemId("ingredient-b");
-        simulation.AddIngredient(secondInput, RawIngredient, Player);
+        simulation.AddItem(secondInput, RawIngredient, ItemLocation.Station(Station));
         AssertAccepted(simulation.Submit(Command(CookingRecipeOperation.StartProcess, "second-start", recipe: Recipe, item: secondInput,
             station: Station, expectedVersion: 1)));
         var secondProcess = simulation.Snapshot().Processes.Single();
         AssertAccepted(simulation.Submit(Command(CookingRecipeOperation.AdvanceTicks, "second-complete", process: secondProcess.Id, ticks: 3)));
         var secondProduct = simulation.Snapshot().Items.Single(item => item.IsProduct && item.Id != firstProduct);
-        AssertAccepted(simulation.Submit(Command(CookingRecipeOperation.Plate, "second-plate", item: secondProduct.Id,
-            container: Plate, expectedVersion: secondProduct.Version)));
+        AssertAccepted(simulation.Submit(Command(CookingRecipeOperation.Pickup, "second-pickup", item: secondProduct.Id,
+            expectedVersion: secondProduct.Version)));
+        AssertAccepted(simulation.Submit(Command(CookingRecipeOperation.PutIn, "second-put-in", item: secondProduct.Id,
+            container: Plate, expectedVersion: secondProduct.Version + 1)));
 
         var slots = simulation.Snapshot().Items.Where(item => item.IsProduct)
             .Select(item => item.Location.SlotId).OrderBy(slot => slot, StringComparer.Ordinal).ToArray();
@@ -186,7 +194,7 @@ public sealed class CookingRecipeLoopTests
         var orderPort = new RecordingOrderPort(accepted: true);
         var simulation = CreateSimulation(secondRecipe, secondInput, secondProduct, "blend", orderPort, requiredTicks: 3);
         var input = new ItemId("second-ingredient");
-        simulation.AddIngredient(input, secondInput, Player);
+        simulation.AddItem(input, secondInput, ItemLocation.Station(Station));
 
         AssertAccepted(Submit(simulation, evidence, "R05", Command(CookingRecipeOperation.StartProcess, "second-start", recipe: secondRecipe,
             item: input, station: Station, expectedVersion: 1), "second recipe changes fixture data only"));
@@ -195,13 +203,16 @@ public sealed class CookingRecipeLoopTests
             ticks: 3), "same logical tick rule completes second fixture"));
         var product = simulation.Snapshot().Items.Single(item => item.IsProduct);
         Assert.Equal(secondProduct, product.Definition);
-        AssertAccepted(Submit(simulation, evidence, "R05", Command(CookingRecipeOperation.Plate, "second-plate", item: product.Id,
-            container: Plate, expectedVersion: product.Version), "same plate rule accepts second fixture product"));
+        AssertAccepted(Submit(simulation, evidence, "R05", Command(CookingRecipeOperation.Pickup, "second-pickup",
+            item: product.Id, expectedVersion: product.Version), "same pickup rule lifts the second fixture product"));
+        AssertAccepted(Submit(simulation, evidence, "R05", Command(CookingRecipeOperation.PutIn, "second-put-in",
+            item: product.Id, container: Plate, expectedVersion: product.Version + 1),
+            "same put-in rule accepts the second fixture product"));
         var plated = simulation.Snapshot().Items.Single(item => item.Id == product.Id);
         AssertAccepted(Submit(simulation, evidence, "R05", Command(CookingRecipeOperation.SubmitOrder, "second-submit", item: product.Id,
             order: Order, expectedVersion: plated.Version), "same order boundary accepts second fixture product"));
         Assert.Single(orderPort.Submissions);
-        AssertEvidence(evidence.Path, "R05", 4);
+        AssertEvidence(evidence.Path, "R05", 5);
     }
 
     [Fact]
@@ -212,8 +223,8 @@ public sealed class CookingRecipeLoopTests
         var local = CreateSimulation(Recipe, RawIngredient, Product, "heat", localPort);
         var remote = CreateSimulation(Recipe, RawIngredient, Product, "heat", remotePort);
         var input = new ItemId("shared-input");
-        local.AddIngredient(input, RawIngredient, Player);
-        remote.AddIngredient(input, RawIngredient, Player);
+        local.AddItem(input, RawIngredient, ItemLocation.Station(Station));
+        remote.AddItem(input, RawIngredient, ItemLocation.Station(Station));
 
         ExecuteLoop(local, input);
         ExecuteLoop(remote, input);
@@ -252,7 +263,7 @@ public sealed class CookingRecipeLoopTests
         var orderPort = new RecordingOrderPort(accepted: true);
         var simulation = CreateSimulation(Recipe, RawIngredient, Product, "heat", orderPort);
         var input = new ItemId("ingredient-fixed");
-        simulation.AddIngredient(input, RawIngredient, Player);
+        simulation.AddItem(input, RawIngredient, ItemLocation.Station(Station));
         AssertAccepted(simulation.Submit(Command(CookingRecipeOperation.StartProcess, "fixed-start", recipe: Recipe,
             item: input, station: Station, expectedVersion: 1)));
 
@@ -323,7 +334,7 @@ public sealed class CookingRecipeLoopTests
         var simulation = CreateSimulation(Recipe, RawIngredient, Product, "heat", orderPort, requiredTicks: 1,
             productIdAllocator: allocator);
         var input = new ItemId("ingredient-collision");
-        simulation.AddIngredient(input, RawIngredient, Player);
+        simulation.AddItem(input, RawIngredient, ItemLocation.Station(Station));
         AssertAccepted(simulation.Submit(Command(CookingRecipeOperation.StartProcess, "collision-start", recipe: Recipe,
             item: input, station: Station, expectedVersion: 1)));
         var before = simulation.Snapshot().CanonicalText();
@@ -472,7 +483,7 @@ public sealed class CookingRecipeLoopTests
         Assert.Empty(simulation.Snapshot().Processes);
 
         var secondInput = new ItemId("ingredient-reuse");
-        simulation.AddIngredient(secondInput, RawIngredient, Player);
+        simulation.AddItem(secondInput, RawIngredient, ItemLocation.Station(Station));
         var restarted = simulation.Submit(Command(CookingRecipeOperation.StartProcess, "reuse-station", recipe: Recipe,
             item: secondInput, station: Station, expectedVersion: 1));
         AssertAccepted(restarted);
@@ -491,7 +502,7 @@ public sealed class CookingRecipeLoopTests
     {
         var simulation = CreateSimulation(Recipe, RawIngredient, Product, "heat", new ThrowingOrderPort(), requiredTicks: 1);
         var input = new ItemId("ingredient-no-port");
-        simulation.AddIngredient(input, RawIngredient, Player);
+        simulation.AddItem(input, RawIngredient, ItemLocation.Station(Station));
         AssertAccepted(simulation.Submit(Command(CookingRecipeOperation.StartProcess, "no-port-start", recipe: Recipe,
             item: input, station: Station, expectedVersion: 1)));
 
@@ -529,7 +540,7 @@ public sealed class CookingRecipeLoopTests
     {
         var simulation = CreateSimulation(Recipe, RawIngredient, Product, "heat", new RecordingOrderPort(accepted: true));
         var input = new ItemId("ingredient-direct-regression");
-        simulation.AddIngredient(input, RawIngredient, Player);
+        simulation.AddItem(input, RawIngredient, ItemLocation.Station(Station));
         AssertAccepted(simulation.Submit(Command(CookingRecipeOperation.StartProcess, "direct-start", recipe: Recipe,
             item: input, station: Station, expectedVersion: 1)));
         var process = Assert.Single(simulation.Snapshot().Processes);
@@ -548,13 +559,15 @@ public sealed class CookingRecipeLoopTests
     {
         var simulation = CreateSimulation(Recipe, RawIngredient, Product, "heat", orderPort, containerCapacity: containerCapacity);
         var input = new ItemId("ingredient-a");
-        simulation.AddIngredient(input, RawIngredient, Player);
+        simulation.AddItem(input, RawIngredient, ItemLocation.Station(Station));
         AssertAccepted(simulation.Submit(Command(CookingRecipeOperation.StartProcess, "start", recipe: Recipe, item: input, station: Station, expectedVersion: 1)));
         var process = simulation.Snapshot().Processes.Single();
         AssertAccepted(simulation.Submit(Command(CookingRecipeOperation.AdvanceTicks, "complete", process: process.Id, ticks: 3)));
         var completedProduct = simulation.Snapshot().Items.Single(item => item.IsProduct).Id;
         var state = simulation.Snapshot().Items.Single(item => item.Id == completedProduct);
-        AssertAccepted(simulation.Submit(Command(CookingRecipeOperation.Plate, "plate", item: completedProduct, container: Plate, expectedVersion: state.Version)));
+        AssertAccepted(simulation.Submit(Command(CookingRecipeOperation.Pickup, "pickup", item: completedProduct, expectedVersion: state.Version)));
+        AssertAccepted(simulation.Submit(Command(CookingRecipeOperation.PutIn, "put-in", item: completedProduct,
+            container: Plate, expectedVersion: state.Version + 1)));
         product = completedProduct;
         return simulation;
     }
@@ -565,7 +578,9 @@ public sealed class CookingRecipeLoopTests
         var process = simulation.Snapshot().Processes.Single();
         AssertAccepted(simulation.Submit(Command(CookingRecipeOperation.AdvanceTicks, "shared-complete", process: process.Id, ticks: 3)));
         var product = simulation.Snapshot().Items.Single(item => item.IsProduct);
-        AssertAccepted(simulation.Submit(Command(CookingRecipeOperation.Plate, "shared-plate", item: product.Id, container: Plate, expectedVersion: product.Version)));
+        AssertAccepted(simulation.Submit(Command(CookingRecipeOperation.Pickup, "shared-pickup", item: product.Id, expectedVersion: product.Version)));
+        AssertAccepted(simulation.Submit(Command(CookingRecipeOperation.PutIn, "shared-put-in", item: product.Id,
+            container: Plate, expectedVersion: product.Version + 1)));
         var plated = simulation.Snapshot().Items.Single(item => item.Id == product.Id);
         AssertAccepted(simulation.Submit(Command(CookingRecipeOperation.SubmitOrder, "shared-submit", item: product.Id, order: Order, expectedVersion: plated.Version)));
     }
@@ -578,25 +593,30 @@ public sealed class CookingRecipeLoopTests
         var scope = new CookingScope(Session, World, Match);
         var players = new Dictionary<PlayerId, CookingPlayerConfig>
         {
-            [Player] = new(Player, new HashSet<string>(StringComparer.Ordinal) { "cook" }, reachable ?? new HashSet<string>(StringComparer.Ordinal) { Station.Value }),
+            [Player] = new(Player, new HashSet<string>(StringComparer.Ordinal) { "cook" },
+                reachable ?? new HashSet<string>(StringComparer.Ordinal) { Station.Value, Counter.Value }),
             [OtherPlayer] = new(OtherPlayer, new HashSet<string>(StringComparer.Ordinal) { "cook" }, new HashSet<string>(StringComparer.Ordinal)),
         };
         var items = new Dictionary<DefinitionId, CookingItemDefinition>
         {
             [input] = new(input, new HashSet<string>(StringComparer.Ordinal) { "cook" }),
             [product] = new(product, new HashSet<string>(StringComparer.Ordinal) { "cook" }),
+            [PlateDefinition] = new(PlateDefinition, new HashSet<string>(StringComparer.Ordinal) { "cook" },
+                new CookingItemContainerCapability(containerCapacity, new HashSet<DefinitionId> { product })),
         };
         var appliances = new Dictionary<StationSlotId, CookingApplianceDefinition>
         {
             [Station] = new(Station, applianceCapabilities ?? new HashSet<string>(StringComparer.Ordinal) { applianceCapability }, applianceAvailable),
+            [Counter] = new(Counter, new HashSet<string>(StringComparer.Ordinal)),
         };
         var recipes = new Dictionary<RecipeId, CookingRecipeDefinition>
         {
             [recipe] = new(recipe, new[] { input }, product, new ProcessId($"{recipe.Value}-process"), applianceCapability, requiredTicks),
         };
-        var containers = new Dictionary<ContainerId, CookingContainerDefinition> { [Plate] = new(Plate, containerCapacity) };
-        return new CookingRecipeSimulation(new CookingRecipeFixture(scope, players, items, appliances, recipes, containers),
-            orderPort, productIdAllocator);
+        var simulation = new CookingRecipeSimulation(
+            new CookingRecipeFixture(scope, players, items, appliances, recipes), orderPort, productIdAllocator);
+        simulation.AddItem(Plate, PlateDefinition, ItemLocation.Station(Counter));
+        return simulation;
     }
 
     private static CookingLevelScope LevelScope() => new(
@@ -627,20 +647,24 @@ public sealed class CookingRecipeLoopTests
         {
             [RawIngredient] = new(RawIngredient, new HashSet<string>(StringComparer.Ordinal) { "cook" }),
             [Product] = new(Product, new HashSet<string>(StringComparer.Ordinal) { "cook" }),
+            [PlateDefinition] = new(PlateDefinition, new HashSet<string>(StringComparer.Ordinal) { "cook" },
+                new CookingItemContainerCapability(processCount, new HashSet<DefinitionId> { Product })),
         };
         var recipes = new Dictionary<RecipeId, CookingRecipeDefinition>
         {
             [Recipe] = new(Recipe, new[] { RawIngredient }, Product, new ProcessId("fixture-process"), "heat", 1),
         };
-        var containers = new Dictionary<ContainerId, CookingContainerDefinition> { [Plate] = new(Plate, processCount) };
-        return new CookingRecipeSimulation(new CookingRecipeFixture(scope, players, items, appliances, recipes, containers),
+        var simulation = new CookingRecipeSimulation(
+            new CookingRecipeFixture(scope, players, items, appliances, recipes),
             new RecordingOrderPort(accepted: true), allocator);
+        simulation.AddItem(Plate, PlateDefinition, ItemLocation.World("plate-home"));
+        return simulation;
     }
 
     private static ProcessId StartSingleProcess(CookingRecipeSimulation simulation, string suffix)
     {
         var input = new ItemId($"ingredient-{suffix}");
-        simulation.AddIngredient(input, RawIngredient, Player);
+        simulation.AddItem(input, RawIngredient, ItemLocation.Station(Station));
         AssertAccepted(simulation.Submit(Command(CookingRecipeOperation.StartProcess, $"start-{suffix}", recipe: Recipe,
             item: input, station: Station, expectedVersion: 1)));
         return Assert.Single(simulation.Snapshot().Processes).Id;
@@ -653,7 +677,7 @@ public sealed class CookingRecipeLoopTests
             var player = new PlayerId($"chef-{index:D2}");
             var station = new StationSlotId($"stove-{index:D2}");
             var input = new ItemId($"ingredient-{index:D2}");
-            simulation.AddIngredient(input, RawIngredient, player);
+            simulation.AddItem(input, RawIngredient, ItemLocation.Station(station));
             AssertAccepted(simulation.Submit(new CookingRecipeCommand(
                 new CookingScope(Session, World, Match),
                 10,
@@ -672,7 +696,7 @@ public sealed class CookingRecipeLoopTests
     }
 
     private static CookingRecipeCommand Command(CookingRecipeOperation operation, string commandId, RecipeId? recipe = null,
-        ProcessId? process = null, ItemId? item = null, StationSlotId? station = null, ContainerId? container = null,
+        ProcessId? process = null, ItemId? item = null, StationSlotId? station = null, ItemId? container = null,
         OrderId? order = null, int expectedVersion = 0, int ticks = 0, PlayerId? player = null) =>
         new(new CookingScope(Session, World, Match), 10, player ?? Player, new RecipeCommandId(commandId), operation, recipe, process,
             item, station, container, order, expectedVersion, ticks);

@@ -23,6 +23,8 @@ public sealed class CookingRecipeCommandShapeTests
     private static readonly DefinitionId BeatenEgg = new("beaten-egg");
     private static readonly DefinitionId Soup = new("tomato-egg-soup");
     private static readonly DefinitionId Water = new("water");
+    private static readonly DefinitionId PotDefinition = new("pot");
+    private static readonly ItemId Pot = new("pot-1");
     private static readonly RecipeId SoupRecipe = new("tomato-egg-soup");
     private static readonly RecipeId ChopRecipe = new("chop-tomato");
 
@@ -43,21 +45,22 @@ public sealed class CookingRecipeCommandShapeTests
     }
 
     [Fact]
-    public void S02_well_formed_start_process_still_requires_item_station_and_version()
+    public void S02_well_formed_start_process_requires_item_and_version_but_not_station()
     {
         using var evidence = CreateEvidence("S02");
         var missingItem = Command(CookingRecipeOperation.StartProcess, "no-item", station: Station, expectedVersion: 1);
-        var missingStation = Command(CookingRecipeOperation.StartProcess, "no-station", item: new ItemId("ingredient-a"),
-            expectedVersion: 1);
         var missingVersion = Command(CookingRecipeOperation.StartProcess, "no-version", item: new ItemId("ingredient-a"),
             station: Station);
         var withTicks = Command(CookingRecipeOperation.StartProcess, "with-ticks", item: new ItemId("ingredient-a"),
             station: Station, expectedVersion: 1, ticks: 1);
+        var stationLess = Command(CookingRecipeOperation.StartProcess, "station-less", item: new ItemId("ingredient-a"),
+            expectedVersion: 1);
 
         Assert.False(CookingRecipeCommandValidation.IsWellFormed(missingItem));
-        Assert.False(CookingRecipeCommandValidation.IsWellFormed(missingStation));
         Assert.False(CookingRecipeCommandValidation.IsWellFormed(missingVersion));
         Assert.False(CookingRecipeCommandValidation.IsWellFormed(withTicks));
+        // 免工位加工（打蛋）在 wire 上不携带工位；是否必须带工位由配方的 RequiresStation 在域内决定。
+        Assert.True(CookingRecipeCommandValidation.IsWellFormed(stationLess));
 
         Submit(CreateSimulation(), evidence, "S02", missingItem,
             "relaxing Recipe does not relax Item, Station, ExpectedItemVersion or TickCount");
@@ -69,7 +72,7 @@ public sealed class CookingRecipeCommandShapeTests
         using var evidence = CreateEvidence("S03");
         var simulation = CreateSimulation();
         var input = new ItemId("ingredient-a");
-        simulation.AddIngredient(input, ChoppedTomato, Player);
+        simulation.AddItem(input, ChoppedTomato, ItemLocation.Station(Station));
         var before = simulation.Snapshot().CanonicalText();
         var eventsBefore = simulation.EventHistory.Count;
 
@@ -90,7 +93,7 @@ public sealed class CookingRecipeCommandShapeTests
         using var evidence = CreateEvidence("S04");
         var simulation = CreateSimulation();
         var tomato = new ItemId("ingredient-tomato");
-        simulation.AddIngredient(tomato, Tomato, Player);
+        simulation.AddItem(tomato, Tomato, ItemLocation.Station(Station));
 
         var accepted = Submit(simulation, evidence, "S04", Command(CookingRecipeOperation.StartProcess, "chop-accepted", recipe: ChopRecipe,
             item: tomato, station: Station, expectedVersion: 1), "explicit recipe accepts an input inside the declared input set");
@@ -105,14 +108,14 @@ public sealed class CookingRecipeCommandShapeTests
         using var evidence = CreateEvidence("S05");
         var simulation = CreateSimulation();
         var beaten = new ItemId("ingredient-beaten");
-        simulation.AddIngredient(beaten, BeatenEgg, Player);
+        simulation.AddItem(beaten, BeatenEgg, ItemLocation.Station(Station));
         var before = simulation.Snapshot().CanonicalText();
 
         var rejected = Submit(simulation, evidence, "S05", Command(CookingRecipeOperation.StartProcess, "chop-rejected", recipe: ChopRecipe,
             item: beaten, station: Station, expectedVersion: 1), "explicit recipe rejects an input outside the declared input set");
 
         Assert.Equal(CookingRecipeOutcome.Rejected, rejected.Outcome);
-        Assert.Equal(CookingRecipeRejectionReason.ItemNotFound, rejected.Reason);
+        Assert.Equal(CookingRecipeRejectionReason.RecipeNotMatched, rejected.Reason);
         Assert.Equal(before, simulation.Snapshot().CanonicalText());
         Assert.Empty(simulation.Snapshot().Processes);
     }
@@ -122,7 +125,7 @@ public sealed class CookingRecipeCommandShapeTests
     {
         var simulation = CreateSimulation();
         var chopped = new ItemId("ingredient-chopped");
-        simulation.AddIngredient(chopped, ChoppedTomato, Player);
+        simulation.AddItem(chopped, ChoppedTomato, ItemLocation.Station(Station));
 
         var rejected = simulation.Submit(Command(CookingRecipeOperation.StartProcess, "unknown-recipe",
             recipe: new RecipeId("absent-recipe"), item: chopped, station: Station, expectedVersion: 1));
@@ -135,7 +138,7 @@ public sealed class CookingRecipeCommandShapeTests
     public void S07_the_two_command_modes_have_distinct_fingerprints_and_are_each_idempotent()
     {
         using var evidence = CreateEvidence("S07");
-        var explicitRecipe = Command(CookingRecipeOperation.StartProcess, "fingerprint-a", recipe: SoupRecipe,
+        var explicitRecipe = Command(CookingRecipeOperation.StartProcess, "fingerprint-a", recipe: ChopRecipe,
             item: new ItemId("ingredient-a"), station: Station, expectedVersion: 1);
         var matchedRecipe = Command(CookingRecipeOperation.StartProcess, "fingerprint-a", item: new ItemId("ingredient-a"),
             station: Station, expectedVersion: 1);
@@ -145,7 +148,7 @@ public sealed class CookingRecipeCommandShapeTests
             System.Text.Json.JsonSerializer.Serialize(matchedRecipe));
 
         var explicitSimulation = CreateSimulation();
-        explicitSimulation.AddIngredient(new ItemId("ingredient-a"), ChoppedTomato, Player);
+        explicitSimulation.AddItem(new ItemId("ingredient-a"), Tomato, ItemLocation.Station(Station));
         var explicitBefore = explicitSimulation.Snapshot();
         var firstExplicit = explicitSimulation.Submit(explicitRecipe);
         var replayExplicit = explicitSimulation.Submit(explicitRecipe);
@@ -157,7 +160,7 @@ public sealed class CookingRecipeCommandShapeTests
         Assert.Single(explicitSimulation.Snapshot().Processes);
 
         var matchedSimulation = CreateSimulation();
-        matchedSimulation.AddIngredient(new ItemId("ingredient-a"), ChoppedTomato, Player);
+        matchedSimulation.AddItem(new ItemId("ingredient-a"), BeatenEgg, ItemLocation.Station(Station));
         var firstMatched = matchedSimulation.Submit(matchedRecipe);
         var replayMatched = matchedSimulation.Submit(matchedRecipe);
 
@@ -190,20 +193,85 @@ public sealed class CookingRecipeCommandShapeTests
     }
 
     [Fact]
-    public void S09_multi_input_recipe_accepts_any_member_of_its_declared_input_set()
+    public void S09_multi_input_recipe_starts_only_when_the_container_holds_the_full_declared_set()
     {
         using var evidence = CreateEvidence("S09");
+        var partial = CreateSimulation();
+        PutInSimulation(partial, new ItemId("chopped-only"), ChoppedTomato);
+        var partialState = partial.Snapshot().Items.Single(item => item.Id == Pot);
+
+        var partialStart = Submit(partial, evidence, "S09",
+            Command(CookingRecipeOperation.StartProcess, "soup-partial", item: Pot, station: Station,
+                expectedVersion: partialState.Version),
+            "a partial input set does not start the multi-input recipe");
+
+        Assert.Equal(CookingRecipeOutcome.Rejected, partialStart.Outcome);
+        Assert.Equal(CookingRecipeRejectionReason.RecipeNotMatched, partialStart.Reason);
+        Assert.Empty(partial.Snapshot().Processes);
+
         var simulation = CreateSimulation();
-        var soup = new ItemId("ingredient-beaten-egg");
-        simulation.AddIngredient(soup, BeatenEgg, Player);
+        PutInSimulation(simulation, new ItemId("chopped-1"), ChoppedTomato);
+        PutInSimulation(simulation, new ItemId("beaten-1"), BeatenEgg);
+        var potState = simulation.Snapshot().Items.Single(item => item.Id == Pot);
 
         var accepted = Submit(simulation, evidence, "S09",
-            Command(CookingRecipeOperation.StartProcess, "soup-start", recipe: SoupRecipe,
-                item: soup, station: Station, expectedVersion: 1),
-            "a recipe declaring two inputs accepts an item matching the second member of the set");
+            Command(CookingRecipeOperation.StartProcess, "soup-start", item: Pot, station: Station,
+                expectedVersion: potState.Version),
+            "the full declared input set in the container starts the multi-input recipe; water stays a default supply");
 
         Assert.Equal(CookingRecipeOutcome.Accepted, accepted.Outcome);
-        Assert.Single(simulation.Snapshot().Processes);
+        var process = Assert.Single(simulation.Snapshot().Processes);
+        Assert.Equal(SoupRecipe, process.Recipe);
+    }
+
+    [Fact]
+    public void S10_movement_operations_require_their_own_identifiers_on_the_wire()
+    {
+        using var evidence = CreateEvidence("S10");
+        var item = new ItemId("ingredient-a");
+        var bowl = new ItemId("bowl-a");
+
+        Assert.True(CookingRecipeCommandValidation.IsWellFormed(
+            Command(CookingRecipeOperation.Drop, "drop", item: item, station: Station, expectedVersion: 1)));
+        Assert.True(CookingRecipeCommandValidation.IsWellFormed(
+            Command(CookingRecipeOperation.PutIn, "put-in", item: item, container: bowl, expectedVersion: 1)));
+        Assert.True(CookingRecipeCommandValidation.IsWellFormed(
+            Command(CookingRecipeOperation.TakeOut, "take-out", item: item, container: bowl, expectedVersion: 1)));
+        Assert.True(CookingRecipeCommandValidation.IsWellFormed(
+            Command(CookingRecipeOperation.Pour, "pour", item: bowl, container: bowl, expectedVersion: 1)));
+
+        Assert.False(CookingRecipeCommandValidation.IsWellFormed(
+            Command(CookingRecipeOperation.Drop, "drop-no-station", item: item, expectedVersion: 1)));
+        Assert.False(CookingRecipeCommandValidation.IsWellFormed(
+            Command(CookingRecipeOperation.PutIn, "put-in-no-container", item: item, expectedVersion: 1)));
+        Assert.False(CookingRecipeCommandValidation.IsWellFormed(
+            Command(CookingRecipeOperation.TakeOut, "take-out-no-container", item: item, expectedVersion: 1)));
+        Assert.False(CookingRecipeCommandValidation.IsWellFormed(
+            Command(CookingRecipeOperation.Pour, "pour-no-target", container: bowl, expectedVersion: 1)));
+        Assert.False(CookingRecipeCommandValidation.IsWellFormed(
+            Command(CookingRecipeOperation.Pour, "pour-no-version", item: bowl, container: bowl)));
+        Assert.False(CookingRecipeCommandValidation.IsWellFormed(
+            Command(CookingRecipeOperation.Drop, "drop-with-ticks", item: item, station: Station, expectedVersion: 1, ticks: 1)));
+
+        // Plate 已被 放入/倒出 取代：枚举只保留七项动作加 fixed-tick 命令路径，且新值尾插。
+        Assert.Equal(
+            new[]
+            {
+                CookingRecipeOperation.Pickup, CookingRecipeOperation.StartProcess, CookingRecipeOperation.AdvanceTicks,
+                CookingRecipeOperation.SubmitOrder, CookingRecipeOperation.Drop, CookingRecipeOperation.PutIn,
+                CookingRecipeOperation.TakeOut, CookingRecipeOperation.Pour,
+            },
+            Enum.GetValues<CookingRecipeOperation>());
+
+        var simulation = CreateSimulation();
+        simulation.AddWorldIngredient(new ItemId("shape-item"), Tomato, "spawn");
+        var simulationItem = simulation.Snapshot().Items.First();
+        var accepted = Submit(simulation, evidence, "S10",
+            Command(CookingRecipeOperation.Drop, "drop-shape", item: simulationItem.Id, station: Station,
+                expectedVersion: simulationItem.Version),
+            "a well-formed drop reaches the domain and is rejected only by fixture state");
+        Assert.Equal(CookingRecipeOutcome.Rejected, accepted.Outcome);
+        Assert.Equal(CookingRecipeRejectionReason.CurrentLocationMismatch, accepted.Reason);
     }
 
     private static CookingRecipeSimulation CreateSimulation()
@@ -221,6 +289,8 @@ public sealed class CookingRecipeCommandShapeTests
             [BeatenEgg] = new(BeatenEgg, new HashSet<string>(StringComparer.Ordinal) { "cook" }),
             [Soup] = new(Soup, new HashSet<string>(StringComparer.Ordinal) { "cook" }),
             [Water] = new(Water, new HashSet<string>(StringComparer.Ordinal) { "cook" }),
+            [PotDefinition] = new(PotDefinition, new HashSet<string>(StringComparer.Ordinal) { "cook" },
+                new CookingItemContainerCapability(4, new HashSet<DefinitionId> { ChoppedTomato, BeatenEgg })),
         };
         var appliances = new Dictionary<StationSlotId, CookingApplianceDefinition>
         {
@@ -232,17 +302,25 @@ public sealed class CookingRecipeCommandShapeTests
             [SoupRecipe] = new(SoupRecipe, new[] { ChoppedTomato, BeatenEgg }, Soup, new ProcessId("soup-process"),
                 "heat", 6, new[] { new DefinitionId("water") }),
         };
-        var containers = new Dictionary<ContainerId, CookingContainerDefinition>
-        {
-            [new ContainerId("pot-a")] = new(new ContainerId("pot-a"), 4),
-        };
-        return new CookingRecipeSimulation(
-            new CookingRecipeFixture(scope, players, items, appliances, recipes, containers),
+        var simulation = new CookingRecipeSimulation(
+            new CookingRecipeFixture(scope, players, items, appliances, recipes),
             new AcceptingOrderPort());
+        simulation.AddItem(Pot, PotDefinition, ItemLocation.Station(Station));
+        return simulation;
+    }
+
+    private static void PutInSimulation(CookingRecipeSimulation simulation, ItemId item, DefinitionId definition)
+    {
+        simulation.AddWorldIngredient(item, definition, $"spawn-{item.Value}");
+        var state = simulation.Snapshot().Items.Single(candidate => candidate.Id == item);
+        Assert.Equal(CookingRecipeOutcome.Accepted, simulation.Submit(Command(CookingRecipeOperation.Pickup,
+            $"pickup-{item.Value}", item: item, expectedVersion: state.Version)).Outcome);
+        Assert.Equal(CookingRecipeOutcome.Accepted, simulation.Submit(Command(CookingRecipeOperation.PutIn,
+            $"put-in-{item.Value}", item: item, container: Pot, expectedVersion: state.Version + 1)).Outcome);
     }
 
     private static CookingRecipeCommand Command(CookingRecipeOperation operation, string commandId, RecipeId? recipe = null,
-        ProcessId? process = null, ItemId? item = null, StationSlotId? station = null, ContainerId? container = null,
+        ProcessId? process = null, ItemId? item = null, StationSlotId? station = null, ItemId? container = null,
         OrderId? order = null, int expectedVersion = 0, int ticks = 0, PlayerId? player = null) =>
         new(new CookingScope(Session, World, Match), 10, player ?? Player, new RecipeCommandId(commandId), operation, recipe,
             process, item, station, container, order, expectedVersion, ticks);

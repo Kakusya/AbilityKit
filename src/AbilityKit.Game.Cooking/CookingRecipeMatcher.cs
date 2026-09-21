@@ -32,7 +32,10 @@ public sealed record CookingRecipeMatchResult(
 public static class CookingRecipeMatcher
 {
     /// <param name="presentInputs">容器内物品的定义集合；重复项折叠为集合。</param>
-    /// <param name="applianceCapability">工位提供的能力；候选配方必须要求同一能力。</param>
+    /// <param name="applianceCapabilities">
+    /// 工位提供的能力集合；候选配方要求的能力必须在集合内。传 <c>null</c> 表示无工位约束
+    /// （免工位加工），此时候选集已由调用方限定为免工位配方。
+    /// </param>
     /// <param name="candidates">
     /// 候选配方，每个候选自带 <see cref="CookingRecipeDefinition.DefaultInputs"/>。
     /// 约定来自已通过配置校验的批次：输入集合为空的配方由配置校验拒绝，
@@ -40,7 +43,7 @@ public static class CookingRecipeMatcher
     /// </param>
     public static CookingRecipeMatchResult Match(
         IReadOnlyCollection<DefinitionId> presentInputs,
-        string applianceCapability,
+        IReadOnlySet<string>? applianceCapabilities,
         IReadOnlyCollection<CookingRecipeDefinition> candidates)
     {
         ArgumentNullException.ThrowIfNull(presentInputs);
@@ -52,7 +55,8 @@ public static class CookingRecipeMatcher
         {
             if (candidate is null || candidate.Inputs.Count == 0)
                 continue;
-            if (!string.Equals(candidate.RequiredApplianceCapability, applianceCapability, StringComparison.Ordinal))
+            if (applianceCapabilities is not null &&
+                !applianceCapabilities.Contains(candidate.RequiredApplianceCapability))
                 continue;
             if (!SetEqualsPresentPlusDefaults(present, candidate))
                 continue;

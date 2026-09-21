@@ -13,7 +13,7 @@ public sealed class CookingLevelLifecycleTests
     private static readonly LevelId Level = new("level-a");
     private static readonly PlayerId Player = new("chef-a");
     private static readonly StationSlotId Station = new("stove-a");
-    private static readonly ContainerId Container = new("plate-a");
+    private static readonly DefinitionId Container = new("plate-a");
     private static readonly DefinitionId Raw = new("raw-a");
     private static readonly DefinitionId Product = new("product-a");
     private static readonly RecipeId Recipe = new("recipe-a");
@@ -490,10 +490,11 @@ public sealed class CookingLevelLifecycleTests
             {
                 new CookingItemDefinition(Raw, new HashSet<string>(StringComparer.Ordinal) { "cook" }),
                 new CookingItemDefinition(Product, new HashSet<string>(StringComparer.Ordinal) { "cook" }),
+                new CookingItemDefinition(Container, new HashSet<string>(StringComparer.Ordinal) { "cook" },
+                    new CookingItemContainerCapability(2, new HashSet<DefinitionId> { Product })),
             },
             new[] { new CookingApplianceDefinition(Station, new HashSet<string>(StringComparer.Ordinal) { "heat" }) },
-            new[] { new CookingRecipeDefinition(Recipe, new[] { Raw }, Product, new ProcessId("process-a"), "heat", 3) },
-            new[] { new CookingContainerDefinition(Container, 2) }));
+            new[] { new CookingRecipeDefinition(Recipe, new[] { Raw }, Product, new ProcessId("process-a"), "heat", 3) }));
         Assert.True(result.Accepted);
         return Assert.IsType<CookingConfigurationSnapshot>(registry.Current);
     }
@@ -506,12 +507,12 @@ public sealed class CookingLevelLifecycleTests
                 new HashSet<string>(StringComparer.Ordinal) { Station.Value }),
         };
         return new CookingRecipeSimulation(new CookingRecipeFixture(scope, players, configuration.Items,
-            configuration.Appliances, configuration.Recipes, configuration.Containers), new AcceptingOrderPort());
+            configuration.Appliances, configuration.Recipes), new AcceptingOrderPort());
     }
 
     private static CookingRecipeCommand RecipeCommand(CookingScope scope) =>
         new(scope, 1, Player, new RecipeCommandId("closed-command"), CookingRecipeOperation.AdvanceTicks,
-            null, new ProcessId("missing-process"), null, null, Container, null, 0, 1);
+            null, new ProcessId("missing-process"), null, null, null, null, 0, 1);
 
     private sealed class ReentrantFactory : ICookingLevelGameplayFactory
     {

@@ -79,6 +79,7 @@ powershell -ExecutionPolicy Bypass -File tools\run_test_gate.ps1 -Gate regressio
 | `moba-console-smoke` | P0 | MOBA Runtime/Presentation | MOBA console、表现层可测试性、战斗 smoke、技能 trace | 继续 MOBA 表现层/runtime 后续开发前 |
 | `moba-codegen` | P1 | MOBA Runtime/Compile Time | MOBA Source Generator、Analyzer、Unity package 所有权 | 合并 MOBA 代码生成、静态分析或生成清单改动前 |
 | `cooking-et-level-runtime` | P1 | Cooking Game Runtime | canonical Level lifecycle、旧 Match facade、simulation fixed Tick、ET relation analyzer 与 ET Level host | 合并 Cooking Level lifecycle/fixed-tick/ET host 改动或宣称对应 runtime contract 前；构建 relation analyzer 与带 analyzer 的 ET runtime，并完整执行 Cooking 与 ET 两个测试项目 |
+| `cooking-kitchen-loop` | P1 | Cooking Game Runtime | 容器即物品、七项权威动作、放入即拒绝、锁输入、端走继续、两种完成形态、番茄蛋花汤闭环 fixture 与命令争抢仲裁 | 合并 Cooking 厨房闭环仿真改动或宣称对应 runtime contract 前；构建 Cooking 域与带 analyzer 的 ET runtime，执行 `Gate=CookingKitchenLoop` focused 测试并完整跑通 Cooking 与 ET 两个测试项目 |
 | `core-stability` | P1 | Runtime Platform | Record、StateSync、FrameSync、Host、Triggering、Context、Attributes、Modifiers、核心 UPM 直接依赖与 Attributes 零分配契约 | 合并核心包、生命周期、同步或 Attributes/Modifiers 热路径改动前 |
 | `runtime-contracts` | P1 | Runtime Platform | 网络 runtime、World DI、Game View Runtime | 合并 runtime contract 变化前 |
 | `moba-content-contracts` | P1 | MOBA Content Pipeline | 包资源所有权、TriggerPlan 聚合漂移、配置资源可加载性、跨表有效时序 | 发布 MOBA 内容或合并配置/资源改动前 |

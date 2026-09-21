@@ -1,4 +1,25 @@
 # P2 一条完整配方：cooking-recipe-loop
+## 2026-09-21 仿真落地修约（任务 09-21-cooking-kitchen-loop-simulation）
+
+来源：owner 逐轮决定（09-19 notes §11.1 第一至九轮）与任务①修约契约，经实现落地为可验证行为。本次修约把上一轮“属后续任务”的容器即物品、七项动作与闭环 fixture 从“未实现”改为“已在单机纯 C# 范围实现并验证”，验证证据见 task `check.jsonl` 与 `artifacts/cooking-kitchen-loop-domain/`。前厅（顾客、NPC 询问过程、订单生成节奏、用餐离席）、小关时间结构、失败条件仍范围外。
+
+| 位置 | 旧条款（原文可定位） | 新条款 | 来源 |
+|---|---|---|---|
+| Requirement「装盘与提交订单是独立的权威原子步骤」 | “将完成产物装入合法容器/槽位” 的 `Plate` 操作（容器 ID 直传） | `Plate` 退役，由七项动作中的“放入”（`PutIn`，手持物品进容器槽）与“倒出”（`Pour`，容器间转移或从已完成容器生成成品）取代；提交的产物必须在容器槽中，容器按当前位置判定可达 | owner 决定：notes 11.1 第六轮（七项动作：拾取、放下、放入、取出、启动加工、倒出、提交）、第九轮（蛋液倒进锅后碗即空出） |
+| Requirement「取料与加工必须复用权威物品交互边界」 | 未规定活动进程输入的移动限制 | 启动加工即锁定输入：放下、放入、取出、倒出拒绝属于活动进程输入的物品；拾取仅放行活动进程的容器锚点（端走继续） | owner 决定：notes 11.1 第三轮（启动煮制后不可取消）＋第七轮（可以把锅从灶台端走、加工继续并保留进度） |
+| Requirement「加工进度与产物必须由模拟逻辑驱动」 | 完成时“输入必须停在工位”的强约束（`ValidateProcessForFixedTick`） | 输入位置白名单：世界、工位、容器槽可，手持不可；加“输入未被移除且仍属该进程”。容器锚定加工的内容物必须仍留在该容器槽中。白名单保持腐败检测器可达（测试注入证明） | owner 决定：notes 11.1 第七轮（端走继续）＋实现契约（plan 任务②“保留它作为腐败检测器，不能退化成永不触发”） |
+| Requirement「加工进度与产物必须由模拟逻辑驱动」 | 完成形态只在配置层存在 | 两种完成形态都经 `FixedTickPlan` 原子提交：`ConsumeInputs` 消耗输入并在工位或容器上生成输出（打蛋的蛋液落碗）；`RetainInputs` 保留输入、容器切“已完成”，成品在倒出时才生成；倒出至多生成一次产物（重复倒出拒绝） | owner 决定：notes 11.1 第二/三/八轮 |
+| Requirement「取料与加工必须复用权威物品交互边界」 | 未规定工位绑定 | 工位绑定按加工定义声明（`RequiresStation`）：切→砧板、煮→灶台、烤→烤箱、打蛋→免工位；免工位加工不得携带工位，需工位加工缺工位即结构化拒绝 | owner 决定：notes 11.1 第三/七/八轮（三种加工工位要求并存） |
+| Requirement「多输入下达与匹配」 | 匹配在单物品命令上表达 | 容器锚定加工按容器内容集合匹配；水是默认供应（`DefaultInputs`）不占物品不占容量；显式 Recipe 与自动识别都要求输入集合齐全 | owner 决定：notes 11.1 第一/七轮 |
+| Requirement「争抢仲裁」（P0 交互基础延伸） | recipe 命令路径无批次仲裁 | 封闭批次按 (LogicalTick, 玩家 ID, 命令 ID) 稳定排序；乱序抵达与重复投放结果一致；同一 command identity 重放返回缓存结果 | 实现契约：plan 任务②“多人争抢仲裁按 Tick、玩家 ID、命令序号稳定排序，规则先落地” |
+| Requirement「装盘与提交订单」 | 订单端口无“要求”概念，碗无脏/净与池 | 订单端口按要求（recipe identity）接受/拒绝，提交成功回报订单完成一次；可洗碗定义提交后变脏并交 NPC 端口，注入“清洗完成”后回池且不超过配置上限 | owner 决定：notes 11.1 第二/六轮（碗脏由 NPC 清洗归还、干净碗总量由配置定义）＋plan“NPC 清洗做成注入端口” |
+
+### 实现状态声明
+
+- 已实现并验证（单机纯 C#）：容器即物品（`CookingContainerDefinition` 与 fixture 独立容器表已退役）、七项动作、放入即拒绝、锁输入、端走继续、两种完成形态、统一产品 ID allocator、番茄蛋花汤闭环 fixture（L01 端到端 + L02 确定性重放）、订单要求、碗池、批次争抢仲裁。
+- 仍未实现（范围外）：前厅顾客/NPC 过程、订单生成节奏、小关时间结构与成功条件、失败条件、Unity 一切范围。
+- 推定项（无单独 owner 裁决原文，实现按 task design §9 执行）：Pour 的源/目标用 command.Item/Container 表达、锁定拒绝复用 `ItemStale`、免工位进程按锚点物品建索引、`RequiresStation` 布尔字段、提交后容器直接移除出厨房、仲裁键 (LogicalTick, Player, CommandId)、`OrderCompleted` 透传、`CompleteWash` 返回结果记录、普通容器间 Pour 转移全部内容物、canonical 增加 `RequiresStation` 但保持 v2 身份字符串。
+
 ## 2026-09-21 契约修约
 
 来源：owner 在 `.trellis/tasks/09-19-cooking-gameplay-business-discussion/` 的逐轮决定（notes 11.1 第二/三轮），经 owner 批准由 Trellis task `09-21-cooking-kitchen-loop-contracts` 的 `design.md` 落地为契约。本次修约不解除 2026-09-16 收口状态中"未完成的非 Unity 范围不得写成已实现"的约束，也不代表容器即物品、七项动作或闭环 fixture 已实现——那些属后续任务。

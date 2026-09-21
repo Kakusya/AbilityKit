@@ -1,0 +1,20 @@
+{"file": "tools/test-gates.json", "reason": "门禁配置权威：新增 cooking-kitchen-loop gate 的唯一登记处"}
+{"file": "Docs/AbilityKit测试门禁与批量回归规范.md", "reason": "门禁规范文档：§9 需与新 gate 同步"}
+{"file": ".trellis/tasks/09-21-cooking-kitchen-loop-simulation/prd.md", "reason": "K01-K12 逐条核对：容器即物品、七项动作、放入即拒绝、锁输入、端走继续、两种完成形态、allocator、闭环 fixture、订单要求、碗池、争抢仲裁、门禁均有真实测试与证据。"}
+{"file": ".trellis/tasks/09-21-cooking-kitchen-loop-simulation/design.md", "reason": "契约决策与实现一致；Pour 源/目标约定、锁原因复用、RequiresStation 等推定项在 §9 显式列出并在交付说明中标注。"}
+{"file": ".trellis/tasks/09-21-cooking-kitchen-loop-simulation/implement.md", "reason": "阶段 1-8 执行清单已完成：容器即物品、七项动作、启动加工重构、完成形态、闭环 fixture、争抢仲裁、新 gate 与门禁文档、evidence 与 spec 修约。"}
+{"file": "src/AbilityKit.Game.Cooking/CookingRecipeLoop.cs", "reason": "容器即物品仿真、七项动作、双进程索引、两种完成形态、统一 allocator、碗池与清洗注入端口的实现主体。"}
+{"file": "src/AbilityKit.Game.Cooking/CookingRecipeMatcher.cs", "reason": "能力过滤泛化为工位能力集合（null=免工位不约束），集合相等语义保持任务①契约。"}
+{"file": "src/AbilityKit.Game.Cooking/CookingConfigurationValidation.cs", "reason": "containers 候选/快照/canonical 段退役，canonical recipe 段新增 RequiresStation，身份保持 cooking-definition-v2。"}
+{"file": "src/AbilityKit.Game.Cooking.Tests/CookingContainerAsItemTests.cs", "reason": "K01 容器即物品可观察性：C01-C06。"}
+{"file": "src/AbilityKit.Game.Cooking.Tests/CookingKitchenActionsTests.cs", "reason": "K02/K03/K04 七项动作与放入即拒绝/锁输入/包含环：A01-A11。"}
+{"file": "src/AbilityKit.Game.Cooking.Tests/CookingProcessAnchorTests.cs", "reason": "K03/K04/K05 锚点匹配、免工位、端走继续、白名单腐败检测器可达：P01-P09。"}
+{"file": "src/AbilityKit.Game.Cooking.Tests/CookingCompletionKindTests.cs", "reason": "K06/K07 两种完成形态、倒出至多生成一次、双路径共享 allocator：F01-F06。"}
+{"file": "src/AbilityKit.Game.Cooking.Tests/CookingKitchenLoopFixtureTests.cs", "reason": "K08/K09/K10 番茄蛋花汤闭环、订单要求、碗池上限与清洗注入：L01-L05。"}
+{"file": "src/AbilityKit.Game.Cooking.Tests/CookingCommandArbitrationTests.cs", "reason": "K11 批次争抢稳定排序与幂等：G01-G05。"}
+{"file": "src/AbilityKit.Game.Cooking.Tests/CookingRecipeCommandShapeTests.cs", "reason": "K02 wire 形状：Plate 退役、四个新动作尾插与 IsWellFormed 分支（S10）；S07/S09 按 owner 多输入集合语义迁移。"}
+{"file": "src/AbilityKit.ET.Runtime.Tests/CookingLevelEtHostTests.cs", "reason": "K02 ET 二进制指纹金样重锚：新增 PutIn golden 向量钉住新枚举编号。"}
+{"file": ".trellis/spec/cooking/cooking-recipe-loop.md", "reason": "七项动作/锁输入/端走继续/完成形态/争抢仲裁/订单与碗池的修约记录，含实现状态声明与推定项清单。"}
+{"file": ".trellis/spec/cooking/cooking-config-validation.md", "reason": "containers 段退役与 RequiresStation 的修约记录。"}
+{"file": ".trellis/spec/cooking/index.md", "reason": "P2/P3 行更新为实现并验证，头部追加二次修约说明。"}
+{"file": ".trellis/tasks/09-21-cooking-kitchen-loop-simulation/research/verification-2026-09-21.md", "reason": "验收方法、门禁实际输出、44/44 独立复验、三类变异测试结果与未覆盖边界"}

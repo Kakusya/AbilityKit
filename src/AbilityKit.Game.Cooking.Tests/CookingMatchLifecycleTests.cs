@@ -12,7 +12,7 @@ public sealed class CookingMatchLifecycleTests
     private static readonly MatchId Match = new("match-a");
     private static readonly PlayerId Player = new("chef-a");
     private static readonly StationSlotId Station = new("stove-a");
-    private static readonly ContainerId Container = new("plate-a");
+    private static readonly DefinitionId Container = new("plate-a");
     private static readonly DefinitionId Raw = new("raw-a");
     private static readonly DefinitionId Product = new("product-a");
     private static readonly RecipeId Recipe = new("recipe-a");
@@ -131,7 +131,7 @@ public sealed class CookingMatchLifecycleTests
         Assert.True(second.TryGetGameplay(out var secondGameplay));
 
         var firstIngredient = new ItemId("first-ingredient");
-        firstGameplay.AddIngredient(firstIngredient, Raw, Player);
+        firstGameplay.AddItem(firstIngredient, Raw, ItemLocation.Station(Station));
         AssertAccepted(firstGameplay.Submit(RecipeCommand(first.Scope, "first-start", CookingRecipeOperation.StartProcess, recipe: Recipe,
             item: firstIngredient, station: Station, expectedVersion: 1)));
         var firstProcess = Assert.Single(firstGameplay.Snapshot().Processes);
@@ -249,15 +249,16 @@ public sealed class CookingMatchLifecycleTests
         {
             new CookingItemDefinition(Raw, new HashSet<string>(StringComparer.Ordinal) { "cook" }),
             new CookingItemDefinition(Product, new HashSet<string>(StringComparer.Ordinal) { "cook" }),
+            new CookingItemDefinition(Container, new HashSet<string>(StringComparer.Ordinal) { "cook" },
+                new CookingItemContainerCapability(2, new HashSet<DefinitionId> { Product })),
         },
         new[] { new CookingApplianceDefinition(Station, new HashSet<string>(StringComparer.Ordinal) { "heat" }) },
-        new[] { new CookingRecipeDefinition(Recipe, new[] { Raw }, Product, new ProcessId("process-a"), "heat", 3) },
-        new[] { new CookingContainerDefinition(Container, 2) });
+        new[] { new CookingRecipeDefinition(Recipe, new[] { Raw }, Product, new ProcessId("process-a"), "heat", 3) });
 
     private static CookingRecipeCommand RecipeCommand(CookingScope scope, string id, CookingRecipeOperation operation,
         RecipeId? recipe = null, ProcessId? process = null, ItemId? item = null, StationSlotId? station = null,
         int expectedVersion = 0, int ticks = 0) =>
-        new(scope, 1, Player, new RecipeCommandId(id), operation, recipe, process, item, station, Container, null, expectedVersion, ticks);
+        new(scope, 1, Player, new RecipeCommandId(id), operation, recipe, process, item, station, null, null, expectedVersion, ticks);
 
     private static CookingMatchLifecycleResult Record(CookingMatchLifecycle lifecycle, EvidenceScope evidence, string testId,
         string operation, Func<CookingMatchLifecycleResult> action, string summary)
@@ -325,7 +326,7 @@ public sealed class CookingMatchLifecycleTests
                     new HashSet<string>(StringComparer.Ordinal) { Station.Value }),
             };
             return new CookingRecipeSimulation(new CookingRecipeFixture(scope, players, configuration.Items,
-                configuration.Appliances, configuration.Recipes, configuration.Containers), new AcceptingOrderPort());
+                configuration.Appliances, configuration.Recipes), new AcceptingOrderPort());
         }
     }
 

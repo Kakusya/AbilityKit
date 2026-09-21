@@ -173,13 +173,19 @@ public sealed class CookingRecipeMatcherTests
 
     private static CookingRecipeMatchResult Match(EvidenceScope evidence,
         IReadOnlyList<DefinitionId> presentInputs, string applianceCapability,
+        IReadOnlyList<CookingRecipeDefinition> candidates, string assertionSummary) =>
+        MatchCapabilities(evidence, presentInputs, new HashSet<string>(StringComparer.Ordinal) { applianceCapability },
+            candidates, assertionSummary);
+
+    private static CookingRecipeMatchResult MatchCapabilities(EvidenceScope evidence,
+        IReadOnlyList<DefinitionId> presentInputs, IReadOnlySet<string>? applianceCapabilities,
         IReadOnlyList<CookingRecipeDefinition> candidates, string assertionSummary)
     {
-        var result = CookingRecipeMatcher.Match(presentInputs, applianceCapability, candidates);
+        var result = CookingRecipeMatcher.Match(presentInputs, applianceCapabilities, candidates);
         CookingRecipeMatchAcceptanceEvidenceWriter.Append(evidence.Path, new CookingRecipeMatchAcceptanceEvidence(
             evidence.TestId,
             presentInputs.OrderBy(definition => definition.Value, StringComparer.Ordinal).ToArray(),
-            applianceCapability,
+            applianceCapabilities is null ? "<none>" : string.Join(',', applianceCapabilities.OrderBy(value => value, StringComparer.Ordinal)),
             candidates.Select(candidate => candidate.Id).OrderBy(id => id.Value, StringComparer.Ordinal).ToArray(),
             result.Outcome.ToString(),
             result.Recipe,

@@ -1,0 +1,30 @@
+{
+  "id": "cooking-kitchen-loop-simulation",
+  "name": "cooking-kitchen-loop-simulation",
+  "title": "Cooking 厨房闭环仿真规则与闭环 fixture",
+  "description": "单机范围内把容器落地为带容器能力的物品并退役独立容器定义，落地七项权威原子动作、放入即拒绝、锁输入、端走继续、两种完成形态与统一产品 ID 分配，并以番茄蛋花汤闭环 fixture 验收。",
+  "status": "completed",
+  "dev_type": null,
+  "scope": null,
+  "package": null,
+  "priority": "P1",
+  "creator": "Li He",
+  "assignee": "Li He",
+  "createdAt": "2026-09-21",
+  "completedAt": "2026-09-21",
+  "branch": "master",
+  "base_branch": "master",
+  "worktree_path": null,
+  "commit": null,
+  "pr_url": null,
+  "subtasks": [],
+  "children": [],
+  "parent": null,
+  "relatedFiles": [],
+  "notes": "",
+  "meta": {
+    "acceptance_gate": "cooking-kitchen-loop",
+    "unity_scope": "prohibited",
+    "requirements_source": ".trellis/tasks/09-19-cooking-gameplay-business-discussion/"
+  }
+}

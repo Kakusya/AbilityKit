@@ -11,6 +11,9 @@ namespace AbilityKit.ET.Runtime.Tests;
 
 public sealed class CookingLevelEtHostTests
 {
+    private static readonly ItemId Plate = new("plate");
+    private static readonly DefinitionId PlateDefinition = new("plate");
+
     [Fact]
     [Trait("Gate", "CookingLevelRuntime")]
     public void Canonical_tree_uses_exact_ET_relations_and_recursively_releases()
@@ -418,6 +421,32 @@ public sealed class CookingLevelEtHostTests
 
     [Fact]
     [Trait("Gate", "CookingLevelRuntime")]
+    public void Fingerprint_put_in_has_exact_canonical_bytes_and_sha256_golden_vector()
+    {
+        using var evidence = CreateFingerprintEvidence("put-in");
+        var fixture = CreateFixture();
+        var envelope = fixture.Envelope(1, "put-in", CookingRecipeOperation.PutIn,
+            item: fixture.Ingredient, container: fixture.Container, expectedVersion: 1);
+
+        Assert.True(CookingRecipeCommandValidation.IsWellFormed(envelope.Command));
+        Assert.Equal(CookingRecipeOperation.PutIn, envelope.Command.Operation);
+        Assert.Equal(
+            "0000000773657373696F6E00000005776F726C64000000056D617463680000000000000001" +
+            "000000076C6576656C2D310000000000000001000000000000000100000002703100000006" +
+            "7075742D696E000000050000010000000C696E6772656469656E742D31000100000005706C61" +
+            "7465000000000100000000",
+            Convert.ToHexString(CookingCommandFingerprint.CanonicalBytes(envelope)));
+        Assert.Equal("70181A96B7A5E8775A764083D4D4B30FB0739CB0E67B636976239A8E6FBBF703",
+            CookingCommandFingerprint.Create(envelope).Value);
+
+        AppendFingerprintEvidence(evidence, "Fingerprint_put_in_has_exact_canonical_bytes_and_sha256_golden_vector",
+            envelope, "put-in", "new golden vector for the put-in movement command introduced by the kitchen-loop "
+            + "task: the operation enum lost Plate and tail-appended Drop/PutIn/TakeOut/Pour, so the encoded "
+            + "operation value changed and this vector re-anchors the new numbering from real output");
+    }
+
+    [Fact]
+    [Trait("Gate", "CookingLevelRuntime")]
     public void Fingerprint_three_surfaces_agree_on_command_identity_for_both_recipe_modes()
     {
         using var evidence = CreateFingerprintEvidence("identity");
@@ -722,9 +751,11 @@ public sealed class CookingLevelEtHostTests
         Assert.Equal(CookingRecipeOutcome.Accepted, simulation.Submit(fixture.Command(101, "setup-progress",
             CookingRecipeOperation.AdvanceTicks, process: process.Id, tickCount: 3)).Outcome);
         var product = Assert.Single(simulation.Snapshot().Items, item => item.IsProduct);
-        Assert.Equal(CookingRecipeOutcome.Accepted, simulation.Submit(fixture.Command(102, "setup-plate",
-            CookingRecipeOperation.Plate, item: product.Id, container: fixture.Container,
-            expectedVersion: product.Version)).Outcome);
+        Assert.Equal(CookingRecipeOutcome.Accepted, simulation.Submit(fixture.Command(102, "setup-pickup",
+            CookingRecipeOperation.Pickup, item: product.Id, expectedVersion: product.Version)).Outcome);
+        Assert.Equal(CookingRecipeOutcome.Accepted, simulation.Submit(fixture.Command(103, "setup-put-in",
+            CookingRecipeOperation.PutIn, item: product.Id, container: fixture.Container,
+            expectedVersion: product.Version + 1)).Outcome);
     }
 
     private static void AssertRelation<TAttribute, TEntity, TParent>()
@@ -749,44 +780,42 @@ public sealed class CookingLevelEtHostTests
         var raw = new DefinitionId("raw");
         var cooked = new DefinitionId("cooked");
         var station = new StationSlotId("stove");
+        var counter = new StationSlotId("counter");
         var recipe = new RecipeId("soup");
-        var container = new ContainerId("plate");
-        var configuration = BuildConfiguration(station, container, raw, cooked, recipe);
+        var configuration = BuildConfiguration(station, raw, cooked, recipe);
         var simulationFixture = new CookingRecipeFixture(
             matchScope,
             new Dictionary<PlayerId, CookingPlayerConfig>
             {
-                [player] = new(player, new HashSet<string> { "cook" }, new HashSet<string> { station.Value }),
+                [player] = new(player, new HashSet<string> { "cook" }, new HashSet<string> { station.Value, "counter" }),
             },
             new Dictionary<DefinitionId, CookingItemDefinition>
             {
                 [raw] = new(raw, new HashSet<string> { "cook" }),
                 [cooked] = new(cooked, new HashSet<string> { "cook" }),
+                [PlateDefinition] = new(PlateDefinition, new HashSet<string> { "cook" },
+                    new CookingItemContainerCapability(1, new HashSet<DefinitionId> { cooked })),
             },
             new Dictionary<StationSlotId, CookingApplianceDefinition>
             {
                 [station] = new(station, new HashSet<string> { "heat" }),
+                [counter] = new(counter, new HashSet<string>()),
             },
             new Dictionary<RecipeId, CookingRecipeDefinition>
             {
                 [recipe] = new(recipe, new[] { raw }, cooked, new ProcessId("boil"), "heat", requiredTicks),
-            },
-            new Dictionary<ContainerId, CookingContainerDefinition>
-            {
-                [container] = new(container, 1),
             });
         var factory = new Factory(simulationFixture, productIdAllocator, orderPort);
         var lifecycle = new CookingLevelLifecycle(levelScope, configuration, factory);
         var preparation = new CookingLevelPreparation(levelScope.Level, new MapId("map"),
-            new CookingLogicalLayout(new LayoutId("layout"), new[] { station }, new[] { container }),
+            new CookingLogicalLayout(new LayoutId("layout"), new[] { station }, new[] { PlateDefinition }),
             configuration.Identity);
-        return new Fixture(levelScope, player, ingredient, raw, station, recipe, container, lifecycle, preparation, factory,
+        return new Fixture(levelScope, player, ingredient, raw, station, recipe, Plate, lifecycle, preparation, factory,
             failureInjector);
     }
 
     private static CookingConfigurationSnapshot BuildConfiguration(
         StationSlotId station,
-        ContainerId container,
         DefinitionId raw,
         DefinitionId cooked,
         RecipeId recipe)
@@ -798,10 +827,11 @@ public sealed class CookingLevelEtHostTests
             {
                 new CookingItemDefinition(raw, new HashSet<string> { "cook" }),
                 new CookingItemDefinition(cooked, new HashSet<string> { "cook" }),
+                new CookingItemDefinition(PlateDefinition, new HashSet<string> { "cook" },
+                    new CookingItemContainerCapability(1, new HashSet<DefinitionId> { cooked })),
             },
             new[] { new CookingApplianceDefinition(station, new HashSet<string> { "heat" }) },
-            new[] { new CookingRecipeDefinition(recipe, new[] { raw }, cooked, new ProcessId("boil"), "heat", 3) },
-            new[] { new CookingContainerDefinition(container, 1) }));
+            new[] { new CookingRecipeDefinition(recipe, new[] { raw }, cooked, new ProcessId("boil"), "heat", 3) }));
         Assert.True(result.Accepted);
         return registry.Current!;
     }
@@ -813,7 +843,7 @@ public sealed class CookingLevelEtHostTests
         DefinitionId raw,
         StationSlotId station,
         RecipeId recipe,
-        ContainerId container,
+        ItemId container,
         CookingLevelLifecycle lifecycle,
         CookingLevelPreparation preparation,
         Factory factory,
@@ -825,7 +855,7 @@ public sealed class CookingLevelEtHostTests
         public DefinitionId Raw { get; } = raw;
         public StationSlotId Station { get; } = station;
         public RecipeId Recipe { get; } = recipe;
-        public ContainerId Container { get; } = container;
+        public ItemId Container { get; } = container;
         public CookingLevelLifecycle Lifecycle { get; } = lifecycle;
         public CookingLevelPreparation Preparation { get; } = preparation;
         public CookingRecipeSimulation Simulation => factory.Simulation!;
@@ -862,7 +892,7 @@ public sealed class CookingLevelEtHostTests
             ProcessId? process = null,
             ItemId? item = null,
             StationSlotId? station = null,
-            ContainerId? container = null,
+            ItemId? container = null,
             OrderId? order = null,
             int expectedVersion = 0,
             int tickCount = 0,
@@ -878,7 +908,7 @@ public sealed class CookingLevelEtHostTests
             ProcessId? process = null,
             ItemId? item = null,
             StationSlotId? station = null,
-            ContainerId? container = null,
+            ItemId? container = null,
             OrderId? order = null,
             int expectedVersion = 0,
             int tickCount = 0,
@@ -913,8 +943,12 @@ public sealed class CookingLevelEtHostTests
             return _precreated ??= NewSimulation();
         }
 
-        private CookingRecipeSimulation NewSimulation() =>
-            new(fixture, orderPort ?? new AcceptingOrders(), productIdAllocator);
+        private CookingRecipeSimulation NewSimulation()
+        {
+            var simulation = new CookingRecipeSimulation(fixture, orderPort ?? new AcceptingOrders(), productIdAllocator);
+            simulation.AddItem(Plate, PlateDefinition, ItemLocation.Station(new StationSlotId("counter")));
+            return simulation;
+        }
     }
 
     private sealed class ThrowingAllocator : ICookingProductIdAllocator

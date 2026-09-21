@@ -302,6 +302,58 @@
       ]
     },
     {
+      "name": "cooking-kitchen-loop",
+      "level": "P1",
+      "owner": "Cooking Game Runtime",
+      "description": "Pure .NET kitchen-loop simulation contracts: container-as-item, the seven authoritative actions, put-in rejection, locked inputs, carry-away continuation, both completion kinds, the tomato-egg-soup closed-loop fixture and command arbitration.",
+      "scope": [
+        "cooking",
+        "kitchen-loop",
+        "container-as-item",
+        "seven-actions",
+        "closed-loop-fixture"
+      ],
+      "requiredBefore": [
+        "merge-cooking-kitchen-loop-simulation-change",
+        "claim-cooking-kitchen-loop-contract"
+      ],
+      "failurePolicy": "Block Cooking kitchen-loop simulation delivery until the domain and ET runtime builds succeed, the focused Gate=CookingKitchenLoop tests pass, and the complete Cooking and ET runtime test projects stay green. Do not substitute any transport-level gate for this runtime contract.",
+      "ciPolicy": {
+        "runOnPullRequest": false,
+        "runOnPush": false,
+        "runOnSchedule": false,
+        "artifactRequired": true
+      },
+      "steps": [
+        {
+          "name": "Cooking domain build",
+          "kind": "dotnet-build",
+          "project": "src/AbilityKit.Game.Cooking/AbilityKit.Game.Cooking.csproj"
+        },
+        {
+          "name": "Cooking ET runtime build with relation analyzer",
+          "kind": "dotnet-build",
+          "project": "src/AbilityKit.Game.Cooking.EtRuntime/AbilityKit.Game.Cooking.EtRuntime.csproj"
+        },
+        {
+          "name": "Kitchen-loop focused contract tests",
+          "kind": "dotnet-test",
+          "project": "src/AbilityKit.Game.Cooking.Tests/AbilityKit.Game.Cooking.Tests.csproj",
+          "filter": "Gate=CookingKitchenLoop"
+        },
+        {
+          "name": "Cooking domain and Level lifecycle regression",
+          "kind": "dotnet-test",
+          "project": "src/AbilityKit.Game.Cooking.Tests/AbilityKit.Game.Cooking.Tests.csproj"
+        },
+        {
+          "name": "Cooking ET Level host and runtime regression",
+          "kind": "dotnet-test",
+          "project": "src/AbilityKit.ET.Runtime.Tests/AbilityKit.ET.Runtime.Tests.csproj"
+        }
+      ]
+    },
+    {
       "name": "network-sdk",
       "level": "P1",
       "owner": "Network SDK Platform",

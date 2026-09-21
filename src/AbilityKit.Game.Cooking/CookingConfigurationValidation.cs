@@ -32,8 +32,7 @@ public sealed record CookingConfigurationCandidate(
     IReadOnlyList<string> SupportedApplianceCapabilities,
     IReadOnlyList<CookingItemDefinition> Items,
     IReadOnlyList<CookingApplianceDefinition> Appliances,
-    IReadOnlyList<CookingRecipeDefinition> Recipes,
-    IReadOnlyList<CookingContainerDefinition> Containers);
+    IReadOnlyList<CookingRecipeDefinition> Recipes);
 
 public sealed record CookingConfigurationIdentity(string Schema, string Sha256)
 {
@@ -54,14 +53,12 @@ public sealed class CookingConfigurationSnapshot
         IReadOnlySet<string> supportedApplianceCapabilities,
         IReadOnlyDictionary<DefinitionId, CookingItemDefinition> items,
         IReadOnlyDictionary<StationSlotId, CookingApplianceDefinition> appliances,
-        IReadOnlyDictionary<RecipeId, CookingRecipeDefinition> recipes,
-        IReadOnlyDictionary<ContainerId, CookingContainerDefinition> containers)
+        IReadOnlyDictionary<RecipeId, CookingRecipeDefinition> recipes)
     {
         SupportedApplianceCapabilities = supportedApplianceCapabilities;
         Items = items;
         Appliances = appliances;
         Recipes = recipes;
-        Containers = containers;
         Identity = new CookingConfigurationIdentity(CookingConfigurationIdentity.CurrentSchema, Sha256(CanonicalText()));
     }
 
@@ -69,7 +66,6 @@ public sealed class CookingConfigurationSnapshot
     public IReadOnlyDictionary<DefinitionId, CookingItemDefinition> Items { get; }
     public IReadOnlyDictionary<StationSlotId, CookingApplianceDefinition> Appliances { get; }
     public IReadOnlyDictionary<RecipeId, CookingRecipeDefinition> Recipes { get; }
-    public IReadOnlyDictionary<ContainerId, CookingContainerDefinition> Containers { get; }
     public CookingConfigurationIdentity Identity { get; }
 
     public string CanonicalText() => JsonSerializer.Serialize(new CanonicalConfiguration(
@@ -93,9 +89,7 @@ public sealed class CookingConfigurationSnapshot
                 NormalizeDefinitionList(recipe.DefaultInputs),
                 recipe.ProductDefinition.Value,
                 recipe.Process.Value, recipe.RequiredApplianceCapability,
-                recipe.Completion.ToString(), recipe.RequiredTicks)).ToArray(),
-        Containers.Values.OrderBy(container => container.Id.Value, StringComparer.Ordinal)
-            .Select(container => new CanonicalContainer(container.Id.Value, container.Capacity)).ToArray()), CanonicalJsonOptions);
+                recipe.Completion.ToString(), recipe.RequiredTicks, recipe.RequiresStation)).ToArray()), CanonicalJsonOptions);
 
     private static IReadOnlyList<string> NormalizeDefinitionList(IReadOnlyList<DefinitionId>? definitions) =>
         definitions is null
@@ -109,16 +103,15 @@ public sealed class CookingConfigurationSnapshot
         IReadOnlyList<string> SupportedApplianceCapabilities,
         IReadOnlyList<CanonicalItem> Items,
         IReadOnlyList<CanonicalAppliance> Appliances,
-        IReadOnlyList<CanonicalRecipe> Recipes,
-        IReadOnlyList<CanonicalContainer> Containers);
+        IReadOnlyList<CanonicalRecipe> Recipes);
 
     private sealed record CanonicalItem(string Id, IReadOnlyList<string> AllowedPlayerCapabilities,
         CanonicalItemContainer? Container);
     private sealed record CanonicalItemContainer(int Capacity, IReadOnlyList<string> AcceptedDefinitions);
     private sealed record CanonicalAppliance(string Station, IReadOnlyList<string> Capabilities, bool IsAvailable);
     private sealed record CanonicalRecipe(string Id, IReadOnlyList<string> Inputs, IReadOnlyList<string> DefaultInputs,
-        string ProductDefinition, string Process, string RequiredApplianceCapability, string Completion, int RequiredTicks);
-    private sealed record CanonicalContainer(string Id, int Capacity);
+        string ProductDefinition, string Process, string RequiredApplianceCapability, string Completion, int RequiredTicks,
+        bool RequiresStation);
 }
 
 public sealed record CookingConfigurationSubmissionResult(
@@ -154,7 +147,6 @@ public sealed class CookingConfigurationRegistry
         var items = ValidateItems(candidate.Items, diagnostics);
         var appliances = ValidateAppliances(candidate.Appliances, supportedCapabilities, diagnostics);
         ValidateRecipes(candidate.Recipes, items, appliances, supportedCapabilities, diagnostics);
-        ValidateContainers(candidate.Containers, diagnostics);
         return new CookingConfigurationValidationResult(diagnostics
             .OrderBy(diagnostic => diagnostic.Table, StringComparer.Ordinal)
             .ThenBy(diagnostic => diagnostic.RecordId, StringComparer.Ordinal)
@@ -171,9 +163,8 @@ public sealed class CookingConfigurationRegistry
         ArgumentNullException.ThrowIfNull(candidate.Items);
         ArgumentNullException.ThrowIfNull(candidate.Appliances);
         ArgumentNullException.ThrowIfNull(candidate.Recipes);
-        ArgumentNullException.ThrowIfNull(candidate.Containers);
         if (candidate.Items.Any(item => item is null) || candidate.Appliances.Any(appliance => appliance is null) ||
-            candidate.Recipes.Any(recipe => recipe is null) || candidate.Containers.Any(container => container is null))
+            candidate.Recipes.Any(recipe => recipe is null))
             throw new ArgumentException("Configuration candidates cannot contain null definitions.", nameof(candidate));
     }
 
@@ -194,10 +185,8 @@ public sealed class CookingConfigurationRegistry
         var recipes = candidate.Recipes.ToFrozenDictionary(recipe => recipe.Id,
             recipe => new CookingRecipeDefinition(recipe.Id, recipe.Inputs.ToArray(), recipe.ProductDefinition, recipe.Process,
                 recipe.RequiredApplianceCapability, recipe.RequiredTicks,
-                recipe.DefaultInputs?.ToArray(), recipe.Completion));
-        var containers = candidate.Containers.ToFrozenDictionary(container => container.Id,
-            container => new CookingContainerDefinition(container.Id, container.Capacity));
-        return new CookingConfigurationSnapshot(capabilities, items, appliances, recipes, containers);
+                recipe.DefaultInputs?.ToArray(), recipe.Completion, recipe.RequiresStation));
+        return new CookingConfigurationSnapshot(capabilities, items, appliances, recipes);
     }
 
     private static HashSet<string> ValidateCapabilities(IReadOnlyList<string> capabilities,
@@ -390,31 +379,6 @@ public sealed class CookingConfigurationRegistry
         if (string.IsNullOrWhiteSpace(definition.Value) || !items.ContainsKey(definition))
             diagnostics.Add(Diagnostic(CookingConfigurationDiagnosticCodes.MissingReference, "Recipe", recipe.Value, field,
                 definition.Value, "Recipe references an item definition that is absent from this candidate batch."));
-    }
-
-    private static void ValidateContainers(IReadOnlyList<CookingContainerDefinition> containers,
-        ICollection<CookingConfigurationDiagnostic> diagnostics)
-    {
-        var unique = new HashSet<ContainerId>();
-        foreach (var container in containers)
-        {
-            var recordId = container.Id.Value;
-            if (string.IsNullOrWhiteSpace(recordId))
-            {
-                diagnostics.Add(Diagnostic(CookingConfigurationDiagnosticCodes.RequiredFieldMissing, "Container", "<blank>", "Id", null,
-                    "Container ID must be nonblank."));
-                continue;
-            }
-            if (!unique.Add(container.Id))
-            {
-                diagnostics.Add(Diagnostic(CookingConfigurationDiagnosticCodes.DuplicateId, "Container", recordId, "Id", null,
-                    "Container ID is declared more than once."));
-                continue;
-            }
-            if (container.Capacity <= 0)
-                diagnostics.Add(Diagnostic(CookingConfigurationDiagnosticCodes.InvalidValue, "Container", recordId, "Capacity", null,
-                    "Container capacity must be positive."));
-        }
     }
 
     private static CookingConfigurationDiagnostic Diagnostic(string code, string table, string recordId, string field,

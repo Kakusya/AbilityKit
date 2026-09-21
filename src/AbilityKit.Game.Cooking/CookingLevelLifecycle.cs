@@ -23,7 +23,7 @@ public readonly record struct LayoutId(string Value)
 public sealed record CookingLogicalLayout(
     LayoutId Id,
     IReadOnlyList<StationSlotId> ApplianceStations,
-    IReadOnlyList<ContainerId> Containers);
+    IReadOnlyList<DefinitionId> Containers);
 
 public sealed record CookingLevelScope
 {
@@ -684,7 +684,8 @@ public sealed class CookingLevelLifecycle
                 !configuration.Appliances.ContainsKey(station)))
             return CookingLevelLifecycleReason.ApplianceNotFound;
         if (preparation.Layout.Containers.Any(container => string.IsNullOrWhiteSpace(container.Value) ||
-                !configuration.Containers.ContainsKey(container)))
+                !configuration.Items.TryGetValue(container, out var containerDefinition) ||
+                containerDefinition.Container is null))
             return CookingLevelLifecycleReason.ContainerNotFound;
         return CookingLevelLifecycleReason.None;
     }

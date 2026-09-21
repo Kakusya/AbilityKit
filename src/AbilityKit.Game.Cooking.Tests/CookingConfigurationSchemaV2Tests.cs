@@ -77,8 +77,7 @@ public sealed class CookingConfigurationSchemaV2Tests
                 Recipe("chop-tomato", new[] { Tomato }, TomatoEggSoup, "heat", 3),
                 Recipe("chop-tomato-explicit-empty", new[] { Egg }, TomatoEggSoup, "heat", 3,
                     defaultInputs: Array.Empty<DefinitionId>()),
-            },
-            Array.Empty<CookingContainerDefinition>())).Accepted);
+            })).Accepted);
 
         var omitted = new CookingConfigurationRegistry();
         Assert.True(omitted.Submit(new CookingConfigurationCandidate(
@@ -89,8 +88,7 @@ public sealed class CookingConfigurationSchemaV2Tests
             {
                 Recipe("chop-tomato", new[] { Tomato }, TomatoEggSoup, "heat", 3),
                 Recipe("chop-tomato-explicit-empty", new[] { Egg }, TomatoEggSoup, "heat", 3),
-            },
-            Array.Empty<CookingContainerDefinition>())).Accepted);
+            })).Accepted);
 
         Assert.Equal(explicitEmpty.Current!.CanonicalText(), omitted.Current!.CanonicalText());
         Assert.Equal(explicitEmpty.Current!.Identity, omitted.Current!.Identity);
@@ -160,8 +158,7 @@ public sealed class CookingConfigurationSchemaV2Tests
             new[] { "heat" },
             new[] { Item(Tomato), Item(ChoppedTomato) },
             new[] { Appliance("stove-a", "heat") },
-            new[] { Recipe("chop-tomato", new[] { Tomato }, ChoppedTomato, "heat", 3) },
-            Array.Empty<CookingContainerDefinition>());
+            new[] { Recipe("chop-tomato", new[] { Tomato }, ChoppedTomato, "heat", 3) });
 
         var v2Registry = new CookingConfigurationRegistry();
         Assert.True(v2Registry.Submit(v1Candidate).Accepted);
@@ -194,8 +191,7 @@ public sealed class CookingConfigurationSchemaV2Tests
                 Recipe("duplicate-inputs", new[] { Tomato, Tomato }, TomatoEggSoup, "heat", 3),
                 Recipe("overlapping-defaults", new[] { Tomato, Egg }, TomatoEggSoup, "heat", 3,
                     defaultInputs: new[] { Tomato }),
-            },
-            Array.Empty<CookingContainerDefinition>());
+            });
 
         var result = registry.Validate(candidate);
         AppendEvidence(evidence, "V08", result.IsValid, null, null, result.Diagnostics,
@@ -231,16 +227,14 @@ public sealed class CookingConfigurationSchemaV2Tests
             new[] { "heat" },
             new[] { Item(Tomato), Item(Egg), Item(TomatoEggSoup) },
             new[] { Appliance("stove-a", "heat") },
-            new[] { Recipe("chop-tomato", new[] { Tomato }, TomatoEggSoup, "heat", 3) },
-            Array.Empty<CookingContainerDefinition>())).Accepted);
+            new[] { Recipe("chop-tomato", new[] { Tomato }, TomatoEggSoup, "heat", 3) })).Accepted);
 
         var multi = new CookingConfigurationRegistry();
         Assert.True(multi.Submit(new CookingConfigurationCandidate(
             new[] { "heat" },
             new[] { Item(Tomato), Item(Egg), Item(TomatoEggSoup) },
             new[] { Appliance("stove-a", "heat") },
-            new[] { Recipe("chop-tomato", new[] { Tomato, Egg }, TomatoEggSoup, "heat", 3) },
-            Array.Empty<CookingContainerDefinition>())).Accepted);
+            new[] { Recipe("chop-tomato", new[] { Tomato, Egg }, TomatoEggSoup, "heat", 3) })).Accepted);
 
         Assert.NotEqual(single.Current!.Identity, multi.Current!.Identity);
         Assert.Equal(new[] { Tomato, Egg }, multi.Current!.Recipes[new RecipeId("chop-tomato")].Inputs);
@@ -288,8 +282,7 @@ public sealed class CookingConfigurationSchemaV2Tests
                 Item(Tomato),
             },
             new[] { Appliance("stove-a", "heat") },
-            Array.Empty<CookingRecipeDefinition>(),
-            Array.Empty<CookingContainerDefinition>()));
+            Array.Empty<CookingRecipeDefinition>()));
         var potLastResult = potLast.Validate(new CookingConfigurationCandidate(
             new[] { "heat" },
             new[]
@@ -299,8 +292,7 @@ public sealed class CookingConfigurationSchemaV2Tests
                     new CookingItemContainerCapability(2, new HashSet<DefinitionId> { missing })),
             },
             new[] { Appliance("stove-a", "heat") },
-            Array.Empty<CookingRecipeDefinition>(),
-            Array.Empty<CookingContainerDefinition>()));
+            Array.Empty<CookingRecipeDefinition>()));
 
         Assert.Equal(potFirstResult.Diagnostics, potLastResult.Diagnostics);
         Assert.Contains(potFirstResult.Diagnostics, diagnostic => diagnostic.Code == CookingConfigurationDiagnosticCodes.MissingReference &&
@@ -332,8 +324,7 @@ public sealed class CookingConfigurationSchemaV2Tests
             Recipe("beat-egg", new[] { Egg }, BeatenEgg, "blend", 2),
             Recipe("tomato-egg-soup", new[] { ChoppedTomato, BeatenEgg }, TomatoEggSoup, "heat", 6, new[] { Water },
                 CookingRecipeCompletionKind.RetainInputs),
-        },
-        Array.Empty<CookingContainerDefinition>());
+        });
 
     private static CookingItemDefinition Item(DefinitionId id) =>
         new(id, new HashSet<string>(StringComparer.Ordinal) { "cook" });

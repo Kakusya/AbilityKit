@@ -1,4 +1,14 @@
 # P3 数据配置验证：cooking-config-validation
+## 2026-09-21 容器即物品修约（任务 09-21-cooking-kitchen-loop-simulation）
+
+来源：owner 已确认结构“容器是带容器能力的 Item”（ET 参考 product-lifetimes.md §6）在任务②落地为配置形状。本次修约把容器从“与物品并列的第二身份”改为“物品定义的容器能力”，并新增配方的工位要求字段。
+
+| 位置 | 旧条款（原文可定位） | 新条款 | 来源 |
+|---|---|---|---|
+| 候选/快照/canonical 的 `Containers` 段 | `CookingContainerDefinition`（ContainerId + Capacity）独立表，候选必须声明 | 退役：容器能力由 `CookingItemDefinition.Container` 声明（容量 + 可接受物品定义集合），候选、快照与 canonical 不再有独立 containers 段；canonical 的 recipe 段新增 `RequiresStation` | owner 已确认结构（容器即物品）＋任务② design §1/§3；canonical 增加字段但保持 `cooking-definition-v2` 身份字符串（任务①决定：v1 已封死，v2 内部形状扩展不升版本） |
+| 诊断表 “Container” | 容器 ID 非空/重复/容量为正的结构诊断 | 删除；同类问题改由 ItemDefinition 的 `Container.Capacity` 与 `Container.AcceptedDefinitions` 诊断覆盖（含两遍序无关校验，任务① V11 回归保留） | 同上 |
+| 布局容器校验 | `CookingLogicalLayout.Containers` 引用 `ContainerId`，对照配置容器表 | 布局声明容器物品**定义**（`DefinitionId`），校验“定义存在且带容器能力”，`ContainerNotFound` reason 保留 | 任务② design §7（连带处理布局与生命周期 reason 映射） |
+
 ## 2026-09-21 契约修约
 
 来源：既有“迁移策略未获 owner 确认前 MUST 标记 Draft / Blocked”原则 + Trellis task `09-21-cooking-kitchen-loop-contracts` 的 R1，经 owner 批准该 task 的 `design.md` 后生效。本次修约把 v1→v2 的版本边界从原则落到具体条款，不写迁移、不静默转换；也不代表正式 schema、host/client compatibility 或 durable storage 已完成。

@@ -54,11 +54,6 @@ public sealed class CookingConfigurationValidationTests
             {
                 Recipe("recipe-a", new[] { new DefinitionId("missing-input") }, "product-a", "heat", 0),
                 Recipe("recipe-a", new[] { new DefinitionId("raw-a") }, "missing-product", "unknown", 3),
-            },
-            containers: new[]
-            {
-                new CookingContainerDefinition(new ContainerId("plate-a"), 0),
-                new CookingContainerDefinition(new ContainerId("plate-a"), 1),
             });
 
         var rejected = Submit(registry, invalid, evidence, "C02",
@@ -70,7 +65,8 @@ public sealed class CookingConfigurationValidationTests
         Assert.Equal(before, registry.Current!.Identity);
         var repeated = registry.Validate(invalid);
         Assert.Equal(rejected.Validation.Diagnostics, repeated.Diagnostics);
-        Assert.True(rejected.Validation.Diagnostics.Count >= 8);
+        Assert.DoesNotContain(rejected.Validation.Diagnostics, diagnostic => diagnostic.Table == "Container");
+        Assert.Equal(10, rejected.Validation.Diagnostics.Count);
         Assert.Contains(rejected.Validation.Diagnostics, diagnostic => diagnostic.Table == "Recipe" &&
             diagnostic.RecordId == "recipe-a" && diagnostic.Field == "Inputs" && diagnostic.Relation == "missing-input");
         Assert.Contains(rejected.Validation.Diagnostics, diagnostic => diagnostic.Table == "Appliance" &&
@@ -91,11 +87,6 @@ public sealed class CookingConfigurationValidationTests
             {
                 Recipe("recipe-b", new[] { new DefinitionId("raw-b") }, "product-b", "blend", 2),
                 Recipe("recipe-a", new[] { new DefinitionId("raw-a") }, "product-a", "heat", 3),
-            },
-            containers: new[]
-            {
-                new CookingContainerDefinition(new ContainerId("plate-b"), 2),
-                new CookingContainerDefinition(new ContainerId("plate-a"), 1),
             });
 
         var result = Submit(registry, extended, evidence, "C04-C05",
@@ -187,11 +178,6 @@ public sealed class CookingConfigurationValidationTests
             {
                 Recipe("recipe-b", new[] { new DefinitionId("raw-b") }, "product-b", "blend", 2),
                 Recipe("recipe-a", new[] { new DefinitionId("raw-a") }, "product-a", "heat", 3),
-            },
-            containers: new[]
-            {
-                new CookingContainerDefinition(new ContainerId("plate-b"), 2),
-                new CookingContainerDefinition(new ContainerId("plate-a"), 1),
             }));
         var changedResult = changed.Submit(Candidate(
             items: new[]
@@ -214,8 +200,7 @@ public sealed class CookingConfigurationValidationTests
         IReadOnlyList<string>? capabilities = null,
         IReadOnlyList<CookingItemDefinition>? items = null,
         IReadOnlyList<CookingApplianceDefinition>? appliances = null,
-        IReadOnlyList<CookingRecipeDefinition>? recipes = null,
-        IReadOnlyList<CookingContainerDefinition>? containers = null) => new(
+        IReadOnlyList<CookingRecipeDefinition>? recipes = null) => new(
         capabilities ?? new[] { "heat", "blend" },
         items ?? new[] { Item("raw-a"), Item("product-a"), Item("raw-b"), Item("product-b") },
         appliances ?? new[] { Appliance("stove-a", "heat"), Appliance("blender-a", "blend") },
@@ -223,11 +208,6 @@ public sealed class CookingConfigurationValidationTests
         {
             Recipe("recipe-a", new[] { new DefinitionId("raw-a") }, "product-a", "heat", 3),
             Recipe("recipe-b", new[] { new DefinitionId("raw-b") }, "product-b", "blend", 2),
-        },
-        containers ?? new[]
-        {
-            new CookingContainerDefinition(new ContainerId("plate-a"), 1),
-            new CookingContainerDefinition(new ContainerId("plate-b"), 2),
         });
 
     private static CookingItemDefinition Item(string id) =>

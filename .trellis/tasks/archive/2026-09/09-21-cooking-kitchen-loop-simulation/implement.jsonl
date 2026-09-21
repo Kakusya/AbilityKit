@@ -1,0 +1,6 @@
+{"file": ".trellis/spec/cooking/cooking-recipe-loop.md", "reason": "任务①修约后的配方闭环契约：完成形态、多输入匹配、倒出幂等是本次实现的验收依据"}
+{"file": ".trellis/spec/cooking/cooking-interaction-foundation.md", "reason": "ContainerSlot 与容器即物品的交互基础契约；唯一位置/无重复占有/无包含环不变量继续有效"}
+{"file": ".trellis/spec/cooking/cooking-config-validation.md", "reason": "v2 配置边界：容器能力由物品定义声明、配方纯数据不加规则分支"}
+{"file": ".trellis/tasks/09-19-cooking-gameplay-business-discussion/research/discussion-notes.md", "reason": "owner 逐轮决定的唯一来源：七项动作、放入即拒绝、锁输入、端走继续、完成形态、闭环 fixture 形态"}
+{"file": "Docs/design/CookingGame/reference/product-lifetimes.md", "reason": "容器是具有容器能力的 Item、Process 通过引用关联 Station 的 ET 结构参考"}
+{"file": "Docs/design/CookingGame/technical-roadmap.md", "reason": "做菜应用层技术路线正文，确认配置表与权威模拟边界"}
