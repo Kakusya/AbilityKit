@@ -1,6 +1,6 @@
 # Cooking 厨房闭环契约层
 
-> 状态：`planning`。本任务只做契约层，不实现玩法规则；实现授权以本 PRD 与 design.md 审阅批准为准。
+> 状态：`in_progress`。本任务只做契约层，不实现玩法规则；实现授权来自 owner 2026-09-21 对 prd.md 与 design.md 的批准。
 
 ## Goal
 

@@ -37,7 +37,7 @@ public sealed record CookingConfigurationCandidate(
 
 public sealed record CookingConfigurationIdentity(string Schema, string Sha256)
 {
-    public const string CurrentSchema = "cooking-definition-v1";
+    public const string CurrentSchema = "cooking-definition-v2";
 
     public override string ToString() => $"{Schema}:{Sha256}";
 }
@@ -77,15 +77,30 @@ public sealed class CookingConfigurationSnapshot
         SupportedApplianceCapabilities.OrderBy(capability => capability, StringComparer.Ordinal).ToArray(),
         Items.Values.OrderBy(item => item.Id.Value, StringComparer.Ordinal)
             .Select(item => new CanonicalItem(item.Id.Value,
-                item.AllowedPlayerCapabilities.OrderBy(capability => capability, StringComparer.Ordinal).ToArray())).ToArray(),
+                item.AllowedPlayerCapabilities.OrderBy(capability => capability, StringComparer.Ordinal).ToArray(),
+                item.Container is null
+                    ? null
+                    : new CanonicalItemContainer(item.Container.Capacity,
+                        item.Container.AcceptedDefinitions.Select(definition => definition.Value)
+                            .OrderBy(definition => definition, StringComparer.Ordinal).ToArray())))
+            .ToArray(),
         Appliances.Values.OrderBy(appliance => appliance.Station.Value, StringComparer.Ordinal)
             .Select(appliance => new CanonicalAppliance(appliance.Station.Value,
                 appliance.Capabilities.OrderBy(capability => capability, StringComparer.Ordinal).ToArray(), appliance.IsAvailable)).ToArray(),
         Recipes.Values.OrderBy(recipe => recipe.Id.Value, StringComparer.Ordinal)
-            .Select(recipe => new CanonicalRecipe(recipe.Id.Value, recipe.InputDefinition.Value, recipe.ProductDefinition.Value,
-                recipe.Process.Value, recipe.RequiredApplianceCapability, recipe.RequiredTicks)).ToArray(),
+            .Select(recipe => new CanonicalRecipe(recipe.Id.Value,
+                recipe.Inputs.Select(input => input.Value).OrderBy(input => input, StringComparer.Ordinal).ToArray(),
+                NormalizeDefinitionList(recipe.DefaultInputs),
+                recipe.ProductDefinition.Value,
+                recipe.Process.Value, recipe.RequiredApplianceCapability,
+                recipe.Completion.ToString(), recipe.RequiredTicks)).ToArray(),
         Containers.Values.OrderBy(container => container.Id.Value, StringComparer.Ordinal)
             .Select(container => new CanonicalContainer(container.Id.Value, container.Capacity)).ToArray()), CanonicalJsonOptions);
+
+    private static IReadOnlyList<string> NormalizeDefinitionList(IReadOnlyList<DefinitionId>? definitions) =>
+        definitions is null
+            ? Array.Empty<string>()
+            : definitions.Select(definition => definition.Value).OrderBy(definition => definition, StringComparer.Ordinal).ToArray();
 
     private static string Sha256(string text) => Convert.ToHexString(SHA256.HashData(Encoding.UTF8.GetBytes(text)));
 
@@ -97,10 +112,12 @@ public sealed class CookingConfigurationSnapshot
         IReadOnlyList<CanonicalRecipe> Recipes,
         IReadOnlyList<CanonicalContainer> Containers);
 
-    private sealed record CanonicalItem(string Id, IReadOnlyList<string> AllowedPlayerCapabilities);
+    private sealed record CanonicalItem(string Id, IReadOnlyList<string> AllowedPlayerCapabilities,
+        CanonicalItemContainer? Container);
+    private sealed record CanonicalItemContainer(int Capacity, IReadOnlyList<string> AcceptedDefinitions);
     private sealed record CanonicalAppliance(string Station, IReadOnlyList<string> Capabilities, bool IsAvailable);
-    private sealed record CanonicalRecipe(string Id, string InputDefinition, string ProductDefinition, string Process,
-        string RequiredApplianceCapability, int RequiredTicks);
+    private sealed record CanonicalRecipe(string Id, IReadOnlyList<string> Inputs, IReadOnlyList<string> DefaultInputs,
+        string ProductDefinition, string Process, string RequiredApplianceCapability, string Completion, int RequiredTicks);
     private sealed record CanonicalContainer(string Id, int Capacity);
 }
 
@@ -165,13 +182,19 @@ public sealed class CookingConfigurationRegistry
         var capabilities = candidate.SupportedApplianceCapabilities
             .ToFrozenSet(StringComparer.Ordinal);
         var items = candidate.Items.ToFrozenDictionary(item => item.Id,
-            item => new CookingItemDefinition(item.Id, item.AllowedPlayerCapabilities.ToFrozenSet(StringComparer.Ordinal)));
+            item => new CookingItemDefinition(item.Id,
+                item.AllowedPlayerCapabilities.ToFrozenSet(StringComparer.Ordinal),
+                item.Container is null
+                    ? null
+                    : new CookingItemContainerCapability(item.Container.Capacity,
+                        item.Container.AcceptedDefinitions.ToFrozenSet())));
         var appliances = candidate.Appliances.ToFrozenDictionary(appliance => appliance.Station,
             appliance => new CookingApplianceDefinition(appliance.Station,
                 appliance.Capabilities.ToFrozenSet(StringComparer.Ordinal), appliance.IsAvailable));
         var recipes = candidate.Recipes.ToFrozenDictionary(recipe => recipe.Id,
-            recipe => new CookingRecipeDefinition(recipe.Id, recipe.InputDefinition, recipe.ProductDefinition, recipe.Process,
-                recipe.RequiredApplianceCapability, recipe.RequiredTicks));
+            recipe => new CookingRecipeDefinition(recipe.Id, recipe.Inputs.ToArray(), recipe.ProductDefinition, recipe.Process,
+                recipe.RequiredApplianceCapability, recipe.RequiredTicks,
+                recipe.DefaultInputs?.ToArray(), recipe.Completion));
         var containers = candidate.Containers.ToFrozenDictionary(container => container.Id,
             container => new CookingContainerDefinition(container.Id, container.Capacity));
         return new CookingConfigurationSnapshot(capabilities, items, appliances, recipes, containers);
@@ -218,6 +241,24 @@ public sealed class CookingConfigurationRegistry
             if (item.AllowedPlayerCapabilities.Count == 0 || item.AllowedPlayerCapabilities.Any(string.IsNullOrWhiteSpace))
                 diagnostics.Add(Diagnostic(CookingConfigurationDiagnosticCodes.RequiredFieldMissing, "ItemDefinition", item.Id.Value,
                     "AllowedPlayerCapabilities", null, "Item definition must declare only nonblank player capabilities."));
+        }
+
+        // Container capability references must be checked against the whole item table, not the
+        // partially built dictionary, so diagnostics never depend on declaration order.
+        foreach (var item in unique.Values)
+        {
+            if (item.Container is null)
+                continue;
+            if (item.Container.Capacity <= 0)
+                diagnostics.Add(Diagnostic(CookingConfigurationDiagnosticCodes.InvalidValue, "ItemDefinition", item.Id.Value,
+                    "Container.Capacity", null, "Item container capacity must be positive."));
+            foreach (var accepted in item.Container.AcceptedDefinitions.Where(accepted => !string.IsNullOrWhiteSpace(accepted.Value)))
+            {
+                if (!unique.ContainsKey(accepted))
+                    diagnostics.Add(Diagnostic(CookingConfigurationDiagnosticCodes.MissingReference, "ItemDefinition", item.Id.Value,
+                        "Container.AcceptedDefinitions", accepted.Value,
+                        "Item container accepts an item definition that is absent from this candidate batch."));
+            }
         }
         return unique;
     }
@@ -284,6 +325,9 @@ public sealed class CookingConfigurationRegistry
             if (recipe.RequiredTicks <= 0)
                 diagnostics.Add(Diagnostic(CookingConfigurationDiagnosticCodes.InvalidValue, "Recipe", recordId, "RequiredTicks", null,
                     "Recipe required ticks must be positive."));
+            if (!Enum.IsDefined(recipe.Completion))
+                diagnostics.Add(Diagnostic(CookingConfigurationDiagnosticCodes.InvalidValue, "Recipe", recordId, "Completion",
+                    ((int)recipe.Completion).ToString(), "Recipe completion kind is not a defined value."));
             if (string.IsNullOrWhiteSpace(recipe.RequiredApplianceCapability))
                 diagnostics.Add(Diagnostic(CookingConfigurationDiagnosticCodes.RequiredFieldMissing, "Recipe", recordId,
                     "RequiredApplianceCapability", null, "Recipe appliance capability must be nonblank."));
@@ -296,7 +340,42 @@ public sealed class CookingConfigurationRegistry
                     "RequiredApplianceCapability", recipe.RequiredApplianceCapability,
                     "No appliance declares the capability required by this recipe."));
 
-            ValidateRecipeDefinitionReference(recipe.InputDefinition, "InputDefinition", recipe.Id, items, diagnostics);
+            if (recipe.Inputs.Count == 0)
+            {
+                diagnostics.Add(Diagnostic(CookingConfigurationDiagnosticCodes.RequiredFieldMissing, "Recipe", recordId, "Inputs", null,
+                    "Recipe must declare at least one input definition."));
+            }
+            else
+            {
+                var seenInputs = new HashSet<DefinitionId>();
+                foreach (var input in recipe.Inputs)
+                {
+                    if (string.IsNullOrWhiteSpace(input.Value) || !items.ContainsKey(input))
+                    {
+                        diagnostics.Add(Diagnostic(CookingConfigurationDiagnosticCodes.MissingReference, "Recipe", recordId, "Inputs",
+                            input.Value, "Recipe references an item definition that is absent from this candidate batch."));
+                        continue;
+                    }
+                    if (!seenInputs.Add(input))
+                        diagnostics.Add(Diagnostic(CookingConfigurationDiagnosticCodes.DuplicateId, "Recipe", recordId, "Inputs",
+                            input.Value, "Recipe declares the same input definition more than once."));
+                }
+            }
+
+            var declaredInputs = recipe.Inputs.Where(input => !string.IsNullOrWhiteSpace(input.Value)).ToHashSet();
+            foreach (var defaultInput in recipe.DefaultInputs ?? Array.Empty<DefinitionId>())
+            {
+                if (string.IsNullOrWhiteSpace(defaultInput.Value) || !items.ContainsKey(defaultInput))
+                {
+                    diagnostics.Add(Diagnostic(CookingConfigurationDiagnosticCodes.MissingReference, "Recipe", recordId, "DefaultInputs",
+                        defaultInput.Value, "Recipe declares a default input that is absent from this candidate batch."));
+                    continue;
+                }
+                if (declaredInputs.Contains(defaultInput))
+                    diagnostics.Add(Diagnostic(CookingConfigurationDiagnosticCodes.InvalidValue, "Recipe", recordId, "DefaultInputs",
+                        defaultInput.Value, "Recipe default input duplicates a declared item input."));
+            }
+
             ValidateRecipeDefinitionReference(recipe.ProductDefinition, "ProductDefinition", recipe.Id, items, diagnostics);
         }
     }

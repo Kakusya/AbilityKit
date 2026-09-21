@@ -34,7 +34,7 @@ public sealed class CookingVerticalSliceTests
             },
             new Dictionary<RecipeId, CookingRecipeDefinition>
             {
-                [recipe] = new(recipe, raw, cooked, new ProcessId("boil"), "heat", 3),
+                [recipe] = new(recipe, new[] { raw }, cooked, new ProcessId("boil"), "heat", 3),
             },
             new Dictionary<ContainerId, CookingContainerDefinition> { [plate] = new(plate, 1) }), orders);
         simulation.AddWorldIngredient(ingredient, raw, "spawn");

@@ -1,4 +1,16 @@
 # P0 交互基础：cooking-interaction-foundation
+## 2026-09-21 契约修约
+
+来源：owner 对具体行为的逐轮裁决（09-19 notes 11.1 第三轮“可以把锅从灶台端走、加工继续”、第八轮“手持碗打蛋、蛋液留碗”、第九轮“碗倒空复用”），经 owner 批准由 Trellis task `09-21-cooking-kitchen-loop-contracts` 的 `design.md` 复合为一般化表述后落地为契约。本次修约不解除 2026-09-16 收口状态的约束。
+
+| 位置 | 旧条款（原文可定位） | 新条款 | 来源 |
+|---|---|---|---|
+| Requirement「Item location has one authoritative owner」 | “位置 MUST 属于配置允许的 WorldPosition、PlayerHand 或 StationSlot” | 位置枚举补 `ContainerSlot`；容器是带容器能力的物品，其容量与可接受物品定义集合由配置声明 | owner 对具体行为的裁决（notes 11.1 第三/八/九轮）复合推出；另注：代码 `LocationKind` 早已包含 `ContainerSlot`（`CookingDomain.cs`），本修订是让规范追上代码与已确认行为，不是新行为 |
+
+“容器是带容器能力的物品”这一**一般化表述没有单独的 owner 裁决原文**（09-19 notes 6.2 至今仍把它列为形式问题）；它由上述具体行为裁决复合推出，并随本修约程序提交 owner 批准。design 与实现不得把它表述为 owner 已单独确认的项。
+
+唯一位置、无重复占有、无包含环三项不变量在本修订后继续有效，且因 `ContainerSlot` 成为合法位置而适用范围扩大。
+
 ## 2026-09-16 收口状态
 
 - T01-T08 纯 .NET authority/interaction contract 已验证并作为 limited delivery 收口；P0 无 non-Unity successor。
@@ -38,7 +50,7 @@
 - **THEN** 命令被拒绝且权威状态、所有权、槽位占用和事件输出均不发生变更
 
 ### Requirement: Item location has one authoritative owner
-每个有效 Item instance 在任一时刻 MUST 恰有一个权威位置，位置 MUST 属于配置允许的 WorldPosition、PlayerHand 或 StationSlot；运行时 MUST 禁止重复占有、重复槽位占用和通过本能力引入的包含环。手与站点槽位容量 MUST 来自测试 fixture/运行时配置，而不是隐含的全局一人一物规则。
+每个有效 Item instance 在任一时刻 MUST 恰有一个权威位置，位置 MUST 属于配置允许的 `WorldPosition`、`PlayerHand`、`StationSlot` 或 `ContainerSlot`；容器是带容器能力的物品，其容量与可接受物品定义集合 MUST 由配置声明，而不是隐含的全局规则。运行时 MUST 禁止重复占有、重复槽位占用和通过本能力引入的包含环。手、站点槽位与容器容量 MUST 来自测试 fixture/运行时配置，而不是隐含的全局一人一物规则。
 
 #### Scenario: Fixture permits one pickup into an empty hand
 - **WHEN** 配置的可移动物品位于可达 WorldPosition，目标玩家的配置手槽可用且玩家有资格交互

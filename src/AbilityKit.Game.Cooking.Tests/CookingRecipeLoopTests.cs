@@ -592,7 +592,7 @@ public sealed class CookingRecipeLoopTests
         };
         var recipes = new Dictionary<RecipeId, CookingRecipeDefinition>
         {
-            [recipe] = new(recipe, input, product, new ProcessId($"{recipe.Value}-process"), applianceCapability, requiredTicks),
+            [recipe] = new(recipe, new[] { input }, product, new ProcessId($"{recipe.Value}-process"), applianceCapability, requiredTicks),
         };
         var containers = new Dictionary<ContainerId, CookingContainerDefinition> { [Plate] = new(Plate, containerCapacity) };
         return new CookingRecipeSimulation(new CookingRecipeFixture(scope, players, items, appliances, recipes, containers),
@@ -630,7 +630,7 @@ public sealed class CookingRecipeLoopTests
         };
         var recipes = new Dictionary<RecipeId, CookingRecipeDefinition>
         {
-            [Recipe] = new(Recipe, RawIngredient, Product, new ProcessId("fixture-process"), "heat", 1),
+            [Recipe] = new(Recipe, new[] { RawIngredient }, Product, new ProcessId("fixture-process"), "heat", 1),
         };
         var containers = new Dictionary<ContainerId, CookingContainerDefinition> { [Plate] = new(Plate, processCount) };
         return new CookingRecipeSimulation(new CookingRecipeFixture(scope, players, items, appliances, recipes, containers),

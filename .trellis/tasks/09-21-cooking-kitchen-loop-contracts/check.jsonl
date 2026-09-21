@@ -1,9 +1,0 @@
-{"file":".trellis/tasks/09-21-cooking-kitchen-loop-contracts/prd.md","reason":"验收标准逐条对应实现，未把助手建议或推迟项写成要求。"}
-{"file":".trellis/tasks/09-21-cooking-kitchen-loop-contracts/design.md","reason":"契约决策与代码现状一致，匹配纯函数、指纹与 canonical 归一化规则无自相矛盾。"}
-{"file":".trellis/tasks/09-21-cooking-kitchen-loop-contracts/implement.md","reason":"执行清单步骤完整且不越界到任务②，红测来自缺失 API 而非编译错误。"}
-{"file":".trellis/spec/cooking/cooking-recipe-loop.md","reason":"完成语义修约后与 owner 决定的两种完成形态一致，且注明来源。"}
-{"file":".trellis/spec/cooking/cooking-interaction-foundation.md","reason":"位置枚举补 ContainerSlot 后仍保持唯一位置、无重复占有、无包含环。"}
-{"file":".trellis/spec/cooking/cooking-config-validation.md","reason":"v1→v2 blocked、无迁移的表述与实现一致。"}
-{"file":".trellis/spec/cooking/index.md","reason":"P2/P3 行边界表述与修约后的契约一致。"}
-{"file":"tools/test-gates.json","reason":"验收 gate 定义与 cooking-udp 退役状态。"}
-{"file":"Docs/design/CookingGame/progress.md","reason":"不提前宣称完成，UDP 退役表述保持准确。"}

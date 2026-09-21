@@ -29,13 +29,25 @@ public readonly record struct RecipeCommandId(string Value)
     public override string ToString() => Value;
 }
 
+/// <summary>
+/// 加工完成形态。<see cref="ConsumeInputs"/> 在到点时消耗输入并在工位或容器上生成输出；
+/// <see cref="RetainInputs"/> 保留输入、容器切“已完成”，成品在倒出时才生成。
+/// </summary>
+public enum CookingRecipeCompletionKind
+{
+    ConsumeInputs,
+    RetainInputs,
+}
+
 public sealed record CookingRecipeDefinition(
     RecipeId Id,
-    DefinitionId InputDefinition,
+    IReadOnlyList<DefinitionId> Inputs,
     DefinitionId ProductDefinition,
     ProcessId Process,
     string RequiredApplianceCapability,
-    int RequiredTicks);
+    int RequiredTicks,
+    IReadOnlyList<DefinitionId>? DefaultInputs = null,
+    CookingRecipeCompletionKind Completion = CookingRecipeCompletionKind.ConsumeInputs);
 
 public sealed record CookingApplianceDefinition(
     StationSlotId Station,
@@ -62,8 +74,12 @@ public sealed record CookingRecipeFixture
         ArgumentNullException.ThrowIfNull(containers);
         foreach (var recipe in recipes.Values)
         {
-            if (!items.ContainsKey(recipe.InputDefinition) || !items.ContainsKey(recipe.ProductDefinition))
+            if (recipe.Inputs.Count == 0)
+                throw new ArgumentException($"Recipe '{recipe.Id}' must declare at least one input.", nameof(recipes));
+            if (recipe.Inputs.Any(input => !items.ContainsKey(input)) || !items.ContainsKey(recipe.ProductDefinition))
                 throw new ArgumentException($"Recipe '{recipe.Id}' references an unknown item definition.", nameof(recipes));
+            if (recipe.DefaultInputs is { } defaultInputs && defaultInputs.Any(input => !items.ContainsKey(input)))
+                throw new ArgumentException($"Recipe '{recipe.Id}' references an unknown default input.", nameof(recipes));
             if (recipe.RequiredTicks <= 0)
                 throw new ArgumentOutOfRangeException(nameof(recipes), $"Recipe '{recipe.Id}' must require a positive tick count.");
             if (string.IsNullOrWhiteSpace(recipe.RequiredApplianceCapability))
@@ -134,6 +150,9 @@ public enum CookingRecipeRejectionReason
     CommandIdentityConflict,
     MalformedCommand,
     QueueFull,
+    RecipeNotMatched,
+    RecipeAmbiguous,
+    ContainerRejectsItem,
 }
 
 public sealed record CookingRecipeCommand(
@@ -227,7 +246,7 @@ public static class CookingRecipeCommandValidation
         return command.Operation switch
         {
             CookingRecipeOperation.Pickup => HasIdentifier(command.Item) && IsExpectedVersion(command.ExpectedItemVersion) && command.TickCount == 0,
-            CookingRecipeOperation.StartProcess => HasIdentifier(command.Recipe) && HasIdentifier(command.Item) &&
+            CookingRecipeOperation.StartProcess => HasIdentifier(command.Item) &&
                 HasIdentifier(command.Station) && IsExpectedVersion(command.ExpectedItemVersion) && command.TickCount == 0,
             CookingRecipeOperation.AdvanceTicks => HasIdentifier(command.Process) && command.ExpectedItemVersion == 0 &&
                 command.TickCount is > 0 and <= MaximumTickCount,
@@ -642,7 +661,7 @@ public sealed class CookingRecipeSimulation
             throw new InvalidOperationException($"Process '{process.Id}' has invalid progress invariants.");
         if (!_items.TryGetValue(process.Input, out var input) || input.Removed)
             throw new InvalidOperationException($"Process '{process.Id}' references unavailable input '{process.Input}'.");
-        if (input.Definition != recipe.InputDefinition || input.Location != ItemLocation.Station(process.Station))
+        if (!recipe.Inputs.Contains(input.Definition) || input.Location != ItemLocation.Station(process.Station))
             throw new InvalidOperationException($"Process '{process.Id}' input state is inconsistent with its recipe and station.");
     }
 
@@ -682,7 +701,9 @@ public sealed class CookingRecipeSimulation
     {
         if (!TryValidateCommandScopeAndPlayer(command, out var player, out var rejection))
             return Reject(rejection);
-        if (command.Recipe is not { } recipeId || !_fixture.Recipes.TryGetValue(recipeId, out var recipe))
+        if (command.Recipe is not { } recipeId)
+            return Reject(CookingRecipeRejectionReason.RecipeNotMatched);
+        if (!_fixture.Recipes.TryGetValue(recipeId, out var recipe))
             return Reject(CookingRecipeRejectionReason.RecipeNotFound);
         if (command.Item is not { } itemId || !_items.TryGetValue(itemId, out var item) || item.Removed)
             return Reject(CookingRecipeRejectionReason.ItemNotFound);
@@ -690,7 +711,7 @@ public sealed class CookingRecipeSimulation
             return Reject(CookingRecipeRejectionReason.ItemStale);
         if (item.Location != ItemLocation.Hand(command.Player))
             return Reject(CookingRecipeRejectionReason.CurrentLocationMismatch);
-        if (item.Definition != recipe.InputDefinition)
+        if (!recipe.Inputs.Contains(item.Definition))
             return Reject(CookingRecipeRejectionReason.ItemNotFound);
         if (command.Station is not { } stationId || !_fixture.Appliances.TryGetValue(stationId, out var appliance))
             return Reject(CookingRecipeRejectionReason.ApplianceNotFound);

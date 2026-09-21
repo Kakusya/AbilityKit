@@ -1,0 +1,303 @@
+using System.Text.Json;
+using AbilityKit.Game.Cooking;
+using Xunit;
+
+namespace AbilityKit.Game.Cooking.Tests;
+
+/// <summary>
+/// 任务 <c>09-21-cooking-kitchen-loop-contracts</c> 的命令形状契约测试：
+/// StartProcess 不再强制显式 RecipeId，多输入靠“多条放入 + 一次启动”累积，
+/// 匹配失败与歧义以结构化拒绝返回，不抛异常污染帧路径。
+/// </summary>
+[Trait("Gate", "CookingRecipeLoop")]
+public sealed class CookingRecipeCommandShapeTests
+{
+    private static readonly SessionId Session = new("shape-session");
+    private static readonly WorldId World = new("shape-world");
+    private static readonly MatchId Match = new("shape-match");
+    private static readonly PlayerId Player = new("chef-a");
+    private static readonly StationSlotId Station = new("stove-a");
+    private static readonly OrderId Order = new("shape-order");
+    private static readonly DefinitionId Tomato = new("tomato");
+    private static readonly DefinitionId ChoppedTomato = new("chopped-tomato");
+    private static readonly DefinitionId BeatenEgg = new("beaten-egg");
+    private static readonly DefinitionId Soup = new("tomato-egg-soup");
+    private static readonly DefinitionId Water = new("water");
+    private static readonly RecipeId SoupRecipe = new("tomato-egg-soup");
+    private static readonly RecipeId ChopRecipe = new("chop-tomato");
+
+    [Fact]
+    public void S01_well_formed_start_process_accepts_missing_recipe()
+    {
+        using var evidence = CreateEvidence("S01");
+        var recipeLess = Command(CookingRecipeOperation.StartProcess, "no-recipe", item: new ItemId("ingredient-a"),
+            station: Station, expectedVersion: 1);
+        var withRecipe = Command(CookingRecipeOperation.StartProcess, "with-recipe", recipe: SoupRecipe,
+            item: new ItemId("ingredient-a"), station: Station, expectedVersion: 1);
+
+        Assert.True(CookingRecipeCommandValidation.IsWellFormed(recipeLess));
+        Assert.True(CookingRecipeCommandValidation.IsWellFormed(withRecipe));
+
+        Submit(CreateSimulation(), evidence, "S01", recipeLess,
+            "StartProcess is well formed without an explicit RecipeId, preserving the explicit-recipe mode");
+    }
+
+    [Fact]
+    public void S02_well_formed_start_process_still_requires_item_station_and_version()
+    {
+        using var evidence = CreateEvidence("S02");
+        var missingItem = Command(CookingRecipeOperation.StartProcess, "no-item", station: Station, expectedVersion: 1);
+        var missingStation = Command(CookingRecipeOperation.StartProcess, "no-station", item: new ItemId("ingredient-a"),
+            expectedVersion: 1);
+        var missingVersion = Command(CookingRecipeOperation.StartProcess, "no-version", item: new ItemId("ingredient-a"),
+            station: Station);
+        var withTicks = Command(CookingRecipeOperation.StartProcess, "with-ticks", item: new ItemId("ingredient-a"),
+            station: Station, expectedVersion: 1, ticks: 1);
+
+        Assert.False(CookingRecipeCommandValidation.IsWellFormed(missingItem));
+        Assert.False(CookingRecipeCommandValidation.IsWellFormed(missingStation));
+        Assert.False(CookingRecipeCommandValidation.IsWellFormed(missingVersion));
+        Assert.False(CookingRecipeCommandValidation.IsWellFormed(withTicks));
+
+        Submit(CreateSimulation(), evidence, "S02", missingItem,
+            "relaxing Recipe does not relax Item, Station, ExpectedItemVersion or TickCount");
+    }
+
+    [Fact]
+    public void S03_start_process_without_recipe_returns_structured_rejection_without_mutation()
+    {
+        using var evidence = CreateEvidence("S03");
+        var simulation = CreateSimulation();
+        var input = new ItemId("ingredient-a");
+        simulation.AddIngredient(input, ChoppedTomato, Player);
+        var before = simulation.Snapshot().CanonicalText();
+        var eventsBefore = simulation.EventHistory.Count;
+
+        var rejected = Submit(simulation, evidence, "S03", Command(CookingRecipeOperation.StartProcess, "no-recipe", item: input,
+            station: Station, expectedVersion: 1), "recipe-less StartProcess is a structured rejection with no mutation and no exception");
+
+        Assert.Equal(CookingRecipeOutcome.Rejected, rejected.Outcome);
+        Assert.Equal(CookingRecipeRejectionReason.RecipeNotMatched, rejected.Reason);
+        Assert.Empty(rejected.Events);
+        Assert.Equal(before, simulation.Snapshot().CanonicalText());
+        Assert.Equal(eventsBefore, simulation.EventHistory.Count);
+        Assert.Empty(simulation.Snapshot().Processes);
+    }
+
+    [Fact]
+    public void S04_explicit_recipe_accepts_only_declared_input_definitions()
+    {
+        using var evidence = CreateEvidence("S04");
+        var simulation = CreateSimulation();
+        var tomato = new ItemId("ingredient-tomato");
+        simulation.AddIngredient(tomato, Tomato, Player);
+
+        var accepted = Submit(simulation, evidence, "S04", Command(CookingRecipeOperation.StartProcess, "chop-accepted", recipe: ChopRecipe,
+            item: tomato, station: Station, expectedVersion: 1), "explicit recipe accepts an input inside the declared input set");
+
+        Assert.Equal(CookingRecipeOutcome.Accepted, accepted.Outcome);
+        Assert.Single(simulation.Snapshot().Processes);
+    }
+
+    [Fact]
+    public void S05_explicit_recipe_rejects_an_input_outside_the_declared_input_set()
+    {
+        using var evidence = CreateEvidence("S05");
+        var simulation = CreateSimulation();
+        var beaten = new ItemId("ingredient-beaten");
+        simulation.AddIngredient(beaten, BeatenEgg, Player);
+        var before = simulation.Snapshot().CanonicalText();
+
+        var rejected = Submit(simulation, evidence, "S05", Command(CookingRecipeOperation.StartProcess, "chop-rejected", recipe: ChopRecipe,
+            item: beaten, station: Station, expectedVersion: 1), "explicit recipe rejects an input outside the declared input set");
+
+        Assert.Equal(CookingRecipeOutcome.Rejected, rejected.Outcome);
+        Assert.Equal(CookingRecipeRejectionReason.ItemNotFound, rejected.Reason);
+        Assert.Equal(before, simulation.Snapshot().CanonicalText());
+        Assert.Empty(simulation.Snapshot().Processes);
+    }
+
+    [Fact]
+    public void S06_unknown_explicit_recipe_still_reports_recipe_not_found()
+    {
+        var simulation = CreateSimulation();
+        var chopped = new ItemId("ingredient-chopped");
+        simulation.AddIngredient(chopped, ChoppedTomato, Player);
+
+        var rejected = simulation.Submit(Command(CookingRecipeOperation.StartProcess, "unknown-recipe",
+            recipe: new RecipeId("absent-recipe"), item: chopped, station: Station, expectedVersion: 1));
+
+        Assert.Equal(CookingRecipeOutcome.Rejected, rejected.Outcome);
+        Assert.Equal(CookingRecipeRejectionReason.RecipeNotFound, rejected.Reason);
+    }
+
+    [Fact]
+    public void S07_the_two_command_modes_have_distinct_fingerprints_and_are_each_idempotent()
+    {
+        using var evidence = CreateEvidence("S07");
+        var explicitRecipe = Command(CookingRecipeOperation.StartProcess, "fingerprint-a", recipe: SoupRecipe,
+            item: new ItemId("ingredient-a"), station: Station, expectedVersion: 1);
+        var matchedRecipe = Command(CookingRecipeOperation.StartProcess, "fingerprint-a", item: new ItemId("ingredient-a"),
+            station: Station, expectedVersion: 1);
+
+        Assert.NotEqual(
+            System.Text.Json.JsonSerializer.Serialize(explicitRecipe),
+            System.Text.Json.JsonSerializer.Serialize(matchedRecipe));
+
+        var explicitSimulation = CreateSimulation();
+        explicitSimulation.AddIngredient(new ItemId("ingredient-a"), ChoppedTomato, Player);
+        var explicitBefore = explicitSimulation.Snapshot();
+        var firstExplicit = explicitSimulation.Submit(explicitRecipe);
+        var replayExplicit = explicitSimulation.Submit(explicitRecipe);
+        var explicitAfter = explicitSimulation.Snapshot();
+
+        Assert.Equal(CookingRecipeOutcome.Accepted, firstExplicit.Outcome);
+        Assert.True(replayExplicit.IsDuplicate);
+        Assert.Empty(replayExplicit.Events);
+        Assert.Single(explicitSimulation.Snapshot().Processes);
+
+        var matchedSimulation = CreateSimulation();
+        matchedSimulation.AddIngredient(new ItemId("ingredient-a"), ChoppedTomato, Player);
+        var firstMatched = matchedSimulation.Submit(matchedRecipe);
+        var replayMatched = matchedSimulation.Submit(matchedRecipe);
+
+        Assert.Equal(CookingRecipeOutcome.Rejected, firstMatched.Outcome);
+        Assert.Equal(CookingRecipeRejectionReason.RecipeNotMatched, firstMatched.Reason);
+        Assert.True(replayMatched.IsDuplicate);
+        Assert.Empty(replayMatched.Events);
+        Assert.Empty(matchedSimulation.Snapshot().Processes);
+
+        AppendEvidence(evidence, explicitRecipe, firstExplicit, explicitBefore.Sha256(), explicitAfter.Sha256());
+    }
+
+    [Fact]
+    public void S08_container_slot_and_recipe_rejection_reasons_exist_as_tail_appended_enum_values()
+    {
+        Assert.True(Enum.IsDefined(CookingRecipeRejectionReason.RecipeNotMatched));
+        Assert.True(Enum.IsDefined(CookingRecipeRejectionReason.RecipeAmbiguous));
+        Assert.True(Enum.IsDefined(CookingRecipeRejectionReason.ContainerRejectsItem));
+        Assert.True(Enum.IsDefined(LocationKind.ContainerSlot));
+        Assert.Equal(LocationKind.ContainerSlot, (LocationKind)3);
+
+        // The three new rejection reasons must stay tail-appended after the last pre-existing
+        // value: inserting a value in the middle of the enum would silently renumber every
+        // reason after it, and these values are part of the command contract.
+        var queueFull = (int)CookingRecipeRejectionReason.QueueFull;
+        Assert.Equal(CookingRecipeRejectionReason.RecipeNotMatched, (CookingRecipeRejectionReason)(queueFull + 1));
+        Assert.Equal(CookingRecipeRejectionReason.RecipeAmbiguous, (CookingRecipeRejectionReason)(queueFull + 2));
+        Assert.Equal(CookingRecipeRejectionReason.ContainerRejectsItem, (CookingRecipeRejectionReason)(queueFull + 3));
+        Assert.Equal(queueFull + 4, Enum.GetValues<CookingRecipeRejectionReason>().Length);
+    }
+
+    [Fact]
+    public void S09_multi_input_recipe_accepts_any_member_of_its_declared_input_set()
+    {
+        using var evidence = CreateEvidence("S09");
+        var simulation = CreateSimulation();
+        var soup = new ItemId("ingredient-beaten-egg");
+        simulation.AddIngredient(soup, BeatenEgg, Player);
+
+        var accepted = Submit(simulation, evidence, "S09",
+            Command(CookingRecipeOperation.StartProcess, "soup-start", recipe: SoupRecipe,
+                item: soup, station: Station, expectedVersion: 1),
+            "a recipe declaring two inputs accepts an item matching the second member of the set");
+
+        Assert.Equal(CookingRecipeOutcome.Accepted, accepted.Outcome);
+        Assert.Single(simulation.Snapshot().Processes);
+    }
+
+    private static CookingRecipeSimulation CreateSimulation()
+    {
+        var scope = new CookingScope(Session, World, Match);
+        var players = new Dictionary<PlayerId, CookingPlayerConfig>
+        {
+            [Player] = new(Player, new HashSet<string>(StringComparer.Ordinal) { "cook" },
+                new HashSet<string>(StringComparer.Ordinal) { Station.Value }),
+        };
+        var items = new Dictionary<DefinitionId, CookingItemDefinition>
+        {
+            [Tomato] = new(Tomato, new HashSet<string>(StringComparer.Ordinal) { "cook" }),
+            [ChoppedTomato] = new(ChoppedTomato, new HashSet<string>(StringComparer.Ordinal) { "cook" }),
+            [BeatenEgg] = new(BeatenEgg, new HashSet<string>(StringComparer.Ordinal) { "cook" }),
+            [Soup] = new(Soup, new HashSet<string>(StringComparer.Ordinal) { "cook" }),
+            [Water] = new(Water, new HashSet<string>(StringComparer.Ordinal) { "cook" }),
+        };
+        var appliances = new Dictionary<StationSlotId, CookingApplianceDefinition>
+        {
+            [Station] = new(Station, new HashSet<string>(StringComparer.Ordinal) { "cut", "heat" }),
+        };
+        var recipes = new Dictionary<RecipeId, CookingRecipeDefinition>
+        {
+            [ChopRecipe] = new(ChopRecipe, new[] { Tomato }, ChoppedTomato, new ProcessId("chop-process"), "cut", 2),
+            [SoupRecipe] = new(SoupRecipe, new[] { ChoppedTomato, BeatenEgg }, Soup, new ProcessId("soup-process"),
+                "heat", 6, new[] { new DefinitionId("water") }),
+        };
+        var containers = new Dictionary<ContainerId, CookingContainerDefinition>
+        {
+            [new ContainerId("pot-a")] = new(new ContainerId("pot-a"), 4),
+        };
+        return new CookingRecipeSimulation(
+            new CookingRecipeFixture(scope, players, items, appliances, recipes, containers),
+            new AcceptingOrderPort());
+    }
+
+    private static CookingRecipeCommand Command(CookingRecipeOperation operation, string commandId, RecipeId? recipe = null,
+        ProcessId? process = null, ItemId? item = null, StationSlotId? station = null, ContainerId? container = null,
+        OrderId? order = null, int expectedVersion = 0, int ticks = 0, PlayerId? player = null) =>
+        new(new CookingScope(Session, World, Match), 10, player ?? Player, new RecipeCommandId(commandId), operation, recipe,
+            process, item, station, container, order, expectedVersion, ticks);
+
+    private sealed class AcceptingOrderPort : ICookingOrderPort
+    {
+        public CookingOrderAcceptance Submit(CookingOrderSubmission submission) => new(true, "fixture-accepted");
+    }
+
+    private static EvidenceScope CreateEvidence(string testId) => new(testId);
+
+    private static void AppendEvidence(EvidenceScope evidence, CookingRecipeCommand explicitRecipe,
+        CookingRecipeCommandResult firstExplicit, string beforeStateHash, string afterStateHash) =>
+        CookingRecipeAcceptanceEvidenceWriter.Append(evidence.Path, new CookingRecipeAcceptanceEvidence(
+            "S07", "shape-multi-input-command", explicitRecipe, 0, firstExplicit.Outcome.ToString(),
+            firstExplicit.Reason.ToString(), firstExplicit.IsDuplicate, firstExplicit.Events,
+            beforeStateHash, afterStateHash,
+            "the two command modes produce different JSON fingerprints; each replays as a duplicate with zero events",
+            "dotnet test AbilityKit.Game.Cooking.Tests", DateTimeOffset.UtcNow.ToString("O")));
+
+    private static CookingRecipeCommandResult Submit(CookingRecipeSimulation simulation, EvidenceScope evidence,
+        string testId, CookingRecipeCommand command, string assertionSummary)
+    {
+        var before = simulation.Snapshot();
+        var result = simulation.Submit(command);
+        CookingRecipeAcceptanceEvidenceWriter.Append(evidence.Path, new CookingRecipeAcceptanceEvidence(
+            testId, "shape-multi-input-command", command, simulation.LogicalTick, result.Outcome.ToString(),
+            result.Reason.ToString(), result.IsDuplicate, result.Events, before.Sha256(), simulation.Snapshot().Sha256(),
+            assertionSummary, "dotnet test AbilityKit.Game.Cooking.Tests", DateTimeOffset.UtcNow.ToString("O")));
+        if (result.Outcome == CookingRecipeOutcome.Rejected)
+            Assert.Equal(before.CanonicalText(), simulation.Snapshot().CanonicalText());
+        return result;
+    }
+
+    private sealed class EvidenceScope : IDisposable
+    {
+        private readonly string _directory;
+        private readonly bool _keepArtifacts;
+
+        public EvidenceScope(string testId)
+        {
+            var requestedRoot = Environment.GetEnvironmentVariable("COOKING_RECIPE_EVIDENCE_DIRECTORY");
+            _keepArtifacts = !string.IsNullOrWhiteSpace(requestedRoot);
+            var root = _keepArtifacts ? System.IO.Path.GetFullPath(requestedRoot!) :
+                System.IO.Path.Combine(System.IO.Path.GetTempPath(), "AbilityKit.Game.Cooking.Tests", "command-shape");
+            _directory = System.IO.Path.Combine(root, testId, Guid.NewGuid().ToString("N"));
+            Path = System.IO.Path.Combine(_directory, "recipe-acceptance.jsonl");
+        }
+
+        public string Path { get; }
+
+        public void Dispose()
+        {
+            if (!_keepArtifacts && System.IO.Directory.Exists(_directory))
+                System.IO.Directory.Delete(_directory, recursive: true);
+        }
+    }
+}

@@ -146,6 +146,41 @@ public sealed class CookingMatchLifecycleTests
     }
 
     [Fact]
+    public void M08_v1_schema_identity_is_rejected_by_the_production_lifecycle_and_snapshot_paths()
+    {
+        using var evidence = CreateEvidence("M08");
+        var lifecycle = CreateLifecycle();
+        var v2 = CurrentIdentity(lifecycle);
+        var v1 = v2 with { Schema = "cooking-definition-v1" };
+
+        Assert.Equal(CookingConfigurationIdentity.CurrentSchema, v2.Schema);
+        Assert.Equal("cooking-definition-v2", v2.Schema);
+
+        // Production rejection path 1: a preparation carrying a v1 config identity is refused
+        // before any gameplay is created.
+        var prepareRejected = Record(lifecycle, evidence, "M08", "v1-config-identity",
+            () => lifecycle.Prepare(Preparation(v1)),
+            "a v1 schema configuration identity is rejected by the production lifecycle, not only by the compatibility predicate");
+        AssertRejected(prepareRejected, CookingMatchLifecycleReason.ConfigIdentityMismatch);
+        Assert.Equal(CookingMatchState.Preparing, lifecycle.State);
+        Assert.False(lifecycle.TryGetGameplay(out _));
+
+        // Production rejection path 2: a snapshot carrying a v1 config identity is refused.
+        AssertAccepted(lifecycle.Prepare(Preparation(v2)), CookingMatchState.Ready);
+        var applier = new CookingLifecycleSnapshotApplier(lifecycle.Scope, lifecycle.Epoch, v2);
+        var v1Snapshot = lifecycle.Snapshot() with { ConfigIdentity = v1.ToString() };
+        var applyRejected = applier.Apply(v1Snapshot);
+        Assert.False(applyRejected.Accepted);
+        Assert.Equal(CookingMatchLifecycleReason.SnapshotIdentityMismatch, applyRejected.Reason);
+        Assert.Null(applier.Current);
+
+        // Control: the matching v2 identity is still accepted, so the rejection above is caused
+        // by the schema difference alone and not by an unrelated defect.
+        Assert.True(applier.Apply(lifecycle.Snapshot()).Accepted);
+        AssertEvidence(evidence.Path, "M08", 1);
+    }
+
+    [Fact]
     public void M06_M07_old_scope_epoch_and_out_of_order_lifecycle_snapshots_do_not_replace_watermark()
     {
         var lifecycle = CreateLifecycle();
@@ -216,7 +251,7 @@ public sealed class CookingMatchLifecycleTests
             new CookingItemDefinition(Product, new HashSet<string>(StringComparer.Ordinal) { "cook" }),
         },
         new[] { new CookingApplianceDefinition(Station, new HashSet<string>(StringComparer.Ordinal) { "heat" }) },
-        new[] { new CookingRecipeDefinition(Recipe, Raw, Product, new ProcessId("process-a"), "heat", 3) },
+        new[] { new CookingRecipeDefinition(Recipe, new[] { Raw }, Product, new ProcessId("process-a"), "heat", 3) },
         new[] { new CookingContainerDefinition(Container, 2) });
 
     private static CookingRecipeCommand RecipeCommand(CookingScope scope, string id, CookingRecipeOperation operation,

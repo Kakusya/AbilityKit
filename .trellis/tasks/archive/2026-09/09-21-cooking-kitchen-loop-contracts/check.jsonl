@@ -1,0 +1,27 @@
+{"file": ".trellis/tasks/09-21-cooking-kitchen-loop-contracts/prd.md", "reason": "逐条核对 R1-R6 与 Acceptance Criteria；未把推迟项写成要求。"}
+{"file": ".trellis/tasks/09-21-cooking-kitchen-loop-contracts/design.md", "reason": "契约决策与实现一致；§3.1 记录了匹配签名相对草图的一处收敛与理由。"}
+{"file": ".trellis/tasks/09-21-cooking-kitchen-loop-contracts/implement.md", "reason": "执行清单步骤 0-6 已完成，步骤 7 待本 check 后执行。"}
+{"file": ".trellis/spec/cooking/cooking-recipe-loop.md", "reason": "完成语义与幂等延伸到倒出已修约，头部有 2026-09-21 修约记录并区分 owner 决定与经批准 design。"}
+{"file": ".trellis/spec/cooking/cooking-interaction-foundation.md", "reason": "位置枚举补 ContainerSlot 与容器能力表述，唯一位置/无重复占有/无包含环不变量保留。"}
+{"file": ".trellis/spec/cooking/cooking-config-validation.md", "reason": "v1→v2 blocked、无迁移落到具体条款；v2 数据模型与校验面补齐。"}
+{"file": ".trellis/spec/cooking/index.md", "reason": "P2/P3 行边界与“未完成范围入口”列更新，并记录本次修约的程序与日期。"}
+{"file": "tools/test-gates.json", "reason": "验收 gate cooking-et-level-runtime 定义未变；cooking-udp 已退役，未恢复。"}
+{"file": "Docs/design/CookingGame/progress.md", "reason": "未提前宣称完成；本任务状态表述只在 finish 时更新。"}
+{"file": "artifacts/cooking-kitchen-loop-contracts/gate-summary.json", "reason": "cooking-et-level-runtime gate 实际运行结果：Passed，9.273s，2026-09-21T14:04:44.8442459+08:00。注意 artifacts/ 被 .gitignore 忽略，证据为本地-only。"}
+{"file": "artifacts/cooking-kitchen-loop-contracts/03-Cooking_domain_and_Level_lifecycle_tests.log", "reason": "Cooking.Tests 实际运行：118 passed / 0 failed / 0 skipped（基线 91 passed，新增 27 条契约测试）。"}
+{"file": "artifacts/cooking-kitchen-loop-contracts/04-Cooking_ET_Level_host_and_runtime_tests.log", "reason": "ET.Runtime.Tests 实际运行：39 passed / 0 failed / 0 skipped（基线 37 passed，新增 2 条指纹测试）。"}
+{"file": "artifacts/cooking-kitchen-loop-contracts/fingerprint/pickup/eff1a97b397b4808aa335edf1cd688a5/cooking-command-fingerprint.jsonl", "reason": "既有 Pickup golden 向量逐字节未变的确认：命令 record 无字段变化，该测试继续作为“指纹未被意外改动”的回归锚。"}
+{"file": "artifacts/cooking-kitchen-loop-contracts/fingerprint/start/034defda82374e1bba4c1645dd80c659/cooking-command-fingerprint.jsonl", "reason": "新增 recipe-less StartProcess golden 向量：canonical 十六进制与 SHA-256 由真实输出锚定，未为迁就期望而改动 fingerprint。"}
+{"file": "artifacts/cooking-kitchen-loop-contracts/fingerprint/identity/00ef366d92504007ac2c05b7159d7d32/cooking-command-fingerprint.jsonl", "reason": "两种命令模式在 JSON 指纹、IsWellFormed 与二进制指纹三处得到一致且可区分的身份结论。"}
+{"file": "artifacts/cooking-kitchen-loop-contracts/configuration/V01/ab9992a2420a49f784636f376aacfbbb/configuration-validation.jsonl", "reason": "schema v2 生效，候选提交后暴露物品容器能力、多输入集合、默认供应与完成形态。"}
+{"file": "artifacts/cooking-kitchen-loop-contracts/configuration/V06/20ed4b147ce24b84b69eff762be8fc4c/configuration-validation.jsonl", "reason": "v1 schema 与 sha256 不等得到结构化 blocked 诊断；不存在迁移转换路径。"}
+{"file": "artifacts/cooking-kitchen-loop-contracts/configuration/V08/23953c2256ec47a9b7bf9ddefac6a02b/configuration-validation.jsonl", "reason": "多输入/默认供应/容器能力诊断一次性收集且确定性排序。"}
+{"file": "artifacts/cooking-kitchen-loop-contracts/configuration/V11/aac15cf4c45849929a0b7d9c970c9d9a/configuration-validation.jsonl", "reason": "容器能力引用诊断不依赖物品声明顺序（实现期发现并修掉的真缺陷的回归测试）。"}
+{"file": "artifacts/cooking-kitchen-loop-contracts/match-lifecycle/M01/9a46d9509ee54b2d936638c840900c08/match-lifecycle.jsonl", "reason": "纯匹配函数顺序无关：两种输入顺序得到同一匹配结果。"}
+{"file": "artifacts/cooking-kitchen-loop-contracts/recipe-match/M05/138741c53e34470fb013a192d7f494b8/recipe-match.jsonl", "reason": "命中多个配方返回 Ambiguous 与确定性候选列表，不是运行时异常。"}
+{"file": "artifacts/cooking-kitchen-loop-contracts/recipe/S03/4b17d3a738354ec9b63990f820b42129/recipe-acceptance.jsonl", "reason": "不携带 Recipe 的 StartProcess 返回 RecipeNotMatched 结构化拒绝且零 mutation、无异常。"}
+{"file": "artifacts/cooking-kitchen-loop-contracts/recipe/S05/3a403c57ac3d4a74812cd521cc68c30c/recipe-acceptance.jsonl", "reason": "显式配方模式按输入集合成员判定，集合外输入被结构化拒绝。"}
+{"file": "artifacts/cooking-kitchen-loop-contracts/recipe/S07/c00f6958a66e41fc9ad6376709e3fe33/recipe-acceptance.jsonl", "reason": "两种命令模式 JSON 指纹不同且各自重放为 IsDuplicate 零事件。"}
+{"file": "artifacts/cooking-kitchen-loop-contracts/independent-verification.txt", "reason": "独立复核输出：32/32 通过。该验证不调用被测 C# 代码——SHA-256 由 python hashlib 重算、测试计数由解析 TRX 得到、golden 向量按 CanonicalWriter 帧格式手工解码，与 evidence 记录逐字段一致。"}
+{"file": "artifacts/cooking-kitchen-loop-contracts/match-lifecycle/M08/924785fc8c1d4764978ec5a4697a445a/match-lifecycle.jsonl", "reason": "M08 端到端证据：v1 schema 身份穿过生产 lifecycle 的 Prepare 与 snapshot Apply 两条拒绝路径，均得到结构化 ConfigIdentityMismatch / SnapshotIdentityMismatch，且未创建 gameplay。"}
+{"file": ".trellis/tasks/archive/2026-09/09-21-cooking-kitchen-loop-contracts/research/audit-2026-09-21.md", "reason": "独立子智能体审计结论（有条件通过、无严重问题）、7 项发现的处置记录，以及不调用被测 C# 代码的独立复核复现方式。"}

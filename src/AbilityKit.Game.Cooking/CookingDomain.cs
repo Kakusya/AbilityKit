@@ -127,7 +127,15 @@ public sealed record CommandExecution(
     CookingSnapshot Before,
     CookingSnapshot After);
 
-public sealed record CookingItemDefinition(DefinitionId Id, IReadOnlySet<string> AllowedPlayerCapabilities);
+/// <summary>
+/// 物品级容器能力：容器是带容器能力的物品，容量与可接受物品定义集合由配置声明。
+/// </summary>
+public sealed record CookingItemContainerCapability(int Capacity, IReadOnlySet<DefinitionId> AcceptedDefinitions);
+
+public sealed record CookingItemDefinition(
+    DefinitionId Id,
+    IReadOnlySet<string> AllowedPlayerCapabilities,
+    CookingItemContainerCapability? Container = null);
 
 public sealed record CookingPlayerConfig(
     PlayerId Id,

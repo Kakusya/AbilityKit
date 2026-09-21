@@ -86,6 +86,17 @@ CookingRecipeMatcher.Match(
 
 **配方唯一性是实现契约而非 owner 裁决**：owner 确认的是“配方自动识别、按输入集合匹配、顺序不重要”（09-19 notes 11.1 第一/七轮）；“同一集合 + 工位能力必须唯一”是由“自动识别必须可判定”推导的实现层约束，本任务以 v2 校验强制它，并在 spec 修约中注明推导来源。
 
+实现注记（2026-09-21，相对上面签名草图的一处收敛，不改变上面任何一条规则）：实际签名不单独传 `defaultInputs`，而是
+
+```text
+CookingRecipeMatcher.Match(
+    IReadOnlyCollection<DefinitionId> presentInputs,   // 容器内物品定义（顺序无关、重复折叠）
+    string applianceCapability,
+    IReadOnlyCollection<CookingRecipeDefinition> candidates)   // 每个候选自带 DefaultInputs
+```
+
+原因是 PRD R3 规定“配方可声明默认供应输入”，默认供应是每条配方自己的数据；上面签名里的独立 `defaultInputs` 参数与“调用方按每个候选配方把它的 `DefaultInputs` 并入再比较”自相矛盾（独立参数无法按候选变化）。匹配规则仍按上面两条原文实现：把 present 与该候选的 `DefaultInputs` 并入后，与该候选的 `Inputs ∪ DefaultInputs` 做集合相等比较。因为 §2.2 已规定 `Inputs` 与 `DefaultInputs` 不得重叠，该比较等价于“present 必须恰好覆盖 `Inputs`”，且允许默认供应被物理放入。
+
 ### 3.2 命令流与 DTO
 
 任务①落地的命令流（任务②才补 `PutInto` 等操作）：

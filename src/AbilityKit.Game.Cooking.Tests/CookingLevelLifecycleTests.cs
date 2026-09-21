@@ -492,7 +492,7 @@ public sealed class CookingLevelLifecycleTests
                 new CookingItemDefinition(Product, new HashSet<string>(StringComparer.Ordinal) { "cook" }),
             },
             new[] { new CookingApplianceDefinition(Station, new HashSet<string>(StringComparer.Ordinal) { "heat" }) },
-            new[] { new CookingRecipeDefinition(Recipe, Raw, Product, new ProcessId("process-a"), "heat", 3) },
+            new[] { new CookingRecipeDefinition(Recipe, new[] { Raw }, Product, new ProcessId("process-a"), "heat", 3) },
             new[] { new CookingContainerDefinition(Container, 2) }));
         Assert.True(result.Accepted);
         return Assert.IsType<CookingConfigurationSnapshot>(registry.Current);
