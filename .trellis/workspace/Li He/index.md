@@ -8,8 +8,8 @@
 
 <!-- @@@auto:current-status -->
 - **Active File**: `journal-1.md`
-- **Total Sessions**: 6
-- **Last Active**: 2026-09-21
+- **Total Sessions**: 7
+- **Last Active**: 2026-09-22
 <!-- @@@/auto:current-status -->
 
 ---
@@ -19,7 +19,7 @@
 <!-- @@@auto:active-documents -->
 | File | Lines | Status |
 |------|-------|--------|
-| `journal-1.md` | ~138 | Active |
+| `journal-1.md` | ~170 | Active |
 <!-- @@@/auto:active-documents -->
 
 ---
@@ -29,6 +29,7 @@
 <!-- @@@auto:session-history -->
 | # | Date | Title | Commits | Branch |
 |---|------|-------|---------|--------|
+| 7 | 2026-09-22 | Cooking 恢复 checkpoint 契约（单机） | `bd6a2f10c` | `master` |
 | 6 | 2026-09-21 | Cooking ET Level 闭环验收（单机） | `56c310c32e46c0edddec0b6d6327b7c37dd0b55a` | `master` |
 | 5 | 2026-09-21 | Cooking 正式配方与订单内容（单机） | `136bef394df9862b05b20a40185b0d6676a4a0d3` | `master` |
 | 4 | 2026-09-19 | Cooking ET Level 固定时钟 Phase A | `29bc685cc777751b246cd5d5ade23c3021e3aecc` | `feat/et-share-bootstrap` |

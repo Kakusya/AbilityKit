@@ -136,3 +136,35 @@ Todo P0-C1 未勾项落地：ET fixed-tick Level 宿主（`CookingLevelEtHost`�
 ### Status
 
 [OK] **Completed (archived, uncommitted)**
+
+
+## Session 7: Cooking 恢复 checkpoint 契约（单机）
+<!-- trellis-session: v=2 fp=3533212033b79ede -->
+
+**Date**: 2026-09-22
+**Task**: Cooking 恢复 checkpoint 契约（单机）
+**Branch**: `master`
+
+### Summary
+
+Todo P0-C1 前两条未勾项落地：同步 snapshot 与恢复 checkpoint 显式区分，宿主导出/销毁/重建/继续与不中断基线不可区分。
+
+### Main Changes
+
+- 域侧 `CookingRecipeCheckpoint`：覆盖物品/tombstone、活动加工、容器有序内容、订单、结算、消耗产物账、干净池计数、去重账本、事件/tick 历史与 event sequence、三个 ID 计数器、state version/logical tick 与 scope；可派生索引恢复时重建，fixed-tick 腐败检测器下一 tick 兜底复核。`RestoreCheckpoint` 整册换入、结构化拒绝、零变更。
+- 宿主侧 `CookingLevelCheckpoint` + codec（格式版本 + 完整性 + 结构化读回）；`CookingLevelEtHost.ExportCheckpoint` 前置 Running 且 pending 为空；静态 `Restore` 按同一代际重建（HostFrameSequence 单调不 reset、命令水位恢复、失败释放宿主）。仿真类改 partial 是 `CookingRecipeLoop.cs` 唯一改动。
+- R01 两臂顺序执行（ET 宿主进程级单例）：基线臂 vs 恢复臂（煮制进行中导出→销毁→重建→继续）终态 canonical/Sha256、版本、tick、下一产物 ID、结算次数与终态 checkpoint canonical 全部相等，evidence 逐位一致；R02 导出前置、R03 跨代际/跨配置/载荷投毒/载荷缺失拒绝、R04 帧序列连续；域内 C01–C04。
+- 实现期发现并修复：仅改 epoch 的 checkpoint 会绕过校验被静默恢复（补 payload-scope 前置）；去重指纹含批量，同 identity 换批量重投判 CommandIdentityConflict，宿主级“不二次推进”证明改为 基线 Duplicate vs 恢复 BatchStale（design §7.1 按实测改写）。
+- 门禁 `cooking-et-level-runtime`（Cooking 179/179、ET 47/47）与 `cooking-kitchen-loop`（focused 58/58）全步骤 exit 0；五个变异全部杀死；evidence 经独立脚本（不加载被测程序集）复验；三个二进制指纹金样字节不变。spec 五次修约、progress.md 第 7 节、Todo.md 勾选前两条。
+- durable storage、跨小关 checkpoint 产品语义、失败条件、评分、前厅、传输与 Unity 仍范围外。归档遵循 --no-commit；本会话提交由我决定（bd6a2f10c）。
+
+
+### Git Commits
+
+| Hash | Message |
+|------|---------|
+| `bd6a2f10c` | feat(cooking): land recovery checkpoint contract and rebuild equivalence |
+
+### Status
+
+[OK] **Completed**
