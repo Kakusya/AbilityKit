@@ -1,4 +1,21 @@
 # P2 一条完整配方：cooking-recipe-loop
+## 2026-09-22 恢复 checkpoint 契约修约（任务 09-22-cooking-checkpoint-recovery）
+
+来源：`Docs/Todo.md` P0-C1 前两条未勾项（“区分同步 snapshot 与恢复 checkpoint”与“导出 checkpoint -> 销毁 host -> 重建 -> 继续运行”等价验收），产品语义基准为 `Docs/design/CookingGame/reference/product-lifetimes.md` §4.1（HostFrameSequence 单调不 reset、Level 身份含 MatchId/RestaurantRuntime/LevelId/LevelEpoch），经 Trellis task `09-22-cooking-checkpoint-recovery` 实现并验证。验证证据见 task `check.jsonl`、`research/verification-2026-09-22.md` 与 `artifacts/cooking-checkpoint-recovery/`。durable storage、跨小关 checkpoint 产品语义、失败条件、前厅、传输与 Unity 仍范围外。
+
+| 位置 | 旧条款（原文可定位） | 新条款 | 来源 |
+|---|---|---|---|
+| Requirement「权威状态必须可序列化并可重放」（同步快照语义） | 运行态唯一出口是 `CookingRecipeSimulation.Snapshot()` 同步投影；快照过滤墓碑、不含去重账本、事件/tick 历史、ID 计数器、干净池计数与消耗产物账 | 显式区分两条出口：**同步快照**（每帧投影，服务远端对齐，过滤墓碑）与**恢复 checkpoint**（`CookingRecipeCheckpoint`，覆盖物品/tombstone、活动加工、容器有序内容、订单、结算、消耗产物账、干净池计数、去重账本、事件/tick 历史与 event sequence、三个 ID 计数器、state version/logical tick 与 scope）；可派生索引（持物、station/anchor 进程索引、锁输入反查）由载荷重建，不进信封 | 实现契约：Todo P0-C1 覆盖表逐项；task design §2（存什么与为什么不存） |
+| Requirement「加工进度与产物必须由模拟逻辑驱动」（恢复正确性） | 无（新增条款） | `CookingRecipeSimulation.RestoreCheckpoint` 整册换入载荷（fresh 构造期状态被完全替换，原子赋值提交）；恢复校验全部结构化（scope、物品定义、recipe/工位/容器外键、墓碑与锁输入一致、计数器与结算序列单调、干净池上下限），失败零变更；恢复后既有 `ValidateProcessIndexesForFixedTick`/`ValidateProcessForFixedTick` 在下一 tick 兜底复核 | 实现契约：task design §6；既有腐败检测器复用，不为恢复新造第二套校验语义 |
+| Requirement「同步与持久化边界」（宿主级信封） | 恢复只在领域层存在概念；宿主 watermarks（HostFrameSequence、命令水位）无跨宿主契约 | 宿主级 `CookingLevelCheckpoint` 携带 level scope/epoch、config identity、preparation、lifecycle 状态/version、HostFrameSequence、LastCommittedSimulationBatch 与整册仿真载荷；`CookingLevelCheckpointCodec`（格式版本 + 完整性 + 结构化读回，形态对照 P5 envelope）使 checkpoint 可脱离宿主自包含存在；`CookingLevelEtHost.ExportCheckpoint` 前置 `Running` 且 pending 为空，`Restore` 销毁后按同一代际重建并继续 | 实现契约：`reference/product-lifetimes.md` §4.1（HostFrameSequence 单调不 reset、Level-local 水位按代际恢复）；task design §4–§5 |
+| Requirement「同步与持久化边界」（恢复等价口径） | 无（新增条款） | “导出 → 销毁 host → 重建 → 继续运行”与不中断基线终态不可区分：canonical/Sha256、state version、logical tick、下一产物 ID、结算次数与两份终态 checkpoint canonical 全部相等（R01 两臂 evidence 逐位一致）。口径差异显式记录：宿主终态簿记不进 checkpoint——基线臂原批量重投给 `Duplicate` disposition，恢复臂同命令在 admission 判 `BatchStale`（命令水位已恢复），两臂均不二次推进；去重指纹覆盖整条命令（含 `SimulationBatch`），同 identity 换批量重投判 `CommandIdentityConflict`（既有契约） | 实现契约：task design §7 口径决定；证据 `artifacts/cooking-checkpoint-recovery/R01-*` |
+
+### 实现状态声明
+
+- 已实现并验证（单机纯 C#）：`CookingRecipeCheckpoint` 与仿真导出/整册恢复（结构化拒绝、零变更）、`CookingLevelCheckpoint` 与 codec（信封/完整性/截断与篡改拒绝）、宿主导出（Running + pending 空前置）与静态恢复入口（同代际重建、水位续接、失败释放宿主）、域内 C01–C04 与宿主级 R01–R04、变异测试 5 项全部杀死、evidence 经独立脚本复验（两臂逐位一致）。证据见 task `check.jsonl` 与 `artifacts/cooking-checkpoint-recovery/`。
+- 仍未实现（范围外）：durable store 与进程崩溃恢复、跨小关成功/失败/升级规则与 checkpoint 产品语义（保存什么/清除什么/加载流程）、Paused 代际导出、lifecycle 事件历史恢复、评分/收益/评价、失败条件、前厅与订单生成节奏、生产传输、真实 LAN、Unity 一切范围、ET Phase B 权威迁移。
+- 推定项（无单独 owner 裁决原文，实现按 task design 执行）：checkpoint 记录字段集与 canonical 结构、envelope 体积上限（1M 字符）、导出前置仅 Running、宿主终态簿记不恢复的口径、`AdoptRecoveredVersion` 只推进版本计数、恢复入口以静态工厂形态落在 ET 宿主、测试 trait 归属（域内 `CookingKitchenLoop`、宿主级 `CookingLevelRuntime`）。
+
 ## 2026-09-21 正式内容与 order owner 修约（任务 09-21-cooking-formal-content-and-orders）
 
 来源：owner 逐轮决定（09-19 notes §10–§12）与任务①②落地契约，经 Trellis task `09-21-cooking-formal-content-and-orders` 实现并验证。本次修约把 successor backlog P2 的“正式 Recipe/Process/Appliance/Container/Order 内容与 timing”与“order owner”从“未启动”改为“已在单机纯 C# 范围实现并验证”，验证证据见 task `check.jsonl`、`research/verification-2026-09-21.md` 与 `artifacts/cooking-formal-content/`。评分/收益/评价（小关结算）、失败条件与前厅订单生成节奏仍范围外；正式 schema 推广与 Level/Map 对内容的引用属 P3 successor。

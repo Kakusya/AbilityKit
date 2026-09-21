@@ -1,6 +1,11 @@
 # P5 持久化经营管理：cooking-persistence-management
 ## 2026-09-16 收口状态
 
+## 2026-09-22 交叉引用（任务 09-22-cooking-checkpoint-recovery）
+
+- 运行态恢复 checkpoint（`CookingRecipeCheckpoint`/`CookingLevelCheckpoint`）契约落在 [`cooking-recipe-loop.md`](cooking-recipe-loop.md) 2026-09-22 修约节；它是**一局运行态**的恢复载荷，不是本文的长期经营进度（settlement/progress ledger），两者消费者与覆盖范围不同，不得互相替代。
+- 该增量不改变本规范的 durable 边界：真实文件/数据库/云端 store、进程崩溃恢复与存档策略仍未启动，见 successor backlog；checkpoint 信封自带格式版本与完整性，不等于 durable storage 已验证。
+
 - in-memory 纯 .NET settlement/progress/staged-store 技术合同已验证并作为 limited delivery 收口；durable store 与产品存档策略等仍未启动，见 successor backlog。
 - 对应 `09-15-cooking-*` task 已按 `completed-limited-scope` 语义归档；`completed` 不表示完整 P5 或完整 P0-P6 产品出口。
 - Cooking Unity package、asmdef、scene、authoring、projection、UI、EditMode 与 scene smoke 长期禁止实施；原 Unity 场景及宿主无关不变量统一见 [`future-scope.md`](../../../Docs/design/CookingGame/future-scope.md)。

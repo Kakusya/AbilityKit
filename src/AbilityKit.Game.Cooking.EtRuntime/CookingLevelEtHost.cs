@@ -179,6 +179,41 @@ public sealed record CookingLevelHostGenerationResult(
     CookingLevelLifecycle? Lifecycle,
     IReadOnlyList<CookingLevelPendingDisposition> Dispositions);
 
+public enum CookingLevelCheckpointExportReason
+{
+    None,
+    LevelNotRunning,
+    LevelPaused,
+    PendingCommands,
+    PreparationMissing,
+}
+
+public sealed record CookingLevelCheckpointExportResult(
+    bool Accepted,
+    CookingLevelCheckpointExportReason Reason,
+    CookingLevelCheckpoint? Checkpoint = null);
+
+public enum CookingLevelCheckpointRestoreReason
+{
+    None,
+    CheckpointNull,
+    CheckpointScopeInvalid,
+    CheckpointPayloadScopeMismatch,
+    ConfigurationIdentityMismatch,
+    PreparationRejected,
+    LifecycleStartRejected,
+    GameplayUnavailable,
+    GameplayRestoreRejected,
+    HostCreationFailed,
+}
+
+public sealed record CookingLevelCheckpointRestoreResult(
+    bool Accepted,
+    CookingLevelCheckpointRestoreReason Reason,
+    CookingLevelEtHost? Host = null,
+    CookingCheckpointRestoreReason RecipeRestoreReason = CookingCheckpointRestoreReason.None,
+    string? Detail = null);
+
 public enum CookingLevelEtHostFailurePoint
 {
     LevelCreated,
@@ -517,6 +552,134 @@ public sealed class CookingLevelEtHost : IDisposable
         return candidateResult.Reason == CookingLevelLifecycleReason.None
             ? InstallGeneration(candidateResult.Candidate!, isRetry: false)
             : RejectGeneration(candidateResult.Reason);
+    }
+
+    /// <summary>
+    /// 导出宿主级恢复 checkpoint：本代际的 Level scope/epoch、config identity、preparation、
+    /// lifecycle 状态与版本、HostFrameSequence、命令水位与整册仿真载荷。
+    /// 前置条件：Level Running 且 admitted 命令已全部有终态（pending 与 in-flight 皆空）——
+    /// 宿主 Dispose 对未决命令的既有语义是取消并返回有序 disposition，半途点不构成权威态记录。
+    /// </summary>
+    public CookingLevelCheckpointExportResult ExportCheckpoint()
+    {
+        Check();
+        var state = _lifecycle.State;
+        if (state == CookingLevelState.Paused)
+            return new CookingLevelCheckpointExportResult(false, CookingLevelCheckpointExportReason.LevelPaused);
+        if (state != CookingLevelState.Running || _ownedSimulation is null)
+            return new CookingLevelCheckpointExportResult(false, CookingLevelCheckpointExportReason.LevelNotRunning);
+        if (_pending.Count > 0 || _inFlight is not null)
+            return new CookingLevelCheckpointExportResult(false, CookingLevelCheckpointExportReason.PendingCommands);
+        if (_lifecycle.Preparation is not { } preparation)
+            return new CookingLevelCheckpointExportResult(false, CookingLevelCheckpointExportReason.PreparationMissing);
+
+        return new CookingLevelCheckpointExportResult(true, CookingLevelCheckpointExportReason.None,
+            new CookingLevelCheckpoint(
+                Binding.LevelScope,
+                _lifecycle.Configuration.Identity,
+                CookingLevelLifecycle.CopyPreparation(preparation),
+                CookingLevelState.Running,
+                null,
+                _lifecycle.Version,
+                HostFrameSequence,
+                LastCommittedSimulationBatch,
+                _ownedSimulation.ExportCheckpoint()));
+    }
+
+    /// <summary>
+    /// 按 checkpoint 重建一代 Level 宿主并交还调用方：同一 scope/epoch 与 config identity，
+    /// 仿真由工厂创建后整册换入载荷，HostFrameSequence 单调不重置（reference/product-lifetimes §4.1），
+    /// Level-local 命令水位按 checkpoint 恢复。任一步失败都会释放已创建宿主（ET 宿主是进程级单例），
+    /// 并以结构化 reason 报告，不残留半恢复状态。
+    /// </summary>
+    public static CookingLevelCheckpointRestoreResult Restore(
+        CookingLevelCheckpoint checkpoint,
+        CookingConfigurationSnapshot configuration,
+        ICookingLevelGameplayFactory factory)
+    {
+        ArgumentNullException.ThrowIfNull(checkpoint);
+        ArgumentNullException.ThrowIfNull(configuration);
+        ArgumentNullException.ThrowIfNull(factory);
+        if (!Equals(configuration.Identity, checkpoint.ConfigIdentity))
+            return new CookingLevelCheckpointRestoreResult(false,
+                CookingLevelCheckpointRestoreReason.ConfigurationIdentityMismatch);
+        // 载荷必须属于信封声明的同一 match scope：防止把别的对局/代际的仿真状态插进本代际。
+        if (checkpoint.Recipe is null || !Equals(checkpoint.Recipe.Scope, checkpoint.Scope.MatchScope))
+            return new CookingLevelCheckpointRestoreResult(false,
+                CookingLevelCheckpointRestoreReason.CheckpointPayloadScopeMismatch);
+
+        CookingLevelLifecycle? lifecycle = null;
+        CookingLevelEtHost? host = null;
+        try
+        {
+            lifecycle = new CookingLevelLifecycle(checkpoint.Scope, configuration, factory);
+        }
+        catch (Exception exception) when (exception is ArgumentException)
+        {
+            return new CookingLevelCheckpointRestoreResult(false,
+                CookingLevelCheckpointRestoreReason.CheckpointScopeInvalid, null,
+                CookingCheckpointRestoreReason.None, exception.Message);
+        }
+
+        try
+        {
+            host = new CookingLevelEtHost(lifecycle);
+            var prepared = host.Prepare(checkpoint.Preparation);
+            if (!prepared.Accepted)
+            {
+                host.Dispose();
+                return new CookingLevelCheckpointRestoreResult(false,
+                    CookingLevelCheckpointRestoreReason.PreparationRejected, null,
+                    CookingCheckpointRestoreReason.None, prepared.Reason);
+            }
+
+            var started = host.Start();
+            if (!started.Accepted)
+            {
+                host.Dispose();
+                return new CookingLevelCheckpointRestoreResult(false,
+                    CookingLevelCheckpointRestoreReason.LifecycleStartRejected, null,
+                    CookingCheckpointRestoreReason.None, started.Reason);
+            }
+
+            if (!lifecycle.TryGetGameplay(out var simulation))
+            {
+                host.Dispose();
+                return new CookingLevelCheckpointRestoreResult(false,
+                    CookingLevelCheckpointRestoreReason.GameplayUnavailable);
+            }
+
+            var restored = simulation.RestoreCheckpoint(checkpoint.Recipe);
+            if (!restored.Accepted)
+            {
+                host.Dispose();
+                return new CookingLevelCheckpointRestoreResult(false,
+                    CookingLevelCheckpointRestoreReason.GameplayRestoreRejected, null, restored.Reason);
+            }
+
+            host.AdoptRecoveredCheckpoint(checkpoint);
+            return new CookingLevelCheckpointRestoreResult(true, CookingLevelCheckpointRestoreReason.None, host);
+        }
+        catch (Exception exception)
+        {
+            host?.Dispose();
+            return new CookingLevelCheckpointRestoreResult(false,
+                CookingLevelCheckpointRestoreReason.HostCreationFailed, null,
+                CookingCheckpointRestoreReason.None, exception.Message);
+        }
+    }
+
+    internal void AdoptRecoveredCheckpoint(CookingLevelCheckpoint checkpoint)
+    {
+        ArgumentNullException.ThrowIfNull(checkpoint);
+        if (_lifecycle.State != CookingLevelState.Running)
+            throw new InvalidOperationException("Only a running level host can adopt a recovered checkpoint.");
+        if (HostFrameSequence > checkpoint.HostFrameSequence)
+            throw new InvalidOperationException("A recovered checkpoint must not move the host frame sequence backwards.");
+
+        HostFrameSequence = checkpoint.HostFrameSequence;
+        LastCommittedSimulationBatch = checkpoint.LastCommittedSimulationBatch;
+        _lifecycle.AdoptRecoveredVersion(checkpoint.LifecycleVersion);
     }
 
     internal void ExecuteEtUpdate(CookingLevelDriverComponent driver)

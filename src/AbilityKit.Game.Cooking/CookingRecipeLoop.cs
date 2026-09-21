@@ -365,7 +365,7 @@ public sealed class SequentialCookingProductIdAllocator : ICookingProductIdAlloc
     }
 }
 
-public sealed class CookingRecipeSimulation
+public sealed partial class CookingRecipeSimulation
 {
     private static readonly JsonSerializerOptions CanonicalJsonOptions = new()
     {

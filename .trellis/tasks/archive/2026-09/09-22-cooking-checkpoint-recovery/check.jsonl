@@ -1,0 +1,18 @@
+{"file": "tools/test-gates.json", "reason": "门禁配置权威：两个 Cooking P1 gate 步骤定义；本任务仅 cooking-kitchen-loop description 补恢复 checkpoint 措辞，无步骤变化、无新增 gate。"}
+{"file": "Docs/AbilityKit测试门禁与批量回归规范.md", "reason": "门禁规范 §3 表格与 test-gates.json 描述同步（措辞级），步骤与判定不变。"}
+{"file": ".trellis/tasks/09-22-cooking-checkpoint-recovery/prd.md", "reason": "R1-R7 与 A1-A5 逐条核对：snapshot/checkpoint 区分、覆盖表、导出前置、恢复校验、等价验收、不证明项均有实现与证据对应。"}
+{"file": ".trellis/tasks/09-22-cooking-checkpoint-recovery/design.md", "reason": "契约决策与实现一致：分层、字段表、信封形态、恢复七步、校验清单、口径 §7（含实现期对去重指纹口径的修正）均落地。"}
+{"file": ".trellis/tasks/09-22-cooking-checkpoint-recovery/implement.md", "reason": "阶段 1-5 执行清单：域载荷、宿主信封与恢复、C01-C04/R01-R04、双 gate、变异、spec/progress/Todo 与归档。"}
+{"file": "src/AbilityKit.Game.Cooking/CookingRecipeCheckpoint.cs", "reason": "域侧新文件：CookingRecipeCheckpoint 载荷与 canonical、导出/整册恢复（结构化拒绝、原子替换）、校验清单。"}
+{"file": "src/AbilityKit.Game.Cooking/CookingLevelCheckpoint.cs", "reason": "宿主级信封内容与 codec：格式版本、完整性、结构化读回；canonical 用于两臂终态比较。"}
+{"file": "src/AbilityKit.Game.Cooking/CookingRecipeLoop.cs", "reason": "唯一改动是类声明加 partial（checkpoint 成员拆入新文件）；命令路径、fixed-tick 计划与 canonical 语义零改动。"}
+{"file": "src/AbilityKit.Game.Cooking/CookingLevelLifecycle.cs", "reason": "CopyPreparation 提升 internal 供导出复刻；新增 AdoptRecoveredVersion 接缝（仅 Running、版本不回退）。"}
+{"file": "src/AbilityKit.Game.Cooking.EtRuntime/CookingLevelEtHost.cs", "reason": "宿主导出（Running + pending 空前置）与静态 Restore（同代际重建、payload-scope 前置、水位续接、失败释放宿主）。"}
+{"file": "src/AbilityKit.Game.Cooking.Tests/CookingCheckpointRecoveryTests.cs", "reason": "域内 C01-C04：覆盖表逐项、序列化往返续跑等价、篡改/外键/计数器拒绝零变更、恢复后去重账本生效。；evidence 落 artifacts/cooking-checkpoint-recovery/C02-*（源臂 21 条、恢复臂 7 条）。"}
+{"file": "src/AbilityKit.ET.Runtime.Tests/CookingLevelCheckpointTests.cs", "reason": "宿主级 R01-R04：两臂等价（evidence 逐位一致）、导出前置、跨代际/跨配置/载荷投毒拒绝、HostFrameSequence 连续；宿主单例顺序执行。；evidence 落 artifacts/cooking-checkpoint-recovery/R01-*（两臂各 21 条，独立脚本复验逐位一致）。"}
+{"file": ".trellis/spec/cooking/cooking-recipe-loop.md", "reason": "2026-09-22 修约节：snapshot/checkpoint 区分、覆盖表、恢复校验、信封与宿主恢复、等价口径；实现状态声明与推定项。"}
+{"file": ".trellis/spec/cooking/cooking-persistence-management.md", "reason": "交叉引用：checkpoint 是运行态恢复载荷，不改变 P5 durable store 边界。"}
+{"file": ".trellis/spec/cooking/index.md", "reason": "第五次修约注记与 P2 行扩展；状态语义（archived verified delivery / successor / 范围外）不变。"}
+{"file": "Docs/design/CookingGame/progress.md", "reason": "新增第 7 节（本次增量：交付表、门禁数字、不证明项），后续节顺延；§3 末句补增量入口。"}
+{"file": "Docs/Todo.md", "reason": "P0-C1 前两条勾选并写证据指针；总体判断段同步 checkpoint 契约已落地。"}
+{"file": ".trellis/tasks/09-22-cooking-checkpoint-recovery/research/verification-2026-09-22.md", "reason": "验证记录：双 gate 真实输出与计数、独立复验命令与结果、五项变异全部杀死、实现期发现与口径修正、未覆盖边界。"}

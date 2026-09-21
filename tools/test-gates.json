@@ -305,7 +305,7 @@
       "name": "cooking-kitchen-loop",
       "level": "P1",
       "owner": "Cooking Game Runtime",
-      "description": "Pure .NET kitchen-loop simulation contracts: container-as-item, the seven authoritative actions, put-in rejection, locked inputs, carry-away continuation, both completion kinds, the tomato-egg-soup closed-loop fixture and command arbitration.",
+      "description": "Pure .NET kitchen-loop simulation contracts: container-as-item, the seven authoritative actions, put-in rejection, locked inputs, carry-away continuation, both completion kinds, the tomato-egg-soup closed-loop fixture and command arbitration, and the recovery checkpoint contract (snapshot/checkpoint separation, export-restore equivalence).",
       "scope": [
         "cooking",
         "kitchen-loop",

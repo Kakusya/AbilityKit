@@ -24,7 +24,7 @@
 
 当前存在两条需要重点推进的 P0 主线：
 
-- **Cooking ET 应用运行时主线**：独立 ET runtime 和最小权威命令 Tick 接点已经完成，但正式 Match 宿主、单一加工时钟、checkpoint、跨小关规则与 ECS 清退尚未完成。原 UDP ingress 方向已于 2026-09-21 放弃（传输计划改用 KCP，属未启动后续工作），不再计入本主线待办。单机纯 .NET 厨房闭环仿真（容器即物品、七项权威动作、两种完成形态、订单要求与碗池、批次争抢仲裁）已于 2026-09-21 由两个 Trellis task 实现并验证，状态见 [Cooking 当前工程进度](design/CookingGame/progress.md) 第 4 节；正式 Recipe/Process/Appliance/Container/Order 内容与 timing（数据驱动 `cooking-definition-v2` 内容目录）与 order owner（订单簿、开单注入、提交/结算契约）已于同日由 task `09-21-cooking-formal-content-and-orders` 实现并验证，状态见同文第 5 节；同一条番茄蛋花汤闭环已在 ET fixed-tick Level 宿主上以正式内容跑通验收（命令 ingress + 固定 Tick、拒绝零变更、确定性重放），状态见同文第 6 节。评分/收益/评价与小关结算、失败条件与前厅订单生成节奏、固定伙伴最终人数、生产传输与 Unity 范围仍未启动。
+- **Cooking ET 应用运行时主线**：独立 ET runtime 和最小权威命令 Tick 接点已经完成，但正式 Match 宿主、单一加工时钟、checkpoint、跨小关规则与 ECS 清退尚未完成。原 UDP ingress 方向已于 2026-09-21 放弃（传输计划改用 KCP，属未启动后续工作），不再计入本主线待办。单机纯 .NET 厨房闭环仿真（容器即物品、七项权威动作、两种完成形态、订单要求与碗池、批次争抢仲裁）已于 2026-09-21 由两个 Trellis task 实现并验证，状态见 [Cooking 当前工程进度](design/CookingGame/progress.md) 第 4 节；正式 Recipe/Process/Appliance/Container/Order 内容与 timing（数据驱动 `cooking-definition-v2` 内容目录）与 order owner（订单簿、开单注入、提交/结算契约）已于同日由 task `09-21-cooking-formal-content-and-orders` 实现并验证，状态见同文第 5 节；同一条番茄蛋花汤闭环已在 ET fixed-tick Level 宿主上以正式内容跑通验收（命令 ingress + 固定 Tick、拒绝零变更、确定性重放），状态见同文第 6 节。 运行态恢复契约（同步 snapshot 与恢复 checkpoint 区分、覆盖表逐项入账、导出→销毁 host→重建→继续与不中断基线不可区分）已于 2026-09-22 落地，状态见同文第 7 节。评分/收益/评价与小关结算、失败条件与前厅订单生成节奏、固定伙伴最终人数、生产传输与 Unity 范围仍未启动。
 - **Shooter 同步正式化主线**：已有同步主干和 pure-state runtime 起点，但仍缺客户端消费、AOI、delta/keyframe/resync 和远程服务端预算闭环。
 
 MOBA、Client Flow、Presentation 与通用工程治理属于后续正式化主线，其中完整 build 阻塞和主流程失败语义仍应优先处理。
@@ -41,8 +41,8 @@ MOBA、Client Flow、Presentation 与通用工程治理属于后续正式化主�
 - [x] 明确最小 Match/RestaurantRuntime/Kitchen/Level ET 所有权结构；ET 只承载生命周期与 driver seam，不复制 Cooking gameplay 权威状态；精确 parent 由窄范围 Roslyn relation analyzer 与运行时树测试共同验证。
 - [x] 建立单一固定加工时钟：每个 Running 权威帧全局 `LogicalTick` 只推进一次，批量稳定推进全部加工；Paused 停止 Tick/新命令，Resume 延续；fixed-step delta 原子提交。
 - [x] 让 ET fixed-tick host 承载同一条番茄蛋花汤闭环验收：已于 2026-09-21 由 task `09-21-cooking-et-closed-loop-acceptance` 交付——fixture 与标准初始供应来自正式内容目录，17 条玩家命令全部经宿主命令 ingress 与固定 Tick 驱动（10 个纯时钟帧），开单/清洗完成走帧间注入，拒绝零变更以命令级版本相等 + 对照臂 canonical 相等两级证明，两遍重放 canonical/Sha256 一致；门禁 `cooking-et-level-runtime`（Cooking 175/175、ET runtime 43/43）与 `cooking-kitchen-loop`（focused 54/54）通过，证据见 [归档 task](../.trellis/tasks/archive/2026-09/09-21-cooking-et-closed-loop-acceptance/check.jsonl) 与 `artifacts/cooking-et-closed-loop/`。宿主与领域闭环计数器差异（终态 LogicalTick 27 vs 8）是显式口径；评分、失败条件、前厅、传输与 Unity 仍未启动。
-- [ ] 区分同步 snapshot 与恢复 checkpoint；checkpoint 覆盖物品/tombstone、加工、容器、订单、逻辑 Tick、命令水位、去重账本、事件序列、ID 计数器、Match/epoch/config identity 和 lifecycle 状态。
-- [ ] 验证“导出 checkpoint -> 销毁 host -> 重建 -> 继续运行”与不中断基线产生相同最终 hash、ID、版本、去重结果和订单提交次数。
+- [x] 区分同步 snapshot 与恢复 checkpoint：已于 2026-09-22 由 task `09-22-cooking-checkpoint-recovery` 交付——同步快照是每帧投影（过滤墓碑），恢复 checkpoint（`CookingRecipeCheckpoint`）覆盖物品/tombstone、活动加工、容器有序内容、订单、逻辑 Tick、宿主命令水位、去重账本、事件/tick 历史与 event sequence、三个 ID 计数器、Match/epoch/config identity 与 lifecycle 状态，并经 `CookingLevelCheckpointCodec`（格式版本 + 完整性）序列化自包含存在；校验全部结构化且拒绝零变更。证据见 [归档 task](../.trellis/tasks/archive/2026-09/09-22-cooking-checkpoint-recovery/check.jsonl) 与 `artifacts/cooking-checkpoint-recovery/`。
+- [x] 验证“导出 checkpoint -> 销毁 host -> 重建 -> 继续运行”与不中断基线不可区分：同一条番茄蛋花汤闭环在煮制进行中导出→销毁→按同一代际重建→继续，终态 canonical/Sha256、state version、logical tick、下一产物 ID、结算次数与两份终态 checkpoint canonical 全部相等，两臂 evidence 逐位一致；HostFrameSequence 单调不 reset；导出前置 Running 且 pending 为空，跨代际/跨配置/载荷投毒结构化拒绝。门禁 `cooking-et-level-runtime`（Cooking 179/179、ET runtime 47/47）与 `cooking-kitchen-loop`（focused 58/58）通过。证据同上。durable storage、跨小关 checkpoint 产品语义、失败条件、前厅、传输与 Unity 仍未启动。
 - [ ] 落实成功进入下一小关：保留食材、半成品和未完成加工；清理本关订单；准备阶段暂停并在下一小关恢复。
 - [ ] 落实失败重开：关闭失败 Match，创建新 MatchId/更高 epoch，清空失败现场，按关卡定义生成标准初始供应；失败和准备阶段修改不写盘。
 - [ ] 落实工位升级迁移：使用显式领域操作迁移未完成加工并保留进度，不通过销毁父 Entity 隐式丢失 Process。

@@ -28,7 +28,7 @@ P1 旧 metadata 曾写 `19/19`，属于摘要漂移；原始权威 check event �
 
 ## 3. 当前可运行纵向链路
 
-纯 .NET fixture 已能无界面地创建 scope 与实例、完成 in-process handshake、执行权威交互、运行最小配方、推进 Match、应用 settlement/progress，并生成 InProcess 测量诊断。此外曾有 pure .NET Cooking UDP 链路（LiteNetLib reliable-UDP loopback 与同机双进程 listen-host/client），其 task 已于 2026-09-21 因 owner 决定放弃并归档；三个 Cooking UDP 项目退出当前构建范围，源码与 artifact 证据保留，不得据此宣称能力被删除或从未存在。真实 artifact 仍将其标为 same-machine，且两台物理 PC LAN 未运行。以上证明有限领域合同、测试 transport 边界和同机真实 socket 曾经可以运行；不证明 Unity 表现、物理两机 LAN 或 durable storage，也不证明当前范围包含网络内容。2026-09-21 起，单机纯 .NET 范围另有一条可运行的番茄蛋花汤厨房闭环，其契约层、仿真规则、正式内容与 ET 宿主闭环验收分三个 task 交付，见第 4、5、6 节。
+纯 .NET fixture 已能无界面地创建 scope 与实例、完成 in-process handshake、执行权威交互、运行最小配方、推进 Match、应用 settlement/progress，并生成 InProcess 测量诊断。此外曾有 pure .NET Cooking UDP 链路（LiteNetLib reliable-UDP loopback 与同机双进程 listen-host/client），其 task 已于 2026-09-21 因 owner 决定放弃并归档；三个 Cooking UDP 项目退出当前构建范围，源码与 artifact 证据保留，不得据此宣称能力被删除或从未存在。真实 artifact 仍将其标为 same-machine，且两台物理 PC LAN 未运行。以上证明有限领域合同、测试 transport 边界和同机真实 socket 曾经可以运行；不证明 Unity 表现、物理两机 LAN 或 durable storage，也不证明当前范围包含网络内容。2026-09-21 起，单机纯 .NET 范围另有一条可运行的番茄蛋花汤厨房闭环，其契约层、仿真规则、正式内容与 ET 宿主闭环验收分三个 task 交付，见第 4、5、6 节。 2026-09-22 起，该范围另有一条运行态恢复契约（checkpoint 与销毁重建等价验收），见第 7 节。
 
 ## 4. 2026-09-21 单机厨房闭环增量
 
@@ -75,7 +75,21 @@ Owner 于 2026-09-21 批准 Trellis task `09-21-cooking-et-closed-loop-acceptanc
 
 以上只证明同一条番茄蛋花汤闭环可在 ET fixed-tick Level 宿主上以正式内容运行、拒绝在宿主命令路径零变更、可确定性重放，且宿主机制与指纹金样无回归。不证明评分/收益/评价与小关结算（owner 推迟）、失败条件与失败重试（owner 推迟）、前厅与订单生成节奏（订单只能由前厅经 `OpenOrder` 注入）、过度加工与烧焦、跨小关规则、检查点与 snapshot/checkpoint 分离、生产传输、真实两 PC LAN、Unity 可玩版本或 ET Phase B 权威迁移。宿主与领域闭环的 canonical 不要求字节一致：宿主每帧推进一个 tick（终态 `LogicalTick=27`），领域 L01 用 `AdvanceTicks` 与显式帧 1–8（终态 `8`），该差异是宿主拥有时钟的必然结果，已在 spec 显式记录为口径而非回归。
 
-## 7. 未完成范围
+## 7. 2026-09-22 恢复 checkpoint 契约增量
+
+Owner 于 2026-09-22 批准 Trellis task `09-22-cooking-checkpoint-recovery`（Todo P0-C1 前两条未勾项：区分同步 snapshot 与恢复 checkpoint；“导出 checkpoint -> 销毁 host -> 重建 -> 继续运行”等价验收），task 已归档，不含传输、UDP/KCP 与 Unity 内容。
+
+| 受限交付 | Evidence |
+|---|---|
+| 同步快照与恢复 checkpoint 显式区分：`CookingRecipeCheckpoint` 覆盖物品/tombstone、活动加工（elapsed/required/completion/container/lockedInputs）、容器**有序**内容、订单、结算、消耗产物账、干净碗池计数、去重账本、事件/tick 历史与 event sequence、三个 ID 计数器、state version/logical tick 与 scope；可派生索引（持物、进程索引、锁输入反查）由载荷重建；`CookingRecipeSimulation.RestoreCheckpoint` 整册换入（原子替换、结构化拒绝、零变更），恢复后既有 fixed-tick 腐败检测器在下一 tick 兜底复核 | [check](../../../.trellis/tasks/archive/2026-09/09-22-cooking-checkpoint-recovery/check.jsonl)；[research/verification-2026-09-22.md](../../../.trellis/tasks/archive/2026-09/09-22-cooking-checkpoint-recovery/research/verification-2026-09-22.md)；`artifacts/cooking-checkpoint-recovery/` |
+| 宿主级信封与恢复入口：`CookingLevelCheckpoint`（level scope/epoch、config identity、preparation、lifecycle 状态/version、HostFrameSequence、命令水位 + 整册仿真载荷）经 `CookingLevelCheckpointCodec`（格式版本 + 完整性 + 结构化读回）序列化；`CookingLevelEtHost.ExportCheckpoint` 前置 Running 且 pending 为空；静态 `Restore` 按同一代际重建（同 scope/epoch/config identity、仿真由工厂创建后整册换入、HostFrameSequence 单调不 reset、失败即释放宿主编修） | 同上；spec [`cooking-recipe-loop.md`](../../../.trellis/spec/cooking/cooking-recipe-loop.md) 2026-09-22 修约节 |
+| 等价验收：R01 基线臂与恢复臂（煮制进行中导出 → 销毁 → 重建 → 继续）终态 canonical/Sha256、state version、logical tick、下一产物 ID（烤面包探针 `product-4`）、结算次数与两份终态 checkpoint canonical 全部相等，两臂 evidence 逐位一致；R02 导出前置（pending 非空/Paused 拒绝）；R03 跨代际/跨配置/载荷投毒结构化拒绝；R04 HostFrameSequence 连续；域内 C01 覆盖表逐项、C02 序列化往返后续跑等价、C03 篡改/截断/外键拒绝零变更、C04 恢复后去重账本仍生效 | 同上；`artifacts/cooking-checkpoint-recovery/`（R01 两臂各 21 条、C02 双臂 21/7 条证据，独立脚本复验通过） |
+
+门禁：沿用 P1 `cooking-et-level-runtime`（Cooking 179/179、ET runtime 47/47，本任务 +8）与 P1 `cooking-kitchen-loop`（focused `Gate=CookingKitchenLoop` 58/58、Cooking 179/179、ET runtime 47/47），均全步骤 exit 0；[`tools/test-gates.json`](../../../tools/test-gates.json) 未新增 gate，仅 `cooking-kitchen-loop` description 补“恢复 checkpoint 契约”措辞（域内新测试挂 `CookingKitchenLoop` trait）。变异测试 5 项全部杀死（tombstone 不入账、干净池计数不入账、去重账本不入账、锁输入不入账、HostFrameSequence 不续接）；既有测试零回归，三个二进制指纹金样字节不变（`CookingLevelEtHostTests` 零改动）。
+
+以上只证明单机纯 C# 的运行态恢复契约成立：checkpoint 自包含、可结构化拒绝、销毁重建后与不中断基线不可区分。不证明 durable storage 或进程崩溃恢复（store 未实现）、跨小关 checkpoint 产品语义（保存/清除/加载流程，见 09-19 讨论 PRD）、失败条件与失败重试、评分/收益/评价、前厅与订单生成节奏、Paused 代际导出、生产传输、真实两 PC LAN、Unity 可玩版本或 ET Phase B 权威迁移。宿主与领域闭环计数器口径不变：宿主每帧推进一个 fixed tick，checkpoint 的 LogicalTick 与 HostFrameSequence 在导出点相等。
+
+## 8. 未完成范围
 
 ### Non-Unity successor backlog
 
@@ -85,7 +99,7 @@ P1–P6 尚可另行审议的工作包括两台物理 PC LAN 验收、正式 rec
 
 Cooking Unity 应用层、场景、authoring/export、projection、UI、动画、EditMode 与 scene smoke 长期禁止实施，不再作为旧 task、successor 或完整出口的当前 blocker。其历史来源、跨宿主 authority/identity/stale-input 不变量和重新授权条件见 [future scope](future-scope.md)。
 
-## 8. 后续读取顺序
+## 9. 后续读取顺序
 
 1. 读取本文确认三类状态。
 2. 读取 [技术路线](technical-roadmap.md)、[交付计划](delivery-plan.md) 与 [Cooking spec index](../../../.trellis/spec/cooking/index.md)。
@@ -93,7 +107,7 @@ Cooking Unity 应用层、场景、authoring/export、projection、UI、动画�
 4. 只有 owner 明确批准新范围后才新建 Trellis task；不要恢复已归档 task。
 5. Unity 重新授权必须满足 [future scope](future-scope.md) 的独立条件；non-Unity 后续从 [successor backlog](successor-backlog.md) 选择并重新审议。
 
-## 9. 维护规则
+## 10. 维护规则
 
 - 本文只汇总状态与链接，不复制行为契约、测试矩阵或未来 checklist。
 - 未实际运行的 Unity、LAN、protocol、durability 或 global gate 继续是 not-run/未完成，不能因 task archive 记为通过。

@@ -1,0 +1,4 @@
+{"file": ".trellis/spec/cooking/cooking-recipe-loop.md", "reason": "闭环行为契约：snapshot/canonical、去重账本、两种完成形态与 fixed-tick 原子提交的既有条款，checkpoint 契约必须与之对齐"}
+{"file": ".trellis/spec/cooking/cooking-persistence-management.md", "reason": "P5 envelope/codec 既有形态（格式版本、完整性、结构化读回）是 checkpoint 信封的对照基线"}
+{"file": ".trellis/spec/cooking/cooking-match-lifecycle.md", "reason": "Level/Prepare/Start 生命周期与 snapshot applier 契约；恢复入口复用同一条生命周期"}
+{"file": ".trellis/spec/cooking/index.md", "reason": "spec 索引与修约程序：本次落地后需要按同一程序追加修约注记"}

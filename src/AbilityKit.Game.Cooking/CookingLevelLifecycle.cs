@@ -659,6 +659,21 @@ public sealed class CookingLevelLifecycle
         Version,
         _hasCreatedNextGeneration);
 
+    /// <summary>
+    /// 恢复接缝：跨宿主重建一代 Level 后，把 checkpoint 携带的 lifecycle 版本续到新宿主对象上。
+    /// 只推进版本计数、不改状态机语义（事件历史记录新宿主自身的操作，不搬运旧宿主的审计历史）。
+    /// </summary>
+    internal void AdoptRecoveredVersion(long version)
+    {
+        if (State != CookingLevelState.Running)
+            throw new InvalidOperationException("Only a running level generation can adopt a recovered lifecycle version.");
+        if (version < Version)
+            throw new ArgumentOutOfRangeException(nameof(version),
+                "A recovered lifecycle version must not move the generation version backwards.");
+        if (version > Version)
+            Version = version;
+    }
+
     internal static CookingLevelLifecycleReason ValidatePreparation(
         CookingLevelScope scope,
         CookingConfigurationSnapshot configuration,
@@ -832,7 +847,7 @@ public sealed class CookingLevelLifecycle
     private CookingLevelSuccessorResult RejectSuccessor(CookingLevelLifecycleReason reason, long before) =>
         new(false, reason, null, Scope, Outcome, null, before, Version, _gameplay is null || _gameplayClosed, Reject(reason));
 
-    private static CookingLevelPreparation CopyPreparation(CookingLevelPreparation preparation) =>
+    internal static CookingLevelPreparation CopyPreparation(CookingLevelPreparation preparation) =>
         new(
             preparation.Level,
             preparation.Map,

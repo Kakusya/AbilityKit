@@ -1,0 +1,29 @@
+{
+  "id": "cooking-checkpoint-recovery",
+  "name": "cooking-checkpoint-recovery",
+  "title": "Cooking checkpoint 与恢复契约",
+  "description": "区分同步 snapshot 与恢复 checkpoint：checkpoint 覆盖物品/tombstone、加工、容器、订单、逻辑 Tick、命令水位、去重账本、事件序列、ID 计数器、Match/epoch/config identity 与 lifecycle 状态；经序列化信封导出后在宿主边界恢复，验证“导出 checkpoint -> 销毁 host -> 重建 -> 继续运行”与不中断基线产生相同最终 hash、ID、版本、去重结果与订单提交次数。评分、失败条件、前厅、传输与 Unity 范围外。",
+  "status": "completed",
+  "dev_type": null,
+  "scope": null,
+  "package": null,
+  "priority": "P1",
+  "creator": "Li He",
+  "assignee": "Li He",
+  "createdAt": "2026-09-22",
+  "completedAt": "2026-09-22",
+  "branch": "master",
+  "base_branch": "master",
+  "worktree_path": null,
+  "commit": null,
+  "pr_url": null,
+  "subtasks": [],
+  "children": [],
+  "parent": null,
+  "relatedFiles": [],
+  "notes": "",
+  "meta": {
+    "acceptance_gate": "cooking-et-level-runtime",
+    "unity_scope": "prohibited"
+  }
+}
