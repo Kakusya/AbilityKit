@@ -148,8 +148,7 @@ public sealed class CookingCommandArbitrationTests
             [Counter] = new(Counter, new HashSet<string>(StringComparer.Ordinal)),
         };
         var simulation = new CookingRecipeSimulation(
-            new CookingRecipeFixture(scope, players, items, appliances, new Dictionary<RecipeId, CookingRecipeDefinition>()),
-            new AcceptingOrderPort());
+            new CookingRecipeFixture(scope, players, items, appliances, new Dictionary<RecipeId, CookingRecipeDefinition>()));
         simulation.AddItem(Bowl, BowlDefinition, ItemLocation.Station(Counter));
         simulation.AddWorldIngredient(Ingredient, Raw, "spawn");
         return simulation;
@@ -160,8 +159,4 @@ public sealed class CookingCommandArbitrationTests
         new(new CookingScope(Session, World, Match), 10, player, new RecipeCommandId(commandId), operation,
             null, null, item, station, container, null, expectedVersion, 0);
 
-    private sealed class AcceptingOrderPort : ICookingOrderPort
-    {
-        public CookingOrderAcceptance Submit(CookingOrderSubmission submission) => new(true, "fixture-accepted");
-    }
 }

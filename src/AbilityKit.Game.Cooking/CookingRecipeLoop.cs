@@ -24,6 +24,11 @@ public readonly record struct OrderId(string Value)
     public override string ToString() => Value;
 }
 
+public readonly record struct OrderTemplateId(string Value)
+{
+    public override string ToString() => Value;
+}
+
 public readonly record struct RecipeCommandId(string Value)
 {
     public override string ToString() => Value;
@@ -65,7 +70,8 @@ public sealed record CookingRecipeFixture
         IReadOnlyDictionary<RecipeId, CookingRecipeDefinition> recipes,
         IReadOnlySet<DefinitionId>? washableContainerDefinitions = null,
         IReadOnlyDictionary<DefinitionId, int>? cleanContainerSupply = null,
-        string? cleanPoolLocation = null)
+        string? cleanPoolLocation = null,
+        IReadOnlyDictionary<OrderTemplateId, CookingOrderTemplateDefinition>? orderTemplates = null)
     {
         ArgumentNullException.ThrowIfNull(scope);
         ArgumentNullException.ThrowIfNull(players);
@@ -94,6 +100,7 @@ public sealed record CookingRecipeFixture
         WashableContainerDefinitions = washableContainerDefinitions ?? new HashSet<DefinitionId>();
         CleanContainerSupply = cleanContainerSupply ?? new Dictionary<DefinitionId, int>();
         CleanPoolLocation = cleanPoolLocation ?? "clean-pool";
+        OrderTemplates = orderTemplates ?? new Dictionary<OrderTemplateId, CookingOrderTemplateDefinition>();
     }
 
     public CookingScope Scope { get; init; }
@@ -104,6 +111,7 @@ public sealed record CookingRecipeFixture
     public IReadOnlySet<DefinitionId> WashableContainerDefinitions { get; init; }
     public IReadOnlyDictionary<DefinitionId, int> CleanContainerSupply { get; init; }
     public string CleanPoolLocation { get; init; }
+    public IReadOnlyDictionary<OrderTemplateId, CookingOrderTemplateDefinition> OrderTemplates { get; init; }
 }
 
 /// <summary>
@@ -159,6 +167,9 @@ public enum CookingRecipeRejectionReason
     RecipeNotMatched,
     RecipeAmbiguous,
     ContainerRejectsItem,
+    OrderNotFound,
+    OrderAlreadyCompleted,
+    OrderRequirementMismatch,
 }
 
 public sealed record CookingRecipeCommand(
@@ -284,14 +295,33 @@ public static class CookingRecipeCommandValidation
     private static bool HasIdentifier(OrderId? value) => value is { Value: { } id } && !string.IsNullOrWhiteSpace(id);
 }
 
-public sealed record CookingOrderSubmission(
+public enum CookingOrderStatus
+{
+    Open,
+    Completed,
+}
+
+/// <summary>
+/// 结算记录：提交成功时追加的确定事实（订单、模板、recipe、产物、玩家、容器与逻辑 Tick）。
+/// 不含评分、收益或评价字段——那些属小关结算，owner 已推迟。
+/// </summary>
+public sealed record CookingOrderSettlement(
+    long Sequence,
     OrderId Order,
+    OrderTemplateId Template,
     RecipeId Recipe,
     ItemId Product,
     PlayerId Player,
-    ItemId? Container = null);
+    ItemId Container,
+    long LogicalTick);
 
-public sealed record CookingOrderAcceptance(bool Accepted, string ReasonCode = "None", bool OrderCompleted = false);
+/// <summary>前厅注入开单的结果（对称 <see cref="CookingWashCompletionResult"/>）。</summary>
+public sealed record CookingOrderResult(bool Accepted, string ReasonCode)
+{
+    public const string AcceptedReason = "OrderOpened";
+    public const string OrderTemplateNotFound = "OrderTemplateNotFound";
+    public const string OrderIdentityConflict = "OrderIdentityConflict";
+}
 
 /// <summary>
 /// NPC 洗碗端口：领域只在提交成功时发出“这个容器脏了、交给 NPC”的请求；
@@ -303,11 +333,6 @@ public interface ICookingBowlWashingPort
 }
 
 public sealed record CookingWashCompletionResult(bool Accepted, string ReasonCode);
-
-public interface ICookingOrderPort
-{
-    CookingOrderAcceptance Submit(CookingOrderSubmission submission);
-}
 
 public interface ICookingProductIdAllocator
 {
@@ -349,7 +374,6 @@ public sealed class CookingRecipeSimulation
     };
 
     private readonly CookingRecipeFixture _fixture;
-    private readonly ICookingOrderPort _orderPort;
     private readonly ICookingProductIdAllocator _productIdAllocator;
     private readonly ICookingBowlWashingPort? _bowlWashingPort;
     private readonly Dictionary<DefinitionId, int> _cleanContainerCount = new();
@@ -364,7 +388,8 @@ public sealed class CookingRecipeSimulation
     private readonly Dictionary<ItemId, ProcessId> _inputsByProcessItem = new();
     private readonly Dictionary<ProcessId, IReadOnlyList<ItemId>> _lockedInputsByProcess = new();
     private readonly HashSet<ItemId> _consumedProducts = new();
-    private readonly HashSet<OrderId> _acceptedOrders = new();
+    private readonly Dictionary<OrderId, OrderState> _orders = new();
+    private readonly List<CookingOrderSettlement> _settlements = new();
     private readonly Dictionary<RecipeCommandKey, ProcessedCommand> _processedCommands = new();
     private readonly List<CookingRecipeEvent> _events = new();
     private List<CookingRecipeTickEvent> _tickEvents = new();
@@ -372,6 +397,7 @@ public sealed class CookingRecipeSimulation
     private long _eventSequence;
     private long _nextProcessId;
     private long _nextProductId;
+    private long _nextSettlementSequence;
     private bool _lifecycleClosed;
     private bool _mutationInProgress;
     private ICookingRecipeLifecycleGate? _lifecycleGate;
@@ -379,12 +405,10 @@ public sealed class CookingRecipeSimulation
 
     public CookingRecipeSimulation(
         CookingRecipeFixture fixture,
-        ICookingOrderPort orderPort,
         ICookingProductIdAllocator? productIdAllocator = null,
         ICookingBowlWashingPort? bowlWashingPort = null)
     {
         _fixture = fixture ?? throw new ArgumentNullException(nameof(fixture));
-        _orderPort = orderPort ?? throw new ArgumentNullException(nameof(orderPort));
         _productIdAllocator = productIdAllocator ?? SequentialCookingProductIdAllocator.Instance;
         _bowlWashingPort = bowlWashingPort;
         foreach (var player in fixture.Players.Keys)
@@ -433,6 +457,31 @@ public sealed class CookingRecipeSimulation
     public int CleanContainerCount(DefinitionId definition) =>
         _cleanContainerCount.TryGetValue(definition, out var count) ? count : 0;
 
+    /// <summary>
+    /// 前厅注入开单（与 <see cref="CompleteWash"/> 同一模式）：模板必须存在于 fixture，
+    /// 订单身份未被使用过；开单不是玩家命令，不进命令路径、不产生命令事件。
+    /// </summary>
+    public CookingOrderResult OpenOrder(OrderId order, OrderTemplateId template)
+    {
+        if (!_fixture.OrderTemplates.TryGetValue(template, out var declared))
+            return new CookingOrderResult(false, CookingOrderResult.OrderTemplateNotFound);
+        if (_orders.ContainsKey(order))
+            return new CookingOrderResult(false, CookingOrderResult.OrderIdentityConflict);
+
+        _orders.Add(order, new OrderState(order, template, declared.RequiredRecipe,
+            declared.RequiredContainerDefinition, CookingOrderStatus.Open, null));
+        _stateVersion++;
+        return new CookingOrderResult(true, CookingOrderResult.AcceptedReason);
+    }
+
+    public IReadOnlyList<CookingOrderSettlement> SettlementHistory => _settlements;
+
+    public IReadOnlyList<CookingOrderSnapshotOrder> Orders => _orders.Values
+        .OrderBy(order => order.Id.Value, StringComparer.Ordinal)
+        .Select(order => new CookingOrderSnapshotOrder(order.Id, order.Template, order.RequiredRecipe,
+            order.RequiredContainerDefinition, order.Status.ToString(), order.CompletedAtLogicalTick))
+        .ToArray();
+
     public long LogicalTick { get; private set; }
 
     public IReadOnlyList<CookingRecipeEvent> EventHistory => _events;
@@ -464,7 +513,9 @@ public sealed class CookingRecipeSimulation
             .Select(pair => new CookingRecipeSnapshotContainer(pair.Key, ContainerCapacity(pair.Key),
                 pair.Value.OrderBy(item => item.Value, StringComparer.Ordinal).ToArray()))
             .ToArray(),
-        _acceptedOrders.OrderBy(order => order.Value, StringComparer.Ordinal).ToArray());
+        CompletedOrderIds(),
+        Orders,
+        _settlements.ToArray());
 
     public void AddIngredient(ItemId id, DefinitionId definition, PlayerId player, int version = 1)
     {
@@ -1445,6 +1496,13 @@ public sealed class CookingRecipeSimulation
 
     private bool IsLockedInput(ItemId item) => _inputsByProcessItem.ContainsKey(item);
 
+    /// <summary>Completed 订单 ID 列表：保持 <see cref="CookingRecipeSnapshot.AcceptedOrders"/> 语义不变。</summary>
+    private IReadOnlyList<OrderId> CompletedOrderIds() => _orders.Values
+        .Where(order => order.Status == CookingOrderStatus.Completed)
+        .Select(order => order.Id)
+        .OrderBy(order => order.Value, StringComparer.Ordinal)
+        .ToArray();
+
     /// <summary>
     /// ConsumeInputs 实际消耗的输入：单物品加工消耗锚点自身；容器锚定加工只消耗内容物，容器保留。
     /// </summary>
@@ -1483,6 +1541,11 @@ public sealed class CookingRecipeSimulation
         return Commit(command, null, null, itemId, "item-dropped");
     }
 
+    /// <summary>
+    /// 提交订单：领域按订单簿校验（订单存在且 Open、产物 recipe 与容器定义匹配订单要求），
+    /// 成功时原子地消耗产物、订单转 Completed、追加结算记录，并按可洗碗定义把容器交给 NPC。
+    /// 同 command identity 重放由 SubmitCore 缓存层返回 IsDuplicate；跨 identity 不得二次变更。
+    /// </summary>
     private CookingRecipeCommandResult SubmitOrder(CookingRecipeCommand command)
     {
         if (!TryValidateCommandScopeAndPlayer(command, out var player, out var rejection))
@@ -1490,9 +1553,11 @@ public sealed class CookingRecipeSimulation
         if (command.Item is not { } productId || !_items.TryGetValue(productId, out var product) || product.Removed || !product.IsProduct)
             return Reject(_consumedProducts.Contains(command.Item ?? default) ? CookingRecipeRejectionReason.ProductAlreadyConsumed : CookingRecipeRejectionReason.ProductNotFound);
         if (command.Order is not { } orderId)
-            return Reject(CookingRecipeRejectionReason.OrderRejected);
-        if (_acceptedOrders.Contains(orderId))
-            return Reject(CookingRecipeRejectionReason.OrderRejected);
+            return Reject(CookingRecipeRejectionReason.OrderNotFound);
+        if (!_orders.TryGetValue(orderId, out var order))
+            return Reject(CookingRecipeRejectionReason.OrderNotFound);
+        if (order.Status != CookingOrderStatus.Open)
+            return Reject(CookingRecipeRejectionReason.OrderAlreadyCompleted);
         if (product.Version != command.ExpectedItemVersion)
             return Reject(CookingRecipeRejectionReason.ItemStale);
         if (product.Location.Kind != LocationKind.ContainerSlot)
@@ -1502,20 +1567,27 @@ public sealed class CookingRecipeSimulation
             return Reject(CookingRecipeRejectionReason.TargetOutOfRange);
         if (product.Recipe is not { } recipe)
             return Reject(CookingRecipeRejectionReason.ProductNotFound);
+        if (recipe != order.RequiredRecipe)
+            return Reject(CookingRecipeRejectionReason.OrderRequirementMismatch);
 
         var container = new ItemId(product.Location.OwnerId!);
-        var acceptance = _orderPort.Submit(new CookingOrderSubmission(orderId, recipe, productId, command.Player, container));
-        if (!acceptance.Accepted)
-            return Reject(CookingRecipeRejectionReason.OrderRejected);
+        var containerState = _items[container];
+        if (containerState.Definition != order.RequiredContainerDefinition)
+            return Reject(CookingRecipeRejectionReason.OrderRequirementMismatch);
 
         if (_containerItems.TryGetValue(container, out var contents))
             contents.Remove(productId);
         _items[productId] = product with { Removed = true, Version = product.Version + 1 };
         _consumedProducts.Add(productId);
-        _acceptedOrders.Add(orderId);
+        _orders[orderId] = order with
+        {
+            Status = CookingOrderStatus.Completed,
+            CompletedAtLogicalTick = LogicalTick,
+        };
+        _settlements.Add(new CookingOrderSettlement(
+            ++_nextSettlementSequence, orderId, order.Template, recipe, productId, command.Player, container, LogicalTick));
 
         // 提交成功后容器变脏并交给 NPC 清洗：脏碗离开厨房，在册干净数下降。
-        var containerState = _items[container];
         if (_fixture.WashableContainerDefinitions.Contains(containerState.Definition))
         {
             _items[container] = containerState with { IsDirty = true, Removed = true, Version = containerState.Version + 1 };
@@ -1676,6 +1748,14 @@ public sealed class CookingRecipeSimulation
         ItemId? Container,
         IReadOnlyList<ItemId> LockedInputs);
 
+    private sealed record OrderState(
+        OrderId Id,
+        OrderTemplateId Template,
+        RecipeId RequiredRecipe,
+        DefinitionId RequiredContainerDefinition,
+        CookingOrderStatus Status,
+        long? CompletedAtLogicalTick);
+
     private sealed record FixedTickPlan(
         long BeforeLogicalTick,
         long AfterLogicalTick,
@@ -1707,7 +1787,9 @@ public sealed record CookingRecipeSnapshot(
     IReadOnlyList<CookingRecipeSnapshotItem> Items,
     IReadOnlyList<CookingRecipeSnapshotProcess> Processes,
     IReadOnlyList<CookingRecipeSnapshotContainer> Containers,
-    IReadOnlyList<OrderId> AcceptedOrders)
+    IReadOnlyList<OrderId> AcceptedOrders,
+    IReadOnlyList<CookingOrderSnapshotOrder> Orders,
+    IReadOnlyList<CookingOrderSettlement> Settlements)
 {
     private static readonly JsonSerializerOptions CanonicalJsonOptions = new()
     {
@@ -1731,20 +1813,40 @@ public sealed record CookingRecipeSnapshot(
         Containers.OrderBy(container => container.Id.Value, StringComparer.Ordinal)
             .Select(container => new CanonicalContainer(container.Id.Value, container.Capacity,
                 container.ItemIds.OrderBy(item => item.Value, StringComparer.Ordinal).Select(item => item.Value).ToArray())).ToArray(),
-        AcceptedOrders.OrderBy(order => order.Value, StringComparer.Ordinal).Select(order => order.Value).ToArray()),
+        AcceptedOrders.OrderBy(order => order.Value, StringComparer.Ordinal).Select(order => order.Value).ToArray(),
+        Orders.OrderBy(order => order.Id.Value, StringComparer.Ordinal)
+            .Select(order => new CanonicalOrder(order.Id.Value, order.Template.Value, order.RequiredRecipe.Value,
+                order.RequiredContainerDefinition.Value, order.Status, order.CompletedAtLogicalTick)).ToArray(),
+        Settlements.OrderBy(settlement => settlement.Sequence)
+            .Select(settlement => new CanonicalSettlement(settlement.Sequence, settlement.Order.Value,
+                settlement.Template.Value, settlement.Recipe.Value, settlement.Product.Value, settlement.Player.Value,
+                settlement.Container.Value, settlement.LogicalTick)).ToArray()),
         CanonicalJsonOptions);
 
     public string Sha256() => Convert.ToHexString(SHA256.HashData(Encoding.UTF8.GetBytes(CanonicalText())));
 
     private sealed record CanonicalSnapshot(string SessionId, string WorldId, string MatchId, long Version, long LogicalTick,
-        IReadOnlyList<CanonicalItem> Items, IReadOnlyList<CanonicalProcess> Processes,
-        IReadOnlyList<CanonicalContainer> Containers, IReadOnlyList<string> AcceptedOrders);
+        IReadOnlyList<CanonicalItem> Items, IReadOnlyList<CanonicalProcess> Processes, IReadOnlyList<CanonicalContainer> Containers,
+        IReadOnlyList<string> AcceptedOrders, IReadOnlyList<CanonicalOrder> Orders, IReadOnlyList<CanonicalSettlement> Settlements);
     private sealed record CanonicalItem(string ItemId, string DefinitionId, int Version, string LocationKind, string? OwnerId,
         string? SlotId, string? RecipeId, bool IsProduct, string? OriginStation, bool ContainerCompleted, bool IsDirty);
     private sealed record CanonicalProcess(string ProcessId, string RecipeId, string PlayerId, string AnchorItemId,
         string? StationId, int ElapsedTicks, int RequiredTicks);
     private sealed record CanonicalContainer(string ContainerId, int Capacity, IReadOnlyList<string> ItemIds);
+    private sealed record CanonicalOrder(string OrderId, string TemplateId, string RequiredRecipeId,
+        string RequiredContainerDefinitionId, string Status, long? CompletedAtLogicalTick);
+    private sealed record CanonicalSettlement(long Sequence, string OrderId, string TemplateId, string RecipeId,
+        string ProductId, string PlayerId, string ContainerId, long LogicalTick);
 }
+
+/// <summary>订单簿中的一条订单：模板、要求与状态对快照与哈希可观察。</summary>
+public sealed record CookingOrderSnapshotOrder(
+    OrderId Id,
+    OrderTemplateId Template,
+    RecipeId RequiredRecipe,
+    DefinitionId RequiredContainerDefinition,
+    string Status,
+    long? CompletedAtLogicalTick);
 
 public sealed record CookingRecipeSnapshotItem(ItemId Id, DefinitionId Definition, int Version, ItemLocation Location,
     RecipeId? Recipe, bool IsProduct, StationSlotId? OriginStation, bool ContainerCompleted = false, bool IsDirty = false);

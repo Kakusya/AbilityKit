@@ -18,7 +18,7 @@ public sealed class CookingVerticalSliceTests
         var recipe = new RecipeId("soup");
         var plate = new ItemId("plate");
         var plateDefinition = new DefinitionId("plate");
-        var orders = new AcceptingOrders();
+        var orderTemplate = new OrderTemplateId("order-template");
         var simulation = new CookingRecipeSimulation(new CookingRecipeFixture(
             scope,
             new Dictionary<PlayerId, CookingPlayerConfig>
@@ -40,7 +40,11 @@ public sealed class CookingVerticalSliceTests
             new Dictionary<RecipeId, CookingRecipeDefinition>
             {
                 [recipe] = new(recipe, new[] { raw }, cooked, new ProcessId("boil"), "heat", 3),
-            }), orders);
+            },
+            orderTemplates: new Dictionary<OrderTemplateId, CookingOrderTemplateDefinition>
+            {
+                [orderTemplate] = new(orderTemplate, recipe, plateDefinition),
+            }));
         simulation.AddItem(plate, plateDefinition, ItemLocation.Station(counter));
         simulation.AddWorldIngredient(ingredient, raw, "spawn");
         using var host = new AbilityKit.Game.Cooking.EtRuntime.CookingRecipeTickHost(simulation);
@@ -75,26 +79,16 @@ public sealed class CookingVerticalSliceTests
             Item: product.Id, ExpectedItemVersion: 1));
         Execute(new(scope, 5, player, new RecipeCommandId("put-in"), CookingRecipeOperation.PutIn,
             Item: product.Id, Container: plate, ExpectedItemVersion: 2));
+        Assert.True(simulation.OpenOrder(new OrderId("order-1"), orderTemplate).Accepted);
         var submit = new CookingRecipeCommand(scope, 6, player, new RecipeCommandId("order"),
             CookingRecipeOperation.SubmitOrder, Item: product.Id, Order: new OrderId("order-1"), ExpectedItemVersion: 3);
         Execute(submit);
         Assert.True(Execute(submit).IsDuplicate);
-        Assert.Equal(1, orders.Submissions);
+        Assert.Single(simulation.SettlementHistory);
         Assert.Equal(new[] { plate }, simulation.Snapshot().Items.Select(item => item.Id).ToArray());
         Assert.Single(simulation.Snapshot().AcceptedOrders);
         host.Dispose();
         Assert.Throws<ObjectDisposedException>(() => host.Enqueue(submit));
         Assert.Throws<ObjectDisposedException>(() => host.Tick());
-    }
-
-    private sealed class AcceptingOrders : ICookingOrderPort
-    {
-        public int Submissions { get; private set; }
-
-        public CookingOrderAcceptance Submit(CookingOrderSubmission submission)
-        {
-            Submissions++;
-            return new(true);
-        }
     }
 }

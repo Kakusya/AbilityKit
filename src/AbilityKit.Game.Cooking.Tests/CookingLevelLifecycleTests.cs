@@ -507,7 +507,7 @@ public sealed class CookingLevelLifecycleTests
                 new HashSet<string>(StringComparer.Ordinal) { Station.Value }),
         };
         return new CookingRecipeSimulation(new CookingRecipeFixture(scope, players, configuration.Items,
-            configuration.Appliances, configuration.Recipes), new AcceptingOrderPort());
+            configuration.Appliances, configuration.Recipes));
     }
 
     private static CookingRecipeCommand RecipeCommand(CookingScope scope) =>
@@ -556,8 +556,4 @@ public sealed class CookingLevelLifecycleTests
     }
 #pragma warning restore CS0618
 
-    private sealed class AcceptingOrderPort : ICookingOrderPort
-    {
-        public CookingOrderAcceptance Submit(CookingOrderSubmission submission) => new(true, "accepted");
-    }
 }

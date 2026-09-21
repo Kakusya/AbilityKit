@@ -356,7 +356,7 @@ public sealed class CookingKitchenActionsTests
             [Recipe] = new(Recipe, new[] { Raw }, Product, new ProcessId("cook-process"), "heat", 3),
         };
         var simulation = new CookingRecipeSimulation(
-            new CookingRecipeFixture(scope, players, items, appliances, recipes), new RecordingOrderPort(true));
+            new CookingRecipeFixture(scope, players, items, appliances, recipes));
         simulation.AddItem(Bowl, BowlDefinition, ItemLocation.Station(Counter));
         simulation.AddItem(Pot, PotDefinition, ItemLocation.Station(Counter));
         simulation.AddWorldIngredient(Ingredient, Raw, "spawn");
@@ -410,11 +410,6 @@ public sealed class CookingKitchenActionsTests
         });
     }
 
-    private sealed class RecordingOrderPort(bool accepted) : ICookingOrderPort
-    {
-        public CookingOrderAcceptance Submit(CookingOrderSubmission submission) =>
-            new(accepted, accepted ? "fixture-accepted" : "fixture-rejected");
-    }
 
     private sealed class EvidenceScope : IDisposable
     {

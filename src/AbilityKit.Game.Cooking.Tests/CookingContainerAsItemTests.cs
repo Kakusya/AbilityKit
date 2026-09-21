@@ -13,6 +13,7 @@ public sealed class CookingContainerAsItemTests
     private static readonly StationSlotId Station = new("stove-a");
     private static readonly StationSlotId Counter = new("counter-a");
     private static readonly OrderId Order = new("fixture-order");
+    private static readonly OrderTemplateId OrderTemplate = new("fixture-order-template");
     private static readonly DefinitionId Raw = new("fixture-raw");
     private static readonly DefinitionId Product = new("fixture-product");
     private static readonly DefinitionId BowlDefinition = new("bowl");
@@ -138,6 +139,7 @@ public sealed class CookingContainerAsItemTests
             container: SmallBowl, expectedVersion: 2)));
         var plated = simulation.Snapshot().Items.Single(item => item.Id == first);
 
+        Assert.True(simulation.OpenOrder(Order, OrderTemplate).Accepted);
         AssertAccepted(simulation.Submit(Command(CookingRecipeOperation.SubmitOrder, "submit-first", item: first,
             order: Order, expectedVersion: plated.Version)));
 
@@ -191,8 +193,12 @@ public sealed class CookingContainerAsItemTests
         {
             [Recipe] = new(Recipe, new[] { Raw }, Product, new ProcessId("fixture-process"), "heat", 3),
         };
+        var orderTemplates = new Dictionary<OrderTemplateId, CookingOrderTemplateDefinition>
+        {
+            [OrderTemplate] = new(OrderTemplate, Recipe, BowlDefinition),
+        };
         var simulation = new CookingRecipeSimulation(
-            new CookingRecipeFixture(scope, players, items, appliances, recipes), new RecordingOrderPort(true));
+            new CookingRecipeFixture(scope, players, items, appliances, recipes, orderTemplates: orderTemplates));
         simulation.AddItem(SmallBowl, BowlDefinition, ItemLocation.Station(Counter));
         simulation.AddItem(LargeBowl, PotDefinition, ItemLocation.Station(Counter));
         return simulation;
@@ -244,11 +250,6 @@ public sealed class CookingContainerAsItemTests
         });
     }
 
-    private sealed class RecordingOrderPort(bool accepted) : ICookingOrderPort
-    {
-        public CookingOrderAcceptance Submit(CookingOrderSubmission submission) =>
-            new(accepted, accepted ? "fixture-accepted" : "fixture-rejected");
-    }
 
     private sealed class EvidenceScope : IDisposable
     {

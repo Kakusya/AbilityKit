@@ -550,9 +550,9 @@ public sealed class CookingLevelEtHostTests
 
     [Fact]
     [Trait("Gate", "CookingLevelRuntime")]
-    public void Throwing_order_port_terminalizes_failing_and_remaining_admitted_envelopes_once()
+    public void Throwing_wash_port_terminalizes_failing_and_remaining_admitted_envelopes_once()
     {
-        var fixture = CreateFixture(orderPort: new ThrowingOrderPort());
+        var fixture = CreateFixture(washPort: new ThrowingWashPort());
         using var host = fixture.CreateStartedHost(simulation => PreparePlatedProduct(fixture, simulation));
         var product = Assert.Single(fixture.Simulation.Snapshot().Items, item => item.IsProduct);
         Assert.True(host.TryEnqueue(fixture.Envelope(1, "order", CookingRecipeOperation.SubmitOrder,
@@ -725,10 +725,10 @@ public sealed class CookingLevelEtHostTests
 
     [Fact]
     [Trait("Gate", "CookingLevelRuntime")]
-    public void Order_port_reentry_is_rejected_and_faults_command_lane()
+    public void Wash_port_reentry_is_rejected_and_faults_command_lane()
     {
-        var port = new ReenteringOrderPort();
-        var fixture = CreateFixture(orderPort: port);
+        var port = new ReenteringWashPort();
+        var fixture = CreateFixture(washPort: port);
         using var host = fixture.CreateStartedHost(simulation => PreparePlatedProduct(fixture, simulation));
         port.Callback = () => host.Tick();
         var product = Assert.Single(fixture.Simulation.Snapshot().Items, item => item.IsProduct);
@@ -743,6 +743,7 @@ public sealed class CookingLevelEtHostTests
 
     private static void PreparePlatedProduct(Fixture fixture, CookingRecipeSimulation simulation)
     {
+        Assert.True(simulation.OpenOrder(new OrderId("order-1"), new OrderTemplateId("order-template")).Accepted);
         simulation.AddIngredient(fixture.Ingredient, fixture.Raw, fixture.Player);
         Assert.Equal(CookingRecipeOutcome.Accepted, simulation.Submit(fixture.Command(100, "setup-start",
             CookingRecipeOperation.StartProcess, recipe: fixture.Recipe, item: fixture.Ingredient,
@@ -769,7 +770,7 @@ public sealed class CookingLevelEtHostTests
 
     private static Fixture CreateFixture(
         ICookingProductIdAllocator? productIdAllocator = null,
-        ICookingOrderPort? orderPort = null,
+        ICookingBowlWashingPort? washPort = null,
         int requiredTicks = 3,
         ICookingLevelEtHostFailureInjector? failureInjector = null)
     {
@@ -783,6 +784,7 @@ public sealed class CookingLevelEtHostTests
         var counter = new StationSlotId("counter");
         var recipe = new RecipeId("soup");
         var configuration = BuildConfiguration(station, raw, cooked, recipe);
+        var orderTemplate = new OrderTemplateId("order-template");
         var simulationFixture = new CookingRecipeFixture(
             matchScope,
             new Dictionary<PlayerId, CookingPlayerConfig>
@@ -804,8 +806,18 @@ public sealed class CookingLevelEtHostTests
             new Dictionary<RecipeId, CookingRecipeDefinition>
             {
                 [recipe] = new(recipe, new[] { raw }, cooked, new ProcessId("boil"), "heat", requiredTicks),
+            },
+            washableContainerDefinitions: washPort is null
+                ? null
+                : new HashSet<DefinitionId> { PlateDefinition },
+            cleanContainerSupply: washPort is null
+                ? null
+                : new Dictionary<DefinitionId, int> { [PlateDefinition] = 1 },
+            orderTemplates: new Dictionary<OrderTemplateId, CookingOrderTemplateDefinition>
+            {
+                [orderTemplate] = new(orderTemplate, recipe, PlateDefinition),
             });
-        var factory = new Factory(simulationFixture, productIdAllocator, orderPort);
+        var factory = new Factory(simulationFixture, productIdAllocator, washPort);
         var lifecycle = new CookingLevelLifecycle(levelScope, configuration, factory);
         var preparation = new CookingLevelPreparation(levelScope.Level, new MapId("map"),
             new CookingLogicalLayout(new LayoutId("layout"), new[] { station }, new[] { PlateDefinition }),
@@ -920,7 +932,7 @@ public sealed class CookingLevelEtHostTests
     private sealed class Factory(
         CookingRecipeFixture fixture,
         ICookingProductIdAllocator? productIdAllocator = null,
-        ICookingOrderPort? orderPort = null) : ICookingLevelGameplayFactory
+        ICookingBowlWashingPort? washPort = null) : ICookingLevelGameplayFactory
     {
         private CookingRecipeSimulation? _precreated;
         public CookingRecipeSimulation? Simulation { get; private set; }
@@ -945,7 +957,7 @@ public sealed class CookingLevelEtHostTests
 
         private CookingRecipeSimulation NewSimulation()
         {
-            var simulation = new CookingRecipeSimulation(fixture, orderPort ?? new AcceptingOrders(), productIdAllocator);
+            var simulation = new CookingRecipeSimulation(fixture, productIdAllocator, washPort);
             simulation.AddItem(Plate, PlateDefinition, ItemLocation.Station(new StationSlotId("counter")));
             return simulation;
         }
@@ -1007,23 +1019,22 @@ public sealed class CookingLevelEtHostTests
         }
     }
 
-    private sealed class ThrowingOrderPort : ICookingOrderPort
+    private sealed class ThrowingWashPort : ICookingBowlWashingPort
     {
-        public CookingOrderAcceptance Submit(CookingOrderSubmission submission) =>
-            throw new InvalidOperationException("order-port-failure");
+        public void RequestWash(ItemId bowl, DefinitionId definition) =>
+            throw new InvalidOperationException("wash-port-failure");
     }
 
-    private sealed class ReenteringOrderPort : ICookingOrderPort
+    private sealed class ReenteringWashPort : ICookingBowlWashingPort
     {
         public Action Callback { get; set; } = null!;
         public Exception? ReentryFailure { get; private set; }
 
-        public CookingOrderAcceptance Submit(CookingOrderSubmission submission)
+        public void RequestWash(ItemId bowl, DefinitionId definition)
         {
             ReentryFailure = Record.Exception(Callback);
             if (ReentryFailure is not null)
                 throw ReentryFailure;
-            return new CookingOrderAcceptance(true);
         }
     }
 
@@ -1038,10 +1049,5 @@ public sealed class CookingLevelEtHostTests
             if (candidate == point && ++_calls == triggerOnCall)
                 throw new InvalidOperationException($"injected-{point}");
         }
-    }
-
-    private sealed class AcceptingOrders : ICookingOrderPort
-    {
-        public CookingOrderAcceptance Submit(CookingOrderSubmission submission) => new(true);
     }
 }

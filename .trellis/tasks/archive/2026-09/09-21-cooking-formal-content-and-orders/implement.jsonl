@@ -1,0 +1,6 @@
+{"file": ".trellis/spec/cooking/cooking-recipe-loop.md", "reason": "P2 行为契约：装盘/提交/幂等/原子失败不变量与 2026-09-21 两次修约记录，本任务提交契约以其为上游。"}
+{"file": ".trellis/spec/cooking/cooking-config-validation.md", "reason": "P3 配置契约：schema v2 边界、候选/校验/canonical/身份形状，本任务扩展订单模板与供应校验面。"}
+{"file": ".trellis/spec/cooking/index.md", "reason": "spec index：修约程序与 P2/P3 行状态表述，归档前需同步。"}
+{"file": ".trellis/tasks/09-19-cooking-gameplay-business-discussion/research/discussion-notes.md", "reason": "owner 决定来源：代表菜、七项动作、两种完成形态、订单与碗池、NPC 与前厅方向、跨小关收敛（§10-§12）。"}
+{"file": "Docs/design/CookingGame/successor-backlog.md", "reason": "P2 successor 条目原文与'未批准'语义；本任务显式审议其与 owner 推迟项的范围冲突。"}
+{"file": "Docs/design/CookingGame/technical-roadmap.md", "reason": "配置表模型（定义与实例分离、DefinitionId/InstanceId）与内容目录形状的上游路线。"}

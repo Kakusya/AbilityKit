@@ -4,7 +4,8 @@ using Xunit;
 namespace AbilityKit.Game.Cooking.Tests;
 
 /// <summary>
-/// 任务 <c>09-21-cooking-kitchen-loop-simulation</c> 的番茄蛋花汤闭环 fixture：
+/// 任务 <c>09-21-cooking-formal-content-and-orders</c> 起从正式内容目录运行的番茄蛋花汤闭环 fixture
+/// （原 <c>09-21-cooking-kitchen-loop-simulation</c> 的手写 fixture 已由 <c>Content/cooking-content-v2.json</c> 取代）：
 /// 从标准初始供应出发，走完取料、预处理、多输入煮制、端走继续、倒出、提交、洗碗回池全链路，
 /// 并以确定快照哈希与可重复运行验收。工位绑定按加工区分：切→砧板、煮→灶台、烤→烤箱、打蛋→免工位。
 /// </summary>
@@ -25,8 +26,8 @@ public sealed class CookingKitchenLoopFixtureTests
     private static readonly DefinitionId BeatenEgg = new("beaten-egg");
     private static readonly DefinitionId Water = new("water");
     private static readonly DefinitionId Soup = new("tomato-egg-soup");
-    private static readonly DefinitionId Dough = new("dough");
     private static readonly DefinitionId BreadSlice = new("bread-slice");
+    private static readonly DefinitionId ToastedBread = new("toasted-bread");
     private static readonly DefinitionId BowlDefinition = new("bowl");
     private static readonly DefinitionId PotDefinition = new("pot");
     private static readonly RecipeId ChopRecipe = new("chop-tomato");
@@ -34,6 +35,7 @@ public sealed class CookingKitchenLoopFixtureTests
     private static readonly RecipeId SoupRecipe = new("tomato-egg-soup");
     private static readonly RecipeId BakeRecipe = new("bake-bread");
     private static readonly OrderId SoupOrder = new("order-soup-1");
+    private static readonly OrderTemplateId SoupOrderTemplate = new("tomato-egg-soup-order");
     private static readonly ItemId Pot = new("pot-1");
     private static readonly ItemId Bowl = new("pool-bowl-1");
 
@@ -108,11 +110,13 @@ public sealed class CookingKitchenLoopFixtureTests
         Assert.Equal(ItemLocation.Container(Bowl, "slot-0"), soup.Location);
         Assert.Empty(simulation.ItemsInContainer(Pot));
 
-        // 提交碗（含汤）到订单：订单完成一次，碗脏并交给 NPC。
+        // 前厅开单（NPC 询问生成的订单进入订单簿），提交碗（含汤）：订单完成一次，碗脏并交给 NPC。
+        Assert.True(simulation.OpenOrder(SoupOrder, SoupOrderTemplate).Accepted);
         AssertAccepted(Submit(simulation, evidence, "L01", Command(CookingRecipeOperation.SubmitOrder, "submit-soup",
             item: soup.Id, order: SoupOrder, expectedVersion: soup.Version), "submit the bowl of soup to the order"));
-        Assert.Equal(1, fixture.OrderPort.CompletedOrders.Count);
-        Assert.Equal(SoupOrder, fixture.OrderPort.CompletedOrders[0]);
+        Assert.Equal(CookingOrderStatus.Completed.ToString(),
+            simulation.Snapshot().Orders.Single(order => order.Id == SoupOrder).Status);
+        Assert.Single(simulation.SettlementHistory);
         Assert.Single(fixture.WashPort.Requests);
         Assert.DoesNotContain(simulation.Snapshot().Items, item => item.Id == Bowl);
         Assert.Equal(1, simulation.CleanContainerCount(BowlDefinition));
@@ -148,38 +152,40 @@ public sealed class CookingKitchenLoopFixtureTests
         var simulation = fixture.Simulation;
         StageBowlOnCounter(simulation);
 
-        simulation.AddWorldIngredient(new ItemId("dough-1"), Dough, "pantry");
-        var dough = simulation.Snapshot().Items.Single(item => item.Id == new ItemId("dough-1"));
-        AssertAccepted(Submit(simulation, evidence, "L03", Command(CookingRecipeOperation.Pickup, "pickup-dough",
-            item: dough.Id, expectedVersion: dough.Version), "pick up the dough"));
-        var heldDough = simulation.Snapshot().Items.Single(item => item.Id == dough.Id);
-        AssertAccepted(Submit(simulation, evidence, "L03", Command(CookingRecipeOperation.Drop, "drop-dough",
-            item: dough.Id, station: Oven, expectedVersion: heldDough.Version), "drop the dough onto the oven"));
-        var platedDough = simulation.Snapshot().Items.Single(item => item.Id == dough.Id);
+        // 正式内容的烤面包配方：面包片（标准初始供应）放入烤箱，消耗输入并在烤箱生成烤面包。
+        var slice = simulation.Snapshot().Items.Single(item => item.Id == new ItemId("bread-slice-1"));
+        AssertAccepted(Submit(simulation, evidence, "L03", Command(CookingRecipeOperation.Pickup, "pickup-slice",
+            item: slice.Id, expectedVersion: slice.Version), "pick up the bread slice from the standard supply"));
+        var heldSlice = simulation.Snapshot().Items.Single(item => item.Id == slice.Id);
+        AssertAccepted(Submit(simulation, evidence, "L03", Command(CookingRecipeOperation.Drop, "drop-slice",
+            item: slice.Id, station: Oven, expectedVersion: heldSlice.Version), "drop the bread slice onto the oven"));
+        var platedSlice = simulation.Snapshot().Items.Single(item => item.Id == slice.Id);
         AssertAccepted(Submit(simulation, evidence, "L03", Command(CookingRecipeOperation.StartProcess, "bake-start",
-            item: dough.Id, station: Oven, expectedVersion: platedDough.Version), "the oven bakes with a single input"));
+            item: slice.Id, station: Oven, expectedVersion: platedSlice.Version), "the oven bakes with a single input"));
         AssertAccepted(Submit(simulation, evidence, "L03", Command(CookingRecipeOperation.AdvanceTicks, "bake-complete",
             process: simulation.Snapshot().Processes.Single().Id, ticks: 2), "baking completes on the oven"));
         var bread = Assert.Single(simulation.Snapshot().Items, item => item.IsProduct);
-        Assert.Equal(BreadSlice, bread.Definition);
+        Assert.Equal(ToastedBread, bread.Definition);
         Assert.Equal(ItemLocation.Station(Oven), bread.Location);
 
         var heldBread = simulation.Snapshot().Items.Single(item => item.Id == bread.Id);
         AssertAccepted(Submit(simulation, evidence, "L03", Command(CookingRecipeOperation.Pickup, "pickup-bread",
-            item: bread.Id, expectedVersion: heldBread.Version), "pick up the baked bread"));
+            item: bread.Id, expectedVersion: heldBread.Version), "pick up the toasted bread"));
         var inHand = simulation.Snapshot().Items.Single(item => item.Id == bread.Id);
         AssertAccepted(Submit(simulation, evidence, "L03", Command(CookingRecipeOperation.PutIn, "bread-into-bowl",
-            item: bread.Id, container: Bowl, expectedVersion: inHand.Version), "put the bread into the bowl"));
+            item: bread.Id, container: Bowl, expectedVersion: inHand.Version), "put the toasted bread into the bowl"));
         var plated = simulation.Snapshot().Items.Single(item => item.Id == bread.Id);
-        var before = simulation.Snapshot().CanonicalText();
 
+        // 订单簿要求番茄蛋花汤：开单后提交烤面包被领域拒绝，已装盘菜品不回滚。
+        Assert.True(simulation.OpenOrder(SoupOrder, SoupOrderTemplate).Accepted);
+        var before = simulation.Snapshot().CanonicalText();
         var rejected = Submit(simulation, evidence, "L03", Command(CookingRecipeOperation.SubmitOrder, "submit-bread",
             item: bread.Id, order: SoupOrder, expectedVersion: plated.Version),
-            "the order requires the soup recipe, so the bread submission is rejected");
+            "the order requires the soup recipe, so the toasted-bread submission is rejected");
 
-        AssertRejected(rejected, CookingRecipeRejectionReason.OrderRejected);
+        AssertRejected(rejected, CookingRecipeRejectionReason.OrderRequirementMismatch);
         Assert.Equal(before, simulation.Snapshot().CanonicalText());
-        Assert.Empty(fixture.OrderPort.CompletedOrders);
+        Assert.Empty(simulation.SettlementHistory);
         Assert.Equal(new[] { bread.Id }, simulation.ItemsInContainer(Bowl));
         AssertEvidence(evidence.Path, "L03", 7);
     }
@@ -269,6 +275,7 @@ public sealed class CookingKitchenLoopFixtureTests
         simulation.Submit(Command(CookingRecipeOperation.Pour, "pour-soup", item: Pot, container: Bowl,
             expectedVersion: carriedPot.Version));
         var soup = simulation.Snapshot().Items.Single(item => item.Definition == Soup);
+        simulation.OpenOrder(SoupOrder, SoupOrderTemplate);
         simulation.Submit(Command(CookingRecipeOperation.SubmitOrder, "submit-soup", item: soup.Id, order: SoupOrder,
             expectedVersion: soup.Version));
         simulation.CompleteWash(Bowl);
@@ -331,13 +338,11 @@ public sealed class CookingKitchenLoopFixtureTests
     private sealed class Fixture
     {
         public CookingRecipeSimulation Simulation { get; }
-        public RequirementOrderPort OrderPort { get; }
         public RecordingWashPort WashPort { get; }
 
-        public Fixture(CookingRecipeSimulation simulation, RequirementOrderPort orderPort, RecordingWashPort washPort)
+        public Fixture(CookingRecipeSimulation simulation, RecordingWashPort washPort)
         {
             Simulation = simulation;
-            OrderPort = orderPort;
             WashPort = washPort;
         }
     }
@@ -350,49 +355,13 @@ public sealed class CookingKitchenLoopFixtureTests
             [Player] = new(Player, new HashSet<string>(StringComparer.Ordinal) { "cook" },
                 new HashSet<string>(StringComparer.Ordinal) { Board.Value, Stove.Value, Oven.Value, Counter.Value }),
         };
-        var items = new Dictionary<DefinitionId, CookingItemDefinition>
-        {
-            [Tomato] = new(Tomato, new HashSet<string>(StringComparer.Ordinal) { "cook" }),
-            [ChoppedTomato] = new(ChoppedTomato, new HashSet<string>(StringComparer.Ordinal) { "cook" }),
-            [Egg] = new(Egg, new HashSet<string>(StringComparer.Ordinal) { "cook" }),
-            [BeatenEgg] = new(BeatenEgg, new HashSet<string>(StringComparer.Ordinal) { "cook" }),
-            [Water] = new(Water, new HashSet<string>(StringComparer.Ordinal) { "cook" }),
-            [Soup] = new(Soup, new HashSet<string>(StringComparer.Ordinal) { "cook" }),
-            [Dough] = new(Dough, new HashSet<string>(StringComparer.Ordinal) { "cook" }),
-            [BreadSlice] = new(BreadSlice, new HashSet<string>(StringComparer.Ordinal) { "cook" }),
-            [BowlDefinition] = new(BowlDefinition, new HashSet<string>(StringComparer.Ordinal) { "cook" },
-                new CookingItemContainerCapability(1, new HashSet<DefinitionId> { Soup, BreadSlice, BeatenEgg, Egg })),
-            [PotDefinition] = new(PotDefinition, new HashSet<string>(StringComparer.Ordinal) { "cook" },
-                new CookingItemContainerCapability(4, new HashSet<DefinitionId> { ChoppedTomato, BeatenEgg })),
-        };
-        var appliances = new Dictionary<StationSlotId, CookingApplianceDefinition>
-        {
-            [Board] = new(Board, new HashSet<string>(StringComparer.Ordinal) { "cut" }),
-            [Stove] = new(Stove, new HashSet<string>(StringComparer.Ordinal) { "heat" }),
-            [Oven] = new(Oven, new HashSet<string>(StringComparer.Ordinal) { "bake" }),
-            [Counter] = new(Counter, new HashSet<string>(StringComparer.Ordinal)),
-        };
-        var recipes = new Dictionary<RecipeId, CookingRecipeDefinition>
-        {
-            [ChopRecipe] = new(ChopRecipe, new[] { Tomato }, ChoppedTomato, new ProcessId("chop-process"), "cut", 2),
-            [BeatRecipe] = new(BeatRecipe, new[] { Egg }, BeatenEgg, new ProcessId("beat-process"), "beat", 2,
-                Completion: CookingRecipeCompletionKind.ConsumeInputs, RequiresStation: false),
-            [SoupRecipe] = new(SoupRecipe, new[] { ChoppedTomato, BeatenEgg }, Soup, new ProcessId("soup-process"),
-                "heat", 6, new[] { Water }, CookingRecipeCompletionKind.RetainInputs),
-            [BakeRecipe] = new(BakeRecipe, new[] { Dough }, BreadSlice, new ProcessId("bake-process"), "bake", 2),
-        };
-        var orderPort = new RequirementOrderPort(SoupRecipe);
+        var content = CookingContentCatalog.Load(File.ReadAllText(
+            Path.Combine(AppContext.BaseDirectory, CookingContentCatalog.ContentFileName)));
         var washPort = new RecordingWashPort();
         var simulation = new CookingRecipeSimulation(
-            new CookingRecipeFixture(scope, players, items, appliances, recipes,
-                new HashSet<DefinitionId> { BowlDefinition },
-                new Dictionary<DefinitionId, int> { [BowlDefinition] = 2 },
-                "clean-pool"),
-            orderPort, null, washPort);
-        simulation.AddItem(Pot, PotDefinition, ItemLocation.Station(Stove));
-        simulation.AddWorldIngredient(new ItemId("tomato-1"), Tomato, "pantry");
-        simulation.AddWorldIngredient(new ItemId("egg-1"), Egg, "pantry");
-        return new Fixture(simulation, orderPort, washPort);
+            CookingContentCatalog.BuildFixture(content, scope, players, "clean-pool"), null, washPort);
+        CookingContentCatalog.ApplyStandardInitialSupply(simulation, content);
+        return new Fixture(simulation, washPort);
     }
 
     private static CookingLevelScope LevelScope() => new(
@@ -442,19 +411,6 @@ public sealed class CookingKitchenLoopFixtureTests
             Assert.False(string.IsNullOrWhiteSpace(record.BeforeStateHash));
             Assert.False(string.IsNullOrWhiteSpace(record.AfterStateHash));
         });
-    }
-
-    private sealed class RequirementOrderPort(RecipeId required) : ICookingOrderPort
-    {
-        public List<OrderId> CompletedOrders { get; } = new();
-
-        public CookingOrderAcceptance Submit(CookingOrderSubmission submission)
-        {
-            if (submission.Recipe != required)
-                return new CookingOrderAcceptance(false, "RequirementMismatch");
-            CompletedOrders.Add(submission.Order);
-            return new CookingOrderAcceptance(true, "fixture-accepted", true);
-        }
     }
 
     private sealed class RecordingWashPort : ICookingBowlWashingPort

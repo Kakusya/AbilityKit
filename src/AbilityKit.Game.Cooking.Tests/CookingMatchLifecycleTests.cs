@@ -326,13 +326,8 @@ public sealed class CookingMatchLifecycleTests
                     new HashSet<string>(StringComparer.Ordinal) { Station.Value }),
             };
             return new CookingRecipeSimulation(new CookingRecipeFixture(scope, players, configuration.Items,
-                configuration.Appliances, configuration.Recipes), new AcceptingOrderPort());
+                configuration.Appliances, configuration.Recipes));
         }
-    }
-
-    private sealed class AcceptingOrderPort : ICookingOrderPort
-    {
-        public CookingOrderAcceptance Submit(CookingOrderSubmission submission) => new(true, "fixture-accepted");
     }
 
     private sealed class EvidenceScope : IDisposable

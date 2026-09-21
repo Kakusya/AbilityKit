@@ -1,0 +1,28 @@
+{"file": ".trellis/tasks/09-21-cooking-formal-content-and-orders/prd.md", "reason": "K01-K10 逐条核对：内容加载与坏内容、订单簿、提交契约、幂等、结算记录、闭环、烤面包修正、wire 形状、门禁、文档均有真实测试与证据。"}
+{"file": ".trellis/tasks/09-21-cooking-formal-content-and-orders/design.md", "reason": "契约决策与实现一致；端口退役旧→新映射、提交校验顺序、推定项（供应语法、模板字段集、reason 命名、两处校验放宽）均在文中显式记录。"}
+{"file": ".trellis/tasks/09-21-cooking-formal-content-and-orders/implement.md", "reason": "阶段 1-4 执行清单已完成：候选扩展与内容目录、订单簿与提交/结算契约、闭环 fixture 与存量测试迁移、门禁与证据。"}
+{"file": ".trellis/tasks/09-21-cooking-formal-content-and-orders/research/verification-2026-09-21.md", "reason": "验收方法、两份门禁真实输出（focused 54/54、Cooking 175/175、ET 40/40）、独立复验结论与已处理问题、四类变异测试（含 M4 初版存活后补 O06）、未覆盖边界。"}
+{"file": "src/AbilityKit.Game.Cooking/Content/cooking-content-v2.json", "reason": "正式内容唯一数据来源：10 物品、4 工位、4 配方、1 订单模板、5 项标准初始供应；烤面包为面包片→烤面包，dough 已退役。"}
+{"file": "src/AbilityKit.Game.Cooking/CookingContentCatalog.cs", "reason": "内容加载器：schema 校验、v2 注册表提交校验、BuildFixture 与 ApplyStandardInitialSupply；加载失败带结构化诊断。"}
+{"file": "src/AbilityKit.Game.Cooking/CookingConfigurationValidation.cs", "reason": "v2 候选/快照/canonical 增加订单模板与标准初始供应两段（身份字符串保持 v2）；订单模板与供应校验；两处既有规则显式放宽（工位零能力、免工位配方豁免 CapabilityUnavailable）。"}
+{"file": "src/AbilityKit.Game.Cooking/CookingRecipeLoop.cs", "reason": "order owner 实现主体：订单簿、OpenOrder 注入、SubmitOrder 五分支契约、结算记录、快照/canonical 订单簿与结算、ICookingOrderPort 退役、三个新 reason 尾插。"}
+{"file": "src/AbilityKit.Game.Cooking/AbilityKit.Game.Cooking.csproj", "reason": "内容文档随程序集输出（Content/CopyToOutputDirectory）。"}
+{"file": "src/AbilityKit.Game.Cooking.Tests/CookingContentCatalogTests.cs", "reason": "K01/K07：加载与身份确定性、乱序一致、六种坏内容结构化拒绝、schema 拒绝、fixture 与初始供应实例化、容器/工位声明。"}
+{"file": "src/AbilityKit.Game.Cooking.Tests/CookingOrderBookTests.cs", "reason": "K02-K05：开单校验、提交成功一次与结算全字段、五个拒绝分支全部 mutation-free（含 canonical 相等断言）、幂等重放、结算累积顺序、canonical 订单簿可观察（O06 闭合 M4 存活缺口）。"}
+{"file": "src/AbilityKit.Game.Cooking.Tests/CookingKitchenLoopFixtureTests.cs", "reason": "K06/K07：闭环 fixture 改从正式内容运行（无手写 fixture 字典）；L01 全链路含开单/提交/碗脏/清洗回池；L03 烤面包路径与 OrderRequirementMismatch 零变更。"}
+{"file": "src/AbilityKit.Game.Cooking.Tests/CookingRecipeLoopTests.cs", "reason": "R01-R06 与 fixed-tick 回归迁移到订单簿：开单注入、结算断言替代端口提交计数、FixedTick 不触碰订单簿。"}
+{"file": "src/AbilityKit.Game.Cooking.Tests/CookingContainerAsItemTests.cs", "reason": "容器槽复用测试迁移：fixture 订单模板 + OpenOrder 后提交。"}
+{"file": "src/AbilityKit.Game.Cooking.Tests/CookingCompletionKindTests.cs", "reason": "完成形态测试去掉订单端口依赖（该文件不提交订单）。"}
+{"file": "src/AbilityKit.Game.Cooking.Tests/CookingKitchenActionsTests.cs", "reason": "七项动作测试去掉订单端口依赖。"}
+{"file": "src/AbilityKit.Game.Cooking.Tests/CookingProcessAnchorTests.cs", "reason": "进程锚点测试去掉订单端口依赖。"}
+{"file": "src/AbilityKit.Game.Cooking.Tests/CookingCommandArbitrationTests.cs", "reason": "批次争抢仲裁测试去掉订单端口依赖。"}
+{"file": "src/AbilityKit.Game.Cooking.Tests/CookingRecipeCommandShapeTests.cs", "reason": "S08 更新拒绝原因枚举计数（29→32）并断言三个新 reason 尾插；命令枚举与 IsWellFormed 不变。"}
+{"file": "src/AbilityKit.Game.Cooking.Tests/CookingLevelLifecycleTests.cs", "reason": "Level 生命周期工厂去掉订单端口参数。"}
+{"file": "src/AbilityKit.Game.Cooking.Tests/CookingMatchLifecycleTests.cs", "reason": "Match 生命周期 obsolete facade 测试去掉订单端口依赖。"}
+{"file": "src/AbilityKit.ET.Runtime.Tests/CookingLevelEtHostTests.cs", "reason": "K08：三个二进制指纹金样（pickup/start-process/put-in）断言未动；订单端口故障/重入两个宿主测试迁移到洗碗端口故障注入（plate 可洗碗 + 干净池 1）；fixture 增加订单模板，PreparePlatedProduct 开单。"}
+{"file": "src/AbilityKit.ET.Runtime.Tests/CookingVerticalSliceTests.cs", "reason": "ET tick 垂直切片迁移到订单簿：fixture 订单模板 + OpenOrder，端口提交计数改结算记录断言。"}
+{"file": ".trellis/spec/cooking/cooking-recipe-loop.md", "reason": "头部新增 2026-09-21 正式内容与 order owner 修约（四行映射表、实现状态声明、推定项）；收口节与边界节中“正式内容/订单未启动”表述改为指向两则 2026-09-21 修约。"}
+{"file": ".trellis/spec/cooking/cooking-config-validation.md", "reason": "P3 契约随候选扩展同步（订单模板/供应校验面与两处放宽，见 index P3 行与 recipe-loop 修约表第四行）。"}
+{"file": ".trellis/spec/cooking/index.md", "reason": "头部追加三次修约说明；P2 行追加正式内容与 order owner 已实现并验证；P3 行追加新校验面与两处规则放宽。"}
+{"file": "Docs/design/CookingGame/progress.md", "reason": "新增第 5 节记录本增量（四项受限交付 + 门禁 54/54、175/175、40/40 + 非宣称清单）；后续章节重编号；successor 段更新为评分/失败/前厅待立项。"}
+{"file": "Docs/Todo.md", "reason": "Cooking ET 主线状态表述更新：正式内容与 order owner 已交付（progress 第 5 节），评分/失败/前厅/固定伙伴/传输/Unity 仍未启动；ET 闭环验收待办补充正式内容目录现状。"}

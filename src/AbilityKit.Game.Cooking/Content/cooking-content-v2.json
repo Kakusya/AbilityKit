@@ -1,0 +1,93 @@
+{
+  "schema": "cooking-definition-v2",
+  "supportedApplianceCapabilities": ["cut", "heat", "bake", "beat"],
+  "items": [
+    { "id": "tomato", "allowedPlayerCapabilities": ["cook"] },
+    { "id": "chopped-tomato", "allowedPlayerCapabilities": ["cook"] },
+    { "id": "egg", "allowedPlayerCapabilities": ["cook"] },
+    { "id": "beaten-egg", "allowedPlayerCapabilities": ["cook"] },
+    { "id": "water", "allowedPlayerCapabilities": ["cook"] },
+    { "id": "tomato-egg-soup", "allowedPlayerCapabilities": ["cook"] },
+    { "id": "bread-slice", "allowedPlayerCapabilities": ["cook"] },
+    { "id": "toasted-bread", "allowedPlayerCapabilities": ["cook"] },
+    {
+      "id": "bowl",
+      "allowedPlayerCapabilities": ["cook"],
+      "container": {
+        "capacity": 1,
+        "acceptedDefinitions": ["tomato-egg-soup", "beaten-egg", "egg", "toasted-bread"]
+      }
+    },
+    {
+      "id": "pot",
+      "allowedPlayerCapabilities": ["cook"],
+      "container": {
+        "capacity": 4,
+        "acceptedDefinitions": ["chopped-tomato", "beaten-egg"]
+      }
+    }
+  ],
+  "appliances": [
+    { "station": "board-a", "capabilities": ["cut"] },
+    { "station": "stove-a", "capabilities": ["heat"] },
+    { "station": "oven-a", "capabilities": ["bake"] },
+    { "station": "counter-a", "capabilities": [] }
+  ],
+  "recipes": [
+    {
+      "id": "chop-tomato",
+      "inputs": ["tomato"],
+      "productDefinition": "chopped-tomato",
+      "process": "process-chop",
+      "requiredApplianceCapability": "cut",
+      "requiredTicks": 2,
+      "completion": "ConsumeInputs",
+      "requiresStation": true
+    },
+    {
+      "id": "beat-egg",
+      "inputs": ["egg"],
+      "productDefinition": "beaten-egg",
+      "process": "process-beat",
+      "requiredApplianceCapability": "beat",
+      "requiredTicks": 2,
+      "completion": "ConsumeInputs",
+      "requiresStation": false
+    },
+    {
+      "id": "tomato-egg-soup",
+      "inputs": ["chopped-tomato", "beaten-egg"],
+      "defaultInputs": ["water"],
+      "productDefinition": "tomato-egg-soup",
+      "process": "process-boil",
+      "requiredApplianceCapability": "heat",
+      "requiredTicks": 6,
+      "completion": "RetainInputs",
+      "requiresStation": true
+    },
+    {
+      "id": "bake-bread",
+      "inputs": ["bread-slice"],
+      "productDefinition": "toasted-bread",
+      "process": "process-bake",
+      "requiredApplianceCapability": "bake",
+      "requiredTicks": 2,
+      "completion": "ConsumeInputs",
+      "requiresStation": true
+    }
+  ],
+  "orderTemplates": [
+    {
+      "id": "tomato-egg-soup-order",
+      "requiredRecipe": "tomato-egg-soup",
+      "requiredContainerDefinition": "bowl"
+    }
+  ],
+  "standardInitialSupply": [
+    { "definition": "pot", "count": 1, "location": "station:stove-a" },
+    { "definition": "tomato", "count": 2, "location": "world:pantry" },
+    { "definition": "egg", "count": 2, "location": "world:pantry" },
+    { "definition": "bread-slice", "count": 2, "location": "world:pantry" },
+    { "definition": "bowl", "count": 2, "location": "cleanPool" }
+  ]
+}

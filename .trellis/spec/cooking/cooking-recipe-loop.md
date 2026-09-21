@@ -1,4 +1,21 @@
 # P2 一条完整配方：cooking-recipe-loop
+## 2026-09-21 正式内容与 order owner 修约（任务 09-21-cooking-formal-content-and-orders）
+
+来源：owner 逐轮决定（09-19 notes §10–§12）与任务①②落地契约，经 Trellis task `09-21-cooking-formal-content-and-orders` 实现并验证。本次修约把 successor backlog P2 的“正式 Recipe/Process/Appliance/Container/Order 内容与 timing”与“order owner”从“未启动”改为“已在单机纯 C# 范围实现并验证”，验证证据见 task `check.jsonl`、`research/verification-2026-09-21.md` 与 `artifacts/cooking-formal-content/`。评分/收益/评价（小关结算）、失败条件与前厅订单生成节奏仍范围外；正式 schema 推广与 Level/Map 对内容的引用属 P3 successor。
+
+| 位置 | 旧条款（原文可定位） | 新条款 | 来源 |
+|---|---|---|---|
+| Requirement「正式配方与订单语义必须经过决策门」 | 正式 Recipe/Process/Appliance/Container/Order 内容与 timing 未启动，测试 fixture 内联手写 items/appliances/recipes 字典 | 正式内容以数据文档 `cooking-definition-v2` 唯一存在（`src/AbilityKit.Game.Cooking/Content/cooking-content-v2.json`），经 `CookingContentCatalog` 加载并过 v2 校验；加工时长等数值只存在于内容文档；烤面包按 owner 采纳版本“面包片（开局供应）→ 烤面包”，占位 `dough -> bread-slice` 退役 | owner 决定：notes 12.1 第十轮（采纳烤面包）；notes 11.1 第六轮（数值归属配置）＋successor backlog P2 首条（经 owner 批准开工） |
+| Requirement「装盘与提交订单是独立的权威原子步骤」 | 订单“要求”由注入端口 `ICookingOrderPort` 判定，领域只维护已完成订单集合 | order owner 移入领域：仿真拥有订单簿（模板、要求、Open/Completed），开单是前厅注入入口（`OpenOrder`，与 `CompleteWash` 同模式，不产生命令事件）；`ICookingOrderPort`/`CookingOrderSubmission`/`CookingOrderAcceptance` 退役；提交校验（订单存在且 Open、产物 recipe 与容器物品定义匹配要求）全部在领域内执行 | owner 决定：notes 11.1 第四轮（NPC 询问生成订单进订单簿）＋successor backlog P2“明确 order owner”（经 owner 批准开工；评分/失败处理/产品 UX 按 owner 推迟另行立项） |
+| Requirement「装盘与提交订单是独立的权威原子步骤」 | 提交成功只更新已完成订单集合 | 提交成功原子地消耗产物、订单转 Completed（一次）、追加一条结算记录 `CookingOrderSettlement`（sequence/order/template/recipe/product/player/container/logicalTick，不含评分字段）；订单簿与结算记录进入快照与 canonical；同 command identity 重放返回缓存结果，跨 identity 不得二次变更 | 实现契约：successor backlog P2“维持装盘、提交、幂等和原子失败不变量”；评分字段缺席是 owner 推迟项，不是遗漏 |
+| Requirement「配置加载必须在提交前完成一致性验证」（P3 契约交叉） | 工位必须声明至少一个能力；任何 recipe 要求的能力必须有工位声明 | 两处显式放宽：(a) 工位可声明零能力（台面是放置/中转面，空白能力字符串仍拒）；(b) `RequiresStation == false` 的配方豁免 `CapabilityUnavailable`（免工位加工的能力只是标识），supported 能力检查保留 | 实现契约：任务 design §2（正式内容要求 counter-a 无能力、打蛋免工位且无工位声明 beat） |
+
+### 实现状态声明
+
+- 已实现并验证（单机纯 C#）：正式内容目录与加载器（含 v2 校验扩展：订单模板外键、初始供应校验、两处规则放宽）、订单簿与开单注入、提交/结算契约（五个结构化拒绝分支 + 幂等 + 结算记录）、闭环 fixture 改从正式内容运行、烤面包配方修正、快照/canonical 订单簿与结算可观察。证据见 task `check.jsonl` 与 `artifacts/cooking-formal-content/`。
+- 仍未实现（范围外）：评分/收益/评价与小关结算、失败条件与失败重试、前厅顾客/NPC 过程与订单生成节奏、过度加工与烧焦、跨小关装修/道具/Buff、检查点、Level/Map schema 对内容的正式引用（P3）、生产传输、真实 LAN、Unity 一切范围。
+- 推定项（无单独 owner 裁决原文，实现按 task design §9 执行）：供应 location 语法与实例 ID 生成规则、订单模板只声明“要求 recipe + 要求容器定义”、开单/提交新增 reason 的命名、结算记录字段集、内容文档位置与随程序集输出、`AcceptedOrders` 保留为 Completed 订单 ID 列表、两处 v2 校验放宽。
+
 ## 2026-09-21 仿真落地修约（任务 09-21-cooking-kitchen-loop-simulation）
 
 来源：owner 逐轮决定（09-19 notes §11.1 第一至九轮）与任务①修约契约，经实现落地为可验证行为。本次修约把上一轮“属后续任务”的容器即物品、七项动作与闭环 fixture 从“未实现”改为“已在单机纯 C# 范围实现并验证”，验证证据见 task `check.jsonl` 与 `artifacts/cooking-kitchen-loop-domain/`。前厅（顾客、NPC 询问过程、订单生成节奏、用餐离席）、小关时间结构、失败条件仍范围外。
@@ -34,14 +51,14 @@
 
 ## 2026-09-16 收口状态
 
-- R01-R06 纯 .NET fixture loop 已验证并作为 limited delivery 收口；正式内容、订单/结算和真实 LAN 等仍未启动，见 successor backlog。
+- R01-R06 纯 .NET fixture loop 已验证并作为 limited delivery 收口。2026-09-21 两次增量（厨房闭环仿真、正式内容与 order owner）已分别落地并验证，见本文件头部两则修约；评分/收益/评价、失败条件、前厅与真实 LAN 仍未启动，见 successor backlog。
 - 对应 `09-15-cooking-*` task 已按 `completed-limited-scope` 语义归档；`completed` 不表示完整 P2 或完整 P0-P6 产品出口。
 - Cooking Unity package、asmdef、scene、authoring、projection、UI、EditMode 与 scene smoke 长期禁止实施；原 Unity 场景及宿主无关不变量统一见 [`future-scope.md`](../../../Docs/design/CookingGame/future-scope.md)。
 - 本文以下 authority、identity、atomicity、sequence、stale-input、persistence 或 measurement 行为不变量继续有效；未完成的非 Unity 范围不得写成已实现，P1-P6 入口见 [`successor-backlog.md`](../../../Docs/design/CookingGame/successor-backlog.md)。
 
 > 交付状态：**completed-limited-scope**；原完整能力迁移状态为 `blocked`。本规范由只读来源快照 `.trellis/migration/legacy-cooking-changes/add-cooking-recipe-loop/specs/cooking-recipe-loop/spec.md` 转换；原始 SHA-256 见 [迁移清单](../../migration/legacy-cooking-changes/manifest.json)。
 >
-> 当前已实现并验证受限 pure .NET fixture：单输入/单工序/3 Tick、container slot、注入式 accept/reject order port，覆盖 R01-R06。正式 recipe/order/settlement/score 与真实 LAN R07 是 successor backlog 中未启动、未批准的 non-Unity 范围；Unity 是 prohibited/not-run future scope。
+> 当前已实现并验证：R01-R06 单输入/单工序/3 Tick fixture；2026-09-21 厨房闭环仿真（容器即物品、七项动作、两种完成形态、订单要求与碗池、批次争抢仲裁）与正式内容及 order owner（数据驱动内容目录、订单簿、提交/结算契约）。正式 score、失败处理、前厅订单生成节奏与真实 LAN R07 是 successor backlog 中未启动、未批准的 non-Unity 范围；Unity 是 prohibited/not-run future scope。
 
 ## 当前边界
 
@@ -52,8 +69,8 @@
 ## 迁移边界
 
 - 依赖：P0；联机验收时还依赖 P1 的稳定 session。
-- 阻塞：正式配方、订单/结算 owner、评分与失败处理均待确认。
-- 验证状态：R01-R06 已实现并通过 focused pure .NET tests；R07 two-PC LAN 与正式内容属于 successor backlog，未启动、未批准、未执行。
+- 阻塞：评分、失败处理与前厅订单生成节奏均待 owner 确认（正式配方与订单 owner 已于 2026-09-21 由 task `09-21-cooking-formal-content-and-orders` 落地，见头部修约）。
+- 验证状态：R01-R06 与 2026-09-21 两次增量已实现并通过 focused pure .NET tests（证据见对应归档 task）；R07 two-PC LAN、正式 score/失败处理/前厅节奏属于 successor backlog，未启动、未批准、未执行。
 
 ## 迁移的行为草案
 

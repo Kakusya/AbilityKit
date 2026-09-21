@@ -189,7 +189,12 @@ public sealed class CookingRecipeCommandShapeTests
         Assert.Equal(CookingRecipeRejectionReason.RecipeNotMatched, (CookingRecipeRejectionReason)(queueFull + 1));
         Assert.Equal(CookingRecipeRejectionReason.RecipeAmbiguous, (CookingRecipeRejectionReason)(queueFull + 2));
         Assert.Equal(CookingRecipeRejectionReason.ContainerRejectsItem, (CookingRecipeRejectionReason)(queueFull + 3));
-        Assert.Equal(queueFull + 4, Enum.GetValues<CookingRecipeRejectionReason>().Length);
+
+        // 订单簿契约的三个新 reason 同样只能尾插（order owner 移入领域时追加）。
+        Assert.Equal(CookingRecipeRejectionReason.OrderNotFound, (CookingRecipeRejectionReason)(queueFull + 4));
+        Assert.Equal(CookingRecipeRejectionReason.OrderAlreadyCompleted, (CookingRecipeRejectionReason)(queueFull + 5));
+        Assert.Equal(CookingRecipeRejectionReason.OrderRequirementMismatch, (CookingRecipeRejectionReason)(queueFull + 6));
+        Assert.Equal(queueFull + 7, Enum.GetValues<CookingRecipeRejectionReason>().Length);
     }
 
     [Fact]
@@ -303,8 +308,7 @@ public sealed class CookingRecipeCommandShapeTests
                 "heat", 6, new[] { new DefinitionId("water") }),
         };
         var simulation = new CookingRecipeSimulation(
-            new CookingRecipeFixture(scope, players, items, appliances, recipes),
-            new AcceptingOrderPort());
+            new CookingRecipeFixture(scope, players, items, appliances, recipes));
         simulation.AddItem(Pot, PotDefinition, ItemLocation.Station(Station));
         return simulation;
     }
@@ -324,11 +328,6 @@ public sealed class CookingRecipeCommandShapeTests
         OrderId? order = null, int expectedVersion = 0, int ticks = 0, PlayerId? player = null) =>
         new(new CookingScope(Session, World, Match), 10, player ?? Player, new RecipeCommandId(commandId), operation, recipe,
             process, item, station, container, order, expectedVersion, ticks);
-
-    private sealed class AcceptingOrderPort : ICookingOrderPort
-    {
-        public CookingOrderAcceptance Submit(CookingOrderSubmission submission) => new(true, "fixture-accepted");
-    }
 
     private static EvidenceScope CreateEvidence(string testId) => new(testId);
 

@@ -273,7 +273,7 @@ public sealed class CookingProcessAnchorTests
                 "heat", 6, new[] { Water }, CookingRecipeCompletionKind.RetainInputs),
         };
         var simulation = new CookingRecipeSimulation(
-            new CookingRecipeFixture(scope, players, items, appliances, recipes), new RecordingOrderPort(true));
+            new CookingRecipeFixture(scope, players, items, appliances, recipes));
         simulation.AddItem(Pot, PotDefinition, ItemLocation.Station(Stove));
         simulation.AddItem(Bowl, BowlDefinition, ItemLocation.Station(Counter));
         return simulation;
@@ -327,11 +327,6 @@ public sealed class CookingProcessAnchorTests
         });
     }
 
-    private sealed class RecordingOrderPort(bool accepted) : ICookingOrderPort
-    {
-        public CookingOrderAcceptance Submit(CookingOrderSubmission submission) =>
-            new(accepted, accepted ? "fixture-accepted" : "fixture-rejected");
-    }
 
     private sealed class EvidenceScope : IDisposable
     {

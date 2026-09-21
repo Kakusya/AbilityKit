@@ -1,0 +1,30 @@
+{
+  "id": "cooking-formal-content-and-orders",
+  "name": "cooking-formal-content-and-orders",
+  "title": "Cooking 正式配方与订单内容",
+  "description": "单机纯 C# 范围内落地正式 Recipe/Process/Appliance/Container/Order 内容与 timing（数据驱动、经 cooking-definition-v2 校验），把 order owner（订单簿与提交/结算契约）从注入端口移入领域，并以正式内容验收番茄蛋花汤闭环。评分、失败条件、前厅订单生成节奏、Unity 与传输范围外。",
+  "status": "completed",
+  "dev_type": null,
+  "scope": null,
+  "package": null,
+  "priority": "P1",
+  "creator": "Li He",
+  "assignee": "Li He",
+  "createdAt": "2026-09-21",
+  "completedAt": "2026-09-21",
+  "branch": "master",
+  "base_branch": "master",
+  "worktree_path": null,
+  "commit": null,
+  "pr_url": null,
+  "subtasks": [],
+  "children": [],
+  "parent": null,
+  "relatedFiles": [],
+  "notes": "",
+  "meta": {
+    "acceptance_gate": "cooking-kitchen-loop",
+    "unity_scope": "prohibited",
+    "requirements_source": ".trellis/tasks/09-19-cooking-gameplay-business-discussion/research/discussion-notes.md"
+  }
+}

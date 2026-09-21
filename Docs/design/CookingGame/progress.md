@@ -41,19 +41,36 @@ Owner 于 2026-09-21 把范围收敛为单机纯 C#/.NET，并按两个 Trellis 
 
 门禁：新增 P1 `cooking-kitchen-loop`（域构建、ET runtime 构建、focused `Gate=CookingKitchenLoop` 42/42、Cooking 163/163、ET runtime 40/40），回归门禁 `cooking-et-level-runtime` 同时通过；[`tools/test-gates.json`](../../../tools/test-gates.json) 与 [测试门禁规范](../../AbilityKit测试门禁与批量回归规范.md) §3 已同步。
 
-以上只证明单机纯 .NET 厨房闭环规则与闭环 fixture 可运行、可确定性重放、可按门禁验证，且 ET 命令指纹金样已随 `Plate` 退役处理（pickup 与 StartProcess 两个既有金样字节不变，新增 PutIn 金样）。不证明正式 Recipe/Order 内容与 timing（见 [successor backlog](successor-backlog.md) P2）、失败条件与小关成功条件（owner 明确推迟）、订单生成节奏与前厅、固定伙伴最终人数、生产传输（KCP，未启动未批准）、durable storage、真实两 PC LAN、Unity 可玩版本或 ET Phase B 权威迁移。计划中任务③的单机验收动作（指纹金样重锚、验收 evidence 落盘、回归门禁实际运行与记录）已由任务①②连带完成，本文与 [Todo.md](../../Todo.md) 的状态表述即其收口，未为此新建独立 task。
+以上只证明单机纯 .NET 厨房闭环规则与闭环 fixture 可运行、可确定性重放、可按门禁验证，且 ET 命令指纹金样已随 `Plate` 退役处理（pickup 与 StartProcess 两个既有金样字节不变，新增 PutIn 金样）。不证明失败条件与小关成功条件（owner 明确推迟）、订单生成节奏与前厅、固定伙伴最终人数、生产传输（KCP，未启动未批准）、durable storage、真实两 PC LAN、Unity 可玩版本或 ET Phase B 权威迁移。计划中任务③的单机验收动作（指纹金样重锚、验收 evidence 落盘、回归门禁实际运行与记录）已由任务①②连带完成，本文与 [Todo.md](../../Todo.md) 的状态表述即其收口，未为此新建独立 task。
 
-## 5. 未完成范围
+2026-09-21 另有一条单机增量把正式内容与 order owner 落地，见第 5 节。
+
+## 5. 2026-09-21 单机正式内容与 order owner 增量
+
+Owner 于 2026-09-21 批准 Trellis task `09-21-cooking-formal-content-and-orders`（successor backlog P2 首条），把“单输入/单工序/3 Tick fixture + 测试端口判定订单要求”的临时形态替换为正式内容与领域订单归属；task 已归档，不含传输、UDP/KCP 与 Unity 内容。
+
+| 受限交付 | Evidence |
+|---|---|
+| 正式内容目录：数据文档 `cooking-definition-v2`（`src/AbilityKit.Game.Cooking/Content/cooking-content-v2.json`）经 `CookingContentCatalog` 加载并过 v2 校验；10 物品、4 工位、4 配方（切番茄/打蛋/番茄蛋花汤/烤面包）、1 订单模板、5 项标准初始供应；加工时长等数值只存在于内容文档；烤面包按 owner 采纳版本“面包片→烤面包”，占位 dough 退役 | [check](../../../.trellis/tasks/archive/2026-09/09-21-cooking-formal-content-and-orders/check.jsonl)；[research/verification-2026-09-21.md](../../../.trellis/tasks/archive/2026-09/09-21-cooking-formal-content-and-orders/research/verification-2026-09-21.md)；`artifacts/cooking-formal-content/` |
+| v2 校验扩展：候选/canonical 增加订单模板与标准初始供应两段（身份字符串保持 v2）；订单模板外键（要求 recipe 存在、要求容器定义存在、带容器能力且接受该 recipe 产物）与供应项校验（定义存在、数量为正、位置语法、station 引用）；两处既有规则显式放宽（工位可声明零能力、免工位配方豁免 `CapabilityUnavailable`） | 同上；spec [cooking-config-validation](../../../.trellis/spec/cooking/cooking-config-validation.md) P3 行 |
+| order owner 移入领域：订单簿（模板、要求、Open/Completed）与快照/canonical 可观察；开单是前厅注入入口（`OpenOrder`，与 `CompleteWash` 同模式，不产生命令事件）；`ICookingOrderPort`/`CookingOrderSubmission`/`CookingOrderAcceptance` 退役 | [check](../../../.trellis/tasks/archive/2026-09/09-21-cooking-formal-content-and-orders/check.jsonl) |
+| 提交/结算契约：五个结构化拒绝分支（未开单、订单已完成、recipe 不匹配、容器定义不匹配、产物已消费）全部 mutation-free；成功提交原子消耗产物、订单 Completed 一次、追加结算记录（sequence/order/template/recipe/product/player/container/logicalTick，无评分字段）；闭环 fixture 改从正式内容运行并保持确定性重放 | 同上 |
+
+门禁：沿用 P1 `cooking-kitchen-loop`（focused `Gate=CookingKitchenLoop` 54/54、Cooking 175/175、ET runtime 40/40，含三个二进制指纹金样字节不变），回归 `cooking-et-level-runtime` 同时通过；未新增 gate。
+
+以上只证明正式内容可数据驱动加载与校验、订单归属与提交/结算契约在领域内确定成立、闭环可从正式内容确定性重放。不证明评分/收益/评价与小关结算（owner 推迟，结算记录刻意不含这些字段）、失败条件与失败重试（owner 推迟）、订单生成节奏与前厅顾客/NPC 过程（订单只能由前厅经 `OpenOrder` 注入）、过度加工与烧焦、跨小关装修/道具/Buff、检查点、Level/Map schema 对内容的正式引用（P3）、生产传输、真实两 PC LAN、Unity 可玩版本或 ET Phase B 权威迁移。
+
+## 6. 未完成范围
 
 ### Non-Unity successor backlog
 
-P1–P6 尚可另行审议的工作包括两台物理 PC LAN 验收、正式 recipe/order/content/schema、Room/Match 产品语义、durable store、process-crash 恢复、批准 workload/threshold 和非 Unity 优化验证。原 UDP task 曾提供 LiteNetLib minimal wire/adapter、loopback 与 same-machine harness，但未替代两 PC 证据，也未解决完整 production transport 的认证、安全、重连或产品生命周期语义；该方向已于 2026-09-21 放弃，传输计划改用 KCP，属未启动、未批准、无时间表的后续工作。其两机执行入口见 [UDP two-PC LAN acceptance](udp-two-pc-lan-acceptance.md)（已退役，仅作历史参考）。其余工作均未启动、未批准、没有时间表，详见 [successor backlog](successor-backlog.md)。2026-09-21 单机厨房闭环落地后，与现状衔接最直接的是 P2 的正式 recipe/order 内容与 timing 以及 order owner、提交与结算契约；owner 尚未批准，也未为此新建 task。
+P1–P6 尚可另行审议的工作包括两台物理 PC LAN 验收、正式 recipe/order/content/schema、Room/Match 产品语义、durable store、process-crash 恢复、批准 workload/threshold 和非 Unity 优化验证。原 UDP task 曾提供 LiteNetLib minimal wire/adapter、loopback 与 same-machine harness，但未替代两 PC 证据，也未解决完整 production transport 的认证、安全、重连或产品生命周期语义；该方向已于 2026-09-21 放弃，传输计划改用 KCP，属未启动、未批准、无时间表的后续工作。其两机执行入口见 [UDP two-PC LAN acceptance](udp-two-pc-lan-acceptance.md)（已退役，仅作历史参考）。其余工作均未启动、未批准、没有时间表，详见 [successor backlog](successor-backlog.md)。2026-09-21 单机厨房闭环与正式内容增量落地后，与现状衔接最直接的是 P2 余下的评分、收益、评价与小关结算契约，以及失败条件与失败重试（均属 owner 明确推迟项，需重新审议后立项）；订单生成节奏与前厅属 P2/P4 交叉，依赖生产 session 的跨进程与真实 LAN recipe-loop 验收仍以 R07 形式挂起。上述均未批准，也未为此新建 task。
 
 ### Prohibited Unity scope
 
 Cooking Unity 应用层、场景、authoring/export、projection、UI、动画、EditMode 与 scene smoke 长期禁止实施，不再作为旧 task、successor 或完整出口的当前 blocker。其历史来源、跨宿主 authority/identity/stale-input 不变量和重新授权条件见 [future scope](future-scope.md)。
 
-## 6. 后续读取顺序
+## 7. 后续读取顺序
 
 1. 读取本文确认三类状态。
 2. 读取 [技术路线](technical-roadmap.md)、[交付计划](delivery-plan.md) 与 [Cooking spec index](../../../.trellis/spec/cooking/index.md)。
@@ -61,7 +78,7 @@ Cooking Unity 应用层、场景、authoring/export、projection、UI、动画�
 4. 只有 owner 明确批准新范围后才新建 Trellis task；不要恢复已归档 task。
 5. Unity 重新授权必须满足 [future scope](future-scope.md) 的独立条件；non-Unity 后续从 [successor backlog](successor-backlog.md) 选择并重新审议。
 
-## 7. 维护规则
+## 8. 维护规则
 
 - 本文只汇总状态与链接，不复制行为契约、测试矩阵或未来 checklist。
 - 未实际运行的 Unity、LAN、protocol、durability 或 global gate 继续是 not-run/未完成，不能因 task archive 记为通过。

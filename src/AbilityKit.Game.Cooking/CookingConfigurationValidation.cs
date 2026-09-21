@@ -28,11 +28,28 @@ public sealed record CookingConfigurationValidationResult(IReadOnlyList<CookingC
     public bool IsValid => Diagnostics.Count == 0;
 }
 
+/// <summary>
+/// 订单模板：前厅按模板生成订单实例；要求由 recipe 身份与容器物品定义声明，
+/// 不带耐心/时限/奖励字段（分别属前厅节奏与评分，均范围外）。
+/// </summary>
+public sealed record CookingOrderTemplateDefinition(
+    OrderTemplateId Id,
+    RecipeId RequiredRecipe,
+    DefinitionId RequiredContainerDefinition);
+
+/// <summary>
+/// 标准初始供应项：位置语法为 <c>world:&lt;position&gt;</c>、<c>station:&lt;stationId&gt;</c> 或 <c>cleanPool</c>。
+/// <c>cleanPool</c> 项同时声明该定义是可清洗容器并给出干净池上限。
+/// </summary>
+public sealed record CookingSupplyEntryDefinition(DefinitionId Definition, int Count, string Location);
+
 public sealed record CookingConfigurationCandidate(
     IReadOnlyList<string> SupportedApplianceCapabilities,
     IReadOnlyList<CookingItemDefinition> Items,
     IReadOnlyList<CookingApplianceDefinition> Appliances,
-    IReadOnlyList<CookingRecipeDefinition> Recipes);
+    IReadOnlyList<CookingRecipeDefinition> Recipes,
+    IReadOnlyList<CookingOrderTemplateDefinition>? OrderTemplates = null,
+    IReadOnlyList<CookingSupplyEntryDefinition>? StandardInitialSupply = null);
 
 public sealed record CookingConfigurationIdentity(string Schema, string Sha256)
 {
@@ -53,12 +70,16 @@ public sealed class CookingConfigurationSnapshot
         IReadOnlySet<string> supportedApplianceCapabilities,
         IReadOnlyDictionary<DefinitionId, CookingItemDefinition> items,
         IReadOnlyDictionary<StationSlotId, CookingApplianceDefinition> appliances,
-        IReadOnlyDictionary<RecipeId, CookingRecipeDefinition> recipes)
+        IReadOnlyDictionary<RecipeId, CookingRecipeDefinition> recipes,
+        IReadOnlyDictionary<OrderTemplateId, CookingOrderTemplateDefinition>? orderTemplates = null,
+        IReadOnlyList<CookingSupplyEntryDefinition>? standardInitialSupply = null)
     {
         SupportedApplianceCapabilities = supportedApplianceCapabilities;
         Items = items;
         Appliances = appliances;
         Recipes = recipes;
+        OrderTemplates = orderTemplates ?? new Dictionary<OrderTemplateId, CookingOrderTemplateDefinition>();
+        StandardInitialSupply = standardInitialSupply ?? Array.Empty<CookingSupplyEntryDefinition>();
         Identity = new CookingConfigurationIdentity(CookingConfigurationIdentity.CurrentSchema, Sha256(CanonicalText()));
     }
 
@@ -66,6 +87,8 @@ public sealed class CookingConfigurationSnapshot
     public IReadOnlyDictionary<DefinitionId, CookingItemDefinition> Items { get; }
     public IReadOnlyDictionary<StationSlotId, CookingApplianceDefinition> Appliances { get; }
     public IReadOnlyDictionary<RecipeId, CookingRecipeDefinition> Recipes { get; }
+    public IReadOnlyDictionary<OrderTemplateId, CookingOrderTemplateDefinition> OrderTemplates { get; }
+    public IReadOnlyList<CookingSupplyEntryDefinition> StandardInitialSupply { get; }
     public CookingConfigurationIdentity Identity { get; }
 
     public string CanonicalText() => JsonSerializer.Serialize(new CanonicalConfiguration(
@@ -89,7 +112,14 @@ public sealed class CookingConfigurationSnapshot
                 NormalizeDefinitionList(recipe.DefaultInputs),
                 recipe.ProductDefinition.Value,
                 recipe.Process.Value, recipe.RequiredApplianceCapability,
-                recipe.Completion.ToString(), recipe.RequiredTicks, recipe.RequiresStation)).ToArray()), CanonicalJsonOptions);
+                recipe.Completion.ToString(), recipe.RequiredTicks, recipe.RequiresStation)).ToArray(),
+        OrderTemplates.Values.OrderBy(template => template.Id.Value, StringComparer.Ordinal)
+            .Select(template => new CanonicalOrderTemplate(template.Id.Value, template.RequiredRecipe.Value,
+                template.RequiredContainerDefinition.Value)).ToArray(),
+        StandardInitialSupply.OrderBy(entry => entry.Definition.Value, StringComparer.Ordinal)
+            .ThenBy(entry => entry.Location, StringComparer.Ordinal)
+            .Select(entry => new CanonicalSupplyEntry(entry.Definition.Value, entry.Count, entry.Location)).ToArray()),
+        CanonicalJsonOptions);
 
     private static IReadOnlyList<string> NormalizeDefinitionList(IReadOnlyList<DefinitionId>? definitions) =>
         definitions is null
@@ -103,7 +133,9 @@ public sealed class CookingConfigurationSnapshot
         IReadOnlyList<string> SupportedApplianceCapabilities,
         IReadOnlyList<CanonicalItem> Items,
         IReadOnlyList<CanonicalAppliance> Appliances,
-        IReadOnlyList<CanonicalRecipe> Recipes);
+        IReadOnlyList<CanonicalRecipe> Recipes,
+        IReadOnlyList<CanonicalOrderTemplate> OrderTemplates,
+        IReadOnlyList<CanonicalSupplyEntry> StandardInitialSupply);
 
     private sealed record CanonicalItem(string Id, IReadOnlyList<string> AllowedPlayerCapabilities,
         CanonicalItemContainer? Container);
@@ -112,6 +144,8 @@ public sealed class CookingConfigurationSnapshot
     private sealed record CanonicalRecipe(string Id, IReadOnlyList<string> Inputs, IReadOnlyList<string> DefaultInputs,
         string ProductDefinition, string Process, string RequiredApplianceCapability, string Completion, int RequiredTicks,
         bool RequiresStation);
+    private sealed record CanonicalOrderTemplate(string Id, string RequiredRecipe, string RequiredContainerDefinition);
+    private sealed record CanonicalSupplyEntry(string Definition, int Count, string Location);
 }
 
 public sealed record CookingConfigurationSubmissionResult(
@@ -146,7 +180,9 @@ public sealed class CookingConfigurationRegistry
         var supportedCapabilities = ValidateCapabilities(candidate.SupportedApplianceCapabilities, diagnostics);
         var items = ValidateItems(candidate.Items, diagnostics);
         var appliances = ValidateAppliances(candidate.Appliances, supportedCapabilities, diagnostics);
-        ValidateRecipes(candidate.Recipes, items, appliances, supportedCapabilities, diagnostics);
+        var recipes = ValidateRecipes(candidate.Recipes, items, appliances, supportedCapabilities, diagnostics);
+        ValidateOrderTemplates(candidate.OrderTemplates, recipes, items, diagnostics);
+        ValidateStandardInitialSupply(candidate.StandardInitialSupply, items, appliances, diagnostics);
         return new CookingConfigurationValidationResult(diagnostics
             .OrderBy(diagnostic => diagnostic.Table, StringComparer.Ordinal)
             .ThenBy(diagnostic => diagnostic.RecordId, StringComparer.Ordinal)
@@ -164,7 +200,9 @@ public sealed class CookingConfigurationRegistry
         ArgumentNullException.ThrowIfNull(candidate.Appliances);
         ArgumentNullException.ThrowIfNull(candidate.Recipes);
         if (candidate.Items.Any(item => item is null) || candidate.Appliances.Any(appliance => appliance is null) ||
-            candidate.Recipes.Any(recipe => recipe is null))
+            candidate.Recipes.Any(recipe => recipe is null) ||
+            (candidate.OrderTemplates is { } orderTemplates && orderTemplates.Any(template => template is null)) ||
+            (candidate.StandardInitialSupply is { } supply && supply.Any(entry => entry is null)))
             throw new ArgumentException("Configuration candidates cannot contain null definitions.", nameof(candidate));
     }
 
@@ -186,7 +224,10 @@ public sealed class CookingConfigurationRegistry
             recipe => new CookingRecipeDefinition(recipe.Id, recipe.Inputs.ToArray(), recipe.ProductDefinition, recipe.Process,
                 recipe.RequiredApplianceCapability, recipe.RequiredTicks,
                 recipe.DefaultInputs?.ToArray(), recipe.Completion, recipe.RequiresStation));
-        return new CookingConfigurationSnapshot(capabilities, items, appliances, recipes);
+        var orderTemplates = (candidate.OrderTemplates ?? Array.Empty<CookingOrderTemplateDefinition>())
+            .ToFrozenDictionary(template => template.Id);
+        var standardInitialSupply = (candidate.StandardInitialSupply ?? Array.Empty<CookingSupplyEntryDefinition>()).ToArray();
+        return new CookingConfigurationSnapshot(capabilities, items, appliances, recipes, orderTemplates, standardInitialSupply);
     }
 
     private static HashSet<string> ValidateCapabilities(IReadOnlyList<string> capabilities,
@@ -272,7 +313,7 @@ public sealed class CookingConfigurationRegistry
                     "Station", null, "Appliance station ID is declared more than once."));
                 continue;
             }
-            if (appliance.Capabilities.Count == 0 || appliance.Capabilities.Any(string.IsNullOrWhiteSpace))
+            if (appliance.Capabilities.Any(string.IsNullOrWhiteSpace))
                 diagnostics.Add(Diagnostic(CookingConfigurationDiagnosticCodes.RequiredFieldMissing, "Appliance", appliance.Station.Value,
                     "Capabilities", null, "Appliance must declare only nonblank capabilities."));
             foreach (var capability in appliance.Capabilities.Where(capability => !string.IsNullOrWhiteSpace(capability)))
@@ -285,7 +326,7 @@ public sealed class CookingConfigurationRegistry
         return unique;
     }
 
-    private static void ValidateRecipes(
+    private static Dictionary<RecipeId, CookingRecipeDefinition> ValidateRecipes(
         IReadOnlyList<CookingRecipeDefinition> recipes,
         IReadOnlyDictionary<DefinitionId, CookingItemDefinition> items,
         IReadOnlyDictionary<StationSlotId, CookingApplianceDefinition> appliances,
@@ -293,6 +334,7 @@ public sealed class CookingConfigurationRegistry
         ICollection<CookingConfigurationDiagnostic> diagnostics)
     {
         var unique = new HashSet<RecipeId>();
+        var validated = new Dictionary<RecipeId, CookingRecipeDefinition>();
         foreach (var recipe in recipes)
         {
             var recordId = recipe.Id.Value;
@@ -324,7 +366,8 @@ public sealed class CookingConfigurationRegistry
                 diagnostics.Add(Diagnostic(CookingConfigurationDiagnosticCodes.UnknownCapability, "Recipe", recordId,
                     "RequiredApplianceCapability", recipe.RequiredApplianceCapability,
                     "Recipe requires a capability not supported by this configuration schema."));
-            else if (!appliances.Values.Any(appliance => appliance.Capabilities.Contains(recipe.RequiredApplianceCapability)))
+            else if (recipe.RequiresStation &&
+                     !appliances.Values.Any(appliance => appliance.Capabilities.Contains(recipe.RequiredApplianceCapability)))
                 diagnostics.Add(Diagnostic(CookingConfigurationDiagnosticCodes.CapabilityUnavailable, "Recipe", recordId,
                     "RequiredApplianceCapability", recipe.RequiredApplianceCapability,
                     "No appliance declares the capability required by this recipe."));
@@ -366,7 +409,10 @@ public sealed class CookingConfigurationRegistry
             }
 
             ValidateRecipeDefinitionReference(recipe.ProductDefinition, "ProductDefinition", recipe.Id, items, diagnostics);
+            validated[recipe.Id] = recipe;
         }
+
+        return validated;
     }
 
     private static void ValidateRecipeDefinitionReference(
@@ -379,6 +425,101 @@ public sealed class CookingConfigurationRegistry
         if (string.IsNullOrWhiteSpace(definition.Value) || !items.ContainsKey(definition))
             diagnostics.Add(Diagnostic(CookingConfigurationDiagnosticCodes.MissingReference, "Recipe", recipe.Value, field,
                 definition.Value, "Recipe references an item definition that is absent from this candidate batch."));
+    }
+
+    private static void ValidateOrderTemplates(
+        IReadOnlyList<CookingOrderTemplateDefinition>? templates,
+        IReadOnlyDictionary<RecipeId, CookingRecipeDefinition> recipes,
+        IReadOnlyDictionary<DefinitionId, CookingItemDefinition> items,
+        ICollection<CookingConfigurationDiagnostic> diagnostics)
+    {
+        if (templates is null)
+            return;
+        var unique = new HashSet<OrderTemplateId>();
+        foreach (var template in templates)
+        {
+            if (string.IsNullOrWhiteSpace(template.Id.Value))
+            {
+                diagnostics.Add(Diagnostic(CookingConfigurationDiagnosticCodes.RequiredFieldMissing, "OrderTemplate", "<blank>",
+                    "Id", null, "Order template ID must be nonblank."));
+                continue;
+            }
+            if (!unique.Add(template.Id))
+            {
+                diagnostics.Add(Diagnostic(CookingConfigurationDiagnosticCodes.DuplicateId, "OrderTemplate", template.Id.Value,
+                    "Id", null, "Order template ID is declared more than once."));
+                continue;
+            }
+            if (!recipes.ContainsKey(template.RequiredRecipe))
+            {
+                diagnostics.Add(Diagnostic(CookingConfigurationDiagnosticCodes.MissingReference, "OrderTemplate", template.Id.Value,
+                    "RequiredRecipe", template.RequiredRecipe.Value,
+                    "Order template requires a recipe that is absent from this candidate batch."));
+                continue;
+            }
+            if (!items.TryGetValue(template.RequiredContainerDefinition, out var container) ||
+                container.Container is null)
+            {
+                diagnostics.Add(Diagnostic(CookingConfigurationDiagnosticCodes.MissingReference, "OrderTemplate", template.Id.Value,
+                    "RequiredContainerDefinition", template.RequiredContainerDefinition.Value,
+                    "Order template requires a container item definition that is absent from this candidate batch."));
+                continue;
+            }
+            var product = recipes[template.RequiredRecipe].ProductDefinition;
+            if (!container.Container.AcceptedDefinitions.Contains(product))
+                diagnostics.Add(Diagnostic(CookingConfigurationDiagnosticCodes.MissingReference, "OrderTemplate", template.Id.Value,
+                    "RequiredContainerDefinition", product.Value,
+                    "Order template container does not accept the product definition of its required recipe."));
+        }
+    }
+
+    private static void ValidateStandardInitialSupply(
+        IReadOnlyList<CookingSupplyEntryDefinition>? supply,
+        IReadOnlyDictionary<DefinitionId, CookingItemDefinition> items,
+        IReadOnlyDictionary<StationSlotId, CookingApplianceDefinition> appliances,
+        ICollection<CookingConfigurationDiagnostic> diagnostics)
+    {
+        if (supply is null)
+            return;
+        foreach (var entry in supply)
+        {
+            var recordId = string.IsNullOrWhiteSpace(entry.Definition.Value) ? "<blank>" : entry.Definition.Value;
+            if (string.IsNullOrWhiteSpace(entry.Definition.Value) || !items.ContainsKey(entry.Definition))
+            {
+                diagnostics.Add(Diagnostic(CookingConfigurationDiagnosticCodes.MissingReference, "StandardInitialSupply", recordId,
+                    "Definition", entry.Definition.Value,
+                    "Standard initial supply references an item definition that is absent from this candidate batch."));
+                continue;
+            }
+            if (entry.Count <= 0)
+            {
+                diagnostics.Add(Diagnostic(CookingConfigurationDiagnosticCodes.InvalidValue, "StandardInitialSupply", recordId,
+                    "Count", entry.Count.ToString(), "Standard initial supply count must be positive."));
+                continue;
+            }
+            if (string.Equals(entry.Location, "cleanPool", StringComparison.Ordinal))
+            {
+                if (items[entry.Definition].Container is null)
+                    diagnostics.Add(Diagnostic(CookingConfigurationDiagnosticCodes.InvalidValue, "StandardInitialSupply", recordId,
+                        "Location", entry.Location,
+                        "A clean-pool supply entry must reference an item definition with a container capability."));
+                continue;
+            }
+            if (entry.Location.StartsWith("station:", StringComparison.Ordinal))
+            {
+                var station = new StationSlotId(entry.Location["station:".Length..]);
+                if (!appliances.ContainsKey(station))
+                    diagnostics.Add(Diagnostic(CookingConfigurationDiagnosticCodes.MissingReference, "StandardInitialSupply", recordId,
+                        "Location", entry.Location,
+                        "Standard initial supply references a station that is absent from this candidate batch."));
+                continue;
+            }
+            if (!entry.Location.StartsWith("world:", StringComparison.Ordinal) ||
+                string.IsNullOrWhiteSpace(entry.Location["world:".Length..]))
+                diagnostics.Add(Diagnostic(CookingConfigurationDiagnosticCodes.InvalidValue, "StandardInitialSupply", recordId,
+                    "Location", entry.Location,
+                    "Standard initial supply location must be 'cleanPool', 'station:<stationId>' or 'world:<position>'."));
+        }
     }
 
     private static CookingConfigurationDiagnostic Diagnostic(string code, string table, string recordId, string field,
