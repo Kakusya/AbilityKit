@@ -114,3 +114,25 @@ successor backlog P2 首条落地：数据驱动正式内容目录（`cooking-de
 ### Status
 
 [OK] **Completed (archived, uncommitted)**
+
+## Session 6: Cooking ET Level 闭环验收（单机）
+<!-- trellis-session: v=2 fp=et-level-closed-loop -->
+
+**Date**: 2026-09-21
+**Task**: 09-21-cooking-et-closed-loop-acceptance（已归档，未提交）
+**Branch**: `master`
+
+### Summary
+
+Todo P0-C1 未勾项落地：ET fixed-tick Level 宿主（`CookingLevelEtHost`）承载同一条番茄蛋花汤闭环验收。产品侧仅一处加法——`CookingContent` 增露加载时经 v2 校验的快照，Level 生命周期与 preparation 身份同一来源。新增 `CookingLevelClosedLoopTests`：E01 正式内容 fixture + 标准初始供应，17 条玩家命令全部经宿主命令 ingress 与固定 Tick（10 个纯时钟帧），帧结构、`AdvanceTicks` 保留拒绝、订单/结算/洗碗回池全断言；E02 拒绝零变更用"命令级版本相等 + 对照臂 canonical 相等"两级证明（宿主每帧固有 tick 推进由对照臂抵消）；E03 两遍 canonical/Sha256 一致。门禁 `cooking-et-level-runtime`（Cooking 175/175、ET 43/43）与 `cooking-kitchen-loop`（focused 54/54）通过；四个二进制指纹金样字节不变（宿主测试文件零改动）；四项变异测试全被杀；evidence 经独立脚本（不加载被测程序集）复验。spec recipe-loop/index 四次修约、progress.md 新增第 6 节、Todo.md 勾选该条。
+
+### Notes
+
+- ET 宿主是进程级单例：E02/E03 的多臂必须顺序执行；实现中发现并修复两处失败路径宿主泄漏（`RunLoop` 中途失败、`CreateStartedHost` 初始化失败），修复前变异测试会出现"Only one ET runtime host"串联假象。
+- 宿主闭环与领域闭环 canonical 不要求字节一致（终态 LogicalTick 27 vs 8）：宿主拥有时钟、`AdvanceTicks` 被保留拒绝是既有契约，该差异已在 spec 显式记录为口径，防后续误判回归。
+- evidence 环境变量需用绝对路径：testhost 的工作目录不是仓库根，相对路径会静默回落到临时目录。
+- 归档 commit 遵循 `--no-commit`；是否提交由 owner 决定。
+
+### Status
+
+[OK] **Completed (archived, uncommitted)**

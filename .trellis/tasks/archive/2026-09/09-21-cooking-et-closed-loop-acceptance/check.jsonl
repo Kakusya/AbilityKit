@@ -1,0 +1,16 @@
+{"file": "tools/test-gates.json", "reason": "门禁配置权威：两个 Cooking P1 gate 的步骤定义，本任务验收门槛；预期不改动。"}
+{"file": "Docs/AbilityKit测试门禁与批量回归规范.md", "reason": "门禁规范文档：核对 gate 步骤与描述无需同步（不新增 gate）。"}
+{"file": ".trellis/tasks/09-21-cooking-et-closed-loop-acceptance/prd.md", "reason": "K01-K08 逐条核对：内容直达、全链路、订单与结算、完成形态与端走、拒绝零变更、确定性、回归、文档。"}
+{"file": ".trellis/tasks/09-21-cooking-et-closed-loop-acceptance/design.md", "reason": "契约决策与实现一致：宿主驱动模型、Snapshot 暴露理由、帧结构断言、计数器差异口径在 §6 显式记录。"}
+{"file": ".trellis/tasks/09-21-cooking-et-closed-loop-acceptance/implement.md", "reason": "阶段 1-5 执行清单：快照暴露、E01-E03、双 gate、变异测试、证据与 spec 修约、归档。"}
+{"file": "src/AbilityKit.Game.Cooking/CookingContentCatalog.cs", "reason": "产品侧唯一改动：CookingContent.Snapshot 暴露（加载路径单一身份）；加载器与供应实例化保持不变。"}
+{"file": "src/AbilityKit.ET.Runtime.Tests/CookingLevelEtHostTests.cs", "reason": "回归基线：24 个宿主机制测试与三个二进制指纹金样（pickup/start-process/put-in）字节不变。"}
+{"file": "src/AbilityKit.ET.Runtime.Tests/CookingVerticalSliceTests.cs", "reason": "回归基线：legacy CookingRecipeTickHost 纵切（最小 fixture）保持原写法通过。"}
+{"file": "src/AbilityKit.Game.Cooking.Tests/CookingKitchenLoopFixtureTests.cs", "reason": "领域闭环参照：L01-L05 的结果契约与供应/池物品 ID 命名，ET 验收断言与其同构。"}
+{"file": "src/AbilityKit.Game.Cooking/CookingRecipeLoop.cs", "reason": "证据写入器与领域契约（OpenOrder/CompleteWash 注入缝隙、SubmitOrder 拒绝分支、snapshot/canonical）不变。"}
+{"file": ".trellis/spec/cooking/cooking-recipe-loop.md", "reason": "ET Level 宿主闭环验收的修约记录：宿主时钟归属、注入缝隙口径、计数器差异口径与实现状态声明。"}
+{"file": ".trellis/spec/cooking/index.md", "reason": "头部追加四次修约说明；P2 行补 ET 侧闭环验收状态。"}
+{"file": "Docs/design/CookingGame/progress.md", "reason": "新增'2026-09-21 ET Level 闭环验收增量'一节：门禁实测数字、证据位置与非宣称清单。"}
+{"file": "Docs/Todo.md", "reason": "P0-C1 闭环验收条勾选并引用证据；总体判断与推荐顺序同步。"}
+{"file": "src/AbilityKit.ET.Runtime.Tests/CookingLevelClosedLoopTests.cs", "reason": "本任务新增验收：E01 正式内容全链路经 CookingLevelEtHost（17 命令 + 10 时钟帧、帧结构与 AdvanceTicks 保留拒绝）、E02 拒绝零变更两级证明（命令级版本相等 + 对照臂 canonical）、E03 两遍 canonical/Sha256 一致；evidence 落 artifacts/cooking-et-closed-loop/。"}
+{"file": ".trellis/tasks/09-21-cooking-et-closed-loop-acceptance/research/verification-2026-09-21.md", "reason": "验收方法、双 gate 实际输出、独立复验、四项变异测试结果与未覆盖边界。"}

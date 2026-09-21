@@ -1,0 +1,6 @@
+{"file": ".trellis/spec/cooking/cooking-recipe-loop.md", "reason": "P2 行为契约：七项动作、两种完成形态、订单簿与注入缝隙（OpenOrder/CompleteWash）及 2026-09-21 三次修约记录，本任务 ET 侧闭环以其为上游。"}
+{"file": ".trellis/spec/cooking/cooking-config-validation.md", "reason": "P3 配置契约：schema v2 候选/快照/身份形状；本任务暴露内容快照供 Level 生命周期消费，需核对该契约边界。"}
+{"file": ".trellis/spec/cooking/index.md", "reason": "spec index：修约程序与 P2 行状态表述，归档前需同步。"}
+{"file": "Docs/Todo.md", "reason": "P0-C1 未勾项'让 ET fixed-tick host 承载同一条番茄蛋花汤闭环验收'即本任务交付对象，完成后需勾选并引用证据。"}
+{"file": "Docs/design/CookingGame/progress.md", "reason": "跨阶段状态入口：第 4/5 节记录领域闭环与正式内容交付，本任务需新增一节且不提前宣称范围外能力。"}
+{"file": "Docs/design/CookingGame/technical-roadmap.md", "reason": "ET Phase A 单机 fixed-tick 路线：宿主只承载生命周期与 driver seam、不复制权威状态，本任务验收不得越过该边界。"}

@@ -46,6 +46,9 @@ public sealed record CookingContent(
     IReadOnlyList<CookingSupplyEntryDefinition> StandardInitialSupply,
     CookingConfigurationIdentity Identity)
 {
+    /// <summary>加载时经 v2 校验得到的快照；Level 生命周期与 preparation 身份从同一份已验证内容取得。</summary>
+    public CookingConfigurationSnapshot Snapshot { get; init; } = null!;
+
     public IReadOnlyDictionary<DefinitionId, CookingItemDefinition> Items { get; init; } =
         Candidate.Items.ToDictionary(item => item.Id);
     public IReadOnlyDictionary<StationSlotId, CookingApplianceDefinition> Appliances { get; init; } =
@@ -128,6 +131,7 @@ public static class CookingContentCatalog
 
         return new CookingContent(candidate, snapshot.OrderTemplates, snapshot.StandardInitialSupply, snapshot.Identity)
         {
+            Snapshot = snapshot,
             Items = snapshot.Items,
             Appliances = snapshot.Appliances,
             Recipes = snapshot.Recipes,

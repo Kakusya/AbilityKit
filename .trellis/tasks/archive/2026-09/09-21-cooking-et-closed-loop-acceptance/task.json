@@ -1,0 +1,29 @@
+{
+  "id": "cooking-et-closed-loop-acceptance",
+  "name": "cooking-et-closed-loop-acceptance",
+  "title": "Cooking ET Level 闭环验收",
+  "description": "让 ET fixed-tick Level 宿主承载同一条番茄蛋花汤闭环验收：从正式内容目录（cooking-definition-v2）构造 fixture 与标准初始供应，经 CookingLevelEtHost 的命令 ingress 与固定 Tick 驱动全链路（取料、预处理、多输入煮制、端走继续、倒出、开单、提交、洗碗回池），验收结果状态、确定性与 evidence；指纹金样与命令 wire 形状不变。评分、失败条件、前厅、传输与 Unity 范围外。",
+  "status": "completed",
+  "dev_type": null,
+  "scope": null,
+  "package": null,
+  "priority": "P1",
+  "creator": "Li He",
+  "assignee": "Li He",
+  "createdAt": "2026-09-21",
+  "completedAt": "2026-09-21",
+  "branch": "master",
+  "base_branch": "master",
+  "worktree_path": null,
+  "commit": null,
+  "pr_url": null,
+  "subtasks": [],
+  "children": [],
+  "parent": null,
+  "relatedFiles": [],
+  "notes": "",
+  "meta": {
+    "acceptance_gate": "cooking-et-level-runtime",
+    "unity_scope": "prohibited"
+  }
+}

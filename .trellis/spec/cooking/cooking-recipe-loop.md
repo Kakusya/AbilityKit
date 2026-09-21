@@ -16,6 +16,23 @@
 - 仍未实现（范围外）：评分/收益/评价与小关结算、失败条件与失败重试、前厅顾客/NPC 过程与订单生成节奏、过度加工与烧焦、跨小关装修/道具/Buff、检查点、Level/Map schema 对内容的正式引用（P3）、生产传输、真实 LAN、Unity 一切范围。
 - 推定项（无单独 owner 裁决原文，实现按 task design §9 执行）：供应 location 语法与实例 ID 生成规则、订单模板只声明“要求 recipe + 要求容器定义”、开单/提交新增 reason 的命名、结算记录字段集、内容文档位置与随程序集输出、`AcceptedOrders` 保留为 Completed 订单 ID 列表、两处 v2 校验放宽。
 
+## 2026-09-21 ET Level 宿主闭环验收修约（任务 09-21-cooking-et-closed-loop-acceptance）
+
+来源：`Docs/Todo.md` P0-C1 未勾项“让 ET fixed-tick host 承载同一条番茄蛋花汤闭环验收”与 owner“继续下一个任务”的指示，经 Trellis task `09-21-cooking-et-closed-loop-acceptance` 实现并验证。本次修约把“闭环只在领域仿真层运行、ET 侧仍是最小 fixture”改为“ET fixed-tick Level 宿主（`CookingLevelEtHost`）承载同一 fixture 的全链路闭环验收”，验证证据见 task `check.jsonl`、`research/verification-2026-09-21.md` 与 `artifacts/cooking-et-closed-loop/`。评分/失败条件/前厅/传输/Unity 仍范围外。
+
+| 位置 | 旧条款（原文可定位） | 新条款 | 来源 |
+|---|---|---|---|
+| Requirement「加工进度与产物必须由模拟逻辑驱动」（宿主边界） | 宿主侧时间推进未被闭环覆盖；`AdvanceTicks` 与 fixed tick 的关系只在最小 fixture 中断言 | 宿主拥有时钟：玩家命令经 `TryEnqueue` + `Tick()` 每帧执行一个最小批次再推进一次 fixed tick，`AdvanceTicks` 在 admission 即被 `ReservedClockOperation` 拒绝；加工完成只由宿主帧驱动（切 2、打蛋 2、煮 6 个纯时钟帧）。闭环验收显式钉住该边界 | 实现契约：既有 `CookingLevelEtHost` admission 与 fixed-tick 行为（09-17 task 落地），本次补闭环级验收 |
+| Requirement「装盘与提交订单是独立的权威原子步骤」（注入缝隙） | 开单/清洗完成是领域直接调用，宿主拥有仿真后是否仍可调用未在闭环中验证 | 帧间注入口径确认：`OpenOrder`（前厅）与 `CompleteWash`（NPC）不走命令路径、不受 authority gate 约束，在宿主 Running 期间帧间直接调用；提交经命令路径执行并触发洗碗端口。闭环验收按此口径执行 | 实现契约：正式内容 task 的“注入缝隙对称”设计，本次在宿主侧验证 |
+| Requirement「加工进度与产物必须由模拟逻辑驱动」（计数器口径） | 无（新增口径） | 宿主闭环与领域闭环的 canonical 不要求字节一致：领域用 `AdvanceTicks` 一次完成切番茄、显式帧 1–8（终态 `LogicalTick=8`）；宿主每帧一个 tick（17 命令帧 + 10 时钟帧，终态 `LogicalTick=27`）。“同一条闭环”指同一 fixture、同一动作序列语义、同一结果契约，加 ET 侧自身确定性重放；计数器差异不是回归 | 实现契约：task design §6（宿主拥有时钟的必然结果），显式记录以防误判 |
+| Requirement「取料与加工必须复用权威物品交互边界」（拒绝零变更） | 拒绝“零变更”在领域层以整段 canonical 前后一致证明 | 宿主层两级证明：(a) 命令级——拒绝结果 `StateVersion` 等于执行前版本且无事件；(b) 帧级——被拒绝的命令帧与同序列纯时钟帧（对照臂）到达同一 canonical（每帧固有的 tick 推进由对照臂抵消） | 实现契约：task design §5；领域 L03 语义在宿主命令路径的对应 |
+
+### 实现状态声明
+
+- 已实现并验证（单机纯 C#）：`CookingContent` 暴露加载时经 v2 校验的快照（Level 生命周期与 preparation 身份同一来源）；`CookingLevelClosedLoopTests`（E01 全链路 17 命令 + 10 时钟帧、E02 拒绝零变更对照臂、E03 两遍 canonical/Sha256 一致）；宿主失败路径的释放保证（`RunLoop`/`CreateStartedHost` 异常时释放进程级单例宿主）。证据见 task `check.jsonl` 与 `artifacts/cooking-et-closed-loop/`。
+- 仍未实现（范围外）：评分/收益/评价与小关结算、失败条件与失败重试、前厅与订单生成节奏、过度加工与烧焦、跨小关规则、检查点与 snapshot/checkpoint 分离、生产传输、真实 LAN、Unity 一切范围、ET Phase B 权威迁移。
+- 推定项（无单独 owner 裁决原文，实现按 task design 执行）：ET 侧 evidence 的 `fixtureId` 取 `et-level-closed-loop`、E03 不落证据（纯确定性比较）、变异测试选项、宿主失败路径释放的测试卫生规则。
+
 ## 2026-09-21 仿真落地修约（任务 09-21-cooking-kitchen-loop-simulation）
 
 来源：owner 逐轮决定（09-19 notes §11.1 第一至九轮）与任务①修约契约，经实现落地为可验证行为。本次修约把上一轮“属后续任务”的容器即物品、七项动作与闭环 fixture 从“未实现”改为“已在单机纯 C# 范围实现并验证”，验证证据见 task `check.jsonl` 与 `artifacts/cooking-kitchen-loop-domain/`。前厅（顾客、NPC 询问过程、订单生成节奏、用餐离席）、小关时间结构、失败条件仍范围外。
@@ -51,14 +68,14 @@
 
 ## 2026-09-16 收口状态
 
-- R01-R06 纯 .NET fixture loop 已验证并作为 limited delivery 收口。2026-09-21 两次增量（厨房闭环仿真、正式内容与 order owner）已分别落地并验证，见本文件头部两则修约；评分/收益/评价、失败条件、前厅与真实 LAN 仍未启动，见 successor backlog。
+- R01-R06 纯 .NET fixture loop 已验证并作为 limited delivery 收口。2026-09-21 三次增量（厨房闭环仿真、正式内容与 order owner、ET Level 宿主闭环验收）已分别落地并验证，见本文件头部三则修约；评分/收益/评价、失败条件、前厅与真实 LAN 仍未启动，见 successor backlog。
 - 对应 `09-15-cooking-*` task 已按 `completed-limited-scope` 语义归档；`completed` 不表示完整 P2 或完整 P0-P6 产品出口。
 - Cooking Unity package、asmdef、scene、authoring、projection、UI、EditMode 与 scene smoke 长期禁止实施；原 Unity 场景及宿主无关不变量统一见 [`future-scope.md`](../../../Docs/design/CookingGame/future-scope.md)。
 - 本文以下 authority、identity、atomicity、sequence、stale-input、persistence 或 measurement 行为不变量继续有效；未完成的非 Unity 范围不得写成已实现，P1-P6 入口见 [`successor-backlog.md`](../../../Docs/design/CookingGame/successor-backlog.md)。
 
 > 交付状态：**completed-limited-scope**；原完整能力迁移状态为 `blocked`。本规范由只读来源快照 `.trellis/migration/legacy-cooking-changes/add-cooking-recipe-loop/specs/cooking-recipe-loop/spec.md` 转换；原始 SHA-256 见 [迁移清单](../../migration/legacy-cooking-changes/manifest.json)。
 >
-> 当前已实现并验证：R01-R06 单输入/单工序/3 Tick fixture；2026-09-21 厨房闭环仿真（容器即物品、七项动作、两种完成形态、订单要求与碗池、批次争抢仲裁）与正式内容及 order owner（数据驱动内容目录、订单簿、提交/结算契约）。正式 score、失败处理、前厅订单生成节奏与真实 LAN R07 是 successor backlog 中未启动、未批准的 non-Unity 范围；Unity 是 prohibited/not-run future scope。
+> 当前已实现并验证：R01-R06 单输入/单工序/3 Tick fixture；2026-09-21 厨房闭环仿真（容器即物品、七项动作、两种完成形态、订单要求与碗池、批次争抢仲裁）、正式内容及 order owner（数据驱动内容目录、订单簿、提交/结算契约）与 ET Level 宿主闭环验收（正式内容全链路经宿主命令路径与固定 Tick 驱动、拒绝零变更两级证明、确定性重放）。正式 score、失败处理、前厅订单生成节奏与真实 LAN R07 是 successor backlog 中未启动、未批准的 non-Unity 范围；Unity 是 prohibited/not-run future scope。
 
 ## 当前边界
 
@@ -69,8 +86,8 @@
 ## 迁移边界
 
 - 依赖：P0；联机验收时还依赖 P1 的稳定 session。
-- 阻塞：评分、失败处理与前厅订单生成节奏均待 owner 确认（正式配方与订单 owner 已于 2026-09-21 由 task `09-21-cooking-formal-content-and-orders` 落地，见头部修约）。
-- 验证状态：R01-R06 与 2026-09-21 两次增量已实现并通过 focused pure .NET tests（证据见对应归档 task）；R07 two-PC LAN、正式 score/失败处理/前厅节奏属于 successor backlog，未启动、未批准、未执行。
+- 阻塞：评分、失败处理与前厅订单生成节奏均待 owner 确认（正式配方与订单 owner 已于 2026-09-21 由 task `09-21-cooking-formal-content-and-orders` 落地，ET Level 宿主闭环验收已于同日由 task `09-21-cooking-et-closed-loop-acceptance` 落地，见头部修约）。
+- 验证状态：R01-R06 与 2026-09-21 三次增量已实现并通过 focused pure .NET tests（证据见对应归档 task）；R07 two-PC LAN、正式 score/失败处理/前厅节奏属于 successor backlog，未启动、未批准、未执行。
 
 ## 迁移的行为草案
 
