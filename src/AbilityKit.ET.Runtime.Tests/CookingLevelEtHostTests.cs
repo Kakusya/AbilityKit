@@ -620,6 +620,71 @@ public sealed class CookingLevelEtHostTests
 
     [Fact]
     [Trait("Gate", "CookingLevelRuntime")]
+    public void H02_successful_successor_keeps_the_kitchen_and_stays_created()
+    {
+        var fixture = CreateFixture();
+        using var host = fixture.CreateStartedHost(simulation =>
+        {
+            simulation.OpenOrder(new OrderId("order-1"), new OrderTemplateId("order-template"));
+            simulation.AddIngredient(fixture.Ingredient, fixture.Raw, fixture.Player);
+            Assert.Equal(CookingRecipeOutcome.Accepted, simulation.Submit(fixture.Command(100, "setup-start",
+                CookingRecipeOperation.StartProcess, recipe: fixture.Recipe, item: fixture.Ingredient,
+                station: fixture.Station, expectedVersion: 1)).Outcome);
+        });
+        var before = fixture.Simulation.ExportCheckpoint();
+        Assert.NotEmpty(before.Orders);
+        Assert.NotEmpty(before.Processes);
+        Assert.True(host.Tick().Accepted);
+        var frameAfterPlay = host.HostFrameSequence;
+        var ingredient = fixture.Ingredient;
+
+        Assert.True(host.BeginEnd(CookingLevelOutcome.Success).Accepted);
+        Assert.True(host.CompleteEnd().Accepted);
+        var successor = host.CreateSuccessor(new LevelId("level-2"), 2);
+
+        Assert.True(successor.Accepted, successor.Reason);
+        Assert.Equal(CookingLevelState.Created, host.Lifecycle.State);
+        Assert.Equal(1, successor.RetainedProcessCount);
+        Assert.Equal(1, successor.ClearedOrderCount);
+        Assert.True(host.HostFrameSequence >= frameAfterPlay);
+        var handed = fixture.Simulation.ExportCheckpoint();
+        Assert.Contains(handed.Items, item => item.Id == ingredient);
+        Assert.NotEmpty(handed.Processes);
+        Assert.Empty(handed.Orders);
+        Assert.Empty(handed.Settlements);
+        Assert.Equal(0, handed.LogicalTick);
+        Assert.Equal(CookingLevelFrameReason.LevelNotRunning, host.Tick().Reason);
+        Assert.Equal(CookingLevelAdmissionReason.LevelNotRunning,
+            host.TryEnqueue(fixture.Envelope(1, "early", CookingRecipeOperation.Pickup, item: ingredient, expectedVersion: 1)).Reason);
+
+        var preparation = fixture.Preparation with { Level = new LevelId("level-2") };
+        Assert.True(host.Prepare(preparation).Accepted);
+        Assert.True(host.Start().Accepted);
+        Assert.Equal(CookingLevelState.Running, host.Lifecycle.State);
+        Assert.Contains(fixture.Simulation.ExportCheckpoint().Items, item => item.Id == ingredient);
+        Assert.Empty(fixture.Simulation.ExportCheckpoint().Orders);
+        Assert.True(host.Tick().Accepted);
+    }
+
+    [Fact]
+    [Trait("Gate", "CookingLevelRuntime")]
+    public void H03_running_level_cannot_hand_off()
+    {
+        var fixture = CreateFixture();
+        using var host = fixture.CreateStartedHost(simulation =>
+            simulation.AddIngredient(fixture.Ingredient, fixture.Raw, fixture.Player));
+        var before = fixture.Simulation.ExportCheckpoint().CanonicalText();
+
+        var successor = host.CreateSuccessor(new LevelId("level-2"), 2);
+
+        Assert.False(successor.Accepted);
+        Assert.Equal(CookingLevelLifecycleReason.InvalidState.ToString(), successor.Reason);
+        Assert.Equal(before, fixture.Simulation.ExportCheckpoint().CanonicalText());
+        Assert.Equal(CookingLevelState.Running, host.Lifecycle.State);
+    }
+
+    [Fact]
+    [Trait("Gate", "CookingLevelRuntime")]
     public void Successor_install_failure_rolls_back_partial_tree_keeps_old_binding_and_faults_host()
     {
         var injector = new OneShotFailureInjector(CookingLevelEtHostFailurePoint.DriverCreated, triggerOnCall: 2);

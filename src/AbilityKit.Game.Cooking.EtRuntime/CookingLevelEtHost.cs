@@ -167,7 +167,7 @@ public sealed record CookingLevelHostOperationResult(
     long Version,
     IReadOnlyList<CookingLevelPendingDisposition> Dispositions);
 
-public sealed record CookingLevelHostGenerationResult(
+    public sealed record CookingLevelHostGenerationResult(
     bool Accepted,
     string Reason,
     CookingLevelScope SourceScope,
@@ -177,7 +177,10 @@ public sealed record CookingLevelHostGenerationResult(
     bool SourceGameplayClosed,
     CookingLevelScope? NewScope,
     CookingLevelLifecycle? Lifecycle,
-    IReadOnlyList<CookingLevelPendingDisposition> Dispositions);
+    IReadOnlyList<CookingLevelPendingDisposition> Dispositions,
+    int RetainedProcessCount = 0,
+    int ClearedOrderCount = 0,
+    int ClearedSettlementCount = 0);
 
 public enum CookingLevelCheckpointExportReason
 {
@@ -523,7 +526,10 @@ public sealed class CookingLevelEtHost : IDisposable
         var result = RunLifecycleOperation(_lifecycle.CompleteEnd);
         if (result.Accepted)
         {
-            ReleaseSimulationOwnership();
+            if (_lifecycle.Outcome == CookingLevelOutcome.Success)
+                DetachEndedSimulation();
+            else
+                ReleaseSimulationOwnership();
             RemoveLevel();
         }
         return Operation(result);
@@ -550,9 +556,38 @@ public sealed class CookingLevelEtHost : IDisposable
             var reason = _lifecycle.TryCreateSuccessorCandidate(newLevelId, newEpoch, out var candidate);
             return new CandidateResult(reason, candidate);
         });
-        return candidateResult.Reason == CookingLevelLifecycleReason.None
-            ? InstallGeneration(candidateResult.Candidate!, isRetry: false)
-            : RejectGeneration(candidateResult.Reason);
+        if (candidateResult.Reason != CookingLevelLifecycleReason.None)
+            return RejectGeneration(candidateResult.Reason);
+        if (_ownedSimulation is null)
+            return RejectGeneration(CookingLevelLifecycleReason.GameplayUnavailable);
+
+        var candidate = candidateResult.Candidate!;
+        var sourceCheckpoint = _ownedSimulation.ExportCheckpoint();
+        var installed = InstallGeneration(candidate, isRetry: false);
+        if (!installed.Accepted)
+            return installed;
+
+        var handoff = _ownedSimulation.ExportSuccessHandoff();
+        var adopted = candidate.AdoptSuccessorKitchen(_ownedSimulation);
+        var accepted = adopted == CookingLevelLifecycleReason.None
+            ? _ownedSimulation.AcceptSuccessHandoff(handoff)
+            : CookingRecipeCheckpointRestoreResult.Reject(CookingCheckpointRestoreReason.NotSuccessHandoff);
+        if (adopted != CookingLevelLifecycleReason.None || !accepted.Accepted)
+        {
+            var restored = _ownedSimulation.RestoreExportedCheckpoint(sourceCheckpoint);
+            if (restored != CookingCheckpointRestoreReason.None)
+                throw Fault(new InvalidOperationException(
+                    $"The source kitchen could not be restored after a rejected handoff: {restored}."));
+            throw Fault(new InvalidOperationException(
+                $"The successor kitchen could not be adopted: {adopted}; handoff {accepted.Reason}."));
+        }
+
+        return installed with
+        {
+            RetainedProcessCount = handoff.Processes.Count,
+            ClearedOrderCount = sourceCheckpoint.Orders.Count,
+            ClearedSettlementCount = sourceCheckpoint.Settlements.Count,
+        };
     }
 
     /// <summary>
@@ -1118,6 +1153,16 @@ public sealed class CookingLevelEtHost : IDisposable
         _ownedSimulation = null;
     }
 
+    /// <summary>
+    /// 成功结束只解除 ET driver 绑定，厨房对象留给随后的 <see cref="CreateSuccessor"/>。
+    /// 失败和中止仍走 <see cref="ReleaseSimulationOwnership"/>，不把失败现场交到下一代。
+    /// </summary>
+    private void DetachEndedSimulation()
+    {
+        if (Driver is not null && !Driver.IsDisposed)
+            Driver.Simulation = null;
+    }
+
     private T RunLifecycleOperation<T>(Func<T> operation)
     {
         ArgumentNullException.ThrowIfNull(operation);
@@ -1182,9 +1227,15 @@ public sealed class CookingLevelEtHost : IDisposable
         try
         {
             if (_lifecycle.State == CookingLevelState.Ending)
+            {
                 RunLifecycleOperation(_lifecycle.CompleteEnd);
+                if (_lifecycle.Outcome == CookingLevelOutcome.Success)
+                    DetachEndedSimulation();
+            }
             else if (_lifecycle.State != CookingLevelState.Ended)
+            {
                 BestEffortAbortLifecycle();
+            }
             if (_ownedSimulation is not null)
                 _ownedSimulation.CloseLifecycle();
             ReleaseSimulationOwnership();

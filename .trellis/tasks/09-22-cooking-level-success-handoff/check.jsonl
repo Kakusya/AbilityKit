@@ -1,0 +1,6 @@
+{"file": ".trellis/tasks/09-22-cooking-level-success-handoff/prd.md", "reason": "R1-R6 accepted by domain H01/H03 and host H02/H03."}
+{"file": "src/AbilityKit.Game.Cooking/CookingRecipeCheckpoint.cs", "reason": "ExportSuccessHandoff and AcceptSuccessHandoff."}
+{"file": "src/AbilityKit.Game.Cooking/CookingLevelLifecycle.cs", "reason": "Successor Start binds the handed kitchen."}
+{"file": "src/AbilityKit.Game.Cooking.EtRuntime/CookingLevelEtHost.cs", "reason": "CreateSuccessor installs the handed kitchen and stays Created."}
+{"file": "local/Logs/test-gates/20260922-112553-cooking-kitchen-loop/cooking-kitchen-loop/gate-summary.json", "reason": "cooking-kitchen-loop exit 0: focused 61/61, Cooking 182/182, ET runtime 49/49."}
+{"file": "local/Logs/test-gates/20260922-112611-cooking-et-level-runtime/cooking-et-level-runtime/gate-summary.json", "reason": "cooking-et-level-runtime exit 0: Cooking 182/182, ET runtime 49/49."}

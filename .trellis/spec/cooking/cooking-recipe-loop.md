@@ -1,4 +1,19 @@
 # P2 一条完整配方：cooking-recipe-loop
+## 2026-09-22 小关成功交接修约（任务 09-22-cooking-level-success-handoff）
+
+来源：`Docs/Todo.md` P0-C1「落实成功进入下一小关」，产品语义基准为 `Docs/design/CookingGame/reference/product-lifetimes.md` §5.1。只覆盖成功收口后的厨房保留与本关上下文清除。失败重开、工位升级、durable storage 仍未实现。
+
+| 位置 | 旧条款 | 新条款 | 来源 |
+|---|---|---|---|
+| 跨小关厨房 | `CreateSuccessor` 只换 Level 身份；下一次 `Start` 由工厂新建空厨房 | 成功 `Ended` 后，`ExportSuccessHandoff` 保留物品、加工、容器、脏/净碗、消耗产物账、下一 Process 与下一产物 ID；清除订单、结算、去重、两类事件；逻辑 Tick、事件序号、状态版本、下一结算序号与 Level 绑定归零。宿主把这份厨房换入下一代并停在 `Created` | 实现契约：task design；§5.1 |
+| 准备态 | 无厨房只读条款 | `Created` / `Preparing` 不提供改厨房入口。延续状态只能在下一代 `Running` 后由权威命令修改 | 实现契约：task PRD R4 |
+| 同代际恢复 | 恢复整册换入 | 不变。恢复 checkpoint 不是交接载荷；`AcceptSuccessHandoff` 拒绝仍带订单、Tick 或 Level 绑定的载荷 | 既有恢复契约 |
+
+### 实现状态声明
+
+- 已实现并验证（单机纯 C#）：领域 H01/H03，宿主 H02/H03。成功换代保留现场、清除本关上下文、停在 `Created`，随后 `Prepare` + `Start` 绑定同一份厨房。
+- 仍未实现：失败重开如何重建标准供应、工位升级迁移、写盘、评分、装修/道具/Buff、前厅。
+
 ## 2026-09-22 恢复 checkpoint 契约修约（任务 09-22-cooking-checkpoint-recovery）
 
 来源：`Docs/Todo.md` P0-C1 前两条未勾项（“区分同步 snapshot 与恢复 checkpoint”与“导出 checkpoint -> 销毁 host -> 重建 -> 继续运行”等价验收），产品语义基准为 `Docs/design/CookingGame/reference/product-lifetimes.md` §4.1（HostFrameSequence 单调不 reset、Level 身份含 MatchId/RestaurantRuntime/LevelId/LevelEpoch），经 Trellis task `09-22-cooking-checkpoint-recovery` 实现并验证。验证证据见 task `check.jsonl`、`research/verification-2026-09-22.md` 与 `artifacts/cooking-checkpoint-recovery/`。durable storage、跨小关 checkpoint 产品语义、失败条件、前厅、传输与 Unity 仍范围外。

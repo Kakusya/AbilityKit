@@ -216,6 +216,7 @@ public enum CookingCheckpointRestoreReason
     DeduplicationEntryInvalid,
     EventSequenceInvalid,
     CounterInvalid,
+    NotSuccessHandoff,
 }
 
 public sealed record CookingRecipeCheckpointRestoreResult(
@@ -290,6 +291,8 @@ public sealed partial class CookingRecipeSimulation
     public CookingRecipeCheckpointRestoreResult RestoreCheckpoint(CookingRecipeCheckpoint checkpoint)
     {
         ArgumentNullException.ThrowIfNull(checkpoint);
+        if (_lifecycleClosed)
+            return CookingRecipeCheckpointRestoreResult.Reject(CookingCheckpointRestoreReason.LifecycleClosed);
         if (!IsGameplayMutationOpen)
             return CookingRecipeCheckpointRestoreResult.Reject(CookingCheckpointRestoreReason.LifecycleClosed);
 
@@ -309,6 +312,92 @@ public sealed partial class CookingRecipeSimulation
 
         return new CookingRecipeCheckpointRestoreResult(true, CookingCheckpointRestoreReason.None, checkpoint);
     }
+
+    /// <summary>
+    /// 成功交接载荷：保留厨房现场与三个 ID 计数器，清除本关订单、结算、去重账本、
+    /// 命令/tick 事件，并把逻辑 Tick、事件序号、状态版本和 Level 绑定归零。
+    /// 这不是同代际恢复；<see cref="ExportCheckpoint"/> 仍整册导出。
+    /// </summary>
+    public CookingRecipeCheckpoint ExportSuccessHandoff()
+    {
+        var checkpoint = ExportCheckpoint();
+        return checkpoint with
+        {
+            StateVersion = 0,
+            LogicalTick = 0,
+            Orders = Array.Empty<CookingRecipeCheckpointOrder>(),
+            Settlements = Array.Empty<CookingOrderSettlement>(),
+            NextSettlementSequence = 0,
+            Deduplication = Array.Empty<CookingRecipeCheckpointDeduplication>(),
+            Events = Array.Empty<CookingRecipeEvent>(),
+            EventSequence = 0,
+            TickEvents = Array.Empty<CookingRecipeTickEvent>(),
+            LevelScope = null,
+        };
+    }
+
+    /// <summary>
+    /// 把一份成功交接载荷整册换入。形状必须已经是交接裁剪（本关上下文为空、水位归零、未绑定 Level）；
+    /// 其它形状结构化拒绝且零变更。接受后走 <see cref="RestoreCheckpoint"/> 的外键校验。
+    /// </summary>
+    public CookingRecipeCheckpointRestoreResult AcceptSuccessHandoff(CookingRecipeCheckpoint handoff)
+    {
+        ArgumentNullException.ThrowIfNull(handoff);
+        if (!IsSuccessHandoffShape(handoff))
+            return CookingRecipeCheckpointRestoreResult.Reject(CookingCheckpointRestoreReason.NotSuccessHandoff);
+        if (handoff.NextProcessId < _nextProcessId || handoff.NextProductId < _nextProductId ||
+            handoff.NextSettlementSequence < _nextSettlementSequence)
+        {
+            return CookingRecipeCheckpointRestoreResult.Reject(CookingCheckpointRestoreReason.CounterInvalid);
+        }
+
+        // 源代际 CompleteEnd 会关掉 gameplay mutation。成功交接是这次关闭之后唯一允许的换入，
+        // 而且只在厨房还没有绑到下一代时发生一次。换入后重新打开，交给下一代 Start 绑定。
+        var closedForHandoff = _lifecycleClosed;
+        var detachedGate = _lifecycleGate;
+        if (closedForHandoff)
+        {
+            _lifecycleClosed = false;
+            _lifecycleGate = null;
+        }
+        var restored = RestoreCheckpoint(handoff);
+        if (!restored.Accepted && closedForHandoff)
+        {
+            _lifecycleClosed = true;
+            _lifecycleGate = detachedGate;
+        }
+        else if (restored.Accepted)
+        {
+            _lifecycleClosed = false;
+            _lifecycleGate = null;
+            _levelScope = null;
+        }
+        return restored;
+    }
+
+    /// <summary>
+    /// 交接换入失败后的内部装回。不走对外的生命周期开关：调用前的关闭状态保持不变。
+    /// </summary>
+    internal CookingCheckpointRestoreReason RestoreExportedCheckpoint(CookingRecipeCheckpoint checkpoint)
+    {
+        ArgumentNullException.ThrowIfNull(checkpoint);
+        var validation = ValidateCheckpoint(checkpoint);
+        if (validation != CookingCheckpointRestoreReason.None)
+            return validation;
+        InstallCheckpointState(checkpoint);
+        return CookingCheckpointRestoreReason.None;
+    }
+
+    private static bool IsSuccessHandoffShape(CookingRecipeCheckpoint handoff) =>
+        handoff.StateVersion == 0 &&
+        handoff.LogicalTick == 0 &&
+        handoff.EventSequence == 0 &&
+        handoff.LevelScope is null &&
+        handoff.Orders.Count == 0 &&
+        handoff.Settlements.Count == 0 &&
+        handoff.Deduplication.Count == 0 &&
+        handoff.Events.Count == 0 &&
+        handoff.TickEvents.Count == 0;
 
     private CookingCheckpointRestoreReason ValidateCheckpoint(CookingRecipeCheckpoint checkpoint)
     {

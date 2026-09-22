@@ -360,6 +360,7 @@ public sealed class CookingLevelLifecycle
     private CookingRecipeSimulation? _gameplay;
     private bool _gameplayClosed;
     private bool _hasCreatedNextGeneration;
+    private bool _receivesSuccessorKitchen;
     private bool _isStarting;
     private bool _startReentered;
 
@@ -391,6 +392,12 @@ public sealed class CookingLevelLifecycle
     public IReadOnlyList<CookingLevelLifecycleEvent> EventHistory => _events.AsReadOnly();
     public bool IsGameplayAdmissionOpen => State == CookingLevelState.Running && _gameplay is not null && !_gameplayClosed;
     public bool HasCreatedNextGeneration => _hasCreatedNextGeneration;
+
+    /// <summary>
+    /// 这一代是成功交接的下一小关：厨房已经换入，<see cref="Start"/> 不得再向工厂要一份空仿真。
+    /// 普通新开局保持 false。
+    /// </summary>
+    internal bool ReceivesSuccessorKitchen => _receivesSuccessorKitchen;
 
     internal CookingConfigurationSnapshot Configuration => _configuration;
     internal ICookingLevelGameplayFactory GameplayFactory => _gameplayFactory;
@@ -466,12 +473,16 @@ public sealed class CookingLevelLifecycle
             return Reject(CookingLevelLifecycleReason.InvalidState);
         }
 
-        CookingRecipeSimulation? gameplay = null;
+        if (_receivesSuccessorKitchen && _gameplay is null)
+            return Reject(CookingLevelLifecycleReason.GameplayUnavailable);
+
+        CookingRecipeSimulation? gameplay = _receivesSuccessorKitchen ? _gameplay : null;
         _startReentered = false;
         _isStarting = true;
         try
         {
-            gameplay = _gameplayFactory.Create(Scope, _configuration);
+            if (!_receivesSuccessorKitchen)
+                gameplay = _gameplayFactory.Create(Scope, _configuration);
         }
         catch (Exception)
         {
@@ -500,11 +511,14 @@ public sealed class CookingLevelLifecycle
             return Reject(CookingLevelLifecycleReason.GameplayInitializationFailed);
         }
 
-        if (_startReentered || State != CookingLevelState.Ready || _gameplay is not null)
+        if (_startReentered || State != CookingLevelState.Ready ||
+            (!_receivesSuccessorKitchen && _gameplay is not null) ||
+            (_receivesSuccessorKitchen && !ReferenceEquals(_gameplay, gameplay)))
         {
             if (publicationAcquired)
                 publicationGuard!.Release(gameplay);
-            gameplay.CloseLifecycle();
+            if (!_receivesSuccessorKitchen)
+                gameplay.CloseLifecycle();
             return Reject(CookingLevelLifecycleReason.GameplayInitializationFailed);
         }
 
@@ -744,6 +758,21 @@ public sealed class CookingLevelLifecycle
             "level-successor-created",
             "created the next successful level generation",
             requireDifferentLevel: true);
+
+    /// <summary>
+    /// 把已经裁好的成功交接厨房挂到这一代上。只允许还在 <see cref="CookingLevelState.Created"/>、
+    /// 且尚未持有仿真的下一代调用。挂上后 <see cref="Start"/> 绑定这份厨房，不再向工厂新建。
+    /// </summary>
+    internal CookingLevelLifecycleReason AdoptSuccessorKitchen(CookingRecipeSimulation kitchen)
+    {
+        ArgumentNullException.ThrowIfNull(kitchen);
+        if (State != CookingLevelState.Created || _gameplay is not null || _receivesSuccessorKitchen)
+            return CookingLevelLifecycleReason.InvalidState;
+        _gameplay = kitchen;
+        _gameplayClosed = false;
+        _receivesSuccessorKitchen = true;
+        return CookingLevelLifecycleReason.None;
+    }
 
     private CookingLevelSuccessorResult CommitCandidate(
         CookingLevelLifecycle candidate,
