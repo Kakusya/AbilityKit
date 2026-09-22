@@ -93,6 +93,27 @@ public sealed class CookingFrontOfHouseTests
     }
 
     [Fact]
+    public void G01_a_served_guest_keeps_the_seat_until_dining_ends()
+    {
+        var house = new CookingFrontOfHouse(Schedule(serviceTicks: 1, diningTicks: 2));
+        var kitchen = Kitchen();
+        house.Step(kitchen, Template);
+        house.Step(kitchen, Template);
+        house.Step(kitchen, Template);
+        var order = new OrderId("table-1-order");
+        kitchen.MarkOrderCompletedForTest(order);
+
+        Assert.Equal(1, house.Step(kitchen, Template).SeatedCount);
+        Assert.False(house.CanSucceed);
+        Assert.Equal(1, house.Step(kitchen, Template).SeatedCount);
+
+        var left = house.Step(kitchen, Template);
+        Assert.Equal(0, left.SeatedCount);
+        Assert.True(left.CanSucceed);
+        Assert.Empty(kitchen.SettlementHistory);
+    }
+
+    [Fact]
     public void F05_success_finish_completes_the_current_inquiry_and_wash()
     {
         var house = House();

@@ -261,10 +261,43 @@ public sealed class CookingLevelClosedLoopTests
         Assert.True(host.Tick().Accepted);
         Assert.Single(fixture.Simulation.Orders);
 
+        Assert.False(host.TryFinishService().Accepted);
+        Assert.Equal(CookingLevelState.Running, host.Lifecycle.State);
         Assert.True(host.Pause().Accepted);
         var paused = host.Tick();
         Assert.False(paused.Accepted);
         Assert.Single(fixture.Simulation.Orders);
+    }
+
+    [Fact]
+    public void G02_service_finishes_only_after_the_seat_is_empty()
+    {
+        var content = LoadContent();
+        var bare = CreateFixture(content);
+        using var withoutHouse = bare.CreateStartedHost(state =>
+            CookingContentCatalog.ApplyStandardInitialSupply(state, content));
+        Assert.False(withoutHouse.TryFinishService().Accepted);
+        Assert.Equal(CookingLevelState.Running, withoutHouse.Lifecycle.State);
+        withoutHouse.Dispose();
+
+        var fixture = CreateFixture(content);
+        using var host = fixture.CreateStartedHost(state =>
+            CookingContentCatalog.ApplyStandardInitialSupply(state, content));
+        var house = new CookingFrontOfHouse(new CookingFrontOfHouseSchedule(1, 1, 2, 1, 2, 2, 9));
+        host.UseFrontOfHouse(house, SoupOrderTemplate);
+        Assert.True(host.Tick().Accepted);
+        Assert.False(host.TryFinishService().Accepted);
+        Assert.True(host.Tick().Accepted);
+        Assert.Single(fixture.Simulation.Orders);
+
+        fixture.Simulation.MarkOrderCompletedForTest(new OrderId("table-1-order"));
+        Assert.True(host.Tick().Accepted);
+        Assert.False(host.TryFinishService().Accepted);
+        Assert.True(host.Tick().Accepted);
+        Assert.True(host.Tick().Accepted);
+        var finished = host.TryFinishService();
+        Assert.True(finished.Accepted);
+        Assert.Equal(CookingLevelState.Ending, host.Lifecycle.State);
     }
 
     private sealed class TempSettlementDirectory : IDisposable

@@ -493,6 +493,15 @@ public sealed partial class CookingRecipeSimulation
         return new CookingOrderResult(true, "OrderUnsatisfied");
     }
 
+    /// <summary>测试入口：把已开订单标成完成，不写结算。</summary>
+    public void MarkOrderCompletedForTest(OrderId order)
+    {
+        if (!_orders.TryGetValue(order, out var state) || state.Status != CookingOrderStatus.Open)
+            throw new ArgumentException($"Order '{order}' is not open.", nameof(order));
+        _orders[order] = state with { Status = CookingOrderStatus.Completed, CompletedAtLogicalTick = LogicalTick };
+        _stateVersion++;
+    }
+
     /// <summary>测试入口：把一只在册干净碗标成待洗。不产生结算。</summary>
     public void MarkBowlDirtyForTest(ItemId bowl)
     {

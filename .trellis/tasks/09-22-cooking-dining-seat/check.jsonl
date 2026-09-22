@@ -1,0 +1,5 @@
+{"file": ".trellis/tasks/09-22-cooking-dining-seat/prd.md", "reason": "Acceptance is dining occupancy before service can finish."}
+{"file": "src/AbilityKit.Game.Cooking/CookingFrontOfHouse.cs", "reason": "A completed order holds the seat for the configured dining ticks."}
+{"file": "src/AbilityKit.Game.Cooking.EtRuntime/CookingLevelEtHost.cs", "reason": "TryFinishService accepts success only when the front of house can succeed."}
+{"file": "local/Logs/test-gates/20260922-232144-cooking-kitchen-loop/cooking-kitchen-loop/gate-summary.json", "reason": "cooking-kitchen-loop exit 0: focused 76/76, Cooking 197/197, ET runtime 56/56."}
+{"file": "local/Logs/test-gates/20260922-232204-cooking-et-level-runtime/cooking-et-level-runtime/gate-summary.json", "reason": "cooking-et-level-runtime exit 0: Cooking 197/197, ET runtime 56/56."}

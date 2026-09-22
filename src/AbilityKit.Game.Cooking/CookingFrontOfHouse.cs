@@ -160,10 +160,21 @@ public sealed class CookingFrontOfHouse
                 continue;
             }
 
-            if (table.Order is { } order && OrderClosed(kitchen, order))
+            if (table.Phase != CookingTablePhase.Dining && table.Order is { } served)
             {
-                table.Reset();
-                continue;
+                var status = OrderStatus(kitchen, served);
+                if (status == CookingOrderStatus.Completed.ToString())
+                {
+                    table.Phase = CookingTablePhase.Dining;
+                    table.TicksSeated = 0;
+                    continue;
+                }
+
+                if (status == CookingOrderStatus.Unsatisfied.ToString())
+                {
+                    table.Reset();
+                    continue;
+                }
             }
 
             if (table.TicksSeated < _schedule.WaitLimitTicks)
@@ -185,8 +196,8 @@ public sealed class CookingFrontOfHouse
         }
     }
 
-    private static bool OrderClosed(CookingRecipeSimulation kitchen, OrderId order) =>
-        kitchen.Orders.Any(candidate => candidate.Id == order && candidate.Status != CookingOrderStatus.Open.ToString());
+    private static string? OrderStatus(CookingRecipeSimulation kitchen, OrderId order) =>
+        kitchen.Orders.FirstOrDefault(candidate => candidate.Id == order)?.Status;
 
     private void TrySeatGuest()
     {

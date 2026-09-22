@@ -1,0 +1,4 @@
+{"file": ".trellis/spec/cooking/cooking-recipe-loop.md", "reason": "Front-of-house amendment must record dining occupancy."}
+{"file": ".trellis/tasks/09-22-cooking-dining-seat/prd.md", "reason": "Dining occupancy requirements and non-goals."}
+{"file": ".trellis/tasks/09-22-cooking-dining-seat/design.md", "reason": "Completed orders hold the table; TryFinishService gates success."}
+{"file": ".trellis/tasks/09-19-cooking-gameplay-business-discussion/prd.md", "reason": "Owner decision that a served guest stays seated while eating."}

@@ -537,6 +537,16 @@ public sealed class CookingLevelEtHost : IDisposable
         return Operation(RunLifecycleOperation(_lifecycle.Resume));
     }
 
+    /// <summary>前厅允许成功时才进入结束。没有前厅，或座位未空，都不改关卡。</summary>
+    public CookingLevelHostOperationResult TryFinishService()
+    {
+        Check();
+        if (_frontOfHouse is null || !_frontOfHouse.CanSucceed)
+            return new CookingLevelHostOperationResult(false, "ServiceNotFinished", _lifecycle.State.ToString(),
+                _lifecycle.Version, Array.Empty<CookingLevelPendingDisposition>());
+        return BeginEnd(CookingLevelOutcome.Success);
+    }
+
     public CookingLevelHostOperationResult BeginEnd(CookingLevelOutcome outcome)
     {
         Check();
