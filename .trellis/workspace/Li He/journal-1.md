@@ -204,3 +204,42 @@ Todo P0-C1 前两条未勾项落地：同步 snapshot 与恢复 checkpoint 显�
 ### Next Steps
 
 - 工位升级、确认结算写盘、失败条件仍未做。
+
+
+## Session 9: 前厅询问、洗碗与小关时间
+<!-- trellis-session: v=2 fp=f68ec376d923c201 -->
+
+**Date**: 2026-09-22
+**Task**: 前厅询问、洗碗与小关时间
+**Branch**: `master`
+
+### Summary
+
+一位固定伙伴问完才开单、空闲才洗碗；营业结束且座位空了才允许成功。三项已完成关卡任务已归档。
+
+### Main Changes
+
+- 新增 CookingFrontOfHouse：占桌、询问后开单、空闲洗碗、超时未满足、前厅成功条件。
+- 宿主只在运行帧之后推进一步；暂停帧不推进。
+- 归档成功交接、结算落盘、跨关进度和前厅四项任务。
+
+### Git Commits
+
+| Hash | Message |
+|------|---------|
+| `460f2233a` | feat(cooking): ask before an order and wash only when idle |
+| `c368dfc39` | chore(task): archive 09-22-cooking-front-of-house |
+| `f96986f6a` | chore(task): archive three finished Cooking level tasks |
+
+### Testing
+
+- [OK] cooking-kitchen-loop：focused 75/75，Cooking 196/196，ET 55/55。
+- [OK] cooking-et-level-runtime：Cooking 196/196，ET 55/55。
+
+### Status
+
+[OK] **Completed**
+
+### Next Steps
+
+- 可见顾客、收益评价、伙伴成长、失败条件、Profile/SaveSlot、connection 到 PlayerId 仍未做。
