@@ -1,0 +1,4 @@
+{"file": ".trellis/spec/cooking/cooking-persistence-management.md", "reason": "P5 in-memory apply is reward posting, not this level confirmation ledger."}
+{"file": ".trellis/spec/cooking/cooking-recipe-loop.md", "reason": "Success handoff clears SettlementHistory; confirmation must read it before that crop."}
+{"file": "Docs/design/CookingGame/reference/product-lifetimes.md", "reason": "Section 5.1 confirms settlement only after success; section 5.2 writes nothing on failure."}
+{"file": ".trellis/tasks/09-19-cooking-gameplay-business-discussion/prd.md", "reason": "Score, revenue, and rating formulas are not decided."}

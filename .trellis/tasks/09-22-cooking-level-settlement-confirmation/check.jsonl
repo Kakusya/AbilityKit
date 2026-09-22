@@ -1,0 +1,5 @@
+{"file": ".trellis/tasks/09-22-cooking-level-settlement-confirmation/prd.md", "reason": "R1-R5 accepted by domain S01/S02 and host S03."}
+{"file": "src/AbilityKit.Game.Cooking/CookingLevelSettlementConfirmation.cs", "reason": "Generation ledger confirms, duplicates, and rejects a conflicting list."}
+{"file": "src/AbilityKit.Game.Cooking.EtRuntime/CookingLevelEtHost.cs", "reason": "Host confirms only after Ended+Success and before the handoff."}
+{"file": "local/Logs/test-gates/20260922-170119-cooking-kitchen-loop/cooking-kitchen-loop/gate-summary.json", "reason": "cooking-kitchen-loop exit 0: focused 63/63, Cooking 184/184, ET runtime 52/52."}
+{"file": "local/Logs/test-gates/20260922-170138-cooking-et-level-runtime/cooking-et-level-runtime/gate-summary.json", "reason": "cooking-et-level-runtime exit 0: Cooking 184/184, ET runtime 52/52."}

@@ -1,4 +1,19 @@
 # P2 一条完整配方：cooking-recipe-loop
+## 2026-09-22 小关成功结算确认修约（任务 09-22-cooking-level-settlement-confirmation）
+
+来源：`Docs/Todo.md` P0-C1「只在小关成功完成时应用 confirmed settlement」。本条只覆盖确认边界。评分、收益、评价和写盘仍未实现。
+
+| 位置 | 旧条款 | 新条款 | 来源 |
+|---|---|---|---|
+| 成功结算 | 局内 `SettlementHistory` 在成功交接时被清空，没有单独的确认记录 | `Ended` + `Success` 且尚未交接时，按 Match、`LevelId`、`LevelEpoch` 确认一份结算列表。同一列表再确认是重复；换一份列表则拒绝 | 实现契约：task design |
+| 失败与准备 | 失败重开丢掉现场 | 失败、未结束和准备态不能确认。交接后的空账不能覆盖确认前的列表 | §5.1、§5.2 |
+| 长期进度 | `CookingProgressPersistence.Apply` 入账奖励 | 本条不调用它，也不填写货币、解锁或升级 | 奖励公式未定 |
+
+### 实现状态声明
+
+- 已实现并验证（单机纯 C#）：领域 S01/S02，宿主 S03。确认只活在内存账本里。
+- 仍未实现：评分与收益、把确认应用到长期进度、写盘、崩溃恢复。
+
 ## 2026-09-22 小关失败重开修约（任务 09-22-cooking-level-fail-retry）
 
 来源：`Docs/Todo.md` P0-C1「落实失败重开」，产品语义基准为 `Docs/design/CookingGame/reference/product-lifetimes.md` §5.2。只覆盖已经 `Ended` + `Failed` 之后的厨房重建。失败条件、工位升级、写盘仍未实现。

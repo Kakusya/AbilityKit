@@ -136,6 +136,42 @@ public sealed class CookingLevelClosedLoopTests
         Assert.True(host.Tick().Accepted);
     }
 
+    [Fact]
+    public void S03_only_a_successful_level_confirms_its_settlements()
+    {
+        var content = LoadContent();
+        var failed = CreateFixture(content);
+        using var failedHost = failed.CreateStartedHost(state =>
+            CookingContentCatalog.ApplyStandardInitialSupply(state, content));
+        Assert.True(failed.Simulation.OpenOrder(SoupOrder, SoupOrderTemplate).Accepted);
+        Assert.True(failedHost.BeginEnd(CookingLevelOutcome.Failed).Accepted);
+        Assert.True(failedHost.CompleteEnd().Accepted);
+        var ledger = new CookingLevelSettlementLedger();
+        var rejected = failedHost.ConfirmSettlements(ledger);
+        Assert.Equal(CookingLevelSettlementConfirmationDisposition.Rejected, rejected.Disposition);
+        Assert.False(ledger.TryRead(failed.LevelScope, out _));
+        failedHost.Dispose();
+
+        var succeeded = CreateFixture(content);
+        using var host = succeeded.CreateStartedHost(state =>
+            CookingContentCatalog.ApplyStandardInitialSupply(state, content));
+        Assert.True(host.BeginEnd(CookingLevelOutcome.Success).Accepted);
+        Assert.True(host.CompleteEnd().Accepted);
+        var beforeHandoff = succeeded.Simulation.SettlementHistory.ToArray();
+        var confirmed = host.ConfirmSettlements(ledger);
+        Assert.Equal(beforeHandoff, confirmed.Confirmation!.Settlements);
+        var duplicate = host.ConfirmSettlements(ledger);
+        Assert.Equal(CookingLevelSettlementConfirmationDisposition.Confirmed, confirmed.Disposition);
+        Assert.Empty(confirmed.Confirmation!.Settlements);
+        Assert.Equal(CookingLevelSettlementConfirmationDisposition.Duplicate, duplicate.Disposition);
+
+        Assert.True(host.CreateSuccessor(new LevelId("level-2"), 2).Accepted);
+        var afterHandoff = host.ConfirmSettlements(ledger);
+        Assert.Equal(CookingLevelSettlementConfirmationDisposition.Rejected, afterHandoff.Disposition);
+        Assert.True(ledger.TryRead(succeeded.LevelScope, out var stored));
+        Assert.Empty(stored!.Settlements);
+    }
+
     private static string ReferenceSupply(CookingContent content, CookingScope scope)
     {
         var players = new Dictionary<PlayerId, CookingPlayerConfig>

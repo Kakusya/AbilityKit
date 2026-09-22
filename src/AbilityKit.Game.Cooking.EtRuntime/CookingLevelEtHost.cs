@@ -534,6 +534,31 @@ public sealed class CookingLevelEtHost : IDisposable
         return Operation(result, dispositions);
     }
 
+    public CookingLevelSettlementConfirmationResult ConfirmSettlements(CookingLevelSettlementLedger ledger)
+    {
+        Check();
+        ArgumentNullException.ThrowIfNull(ledger);
+        if (_lifecycle.State != CookingLevelState.Ended || _lifecycle.Outcome != CookingLevelOutcome.Success)
+        {
+            return new CookingLevelSettlementConfirmationResult(
+                false,
+                CookingLevelSettlementConfirmationDisposition.Rejected,
+                CookingLevelSettlementConfirmationReason.InvalidState,
+                null);
+        }
+
+        if (_ownedSimulation is null)
+        {
+            return new CookingLevelSettlementConfirmationResult(
+                false,
+                CookingLevelSettlementConfirmationDisposition.Rejected,
+                CookingLevelSettlementConfirmationReason.InvalidState,
+                null);
+        }
+
+        return ledger.Confirm(_lifecycle.Scope, _ownedSimulation.SettlementHistory);
+    }
+
     public CookingLevelHostOperationResult CompleteEnd()
     {
         Check();

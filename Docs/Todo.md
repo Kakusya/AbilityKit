@@ -46,7 +46,7 @@ MOBA、Client Flow、Presentation 与通用工程治理属于后续正式化主�
 - [x] 落实成功进入下一小关：已于 2026-09-22 由 task `09-22-cooking-level-success-handoff` 交付——保留物品、加工、容器、脏/净碗与消耗产物账；清除订单、结算、去重与事件历史；逻辑 Tick 与下一结算序号归零；新代际停在 `Created`，准备态不改厨房。失败重开、工位升级与写盘仍未开始。
 - [x] 落实失败重开：已于 2026-09-22 由 task `09-22-cooking-level-fail-retry` 交付——同一 Match、同一 `LevelId`、更高 epoch；丢掉失败现场，按标准初始供应重建厨房，停在 `Created`。不写盘，不覆盖成功检查点。失败条件、工位升级与写盘仍未开始。旧句「关闭失败 Match，创建新 MatchId」与产品参考冲突，不采用。
 - [ ] 落实工位升级迁移：使用显式领域操作迁移未完成加工并保留进度，不通过销毁父 Entity 隐式丢失 Process。
-- [ ] 只在小关成功完成时应用 confirmed settlement；durable storage、进程崩溃恢复和磁盘原子性必须有真实实现与测试。
+- [x] 只在小关成功完成时确认本关结算列表：已于 2026-09-22 由 task `09-22-cooking-level-settlement-confirmation` 交付——身份为 Match、`LevelId`、`LevelEpoch`，载荷为交接前的结算条；重复确认无效，失败与准备态不确认。评分、收益、长期进度入账、durable storage、进程崩溃恢复和磁盘原子性仍未开始。
 - [ ] ~~将 UDP 接入 ET owner-thread ingress~~：已于 2026-09-21 放弃（owner 决定传输改用 KCP），不在当前范围；若将来立项 KCP，必须重新审议回调解码/入队、ET Tick 取稳定批次与本地/远端同一权威入口的契约。
 - [ ] 校验 connection 到 PlayerId 的绑定以及 scope、MatchId、epoch、config identity；重复、乱序、过期命令不得重复推进或重复提交订单。
 - [ ] 在允许范围内补 Unity compile evidence；未获重新授权前不实施 Cooking Unity 应用层、场景、authoring、projection 或 UI。
