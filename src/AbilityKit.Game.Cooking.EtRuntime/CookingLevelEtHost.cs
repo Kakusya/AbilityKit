@@ -205,6 +205,7 @@ public enum CookingLevelCheckpointRestoreReason
     GameplayUnavailable,
     GameplayRestoreRejected,
     HostCreationFailed,
+    TickHistoryScopeMismatch,
 }
 
 public sealed record CookingLevelCheckpointRestoreResult(
@@ -603,10 +604,15 @@ public sealed class CookingLevelEtHost : IDisposable
         if (!Equals(configuration.Identity, checkpoint.ConfigIdentity))
             return new CookingLevelCheckpointRestoreResult(false,
                 CookingLevelCheckpointRestoreReason.ConfigurationIdentityMismatch);
-        // 载荷必须属于信封声明的同一 match scope：防止把别的对局/代际的仿真状态插进本代际。
+        // 载荷必须属于信封声明的同一 match，且已经绑定的 Level scope（含 epoch）必须就是本代际。
+        // 只改 epoch、载荷 match 不变的 checkpoint 不能绕过这里被建成另一代宿主。
+        // 尚未推进 fixed tick 的载荷没有代际绑定，同样拒绝：宿主恢复要求这一代已经被记录。
         if (checkpoint.Recipe is null || !Equals(checkpoint.Recipe.Scope, checkpoint.Scope.MatchScope))
             return new CookingLevelCheckpointRestoreResult(false,
                 CookingLevelCheckpointRestoreReason.CheckpointPayloadScopeMismatch);
+        if (checkpoint.Recipe.LevelScope is not { } levelScope || !Equals(levelScope, checkpoint.Scope))
+            return new CookingLevelCheckpointRestoreResult(false,
+                CookingLevelCheckpointRestoreReason.TickHistoryScopeMismatch);
 
         CookingLevelLifecycle? lifecycle = null;
         CookingLevelEtHost? host = null;

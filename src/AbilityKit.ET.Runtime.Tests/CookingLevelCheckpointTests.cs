@@ -230,6 +230,17 @@ public sealed class CookingLevelCheckpointTests
         Assert.Equal(CookingLevelCheckpointRestoreReason.CheckpointPayloadScopeMismatch, payloadResult.Reason);
         Assert.Null(payloadResult.Host);
 
+        // 只改 epoch：载荷 match 不变，也不能绕过代际绑定被建成另一代宿主。
+        var foreignEpoch = checkpoint with
+        {
+            Scope = new CookingLevelScope(checkpoint.Scope.MatchScope, checkpoint.Scope.RestaurantRuntime,
+                checkpoint.Scope.Level, checkpoint.Scope.LevelEpoch + 1),
+        };
+        var epochResult = CookingLevelEtHost.Restore(foreignEpoch, content.Snapshot, CreateFactory(content));
+        Assert.False(epochResult.Accepted);
+        Assert.Equal(CookingLevelCheckpointRestoreReason.TickHistoryScopeMismatch, epochResult.Reason);
+        Assert.Null(epochResult.Host);
+
         // 另一配置身份：拒绝，不得把 foreign 内容插进本代际。
         var foreignConfig = checkpoint with
         {
@@ -240,10 +251,18 @@ public sealed class CookingLevelCheckpointTests
         Assert.Equal(CookingLevelCheckpointRestoreReason.ConfigurationIdentityMismatch, configResult.Reason);
         Assert.Null(configResult.Host);
 
-        // 另一 Level 的 preparation：lifecycle 校验拒绝（宿主创建后立即释放）。
+        // 同一代际、layout 引用了不存在的工位：代际绑定不变，lifecycle 校验拒绝（宿主创建后立即释放）。
         var foreignPreparation = checkpoint with
         {
-            Preparation = checkpoint.Preparation with { Level = new LevelId("other-level") },
+            Preparation = checkpoint.Preparation with
+            {
+                Layout = checkpoint.Preparation.Layout with
+                {
+                    ApplianceStations = checkpoint.Preparation.Layout.ApplianceStations
+                        .Append(new StationSlotId("no-such-station"))
+                        .ToArray(),
+                },
+            },
         };
         var preparationResult = CookingLevelEtHost.Restore(foreignPreparation, content.Snapshot, CreateFactory(content));
         Assert.False(preparationResult.Accepted);

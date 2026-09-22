@@ -908,6 +908,8 @@ public sealed class CookingLevelLifecycle
 
         public bool IsGameplayMutationOpen =>
             _owner.IsGameplayAdmissionOpen && (_owner._ownerGameplayGate?.IsGameplayMutationOpen ?? true);
+
+        public CookingLevelScope LevelScope => _owner.Scope;
     }
 
     private CookingLevelLifecycleResult Reject(CookingLevelLifecycleReason reason) =>

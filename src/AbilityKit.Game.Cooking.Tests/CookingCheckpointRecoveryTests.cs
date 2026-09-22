@@ -164,6 +164,32 @@ public sealed class CookingCheckpointRecoveryTests
         AssertRejected(simulation, checkpoint with { LogicalTick = -1 },
             CookingCheckpointRestoreReason.CounterInvalid);
 
+        // 容器内容顺序进 canonical：同槽位、列表顺序不同必须打出不同哈希。
+        var pot = Assert.Single(checkpoint.Containers, container => container.Id == Pot);
+        var reordered = checkpoint with
+        {
+            Containers = checkpoint.Containers
+                .Select(container => container.Id == Pot
+                    ? container with { ItemIds = container.ItemIds.Reverse().ToArray() }
+                    : container)
+                .ToArray(),
+        };
+        Assert.NotEqual(pot.ItemIds, pot.ItemIds.Reverse().ToArray());
+        Assert.NotEqual(checkpoint.CanonicalText(), reordered.CanonicalText());
+        Assert.NotEqual(checkpoint.Sha256(), reordered.Sha256());
+
+        // 事件序号错位：命令事件与 tick 事件序号重复时结构化拒绝，且零变更。
+        AssertRejected(simulation, checkpoint with
+        {
+            Events = checkpoint.Events
+                .Select((entry, index) => index == 0 ? entry with { Sequence = checkpoint.TickEvents[0].Sequence } : entry)
+                .ToArray(),
+        }, CookingCheckpointRestoreReason.EventSequenceInvalid);
+
+        // 去掉代际绑定：已经推进过的载荷不能再当成“尚未绑定”恢复。
+        AssertRejected(simulation, checkpoint with { LevelScope = null },
+            CookingCheckpointRestoreReason.EventSequenceInvalid);
+
         // 信封层：截断、格式版本篡改与载荷篡改分别结构化拒绝。
         var serialized = CookingLevelCheckpointCodec.Serialize(CookingLevelCheckpointCodec.CreateEnvelope(Wrap(checkpoint)));
         Assert.Equal(CookingCheckpointReadReason.RecordTruncated,

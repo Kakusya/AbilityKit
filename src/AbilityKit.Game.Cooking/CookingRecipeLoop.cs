@@ -342,6 +342,8 @@ public interface ICookingProductIdAllocator
 internal interface ICookingRecipeLifecycleGate
 {
     bool IsGameplayMutationOpen { get; }
+
+    CookingLevelScope? LevelScope => null;
 }
 
 internal interface ICookingRecipeAuthorityGate
@@ -393,6 +395,7 @@ public sealed partial class CookingRecipeSimulation
     private readonly Dictionary<RecipeCommandKey, ProcessedCommand> _processedCommands = new();
     private readonly List<CookingRecipeEvent> _events = new();
     private List<CookingRecipeTickEvent> _tickEvents = new();
+    private CookingLevelScope? _levelScope;
     private long _stateVersion;
     private long _eventSequence;
     private long _nextProcessId;
@@ -576,7 +579,19 @@ public sealed partial class CookingRecipeSimulation
             throw new InvalidOperationException("A closed recipe simulation cannot be bound to a level lifecycle.");
         if (_lifecycleGate is not null && !ReferenceEquals(_lifecycleGate, lifecycleGate))
             throw new InvalidOperationException("The recipe simulation is already bound to a different level lifecycle.");
+        if (lifecycleGate.LevelScope is { } levelScope)
+            BindLevelScope(levelScope);
         _lifecycleGate = lifecycleGate;
+    }
+
+    private void BindLevelScope(CookingLevelScope levelScope)
+    {
+        ArgumentNullException.ThrowIfNull(levelScope);
+        if (!Equals(levelScope.MatchScope, _fixture.Scope))
+            throw new ArgumentException("The level scope does not match the recipe simulation scope.", nameof(levelScope));
+        if (_levelScope is not null && !Equals(_levelScope, levelScope))
+            throw new InvalidOperationException("The recipe simulation is already bound to a different level generation.");
+        _levelScope = levelScope;
     }
 
     internal void BindAuthorityGate(ICookingRecipeAuthorityGate authorityGate)
@@ -673,8 +688,7 @@ public sealed partial class CookingRecipeSimulation
             throw new InvalidOperationException("The recipe simulation mutation cannot be reentered.");
         if (hostFrameSequence <= 0)
             throw new ArgumentOutOfRangeException(nameof(hostFrameSequence));
-        if (!Equals(levelScope.MatchScope, _fixture.Scope))
-            throw new ArgumentException("The level scope does not match the recipe simulation scope.", nameof(levelScope));
+        BindLevelScope(levelScope);
 
         _mutationInProgress = true;
         try
@@ -989,6 +1003,7 @@ public sealed partial class CookingRecipeSimulation
         LogicalTick = plan.AfterLogicalTick;
         _stateVersion = plan.AfterStateVersion;
         _eventSequence = plan.AfterEventSequence;
+        _levelScope = plan.TickEvent.LevelScope;
         _nextProductId = plan.NextProductSequence;
         foreach (var process in plan.CompletedProcesses)
             ReleaseProcessLocks(process);

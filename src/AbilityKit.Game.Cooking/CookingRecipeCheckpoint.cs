@@ -34,8 +34,8 @@ public sealed record CookingRecipeCheckpointProcess(
     IReadOnlyList<ItemId> LockedInputs);
 
 /// <summary>
-/// 恢复载荷中的容器内容：列表有序——后续 <c>slot-N</c> 分配取决于当前占用槽集合，
-/// 顺序改变会改变恢复后的落位，因此载荷保序、恢复保序。
+/// 恢复载荷中的容器内容：列表有序。空槽名按各物品自己的 <c>Location.SlotId</c> 占用集分配，
+/// 不按下标分配；但按列表顺序遍历的路径会随顺序分叉，因此载荷保序、canonical 也保序、恢复保序。
 /// </summary>
 public sealed record CookingRecipeCheckpointContainer(ItemId Id, IReadOnlyList<ItemId> ItemIds);
 
@@ -87,7 +87,8 @@ public sealed record CookingRecipeCheckpoint(
     IReadOnlyList<CookingRecipeTickEvent> TickEvents,
     long NextProcessId,
     long NextProductId,
-    long NextSettlementSequence)
+    long NextSettlementSequence,
+    CookingLevelScope? LevelScope = null)
 {
     private static readonly JsonSerializerOptions CanonicalJsonOptions = new()
     {
@@ -113,7 +114,7 @@ public sealed record CookingRecipeCheckpoint(
             .ToArray(),
         Containers.OrderBy(container => container.Id.Value, StringComparer.Ordinal)
             .Select(container => new CanonicalContainer(container.Id.Value,
-                container.ItemIds.OrderBy(item => item.Value, StringComparer.Ordinal).Select(item => item.Value).ToArray()))
+                container.ItemIds.Select(item => item.Value).ToArray()))
             .ToArray(),
         Orders.OrderBy(order => order.Id.Value, StringComparer.Ordinal)
             .Select(order => new CanonicalOrder(order.Id.Value, order.Template.Value, order.RequiredRecipe.Value,
@@ -134,7 +135,14 @@ public sealed record CookingRecipeCheckpoint(
             entry.Command.Value, entry.Operation.ToString(), entry.Recipe?.Value, entry.Process?.Value, entry.Item?.Value,
             entry.Summary)).ToArray(),
         EventSequence,
-        TickEvents.Count,
+        TickEvents.Select(entry => new CanonicalTickEvent(entry.Sequence, entry.LevelScope.MatchScope.Session.Value,
+            entry.LevelScope.MatchScope.World.Value, entry.LevelScope.MatchScope.Match.Value,
+            entry.LevelScope.RestaurantRuntime.Value, entry.LevelScope.Level.Value, entry.LevelScope.LevelEpoch,
+            entry.HostFrameSequence, entry.BeforeLogicalTick, entry.AfterLogicalTick, entry.BeforeStateVersion,
+            entry.AfterStateVersion, entry.Processes.Count)).ToArray(),
+        LevelScope is null ? null : new CanonicalLevelBinding(LevelScope.MatchScope.Session.Value,
+            LevelScope.MatchScope.World.Value, LevelScope.MatchScope.Match.Value,
+            LevelScope.RestaurantRuntime.Value, LevelScope.Level.Value, LevelScope.LevelEpoch),
         NextProcessId,
         NextProductId,
         NextSettlementSequence),
@@ -147,8 +155,13 @@ public sealed record CookingRecipeCheckpoint(
         IReadOnlyList<CanonicalContainer> Containers, IReadOnlyList<CanonicalOrder> Orders,
         IReadOnlyList<CanonicalSettlement> Settlements, IReadOnlyList<string> ConsumedProducts,
         IReadOnlyList<CanonicalCleanPool> CleanContainerCounts, IReadOnlyList<CanonicalDeduplication> Deduplication,
-        IReadOnlyList<CanonicalEvent> Events, long EventSequence, int TickEventCount, long NextProcessId,
-        long NextProductId, long NextSettlementSequence);
+        IReadOnlyList<CanonicalEvent> Events, long EventSequence, IReadOnlyList<CanonicalTickEvent> TickEvents,
+        CanonicalLevelBinding? LevelScope, long NextProcessId, long NextProductId, long NextSettlementSequence);
+    private sealed record CanonicalLevelBinding(string SessionId, string WorldId, string MatchId,
+        long RestaurantRuntimeId, string LevelId, long LevelEpoch);
+    private sealed record CanonicalTickEvent(long Sequence, string SessionId, string WorldId, string MatchId,
+        long RestaurantRuntimeId, string LevelId, long LevelEpoch, long HostFrameSequence, long BeforeLogicalTick,
+        long AfterLogicalTick, long BeforeStateVersion, long AfterStateVersion, int ProcessCount);
     private sealed record CanonicalItem(string ItemId, string DefinitionId, int Version, string LocationKind,
         string? OwnerId, string? SlotId, bool Removed, string? RecipeId, bool IsProduct, string? OriginStation,
         bool ContainerCompleted, bool IsDirty);
@@ -267,7 +280,8 @@ public sealed partial class CookingRecipeSimulation
         _tickEvents.ToArray(),
         _nextProcessId,
         _nextProductId,
-        _nextSettlementSequence);
+        _nextSettlementSequence,
+        _levelScope);
 
     /// <summary>
     /// 把一份恢复载荷整册换入本实例：构造期状态被完全替换，替换是原子的（先构建全部新字典/列表再整体赋值）。
@@ -452,14 +466,86 @@ public sealed partial class CookingRecipeSimulation
             }
         }
 
-        if (checkpoint.EventSequence < 0 || checkpoint.EventSequence < checkpoint.Events.Count ||
-            checkpoint.StateVersion < 0 || checkpoint.LogicalTick < 0 ||
+        if (checkpoint.StateVersion < 0 || checkpoint.LogicalTick < 0 ||
             checkpoint.NextProcessId < 0 || checkpoint.NextProductId < 0)
         {
             return CookingCheckpointRestoreReason.CounterInvalid;
         }
 
+        if (ValidateEventHistory(checkpoint) is { } eventReason)
+            return eventReason;
+
         return CookingCheckpointRestoreReason.None;
+    }
+
+    /// <summary>
+    /// 命令事件与 tick 事件共用一条序号：二者序号互不重复、各自严格递增，
+    /// 且最大序号不超过 <see cref="CookingRecipeCheckpoint.EventSequence"/>。
+    /// tick 历史还要和逻辑 tick、宿主帧首尾相接——错位的历史恢复后，下一帧会从错误水位继续。
+    /// </summary>
+    private static CookingCheckpointRestoreReason? ValidateEventHistory(CookingRecipeCheckpoint checkpoint)
+    {
+        if (checkpoint.EventSequence < 0)
+            return CookingCheckpointRestoreReason.EventSequenceInvalid;
+
+        var seen = new HashSet<long>();
+        long previousCommand = 0;
+        foreach (var entry in checkpoint.Events)
+        {
+            if (entry.Sequence <= 0 || entry.Sequence <= previousCommand || !seen.Add(entry.Sequence))
+                return CookingCheckpointRestoreReason.EventSequenceInvalid;
+            previousCommand = entry.Sequence;
+        }
+
+        long previousTickSequence = 0;
+        long previousLogicalTick = 0;
+        long previousFrame = 0;
+        for (var index = 0; index < checkpoint.TickEvents.Count; index++)
+        {
+            var tick = checkpoint.TickEvents[index];
+            if (tick.Sequence <= 0 || tick.Sequence <= previousTickSequence || !seen.Add(tick.Sequence))
+                return CookingCheckpointRestoreReason.EventSequenceInvalid;
+            if (!Equals(tick.LevelScope.MatchScope, checkpoint.Scope))
+                return CookingCheckpointRestoreReason.EventSequenceInvalid;
+            if (tick.HostFrameSequence <= 0 || tick.AfterLogicalTick != tick.BeforeLogicalTick + 1)
+                return CookingCheckpointRestoreReason.EventSequenceInvalid;
+            if (index == 0)
+            {
+                if (tick.BeforeLogicalTick != 0)
+                    return CookingCheckpointRestoreReason.EventSequenceInvalid;
+            }
+            else if (tick.BeforeLogicalTick != previousLogicalTick || tick.HostFrameSequence != previousFrame + 1)
+            {
+                return CookingCheckpointRestoreReason.EventSequenceInvalid;
+            }
+
+            previousTickSequence = tick.Sequence;
+            previousLogicalTick = tick.AfterLogicalTick;
+            previousFrame = tick.HostFrameSequence;
+        }
+
+        if (checkpoint.TickEvents.Count > 0 &&
+            checkpoint.TickEvents[checkpoint.TickEvents.Count - 1].AfterLogicalTick != checkpoint.LogicalTick)
+        {
+            return CookingCheckpointRestoreReason.EventSequenceInvalid;
+        }
+
+        if (checkpoint.LevelScope is { } bound)
+        {
+            if (!Equals(bound.MatchScope, checkpoint.Scope))
+                return CookingCheckpointRestoreReason.ScopeMismatch;
+            if (checkpoint.TickEvents.Any(tick => !Equals(tick.LevelScope, bound)))
+                return CookingCheckpointRestoreReason.EventSequenceInvalid;
+        }
+        else if (checkpoint.TickEvents.Count > 0 || checkpoint.LogicalTick != 0)
+        {
+            return CookingCheckpointRestoreReason.EventSequenceInvalid;
+        }
+
+        if (seen.Count > 0 && seen.Max() > checkpoint.EventSequence)
+            return CookingCheckpointRestoreReason.EventSequenceInvalid;
+
+        return null;
     }
 
     private static IEnumerable<IGrouping<string, CookingRecipeCheckpointItem>> GroupByHandOccupancy(
@@ -555,6 +641,7 @@ public sealed partial class CookingRecipeSimulation
 
         _stateVersion = checkpoint.StateVersion;
         LogicalTick = checkpoint.LogicalTick;
+        _levelScope = checkpoint.LevelScope;
         _eventSequence = checkpoint.EventSequence;
         _nextProcessId = checkpoint.NextProcessId;
         _nextProductId = checkpoint.NextProductId;
