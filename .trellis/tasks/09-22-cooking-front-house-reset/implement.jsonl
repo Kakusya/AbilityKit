@@ -1,0 +1,4 @@
+{"file": ".trellis/spec/cooking/cooking-recipe-loop.md", "reason": "Front-of-house amendment must say the next level clears seats and keeps dirty bowls."}
+{"file": ".trellis/tasks/09-22-cooking-front-house-reset/prd.md", "reason": "Reset requirements and non-goals."}
+{"file": ".trellis/tasks/09-22-cooking-front-house-reset/design.md", "reason": "Reset clears seats after finishing the current companion job."}
+{"file": ".trellis/tasks/09-19-cooking-gameplay-business-discussion/prd.md", "reason": "Owner decision that level time clears and dirty bowls continue."}

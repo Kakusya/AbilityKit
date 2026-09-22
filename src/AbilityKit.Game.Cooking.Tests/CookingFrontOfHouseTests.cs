@@ -93,6 +93,30 @@ public sealed class CookingFrontOfHouseTests
     }
 
     [Fact]
+    public void N01_the_next_level_clears_seats_and_keeps_a_dirty_bowl()
+    {
+        var house = new CookingFrontOfHouse(Schedule(serviceTicks: 2, waitLimitTicks: 1));
+        var kitchen = Kitchen();
+        house.Step(kitchen, Template);
+        house.Step(kitchen, Template);
+        Assert.True(house.IsClosing);
+        var left = house.Step(kitchen, Template);
+        Assert.Equal(1, left.UnsatisfiedCount);
+        Dirty(kitchen);
+        house.Step(kitchen, Template);
+        Assert.Contains(Bowl, kitchen.DirtyBowlsAwaitingWash());
+
+        house.ResetForNextLevel(kitchen, Template);
+
+        Assert.Equal(0, house.SeatedCount);
+        Assert.False(house.IsClosing);
+        Assert.Empty(house.UnsatisfiedOrders);
+        Assert.DoesNotContain(Bowl, kitchen.DirtyBowlsAwaitingWash());
+        Assert.Equal(1, house.Step(kitchen, Template).SeatedCount);
+        Assert.False(house.IsClosing);
+    }
+
+    [Fact]
     public void G01_a_served_guest_keeps_the_seat_until_dining_ends()
     {
         var house = new CookingFrontOfHouse(Schedule(serviceTicks: 1, diningTicks: 2));

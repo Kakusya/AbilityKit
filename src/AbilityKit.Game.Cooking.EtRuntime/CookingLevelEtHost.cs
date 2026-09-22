@@ -737,6 +737,7 @@ public sealed class CookingLevelEtHost : IDisposable
                 $"The successor kitchen could not be adopted: {adopted}; handoff {accepted.Reason}."));
         }
 
+        _frontOfHouse?.ResetForNextLevel(_ownedSimulation, _frontOfHouseTemplate);
         return installed with
         {
             RetainedProcessCount = handoff.Processes.Count,

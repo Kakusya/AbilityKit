@@ -300,6 +300,34 @@ public sealed class CookingLevelClosedLoopTests
         Assert.Equal(CookingLevelState.Ending, host.Lifecycle.State);
     }
 
+    [Fact]
+    public void N02_the_next_level_can_seat_a_new_guest()
+    {
+        var content = LoadContent();
+        var fixture = CreateFixture(content);
+        using var host = fixture.CreateStartedHost(state =>
+            CookingContentCatalog.ApplyStandardInitialSupply(state, content));
+        var house = new CookingFrontOfHouse(new CookingFrontOfHouseSchedule(1, 4, 2, 1, 2, 1, 9));
+        host.UseFrontOfHouse(house, SoupOrderTemplate);
+        Assert.True(host.Tick().Accepted);
+        Assert.True(host.Tick().Accepted);
+        Assert.True(host.Tick().Accepted);
+        Assert.True(host.Tick().Accepted);
+        Assert.True(house.IsClosing);
+        Assert.True(host.BeginEnd(CookingLevelOutcome.Success).Accepted);
+        Assert.True(host.CompleteEnd().Accepted);
+        Assert.True(host.CreateSuccessor(new LevelId("level-2"), 2).Accepted);
+
+        Assert.False(house.IsClosing);
+        Assert.Empty(house.UnsatisfiedOrders);
+        Assert.Equal(CookingLevelState.Created, host.Lifecycle.State);
+        Assert.True(host.Prepare(fixture.Preparation with { Level = new LevelId("level-2") }).Accepted);
+        Assert.True(host.Start().Accepted);
+        Assert.True(host.Tick().Accepted);
+        Assert.Equal(1, house.SeatedCount);
+        Assert.False(house.IsClosing);
+    }
+
     private sealed class TempSettlementDirectory : IDisposable
     {
         public TempSettlementDirectory()

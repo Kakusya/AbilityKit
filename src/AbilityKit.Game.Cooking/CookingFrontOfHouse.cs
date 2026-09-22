@@ -59,6 +59,20 @@ public sealed class CookingFrontOfHouse
         return new CookingFrontOfHouseStep(SeatedCount, _closing, CanSucceed, _unsatisfied.Count);
     }
 
+    /// <summary>下一小关：先收完正在做的询问或洗碗，再清掉座位、未满足和营业时钟。厨房里的脏碗保留。</summary>
+    public void ResetForNextLevel(CookingRecipeSimulation kitchen, OrderTemplateId template)
+    {
+        FinishInProgress(kitchen, template);
+        foreach (var table in _tables)
+            table.Reset();
+        _unsatisfied.Clear();
+        _serviceTicks = 0;
+        _ticksUntilNextGuest = 0;
+        _closing = false;
+        _nextGuest = 0;
+        _work = CookingCompanionWork.Idle();
+    }
+
     /// <summary>成功收口前把做到一半的询问和洗碗按完成处理。</summary>
     public void FinishInProgress(CookingRecipeSimulation kitchen, OrderTemplateId template)
     {

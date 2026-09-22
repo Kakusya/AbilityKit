@@ -131,17 +131,23 @@ Owner 于 2026-09-22 批准 Trellis task `09-22-cooking-checkpoint-recovery`（T
 
 门禁：`cooking-kitchen-loop`（focused 76/76、Cooking 197/197、ET runtime 56/56）与 `cooking-et-level-runtime`（Cooking 197/197、ET runtime 56/56）均 exit 0。日志在 `local/Logs/test-gates/20260922-232144-cooking-kitchen-loop` 与 `local/Logs/test-gates/20260922-232204-cooking-et-level-runtime`。收益、评价和可见顾客仍未做。
 
-## 15. 未完成范围
+## 15. 2026-09-22 下一小关清空前厅增量
+
+成功交接后，前厅的座位、未满足和营业时钟清空。正在洗的碗会先洗完。还没洗的脏碗留在厨房，下一关伙伴空闲时继续洗。失败重开不走这次清空。
+
+门禁：`cooking-kitchen-loop`（focused 77/77、Cooking 198/198、ET runtime 57/57）与 `cooking-et-level-runtime`（Cooking 198/198、ET runtime 57/57）均 exit 0。日志在 `local/Logs/test-gates/20260922-235333-cooking-kitchen-loop` 与 `local/Logs/test-gates/20260922-235404-cooking-et-level-runtime`。收益、评价和可见顾客仍未做。
+
+## 16. 未完成范围
 
 ### Non-Unity successor backlog
 
-P1–P6 尚可另行审议的工作包括两台物理 PC LAN 验收、正式 recipe/order/content/schema、Room/Match 产品语义、durable store、process-crash 恢复、批准 workload/threshold 和非 Unity 优化验证。原 UDP task 曾提供 LiteNetLib minimal wire/adapter、loopback 与 same-machine harness，但未替代两 PC 证据，也未解决完整 production transport 的认证、安全、重连或产品生命周期语义；该方向已于 2026-09-21 放弃，传输计划改用 KCP，属未启动、未批准、无时间表的后续工作。其两机执行入口见 [UDP two-PC LAN acceptance](udp-two-pc-lan-acceptance.md)（已退役，仅作历史参考）。其余工作均未启动、未批准、没有时间表，详见 [successor backlog](successor-backlog.md)。2026-09-21 单机厨房闭环、正式内容与 ET Level 闭环验收增量落地后，与现状衔接最直接的是 P2 余下的评分、收益、评价与小关结算契约，以及失败条件与失败重试（均属 owner 明确推迟项，需重新审议后立项）；Todo P0-C1 的成功进入下一小关已由 `09-22-cooking-level-success-handoff` 落地，失败重开已由 `09-22-cooking-level-fail-retry` 落地，成功结算确认已由 `09-22-cooking-level-settlement-confirmation` 落地。评分与收益、把确认应用到长期进度、可见顾客、伙伴成长、Profile/SaveSlot、真实断电恢复、connection→PlayerId 绑定与 ECS 清退仍未开始。已确认结算列表按代际落盘已由 `09-22-cooking-level-settlement-store` 落地，见第 11 节。装修换工位、解锁摆放、煮制加速和成功检查点已由 `09-22-cooking-level-progression` 落地，见第 12 节。前厅询问、洗碗和时间结构已由 `09-22-cooking-front-of-house` 落地，见第 13 节。用餐占桌已由 `09-22-cooking-dining-seat` 落地，见第 14 节。上述均未批准，也未为此新建 task。
+P1–P6 尚可另行审议的工作包括两台物理 PC LAN 验收、正式 recipe/order/content/schema、Room/Match 产品语义、durable store、process-crash 恢复、批准 workload/threshold 和非 Unity 优化验证。原 UDP task 曾提供 LiteNetLib minimal wire/adapter、loopback 与 same-machine harness，但未替代两 PC 证据，也未解决完整 production transport 的认证、安全、重连或产品生命周期语义；该方向已于 2026-09-21 放弃，传输计划改用 KCP，属未启动、未批准、无时间表的后续工作。其两机执行入口见 [UDP two-PC LAN acceptance](udp-two-pc-lan-acceptance.md)（已退役，仅作历史参考）。其余工作均未启动、未批准、没有时间表，详见 [successor backlog](successor-backlog.md)。2026-09-21 单机厨房闭环、正式内容与 ET Level 闭环验收增量落地后，与现状衔接最直接的是 P2 余下的评分、收益、评价与小关结算契约，以及失败条件与失败重试（均属 owner 明确推迟项，需重新审议后立项）；Todo P0-C1 的成功进入下一小关已由 `09-22-cooking-level-success-handoff` 落地，失败重开已由 `09-22-cooking-level-fail-retry` 落地，成功结算确认已由 `09-22-cooking-level-settlement-confirmation` 落地。评分与收益、把确认应用到长期进度、可见顾客、伙伴成长、Profile/SaveSlot、真实断电恢复、connection→PlayerId 绑定与 ECS 清退仍未开始。已确认结算列表按代际落盘已由 `09-22-cooking-level-settlement-store` 落地，见第 11 节。装修换工位、解锁摆放、煮制加速和成功检查点已由 `09-22-cooking-level-progression` 落地，见第 12 节。前厅询问、洗碗和时间结构已由 `09-22-cooking-front-of-house` 落地，见第 13 节。用餐占桌已由 `09-22-cooking-dining-seat` 落地，见第 14 节。下一小关清空前厅已由 `09-22-cooking-front-house-reset` 落地，见第 15 节。上述均未批准，也未为此新建 task。
 
 ### Prohibited Unity scope
 
 Cooking Unity 应用层、场景、authoring/export、projection、UI、动画、EditMode 与 scene smoke 长期禁止实施，不再作为旧 task、successor 或完整出口的当前 blocker。其历史来源、跨宿主 authority/identity/stale-input 不变量和重新授权条件见 [future scope](future-scope.md)。
 
-## 16. 后续读取顺序
+## 17. 后续读取顺序
 
 1. 读取本文确认三类状态。
 2. 读取 [技术路线](technical-roadmap.md)、[交付计划](delivery-plan.md) 与 [Cooking spec index](../../../.trellis/spec/cooking/index.md)。
@@ -149,7 +155,7 @@ Cooking Unity 应用层、场景、authoring/export、projection、UI、动画�
 4. 只有 owner 明确批准新范围后才新建 Trellis task；不要恢复已归档 task。
 5. Unity 重新授权必须满足 [future scope](future-scope.md) 的独立条件；non-Unity 后续从 [successor backlog](successor-backlog.md) 选择并重新审议。
 
-## 17. 维护规则
+## 18. 维护规则
 
 - 本文只汇总状态与链接，不复制行为契约、测试矩阵或未来 checklist。
 - 未实际运行的 Unity、LAN、protocol、durability 或 global gate 继续是 not-run/未完成，不能因 task archive 记为通过。

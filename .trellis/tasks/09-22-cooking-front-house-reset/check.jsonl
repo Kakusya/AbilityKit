@@ -1,0 +1,5 @@
+{"file": ".trellis/tasks/09-22-cooking-front-house-reset/prd.md", "reason": "Acceptance is a fresh front of house with the dirty bowls still in the kitchen."}
+{"file": "src/AbilityKit.Game.Cooking/CookingFrontOfHouse.cs", "reason": "Reset clears seats and service time after finishing the current wash."}
+{"file": "src/AbilityKit.Game.Cooking.EtRuntime/CookingLevelEtHost.cs", "reason": "CreateSuccessor resets the front of house only after an accepted handoff."}
+{"file": "local/Logs/test-gates/20260922-235333-cooking-kitchen-loop/cooking-kitchen-loop/gate-summary.json", "reason": "cooking-kitchen-loop exit 0: focused 77/77, Cooking 198/198, ET runtime 57/57."}
+{"file": "local/Logs/test-gates/20260922-235404-cooking-et-level-runtime/cooking-et-level-runtime/gate-summary.json", "reason": "cooking-et-level-runtime exit 0: Cooking 198/198, ET runtime 57/57."}
