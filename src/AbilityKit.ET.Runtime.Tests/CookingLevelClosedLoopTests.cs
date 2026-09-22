@@ -328,6 +328,35 @@ public sealed class CookingLevelClosedLoopTests
         Assert.False(house.IsClosing);
     }
 
+    [Fact]
+    public void Q02_a_failed_retry_starts_the_front_of_house_again()
+    {
+        var content = LoadContent();
+        var fixture = CreateFixture(content);
+        using var host = fixture.CreateStartedHost(state =>
+            CookingContentCatalog.ApplyStandardInitialSupply(state, content));
+        var house = new CookingFrontOfHouse(new CookingFrontOfHouseSchedule(1, 4, 2, 1, 2, 1, 9));
+        host.UseFrontOfHouse(house, SoupOrderTemplate);
+        Assert.True(host.Tick().Accepted);
+        Assert.True(host.Tick().Accepted);
+        Assert.True(host.Tick().Accepted);
+        Assert.True(host.Tick().Accepted);
+        Assert.True(house.IsClosing);
+        Assert.True(host.BeginEnd(CookingLevelOutcome.Failed).Accepted);
+        Assert.True(host.CompleteEnd().Accepted);
+        Assert.True(host.CreateRetry(2, content).Accepted);
+
+        Assert.False(house.IsClosing);
+        Assert.Empty(house.UnsatisfiedOrders);
+        Assert.Empty(fixture.Simulation.Orders);
+        Assert.Equal(CookingLevelState.Created, host.Lifecycle.State);
+        Assert.True(host.Prepare(fixture.Preparation).Accepted);
+        Assert.True(host.Start().Accepted);
+        Assert.True(host.Tick().Accepted);
+        Assert.Equal(1, house.SeatedCount);
+        Assert.False(house.IsClosing);
+    }
+
     private sealed class TempSettlementDirectory : IDisposable
     {
         public TempSettlementDirectory()

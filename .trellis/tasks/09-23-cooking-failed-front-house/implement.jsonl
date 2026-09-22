@@ -1,0 +1,4 @@
+{"file": ".trellis/spec/cooking/cooking-recipe-loop.md", "reason": "Front-of-house amendment must separate a failed retry from a successful handoff."}
+{"file": ".trellis/tasks/09-23-cooking-failed-front-house/prd.md", "reason": "Failed-scene requirements and non-goals."}
+{"file": ".trellis/tasks/09-23-cooking-failed-front-house/design.md", "reason": "DropFailedScene discards seats and the wash queue without touching the new kitchen."}
+{"file": ".trellis/tasks/09-19-cooking-gameplay-business-discussion/prd.md", "reason": "Owner decision that a failed scene is not carried forward."}

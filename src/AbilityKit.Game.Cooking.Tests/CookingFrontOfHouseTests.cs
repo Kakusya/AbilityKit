@@ -93,6 +93,28 @@ public sealed class CookingFrontOfHouseTests
     }
 
     [Fact]
+    public void Q01_a_failed_retry_drops_the_front_of_house_without_touching_the_kitchen()
+    {
+        var house = new CookingFrontOfHouse(Schedule(serviceTicks: 2, waitLimitTicks: 1));
+        var kitchen = Kitchen();
+        var clean = kitchen.CleanContainerCount(BowlDefinition);
+        house.Step(kitchen, Template);
+        house.Step(kitchen, Template);
+        var left = house.Step(kitchen, Template);
+        Assert.Equal(1, left.UnsatisfiedCount);
+        Dirty(kitchen);
+
+        house.DropFailedScene();
+
+        Assert.Equal(0, house.SeatedCount);
+        Assert.False(house.IsClosing);
+        Assert.Empty(house.UnsatisfiedOrders);
+        Assert.Empty(kitchen.Orders);
+        Assert.Equal(clean - 1, kitchen.CleanContainerCount(BowlDefinition));
+        Assert.Contains(Bowl, kitchen.DirtyBowlsAwaitingWash());
+    }
+
+    [Fact]
     public void N01_the_next_level_clears_seats_and_keeps_a_dirty_bowl()
     {
         var house = new CookingFrontOfHouse(Schedule(serviceTicks: 2, waitLimitTicks: 1));

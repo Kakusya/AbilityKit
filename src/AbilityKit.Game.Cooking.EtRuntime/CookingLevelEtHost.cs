@@ -700,6 +700,7 @@ public sealed class CookingLevelEtHost : IDisposable
                 $"The rebuilt kitchen could not be adopted: {adopted}."));
         }
 
+        _frontOfHouse?.DropFailedScene();
         return installed;
     }
 

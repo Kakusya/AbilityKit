@@ -1,0 +1,5 @@
+{"file": ".trellis/tasks/09-23-cooking-failed-front-house/prd.md", "reason": "Acceptance is an empty front of house and an untouched rebuilt kitchen."}
+{"file": "src/AbilityKit.Game.Cooking/CookingFrontOfHouse.cs", "reason": "DropFailedScene discards seats and the wash queue without opening an order."}
+{"file": "src/AbilityKit.Game.Cooking.EtRuntime/CookingLevelEtHost.cs", "reason": "CreateRetry drops the front of house after the rebuilt kitchen is accepted."}
+{"file": "local/Logs/test-gates/20260923-005749-cooking-kitchen-loop/cooking-kitchen-loop/gate-summary.json", "reason": "cooking-kitchen-loop exit 0: focused 78/78, Cooking 199/199, ET runtime 58/58."}
+{"file": "local/Logs/test-gates/20260923-005810-cooking-et-level-runtime/cooking-et-level-runtime/gate-summary.json", "reason": "cooking-et-level-runtime exit 0: Cooking 199/199, ET runtime 58/58."}
