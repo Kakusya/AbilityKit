@@ -1,0 +1,5 @@
+{"file": ".trellis/spec/cooking/index.md", "reason": "Spec index says front-of-house pacing is still out of scope; the amendment must land here."}
+{"file": ".trellis/spec/cooking/cooking-recipe-loop.md", "reason": "Order opening and bowl washing already live in the recipe loop contract."}
+{"file": ".trellis/tasks/09-22-cooking-front-of-house/prd.md", "reason": "Requirements and the explicit non-goals for revenue, rating, growth, and failure."}
+{"file": ".trellis/tasks/09-22-cooking-front-of-house/design.md", "reason": "Front-of-house step, success query, and end-of-level completion."}
+{"file": ".trellis/tasks/09-19-cooking-gameplay-business-discussion/prd.md", "reason": "Owner decisions for inquiry, wash, service hours, and success without a failure condition."}

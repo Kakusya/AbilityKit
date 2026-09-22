@@ -299,6 +299,7 @@ public enum CookingOrderStatus
 {
     Open,
     Completed,
+    Unsatisfied,
 }
 
 /// <summary>
@@ -476,6 +477,41 @@ public sealed partial class CookingRecipeSimulation
         _stateVersion++;
         return new CookingOrderResult(true, CookingOrderResult.AcceptedReason);
     }
+
+    /// <summary>
+    /// 前厅在顾客超时离席时关闭仍开放的订单。不写结算，不加钱，也不把关卡标成失败。
+    /// </summary>
+    public CookingOrderResult MarkOrderUnsatisfied(OrderId order)
+    {
+        if (!_orders.TryGetValue(order, out var state))
+            return new CookingOrderResult(false, "OrderNotFound");
+        if (state.Status != CookingOrderStatus.Open)
+            return new CookingOrderResult(false, "OrderNotOpen");
+
+        _orders[order] = state with { Status = CookingOrderStatus.Unsatisfied };
+        _stateVersion++;
+        return new CookingOrderResult(true, "OrderUnsatisfied");
+    }
+
+    /// <summary>测试入口：把一只在册干净碗标成待洗。不产生结算。</summary>
+    public void MarkBowlDirtyForTest(ItemId bowl)
+    {
+        if (!_items.TryGetValue(bowl, out var state) || state.Removed || state.IsDirty)
+            throw new ArgumentException($"Bowl '{bowl}' is not a clean registered bowl.", nameof(bowl));
+        if (!_fixture.WashableContainerDefinitions.Contains(state.Definition))
+            throw new ArgumentException($"Definition '{state.Definition}' is not washable.", nameof(bowl));
+        if (_cleanContainerCount.TryGetValue(state.Definition, out var cleanCount))
+            _cleanContainerCount[state.Definition] = cleanCount - 1;
+        _items[bowl] = state with { IsDirty = true, Removed = true, Version = state.Version + 1 };
+        _stateVersion++;
+    }
+
+    public IReadOnlyList<ItemId> DirtyBowlsAwaitingWash() => _items
+        .Where(pair => pair.Value.Removed && pair.Value.IsDirty &&
+            _fixture.WashableContainerDefinitions.Contains(pair.Value.Definition))
+        .Select(pair => pair.Key)
+        .OrderBy(item => item.Value, StringComparer.Ordinal)
+        .ToArray();
 
     public IReadOnlyList<CookingOrderSettlement> SettlementHistory => _settlements;
 

@@ -1,0 +1,5 @@
+{"file": ".trellis/tasks/09-22-cooking-front-of-house/prd.md", "reason": "Acceptance is inquiry-before-order, idle washing, and success only after service, closing, and empty seats."}
+{"file": "src/AbilityKit.Game.Cooking/CookingFrontOfHouse.cs", "reason": "One companion asks before opening an order and washes only when idle."}
+{"file": "src/AbilityKit.Game.Cooking.EtRuntime/CookingLevelEtHost.cs", "reason": "The host steps the front of house only after a running frame."}
+{"file": "local/Logs/test-gates/20260922-224049-cooking-kitchen-loop/cooking-kitchen-loop/gate-summary.json", "reason": "cooking-kitchen-loop exit 0: focused 75/75, Cooking 196/196, ET runtime 55/55."}
+{"file": "local/Logs/test-gates/20260922-224111-cooking-et-level-runtime/cooking-et-level-runtime/gate-summary.json", "reason": "cooking-et-level-runtime exit 0: Cooking 196/196, ET runtime 55/55."}

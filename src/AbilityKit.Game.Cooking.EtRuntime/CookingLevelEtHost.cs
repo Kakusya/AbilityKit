@@ -382,6 +382,17 @@ public sealed class CookingLevelEtHost : IDisposable
         CookingContentCatalog.ApplyStandardInitialSupply(kitchen, content);
         return kitchen;
     }
+    private CookingFrontOfHouse? _frontOfHouse;
+    private OrderTemplateId _frontOfHouseTemplate = new("unused");
+
+    /// <summary>运行帧结束后推进前厅。暂停帧不会调用 Tick 的成功路径。模板必须已在厨房内容里。</summary>
+    public void UseFrontOfHouse(CookingFrontOfHouse house, OrderTemplateId template)
+    {
+        ArgumentNullException.ThrowIfNull(house);
+        _frontOfHouse = house;
+        _frontOfHouseTemplate = template;
+    }
+
     public long HostFrameSequence { get; private set; }
     public long LastCommittedSimulationBatch { get; private set; }
     public int PendingCommandIdentityCount => _pending.Count;
@@ -962,6 +973,7 @@ public sealed class CookingLevelEtHost : IDisposable
         }
 
         HostFrameSequence = candidateFrame;
+        _frontOfHouse?.Step(simulation, _frontOfHouseTemplate);
         if (_inFlight is not null)
             LastCommittedSimulationBatch = _inFlight.SimulationBatch;
         _inFlight = null;

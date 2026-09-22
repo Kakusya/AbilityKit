@@ -245,6 +245,28 @@ public sealed class CookingLevelClosedLoopTests
         Assert.False(string.IsNullOrWhiteSpace(read.KitchenCanonical));
     }
 
+    [Fact]
+    public void F06_a_running_frame_opens_an_order_and_a_paused_frame_does_not()
+    {
+        var content = LoadContent();
+        var fixture = CreateFixture(content);
+        using var host = fixture.CreateStartedHost(state =>
+            CookingContentCatalog.ApplyStandardInitialSupply(state, content));
+        var house = new CookingFrontOfHouse(new CookingFrontOfHouseSchedule(1, 8, 2, 2, 2, 1, 9));
+        host.UseFrontOfHouse(house, SoupOrderTemplate);
+
+        Assert.True(host.Tick().Accepted);
+        Assert.Empty(fixture.Simulation.Orders);
+        Assert.True(host.Tick().Accepted);
+        Assert.True(host.Tick().Accepted);
+        Assert.Single(fixture.Simulation.Orders);
+
+        Assert.True(host.Pause().Accepted);
+        var paused = host.Tick();
+        Assert.False(paused.Accepted);
+        Assert.Single(fixture.Simulation.Orders);
+    }
+
     private sealed class TempSettlementDirectory : IDisposable
     {
         public TempSettlementDirectory()
