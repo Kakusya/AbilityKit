@@ -45,7 +45,7 @@ MOBA、Client Flow、Presentation 与通用工程治理属于后续正式化主�
 - [x] 验证“导出 checkpoint -> 销毁 host -> 重建 -> 继续运行”与不中断基线不可区分：同一条番茄蛋花汤闭环在煮制进行中导出→销毁→按同一代际重建→继续，终态 canonical/Sha256、state version、logical tick、下一产物 ID、结算次数与两份终态 checkpoint canonical 全部相等，两臂 evidence 逐位一致；HostFrameSequence 单调不 reset；导出前置 Running 且 pending 为空，跨代际/跨配置/载荷投毒结构化拒绝。门禁 `cooking-et-level-runtime`（Cooking 179/179、ET runtime 47/47）与 `cooking-kitchen-loop`（focused 58/58）通过。证据同上。durable storage、跨小关 checkpoint 产品语义、失败条件、前厅、传输与 Unity 仍未启动。
 - [x] 落实成功进入下一小关：已于 2026-09-22 由 task `09-22-cooking-level-success-handoff` 交付——保留物品、加工、容器、脏/净碗与消耗产物账；清除订单、结算、去重与事件历史；逻辑 Tick 与下一结算序号归零；新代际停在 `Created`，准备态不改厨房。失败重开、工位升级与写盘仍未开始。
 - [x] 落实失败重开：已于 2026-09-22 由 task `09-22-cooking-level-fail-retry` 交付——同一 Match、同一 `LevelId`、更高 epoch；丢掉失败现场，按标准初始供应重建厨房，停在 `Created`。不写盘，不覆盖成功检查点。失败条件、工位升级与写盘仍未开始。旧句「关闭失败 Match，创建新 MatchId」与产品参考冲突，不采用。
-- [ ] 落实工位升级迁移：使用显式领域操作迁移未完成加工并保留进度，不通过销毁父 Entity 隐式丢失 Process。
+- [x] 落实工位升级迁移，并连同解锁摆放、煮制加速和成功检查点：已于 2026-09-22 由 task `09-22-cooking-level-progression` 交付——准备态一次换工位，未完成工序保留已用 tick；解锁定义额外摆进延续厨房；煮制加速只影响新开始的番茄蛋花汤；大关检查点只在选择锁定后的成功收口写入。前厅、评分和真实断电恢复仍未开始。
 - [x] 只在小关成功完成时确认本关结算列表：已于 2026-09-22 由 task `09-22-cooking-level-settlement-confirmation` 交付——身份为 Match、`LevelId`、`LevelEpoch`，载荷为交接前的结算条；重复确认无效，失败与准备态不确认。评分、收益和长期进度入账仍未开始。
 - [x] 把已确认的结算列表按代际落到调用方给的目录：已于 2026-09-22 由 task `09-22-cooking-level-settlement-store` 交付——新读取器读回同一份列表；同一列表再写是重复，换一份列表不覆盖；截断和篡改拒绝。不改货币。Profile、SaveSlot 和真实断电恢复仍未开始。
 - [ ] ~~将 UDP 接入 ET owner-thread ingress~~：已于 2026-09-21 放弃（owner 决定传输改用 KCP），不在当前范围；若将来立项 KCP，必须重新审议回调解码/入队、ET Tick 取稳定批次与本地/远端同一权威入口的契约。

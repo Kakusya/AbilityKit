@@ -1,0 +1,4 @@
+{"file": ".trellis/tasks/09-22-cooking-level-progression/prd.md", "reason": "Approved scope: decoration, unlock, cook buff, and success-only checkpoint."}
+{"file": ".trellis/tasks/09-22-cooking-level-progression/design.md", "reason": "Major progress is separate from the settlement file and from the mid-level checkpoint."}
+{"file": ".trellis/spec/cooking/cooking-recipe-loop.md", "reason": "Success handoff keeps the kitchen; station migration must not rebuild it."}
+{"file": "Docs/design/CookingGame/reference/product-lifetimes.md", "reason": "Section 5.3 moves an unfinished process by reference and keeps elapsed progress."}

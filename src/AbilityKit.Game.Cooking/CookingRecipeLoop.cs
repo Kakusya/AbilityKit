@@ -561,6 +561,111 @@ public sealed partial class CookingRecipeSimulation
 
     internal void CloseLifecycle() => _lifecycleClosed = true;
 
+    private CookingMajorProgress? _majorProgress;
+
+    /// <summary>
+    /// 准备态换工位。没做完的工序改挂新工位，已用 tick 不变。
+    /// 冲突时整次不动。不需要工位的工序不改。
+    /// </summary>
+    public CookingMajorProgressResult MigrateStations(IReadOnlyList<CookingStationReplacement> replacements)
+    {
+        ArgumentNullException.ThrowIfNull(replacements);
+        if (_lifecycleGate?.IsGameplayMutationOpen == true)
+            return new CookingMajorProgressResult(false, CookingMajorProgressReason.InvalidState);
+        if (replacements.Count == 0)
+            return new CookingMajorProgressResult(false, CookingMajorProgressReason.UnknownChoice);
+
+        var moved = new Dictionary<ProcessId, ProcessState>();
+        var occupied = new HashSet<StationSlotId>(_processesByStation.Keys);
+        foreach (var replacement in replacements)
+        {
+            if (!_fixture.Appliances.ContainsKey(replacement.From) || !_fixture.Appliances.ContainsKey(replacement.To))
+                return new CookingMajorProgressResult(false, CookingMajorProgressReason.UnknownChoice);
+        }
+
+        foreach (var replacement in replacements)
+        {
+            if (!_processesByStation.TryGetValue(replacement.From, out var process))
+                continue;
+            if (occupied.Contains(replacement.To) && replacement.From != replacement.To)
+                return new CookingMajorProgressResult(false, CookingMajorProgressReason.StationConflict);
+            occupied.Remove(replacement.From);
+            occupied.Add(replacement.To);
+            moved[process.Id] = process with { Station = replacement.To };
+        }
+
+        foreach (var pair in moved)
+        {
+            var from = _stationsByProcess[pair.Key];
+            _processesByStation.Remove(from);
+            _processesByStation[pair.Value.Station!.Value] = pair.Value;
+            _stationsByProcess[pair.Key] = pair.Value.Station!.Value;
+        }
+
+        return new CookingMajorProgressResult(true, CookingMajorProgressReason.None);
+    }
+
+    /// <summary>
+    /// 准备态把解锁的定义按标准供应摆进延续厨房。未知定义或这个实例已经在则零变更。
+    /// 不重摆整间厨房。
+    /// </summary>
+    public CookingMajorProgressResult PlaceUnlock(CookingContent content, DefinitionId definition)
+    {
+        ArgumentNullException.ThrowIfNull(content);
+        if (_lifecycleClosed || _lifecycleGate?.IsGameplayMutationOpen == true)
+            return new CookingMajorProgressResult(false, CookingMajorProgressReason.InvalidState);
+        var entries = content.StandardInitialSupply.Where(entry => entry.Definition == definition).ToArray();
+        if (entries.Length == 0)
+            return new CookingMajorProgressResult(false, CookingMajorProgressReason.UnknownChoice);
+
+        var planned = new List<(ItemId Id, ItemLocation Location)>();
+        foreach (var entry in entries)
+        {
+            if (StringComparer.Ordinal.Equals(entry.Location, CookingContentCatalog.CleanPoolLocation))
+                continue;
+            if (!_fixture.Items.ContainsKey(entry.Definition))
+                return new CookingMajorProgressResult(false, CookingMajorProgressReason.UnknownChoice);
+            for (var index = 1; index <= entry.Count; index++)
+            {
+                var id = new ItemId($"{entry.Definition.Value}-unlock-{index}");
+                if (_items.ContainsKey(id))
+                    return new CookingMajorProgressResult(false, CookingMajorProgressReason.StationConflict);
+                if (entry.Location.StartsWith("station:", StringComparison.Ordinal))
+                    planned.Add((id, ItemLocation.Station(new StationSlotId(entry.Location["station:".Length..]))));
+                else if (entry.Location.StartsWith("world:", StringComparison.Ordinal))
+                    planned.Add((id, ItemLocation.World(entry.Location["world:".Length..])));
+                else
+                    return new CookingMajorProgressResult(false, CookingMajorProgressReason.UnknownChoice);
+            }
+        }
+
+        foreach (var item in planned)
+        {
+            if (_items.ContainsKey(item.Id))
+                return new CookingMajorProgressResult(false, CookingMajorProgressReason.StationConflict);
+        }
+
+        var gate = _lifecycleGate;
+        _lifecycleGate = null;
+        try
+        {
+            foreach (var item in planned)
+                AddItem(item.Id, definition, item.Location);
+        }
+        finally
+        {
+            _lifecycleGate = gate;
+        }
+
+        return new CookingMajorProgressResult(true, CookingMajorProgressReason.None);
+    }
+
+    public void UseMajorProgress(CookingMajorProgress progress)
+    {
+        ArgumentNullException.ThrowIfNull(progress);
+        _majorProgress = progress;
+    }
+
     private bool IsGameplayMutationOpen =>
         !_lifecycleClosed && (_lifecycleGate?.IsGameplayMutationOpen ?? true);
 
@@ -1136,7 +1241,8 @@ public sealed partial class CookingRecipeSimulation
         }
 
         var processId = new ProcessId($"process-{++_nextProcessId}");
-        var process = new ProcessState(processId, recipe.Id, command.Player, anchorId, stationId, 0, recipe.RequiredTicks,
+        var requiredTicks = _majorProgress?.CookTicks(recipe.Id, recipe.RequiredTicks) ?? recipe.RequiredTicks;
+        var process = new ProcessState(processId, recipe.Id, command.Player, anchorId, stationId, 0, requiredTicks,
             recipe.Completion, containerId, lockedInputs);
         if (stationId is { } stationProcessKey)
         {

@@ -580,6 +580,52 @@ public sealed class CookingLevelEtHost : IDisposable
             ledger, store, _lifecycle.Scope, _ownedSimulation.SettlementHistory);
     }
 
+    public CookingMajorProgressResult ChooseDecoration(
+        CookingMajorProgress progress,
+        IReadOnlyList<CookingStationReplacement> replacements)
+    {
+        Check();
+        ArgumentNullException.ThrowIfNull(progress);
+        if (_lifecycle.State != CookingLevelState.Created || _ownedSimulation is null)
+            return new CookingMajorProgressResult(false, CookingMajorProgressReason.InvalidState);
+        var previous = progress.Decoration;
+        var chosen = progress.ChooseDecoration(replacements);
+        if (!chosen.Accepted)
+            return chosen;
+        var moved = _ownedSimulation.MigrateStations(replacements);
+        if (!moved.Accepted && previous.Count > 0)
+            progress.ChooseDecoration(previous);
+        return moved;
+    }
+
+    public CookingMajorProgressResult Unlock(
+        CookingMajorProgress progress,
+        CookingContent content,
+        DefinitionId definition)
+    {
+        Check();
+        ArgumentNullException.ThrowIfNull(progress);
+        ArgumentNullException.ThrowIfNull(content);
+        if (_lifecycle.State != CookingLevelState.Created || _ownedSimulation is null)
+            return new CookingMajorProgressResult(false, CookingMajorProgressReason.InvalidState);
+        var placed = _ownedSimulation.PlaceUnlock(content, definition);
+        if (!placed.Accepted)
+            return placed;
+        return progress.Unlock(definition);
+    }
+
+    public CookingMajorProgressResult WriteMajorCheckpoint(
+        CookingMajorProgress progress,
+        CookingMajorCheckpointStore store)
+    {
+        Check();
+        ArgumentNullException.ThrowIfNull(progress);
+        ArgumentNullException.ThrowIfNull(store);
+        if (_lifecycle.State != CookingLevelState.Created || _ownedSimulation is null || !progress.Locked)
+            return new CookingMajorProgressResult(false, CookingMajorProgressReason.InvalidState);
+        return store.Write(_lifecycle.Scope.MatchScope, progress, _ownedSimulation.ExportSuccessHandoff());
+    }
+
     public CookingLevelHostOperationResult CompleteEnd()
     {
         Check();

@@ -1,0 +1,5 @@
+{"file": ".trellis/tasks/09-22-cooking-level-progression/prd.md", "reason": "Acceptance is station migration, unlock supply, cook buff, and a success-only checkpoint."}
+{"file": "src/AbilityKit.Game.Cooking/CookingMajorProgress.cs", "reason": "Major progress locks decoration, unlocks, and the cook buff; the checkpoint file is separate from the settlement list."}
+{"file": "src/AbilityKit.Game.Cooking/CookingRecipeLoop.cs", "reason": "Created-state station migration keeps elapsed ticks and places an unlock without rebuilding the kitchen."}
+{"file": "local/Logs/test-gates/20260922-185452-cooking-kitchen-loop/cooking-kitchen-loop/gate-summary.json", "reason": "cooking-kitchen-loop exit 0: focused 70/70, Cooking 191/191, ET runtime 54/54."}
+{"file": "local/Logs/test-gates/20260922-185531-cooking-et-level-runtime/cooking-et-level-runtime/gate-summary.json", "reason": "cooking-et-level-runtime exit 0: Cooking 191/191, ET runtime 54/54."}

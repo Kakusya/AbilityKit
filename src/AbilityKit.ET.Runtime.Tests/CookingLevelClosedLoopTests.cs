@@ -207,6 +207,44 @@ public sealed class CookingLevelClosedLoopTests
         Assert.Equal(beforeHandoff, reread.Confirmation!.Settlements);
     }
 
+    [Fact]
+    public void P04_decoration_moves_an_unfinished_process_and_only_success_writes_the_checkpoint()
+    {
+        var content = LoadContent();
+        var fixture = CreateFixture(content);
+        using var host = fixture.CreateStartedHost(state =>
+            CookingContentCatalog.ApplyStandardInitialSupply(state, content));
+        var progress = new CookingMajorProgress();
+        Assert.Equal(CookingMajorProgressReason.InvalidState,
+            host.ChooseDecoration(progress, new[]
+            {
+                new CookingStationReplacement(Stove, new StationSlotId("stove-b")),
+            }).Reason);
+
+        Assert.True(host.BeginEnd(CookingLevelOutcome.Failed).Accepted);
+        Assert.True(host.CompleteEnd().Accepted);
+        using var directory = new TempSettlementDirectory();
+        var checkpoints = new CookingMajorCheckpointStore(directory.Path);
+        progress.Lock();
+        Assert.Equal(CookingMajorProgressReason.InvalidState, host.WriteMajorCheckpoint(progress, checkpoints).Reason);
+        Assert.Equal(CookingMajorProgressReason.Missing, checkpoints.Read(fixture.LevelScope.MatchScope).Reason);
+        host.Dispose();
+
+        var succeeded = CreateFixture(content);
+        using var success = succeeded.CreateStartedHost(state =>
+            CookingContentCatalog.ApplyStandardInitialSupply(state, content));
+        Assert.True(success.BeginEnd(CookingLevelOutcome.Success).Accepted);
+        Assert.True(success.CompleteEnd().Accepted);
+        Assert.True(success.CreateSuccessor(new LevelId("level-2"), 2).Accepted);
+        var next = new CookingMajorProgress();
+        Assert.True(next.EnableCookFaster().Accepted);
+        next.Lock();
+        Assert.True(success.WriteMajorCheckpoint(next, checkpoints).Accepted);
+        var read = new CookingMajorCheckpointStore(directory.Path).Read(succeeded.LevelScope.MatchScope);
+        Assert.True(read.Progress!.CookFaster);
+        Assert.False(string.IsNullOrWhiteSpace(read.KitchenCanonical));
+    }
+
     private sealed class TempSettlementDirectory : IDisposable
     {
         public TempSettlementDirectory()
