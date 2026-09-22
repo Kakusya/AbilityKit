@@ -172,6 +172,58 @@ public sealed class CookingLevelClosedLoopTests
         Assert.Empty(stored!.Settlements);
     }
 
+    [Fact]
+    public void D04_the_host_stores_the_success_list_and_rejects_a_failed_level()
+    {
+        var content = LoadContent();
+        using var directory = new TempSettlementDirectory();
+        var failed = CreateFixture(content);
+        using var failedHost = failed.CreateStartedHost(state =>
+            CookingContentCatalog.ApplyStandardInitialSupply(state, content));
+        Assert.True(failedHost.BeginEnd(CookingLevelOutcome.Failed).Accepted);
+        Assert.True(failedHost.CompleteEnd().Accepted);
+        var ledger = new CookingLevelSettlementLedger();
+        var store = new CookingLevelSettlementStore(directory.Path);
+        var rejected = failedHost.StoreSettlements(ledger, store);
+        Assert.Equal(CookingLevelSettlementStoreReason.InvalidState, rejected.Reason);
+        Assert.False(ledger.TryRead(failed.LevelScope, out _));
+        Assert.Equal(CookingLevelSettlementStoreReason.Missing, store.Read(failed.LevelScope).Reason);
+        failedHost.Dispose();
+
+        var succeeded = CreateFixture(content);
+        using var host = succeeded.CreateStartedHost(state =>
+            CookingContentCatalog.ApplyStandardInitialSupply(state, content));
+        Assert.True(succeeded.Simulation.OpenOrder(SoupOrder, SoupOrderTemplate).Accepted);
+        Assert.True(host.BeginEnd(CookingLevelOutcome.Success).Accepted);
+        Assert.True(host.CompleteEnd().Accepted);
+        var beforeHandoff = succeeded.Simulation.SettlementHistory.ToArray();
+        var storedOnDisk = host.StoreSettlements(ledger, store);
+        Assert.Equal(beforeHandoff, storedOnDisk.Confirmation!.Settlements);
+        Assert.True(host.CreateSuccessor(new LevelId("level-2"), 2).Accepted);
+        var afterHandoff = host.StoreSettlements(ledger, store);
+        Assert.Equal(CookingLevelSettlementStoreReason.InvalidState, afterHandoff.Reason);
+
+        var reread = new CookingLevelSettlementStore(directory.Path).Read(succeeded.LevelScope);
+        Assert.Equal(beforeHandoff, reread.Confirmation!.Settlements);
+    }
+
+    private sealed class TempSettlementDirectory : IDisposable
+    {
+        public TempSettlementDirectory()
+        {
+            Path = System.IO.Path.Combine(System.IO.Path.GetTempPath(), "cooking-host-settlement-" + Guid.NewGuid().ToString("N"));
+            Directory.CreateDirectory(Path);
+        }
+
+        public string Path { get; }
+
+        public void Dispose()
+        {
+            if (Directory.Exists(Path))
+                Directory.Delete(Path, recursive: true);
+        }
+    }
+
     private static string ReferenceSupply(CookingContent content, CookingScope scope)
     {
         var players = new Dictionary<PlayerId, CookingPlayerConfig>

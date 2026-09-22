@@ -559,6 +559,27 @@ public sealed class CookingLevelEtHost : IDisposable
         return ledger.Confirm(_lifecycle.Scope, _ownedSimulation.SettlementHistory);
     }
 
+    public CookingLevelSettlementStoreResult StoreSettlements(
+        CookingLevelSettlementLedger ledger,
+        CookingLevelSettlementStore store)
+    {
+        Check();
+        ArgumentNullException.ThrowIfNull(ledger);
+        ArgumentNullException.ThrowIfNull(store);
+        if (_lifecycle.State != CookingLevelState.Ended || _lifecycle.Outcome != CookingLevelOutcome.Success ||
+            _ownedSimulation is null)
+        {
+            return new CookingLevelSettlementStoreResult(
+                false,
+                CookingLevelSettlementConfirmationDisposition.Rejected,
+                CookingLevelSettlementStoreReason.InvalidState,
+                null);
+        }
+
+        return CookingLevelSettlementStore.Commit(
+            ledger, store, _lifecycle.Scope, _ownedSimulation.SettlementHistory);
+    }
+
     public CookingLevelHostOperationResult CompleteEnd()
     {
         Check();

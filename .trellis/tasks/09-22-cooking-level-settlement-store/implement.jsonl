@@ -1,0 +1,5 @@
+{"file": ".trellis/spec/cooking/cooking-persistence-management.md", "reason": "P5 reward apply and in-memory store are not this generation file record."}
+{"file": ".trellis/spec/cooking/cooking-recipe-loop.md", "reason": "Success handoff clears SettlementHistory; the file record must be written before that crop."}
+{"file": "Docs/design/CookingGame/reference/save-storage.md", "reason": "Domain records must not hold absolute paths; this task does not choose a platform save root."}
+{"file": ".trellis/tasks/09-22-cooking-level-settlement-store/prd.md", "reason": "Approved scope: persist the confirmed generation list only."}
+{"file": ".trellis/tasks/09-22-cooking-level-settlement-store/design.md", "reason": "File recorder is separate from the reward applier and from the kitchen checkpoint."}

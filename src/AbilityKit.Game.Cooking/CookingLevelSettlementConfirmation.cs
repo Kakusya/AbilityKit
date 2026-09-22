@@ -81,4 +81,13 @@ public sealed class CookingLevelSettlementLedger
         confirmation = new CookingLevelSettlementConfirmation(scope, existing);
         return true;
     }
+
+    /// <summary>
+    /// 只撤回这一代。文件没写上时，内存里也不能留下这次确认。
+    /// </summary>
+    public bool Forget(CookingLevelScope scope)
+    {
+        ArgumentNullException.ThrowIfNull(scope);
+        return _confirmed.Remove(scope);
+    }
 }

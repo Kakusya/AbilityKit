@@ -1,0 +1,5 @@
+{"file": ".trellis/tasks/09-22-cooking-level-settlement-store/prd.md", "reason": "Acceptance is a generation list that survives a new reader, with conflict, truncation, and failed-level rejection."}
+{"file": "src/AbilityKit.Game.Cooking/CookingLevelSettlementStore.cs", "reason": "One generation, one file; same list is a duplicate; a different list is rejected."}
+{"file": "src/AbilityKit.Game.Cooking.EtRuntime/CookingLevelEtHost.cs", "reason": "Host stores only after Ended+Success and before handoff."}
+{"file": "local/Logs/test-gates/20260922-174507-cooking-kitchen-loop/cooking-kitchen-loop/gate-summary.json", "reason": "cooking-kitchen-loop exit 0: focused 66/66, Cooking 187/187, ET runtime 53/53."}
+{"file": "local/Logs/test-gates/20260922-174525-cooking-et-level-runtime/cooking-et-level-runtime/gate-summary.json", "reason": "cooking-et-level-runtime exit 0: Cooking 187/187, ET runtime 53/53."}
