@@ -1,0 +1,6 @@
+{"file": ".trellis/tasks/09-22-cooking-level-fail-retry/prd.md", "reason": "R1-R6 accepted by host F01 and F02."}
+{"file": "src/AbilityKit.Game.Cooking.EtRuntime/CookingLevelEtHost.cs", "reason": "CreateRetry rebuilds the kitchen from standard supply and stays Created."}
+{"file": "src/AbilityKit.ET.Runtime.Tests/CookingLevelClosedLoopTests.cs", "reason": "F01 compares the rebuilt kitchen with a fresh standard supply."}
+{"file": "src/AbilityKit.ET.Runtime.Tests/CookingLevelEtHostTests.cs", "reason": "F02 rejects Running and Success; existing retry watermark test still passes."}
+{"file": "local/Logs/test-gates/20260922-154801-cooking-kitchen-loop/cooking-kitchen-loop/gate-summary.json", "reason": "cooking-kitchen-loop exit 0: focused 61/61, Cooking 182/182, ET runtime 51/51."}
+{"file": "local/Logs/test-gates/20260922-154818-cooking-et-level-runtime/cooking-et-level-runtime/gate-summary.json", "reason": "cooking-et-level-runtime exit 0: Cooking 182/182, ET runtime 51/51."}

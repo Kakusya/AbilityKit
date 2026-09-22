@@ -1,4 +1,20 @@
 # P2 一条完整配方：cooking-recipe-loop
+## 2026-09-22 小关失败重开修约（任务 09-22-cooking-level-fail-retry）
+
+来源：`Docs/Todo.md` P0-C1「落实失败重开」，产品语义基准为 `Docs/design/CookingGame/reference/product-lifetimes.md` §5.2。只覆盖已经 `Ended` + `Failed` 之后的厨房重建。失败条件、工位升级、写盘仍未实现。
+
+| 位置 | 旧条款 | 新条款 | 来源 |
+|---|---|---|---|
+| 失败重开厨房 | `CreateRetry` 只换同一 `LevelId` 的更高 epoch；下一次 `Start` 由工厂新建空厨房 | 失败 `Ended` 后丢掉失败现场。宿主安装下一代后，用工厂新建仿真并调用 `ApplyStandardInitialSupply`，再挂到下一代，停在 `Created`。物品与干净碗池和「新仿真 + 同一份标准供应」一致 | 实现契约：task design；§5.2 |
+| Match | 待办曾写关闭失败 Match 并新建 MatchId | 不采用。失败重开不结束 Match，也不换 MatchId | §5.2，覆盖 `Docs/Todo.md` 旧句 |
+| 准备态 | 成功交接后 `Created` 只读 | 失败重开同样停在 `Created`，不提供改厨房入口。`Start` 绑定这份标准供应厨房，不接回失败现场，也不再新建空仿真 | 实现契约：task PRD R4 |
+| 同代际恢复与成功交接 | 恢复整册换入；成功交接保留现场 | 不变。失败重开既不走 `RestoreCheckpoint`，也不走 `ExportSuccessHandoff` | 既有契约 |
+
+### 实现状态声明
+
+- 已实现并验证（单机纯 C#）：宿主 F01/F02。失败换代丢掉现场、按标准供应重建、停在 `Created`，随后 `Prepare` + `Start` 绑定同一份厨房。`HostFrameSequence` 不回退，重开不写盘。
+- 仍未实现：失败条件、失败界面、装修/道具/Buff、工位升级迁移、写盘、评分、前厅。
+
 ## 2026-09-22 小关成功交接修约（任务 09-22-cooking-level-success-handoff）
 
 来源：`Docs/Todo.md` P0-C1「落实成功进入下一小关」，产品语义基准为 `Docs/design/CookingGame/reference/product-lifetimes.md` §5.1。只覆盖成功收口后的厨房保留与本关上下文清除。失败重开、工位升级、durable storage 仍未实现。
@@ -12,7 +28,7 @@
 ### 实现状态声明
 
 - 已实现并验证（单机纯 C#）：领域 H01/H03，宿主 H02/H03。成功换代保留现场、清除本关上下文、停在 `Created`，随后 `Prepare` + `Start` 绑定同一份厨房。
-- 仍未实现：失败重开如何重建标准供应、工位升级迁移、写盘、评分、装修/道具/Buff、前厅。
+- 失败重开的标准供应重建已由 `09-22-cooking-level-fail-retry` 落地。仍未实现：失败条件、工位升级迁移、写盘、评分、装修/道具/Buff、前厅。
 
 ## 2026-09-22 恢复 checkpoint 契约修约（任务 09-22-cooking-checkpoint-recovery）
 

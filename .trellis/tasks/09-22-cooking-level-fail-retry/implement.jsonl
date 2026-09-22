@@ -1,0 +1,5 @@
+{"file": ".trellis/spec/cooking/cooking-recipe-loop.md", "reason": "Level generation contract; fail retry must not reuse success handoff or same-generation restore."}
+{"file": ".trellis/spec/cooking/index.md", "reason": "Cooking spec index and the latest amendment pointer."}
+{"file": "Docs/design/CookingGame/reference/product-lifetimes.md", "reason": "Section 5.2: same LevelId, higher epoch, discard the failed kitchen, rebuild standard supply."}
+{"file": ".trellis/tasks/09-19-cooking-gameplay-business-discussion/prd.md", "reason": "Failure conditions stay undefined; a failed level does not overwrite the last success checkpoint."}
+{"file": ".trellis/tasks/09-22-cooking-level-success-handoff/prd.md", "reason": "Success handoff is the sibling path and must stay unchanged."}

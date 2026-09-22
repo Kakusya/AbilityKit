@@ -431,6 +431,16 @@ public sealed class CookingLevelLifecycle
         return true;
     }
 
+    /// <summary>
+    /// 准备态只读观察。成功交接和失败重开都会在 <see cref="CookingLevelState.Created"/> 挂上厨房，
+    /// 此时玩法入口仍关闭。<see cref="Start"/> 之后与 <see cref="TryGetGameplay"/> 同一份对象。
+    /// </summary>
+    internal bool TryPeekBoundKitchen(out CookingRecipeSimulation? kitchen)
+    {
+        kitchen = _gameplay;
+        return kitchen is not null;
+    }
+
     public CookingLevelLifecycleResult BeginPreparation(CookingLevelPreparation preparation)
     {
         ArgumentNullException.ThrowIfNull(preparation);

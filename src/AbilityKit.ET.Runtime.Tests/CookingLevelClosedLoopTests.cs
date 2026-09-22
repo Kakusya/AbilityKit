@@ -82,6 +82,73 @@ public sealed class CookingLevelClosedLoopTests
         AssertEvidence(evidence.Path, "E02", 8);
     }
 
+    [Fact]
+    public void F01_failed_retry_rebuilds_the_standard_supply_and_stays_created()
+    {
+        var content = LoadContent();
+        var fixture = CreateFixture(content);
+        using var host = fixture.CreateStartedHost(state =>
+            CookingContentCatalog.ApplyStandardInitialSupply(state, content));
+        var tomato = ItemState(fixture.Simulation, new ItemId("tomato-1"));
+        Assert.True(host.TryEnqueue(new CookingLevelCommandEnvelope(fixture.LevelScope,
+            new CookingRecipeCommand(fixture.LevelScope.MatchScope, fixture.NextBatch(), Player,
+                new RecipeCommandId("move-tomato"), CookingRecipeOperation.Pickup,
+                null, null, tomato.Id, null, null, null, tomato.Version, 0),
+            "loop-connection", "move-tomato")).Accepted);
+        Assert.True(host.Tick().Accepted);
+        Assert.True(fixture.Simulation.OpenOrder(SoupOrder, SoupOrderTemplate).Accepted);
+        var frameAfterPlay = host.HostFrameSequence;
+        var failedKitchen = fixture.Simulation.ExportCheckpoint().CanonicalText();
+        var reference = ReferenceSupply(content, fixture.LevelScope.MatchScope);
+
+        Assert.True(host.BeginEnd(CookingLevelOutcome.Failed).Accepted);
+        Assert.True(host.CompleteEnd().Accepted);
+        var retry = host.CreateRetry(2, content);
+
+        Assert.True(retry.Accepted, retry.Reason);
+        Assert.Equal(fixture.LevelScope.Level, retry.NewScope!.Level);
+        Assert.Equal(2, retry.NewScope.LevelEpoch);
+        Assert.Equal(fixture.LevelScope.MatchScope, retry.NewScope.MatchScope);
+        Assert.Equal(CookingLevelState.Created, host.Lifecycle.State);
+        Assert.True(host.HostFrameSequence >= frameAfterPlay);
+        Assert.True(host.TryPeekBoundKitchen(out var rebuilt));
+        var rebuiltCheckpoint = rebuilt!.ExportCheckpoint();
+        Assert.NotEqual(failedKitchen, rebuiltCheckpoint.CanonicalText());
+        Assert.Equal(reference, rebuiltCheckpoint.CanonicalText());
+        Assert.Empty(rebuiltCheckpoint.Orders);
+        Assert.Empty(rebuiltCheckpoint.Processes);
+        Assert.Empty(rebuiltCheckpoint.Settlements);
+        Assert.Equal(0, rebuiltCheckpoint.LogicalTick);
+        Assert.Equal(CookingLevelFrameReason.LevelNotRunning, host.Tick().Reason);
+        Assert.Equal(CookingLevelAdmissionReason.LevelNotRunning, host.TryEnqueue(
+            new CookingLevelCommandEnvelope(retry.NewScope, new CookingRecipeCommand(
+                retry.NewScope.MatchScope, 1, Player, new RecipeCommandId("early"),
+                CookingRecipeOperation.Pickup, null, null, new ItemId("tomato-1"), null, null, null, 1, 0),
+            "loop-connection", "early")).Reason);
+
+        Assert.True(host.Prepare(fixture.Preparation).Accepted);
+        Assert.True(host.Start().Accepted);
+        Assert.True(host.Lifecycle.TryGetGameplay(out var started));
+        var startedCheckpoint = started.ExportCheckpoint();
+        Assert.Equal(reference, (startedCheckpoint with { LevelScope = null }).CanonicalText());
+        Assert.Equal(host.Lifecycle.Scope, startedCheckpoint.LevelScope);
+        Assert.DoesNotContain(started.ExportCheckpoint().Items, item => item.Location.Kind == LocationKind.PlayerHand);
+        Assert.True(host.Tick().Accepted);
+    }
+
+    private static string ReferenceSupply(CookingContent content, CookingScope scope)
+    {
+        var players = new Dictionary<PlayerId, CookingPlayerConfig>
+        {
+            [Player] = new(Player, new HashSet<string>(StringComparer.Ordinal) { "cook" },
+                new HashSet<string>(StringComparer.Ordinal) { Board.Value, Stove.Value, Oven.Value, Counter.Value }),
+        };
+        var simulation = new CookingRecipeSimulation(
+            CookingContentCatalog.BuildFixture(content, scope, players, CleanPoolLocation));
+        CookingContentCatalog.ApplyStandardInitialSupply(simulation, content);
+        return simulation.ExportCheckpoint().CanonicalText();
+    }
+
     /// <summary>
     /// 烤面包臂：标准初始供应 → 碗上台面 → 烤箱烤面包 → 入碗 → 前厅开单；
     /// <paramref name="submit"/> 为 true 时提交烤面包（被蛋花汤订单要求拒绝），否则只推进一个时钟帧。

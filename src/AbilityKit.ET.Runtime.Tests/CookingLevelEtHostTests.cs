@@ -317,7 +317,7 @@ public sealed class CookingLevelEtHostTests
 
         var oldLevel = host.Level;
         var oldDriver = host.Driver;
-        var retry = host.CreateRetry(2);
+        var retry = host.CreateRetry(2, EmptyContent());
         Assert.True(retry.Accepted);
         Assert.Equal(fixture.LevelScope.Level, retry.NewScope!.Level);
         Assert.Equal(2, retry.NewScope.LevelEpoch);
@@ -668,6 +668,32 @@ public sealed class CookingLevelEtHostTests
 
     [Fact]
     [Trait("Gate", "CookingLevelRuntime")]
+    public void F02_success_cannot_retry_and_running_retry_is_rejected()
+    {
+        var content = EmptyContent();
+        var running = CreateFixture();
+        using var runningHost = running.CreateStartedHost(simulation =>
+            simulation.AddIngredient(running.Ingredient, running.Raw, running.Player));
+        var before = running.Simulation.ExportCheckpoint().CanonicalText();
+        var rejected = runningHost.CreateRetry(2, content);
+        Assert.False(rejected.Accepted);
+        Assert.Equal(CookingLevelLifecycleReason.InvalidState.ToString(), rejected.Reason);
+        Assert.Equal(before, running.Simulation.ExportCheckpoint().CanonicalText());
+        Assert.False(runningHost.Lifecycle.HasCreatedNextGeneration);
+        runningHost.Dispose();
+
+        var success = CreateFixture();
+        using var successHost = success.CreateStartedHost();
+        Assert.True(successHost.BeginEnd(CookingLevelOutcome.Success).Accepted);
+        Assert.True(successHost.CompleteEnd().Accepted);
+        var wrongOutcome = successHost.CreateRetry(2, content);
+        Assert.False(wrongOutcome.Accepted);
+        Assert.Equal(CookingLevelLifecycleReason.RetryRequiresFailedOutcome.ToString(), wrongOutcome.Reason);
+        Assert.False(successHost.Lifecycle.HasCreatedNextGeneration);
+    }
+
+    [Fact]
+    [Trait("Gate", "CookingLevelRuntime")]
     public void H03_running_level_cannot_hand_off()
     {
         var fixture = CreateFixture();
@@ -823,6 +849,25 @@ public sealed class CookingLevelEtHostTests
             CookingRecipeOperation.PutIn, item: product.Id, container: fixture.Container,
             expectedVersion: product.Version + 1)).Outcome);
     }
+
+    private static CookingContent EmptyContent() =>
+        CookingContentCatalog.Load(new CookingContentDocument(
+            "cooking-definition-v2",
+            new[] { "heat" },
+            new[]
+            {
+                new CookingContentItem("raw", new[] { "cook" }),
+                new CookingContentItem("cooked", new[] { "cook" }),
+                new CookingContentItem("plate", new[] { "cook" }, new CookingContentContainer(1, new[] { "cooked" })),
+            },
+            new[]
+            {
+                new CookingContentAppliance("stove", new[] { "heat" }),
+                new CookingContentAppliance("counter", Array.Empty<string>()),
+            },
+            new[] { new CookingContentRecipe("soup", new[] { "raw" }, "cooked", "boil", "heat", 3) },
+            new[] { new CookingContentOrderTemplate("order-template", "soup", "plate") },
+            Array.Empty<CookingContentSupplyEntry>()));
 
     private static void AssertRelation<TAttribute, TEntity, TParent>()
         where TAttribute : Attribute

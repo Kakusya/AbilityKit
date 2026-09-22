@@ -368,6 +368,20 @@ public sealed class CookingLevelEtHost : IDisposable
     public CookingLevelDriverComponent Driver { get; private set; } = null!;
     public CookingLevelSimulationBinding Binding { get; private set; }
     public CookingLevelLifecycle Lifecycle => _lifecycle;
+
+    /// <summary>
+    /// 准备态只读观察。成功交接和失败重开在 <c>Created</c> 就已经挂上厨房，
+    /// 此时 <see cref="CookingLevelLifecycle.TryGetGameplay"/> 仍关闭。
+    /// </summary>
+    public bool TryPeekBoundKitchen(out CookingRecipeSimulation? kitchen) =>
+        _lifecycle.TryPeekBoundKitchen(out kitchen);
+
+    private static CookingRecipeSimulation CreateRetryKitchen(CookingLevelLifecycle lifecycle, CookingContent content)
+    {
+        var kitchen = lifecycle.GameplayFactory.Create(lifecycle.Scope, lifecycle.Configuration);
+        CookingContentCatalog.ApplyStandardInitialSupply(kitchen, content);
+        return kitchen;
+    }
     public long HostFrameSequence { get; private set; }
     public long LastCommittedSimulationBatch { get; private set; }
     public int PendingCommandIdentityCount => _pending.Count;
@@ -535,17 +549,45 @@ public sealed class CookingLevelEtHost : IDisposable
         return Operation(result);
     }
 
-    public CookingLevelHostGenerationResult CreateRetry(long newEpoch)
+    public CookingLevelHostGenerationResult CreateRetry(long newEpoch, CookingContent content)
     {
         Check();
+        ArgumentNullException.ThrowIfNull(content);
         var candidateResult = RunLifecycleOperation(() =>
         {
             var reason = _lifecycle.TryCreateRetryCandidate(newEpoch, out var candidate);
             return new CandidateResult(reason, candidate);
         });
-        return candidateResult.Reason == CookingLevelLifecycleReason.None
-            ? InstallGeneration(candidateResult.Candidate!, isRetry: true)
-            : RejectGeneration(candidateResult.Reason);
+        if (candidateResult.Reason != CookingLevelLifecycleReason.None)
+            return RejectGeneration(candidateResult.Reason);
+
+        var candidate = candidateResult.Candidate!;
+        var installed = InstallGeneration(candidate, isRetry: true);
+        if (!installed.Accepted)
+            return installed;
+        if (_ownedSimulation is not null)
+            ReleaseSimulationOwnership();
+
+        CookingRecipeSimulation kitchen;
+        try
+        {
+            kitchen = CreateRetryKitchen(candidate, content);
+        }
+        catch (Exception exception)
+        {
+            throw Fault(new InvalidOperationException(
+                "The failed level could not be rebuilt from its standard initial supply.", exception));
+        }
+
+        var adopted = candidate.AdoptSuccessorKitchen(kitchen);
+        if (adopted != CookingLevelLifecycleReason.None)
+        {
+            kitchen.CloseLifecycle();
+            throw Fault(new InvalidOperationException(
+                $"The rebuilt kitchen could not be adopted: {adopted}."));
+        }
+
+        return installed;
     }
 
     public CookingLevelHostGenerationResult CreateSuccessor(LevelId newLevelId, long newEpoch)
