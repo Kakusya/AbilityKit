@@ -168,3 +168,39 @@ Todo P0-C1 前两条未勾项落地：同步 snapshot 与恢复 checkpoint 显�
 ### Status
 
 [OK] **Completed**
+
+
+## Session 8: 小关失败重开按标准供应重建厨房
+<!-- trellis-session: v=2 fp=ec29940795152414 -->
+
+**Date**: 2026-09-22
+**Task**: 小关失败重开按标准供应重建厨房
+**Branch**: `master`
+
+### Summary
+
+失败重开丢掉失败现场，按标准初始供应重建厨房并停在 Created。同一 LevelId、更高 epoch、同一 Match。不写盘，不改成功交接和同代恢复。
+
+### Main Changes
+
+- CreateRetry 安装下一代后用工厂新建仿真并 ApplyStandardInitialSupply，停在 Created。
+- Start 绑定这份标准供应厨房，不接回失败现场。
+
+### Git Commits
+
+| Hash | Message |
+|------|---------|
+| `a55848f27` | feat(cooking): rebuild the kitchen from standard supply on a failed retry |
+
+### Testing
+
+- [OK] cooking-kitchen-loop：focused 61/61、Cooking 182/182、ET runtime 51/51。
+- [OK] cooking-et-level-runtime：Cooking 182/182、ET runtime 51/51。
+
+### Status
+
+[OK] **Completed**
+
+### Next Steps
+
+- 工位升级、确认结算写盘、失败条件仍未做。

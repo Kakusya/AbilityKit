@@ -8,7 +8,7 @@
 
 <!-- @@@auto:current-status -->
 - **Active File**: `journal-1.md`
-- **Total Sessions**: 7
+- **Total Sessions**: 8
 - **Last Active**: 2026-09-22
 <!-- @@@/auto:current-status -->
 
@@ -19,7 +19,7 @@
 <!-- @@@auto:active-documents -->
 | File | Lines | Status |
 |------|-------|--------|
-| `journal-1.md` | ~170 | Active |
+| `journal-1.md` | ~206 | Active |
 <!-- @@@/auto:active-documents -->
 
 ---
@@ -29,6 +29,7 @@
 <!-- @@@auto:session-history -->
 | # | Date | Title | Commits | Branch |
 |---|------|-------|---------|--------|
+| 8 | 2026-09-22 | 小关失败重开按标准供应重建厨房 | `a55848f27` | `master` |
 | 7 | 2026-09-22 | Cooking 恢复 checkpoint 契约（单机） | `bd6a2f10c` | `master` |
 | 6 | 2026-09-21 | Cooking ET Level 闭环验收（单机） | `56c310c32e46c0edddec0b6d6327b7c37dd0b55a` | `master` |
 | 5 | 2026-09-21 | Cooking 正式配方与订单内容（单机） | `136bef394df9862b05b20a40185b0d6676a4a0d3` | `master` |
