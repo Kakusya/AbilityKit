@@ -1,0 +1,4 @@
+{"file": ".trellis/tasks/09-23-cooking-retry-keeps-choices/prd.md", "reason": "Approved scope: a failed retry keeps the current process unlock and cook buff, and does not write a checkpoint."}
+{"file": ".trellis/tasks/09-23-cooking-retry-keeps-choices/design.md", "reason": "Apply the progress before InstallGeneration so a rejected choice leaves the failed kitchen in place."}
+{"file": ".trellis/spec/cooking/cooking-recipe-loop.md", "reason": "Failed retry currently rebuilds standard supply only; this task adds the current-process choices without changing the checkpoint rule."}
+{"file": ".trellis/tasks/09-19-cooking-gameplay-business-discussion/prd.md", "reason": "Owner decision that failed retries keep decoration, item, and buff choices in the current process and do not write a checkpoint."}

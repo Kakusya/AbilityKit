@@ -662,7 +662,10 @@ public sealed class CookingLevelEtHost : IDisposable
         return Operation(result);
     }
 
-    public CookingLevelHostGenerationResult CreateRetry(long newEpoch, CookingContent content)
+    public CookingLevelHostGenerationResult CreateRetry(
+        long newEpoch,
+        CookingContent content,
+        CookingMajorProgress? progress = null)
     {
         Check();
         ArgumentNullException.ThrowIfNull(content);
@@ -675,22 +678,31 @@ public sealed class CookingLevelEtHost : IDisposable
             return RejectGeneration(candidateResult.Reason);
 
         var candidate = candidateResult.Candidate!;
-        var installed = InstallGeneration(candidate, isRetry: true);
-        if (!installed.Accepted)
-            return installed;
-        if (_ownedSimulation is not null)
-            ReleaseSimulationOwnership();
-
         CookingRecipeSimulation kitchen;
         try
         {
             kitchen = CreateRetryKitchen(candidate, content);
+            if (progress is not null)
+            {
+                var applied = kitchen.ApplyRetryChoices(content, progress);
+                if (!applied.Accepted)
+                    return RejectGeneration(CookingLevelLifecycleReason.InvalidState);
+            }
         }
         catch (Exception exception)
         {
             throw Fault(new InvalidOperationException(
                 "The failed level could not be rebuilt from its standard initial supply.", exception));
         }
+
+        var installed = InstallGeneration(candidate, isRetry: true);
+        if (!installed.Accepted)
+        {
+            kitchen.CloseLifecycle();
+            return installed;
+        }
+        if (_ownedSimulation is not null)
+            ReleaseSimulationOwnership();
 
         var adopted = candidate.AdoptSuccessorKitchen(kitchen);
         if (adopted != CookingLevelLifecycleReason.None)

@@ -118,6 +118,59 @@ public sealed class CookingMajorProgressTests
         Assert.Contains(simulation.Snapshot().Items, item => item.Id == new ItemId("bread-slice-unlock-1"));
     }
 
+    [Fact]
+    public void P05_retry_choices_place_the_unlock_and_shorten_the_next_soup()
+    {
+        var content = CookingContentCatalog.Load(File.ReadAllText(ContentPath()));
+        var progress = new CookingMajorProgress();
+        Assert.True(progress.Unlock(new DefinitionId("bread-slice")).Accepted);
+        Assert.True(progress.EnableCookFaster().Accepted);
+        var simulation = Supplied(content);
+
+        Assert.True(simulation.ApplyRetryChoices(content, progress).Accepted);
+        Assert.Contains(simulation.Snapshot().Items, item => item.Id == new ItemId("bread-slice-unlock-1"));
+        Assert.Contains(simulation.Snapshot().Items, item => item.Id == new ItemId("bread-slice-unlock-2"));
+        Assert.Contains(simulation.Snapshot().Items, item => item.Id == new ItemId("bread-slice-1"));
+        Assert.Equal(3, progress.CookTicks(new RecipeId("tomato-egg-soup"), 6));
+        Assert.False(progress.Locked);
+    }
+
+    [Fact]
+    public void P06_unknown_retry_choices_leave_the_supply_unchanged()
+    {
+        var content = CookingContentCatalog.Load(File.ReadAllText(ContentPath()));
+        var simulation = Supplied(content);
+        var before = simulation.ExportCheckpoint().CanonicalText();
+        var unknownUnlock = new CookingMajorProgress();
+        Assert.True(unknownUnlock.Unlock(new DefinitionId("missing-pan")).Accepted);
+
+        Assert.Equal(CookingMajorProgressReason.UnknownChoice, simulation.ApplyRetryChoices(content, unknownUnlock).Reason);
+        Assert.Equal(before, simulation.ExportCheckpoint().CanonicalText());
+
+        var unknownStation = new CookingMajorProgress();
+        Assert.True(unknownStation.ChooseDecoration(new[]
+        {
+            new CookingStationReplacement(new StationSlotId("stove-a"), new StationSlotId("stove-b")),
+        }).Accepted);
+        Assert.Equal(CookingMajorProgressReason.UnknownChoice, simulation.ApplyRetryChoices(content, unknownStation).Reason);
+        Assert.Equal(before, simulation.ExportCheckpoint().CanonicalText());
+        Assert.False(unknownStation.Locked);
+    }
+
+    private static CookingRecipeSimulation Supplied(CookingContent content)
+    {
+        var scope = new CookingScope(new SessionId("session"), new WorldId("world"), new MatchId("match"));
+        var player = new PlayerId("chef");
+        var players = new Dictionary<PlayerId, CookingPlayerConfig>
+        {
+            [player] = new(player, new HashSet<string> { "cook" },
+                new HashSet<string> { "board-a", "stove-a", "oven-a", "counter-a" }),
+        };
+        var simulation = new CookingRecipeSimulation(CookingContentCatalog.BuildFixture(content, scope, players));
+        CookingContentCatalog.ApplyStandardInitialSupply(simulation, content);
+        return simulation;
+    }
+
     private static string ContentPath() =>
         Path.Combine(AppContext.BaseDirectory, CookingContentCatalog.ContentFileName);
 

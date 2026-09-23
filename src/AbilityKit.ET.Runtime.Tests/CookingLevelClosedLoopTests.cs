@@ -379,6 +379,77 @@ public sealed class CookingLevelClosedLoopTests
         Assert.False(house.IsClosing);
     }
 
+    [Fact]
+    public void Q03_a_failed_retry_keeps_the_unlock_and_the_faster_cook()
+    {
+        var content = LoadContent();
+        var fixture = CreateFixture(content);
+        using var host = fixture.CreateStartedHost(state =>
+            CookingContentCatalog.ApplyStandardInitialSupply(state, content));
+        var house = new CookingFrontOfHouse(new CookingFrontOfHouseSchedule(1, 4, 2, 1, 2, 1, 9));
+        host.UseFrontOfHouse(house, SoupOrderTemplate);
+        var tomato = ItemState(fixture.Simulation, new ItemId("tomato-1"));
+        Assert.True(host.TryEnqueue(new CookingLevelCommandEnvelope(fixture.LevelScope,
+            new CookingRecipeCommand(fixture.LevelScope.MatchScope, fixture.NextBatch(), Player,
+                new RecipeCommandId("move-tomato"), CookingRecipeOperation.Pickup,
+                null, null, tomato.Id, null, null, null, tomato.Version, 0),
+            "loop-connection", "move-tomato")).Accepted);
+        Assert.True(host.Tick().Accepted);
+        Assert.True(fixture.Simulation.OpenOrder(SoupOrder, SoupOrderTemplate).Accepted);
+        Assert.True(host.BeginEnd(CookingLevelOutcome.Failed).Accepted);
+        Assert.True(host.CompleteEnd().Accepted);
+        using var directory = new TempSettlementDirectory();
+        var checkpoints = new CookingMajorCheckpointStore(directory.Path);
+        var progress = new CookingMajorProgress();
+        Assert.True(progress.Unlock(new DefinitionId("bread-slice")).Accepted);
+        Assert.True(progress.EnableCookFaster().Accepted);
+
+        Assert.True(host.CreateRetry(2, content, progress).Accepted);
+
+        Assert.True(host.TryPeekBoundKitchen(out var rebuilt));
+        Assert.Empty(rebuilt!.Orders);
+        Assert.Empty(rebuilt.ExportCheckpoint().Processes);
+        Assert.Contains(rebuilt.Snapshot().Items, item => item.Id == new ItemId("tomato-1") && item.Location.Kind == LocationKind.WorldPosition);
+        Assert.Contains(rebuilt.Snapshot().Items, item => item.Id == new ItemId("bread-slice-unlock-1"));
+        Assert.Equal(0, house.SeatedCount);
+        Assert.Empty(house.UnsatisfiedOrders);
+        Assert.Equal(CookingMajorProgressReason.Missing, checkpoints.Read(fixture.LevelScope.MatchScope).Reason);
+        Assert.True(progress.ChooseDecoration(new[]
+        {
+            new CookingStationReplacement(Stove, Counter),
+        }).Accepted);
+        progress.Lock();
+        Assert.Equal(CookingMajorProgressReason.InvalidState, progress.EnableCookFaster().Reason);
+        Assert.Equal(3, progress.CookTicks(SoupRecipe, SoupTicks));
+    }
+
+    [Fact]
+    public void Q04_an_unknown_retry_choice_leaves_the_failed_kitchen()
+    {
+        var content = LoadContent();
+        var fixture = CreateFixture(content);
+        using var host = fixture.CreateStartedHost(state =>
+            CookingContentCatalog.ApplyStandardInitialSupply(state, content));
+        Assert.True(fixture.Simulation.OpenOrder(SoupOrder, SoupOrderTemplate).Accepted);
+        Assert.True(host.BeginEnd(CookingLevelOutcome.Failed).Accepted);
+        Assert.True(host.CompleteEnd().Accepted);
+        Assert.Contains(fixture.Simulation.Orders, order => order.Id == SoupOrder);
+        var progress = new CookingMajorProgress();
+        Assert.True(progress.ChooseDecoration(new[]
+        {
+            new CookingStationReplacement(Stove, new StationSlotId("stove-b")),
+        }).Accepted);
+
+        var retry = host.CreateRetry(2, content, progress);
+
+        Assert.False(retry.Accepted);
+        Assert.Equal(CookingLevelState.Ended, host.Lifecycle.State);
+        Assert.Equal(fixture.LevelScope, host.Lifecycle.Scope);
+        Assert.True(host.TryPeekBoundKitchen(out var failedKitchen));
+        Assert.Contains(failedKitchen!.Orders, order => order.Id == SoupOrder);
+        Assert.False(progress.Locked);
+    }
+
     private sealed class TempSettlementDirectory : IDisposable
     {
         public TempSettlementDirectory()

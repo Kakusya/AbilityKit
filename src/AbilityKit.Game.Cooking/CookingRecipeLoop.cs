@@ -711,6 +711,68 @@ public sealed partial class CookingRecipeSimulation
         _majorProgress = progress;
     }
 
+    /// <summary>
+    /// 失败重开的新厨房套用当前进程的选择。装修为空则跳过。
+    /// 任一拒绝时厨房保持调用前的现场，进度对象也不改。
+    /// 调用方必须还没把这间厨房安装到下一代。
+    /// </summary>
+    public CookingMajorProgressResult ApplyRetryChoices(CookingContent content, CookingMajorProgress progress)
+    {
+        ArgumentNullException.ThrowIfNull(content);
+        ArgumentNullException.ThrowIfNull(progress);
+        if (_lifecycleClosed)
+            return new CookingMajorProgressResult(false, CookingMajorProgressReason.InvalidState);
+
+        if (progress.Decoration.Count > 0)
+        {
+            var moved = MigrateStations(progress.Decoration);
+            if (!moved.Accepted)
+                return moved;
+        }
+
+        var planned = new List<(ItemId Id, ItemLocation Location, DefinitionId Definition)>();
+        var reserved = new HashSet<ItemId>();
+        foreach (var definition in progress.Unlocks)
+        {
+            var entries = content.StandardInitialSupply.Where(entry => entry.Definition == definition).ToArray();
+            if (entries.Length == 0 || !_fixture.Items.ContainsKey(definition))
+                return new CookingMajorProgressResult(false, CookingMajorProgressReason.UnknownChoice);
+            foreach (var entry in entries)
+            {
+                if (StringComparer.Ordinal.Equals(entry.Location, CookingContentCatalog.CleanPoolLocation))
+                    continue;
+                ItemLocation location;
+                if (entry.Location.StartsWith("station:", StringComparison.Ordinal))
+                    location = ItemLocation.Station(new StationSlotId(entry.Location["station:".Length..]));
+                else if (entry.Location.StartsWith("world:", StringComparison.Ordinal))
+                    location = ItemLocation.World(entry.Location["world:".Length..]);
+                else
+                    return new CookingMajorProgressResult(false, CookingMajorProgressReason.UnknownChoice);
+                for (var index = 1; index <= entry.Count; index++)
+                {
+                    var id = new ItemId($"{definition.Value}-unlock-{index}");
+                    if (_items.ContainsKey(id) || !reserved.Add(id))
+                        return new CookingMajorProgressResult(false, CookingMajorProgressReason.StationConflict);
+                    planned.Add((id, location, definition));
+                }
+            }
+        }
+
+        var gate = _lifecycleGate;
+        _lifecycleGate = null;
+        try
+        {
+            foreach (var item in planned)
+                AddItem(item.Id, item.Definition, item.Location);
+            UseMajorProgress(progress);
+            return new CookingMajorProgressResult(true, CookingMajorProgressReason.None);
+        }
+        finally
+        {
+            _lifecycleGate = gate;
+        }
+    }
+
     private bool IsGameplayMutationOpen =>
         !_lifecycleClosed && (_lifecycleGate?.IsGameplayMutationOpen ?? true);
 
