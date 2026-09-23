@@ -723,6 +723,8 @@ public sealed class CookingLevelEtHost : IDisposable
         if (!installed.Accepted)
             return installed;
 
+        _frontOfHouse?.FinishInProgress(_ownedSimulation, _frontOfHouseTemplate);
+        var clearedOrders = _ownedSimulation.Orders.Count;
         var handoff = _ownedSimulation.ExportSuccessHandoff();
         var adopted = candidate.AdoptSuccessorKitchen(_ownedSimulation);
         var accepted = adopted == CookingLevelLifecycleReason.None
@@ -742,7 +744,7 @@ public sealed class CookingLevelEtHost : IDisposable
         return installed with
         {
             RetainedProcessCount = handoff.Processes.Count,
-            ClearedOrderCount = sourceCheckpoint.Orders.Count,
+            ClearedOrderCount = clearedOrders,
             ClearedSettlementCount = sourceCheckpoint.Settlements.Count,
         };
     }

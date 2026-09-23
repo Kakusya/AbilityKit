@@ -63,7 +63,11 @@ public sealed class CookingFrontOfHouse
     public void DropFailedScene()
     {
         foreach (var table in _tables)
+        {
             table.Reset();
+            table.ArrivalOrder = 0;
+            table.VisitedThisLevel = false;
+        }
         _unsatisfied.Clear();
         _washQueue.Clear();
         _queuedBowls.Clear();
@@ -79,7 +83,11 @@ public sealed class CookingFrontOfHouse
     {
         FinishInProgress(kitchen, template);
         foreach (var table in _tables)
+        {
             table.Reset();
+            table.ArrivalOrder = 0;
+            table.VisitedThisLevel = false;
+        }
         _unsatisfied.Clear();
         _serviceTicks = 0;
         _ticksUntilNextGuest = 0;
@@ -93,9 +101,10 @@ public sealed class CookingFrontOfHouse
     {
         ArgumentNullException.ThrowIfNull(kitchen);
         NoticeDirtyBowls(kitchen);
-        if (_work.Kind == CookingCompanionWorkKind.Inquiring && _work.Table is not null)
-            CompleteInquiry(kitchen, template, _work.Table);
-        else if (_work.Kind == CookingCompanionWorkKind.Washing && _work.Bowl is { } finishingBowl)
+        foreach (var table in _tables.Where(table => table.VisitedThisLevel && table.Order is null).ToArray())
+            CompleteInquiry(kitchen, template, table);
+
+        if (_work.Kind == CookingCompanionWorkKind.Washing && _work.Bowl is { } finishingBowl)
             CompleteWash(kitchen, finishingBowl);
         _work = CookingCompanionWork.Idle();
     }
@@ -244,6 +253,7 @@ public sealed class CookingFrontOfHouse
             return;
 
         table.Phase = CookingTablePhase.WaitingForInquiry;
+        table.VisitedThisLevel = true;
         table.ArrivalOrder = ++_nextGuest;
         table.TicksSeated = 0;
     }
@@ -267,6 +277,8 @@ public sealed class CookingFrontOfHouse
 
         public int ArrivalOrder { get; set; }
 
+        public bool VisitedThisLevel { get; set; }
+
         public int TicksSeated { get; set; }
 
         public OrderId? Order { get; set; }
@@ -274,7 +286,6 @@ public sealed class CookingFrontOfHouse
         public void Reset()
         {
             Phase = CookingTablePhase.Empty;
-            ArrivalOrder = 0;
             TicksSeated = 0;
             Order = null;
         }

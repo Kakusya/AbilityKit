@@ -1,0 +1,4 @@
+{"file": ".trellis/spec/cooking/cooking-recipe-loop.md", "reason": "Handoff amendment must finish an inquiry before the order book is cleared."}
+{"file": ".trellis/tasks/09-23-cooking-handoff-inquiry/prd.md", "reason": "Inquiry completion belongs to the ending level."}
+{"file": ".trellis/tasks/09-23-cooking-handoff-inquiry/design.md", "reason": "FinishInProgress runs before ExportSuccessHandoff."}
+{"file": ".trellis/tasks/09-19-cooking-gameplay-business-discussion/prd.md", "reason": "Owner decision that an in-progress inquiry opens its order and the level then clears orders."}

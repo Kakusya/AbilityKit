@@ -1,0 +1,5 @@
+{"file": ".trellis/tasks/09-23-cooking-handoff-inquiry/prd.md", "reason": "Acceptance is an inquiry opened before handoff and cleared with this level."}
+{"file": "src/AbilityKit.Game.Cooking/CookingFrontOfHouse.cs", "reason": "Finish opens an order for a table that was seated but had no order yet."}
+{"file": "src/AbilityKit.Game.Cooking.EtRuntime/CookingLevelEtHost.cs", "reason": "CreateSuccessor finishes the inquiry before exporting the handoff and counts those orders as cleared."}
+{"file": "local/Logs/test-gates/20260923-090136-cooking-kitchen-loop/cooking-kitchen-loop/gate-summary.json", "reason": "cooking-kitchen-loop exit 0: focused 78/78, Cooking 199/199, ET runtime 59/59."}
+{"file": "local/Logs/test-gates/20260923-090154-cooking-et-level-runtime/cooking-et-level-runtime/gate-summary.json", "reason": "cooking-et-level-runtime exit 0: Cooking 199/199, ET runtime 59/59."}

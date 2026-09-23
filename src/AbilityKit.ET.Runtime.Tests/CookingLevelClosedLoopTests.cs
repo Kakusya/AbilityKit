@@ -329,6 +329,28 @@ public sealed class CookingLevelClosedLoopTests
     }
 
     [Fact]
+    public void H07_an_inquiry_in_progress_opens_before_the_handoff_clears_orders()
+    {
+        var content = LoadContent();
+        var fixture = CreateFixture(content);
+        using var host = fixture.CreateStartedHost(state =>
+            CookingContentCatalog.ApplyStandardInitialSupply(state, content));
+        var house = new CookingFrontOfHouse(new CookingFrontOfHouseSchedule(1, 8, 2, 4, 2, 1, 30));
+        host.UseFrontOfHouse(house, SoupOrderTemplate);
+        Assert.True(host.Tick().Accepted);
+        Assert.True(host.Tick().Accepted);
+        Assert.Empty(fixture.Simulation.Orders);
+
+        Assert.True(host.BeginEnd(CookingLevelOutcome.Success).Accepted);
+        Assert.True(host.CompleteEnd().Accepted);
+        var successor = host.CreateSuccessor(new LevelId("level-2"), 2);
+        Assert.True(successor.Accepted);
+        Assert.Equal(1, successor.ClearedOrderCount);
+        Assert.Empty(fixture.Simulation.Orders);
+        Assert.Equal(0, house.SeatedCount);
+    }
+
+    [Fact]
     public void Q02_a_failed_retry_starts_the_front_of_house_again()
     {
         var content = LoadContent();
