@@ -663,3 +663,292 @@ NPC 小伙伴不宜只是无人格的效率数值，也不宜变成需要玩家�
 4. 不把未确认建议写成正式要求；
 5. 等最小完整局内闭环收敛后，再创建 `design.md` 和 `implement.md`；
 6. 只有 owner 审阅最终规划并再次明确批准，才允许进入实现。
+
+## 14. 2026-09-23 路线与规划方式审议
+
+### 14.1 Owner 当前明确方向
+
+本轮 owner 提出以下后续工作方向，作为规划输入记录；在本轮需求收敛完成前，不直接视为已批准实施任务：
+
+1. 采用分批次提问的方式继续对齐需求，先完成规划，再集中施工。
+2. 近期范围只关注 Cooking；Shooter 及其他模块不作为当前主动施工对象，相关文档后续应清理或降级为历史/维护背景，不能继续干扰 Cooking 主线。
+3. KCP 传输方向应前置考虑，避免先按单机结构完成全部模块、之后再整体重写网络边界。
+4. 采用模块化开发，各模块之间保持低耦合，以清晰的接口/契约连接，不把网络、玩法、宿主和表现互相渗透。
+5. Cooking Unity 不在前期施工；先完成纯 C# 功能、模块边界和必要的网络接入，再在后期单独处理 Unity 引擎接入及其高成本测试。
+
+### 14.2 当前需要优先确认的边界
+
+“KCP 前置”仍可能有两种不同含义，必须先区分：
+
+- 方案 A：先做 KCP 传输适配层与 transport contract/integration tests；Cooking 领域仍通过 transport-neutral command/session 接口运行，暂不承诺完整联机玩法。
+- 方案 B：近期就做真实 host/client 联机 Cooking 闭环，包括连接、身份、房间、同步、断线等产品语义。
+
+当前建议先确认二者边界，再据此整理 ADR、roadmap、Cooking spec、Todo 和旧 UDP 文档。
+
+### 14.3 Owner 对 KCP 范围的倾向
+
+Owner 表示更倾向方案 B，即较早实施完整多人 Cooking 联机纵切；本轮先审视方案 B 的成本、风险和适用边界，尚未最终批准完整网络产品范围。
+
+### 14.4 Owner 对纵切边界与并行路线的进一步确认
+
+- 当前纵切只覆盖当前已经确认/已有的 Cooking 功能，不借网络纵切顺手扩展新的玩法、失败条件、评分、收益或其他业务能力；
+- 失败条件作为下一个独立议题，不在本轮纵切规划中决定或实现；
+- 交付路线采用两条并行运行线：单机运行线与局域网联网运行线；两条线共享同一份 Cooking 领域规则、状态模型、固定 Tick、命令语义和结算合同，不复制两套玩法实现；
+- 单机线用于验证当前功能在无网络传输下的完整运行；
+- 局域网线用于让同一批当前功能经过 Host/Client、KCP、命令 ingress、权威 Tick 和状态同步，但不得因为联网而增加新的业务功能；
+- Unity 是后续第三条接入/表现线，先消费稳定的纯 C# 与网络/运行时契约，不与单机线或局域网线重新实现玩法规则。
+
+## 15. 2026-09-23 小关结束、失败与星级方向
+
+### 15.1 Owner 已确认
+
+- 业务失败与网络/运行时终止严格分离；
+- 小关不设置必须达成的业务目标；
+- 小关不设置业务失败条件；
+- 小关按既定营业/收尾时间结构自然完成；
+- 结算只累计积分，并将积分映射为面向玩家展示的星级；
+- Host 关闭、连接中断、Match 解散等只属于网络/运行时终止，不生成“小关失败”结算，也不应伪装成低星完成；
+- 现有失败重开合同可以作为历史已实现能力保留，但正常产品流程不主动触发业务失败；是否长期保留或退役由后续兼容/清理任务决定。
+
+### 15.2 下一项待确认
+
+需要继续确认积分来源与星级档位。建议的最小规则是：每份成功交付的订单从配置读取固定基础分，未完成订单为 0 分；本关总分按配置阈值映射为 0–3 星，不引入连击、速度倍率、收益或顾客惩罚。
+
+### 15.3 Owner 确认的第一版积分与星级合同
+
+- 每个订单通过配置提供固定基础分；
+- 订单成功提交时只计分一次；
+- 未完成订单和超时离席订单计 0 分，不倒扣；
+- 本关总分为有效订单积分之和；
+- 总分通过关卡配置阈值映射为 0–3 星；
+- 0 星仍表示小关自然完成，不构成业务失败；
+- 星级只用于结果展示，不阻止进入下一小关；
+- 第一版星级不影响解锁、Buff、装修、存档奖励或其他进度；
+- 第一版不加入速度倍率、连击、菜品质量、收益或额外奖励。
+
+### 16. 2026-09-23 断线继续与 Host 暂停方向
+
+#### 16.1 Owner 已确认方向
+
+- 首个局域网纵切不采用“任一连接断开即结束当前网络运行”的方案；
+- 采用 Host 可继续运行的方向：Client 断开后，Host 可以继续当前 Level；
+- Host 可以单方面主动暂停当前 Level；
+- 暂停请求在当前 Tick 收口后生效；
+- 暂停时应停止逻辑 Tick 和新命令生效，但保留可恢复的当前运行状态；
+- 暂停生效时取消已经入队但尚未执行的命令；
+- 已经开始执行的命令保留其当前进度，恢复后按既有状态继续；
+- 暂停后的恢复由 Host 单方面控制，从下一个逻辑 Tick 继续；
+- 允许原 Client 在同一 Level 内重新连接；
+- 重连后 Participant 的位置和运行时状态回到初始化状态；
+- 当前已加载 Level 中的 Buff 信息由 Level 持有，并由该 Level 保证 Buff 在运行期间生效；
+- Buff 不作为 Match 全局私有数据处理；进入其他 Level 时，以新加载 Level 声明的 Buff 配置/状态为准，不自动假设跨 Level 继承；
+- 已解锁道具、装修和工位布局跟随已经加载的权威 Level，不属于重连 Participant 的私有恢复数据；重连不得重新加载、覆盖或回滚这些内容；
+- 订单、物品、加工和其他厨房世界状态同样以 Host 当前权威 Level 为准；
+- 主机迁移、跨设备恢复以及复杂断线恢复仍需单独定义，不属于首个纵切；
+- 断线、重连、暂停和正常小关完成必须分别建模，不能把 Client 断线伪装成业务失败或低星结算。
+
+#### 16.2 Owner 已确认的 Client 断线收口
+
+- Client 断开后，Host 先收口当前 Tick；
+- 尚未执行的命令取消，不继续在断线后生效；
+- 释放断线 Participant 占用的动作、工位和其他运行时占用；
+- 断线 Participant 手持的物品不归还原位置，直接落地到合法的 `WorldPosition`；
+- 已经原子成功提交的订单或动作结果保留；
+- Host 继续当前 Level，不因此产生业务失败、积分、星级或失败结算；
+- 首个纵切只使用内存级 Match/Level 状态，不加入 Profile、SaveSlot 或断电恢复。
+
+#### 16.3 仍需确认
+
+- KCP 组件候选与技术约束；
+- 重连后初始化状态的具体配置来源。
+
+
+### 17. 2026-09-23 消息包装的浅显解释
+
+Owner 已确认：
+
+- 重连凭证以 Match 为生命周期，同一 Match 跨 Level 有效；Match 结束、Host 关闭或 Match 解散后失效；
+- 同一 Participant 同时只能绑定一条有效 Connection；新连接验证通过后替换旧连接，旧连接命令立即失效；
+- Host 关闭、进程崩溃或解散 Match 时直接终止 Match，不做主机迁移，不产生积分、星级或业务失败。
+
+协议消息信封已确认采用最小基础格式。面向产品的解释是：每条网络消息都像一封信，除了“信的正文”外，还要带上信封上的基本信息：
+
+- 这是哪个版本的规则；
+- 这是什么类型的消息（命令、结果、快照或错误）；
+- 属于哪个 Match 和哪个 Level；
+- 这是第几条消息，避免重复或倒序；
+- 来自哪个 Participant；
+- 正文具体要做什么。
+
+重连时，Client 还要告诉 Host“我是谁”以及“我已经收到哪一条消息”，Host 才能判断是否允许重连、是否需要重新发送当前状态。
+
+
+### 18. 2026-09-23 网络验收分期
+
+Owner 已确认：
+
+- 近期采用方案 A：同一台电脑上的 Host/Client 双进程，通过真实 KCP 进行验收；
+- 方案 B：两台物理电脑的真实局域网验收列为远期目标，近期不做；
+- 同机双进程只能证明跨进程网络与状态流程，不宣称已经完成真实双机 LAN 验收。
+
+
+### 19. 2026-09-23 Buff 归属修正
+
+Owner 修正此前“Buff 在 Match 内跨 Level 自动保留”的建议：
+
+- Buff 信息存在于当前加载的 Level；
+- 当前 Level 必须保证其声明的 Buff 生效；
+- Buff 不是 Participant 私有数据，也不按 Match 全局数据自动继承；
+- 进入其他 Level 时，以新 Level 加载的 Buff 配置/状态为准；
+- Client 重连时，Host 同步当前 Level 的 Buff 状态，不能让 Client 自行决定或覆盖 Buff。
+
+
+### 20. 2026-09-23 暂停重连与快照同步
+
+Owner 已确认：
+
+- Client 可以在 Level 暂停期间重连；
+- 重连成功后接收当前完整状态，但仍保持暂停，直到 Host 单方面恢复；
+- 重连采用当前完整状态快照，不重放断线期间的历史命令；
+- 同机 Host/Client 双进程是近期网络验收目标；双物理机 LAN 验收为远期目标，近期不做。
+
+
+### 21. 2026-09-23 Level 切换、网络纵切与 Unity 后置
+
+Owner 已确认：
+
+- Level 切换由 Host 统一加载下一 Level，并向 Client 广播新的完整状态；旧 Level 命令全部失效；
+- 首个 KCP 纵切不包含积分和星级，评分/星级另立纯 C# 业务任务；
+- KCP 只通过可替换 Transport Adapter 接入，不让 Cooking、Host、Client 或协议直接依赖具体 KCP 库；
+- Unity 接入必须非常后置。同机双进程和 KCP 纵切通过，不自动触发 Unity；需要等纯 C# 产品规则、网络契约和主要验证证据稳定后，再由独立任务重新授权。
+
+
+### 22. 2026-09-23 暂不考虑 Unity
+
+Owner 明确：当前先不考虑 Unity。当前规划和后续近期施工只关注纯 C# Cooking、单机运行线、Host/Client 双进程、KCP、协议、暂停、断线、重连和 Level 生命周期；Unity 不进入当前 task，也不作为当前规划的待决问题。
+
+
+### 23. 2026-09-23 首个 KCP 纵切与候选调查
+
+Owner 已确认：
+
+- 首个 KCP 纵切只做一个 Level；Level 切换规则保留为后续网络纵切，不进入第一版 KCP 施工；
+- 评分顺序为：先完成单机纯 C# 积分/星级，再进行网络化评分接入；
+- KCP 采用可替换 Transport Adapter；具体组件先做候选调查，不提前绑定；
+- 候选调查需关注许可证、纯 .NET 可用性、线程模型、关闭语义、重连适配和同机双进程验证。
+
+
+### 24. 2026-09-23 KCP 候选初步调查（研究，不是实现批准）
+
+本节记录候选调查结果，不等于已经运行 transport spike，也不等于 owner 已选择具体依赖。
+
+#### 候选 A：MirrorNetworking/kcp2k
+
+- MIT；
+- C# KCP，官方 README 声明支持 netcore；
+- 有 low-level KCP 和可选的 client/server high-level 代码；
+- README 明确强调 heavy test coverage，并记录过原始 KCP 的 WND_RCV 修复；
+- 主要风险：面向 Mirror 生态，仓库不是本项目现有 .NET solution 的直接包；需要验证独立引用、线程模型、关闭语义和固定 Tick 驱动方式。
+
+#### 候选 B：Kanawanagasaki.KCP
+
+- NuGet 3.1.1，目标为 net10.0、无包依赖；
+- 提供 transport-agnostic 的 `KcpTransport` 抽象，也提供 `KcpManaged` 和 low-level API；
+- 与当前项目 net10.0 和“Transport Adapter”方向的表面契合度较高；
+- 主要风险：NuGet 页面显示暂无流行 GitHub 仓库使用，生态与长期维护证据较少；许可证、源码测试矩阵和线程/关闭行为仍须从源码与实际 spike 核验。
+
+#### 候选 C：Cysharp/KcpTransport
+
+- MIT；
+- API 形态现代，提供 `KcpListener`、`KcpConnection`、`KcpStream`；
+- 但 GitHub 仓库已于 2025-06-12 archived，README 仍标注 alpha preview、不可用于 production，且当时只支持 .NET 8；
+- 因此暂不作为首个 production-like 纵切的优先候选，可保留为 API 参考。
+
+#### 候选 D：Kcp（NuGet 2.7.0）
+
+- 提供异步 API、泛型 segment 和多目标框架包；
+- 文档明确要求 `Recv/Update` 不可由多个线程并发调用，而 `Send/Input` 支持多线程；
+- 页面显示最新版本更新时间为 2023-11-16，且包含 unsafe/非托管内存选项；
+- 适合作为低层对照候选，不作为当前首选。
+
+#### 当前建议
+
+先把 A、B 进入可执行 transport spike：
+
+1. 不接入 Cooking 领域；
+2. 只验证 loopback UDP + KCP 的双端收发、固定 Tick 驱动、关闭、重连前后的连接生命周期、消息边界和故障注入；
+3. 用本项目当前 net10.0 构建和测试门禁验证；
+4. 之后再由 owner 在 A/B 中选择，或决定内置一份经过审查的低层 KCP 实现。
+
+C 暂不选，D 作为对照，不进入首轮实现。
+
+### 25. 2026-09-23 首个纵切范围与评分顺序确认
+
+Owner 对上一轮三个选项确认如下：
+
+1. 首个 KCP 纵切采用方案 A：只做一个 Level；Level 切换不进入首个纵切。
+2. 评分顺序为：先在单机纯 C# 运行线完成积分/星级，再做网络化评分接入。
+3. KCP 具体库先做候选调查，不在调查前锁定依赖；候选调查完成后再决定是否进入隔离 transport spike 与 production-like 接入。
+
+这组决定不授权实现；当前任务仍处于 planning。
+
+### 26. 2026-09-23 直接退役 Cooking 专用 UDP，统一使用 Network.Runtime/Transport
+
+Owner 明确决定：
+
+- Cooking 不再保留一套专用 UDP 网络入口；
+- 后续网络纵切统一使用项目已有的通用 `Network.Runtime` 与 `Transport` 抽象；
+- `src/AbilityKit.Game.Cooking.Udp/`、`src/AbilityKit.Game.Cooking.Udp.Tests/`、`src/AbilityKit.Game.Cooking.UdpHarness/` 及相关专用 UDP 协议/传输代码直接退役并删除；
+- 不做 Cooking 专用 UDP 到通用 Transport 的迁移，不保留旧 Harness 作为过渡回归入口；
+- 现有通用 LiteNetLib reliable-UDP adapter 优先作为首个真实 Transport；它仍是通用传输能力，不属于 Cooking 专用实现；
+- 通用 Network.Runtime/Transport 需要补齐 listen/host 端能力，使 Cooking Host 不直接依赖 LiteNetLib；
+- KCP 暂不引入，也不作为当前前置工作；只有通用 Transport 在真实需求下存在明确缺口时，才另行评估新的 adapter。
+
+该决定已进入规划边界；代码删除要在后续获批准的施工任务中执行，不在当前 planning 阶段直接删除。
+
+本节 supersede 纪要第 23–25 节中关于首个 KCP 纵切和“迁移完成后退役”的临时方向；这些内容保留仅用于讨论追溯，不再作为当前方案。
+
+### 27. 2026-09-23 通用 Network.Runtime / Transport Host 与 Client 结构调查（未决议）
+
+本轮先核对现有代码，不将调查结果视为实现批准：
+
+- 项目已有 `com.abilitykit.network.host`，其中 `IChannelListener`、`IServerChannel`、`ServerNetworkSession`、`NetworkHost` 已形成传输中立的服务端监听、接入、成帧会话和请求队列边界；因此当前不应再另造一个 `ITransportListener`，除非后续证明现有 Host 契约无法满足需求。
+- `com.abilitykit.host.network` 已有 `HostNetworkConnectionManager`，负责把 `NetworkHost` 的服务端 Session 适配为 HostRuntime 的连接管理；监听器通过注入提供，TCP 只是默认工厂，`InProcessHostNetwork` 也已经是完整的本机组合入口。
+- `com.abilitykit.network.runtime` 的 `ITransport` / `IConnection` 仍是客户端方向的 `Connect(host, port)` 契约；服务端不应强行伪装成同一个接口，而应继续通过 `IChannelListener`/`IServerChannel` 接入，再复用相同 FrameCodec、NetworkPipeline 和协议包格式。
+- 通用 LiteNetLib 包当前只有 `LiteNetTransport : ITransport` 客户端实现；README 和代码均未提供 LiteNet 的通用服务端 Listener/ServerChannel。因此首个 LiteNet 真实链路需要在通用 Transport 包补齐服务端适配，不能把 Cooking 专用 UDP Host 搬回 Cooking，也不能让 Cooking 直接依赖 LiteNetLib。
+- `NetworkHost` 已支持会话建立超时、空闲维护、请求排队、同步/异步 handler、Session 快照和优雅停止；Cooking 的固定 Tick、Participant 身份绑定、重连凭证验证和业务命令语义仍应由 Cooking Application/Session 层拥有，不应下沉到通用网络层。
+- `ConnectionManager` 自带客户端物理连接重连调度，但它不应替代 Cooking Match 的重连凭证与 Participant 重新绑定；两者应分别负责“连接恢复尝试”和“业务身份恢复”。
+
+当前待 owner 确认：
+
+1. Host 本地玩家是否也通过 `InProcessHostNetwork` 的客户端连接走完整帧协议，还是只要求与远端共享同一权威命令队列而允许本地走应用层入口；
+2. 是否正式复用现有 `IChannelListener`/`IServerChannel` 服务端契约，不新增平行的 `ITransportHost`/`ITransportListener`；
+3. 是否在通用 LiteNet 包中新增 Listener/ServerChannel，并以注入方式接入 `HostNetworkConnectionManager`；
+4. 是否规定网络线程只负责收发、解帧和入队，Cooking Host 固定 Tick 才消费命令并产生权威变更；
+5. 是否将 `ConnectionManager` 的自动重连限定为物理连接层，重连凭证验证和 Participant 绑定严格留在 Cooking Session；
+6. 首个真实网络 Transport 是否继续以通用 LiteNet reliable-UDP 为优先验收对象，同时保留 TCP/InProcess 作为对照和回归路径。
+
+以上调查不改变“当前只规划、不实施”的任务状态。
+
+### 28. 2026-09-24 通用 Transport Host/Client 结构与 UDP 唯一真实传输确认
+
+Owner 明确确认：
+
+1. **Host 本地玩家连接**：赞同。Host 进程内的本地玩家通过 `InProcessHostNetwork` 创建本地 Client Connection，完整经过成帧协议、Session、Pipeline 与命令入口，与远端 Client 走完全相同的命令与快照契约；
+2. **服务端抽象**：赞同。直接复用现有的 `IChannelListener`、`IServerChannel`、`NetworkHost` 和 `ServerNetworkSession`，不新增平行的 `ITransportHost` 或 `ITransportListener`；
+3. **LiteNet 服务端适配**：赞同。在通用 `com.abilitykit.network.transport.litenet` 中新增 LiteNet 的服务端 Listener 与 ServerChannel，并注入到 `HostNetworkConnectionManager`，不让 Cooking 直接依赖 LiteNetLib；
+4. **网络线程与固定 Tick 边界**：赞同。网络线程只负责连接、收发、解帧和入队，Cooking Host 的固定 Tick 才消费命令、执行仲裁并推进权威世界；
+5. **重连职责分离**：赞同。`ConnectionManager` 仅负责物理连接层面的自动重连；Cooking Session 负责验证重连凭证、重新绑定原 Participant、清理临时状态并同步完整快照；
+6. **真实传输范围**：**明确不赞同保留 TCP 作为候选；真实网络传输只要 UDP**（使用通用 LiteNet reliable-UDP adapter）。TCP 不作为本路线的备选或并行路径；开发/测试仅保留纯内存的 InProcess 用于同进程与单元测试，网络路径唯一对齐 UDP。
+
+当前决定已固化，下一议题进入：Host 固定 Tick、命令队列与快照同步的具体职责边界。
+
+### 29. 2026-09-24 固定 Tick、命令队列、快照广播与收口原则确认
+
+Owner 明确确认：
+
+1. **命令入队与固定 Tick 仲裁**：网络线程仅反序列化并压入线程安全队列；仅在 Host 固定 Tick 调度点按序出队、校验、仲裁冲突（先到先得）并推进世界；
+2. **完整状态快照广播**：首个网络纵切不做复杂的增量 Delta/Diff 压缩，Host 固定周期全量广播 Full Snapshot，确保两端状态绝对一致；
+3. **Client 纯被动无预测**：客户端无玩法写权限，直接以权威快照驱动本地展现；首个纵切不实现预测与回滚（Prediction & Rollback）；
+4. **断线与暂停时的队列行为**：Client 断线时丢弃其待消费命令；Host 暂停时逻辑 Tick 停止推进，不消费新指令；
+5. **收口原则**：需求对齐已完成，不再发散新增业务议题，尽快收口当前 Planning。

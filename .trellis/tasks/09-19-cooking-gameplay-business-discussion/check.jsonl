@@ -1,3 +1,0 @@
-{"file":".trellis/tasks/09-19-cooking-gameplay-business-discussion/prd.md","reason":"检查讨论结论是否只包含 owner 已确认决定，并保持未决事项未被误写成要求。"}
-{"file":".trellis/tasks/09-19-cooking-gameplay-business-discussion/research/discussion-notes.md","reason":"检查每轮新增讨论是否保留来源、误解修正、确认决定和后续问题。"}
-{"file":"Docs/design/CookingGame/reference/product-lifetimes.md","reason":"检查新决定与既有大关、小关、Kitchen、失败重试和保存时机语义是否冲突。"}
