@@ -409,6 +409,8 @@ public sealed partial class CookingRecipeSimulation
     private bool _mutationInProgress;
     private ICookingRecipeLifecycleGate? _lifecycleGate;
     private ICookingRecipeAuthorityGate? _authorityGate;
+    private bool _isClosing;
+    private bool _isCompleted;
 
     public CookingRecipeSimulation(
         CookingRecipeFixture fixture,
@@ -568,7 +570,19 @@ public sealed partial class CookingRecipeSimulation
         Orders,
         _settlements.ToArray(),
         CalculateTotalScore(),
-        CalculateStars());
+        CalculateStars(),
+        _isClosing,
+        _isCompleted);
+
+    public void UpdateFrontOfHouseState(bool isClosing, bool isCompleted)
+    {
+        if (_isClosing != isClosing || _isCompleted != isCompleted)
+        {
+            _isClosing = isClosing;
+            _isCompleted = isCompleted;
+            _stateVersion++;
+        }
+    }
 
     public int CalculateTotalScore()
     {
@@ -2043,7 +2057,9 @@ public sealed record CookingRecipeSnapshot(
     IReadOnlyList<CookingOrderSnapshotOrder> Orders,
     IReadOnlyList<CookingOrderSettlement> Settlements,
     int TotalScore = 0,
-    int Stars = 0)
+    int Stars = 0,
+    bool IsClosing = false,
+    bool IsCompleted = false)
 {
     private static readonly JsonSerializerOptions CanonicalJsonOptions = new()
     {
@@ -2059,6 +2075,8 @@ public sealed record CookingRecipeSnapshot(
         LogicalTick,
         TotalScore,
         Stars,
+        IsClosing,
+        IsCompleted,
         Items.OrderBy(item => item.Id.Value, StringComparer.Ordinal)
             .Select(item => new CanonicalItem(item.Id.Value, item.Definition.Value, item.Version, item.Location.Kind.ToString(),
                 item.Location.OwnerId, item.Location.SlotId, item.Recipe?.Value, item.IsProduct, item.OriginStation?.Value,
@@ -2082,7 +2100,7 @@ public sealed record CookingRecipeSnapshot(
     public string Sha256() => Convert.ToHexString(SHA256.HashData(Encoding.UTF8.GetBytes(CanonicalText())));
 
     private sealed record CanonicalSnapshot(string SessionId, string WorldId, string MatchId, long Version, long LogicalTick,
-        int TotalScore, int Stars,
+        int TotalScore, int Stars, bool IsClosing, bool IsCompleted,
         IReadOnlyList<CanonicalItem> Items, IReadOnlyList<CanonicalProcess> Processes, IReadOnlyList<CanonicalContainer> Containers,
         IReadOnlyList<string> AcceptedOrders, IReadOnlyList<CanonicalOrder> Orders, IReadOnlyList<CanonicalSettlement> Settlements);
     private sealed record CanonicalItem(string ItemId, string DefinitionId, int Version, string LocationKind, string? OwnerId,

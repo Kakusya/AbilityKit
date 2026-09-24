@@ -1,4 +1,5 @@
 using AbilityKit.Game.Cooking;
+using AbilityKit.Game.Cooking.Session;
 using AbilityKit.Game.Cooking.Tests.Harness;
 using Xunit;
 
@@ -227,5 +228,70 @@ public sealed class CookingReusableHarnessAcceptanceTests
         Assert.Equal(2, thresholds.EvaluateStars(399));
         Assert.Equal(3, thresholds.EvaluateStars(400));
         Assert.Equal(3, thresholds.EvaluateStars(1000));
+    }
+
+    [Fact]
+    public async Task FrontOfHouse_service_schedule_closes_naturally_and_achieves_consensus_under_LAN()
+    {
+        var simulation = CreateSimulation(new[] { ChefA, ChefB });
+        var descriptor = Descriptor();
+        var levelScope = LevelScope();
+
+        // 配置简短的营业时间表：4 Ticks 营业期，10 Ticks 等待上限
+        var schedule = new CookingFrontOfHouseSchedule(
+            TableCount: 1,
+            ServiceTicks: 4,
+            ArrivalIntervalTicks: 2,
+            InquiryTicks: 1,
+            WashTicks: 2,
+            DiningTicks: 3,
+            WaitLimitTicks: 6);
+
+        var frontOfHouse = new CookingFrontOfHouse(schedule);
+
+        var host = new CookingSessionHost(
+            simulation, descriptor, levelScope, ChefA, ChefB,
+            frontOfHouse: frontOfHouse, activeOrderTemplate: new OrderTemplateId("tomato-egg-soup-order"));
+        await host.StartAsync();
+
+        var client = new CookingSessionClient(ChefB);
+        await client.ConnectAndHandshakeAsync("127.0.0.1", host.Port);
+
+        // 阶段 1：推进 3 ticks（营业期），顾客到店
+        host.AdvanceFixedTick(3);
+        await Task.Delay(50);
+        Assert.False(host.LatestSnapshot.IsClosing);
+
+        // 阶段 2：推进至营业结束（> 4 ticks），进入收尾期
+        host.AdvanceFixedTick(3);
+        await Task.Delay(50);
+        Assert.True(host.LatestSnapshot.IsClosing);
+        Assert.False(host.LatestSnapshot.IsCompleted);
+
+        // 阶段 3：继续推进固定 Tick 直至顾客离席、前厅自然结束
+        for (var i = 0; i < 20; i++)
+        {
+            host.AdvanceFixedTick(1);
+            if (host.LatestSnapshot.IsCompleted) break;
+            await Task.Delay(10);
+        }
+
+        Assert.True(host.LatestSnapshot.IsCompleted);
+
+        // 等待客户端同步并验证哈希完全共识
+        var start = DateTime.UtcNow;
+        while (DateTime.UtcNow - start < TimeSpan.FromSeconds(2))
+        {
+            if (client.LatestProjection != null && client.LatestProjection.IsCompleted) break;
+            await Task.Delay(20);
+        }
+
+        Assert.NotNull(client.LatestProjection);
+        Assert.True(client.LatestProjection.IsCompleted);
+        Assert.True(client.LatestProjection.IsClosing);
+        Assert.Equal(host.LatestSnapshot.Sha256(), client.LatestProjection.Sha256());
+
+        await client.DisposeAsync();
+        await host.DisposeAsync();
     }
 }

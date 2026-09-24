@@ -26,6 +26,8 @@ public sealed class CookingSessionHost : IAsyncDisposable
     private readonly PlayerId _hostPlayer;
     private readonly PlayerId _clientPlayer;
     private readonly string _connectionKey;
+    private readonly CookingFrontOfHouse? _frontOfHouse;
+    private readonly OrderTemplateId? _activeOrderTemplate;
     private readonly EventBasedNetListener _listener = new();
     private readonly ConcurrentDictionary<NetPeer, PlayerId> _peerToPlayer = new();
     private readonly ConcurrentDictionary<PlayerId, PlayerSession> _sessions = new();
@@ -46,7 +48,9 @@ public sealed class CookingSessionHost : IAsyncDisposable
         CookingLevelScope levelScope,
         PlayerId hostPlayer,
         PlayerId clientPlayer,
-        string connectionKey = "abilitykit-cooking-lan")
+        string connectionKey = "abilitykit-cooking-lan",
+        CookingFrontOfHouse? frontOfHouse = null,
+        OrderTemplateId? activeOrderTemplate = null)
     {
         _simulation = simulation ?? throw new ArgumentNullException(nameof(simulation));
         _descriptor = descriptor ?? throw new ArgumentNullException(nameof(descriptor));
@@ -54,6 +58,8 @@ public sealed class CookingSessionHost : IAsyncDisposable
         _hostPlayer = hostPlayer;
         _clientPlayer = clientPlayer;
         _connectionKey = connectionKey;
+        _frontOfHouse = frontOfHouse;
+        _activeOrderTemplate = activeOrderTemplate;
 
         _sessions[_hostPlayer] = new PlayerSession(_hostPlayer, Guid.NewGuid().ToString("N"));
         _sessions[_clientPlayer] = new PlayerSession(_clientPlayer, Guid.NewGuid().ToString("N"));
@@ -334,6 +340,12 @@ public sealed class CookingSessionHost : IAsyncDisposable
             {
                 var frame = Interlocked.Increment(ref _hostFrameSequence);
                 _simulation.AdvanceFixedTick(_levelScope, frame);
+
+                if (_frontOfHouse != null && _activeOrderTemplate != null)
+                {
+                    var step = _frontOfHouse.Step(_simulation, _activeOrderTemplate.Value);
+                    _simulation.UpdateFrontOfHouseState(step.Closing, step.CanSucceed);
+                }
             }
             LatestSnapshot = _simulation.Snapshot();
         }
