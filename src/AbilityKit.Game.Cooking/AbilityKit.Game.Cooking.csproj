@@ -9,6 +9,9 @@
     <IsPackable>false</IsPackable>
   </PropertyGroup>
   <ItemGroup>
+    <ProjectReference Include="../AbilityKit.Network.Transport.LiteNet/AbilityKit.Network.Transport.LiteNet.csproj" />
+  </ItemGroup>
+  <ItemGroup>
     <InternalsVisibleTo Include="AbilityKit.Game.Cooking.Tests" />
     <InternalsVisibleTo Include="AbilityKit.Game.Cooking.EtRuntime" />
   </ItemGroup>

@@ -1,10 +1,9 @@
 using System.Collections.Concurrent;
-using AbilityKit.Game.Cooking;
 using AbilityKit.Network.Transport.LiteNet;
 
-namespace AbilityKit.Game.Cooking.Tests.Harness;
+namespace AbilityKit.Game.Cooking.Session;
 
-public sealed class CookingLanClient : IAsyncDisposable
+public sealed class CookingSessionClient : IAsyncDisposable
 {
     private LiteNetTransport _transport;
     private readonly PlayerId _expectedPlayer;
@@ -21,7 +20,7 @@ public sealed class CookingLanClient : IAsyncDisposable
     public string? ReconnectToken { get; private set; }
     public CookingRecipeSnapshot? LatestProjection { get; private set; }
 
-    public CookingLanClient(PlayerId expectedPlayer, string connectionKey = "abilitykit-cooking-lan")
+    public CookingSessionClient(PlayerId expectedPlayer, string connectionKey = "abilitykit-cooking-lan")
     {
         _expectedPlayer = expectedPlayer;
         _connectionKey = connectionKey;

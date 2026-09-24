@@ -1,4 +1,5 @@
 using AbilityKit.Game.Cooking;
+using AbilityKit.Game.Cooking.Session;
 using Xunit;
 
 namespace AbilityKit.Game.Cooking.Tests.Harness;
@@ -10,8 +11,8 @@ namespace AbilityKit.Game.Cooking.Tests.Harness;
 /// </summary>
 public sealed class LoopbackUdpTopology : ICookingTestTopology
 {
-    private readonly CookingLanHost _host;
-    private readonly CookingLanClient _client;
+    private readonly CookingSessionHost _host;
+    private readonly CookingSessionClient _client;
     private readonly CookingSessionDescriptor _descriptor;
     private readonly CookingLevelScope _levelScope;
     private readonly PlayerId _hostPlayer;
@@ -21,12 +22,12 @@ public sealed class LoopbackUdpTopology : ICookingTestTopology
     public CookingScope Scope => _descriptor.Scope;
     public CookingLevelScope LevelScope => _levelScope;
 
-    public CookingLanHost Host => _host;
-    public CookingLanClient Client => _client;
+    public CookingSessionHost Host => _host;
+    public CookingSessionClient Client => _client;
 
     private LoopbackUdpTopology(
-        CookingLanHost host,
-        CookingLanClient client,
+        CookingSessionHost host,
+        CookingSessionClient client,
         CookingSessionDescriptor descriptor,
         CookingLevelScope levelScope,
         PlayerId hostPlayer,
@@ -48,10 +49,10 @@ public sealed class LoopbackUdpTopology : ICookingTestTopology
         PlayerId clientPlayer,
         CancellationToken ct = default)
     {
-        var host = new CookingLanHost(simulation, descriptor, levelScope, hostPlayer, clientPlayer);
+        var host = new CookingSessionHost(simulation, descriptor, levelScope, hostPlayer, clientPlayer);
         await host.StartAsync();
 
-        var client = new CookingLanClient(clientPlayer);
+        var client = new CookingSessionClient(clientPlayer);
         await client.ConnectAndHandshakeAsync("127.0.0.1", host.Port, ct);
 
         return new LoopbackUdpTopology(host, client, descriptor, levelScope, hostPlayer, clientPlayer);

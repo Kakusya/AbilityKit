@@ -1,10 +1,9 @@
 using System.Collections.Concurrent;
-using AbilityKit.Game.Cooking;
 using LiteNetLib;
 
-namespace AbilityKit.Game.Cooking.Tests.Harness;
+namespace AbilityKit.Game.Cooking.Session;
 
-public sealed class CookingLanHost : IAsyncDisposable
+public sealed class CookingSessionHost : IAsyncDisposable
 {
     private sealed class PlayerSession
     {
@@ -41,7 +40,7 @@ public sealed class CookingLanHost : IAsyncDisposable
     public int Port { get; private set; }
     public CookingRecipeSnapshot LatestSnapshot { get; private set; }
 
-    public CookingLanHost(
+    public CookingSessionHost(
         CookingRecipeSimulation simulation,
         CookingSessionDescriptor descriptor,
         CookingLevelScope levelScope,
@@ -93,7 +92,7 @@ public sealed class CookingLanHost : IAsyncDisposable
         if (!bound)
         {
             _manager = null;
-            throw new InvalidOperationException("Failed to find available UDP port for CookingLanHost.");
+            throw new InvalidOperationException("Failed to find available UDP port for CookingSessionHost.");
         }
 
         return Task.CompletedTask;
@@ -101,7 +100,6 @@ public sealed class CookingLanHost : IAsyncDisposable
 
     private void OnPeerConnected(NetPeer peer)
     {
-        // Peer connected, awaiting HandshakeRequest to bind session
     }
 
     private void OnPeerDisconnected(NetPeer peer, DisconnectInfo disconnectInfo)
@@ -113,7 +111,6 @@ public sealed class CookingLanHost : IAsyncDisposable
                 session.CurrentPeer = null;
             }
 
-            // On peer disconnected: handle held items safe drop
             HandlePlayerDisconnected(playerId);
         }
     }
@@ -194,7 +191,6 @@ public sealed class CookingLanHost : IAsyncDisposable
 
         if (!string.IsNullOrEmpty(request.ReconnectToken))
         {
-            // Reconnection flow: check token match
             if (session.ReconnectToken != request.ReconnectToken)
             {
                 return;
@@ -227,7 +223,6 @@ public sealed class CookingLanHost : IAsyncDisposable
             _sessions[player] = session;
         }
 
-        // Idempotency check: if CommandId is already executed, replay cached result
         if (packet.CommandId > 0 && session.ExecutedCommands.TryGetValue(packet.CommandId, out var cachedResult))
         {
             var cachedBytes = CookingLanCodec.Encode(CookingLanMessageKind.RecipeCommandResult, envelope.CorrelationId, cachedResult);

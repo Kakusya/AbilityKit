@@ -1,7 +1,6 @@
 using System.Text.Json;
-using AbilityKit.Game.Cooking;
 
-namespace AbilityKit.Game.Cooking.Tests.Harness;
+namespace AbilityKit.Game.Cooking.Session;
 
 public enum CookingLanMessageKind
 {
