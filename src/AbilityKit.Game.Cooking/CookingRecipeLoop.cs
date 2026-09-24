@@ -71,7 +71,8 @@ public sealed record CookingRecipeFixture
         IReadOnlySet<DefinitionId>? washableContainerDefinitions = null,
         IReadOnlyDictionary<DefinitionId, int>? cleanContainerSupply = null,
         string? cleanPoolLocation = null,
-        IReadOnlyDictionary<OrderTemplateId, CookingOrderTemplateDefinition>? orderTemplates = null)
+        IReadOnlyDictionary<OrderTemplateId, CookingOrderTemplateDefinition>? orderTemplates = null,
+        CookingScoreThresholds? scoreThresholds = null)
     {
         ArgumentNullException.ThrowIfNull(scope);
         ArgumentNullException.ThrowIfNull(players);
@@ -101,6 +102,7 @@ public sealed record CookingRecipeFixture
         CleanContainerSupply = cleanContainerSupply ?? new Dictionary<DefinitionId, int>();
         CleanPoolLocation = cleanPoolLocation ?? "clean-pool";
         OrderTemplates = orderTemplates ?? new Dictionary<OrderTemplateId, CookingOrderTemplateDefinition>();
+        ScoreThresholds = scoreThresholds ?? CookingScoreThresholds.Default;
     }
 
     public CookingScope Scope { get; init; }
@@ -112,6 +114,7 @@ public sealed record CookingRecipeFixture
     public IReadOnlyDictionary<DefinitionId, int> CleanContainerSupply { get; init; }
     public string CleanPoolLocation { get; init; }
     public IReadOnlyDictionary<OrderTemplateId, CookingOrderTemplateDefinition> OrderTemplates { get; init; }
+    public CookingScoreThresholds ScoreThresholds { get; init; }
 }
 
 /// <summary>
@@ -563,7 +566,28 @@ public sealed partial class CookingRecipeSimulation
             .ToArray(),
         CompletedOrderIds(),
         Orders,
-        _settlements.ToArray());
+        _settlements.ToArray(),
+        CalculateTotalScore(),
+        CalculateStars());
+
+    public int CalculateTotalScore()
+    {
+        var total = 0;
+        foreach (var settlement in _settlements)
+        {
+            if (_fixture.OrderTemplates.TryGetValue(settlement.Template, out var template))
+            {
+                total += template.BaseScore;
+            }
+            else
+            {
+                total += 100;
+            }
+        }
+        return total;
+    }
+
+    public int CalculateStars() => _fixture.ScoreThresholds.EvaluateStars(CalculateTotalScore());
 
     public void AddIngredient(ItemId id, DefinitionId definition, PlayerId player, int version = 1)
     {
@@ -2017,7 +2041,9 @@ public sealed record CookingRecipeSnapshot(
     IReadOnlyList<CookingRecipeSnapshotContainer> Containers,
     IReadOnlyList<OrderId> AcceptedOrders,
     IReadOnlyList<CookingOrderSnapshotOrder> Orders,
-    IReadOnlyList<CookingOrderSettlement> Settlements)
+    IReadOnlyList<CookingOrderSettlement> Settlements,
+    int TotalScore = 0,
+    int Stars = 0)
 {
     private static readonly JsonSerializerOptions CanonicalJsonOptions = new()
     {
@@ -2031,6 +2057,8 @@ public sealed record CookingRecipeSnapshot(
         Scope.Match.Value,
         Version,
         LogicalTick,
+        TotalScore,
+        Stars,
         Items.OrderBy(item => item.Id.Value, StringComparer.Ordinal)
             .Select(item => new CanonicalItem(item.Id.Value, item.Definition.Value, item.Version, item.Location.Kind.ToString(),
                 item.Location.OwnerId, item.Location.SlotId, item.Recipe?.Value, item.IsProduct, item.OriginStation?.Value,
@@ -2054,6 +2082,7 @@ public sealed record CookingRecipeSnapshot(
     public string Sha256() => Convert.ToHexString(SHA256.HashData(Encoding.UTF8.GetBytes(CanonicalText())));
 
     private sealed record CanonicalSnapshot(string SessionId, string WorldId, string MatchId, long Version, long LogicalTick,
+        int TotalScore, int Stars,
         IReadOnlyList<CanonicalItem> Items, IReadOnlyList<CanonicalProcess> Processes, IReadOnlyList<CanonicalContainer> Containers,
         IReadOnlyList<string> AcceptedOrders, IReadOnlyList<CanonicalOrder> Orders, IReadOnlyList<CanonicalSettlement> Settlements);
     private sealed record CanonicalItem(string ItemId, string DefinitionId, int Version, string LocationKind, string? OwnerId,

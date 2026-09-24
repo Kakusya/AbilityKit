@@ -35,7 +35,21 @@ public sealed record CookingConfigurationValidationResult(IReadOnlyList<CookingC
 public sealed record CookingOrderTemplateDefinition(
     OrderTemplateId Id,
     RecipeId RequiredRecipe,
-    DefinitionId RequiredContainerDefinition);
+    DefinitionId RequiredContainerDefinition,
+    int BaseScore = 100);
+
+public sealed record CookingScoreThresholds(int OneStar, int TwoStar, int ThreeStar)
+{
+    public static readonly CookingScoreThresholds Default = new(100, 200, 300);
+
+    public int EvaluateStars(int totalScore)
+    {
+        if (totalScore >= ThreeStar) return 3;
+        if (totalScore >= TwoStar) return 2;
+        if (totalScore >= OneStar) return 1;
+        return 0;
+    }
+}
 
 /// <summary>
 /// 标准初始供应项：位置语法为 <c>world:&lt;position&gt;</c>、<c>station:&lt;stationId&gt;</c> 或 <c>cleanPool</c>。

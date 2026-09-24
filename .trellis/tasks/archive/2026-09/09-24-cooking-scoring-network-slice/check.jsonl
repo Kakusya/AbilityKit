@@ -1,0 +1,1 @@
+{"time":"2026-09-24T18:35:00Z","command":"powershell -ExecutionPolicy Bypass -File tools/run_test_gate.ps1 -Gate cooking-kitchen-loop","passed":true,"summary":"Gate cooking-kitchen-loop passed (208 cooking tests + 61 ET tests). Completed base score accumulation, 0-3 star thresholds evaluation, and network consensus over Loopback UDP."}

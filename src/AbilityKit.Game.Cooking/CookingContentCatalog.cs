@@ -23,7 +23,7 @@ public sealed record CookingContentRecipe(
     string Completion = nameof(CookingRecipeCompletionKind.ConsumeInputs),
     bool RequiresStation = true);
 
-public sealed record CookingContentOrderTemplate(string Id, string RequiredRecipe, string RequiredContainerDefinition);
+public sealed record CookingContentOrderTemplate(string Id, string RequiredRecipe, string RequiredContainerDefinition, int? BaseScore = null);
 
 public sealed record CookingContentSupplyEntry(string Definition, int Count, string Location);
 
@@ -116,7 +116,8 @@ public static class CookingContentCatalog
             document.OrderTemplates.Select(template => new CookingOrderTemplateDefinition(
                 new OrderTemplateId(template.Id),
                 new RecipeId(template.RequiredRecipe),
-                new DefinitionId(template.RequiredContainerDefinition))).ToArray(),
+                new DefinitionId(template.RequiredContainerDefinition),
+                template.BaseScore ?? 100)).ToArray(),
             document.StandardInitialSupply.Select(entry => new CookingSupplyEntryDefinition(
                 new DefinitionId(entry.Definition), entry.Count, entry.Location)).ToArray());
 

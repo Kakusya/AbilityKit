@@ -184,4 +184,48 @@ public sealed class CookingReusableHarnessAcceptanceTests
         topology.AssertStateHashConsensus();
         Assert.Equal(simulation.Snapshot().Sha256(), topology.Client.LatestProjection!.Sha256());
     }
+
+    [Fact]
+    public async Task Scenario_under_LoopbackUdpTopology_synchronizes_score_and_star_consensus()
+    {
+        var simulation = CreateSimulation(new[] { ChefA, ChefB });
+        var descriptor = Descriptor();
+        var levelScope = LevelScope();
+
+        await using var topology = await LoopbackUdpTopology.CreateAsync(
+            simulation, descriptor, levelScope, ChefA, ChefB);
+        var scenario = new TomatoEggSoupScenario(ChefA, ChefB);
+
+        // 执行全流程做菜并提交订单
+        await scenario.ExecuteAsync(topology);
+
+        // 验证 Host 与 Client 状态共识
+        topology.AssertStateHashConsensus();
+
+        var hostSnap = topology.GetAuthoritySnapshot();
+        var clientSnap = topology.GetClientSnapshot();
+
+        // 验证积分与星级：提交 1 份订单获得 100 基础分，达到 1 星线（100分）
+        Assert.Equal(100, hostSnap.TotalScore);
+        Assert.Equal(1, hostSnap.Stars);
+
+        Assert.NotNull(clientSnap);
+        Assert.Equal(100, clientSnap.TotalScore);
+        Assert.Equal(1, clientSnap.Stars);
+    }
+
+    [Fact]
+    public void Score_calculator_evaluates_stars_across_score_tiers()
+    {
+        var thresholds = new CookingScoreThresholds(100, 250, 400);
+
+        Assert.Equal(0, thresholds.EvaluateStars(0));
+        Assert.Equal(0, thresholds.EvaluateStars(99));
+        Assert.Equal(1, thresholds.EvaluateStars(100));
+        Assert.Equal(1, thresholds.EvaluateStars(249));
+        Assert.Equal(2, thresholds.EvaluateStars(250));
+        Assert.Equal(2, thresholds.EvaluateStars(399));
+        Assert.Equal(3, thresholds.EvaluateStars(400));
+        Assert.Equal(3, thresholds.EvaluateStars(1000));
+    }
 }
