@@ -103,4 +103,85 @@ public sealed class CookingReusableHarnessAcceptanceTests
         Assert.Single(topology.GetAuthoritySnapshot().AcceptedOrders);
         Assert.Single(topology.GetClientSnapshot()!.AcceptedOrders);
     }
+
+    [Fact]
+    public async Task Client_command_with_same_CommandId_is_idempotent()
+    {
+        var simulation = CreateSimulation(new[] { ChefA, ChefB });
+        var descriptor = Descriptor();
+        var levelScope = LevelScope();
+
+        await using var topology = await LoopbackUdpTopology.CreateAsync(
+            simulation, descriptor, levelScope, ChefA, ChefB);
+
+        // Client 第一次拿番茄
+        var firstResult = await topology.Client.SendCommandAsync(
+            CookingRecipeOperation.Pickup,
+            new ItemId("tomato-1"),
+            explicitCommandId: 1001);
+
+        Assert.Equal(CookingRecipeOutcome.Accepted, firstResult.Outcome);
+        var versionAfterFirst = simulation.Snapshot().Version;
+
+        // Client 重复发送相同 CommandId 的指令
+        var duplicateResult = await topology.Client.SendCommandAsync(
+            CookingRecipeOperation.Pickup,
+            new ItemId("tomato-1"),
+            explicitCommandId: 1001);
+
+        // 验证幂等：返回与之前相同的成功结果，且权威端状态版本不重复自增
+        Assert.Equal(CookingRecipeOutcome.Accepted, duplicateResult.Outcome);
+        Assert.Equal(versionAfterFirst, simulation.Snapshot().Version);
+    }
+
+    [Fact]
+    public async Task Client_disconnection_triggers_safe_item_drop_and_reconnection_restores_consensus()
+    {
+        var simulation = CreateSimulation(new[] { ChefA, ChefB });
+        var descriptor = Descriptor();
+        var levelScope = LevelScope();
+
+        await using var topology = await LoopbackUdpTopology.CreateAsync(
+            simulation, descriptor, levelScope, ChefA, ChefB);
+
+        // Client 拾取番茄
+        var pickupResult = await topology.Client.SendCommandAsync(
+            CookingRecipeOperation.Pickup,
+            new ItemId("tomato-1"));
+        Assert.Equal(CookingRecipeOutcome.Accepted, pickupResult.Outcome);
+
+        // 验证番茄在 ChefB 手上
+        Assert.Equal(new ItemId("tomato-1"), simulation.ItemInHand(ChefB));
+
+        // Client 模拟网络断开
+        topology.Client.Disconnect();
+
+        // 等待 Host 捕获断开并执行安全释放 (至多等待 2 秒)
+        var start = DateTime.UtcNow;
+        while (DateTime.UtcNow - start < TimeSpan.FromSeconds(2))
+        {
+            if (simulation.ItemInHand(ChefB) == null)
+            {
+                break;
+            }
+            await Task.Delay(50);
+        }
+
+        // 断言：ChefB 手上的番茄已安全卸下/掉落到可用工作台（counter-a 或 board-a）
+        Assert.Null(simulation.ItemInHand(ChefB));
+        var tomatoItem = simulation.Snapshot().Items.First(i => i.Id == new ItemId("tomato-1"));
+        Assert.Equal(LocationKind.StationSlot, tomatoItem.Location.Kind);
+        Assert.NotNull(tomatoItem.Location.SlotId);
+
+        // Client 模拟断线重连
+        var token = topology.Client.ReconnectToken;
+        Assert.NotNull(token);
+
+        await topology.Client.ReconnectAsync("127.0.0.1", topology.Host.Port);
+        await topology.SyncAndDrainAsync(TimeSpan.FromSeconds(2));
+
+        // 验证重连后快照自动对齐，双端重新达成 SHA-256 共识
+        topology.AssertStateHashConsensus();
+        Assert.Equal(simulation.Snapshot().Sha256(), topology.Client.LatestProjection!.Sha256());
+    }
 }

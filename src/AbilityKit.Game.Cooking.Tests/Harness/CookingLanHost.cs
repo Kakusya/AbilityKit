@@ -6,6 +6,21 @@ namespace AbilityKit.Game.Cooking.Tests.Harness;
 
 public sealed class CookingLanHost : IAsyncDisposable
 {
+    private sealed class PlayerSession
+    {
+        public PlayerId PlayerId { get; }
+        public string ReconnectToken { get; }
+        public NetPeer? CurrentPeer { get; set; }
+        public bool IsConnected => CurrentPeer != null;
+        public ConcurrentDictionary<long, CookingLanRecipeCommandResultPacket> ExecutedCommands { get; } = new();
+
+        public PlayerSession(PlayerId playerId, string reconnectToken)
+        {
+            PlayerId = playerId;
+            ReconnectToken = reconnectToken;
+        }
+    }
+
     private readonly CookingRecipeSimulation _simulation;
     private readonly CookingSessionDescriptor _descriptor;
     private readonly CookingLevelScope _levelScope;
@@ -13,7 +28,8 @@ public sealed class CookingLanHost : IAsyncDisposable
     private readonly PlayerId _clientPlayer;
     private readonly string _connectionKey;
     private readonly EventBasedNetListener _listener = new();
-    private readonly ConcurrentDictionary<NetPeer, PlayerId> _peers = new();
+    private readonly ConcurrentDictionary<NetPeer, PlayerId> _peerToPlayer = new();
+    private readonly ConcurrentDictionary<PlayerId, PlayerSession> _sessions = new();
     private readonly object _simulationGate = new();
 
     private NetManager? _manager;
@@ -40,11 +56,14 @@ public sealed class CookingLanHost : IAsyncDisposable
         _clientPlayer = clientPlayer;
         _connectionKey = connectionKey;
 
+        _sessions[_hostPlayer] = new PlayerSession(_hostPlayer, Guid.NewGuid().ToString("N"));
+        _sessions[_clientPlayer] = new PlayerSession(_clientPlayer, Guid.NewGuid().ToString("N"));
+
         LatestSnapshot = _simulation.Snapshot();
 
         _listener.ConnectionRequestEvent += request => request.AcceptIfKey(_connectionKey);
         _listener.PeerConnectedEvent += OnPeerConnected;
-        _listener.PeerDisconnectedEvent += (peer, info) => _peers.TryRemove(peer, out _);
+        _listener.PeerDisconnectedEvent += OnPeerDisconnected;
         _listener.NetworkReceiveEvent += OnNetworkReceive;
     }
 
@@ -82,7 +101,65 @@ public sealed class CookingLanHost : IAsyncDisposable
 
     private void OnPeerConnected(NetPeer peer)
     {
-        _peers[peer] = _clientPlayer;
+        // Peer connected, awaiting HandshakeRequest to bind session
+    }
+
+    private void OnPeerDisconnected(NetPeer peer, DisconnectInfo disconnectInfo)
+    {
+        if (_peerToPlayer.TryRemove(peer, out var playerId))
+        {
+            if (_sessions.TryGetValue(playerId, out var session) && session.CurrentPeer == peer)
+            {
+                session.CurrentPeer = null;
+            }
+
+            // On peer disconnected: handle held items safe drop
+            HandlePlayerDisconnected(playerId);
+        }
+    }
+
+    private void HandlePlayerDisconnected(PlayerId playerId)
+    {
+        lock (_simulationGate)
+        {
+            var heldItem = _simulation.ItemInHand(playerId);
+            if (heldItem != null)
+            {
+                var snap = _simulation.Snapshot();
+                var occupiedStations = snap.Items
+                    .Where(i => i.Location.Kind == LocationKind.StationSlot && i.Location.SlotId != null)
+                    .Select(i => i.Location.SlotId!)
+                    .ToHashSet();
+
+                var defaultStations = new[]
+                {
+                    new StationSlotId("counter-a"),
+                    new StationSlotId("board-a"),
+                    new StationSlotId("board-b"),
+                    new StationSlotId("stove-a")
+                };
+
+                StationSlotId? targetStation = null;
+                foreach (var station in defaultStations)
+                {
+                    if (!occupiedStations.Contains(station.Value))
+                    {
+                        targetStation = station;
+                        break;
+                    }
+                }
+
+                if (targetStation != null)
+                {
+                    ExecuteInternalCommand(playerId, CookingRecipeOperation.Drop, heldItem,
+                        null, null, targetStation, null, null, 0);
+                }
+            }
+
+            LatestSnapshot = _simulation.Snapshot();
+        }
+
+        BroadcastSnapshot();
     }
 
     private void OnNetworkReceive(NetPeer peer, NetPacketReader reader, byte channelNumber, DeliveryMethod deliveryMethod)
@@ -105,11 +182,33 @@ public sealed class CookingLanHost : IAsyncDisposable
 
     private void HandleHandshake(NetPeer peer, CookingLanEnvelope envelope)
     {
-        var responsePayload = new CookingLanHandshakeAccepted(_clientPlayer.Value);
+        if (!CookingLanCodec.TryReadPayload<CookingLanHandshakeRequest>(envelope, out var request) || request == null)
+            return;
+
+        var targetPlayer = _clientPlayer;
+        if (!_sessions.TryGetValue(targetPlayer, out var session))
+        {
+            session = new PlayerSession(targetPlayer, Guid.NewGuid().ToString("N"));
+            _sessions[targetPlayer] = session;
+        }
+
+        if (!string.IsNullOrEmpty(request.ReconnectToken))
+        {
+            // Reconnection flow: check token match
+            if (session.ReconnectToken != request.ReconnectToken)
+            {
+                return;
+            }
+        }
+
+        session.CurrentPeer = peer;
+        _peerToPlayer[peer] = targetPlayer;
+
+        var responsePayload = new CookingLanHandshakeAccepted(targetPlayer.Value, session.ReconnectToken);
         var bytes = CookingLanCodec.Encode(CookingLanMessageKind.HandshakeAccepted, envelope.CorrelationId, responsePayload);
         peer.Send(bytes, DeliveryMethod.ReliableOrdered);
 
-        BroadcastSnapshot();
+        SendSnapshotToPeer(peer);
     }
 
     private void HandleCommand(NetPeer peer, CookingLanEnvelope envelope)
@@ -117,19 +216,44 @@ public sealed class CookingLanHost : IAsyncDisposable
         if (!CookingLanCodec.TryReadPayload<CookingLanRecipeCommandPacket>(envelope, out var packet) || packet == null)
             return;
 
+        if (!_peerToPlayer.TryGetValue(peer, out var player))
+        {
+            player = _clientPlayer;
+        }
+
+        if (!_sessions.TryGetValue(player, out var session))
+        {
+            session = new PlayerSession(player, Guid.NewGuid().ToString("N"));
+            _sessions[player] = session;
+        }
+
+        // Idempotency check: if CommandId is already executed, replay cached result
+        if (packet.CommandId > 0 && session.ExecutedCommands.TryGetValue(packet.CommandId, out var cachedResult))
+        {
+            var cachedBytes = CookingLanCodec.Encode(CookingLanMessageKind.RecipeCommandResult, envelope.CorrelationId, cachedResult);
+            peer.Send(cachedBytes, DeliveryMethod.ReliableOrdered);
+            return;
+        }
+
         CookingRecipeCommandResult result;
         lock (_simulationGate)
         {
-            result = ExecuteInternalCommand(_clientPlayer, packet.Operation, packet.Item,
+            result = ExecuteInternalCommand(player, packet.Operation, packet.Item,
                 packet.Recipe, null, packet.Station, packet.Container, packet.Order, 0);
         }
 
         var resultPayload = new CookingLanRecipeCommandResultPacket(
+            packet.CommandId,
             result.Outcome,
             result.Reason,
             result.StateVersion,
             result.IsDuplicate,
             result.Events);
+
+        if (packet.CommandId > 0)
+        {
+            session.ExecutedCommands[packet.CommandId] = resultPayload;
+        }
 
         var resultBytes = CookingLanCodec.Encode(CookingLanMessageKind.RecipeCommandResult, envelope.CorrelationId, resultPayload);
         peer.Send(resultBytes, DeliveryMethod.ReliableOrdered);
@@ -222,6 +346,27 @@ public sealed class CookingLanHost : IAsyncDisposable
         BroadcastSnapshot();
     }
 
+    private void SendSnapshotToPeer(NetPeer peer)
+    {
+        CookingRecipeSnapshot snapshot;
+        lock (_simulationGate)
+        {
+            snapshot = LatestSnapshot;
+        }
+
+        var seq = Interlocked.Increment(ref _snapshotSequence);
+        var packet = new CookingLanSnapshotPacket(seq, snapshot);
+        var bytes = CookingLanCodec.Encode(CookingLanMessageKind.RecipeSnapshot, $"snap-{seq}", packet);
+
+        try
+        {
+            peer.Send(bytes, DeliveryMethod.ReliableOrdered);
+        }
+        catch
+        {
+        }
+    }
+
     public void BroadcastSnapshot()
     {
         CookingRecipeSnapshot snapshot;
@@ -234,7 +379,7 @@ public sealed class CookingLanHost : IAsyncDisposable
         var packet = new CookingLanSnapshotPacket(seq, snapshot);
         var bytes = CookingLanCodec.Encode(CookingLanMessageKind.RecipeSnapshot, $"snap-{seq}", packet);
 
-        foreach (var peer in _peers.Keys)
+        foreach (var peer in _peerToPlayer.Keys)
         {
             try
             {
@@ -253,7 +398,8 @@ public sealed class CookingLanHost : IAsyncDisposable
 
         _manager?.Stop();
         _manager = null;
-        _peers.Clear();
+        _peerToPlayer.Clear();
+        _sessions.Clear();
         return ValueTask.CompletedTask;
     }
 }

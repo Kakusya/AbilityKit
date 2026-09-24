@@ -21,6 +21,9 @@ public sealed class LoopbackUdpTopology : ICookingTestTopology
     public CookingScope Scope => _descriptor.Scope;
     public CookingLevelScope LevelScope => _levelScope;
 
+    public CookingLanHost Host => _host;
+    public CookingLanClient Client => _client;
+
     private LoopbackUdpTopology(
         CookingLanHost host,
         CookingLanClient client,

@@ -6,32 +6,41 @@ namespace AbilityKit.Game.Cooking.Tests.Harness;
 
 public sealed class CookingLanClient : IAsyncDisposable
 {
-    private readonly LiteNetTransport _transport;
+    private LiteNetTransport _transport;
     private readonly PlayerId _expectedPlayer;
+    private readonly string _connectionKey;
     private readonly ConcurrentDictionary<string, TaskCompletionSource<CookingLanRecipeCommandResultPacket>> _pendingCommands = new();
-    private readonly TaskCompletionSource<bool> _connected = new(TaskCreationOptions.RunContinuationsAsynchronously);
-    private readonly TaskCompletionSource<string> _handshake = new(TaskCreationOptions.RunContinuationsAsynchronously);
-    private readonly TaskCompletionSource<bool> _firstSnapshot = new(TaskCreationOptions.RunContinuationsAsynchronously);
+    
+    private TaskCompletionSource<bool> _connected = new(TaskCreationOptions.RunContinuationsAsynchronously);
+    private TaskCompletionSource<string> _handshake = new(TaskCreationOptions.RunContinuationsAsynchronously);
+    private TaskCompletionSource<bool> _firstSnapshot = new(TaskCreationOptions.RunContinuationsAsynchronously);
 
-    private int _commandCounter;
+    private long _commandCounter;
     private bool _disposed;
 
+    public string? ReconnectToken { get; private set; }
     public CookingRecipeSnapshot? LatestProjection { get; private set; }
 
     public CookingLanClient(PlayerId expectedPlayer, string connectionKey = "abilitykit-cooking-lan")
     {
         _expectedPlayer = expectedPlayer;
-        _transport = new LiteNetTransport(connectionKey);
+        _connectionKey = connectionKey;
+        _transport = CreateTransport();
+    }
 
-        _transport.Connected += () => _connected.TrySetResult(true);
-        _transport.BytesReceived += OnBytesReceived;
-        _transport.Disconnected += () =>
+    private LiteNetTransport CreateTransport()
+    {
+        var transport = new LiteNetTransport(_connectionKey);
+        transport.Connected += () => _connected.TrySetResult(true);
+        transport.BytesReceived += OnBytesReceived;
+        transport.Disconnected += () =>
         {
             foreach (var pending in _pendingCommands.Values)
             {
                 pending.TrySetException(new IOException("Transport disconnected."));
             }
         };
+        return transport;
     }
 
     public async Task ConnectAndHandshakeAsync(string host, int port, CancellationToken ct = default)
@@ -39,12 +48,30 @@ public sealed class CookingLanClient : IAsyncDisposable
         _transport.Connect(host, port);
         await _connected.Task.WaitAsync(TimeSpan.FromSeconds(5), ct).ConfigureAwait(false);
 
-        var handshakePayload = new CookingLanHandshakeRequest(_expectedPlayer.Value);
+        var handshakePayload = new CookingLanHandshakeRequest(_expectedPlayer.Value, ReconnectToken);
         var bytes = CookingLanCodec.Encode(CookingLanMessageKind.HandshakeRequest, "client-handshake", handshakePayload);
         _transport.Send(new ArraySegment<byte>(bytes));
 
         await _handshake.Task.WaitAsync(TimeSpan.FromSeconds(5), ct).ConfigureAwait(false);
         await _firstSnapshot.Task.WaitAsync(TimeSpan.FromSeconds(5), ct).ConfigureAwait(false);
+    }
+
+    public async Task ReconnectAsync(string host, int port, CancellationToken ct = default)
+    {
+        _transport.Dispose();
+
+        _connected = new TaskCompletionSource<bool>(TaskCreationOptions.RunContinuationsAsynchronously);
+        _handshake = new TaskCompletionSource<string>(TaskCreationOptions.RunContinuationsAsynchronously);
+        _firstSnapshot = new TaskCompletionSource<bool>(TaskCreationOptions.RunContinuationsAsynchronously);
+        _pendingCommands.Clear();
+
+        _transport = CreateTransport();
+        await ConnectAndHandshakeAsync(host, port, ct);
+    }
+
+    public void Disconnect()
+    {
+        _transport.Dispose();
     }
 
     private void OnBytesReceived(ArraySegment<byte> segment)
@@ -59,6 +86,7 @@ public sealed class CookingLanClient : IAsyncDisposable
             case CookingLanMessageKind.HandshakeAccepted:
                 if (CookingLanCodec.TryReadPayload<CookingLanHandshakeAccepted>(envelope, out var accepted) && accepted != null)
                 {
+                    ReconnectToken = accepted.ReconnectToken;
                     _handshake.TrySetResult(accepted.AssignedPlayerId);
                 }
                 break;
@@ -94,14 +122,15 @@ public sealed class CookingLanClient : IAsyncDisposable
         ItemId? container = null,
         RecipeId? recipe = null,
         OrderId? order = null,
+        long? explicitCommandId = null,
         CancellationToken ct = default)
     {
-        var seq = Interlocked.Increment(ref _commandCounter);
-        var correlationId = $"cmd-{_expectedPlayer.Value}-{seq}";
+        var commandId = explicitCommandId ?? Interlocked.Increment(ref _commandCounter);
+        var correlationId = $"cmd-{_expectedPlayer.Value}-{commandId}";
         var tcs = new TaskCompletionSource<CookingLanRecipeCommandResultPacket>(TaskCreationOptions.RunContinuationsAsynchronously);
         _pendingCommands[correlationId] = tcs;
 
-        var packet = new CookingLanRecipeCommandPacket(operation, item, station, container, recipe, order);
+        var packet = new CookingLanRecipeCommandPacket(commandId, operation, item, station, container, recipe, order);
         var bytes = CookingLanCodec.Encode(CookingLanMessageKind.RecipeCommand, correlationId, packet);
         _transport.Send(new ArraySegment<byte>(bytes));
 

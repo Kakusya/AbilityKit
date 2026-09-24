@@ -17,10 +17,16 @@ public sealed record CookingLanEnvelope(
     string CorrelationId,
     JsonElement Payload);
 
-public sealed record CookingLanHandshakeRequest(string PlayerId);
-public sealed record CookingLanHandshakeAccepted(string AssignedPlayerId);
+public sealed record CookingLanHandshakeRequest(
+    string PlayerId,
+    string? ReconnectToken = null);
+
+public sealed record CookingLanHandshakeAccepted(
+    string AssignedPlayerId,
+    string ReconnectToken);
 
 public sealed record CookingLanRecipeCommandPacket(
+    long CommandId,
     CookingRecipeOperation Operation,
     ItemId? Item,
     StationSlotId? Station,
@@ -29,6 +35,7 @@ public sealed record CookingLanRecipeCommandPacket(
     OrderId? Order);
 
 public sealed record CookingLanRecipeCommandResultPacket(
+    long CommandId,
     CookingRecipeOutcome Outcome,
     CookingRecipeRejectionReason Reason,
     long StateVersion,

@@ -1,0 +1,1 @@
+{"time":"2026-09-24T18:00:00Z","command":"powershell -ExecutionPolicy Bypass -File tools/run_test_gate.ps1 -Gate cooking-kitchen-loop","passed":true,"summary":"Gate cooking-kitchen-loop passed (206 cooking tests + 61 ET tests), all idempotency, safe drop, and reconnection consensus tests passed."}
