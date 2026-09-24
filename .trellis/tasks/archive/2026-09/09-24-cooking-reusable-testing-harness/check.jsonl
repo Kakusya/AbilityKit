@@ -1,0 +1,1 @@
+{"time":"2026-09-24T12:00:00Z","command":"dotnet test src/AbilityKit.Game.Cooking.Tests/AbilityKit.Game.Cooking.Tests.csproj","passed":true,"summary":"203 tests passed including 2 new reusable harness acceptance tests"}

@@ -1,0 +1,1 @@
+{"time":"2026-09-24T16:00:00Z","command":"dotnet test src/AbilityKit.Game.Cooking.Tests/AbilityKit.Game.Cooking.Tests.csproj","passed":true,"summary":"All 204 tests passed including LoopbackUdpTopology TomatoEggSoupScenario consensus"}

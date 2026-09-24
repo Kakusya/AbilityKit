@@ -11,6 +11,9 @@
 
   <ItemGroup>
     <ProjectReference Include="..\AbilityKit.Game.Cooking\AbilityKit.Game.Cooking.csproj" />
+    <ProjectReference Include="..\AbilityKit.Network.Runtime\AbilityKit.Network.Runtime.csproj" />
+    <ProjectReference Include="..\AbilityKit.Network.Transport.InMemory\AbilityKit.Network.Transport.InMemory.csproj" />
+    <ProjectReference Include="..\AbilityKit.Network.Transport.LiteNet\AbilityKit.Network.Transport.LiteNet.csproj" />
   </ItemGroup>
 
   <ItemGroup>
