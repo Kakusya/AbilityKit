@@ -8,8 +8,8 @@
 
 <!-- @@@auto:current-status -->
 - **Active File**: `journal-1.md`
-- **Total Sessions**: 9
-- **Last Active**: 2026-09-22
+- **Total Sessions**: 10
+- **Last Active**: 2026-09-28
 <!-- @@@/auto:current-status -->
 
 ---
@@ -19,7 +19,7 @@
 <!-- @@@auto:active-documents -->
 | File | Lines | Status |
 |------|-------|--------|
-| `journal-1.md` | ~245 | Active |
+| `journal-1.md` | ~267 | Active |
 <!-- @@@/auto:active-documents -->
 
 ---
@@ -29,6 +29,7 @@
 <!-- @@@auto:session-history -->
 | # | Date | Title | Commits | Branch |
 |---|------|-------|---------|--------|
+| 10 | 2026-09-28 | Cooking customer and companion runtime slice | `f66cb5a5a` | `feat/cooking-customer-companion-runtime-slice` |
 | 9 | 2026-09-22 | 前厅询问、洗碗与小关时间 | `460f2233a`, `c368dfc39`, `f96986f6a` | `master` |
 | 8 | 2026-09-22 | 小关失败重开按标准供应重建厨房 | `a55848f27` | `master` |
 | 7 | 2026-09-22 | Cooking 恢复 checkpoint 契约（单机） | `bd6a2f10c` | `master` |

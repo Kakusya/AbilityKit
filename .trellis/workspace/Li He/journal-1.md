@@ -243,3 +243,25 @@ Todo P0-C1 前两条未勾项落地：同步 snapshot 与恢复 checkpoint 显�
 ### Next Steps
 
 - 可见顾客、收益评价、伙伴成长、失败条件、Profile/SaveSlot、connection 到 PlayerId 仍未做。
+
+
+## Session 10: Cooking customer and companion runtime slice
+<!-- trellis-session: v=2 fp=d44c1bead6227390 -->
+
+**Date**: 2026-09-28
+**Task**: Cooking customer and companion runtime slice
+**Branch**: `feat/cooking-customer-companion-runtime-slice`
+
+### Summary
+
+Implemented stable customer and companion runtime projections, deterministic front-of-house snapshots and v2 checkpoint recovery; verified both Cooking P1 gates and archived the task.
+
+### Git Commits
+
+| Hash | Message |
+|------|---------|
+| `f66cb5a5a` | feat(cooking): add customer companion runtime state |
+
+### Status
+
+[OK] **Completed**
