@@ -1,0 +1,6 @@
+{"file":".trellis/spec/cooking/index.md","reason":"Cooking 规划边界、跨小关保留/清除语义和当前禁止范围。"}
+{"file":".trellis/spec/cooking/cooking-lan-session.md","reason":"Cooking Host/Client、固定 Tick、断线重连和快照共识契约。"}
+{"file":".trellis/spec/cooking/cooking-match-lifecycle.md","reason":"Level identity、代际、生命周期和旧命令失效语义。"}
+{"file":"Docs/design/CookingGame/reference/product-lifetimes.md","reason":"Match/Runtime/Level 生命周期、成功交接和检查点边界。"}
+{"file":"Docs/design/CookingGame/reference/et-entity-tree.md","reason":"Level scope、快照水位和跨层状态归属参考。"}
+{"file":"Docs/design/CookingGame/technical-roadmap.md","reason":"Cooking 应用层路线与非 Unity 实施边界。"}

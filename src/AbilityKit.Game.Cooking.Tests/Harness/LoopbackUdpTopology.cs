@@ -20,7 +20,7 @@ public sealed class LoopbackUdpTopology : ICookingTestTopology
 
     public string Name => "LoopbackUdp";
     public CookingScope Scope => _descriptor.Scope;
-    public CookingLevelScope LevelScope => _levelScope;
+    public CookingLevelScope LevelScope => _host.CurrentLevelScope;
 
     public CookingSessionHost Host => _host;
     public CookingSessionClient Client => _client;
@@ -84,8 +84,8 @@ public sealed class LoopbackUdpTopology : ICookingTestTopology
         var start = DateTime.UtcNow;
         while (DateTime.UtcNow - start < timeout)
         {
-            if (_client.LatestProjection != null &&
-                _client.LatestProjection.Version >= _host.LatestSnapshot.Version)
+            if (_client.LatestSessionProjection is not null &&
+                _client.LatestSessionProjection.Sha256() == _host.LatestSessionSnapshot.Sha256())
             {
                 return;
             }
@@ -95,18 +95,23 @@ public sealed class LoopbackUdpTopology : ICookingTestTopology
 
     public void AssertStateHashConsensus()
     {
-        var hostSnapshot = _host.LatestSnapshot;
-        var clientSnapshot = _client.LatestProjection;
+        var hostSession = _host.LatestSessionSnapshot;
+        var clientSession = _client.LatestSessionProjection;
+        var hostSnapshot = hostSession.Recipe;
+        var clientSnapshot = clientSession?.Recipe;
 
         Assert.NotNull(hostSnapshot);
+        Assert.NotNull(clientSession);
         Assert.NotNull(clientSnapshot);
 
-        var hostHash = hostSnapshot.Sha256();
-        var clientHash = clientSnapshot.Sha256();
+        var hostHash = hostSession.Sha256();
+        var clientHash = clientSession.Sha256();
 
         Assert.False(string.IsNullOrWhiteSpace(hostHash), "Host state hash must not be empty.");
         Assert.False(string.IsNullOrWhiteSpace(clientHash), "Client state hash must not be empty.");
         Assert.Equal(hostHash, clientHash);
+        Assert.Equal(hostSession.LevelScope, clientSession.LevelScope);
+        Assert.Equal(hostSession.Generation, clientSession.Generation);
         Assert.Equal(hostSnapshot.Version, clientSnapshot.Version);
     }
 

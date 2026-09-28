@@ -24,7 +24,7 @@
 
 当前存在两条需要重点推进的 P0 主线：
 
-- **Cooking ET 应用运行时主线**：独立 ET runtime 和最小权威命令 Tick 接点已经完成，但正式 Match 宿主、单一加工时钟、checkpoint、跨小关规则与 ECS 清退尚未完成。原 UDP ingress 方向已于 2026-09-21 放弃（传输计划改用 KCP，属未启动后续工作），不再计入本主线待办。单机纯 .NET 厨房闭环仿真（容器即物品、七项权威动作、两种完成形态、订单要求与碗池、批次争抢仲裁）已于 2026-09-21 由两个 Trellis task 实现并验证，状态见 [Cooking 当前工程进度](design/CookingGame/progress.md) 第 4 节；正式 Recipe/Process/Appliance/Container/Order 内容与 timing（数据驱动 `cooking-definition-v2` 内容目录）与 order owner（订单簿、开单注入、提交/结算契约）已于同日由 task `09-21-cooking-formal-content-and-orders` 实现并验证，状态见同文第 5 节；同一条番茄蛋花汤闭环已在 ET fixed-tick Level 宿主上以正式内容跑通验收（命令 ingress + 固定 Tick、拒绝零变更、确定性重放），状态见同文第 6 节。 运行态恢复契约（同步 snapshot 与恢复 checkpoint 区分、覆盖表逐项入账、导出→销毁 host→重建→继续与不中断基线不可区分）已于 2026-09-22 落地，状态见同文第 7 节。评分/收益/评价与小关结算、失败条件与前厅订单生成节奏、固定伙伴最终人数、生产传输与 Unity 范围仍未启动。
+- **Cooking ET 应用运行时主线**：独立 ET runtime、最小权威命令 Tick、checkpoint 和跨小关领域规则已经完成；2026-09-28 又完成生产 Cooking session 的同机 loopback 跨 Level 技术纵切，状态见 [Cooking 当前工程进度](design/CookingGame/progress.md) 第 19 节。该证据不改变产品传输选型：原 ET/UDP ingress 方向已放弃，KCP 仍是未启动后续；两 PC LAN、正式 Match 宿主、ECS 清退与 Unity 仍未完成。单机纯 .NET 厨房闭环、正式内容、ET fixed-tick 验收和运行态恢复分别见同文第 4–7 节。
 - **Shooter 同步正式化主线**：已有同步主干和 pure-state runtime 起点，但仍缺客户端消费、AOI、delta/keyframe/resync 和远程服务端预算闭环。
 
 MOBA、Client Flow、Presentation 与通用工程治理属于后续正式化主线，其中完整 build 阻塞和主流程失败语义仍应优先处理。
@@ -52,6 +52,7 @@ MOBA、Client Flow、Presentation 与通用工程治理属于后续正式化主�
 - [x] 落实下一小关清空前厅：已于 2026-09-22 由 task `09-22-cooking-front-house-reset` 交付——成功交接后座位、未满足和营业时钟清空；正在洗的碗先洗完，其余脏碗留在厨房。收益和可见顾客仍未开始。
 - [x] 落实用餐占桌：已于 2026-09-22 由 task `09-22-cooking-dining-seat` 交付——订单完成后按配置占桌，到点才离席；挂了前厅时座位未空不能结束服务。收益和可见顾客仍未开始。
 - [x] 落实前厅询问、洗碗和小关时间结构：已于 2026-09-22 由 task `09-22-cooking-front-of-house` 交付——一位伙伴问完才开单，空闲才洗碗；营业结束且座位空了才允许成功；超时离席记未满足，不写结算。可见顾客、收益、伙伴成长和失败条件仍未开始。
+- [x] 将跨关状态承接与关间选择接入生产 Cooking session：已于 2026-09-28 由 task `09-28-cooking-level-transition-choices-lan` 交付——完整会话 SHA-256 覆盖 Level scope/generation/进度/厨房，检查点写入失败阻止下一 Level 发布，旧 Level 命令/快照拒绝，重连凭证跨 Level 恢复当前基线。同机 loopback 已验证；两 PC LAN、产品传输选型和 Unity 不在本项。
 - [x] 只在小关成功完成时确认本关结算列表：已于 2026-09-22 由 task `09-22-cooking-level-settlement-confirmation` 交付——身份为 Match、`LevelId`、`LevelEpoch`，载荷为交接前的结算条；重复确认无效，失败与准备态不确认。评分、收益和长期进度入账仍未开始。
 - [x] 把已确认的结算列表按代际落到调用方给的目录：已于 2026-09-22 由 task `09-22-cooking-level-settlement-store` 交付——新读取器读回同一份列表；同一列表再写是重复，换一份列表不覆盖；截断和篡改拒绝。不改货币。Profile、SaveSlot 和真实断电恢复仍未开始。
 - [ ] ~~将 UDP 接入 ET owner-thread ingress~~：已于 2026-09-21 放弃（owner 决定传输改用 KCP），不在当前范围；若将来立项 KCP，必须重新审议回调解码/入队、ET Tick 取稳定批次与本地/远端同一权威入口的契约。

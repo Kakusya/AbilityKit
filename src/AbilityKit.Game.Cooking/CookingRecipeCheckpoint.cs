@@ -371,8 +371,17 @@ public sealed partial class CookingRecipeSimulation
             _lifecycleClosed = false;
             _lifecycleGate = null;
             _levelScope = null;
+            _isClosing = false;
+            _isCompleted = false;
         }
         return restored;
+    }
+
+    internal void RestoreFrontOfHouseState(bool isClosing, bool isCompleted, long stateVersion)
+    {
+        _isClosing = isClosing;
+        _isCompleted = isCompleted;
+        _stateVersion = stateVersion;
     }
 
     /// <summary>

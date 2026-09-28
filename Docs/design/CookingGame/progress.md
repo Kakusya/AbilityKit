@@ -157,7 +157,17 @@ Owner 于 2026-09-22 批准 Trellis task `09-22-cooking-checkpoint-recovery`（T
 
 门禁：`cooking-kitchen-loop`（focused 80/80、Cooking 201/201、ET runtime 61/61）与 `cooking-et-level-runtime`（Cooking 201/201、ET runtime 61/61）均 exit 0。日志在 `local/Logs/test-gates/20260923-093600-cooking-kitchen-loop` 与 `local/Logs/test-gates/20260923-093617-cooking-et-level-runtime`。失败条件、评分和可见顾客仍未做。
 
-## 19. 未完成范围
+## 19. 2026-09-28 跨关选择与状态承接 LAN 纵切
+
+Owner 批准 Trellis task `09-28-cooking-level-transition-choices-lan` 后，既有单机跨关领域能力接入生产 `CookingSessionHost`/`CookingSessionClient`。完整会话投影现在包含 Level scope、generation、sequence、装修/解锁/Buff 和厨房快照，并以稳定 canonical 计算 SHA-256；Recipe command 携带 Level identity，旧 Level 命令、旧 generation 和乱序/重复快照不能覆盖下一 Level。
+
+Host 的跨关提交复用 `ExportSuccessHandoff`/`AcceptSuccessHandoff`、`CookingMajorProgress` 与 `CookingMajorCheckpointStore`：检查点写入成功后才安装并广播下一 Level；写入失败恢复源厨房、Level scope 和客户端投影。成功 handoff 同时在领域根部清除 `IsClosing`/`IsCompleted`，新 Level 从非营业、非完成状态开始。Match-scoped 重连凭证跨 Level 保持有效，重连只接收当前完整基线。
+
+验证：新增 4 个跨关 LAN 测试；Cooking 完整测试 213/213。`cooking-kitchen-loop`（focused 92/92、Cooking 213/213、ET runtime 61/61）与 `cooking-et-level-runtime`（Cooking 213/213、ET runtime 61/61）均 exit 0。日志在 `local/Logs/test-gates/20260928-175010-cooking-kitchen-loop` 与 `local/Logs/test-gates/20260928-175045-cooking-et-level-runtime`。
+
+以上只证明同一台电脑上的生产 Cooking session + LiteNet loopback 跨 Level 技术纵切成立，不改变当前产品传输选型，不证明两台物理 PC LAN、主机迁移、Profile/SaveSlot、真实断电恢复或 Unity 可玩版本。
+
+## 20. 未完成范围
 
 ### Non-Unity successor backlog
 
@@ -167,7 +177,7 @@ P1–P6 尚可另行审议的工作包括两台物理 PC LAN 验收、正式 rec
 
 Cooking Unity 应用层、场景、authoring/export、projection、UI、动画、EditMode 与 scene smoke 长期禁止实施，不再作为旧 task、successor 或完整出口的当前 blocker。其历史来源、跨宿主 authority/identity/stale-input 不变量和重新授权条件见 [future scope](future-scope.md)。
 
-## 20. 后续读取顺序
+## 21. 后续读取顺序
 
 1. 读取本文确认三类状态。
 2. 读取 [技术路线](technical-roadmap.md)、[交付计划](delivery-plan.md) 与 [Cooking spec index](../../../.trellis/spec/cooking/index.md)。
@@ -175,8 +185,8 @@ Cooking Unity 应用层、场景、authoring/export、projection、UI、动画�
 4. 只有 owner 明确批准新范围后才新建 Trellis task；不要恢复已归档 task。
 5. Unity 重新授权必须满足 [future scope](future-scope.md) 的独立条件；non-Unity 后续从 [successor backlog](successor-backlog.md) 选择并重新审议。
 
-## 21. 维护规则
+## 22. 维护规则
 
 - 本文只汇总状态与链接，不复制行为契约、测试矩阵或未来 checklist。
-- 未实际运行的 Unity、LAN、protocol、durability 或 global gate 继续是 not-run/未完成，不能因 task archive 记为通过。
+- 未实际运行的 Unity、两 PC LAN、durability 或 global gate 继续是 not-run/未完成；本次同机 loopback protocol 证据不能替代这些出口。
 - `.trellis/migration/legacy-cooking-changes/` 保持只读。

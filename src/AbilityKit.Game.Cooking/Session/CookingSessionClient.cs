@@ -19,6 +19,8 @@ public sealed class CookingSessionClient : IAsyncDisposable
 
     public string? ReconnectToken { get; private set; }
     public CookingRecipeSnapshot? LatestProjection { get; private set; }
+    public CookingSessionSnapshot? LatestSessionProjection { get; private set; }
+    public CookingLevelScope? CurrentLevelScope => LatestSessionProjection?.LevelScope;
 
     public CookingSessionClient(PlayerId expectedPlayer, string connectionKey = "abilitykit-cooking-lan")
     {
@@ -107,11 +109,63 @@ public sealed class CookingSessionClient : IAsyncDisposable
             case CookingLanMessageKind.RecipeSnapshot:
                 if (CookingLanCodec.TryReadPayload<CookingLanSnapshotPacket>(envelope, out var snapPacket) && snapPacket != null)
                 {
-                    LatestProjection = snapPacket.Snapshot;
+                    if (LatestSessionProjection is null)
+                    {
+                        LatestProjection = snapPacket.Snapshot;
+                        _firstSnapshot.TrySetResult(true);
+                    }
+                }
+                break;
+
+            case CookingLanMessageKind.SessionSnapshot:
+                if (CookingLanCodec.TryReadPayload<CookingLanSessionSnapshotPacket>(envelope, out var sessionPacket) &&
+                    sessionPacket != null &&
+                    TryApplySessionSnapshot(sessionPacket.Snapshot, sessionPacket.Sha256))
+                {
                     _firstSnapshot.TrySetResult(true);
                 }
                 break;
         }
+    }
+
+    public bool TryApplySessionSnapshot(CookingSessionSnapshot snapshot, string? expectedSha256 = null)
+    {
+        ArgumentNullException.ThrowIfNull(snapshot);
+        if (!string.IsNullOrWhiteSpace(expectedSha256) &&
+            !StringComparer.Ordinal.Equals(expectedSha256, snapshot.Sha256()))
+        {
+            return false;
+        }
+
+        var current = LatestSessionProjection;
+        if (current is not null)
+        {
+            if (snapshot.LevelScope.MatchScope != current.LevelScope.MatchScope ||
+                snapshot.LevelScope.RestaurantRuntime != current.LevelScope.RestaurantRuntime ||
+                snapshot.Generation < current.Generation)
+            {
+                return false;
+            }
+
+            if (snapshot.Generation == current.Generation)
+            {
+                if (snapshot.LevelScope != current.LevelScope || snapshot.Sequence <= current.Sequence)
+                    return false;
+            }
+            else
+            {
+                if (snapshot.LevelScope.LevelEpoch <= current.LevelScope.LevelEpoch)
+                    return false;
+                foreach (var pending in _pendingCommands.Values)
+                    pending.TrySetException(new InvalidOperationException("The command belongs to an ended Cooking Level."));
+                _pendingCommands.Clear();
+                Interlocked.Exchange(ref _commandCounter, 0);
+            }
+        }
+
+        LatestSessionProjection = snapshot;
+        LatestProjection = snapshot.Recipe;
+        return true;
     }
 
     public async Task<CookingRecipeCommandResult> SendCommandAsync(
@@ -122,6 +176,7 @@ public sealed class CookingSessionClient : IAsyncDisposable
         RecipeId? recipe = null,
         OrderId? order = null,
         long? explicitCommandId = null,
+        CookingLevelScope? levelScope = null,
         CancellationToken ct = default)
     {
         var commandId = explicitCommandId ?? Interlocked.Increment(ref _commandCounter);
@@ -129,7 +184,15 @@ public sealed class CookingSessionClient : IAsyncDisposable
         var tcs = new TaskCompletionSource<CookingLanRecipeCommandResultPacket>(TaskCreationOptions.RunContinuationsAsynchronously);
         _pendingCommands[correlationId] = tcs;
 
-        var packet = new CookingLanRecipeCommandPacket(commandId, operation, item, station, container, recipe, order);
+        var packet = new CookingLanRecipeCommandPacket(
+            commandId,
+            operation,
+            item,
+            station,
+            container,
+            recipe,
+            order,
+            levelScope ?? LatestSessionProjection?.LevelScope);
         var bytes = CookingLanCodec.Encode(CookingLanMessageKind.RecipeCommand, correlationId, packet);
         _transport.Send(new ArraySegment<byte>(bytes));
 

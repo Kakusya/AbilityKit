@@ -9,6 +9,7 @@ public enum CookingLanMessageKind
     RecipeCommand,
     RecipeCommandResult,
     RecipeSnapshot,
+    SessionSnapshot,
 }
 
 public sealed record CookingLanEnvelope(
@@ -31,7 +32,8 @@ public sealed record CookingLanRecipeCommandPacket(
     StationSlotId? Station,
     ItemId? Container,
     RecipeId? Recipe,
-    OrderId? Order);
+    OrderId? Order,
+    CookingLevelScope? LevelScope = null);
 
 public sealed record CookingLanRecipeCommandResultPacket(
     long CommandId,
@@ -44,6 +46,10 @@ public sealed record CookingLanRecipeCommandResultPacket(
 public sealed record CookingLanSnapshotPacket(
     long Sequence,
     CookingRecipeSnapshot Snapshot);
+
+public sealed record CookingLanSessionSnapshotPacket(
+    CookingSessionSnapshot Snapshot,
+    string Sha256);
 
 public static class CookingLanCodec
 {

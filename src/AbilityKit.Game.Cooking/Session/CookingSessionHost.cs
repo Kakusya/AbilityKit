@@ -22,25 +22,31 @@ public sealed class CookingSessionHost : IAsyncDisposable
 
     private readonly CookingRecipeSimulation _simulation;
     private readonly CookingSessionDescriptor _descriptor;
-    private readonly CookingLevelScope _levelScope;
+    private CookingLevelScope _levelScope;
     private readonly PlayerId _hostPlayer;
     private readonly PlayerId _clientPlayer;
     private readonly string _connectionKey;
     private readonly CookingFrontOfHouse? _frontOfHouse;
     private readonly OrderTemplateId? _activeOrderTemplate;
+    private readonly CookingContent? _content;
     private readonly EventBasedNetListener _listener = new();
     private readonly ConcurrentDictionary<NetPeer, PlayerId> _peerToPlayer = new();
     private readonly ConcurrentDictionary<PlayerId, PlayerSession> _sessions = new();
     private readonly object _simulationGate = new();
+    private readonly HashSet<string> _completedTransitionRequests = new(StringComparer.Ordinal);
 
     private NetManager? _manager;
     private long _snapshotSequence;
+    private long _generation = 1;
     private int _commandSequence;
     private long _hostFrameSequence;
     private bool _disposed;
+    private CookingMajorProgress _majorProgress;
 
     public int Port { get; private set; }
     public CookingRecipeSnapshot LatestSnapshot { get; private set; }
+    public CookingSessionSnapshot LatestSessionSnapshot { get; private set; }
+    public CookingLevelScope CurrentLevelScope => _levelScope;
 
     public CookingSessionHost(
         CookingRecipeSimulation simulation,
@@ -50,7 +56,9 @@ public sealed class CookingSessionHost : IAsyncDisposable
         PlayerId clientPlayer,
         string connectionKey = "abilitykit-cooking-lan",
         CookingFrontOfHouse? frontOfHouse = null,
-        OrderTemplateId? activeOrderTemplate = null)
+        OrderTemplateId? activeOrderTemplate = null,
+        CookingContent? content = null,
+        CookingMajorProgress? majorProgress = null)
     {
         _simulation = simulation ?? throw new ArgumentNullException(nameof(simulation));
         _descriptor = descriptor ?? throw new ArgumentNullException(nameof(descriptor));
@@ -60,11 +68,15 @@ public sealed class CookingSessionHost : IAsyncDisposable
         _connectionKey = connectionKey;
         _frontOfHouse = frontOfHouse;
         _activeOrderTemplate = activeOrderTemplate;
+        _content = content;
+        _majorProgress = majorProgress ?? new CookingMajorProgress();
+        _simulation.UseMajorProgress(_majorProgress);
 
         _sessions[_hostPlayer] = new PlayerSession(_hostPlayer, Guid.NewGuid().ToString("N"));
         _sessions[_clientPlayer] = new PlayerSession(_clientPlayer, Guid.NewGuid().ToString("N"));
 
         LatestSnapshot = _simulation.Snapshot();
+        LatestSessionSnapshot = BuildSessionSnapshot(0);
 
         _listener.ConnectionRequestEvent += request => request.AcceptIfKey(_connectionKey);
         _listener.PeerConnectedEvent += OnPeerConnected;
@@ -229,6 +241,26 @@ public sealed class CookingSessionHost : IAsyncDisposable
             _sessions[player] = session;
         }
 
+        if (packet.LevelScope is null || packet.LevelScope != _levelScope)
+        {
+            var rejected = CookingRecipeCommandResult.Reject(
+                CookingRecipeRejectionReason.ScopeMismatch,
+                LatestSnapshot.Version);
+            var rejectedPayload = new CookingLanRecipeCommandResultPacket(
+                packet.CommandId,
+                rejected.Outcome,
+                rejected.Reason,
+                rejected.StateVersion,
+                rejected.IsDuplicate,
+                rejected.Events);
+            var rejectedBytes = CookingLanCodec.Encode(
+                CookingLanMessageKind.RecipeCommandResult,
+                envelope.CorrelationId,
+                rejectedPayload);
+            peer.Send(rejectedBytes, DeliveryMethod.ReliableOrdered);
+            return;
+        }
+
         if (packet.CommandId > 0 && session.ExecutedCommands.TryGetValue(packet.CommandId, out var cachedResult))
         {
             var cachedBytes = CookingLanCodec.Encode(CookingLanMessageKind.RecipeCommandResult, envelope.CorrelationId, cachedResult);
@@ -353,17 +385,154 @@ public sealed class CookingSessionHost : IAsyncDisposable
         BroadcastSnapshot();
     }
 
-    private void SendSnapshotToPeer(NetPeer peer)
+    public CookingLevelTransitionResult TransitionToNextLevel(
+        CookingLevelTransitionRequest request,
+        CookingMajorCheckpointStore checkpointStore)
     {
-        CookingRecipeSnapshot snapshot;
+        ArgumentNullException.ThrowIfNull(request);
+        ArgumentNullException.ThrowIfNull(checkpointStore);
+
         lock (_simulationGate)
         {
-            snapshot = LatestSnapshot;
+            if (_completedTransitionRequests.Contains(request.RequestId))
+                return RejectTransition(CookingLevelTransitionReason.Duplicate);
+            if (string.IsNullOrWhiteSpace(request.RequestId) || !LatestSnapshot.IsCompleted)
+                return RejectTransition(CookingLevelTransitionReason.InvalidState);
+            if (request.SourceLevel != _levelScope)
+                return RejectTransition(CookingLevelTransitionReason.SourceMismatch);
+            if (request.TargetLevel.MatchScope != _levelScope.MatchScope ||
+                request.TargetLevel.RestaurantRuntime != _levelScope.RestaurantRuntime ||
+                request.TargetLevel.Level == _levelScope.Level ||
+                request.TargetLevel.LevelEpoch <= _levelScope.LevelEpoch)
+            {
+                return RejectTransition(CookingLevelTransitionReason.TargetInvalid);
+            }
+            if (request.Unlocks.Count > 0 && _content is null)
+                return RejectTransition(CookingLevelTransitionReason.ContentUnavailable);
+
+            var sourceCheckpoint = _simulation.ExportCheckpoint();
+            var sourceClosing = LatestSnapshot.IsClosing;
+            var sourceCompleted = LatestSnapshot.IsCompleted;
+            var stagedProgress = CopyProgress(_majorProgress);
+            var choice = stagedProgress.ChooseDecoration(request.Decoration);
+            if (request.Decoration.Count > 0 && !choice.Accepted)
+                return RejectTransition(CookingLevelTransitionReason.ChoiceRejected);
+
+            var newUnlocks = new List<DefinitionId>();
+            foreach (var unlock in request.Unlocks)
+            {
+                var alreadyUnlocked = stagedProgress.Unlocks.Contains(unlock);
+                choice = stagedProgress.Unlock(unlock);
+                if (!choice.Accepted && choice.Reason != CookingMajorProgressReason.Duplicate)
+                    return RejectTransition(CookingLevelTransitionReason.ChoiceRejected);
+                if (!alreadyUnlocked)
+                    newUnlocks.Add(unlock);
+            }
+            if (request.EnableCookFaster)
+            {
+                choice = stagedProgress.EnableCookFaster();
+                if (!choice.Accepted && choice.Reason != CookingMajorProgressReason.Duplicate)
+                    return RejectTransition(CookingLevelTransitionReason.ChoiceRejected);
+            }
+
+            var handoff = _simulation.ExportSuccessHandoff();
+            var accepted = _simulation.AcceptSuccessHandoff(handoff);
+            if (!accepted.Accepted)
+                return RejectTransition(CookingLevelTransitionReason.HandoffRejected);
+
+            if (request.Decoration.Count > 0)
+            {
+                var migrated = _simulation.MigrateStations(request.Decoration);
+                if (!migrated.Accepted)
+                    return RollbackTransition(sourceCheckpoint, sourceClosing, sourceCompleted,
+                        CookingLevelTransitionReason.ChoiceRejected);
+            }
+
+            foreach (var unlock in newUnlocks)
+            {
+                var placed = _simulation.PlaceUnlock(_content!, unlock);
+                if (!placed.Accepted)
+                    return RollbackTransition(sourceCheckpoint, sourceClosing, sourceCompleted,
+                        CookingLevelTransitionReason.ChoiceRejected);
+            }
+
+            _simulation.UseMajorProgress(stagedProgress);
+            stagedProgress.Lock();
+            var write = checkpointStore.Write(
+                _levelScope.MatchScope,
+                stagedProgress,
+                _simulation.ExportSuccessHandoff());
+            if (!write.Accepted)
+                return RollbackTransition(sourceCheckpoint, sourceClosing, sourceCompleted,
+                    CookingLevelTransitionReason.CheckpointWriteFailed);
+
+            if (_frontOfHouse is not null && _activeOrderTemplate is not null)
+                _frontOfHouse.ResetForNextLevel(_simulation, _activeOrderTemplate.Value);
+
+            _levelScope = request.TargetLevel;
+            _majorProgress = stagedProgress;
+            _generation++;
+            _snapshotSequence = 0;
+            _hostFrameSequence = 0;
+            _commandSequence = 0;
+            foreach (var session in _sessions.Values)
+                session.ExecutedCommands.Clear();
+            _completedTransitionRequests.Add(request.RequestId);
+            LatestSnapshot = _simulation.Snapshot();
         }
 
-        var seq = Interlocked.Increment(ref _snapshotSequence);
-        var packet = new CookingLanSnapshotPacket(seq, snapshot);
-        var bytes = CookingLanCodec.Encode(CookingLanMessageKind.RecipeSnapshot, $"snap-{seq}", packet);
+        BroadcastSnapshot();
+        return new CookingLevelTransitionResult(
+            true,
+            CookingLevelTransitionReason.None,
+            LatestSessionSnapshot);
+    }
+
+    private CookingLevelTransitionResult RollbackTransition(
+        CookingRecipeCheckpoint sourceCheckpoint,
+        bool sourceClosing,
+        bool sourceCompleted,
+        CookingLevelTransitionReason reason)
+    {
+        var restored = _simulation.RestoreExportedCheckpoint(sourceCheckpoint);
+        _simulation.RestoreFrontOfHouseState(sourceClosing, sourceCompleted, sourceCheckpoint.StateVersion);
+        _simulation.UseMajorProgress(_majorProgress);
+        LatestSnapshot = _simulation.Snapshot();
+        if (restored != CookingCheckpointRestoreReason.None)
+            return RejectTransition(CookingLevelTransitionReason.RollbackFailed);
+        return RejectTransition(reason);
+    }
+
+    private CookingLevelTransitionResult RejectTransition(CookingLevelTransitionReason reason) =>
+        new(false, reason, LatestSessionSnapshot);
+
+    private static CookingMajorProgress CopyProgress(CookingMajorProgress source)
+    {
+        var copy = new CookingMajorProgress();
+        if (source.Decoration.Count > 0)
+            copy.ChooseDecoration(source.Decoration);
+        foreach (var unlock in source.Unlocks)
+            copy.Unlock(unlock);
+        if (source.CookFaster)
+            copy.EnableCookFaster();
+        return copy;
+    }
+
+    private void SendSnapshotToPeer(NetPeer peer)
+    {
+        CookingSessionSnapshot snapshot;
+        lock (_simulationGate)
+        {
+            var seq = Interlocked.Increment(ref _snapshotSequence);
+            snapshot = BuildSessionSnapshot(seq);
+            LatestSessionSnapshot = snapshot;
+        }
+
+        var packet = new CookingLanSessionSnapshotPacket(snapshot, snapshot.Sha256());
+        var bytes = CookingLanCodec.Encode(
+            CookingLanMessageKind.SessionSnapshot,
+            $"session-snap-{snapshot.Generation}-{snapshot.Sequence}",
+            packet);
 
         try
         {
@@ -376,15 +545,19 @@ public sealed class CookingSessionHost : IAsyncDisposable
 
     public void BroadcastSnapshot()
     {
-        CookingRecipeSnapshot snapshot;
+        CookingSessionSnapshot snapshot;
         lock (_simulationGate)
         {
-            snapshot = LatestSnapshot;
+            var seq = Interlocked.Increment(ref _snapshotSequence);
+            snapshot = BuildSessionSnapshot(seq);
+            LatestSessionSnapshot = snapshot;
         }
 
-        var seq = Interlocked.Increment(ref _snapshotSequence);
-        var packet = new CookingLanSnapshotPacket(seq, snapshot);
-        var bytes = CookingLanCodec.Encode(CookingLanMessageKind.RecipeSnapshot, $"snap-{seq}", packet);
+        var packet = new CookingLanSessionSnapshotPacket(snapshot, snapshot.Sha256());
+        var bytes = CookingLanCodec.Encode(
+            CookingLanMessageKind.SessionSnapshot,
+            $"session-snap-{snapshot.Generation}-{snapshot.Sequence}",
+            packet);
 
         foreach (var peer in _peerToPlayer.Keys)
         {
@@ -397,6 +570,13 @@ public sealed class CookingSessionHost : IAsyncDisposable
             }
         }
     }
+
+    private CookingSessionSnapshot BuildSessionSnapshot(long sequence) => new(
+        _levelScope,
+        _generation,
+        sequence,
+        CookingMajorProgressSnapshot.From(_majorProgress),
+        LatestSnapshot);
 
     public ValueTask DisposeAsync()
     {

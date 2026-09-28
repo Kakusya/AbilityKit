@@ -1,0 +1,10 @@
+{"file":".trellis/spec/cooking/index.md","reason":"检查实现是否保持 successor scope、planning-only 规划源和非 Unity 边界。"}
+{"file":".trellis/spec/cooking/cooking-lan-session.md","reason":"检查协议、Host 权威、断线重连和快照共识。"}
+{"file":".trellis/spec/cooking/cooking-match-lifecycle.md","reason":"检查 Level generation、生命周期迁移和旧水位失效。"}
+{"file":"Docs/design/CookingGame/reference/product-lifetimes.md","reason":"检查成功交接、检查点写入与 Level/Match 生命周期一致性。"}
+{"file":"Docs/AbilityKit测试门禁与批量回归规范.md","reason":"检查定向测试、门禁和证据记录格式。"}
+{"time":"2026-09-28T17:49:00+08:00","command":"dotnet test src/AbilityKit.Game.Cooking.Tests/AbilityKit.Game.Cooking.Tests.csproj --no-restore --filter FullyQualifiedName~CookingSessionLevelTransitionTests","passed":true,"summary":"4/4 cross-Level session transition tests passed"}
+{"time":"2026-09-28T17:49:30+08:00","command":"dotnet test src/AbilityKit.Game.Cooking.Tests/AbilityKit.Game.Cooking.Tests.csproj --no-restore","passed":true,"summary":"213/213 Cooking tests passed"}
+{"time":"2026-09-28T17:50:10+08:00","command":"powershell -ExecutionPolicy Bypass -File tools/run_test_gate.ps1 -Gate cooking-kitchen-loop","passed":true,"summary":"focused 92/92; Cooking 213/213; ET Runtime 61/61; gate exit 0"}
+{"time":"2026-09-28T17:50:45+08:00","command":"powershell -ExecutionPolicy Bypass -File tools/run_test_gate.ps1 -Gate cooking-et-level-runtime","passed":true,"summary":"Cooking 213/213; ET Runtime 61/61; gate exit 0"}
+{"time":"2026-09-28T17:52:11+08:00","command":"trellis channel check-cooking-level-transition","passed":false,"status":"blocked","summary":"check sub-agent sandbox rejected repository reads; main session completed manual diff/spec review and authoritative gates"}
