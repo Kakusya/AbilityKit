@@ -1,4 +1,22 @@
 # P2 一条完整配方：cooking-recipe-loop
+## 2026-09-28 可见顾客与固定伙伴运行态修约（任务 09-28-cooking-customer-companion-runtime-slice）
+
+来源：owner 已确认“可见顾客 + 自动服务 + 餐桌控制客流”和少量固定伙伴方向。本次只把既有前厅节奏升级为稳定、可观察、可恢复的单机纯 C# 权威运行态，不加入表现坐标、寻路、成长、收益或网络协议。
+
+| 位置 | 旧条款 | 新条款 | 来源 |
+|---|---|---|---|
+| 顾客与订单身份 | 桌位是唯一可观察锚点，订单使用 `table-N-order` | 每次入座分配 Level-local `customer-N`；订单使用 `customer-N-order`，同一桌连续接待不会复用顾客或订单身份 | task PRD R1 / design §2.1 |
+| 当前状态投影 | 只暴露座位数、营业/成功与未满足计数 | 不可变前厅 snapshot 暴露顾客阶段/计时/订单、伙伴身份/工作目标/进度、洗碗队列与未满足记录；canonical 字段顺序稳定并提供 SHA-256 | task PRD R2/R3/R5 |
+| 权威来源 | 匿名桌位和伙伴工作只存在于内部可变对象 | `CookingFrontOfHouse` 仍是唯一 owner；snapshot 与 checkpoint 都从同一内部状态导出，不复制第二套订单、计时或成功状态机 | task design §1/§3 |
+| 同 Level 恢复 | `CookingLevelCheckpoint` 只恢复厨房与宿主水位 | v2 信封可选携带前厅 checkpoint；询问、洗碗、用餐、身份水位、队列和营业时钟完整校验后整册恢复，失败释放新宿主并返回结构化原因 | task PRD R6 / design §4–5 |
+| 生命周期 | 失败重开、成功收口、下一 Level 清理按匿名桌位执行 | 既有语义不变：暂停不推进；成功收完询问/洗碗；失败重开和下一 Level 清空顾客及伙伴工作；下一 Level 身份水位归零 | task PRD R4/R7 |
+
+### 实现状态声明
+
+- 已实现并验证（单机纯 C#）：同桌两批顾客身份/订单不复用，四阶段投影，伙伴询问/洗碗进度，canonical/SHA-256，询问/洗碗/用餐 checkpoint，投毒拒绝零变更，ET host 厨房+前厅共同恢复。
+- checkpoint wire 版本从 v1 升至 v2；v1 明确以 `UnknownFormatVersion` 拒绝，不提供迁移。
+- 仍未实现：顾客/伙伴 Unity 表现、位置/寻路/动画、伙伴成长与关系、收益/小费/评价、LAN wire 投影、两 PC LAN、durable store 与 process-crash 恢复。
+
 ## 2026-09-23 失败重开带走当前进程选择修约（任务 09-23-cooking-retry-keeps-choices）
 
 来源：09-19 已确认失败不写检查点，但当前进程里的道具和 Buff 在重试时仍然有效。失败现场本身不进入新厨房。

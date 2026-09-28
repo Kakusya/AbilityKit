@@ -1,0 +1,5 @@
+{"file":".trellis/spec/cooking/index.md","reason":"Cooking 当前已验证范围、未完成可见顾客边界与后续修约入口"}
+{"file":".trellis/spec/cooking/cooking-recipe-loop.md","reason":"前厅询问、洗碗、用餐、超时和跨关清理的稳定行为契约"}
+{"file":"Docs/design/CookingGame/reference/product-lifetimes.md","reason":"Match/Level 生命周期、Level-local 身份和恢复水位边界"}
+{"file":".trellis/tasks/09-19-cooking-productization-network-slice-planning/research/discussion-notes.md","reason":"Owner 已确认的半抽象顾客与固定伙伴产品决定"}
+{"file":".trellis/spec/guides/cross-layer-thinking-guide.md","reason":"领域状态、ET 宿主、恢复信封和测试跨层一致性检查"}

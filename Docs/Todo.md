@@ -24,7 +24,7 @@
 
 当前存在两条需要重点推进的 P0 主线：
 
-- **Cooking ET 应用运行时主线**：独立 ET runtime、最小权威命令 Tick、checkpoint 和跨小关领域规则已经完成；2026-09-28 又完成生产 Cooking session 的同机 loopback 跨 Level 技术纵切，状态见 [Cooking 当前工程进度](design/CookingGame/progress.md) 第 19 节。该证据不改变产品传输选型：原 ET/UDP ingress 方向已放弃，KCP 仍是未启动后续；两 PC LAN、正式 Match 宿主、ECS 清退与 Unity 仍未完成。单机纯 .NET 厨房闭环、正式内容、ET fixed-tick 验收和运行态恢复分别见同文第 4–7 节。
+- **Cooking ET 应用运行时主线**：独立 ET runtime、最小权威命令 Tick、checkpoint 和跨小关领域规则已经完成；2026-09-28 又完成生产 Cooking session 的同机 loopback 跨 Level 技术纵切，以及可见顾客/固定伙伴的单机运行态投影与同 Level checkpoint 恢复，状态见 [Cooking 当前工程进度](design/CookingGame/progress.md) 第 19–20 节。该证据不改变产品传输选型：原 ET/UDP ingress 方向已放弃，KCP 仍是未启动后续；两 PC LAN、正式 Match 宿主、ECS 清退与 Unity 仍未完成。
 - **Shooter 同步正式化主线**：已有同步主干和 pure-state runtime 起点，但仍缺客户端消费、AOI、delta/keyframe/resync 和远程服务端预算闭环。
 
 MOBA、Client Flow、Presentation 与通用工程治理属于后续正式化主线，其中完整 build 阻塞和主流程失败语义仍应优先处理。
@@ -52,6 +52,7 @@ MOBA、Client Flow、Presentation 与通用工程治理属于后续正式化主�
 - [x] 落实下一小关清空前厅：已于 2026-09-22 由 task `09-22-cooking-front-house-reset` 交付——成功交接后座位、未满足和营业时钟清空；正在洗的碗先洗完，其余脏碗留在厨房。收益和可见顾客仍未开始。
 - [x] 落实用餐占桌：已于 2026-09-22 由 task `09-22-cooking-dining-seat` 交付——订单完成后按配置占桌，到点才离席；挂了前厅时座位未空不能结束服务。收益和可见顾客仍未开始。
 - [x] 落实前厅询问、洗碗和小关时间结构：已于 2026-09-22 由 task `09-22-cooking-front-of-house` 交付——一位伙伴问完才开单，空闲才洗碗；营业结束且座位空了才允许成功；超时离席记未满足，不写结算。可见顾客、收益、伙伴成长和失败条件仍未开始。
+- [x] 落实可见顾客与固定伙伴运行态：已于 2026-09-28 由 task `09-28-cooking-customer-companion-runtime-slice` 交付——顾客/订单身份不随桌位复用，四阶段顾客与伙伴工作进度可投影并有稳定 SHA-256，前厅 checkpoint 与厨房共同完成同 Level 恢复；Unity 表现、伙伴成长、收益评价、LAN wire 和 durable/process-crash 恢复不在本项。
 - [x] 将跨关状态承接与关间选择接入生产 Cooking session：已于 2026-09-28 由 task `09-28-cooking-level-transition-choices-lan` 交付——完整会话 SHA-256 覆盖 Level scope/generation/进度/厨房，检查点写入失败阻止下一 Level 发布，旧 Level 命令/快照拒绝，重连凭证跨 Level 恢复当前基线。同机 loopback 已验证；两 PC LAN、产品传输选型和 Unity 不在本项。
 - [x] 只在小关成功完成时确认本关结算列表：已于 2026-09-22 由 task `09-22-cooking-level-settlement-confirmation` 交付——身份为 Match、`LevelId`、`LevelEpoch`，载荷为交接前的结算条；重复确认无效，失败与准备态不确认。评分、收益和长期进度入账仍未开始。
 - [x] 把已确认的结算列表按代际落到调用方给的目录：已于 2026-09-22 由 task `09-22-cooking-level-settlement-store` 交付——新读取器读回同一份列表；同一列表再写是重复，换一份列表不覆盖；截断和篡改拒绝。不改货币。Profile、SaveSlot 和真实断电恢复仍未开始。
@@ -66,7 +67,7 @@ MOBA、Client Flow、Presentation 与通用工程治理属于后续正式化主�
 - ET EntityId 不作为网络身份或存档稳定身份。
 - Cooking 规则、房间流程和网络权威策略不进入通用 `AbilityKit.ET.Runtime` 包。
 - ~~`cooking-udp` 回归通过不等于 ET/UDP 已接合~~：该 gate 已随 UDP 方向放弃而退役；任何将来传输 gate 的通过同样不等于权威入口已接合或两 PC LAN 已通过。
-- Unity、两 PC LAN、durable storage、checkpoint 恢复和 ECS 清退没有真实证据前不得宣称完成。
+- Unity、两 PC LAN、durable/process-crash 恢复和 ECS 清退没有真实证据前不得宣称完成；单机同 Level checkpoint 证据不得替代这些出口。
 
 **权威来源**：
 

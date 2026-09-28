@@ -334,6 +334,107 @@ public sealed class CookingLevelCheckpointTests
         Assert.Equal(checkpoint.Recipe.LogicalTick + 1, frame.Tick!.AfterLogicalTick);
         Assert.Equal(checkpoint.Recipe.StateVersion + 1, frame.Tick!.AfterStateVersion);
     }
+
+    [Fact]
+    public void R05_recovered_host_restores_front_of_house_projection_and_progress()
+    {
+        var content = LoadContent();
+        var schedule = new CookingFrontOfHouseSchedule(1, 10, 10, 3, 3, 3, 9);
+
+        string baselineFrontCanonical;
+        string baselineKitchenCanonical;
+        long baselineFrame;
+        {
+            using var baseline = CreateFixture(content);
+            using var baselineHost = baseline.CreateStartedHost(state =>
+                CookingContentCatalog.ApplyStandardInitialSupply(state, content));
+            baselineHost.UseFrontOfHouse(new CookingFrontOfHouse(schedule), SoupOrderTemplate);
+            AdvanceClock(baseline, 4);
+            baselineFrontCanonical = baselineHost.FrontOfHouseSnapshot!.CanonicalText();
+            baselineKitchenCanonical = baseline.Simulation.Snapshot().CanonicalText();
+            baselineFrame = baselineHost.HostFrameSequence;
+            Assert.Equal(CookingTablePhase.Ordered,
+                Assert.Single(baselineHost.FrontOfHouseSnapshot.Customers).Phase);
+        }
+
+        string recoveredFrontCanonical;
+        string recoveredKitchenCanonical;
+        long recoveredFrame;
+        {
+            using var source = CreateFixture(content);
+            using var sourceHost = source.CreateStartedHost(state =>
+                CookingContentCatalog.ApplyStandardInitialSupply(state, content));
+            sourceHost.UseFrontOfHouse(new CookingFrontOfHouse(schedule), SoupOrderTemplate);
+            AdvanceClock(source, 2);
+            Assert.Equal(CookingCompanionWorkKind.Inquiring, sourceHost.FrontOfHouseSnapshot!.Companion.Work);
+
+            var exported = sourceHost.ExportCheckpoint();
+            Assert.True(exported.Accepted);
+            Assert.NotNull(exported.Checkpoint!.FrontOfHouse);
+            var checkpoint = CookingLevelCheckpointCodec.Deserialize(CookingLevelCheckpointCodec.Serialize(
+                CookingLevelCheckpointCodec.CreateEnvelope(exported.Checkpoint))).Checkpoint!;
+            sourceHost.Dispose();
+
+            using var recovered = CreateFixture(content, checkpoint.LastCommittedSimulationBatch);
+            var restored = CookingLevelEtHost.Restore(checkpoint, content.Snapshot, recovered.Factory);
+            Assert.True(restored.Accepted);
+            using var restoredHost = restored.Host!;
+            recovered.AdoptHost(restoredHost);
+            Assert.Equal(checkpoint.FrontOfHouse!.State.CanonicalText(),
+                restoredHost.FrontOfHouseSnapshot!.CanonicalText());
+
+            AdvanceClock(recovered, 2);
+            recoveredFrontCanonical = restoredHost.FrontOfHouseSnapshot!.CanonicalText();
+            recoveredKitchenCanonical = recovered.Simulation.Snapshot().CanonicalText();
+            recoveredFrame = restoredHost.HostFrameSequence;
+        }
+
+        Assert.Equal(baselineFrontCanonical, recoveredFrontCanonical);
+        Assert.Equal(baselineKitchenCanonical, recoveredKitchenCanonical);
+        Assert.Equal(baselineFrame, recoveredFrame);
+    }
+
+    [Fact]
+    public void R06_restore_rejects_a_corrupt_front_of_house_checkpoint()
+    {
+        var content = LoadContent();
+        var schedule = new CookingFrontOfHouseSchedule(1, 10, 10, 3, 3, 3, 9);
+        CookingLevelCheckpoint checkpoint;
+        {
+            using var source = CreateFixture(content);
+            using var sourceHost = source.CreateStartedHost(state =>
+                CookingContentCatalog.ApplyStandardInitialSupply(state, content));
+            sourceHost.UseFrontOfHouse(new CookingFrontOfHouse(schedule), SoupOrderTemplate);
+            AdvanceClock(source, 2);
+            checkpoint = sourceHost.ExportCheckpoint().Checkpoint!;
+            sourceHost.Dispose();
+        }
+
+        var front = checkpoint.FrontOfHouse!;
+        var corrupt = checkpoint with
+        {
+            FrontOfHouse = front with
+            {
+                State = front.State with
+                {
+                    Companion = front.State.Companion with { RequiredTicks = 99 },
+                },
+            },
+        };
+
+        var rejected = CookingLevelEtHost.Restore(corrupt, content.Snapshot, CreateFactory(content));
+
+        Assert.False(rejected.Accepted);
+        Assert.Equal(CookingLevelCheckpointRestoreReason.FrontOfHouseRestoreRejected, rejected.Reason);
+        Assert.Equal(CookingFrontOfHouseRestoreReason.CompanionInvalid, rejected.FrontOfHouseRestoreReason);
+        Assert.Null(rejected.Host);
+
+        using var recovered = CreateFixture(content, checkpoint.LastCommittedSimulationBatch);
+        var accepted = CookingLevelEtHost.Restore(checkpoint, content.Snapshot, recovered.Factory);
+        Assert.True(accepted.Accepted);
+        using var restoredHost = accepted.Host!;
+    }
+
     private sealed record FinalState(string Canonical, string Hash, long StateVersion, long LogicalTick, ItemId NextProductId);
 
     /// <summary>

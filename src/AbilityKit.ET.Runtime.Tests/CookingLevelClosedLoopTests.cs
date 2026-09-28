@@ -290,7 +290,7 @@ public sealed class CookingLevelClosedLoopTests
         Assert.True(host.Tick().Accepted);
         Assert.Single(fixture.Simulation.Orders);
 
-        fixture.Simulation.MarkOrderCompletedForTest(new OrderId("table-1-order"));
+        fixture.Simulation.MarkOrderCompletedForTest(new OrderId("customer-1-order"));
         Assert.True(host.Tick().Accepted);
         Assert.False(host.TryFinishService().Accepted);
         Assert.True(host.Tick().Accepted);

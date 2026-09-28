@@ -1,0 +1,10 @@
+{"file":".trellis/spec/cooking/cooking-recipe-loop.md","reason":"核对既有前厅与跨关行为未被可见化改造破坏"}
+{"file":"Docs/AbilityKit测试门禁与批量回归规范.md","reason":"选择并记录 Cooking 与 ET runtime 权威门禁"}
+{"file":"Docs/design/CookingGame/reference/product-lifetimes.md","reason":"验证 checkpoint、Level-local identity 和 generation 水位语义"}
+{"file":".trellis/spec/guides/code-reuse-thinking-guide.md","reason":"检查 snapshot/checkpoint 是否复用单一领域状态而非复制逻辑"}
+{"file":".trellis/spec/guides/cross-layer-thinking-guide.md","reason":"检查领域、宿主、序列化和验收测试的完整数据流"}
+{"time":"2026-09-28T18:48:00+08:00","command":"dotnet test src/AbilityKit.Game.Cooking.Tests/AbilityKit.Game.Cooking.Tests.csproj --filter FullyQualifiedName~CookingFrontOfHouseTests.V05_invalid_checkpoint_is_rejected_without_mutation -v minimal","passed":true,"summary":"1/1 poisoned front-of-house checkpoint test passed"}
+{"time":"2026-09-28T18:49:32+08:00","command":"powershell -ExecutionPolicy Bypass -File tools/run_test_gate.ps1 -Gate cooking-kitchen-loop","passed":true,"summary":"builds 0 warnings; focused 97/97; Cooking 218/218; ET Runtime 63/63; gate exit 0"}
+{"time":"2026-09-28T18:49:57+08:00","command":"powershell -ExecutionPolicy Bypass -File tools/run_test_gate.ps1 -Gate cooking-et-level-runtime","passed":true,"summary":"builds 0 warnings; Cooking 218/218; ET Runtime 63/63; gate exit 0"}
+{"time":"2026-09-28T18:50:20+08:00","command":"git diff --check","passed":true,"summary":"exit 0; only LF-to-CRLF working-copy warnings"}
+{"time":"2026-09-28T18:47:46+08:00","command":"trellis channel check workers for impl-cooking-customer-companion","passed":false,"status":"blocked","summary":"Claude executable unavailable; Codex worker sandbox rejected repository reads; main session completed manual diff/spec review and authoritative gates"}

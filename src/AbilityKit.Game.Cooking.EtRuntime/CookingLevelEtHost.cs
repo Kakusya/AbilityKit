@@ -207,6 +207,7 @@ public enum CookingLevelCheckpointRestoreReason
     LifecycleStartRejected,
     GameplayUnavailable,
     GameplayRestoreRejected,
+    FrontOfHouseRestoreRejected,
     HostCreationFailed,
     TickHistoryScopeMismatch,
 }
@@ -216,7 +217,8 @@ public sealed record CookingLevelCheckpointRestoreResult(
     CookingLevelCheckpointRestoreReason Reason,
     CookingLevelEtHost? Host = null,
     CookingCheckpointRestoreReason RecipeRestoreReason = CookingCheckpointRestoreReason.None,
-    string? Detail = null);
+    string? Detail = null,
+    CookingFrontOfHouseRestoreReason FrontOfHouseRestoreReason = CookingFrontOfHouseRestoreReason.None);
 
 public enum CookingLevelEtHostFailurePoint
 {
@@ -368,6 +370,7 @@ public sealed class CookingLevelEtHost : IDisposable
     public CookingLevelDriverComponent Driver { get; private set; } = null!;
     public CookingLevelSimulationBinding Binding { get; private set; }
     public CookingLevelLifecycle Lifecycle => _lifecycle;
+    public CookingFrontOfHouseSnapshot? FrontOfHouseSnapshot => _frontOfHouse?.Snapshot();
 
     /// <summary>
     /// 准备态只读观察。成功交接和失败重开在 <c>Created</c> 就已经挂上厨房，
@@ -790,7 +793,8 @@ public sealed class CookingLevelEtHost : IDisposable
                 _lifecycle.Version,
                 HostFrameSequence,
                 LastCommittedSimulationBatch,
-                _ownedSimulation.ExportCheckpoint()));
+                _ownedSimulation.ExportCheckpoint(),
+                _frontOfHouse?.ExportCheckpoint(_frontOfHouseTemplate)));
     }
 
     /// <summary>
@@ -867,6 +871,21 @@ public sealed class CookingLevelEtHost : IDisposable
                 host.Dispose();
                 return new CookingLevelCheckpointRestoreResult(false,
                     CookingLevelCheckpointRestoreReason.GameplayRestoreRejected, null, restored.Reason);
+            }
+
+            if (checkpoint.FrontOfHouse is { } frontOfHouseCheckpoint)
+            {
+                var frontOfHouse = CookingFrontOfHouse.Restore(frontOfHouseCheckpoint, simulation);
+                if (!frontOfHouse.Accepted || frontOfHouse.FrontOfHouse is null ||
+                    frontOfHouse.ActiveOrderTemplate is null)
+                {
+                    host.Dispose();
+                    return new CookingLevelCheckpointRestoreResult(false,
+                        CookingLevelCheckpointRestoreReason.FrontOfHouseRestoreRejected,
+                        FrontOfHouseRestoreReason: frontOfHouse.Reason);
+                }
+
+                host.UseFrontOfHouse(frontOfHouse.FrontOfHouse, frontOfHouse.ActiveOrderTemplate.Value);
             }
 
             host.AdoptRecoveredCheckpoint(checkpoint);
