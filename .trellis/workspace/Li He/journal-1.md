@@ -265,3 +265,25 @@ Implemented stable customer and companion runtime projections, deterministic fro
 ### Status
 
 [OK] **Completed**
+
+
+## Session 11: Cooking companion level-local growth
+<!-- trellis-session: v=2 fp=6c10bbb61d9ab6d2 -->
+
+**Date**: 2026-09-29
+**Task**: Cooking companion level-local growth
+**Branch**: `feature/cooking-companion-level-growth`
+
+### Summary
+
+Implemented fixed companion Level-local growth: count successful inquiry/wash tasks, unlock rounded-half wash duration after three completions, freeze active work duration, include growth in snapshot/canonical/checkpoint, reset on retry and next Level, and verify Cooking and ET runtime gates. Archived task 09-28-cooking-companion-level-growth.
+
+### Git Commits
+
+| Hash | Message |
+|------|---------|
+| `eaa272932` | feat(cooking): add companion level-local growth |
+
+### Status
+
+[OK] **Completed**
