@@ -287,3 +287,25 @@ Implemented fixed companion Level-local growth: count successful inquiry/wash ta
 ### Status
 
 [OK] **Completed**
+
+
+## Session 12: Cooking 单机多订单菜单纵切
+<!-- trellis-session: v=2 fp=f23bccc2c037423b -->
+
+**Date**: 2026-09-29
+**Task**: Cooking 单机多订单菜单纵切
+**Branch**: `feature/cooking-singleplayer-multi-order-menu`
+
+### Summary
+
+完成纯 C#/ET 单机多订单菜单纵切：新增 plate 与 toasted-bread-order，前厅按临时汤/面包轮换，支持同 Level 汤+烤面包双结算 150 分，菜单/顾客模板进入 snapshot、canonical 和 checkpoint v3；补齐双订单与多菜单恢复验收，Cooking/ET 两组权威门禁通过并归档任务。所有数值与固定轮换明确标记为临时方案；未修改 LAN/session、UDP/KCP、Unity 或 durable persistence。
+
+### Git Commits
+
+| Hash | Message |
+|------|---------|
+| `f4f6b117e` | feat(cooking): add temporary multi-order menu slice |
+
+### Status
+
+[OK] **Completed**

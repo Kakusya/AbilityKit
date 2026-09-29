@@ -8,7 +8,7 @@
 
 <!-- @@@auto:current-status -->
 - **Active File**: `journal-1.md`
-- **Total Sessions**: 11
+- **Total Sessions**: 12
 - **Last Active**: 2026-09-29
 <!-- @@@/auto:current-status -->
 
@@ -19,7 +19,7 @@
 <!-- @@@auto:active-documents -->
 | File | Lines | Status |
 |------|-------|--------|
-| `journal-1.md` | ~289 | Active |
+| `journal-1.md` | ~311 | Active |
 <!-- @@@/auto:active-documents -->
 
 ---
@@ -29,6 +29,7 @@
 <!-- @@@auto:session-history -->
 | # | Date | Title | Commits | Branch |
 |---|------|-------|---------|--------|
+| 12 | 2026-09-29 | Cooking 单机多订单菜单纵切 | `f4f6b117e` | `feature/cooking-singleplayer-multi-order-menu` |
 | 11 | 2026-09-29 | Cooking companion level-local growth | `eaa272932` | `feature/cooking-companion-level-growth` |
 | 10 | 2026-09-28 | Cooking customer and companion runtime slice | `f66cb5a5a` | `feat/cooking-customer-companion-runtime-slice` |
 | 9 | 2026-09-22 | 前厅询问、洗碗与小关时间 | `460f2233a`, `c368dfc39`, `f96986f6a` | `master` |
