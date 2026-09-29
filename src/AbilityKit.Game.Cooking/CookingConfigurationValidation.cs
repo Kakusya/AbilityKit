@@ -129,7 +129,7 @@ public sealed class CookingConfigurationSnapshot
                 recipe.Completion.ToString(), recipe.RequiredTicks, recipe.RequiresStation)).ToArray(),
         OrderTemplates.Values.OrderBy(template => template.Id.Value, StringComparer.Ordinal)
             .Select(template => new CanonicalOrderTemplate(template.Id.Value, template.RequiredRecipe.Value,
-                template.RequiredContainerDefinition.Value)).ToArray(),
+                template.RequiredContainerDefinition.Value, template.BaseScore)).ToArray(),
         StandardInitialSupply.OrderBy(entry => entry.Definition.Value, StringComparer.Ordinal)
             .ThenBy(entry => entry.Location, StringComparer.Ordinal)
             .Select(entry => new CanonicalSupplyEntry(entry.Definition.Value, entry.Count, entry.Location)).ToArray()),
@@ -158,7 +158,8 @@ public sealed class CookingConfigurationSnapshot
     private sealed record CanonicalRecipe(string Id, IReadOnlyList<string> Inputs, IReadOnlyList<string> DefaultInputs,
         string ProductDefinition, string Process, string RequiredApplianceCapability, string Completion, int RequiredTicks,
         bool RequiresStation);
-    private sealed record CanonicalOrderTemplate(string Id, string RequiredRecipe, string RequiredContainerDefinition);
+    private sealed record CanonicalOrderTemplate(string Id, string RequiredRecipe, string RequiredContainerDefinition,
+        int BaseScore);
     private sealed record CanonicalSupplyEntry(string Definition, int Count, string Location);
 }
 

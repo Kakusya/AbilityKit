@@ -338,6 +338,12 @@ public sealed class CookingFrontOfHouseTests
         {
             State = checkpoint.State with { UnsatisfiedOrders = new[] { new OrderId("poison-order") } },
         }, CookingFrontOfHouseRestoreReason.UnsatisfiedInvalid);
+        var missingTemplate = new OrderTemplateId("missing-order-template");
+        AssertRejected(checkpoint with
+        {
+            ActiveOrderTemplate = missingTemplate,
+            State = checkpoint.State with { OrderMenu = new[] { missingTemplate } },
+        }, CookingFrontOfHouseRestoreReason.IdentityInvalid);
 
         void AssertRejected(CookingFrontOfHouseCheckpoint poisoned, CookingFrontOfHouseRestoreReason reason)
         {
@@ -522,6 +528,40 @@ public sealed class CookingFrontOfHouseTests
         next.ResetForNextLevel(nextKitchen, Template);
         Assert.Equal(0, next.Snapshot().Companion.CompletedTaskCount);
         Assert.False(next.Snapshot().Companion.WashSpeedUnlocked);
+    }
+
+    [Fact]
+    public void M01_temporary_menu_alternates_soup_and_toast_by_customer_sequence()
+    {
+        var house = new CookingFrontOfHouse(Schedule(tableCount: 4, serviceTicks: 10,
+            arrivalIntervalTicks: 1, inquiryTicks: 1, waitLimitTicks: 20));
+        var kitchen = Kitchen();
+        var menu = new CookingFrontOfHouseMenu(new[]
+        {
+            new OrderTemplateId("tomato-egg-soup-order"),
+            new OrderTemplateId("toasted-bread-order"),
+        });
+
+        house.Step(kitchen, menu);
+        house.Step(kitchen, menu);
+        house.Step(kitchen, menu);
+        house.Step(kitchen, menu);
+        house.Step(kitchen, menu);
+
+        Assert.Equal(new[]
+        {
+            "tomato-egg-soup-order", "toasted-bread-order",
+            "tomato-egg-soup-order", "toasted-bread-order",
+        },
+            kitchen.Orders.OrderBy(order => order.Id.Value).Select(order => order.Template.Value));
+        Assert.Equal(new[]
+        {
+            "tomato-egg-soup-order", "toasted-bread-order",
+            "tomato-egg-soup-order", "toasted-bread-order",
+        },
+            house.Snapshot().Customers.OrderBy(customer => customer.ArrivalOrder)
+                .Select(customer => customer.OrderTemplate!.Value.Value));
+        Assert.Equal(menu.Templates, house.Snapshot().OrderMenu);
     }
 
     private static void AssertInquiryRoundTrip()

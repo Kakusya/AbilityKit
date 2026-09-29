@@ -38,6 +38,7 @@ public sealed class CookingKitchenLoopFixtureTests
     private static readonly OrderTemplateId SoupOrderTemplate = new("tomato-egg-soup-order");
     private static readonly ItemId Pot = new("pot-1");
     private static readonly ItemId Bowl = new("pool-bowl-1");
+    private static readonly ItemId Plate = new("pool-plate-1");
 
     [Fact]
     public void L01_full_tomato_egg_soup_loop_from_the_standard_initial_supply()
@@ -150,7 +151,7 @@ public sealed class CookingKitchenLoopFixtureTests
         using var evidence = CreateEvidence("L03");
         var fixture = CreateFixture();
         var simulation = fixture.Simulation;
-        StageBowlOnCounter(simulation);
+        StagePlateOnCounter(simulation);
 
         // 正式内容的烤面包配方：面包片（标准初始供应）放入烤箱，消耗输入并在烤箱生成烤面包。
         var slice = simulation.Snapshot().Items.Single(item => item.Id == new ItemId("bread-slice-1"));
@@ -172,8 +173,8 @@ public sealed class CookingKitchenLoopFixtureTests
         AssertAccepted(Submit(simulation, evidence, "L03", Command(CookingRecipeOperation.Pickup, "pickup-bread",
             item: bread.Id, expectedVersion: heldBread.Version), "pick up the toasted bread"));
         var inHand = simulation.Snapshot().Items.Single(item => item.Id == bread.Id);
-        AssertAccepted(Submit(simulation, evidence, "L03", Command(CookingRecipeOperation.PutIn, "bread-into-bowl",
-            item: bread.Id, container: Bowl, expectedVersion: inHand.Version), "put the toasted bread into the bowl"));
+        AssertAccepted(Submit(simulation, evidence, "L03", Command(CookingRecipeOperation.PutIn, "bread-onto-plate",
+            item: bread.Id, container: Plate, expectedVersion: inHand.Version), "put the toasted bread onto the plate"));
         var plated = simulation.Snapshot().Items.Single(item => item.Id == bread.Id);
 
         // 订单簿要求番茄蛋花汤：开单后提交烤面包被领域拒绝，已装盘菜品不回滚。
@@ -186,7 +187,7 @@ public sealed class CookingKitchenLoopFixtureTests
         AssertRejected(rejected, CookingRecipeRejectionReason.OrderRequirementMismatch);
         Assert.Equal(before, simulation.Snapshot().CanonicalText());
         Assert.Empty(simulation.SettlementHistory);
-        Assert.Equal(new[] { bread.Id }, simulation.ItemsInContainer(Bowl));
+        Assert.Equal(new[] { bread.Id }, simulation.ItemsInContainer(Plate));
         AssertEvidence(evidence.Path, "L03", 7);
     }
 
@@ -291,6 +292,17 @@ public sealed class CookingKitchenLoopFixtureTests
         var held = simulation.Snapshot().Items.Single(item => item.Id == Bowl);
         AssertAccepted(simulation.Submit(Command(CookingRecipeOperation.Drop, "drop-bowl",
             item: Bowl, station: Counter, expectedVersion: held.Version)));
+    }
+
+    private static void StagePlateOnCounter(CookingRecipeSimulation simulation)
+    {
+        var pooled = simulation.Snapshot().Items.Single(item => item.Id == Plate);
+        Assert.Equal(ItemLocation.World("clean-pool"), pooled.Location);
+        AssertAccepted(simulation.Submit(Command(CookingRecipeOperation.Pickup, "pickup-pool-plate",
+            item: Plate, expectedVersion: pooled.Version)));
+        var held = simulation.Snapshot().Items.Single(item => item.Id == Plate);
+        AssertAccepted(simulation.Submit(Command(CookingRecipeOperation.Drop, "drop-plate",
+            item: Plate, station: Counter, expectedVersion: held.Version)));
     }
 
     private static void PickupAndDrop(CookingRecipeSimulation simulation, EvidenceScope evidence, string testId,

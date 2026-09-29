@@ -1,5 +1,25 @@
 # P2 一条完整配方：cooking-recipe-loop
 
+## 2026-09-29 单机多订单菜单修约（任务 09-29-cooking-singleplayer-multi-order-menu）
+
+来源：owner 批准把既有 `bake-bread` / `toasted-bread` 提升为第二种可直接点单菜品，并明确固定轮换和全部数值都只是临时验收方案。本次只扩展纯 C# Cooking 与 ET 同 Level checkpoint，不修改 LAN/session、Unity 或 durable persistence。
+
+| 位置 | 旧条款 | 新条款 | 来源 |
+|---|---|---|---|
+| 正式订单内容 | 只有番茄蛋花汤订单；烤面包只作为配方产物 | 正式内容增加 `toasted-bread-order` 与 `plate`。盘子容量 1，只接受烤面包；碗不再接受烤面包 | task PRD / design §2 |
+| 前厅订单生成 | 每个 Level 只绑定一个订单模板 | `CookingFrontOfHouse` 绑定有序菜单，并按顾客 `ArrivalOrder` 派生模板；临时序列固定为汤、面包、汤、面包，不维护第二个菜单游标 | task PRD / design §3–4 |
+| 投影与恢复 | 顾客只保存订单 ID；checkpoint v2 不保存菜单 | snapshot/canonical/SHA-256 保存有序菜单和顾客实际模板；checkpoint v3 校验菜单、轮换结果及厨房订单模板，同 Level 恢复继续相同后续序列 | task PRD / design §5/§8–9 |
+| 提交与清洗 | 正式闭环只验收汤碗提交 | 汤与烤面包分别按 recipe、容器和模板结算；盘子提交后进入既有可洗队列，清洗只恢复盘子自己的 clean-pool | task PRD / design §6–7 |
+| 临时数值 | 汤 100 分、星级阈值 100/200/300 | 面包临时 50 分、干净盘临时 2 个；同 Level 完成汤和面包累计 150 分。所有分值、阈值、供应和固定轮换均未定稿 | owner 2026-09-29 决定 |
+
+### 实现状态声明
+
+- 已实现并验证（单机纯 C# + ET）：正式内容包含两种订单和独立上菜容器；前厅严格轮换汤/面包/汤/面包；同一 Level 可完成两笔 settlement 并累计 150 分；菜单和顾客模板进入 canonical/checkpoint；恢复后下一顾客模板与不中断基线一致。
+- 既有单模板 API 继续兼容；ET host 只持有同一个菜单并复用领域前厅状态，不复制模板游标。
+- `CookingLevelCheckpointCodec` 当前格式升至 v3；v1/v2 明确拒绝，不提供迁移。
+- 门禁 `cooking-kitchen-loop`：focused 105/105、Cooking 226/226、ET Runtime 67/67；门禁 `cooking-et-level-runtime`：Cooking 226/226、ET Runtime 67/67；全部构建 0 警告、0 错误并 exit 0。
+- 仍未实现：正式菜单权重、随机种子、顾客偏好、第三种菜品、正式平衡、收益/经济、LAN 投影、Unity 表现、durable/process-crash 恢复。
+
 ## 2026-09-29 固定伙伴小关内成长修约（任务 09-28-cooking-companion-level-growth）
 
 来源：owner 已确认固定伙伴第一项成长能力为当前 Level 内完成任务后提升洗碗速度。本次只实现纯 C# 前厅领域状态与 ET 同 Level checkpoint，不扩展 LAN、Unity、长期成长或经济系统。

@@ -466,6 +466,8 @@ public sealed partial class CookingRecipeSimulation
     public int CleanContainerCount(DefinitionId definition) =>
         _cleanContainerCount.TryGetValue(definition, out var count) ? count : 0;
 
+    internal bool HasOrderTemplate(OrderTemplateId template) => _fixture.OrderTemplates.ContainsKey(template);
+
     /// <summary>
     /// 前厅注入开单（与 <see cref="CompleteWash"/> 同一模式）：模板必须存在于 fixture，
     /// 订单身份未被使用过；开单不是玩家命令，不进命令路径、不产生命令事件。

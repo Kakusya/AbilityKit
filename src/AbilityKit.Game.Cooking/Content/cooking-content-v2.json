@@ -15,7 +15,15 @@
       "allowedPlayerCapabilities": ["cook"],
       "container": {
         "capacity": 1,
-        "acceptedDefinitions": ["tomato-egg-soup", "beaten-egg", "egg", "toasted-bread"]
+        "acceptedDefinitions": ["tomato-egg-soup", "beaten-egg", "egg"]
+      }
+    },
+    {
+      "id": "plate",
+      "allowedPlayerCapabilities": ["cook"],
+      "container": {
+        "capacity": 1,
+        "acceptedDefinitions": ["toasted-bread"]
       }
     },
     {
@@ -80,7 +88,14 @@
     {
       "id": "tomato-egg-soup-order",
       "requiredRecipe": "tomato-egg-soup",
-      "requiredContainerDefinition": "bowl"
+      "requiredContainerDefinition": "bowl",
+      "baseScore": 100
+    },
+    {
+      "id": "toasted-bread-order",
+      "requiredRecipe": "bake-bread",
+      "requiredContainerDefinition": "plate",
+      "baseScore": 50
     }
   ],
   "standardInitialSupply": [
@@ -88,6 +103,7 @@
     { "definition": "tomato", "count": 2, "location": "world:pantry" },
     { "definition": "egg", "count": 2, "location": "world:pantry" },
     { "definition": "bread-slice", "count": 2, "location": "world:pantry" },
-    { "definition": "bowl", "count": 2, "location": "cleanPool" }
+    { "definition": "bowl", "count": 2, "location": "cleanPool" },
+    { "definition": "plate", "count": 2, "location": "cleanPool" }
   ]
 }

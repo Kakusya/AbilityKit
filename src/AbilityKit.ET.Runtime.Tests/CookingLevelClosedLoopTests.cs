@@ -34,9 +34,12 @@ public sealed class CookingLevelClosedLoopTests
     private static readonly RecipeId SoupRecipe = new("tomato-egg-soup");
     private static readonly RecipeId BakeRecipe = new("bake-bread");
     private static readonly OrderTemplateId SoupOrderTemplate = new("tomato-egg-soup-order");
+    private static readonly OrderTemplateId ToastOrderTemplate = new("toasted-bread-order");
     private static readonly OrderId SoupOrder = new("order-soup-1");
+    private static readonly OrderId ToastOrder = new("order-toast-1");
     private static readonly ItemId Pot = new("pot-1");
     private static readonly ItemId Bowl = new("pool-bowl-1");
+    private static readonly ItemId Plate = new("pool-plate-1");
     private const string CleanPoolLocation = "clean-pool";
     private const int ChopTicks = 2;
     private const int BeatTicks = 2;
@@ -80,6 +83,29 @@ public sealed class CookingLevelClosedLoopTests
         // （每帧固有的时钟推进在两臂相同，已由对照臂抵消）。
         Assert.Equal(control, rejected);
         AssertEvidence(evidence.Path, "E02", 8);
+    }
+
+    [Fact]
+    public void E04_toasted_bread_order_completes_on_a_plate_and_scores_fifty()
+    {
+        RunBreadArm(submit: true, null, null, toastOrder: true);
+    }
+
+    [Fact]
+    public void E05_same_level_soup_and_toast_orders_settle_independently_and_score_one_hundred_fifty()
+    {
+        using var fixture = RunLoop(null, null);
+
+        CompleteToastOrder(fixture);
+
+        var settlements = fixture.Simulation.SettlementHistory;
+        Assert.Equal(2, settlements.Count);
+        Assert.Equal(new[] { SoupOrderTemplate, ToastOrderTemplate },
+            settlements.Select(settlement => settlement.Template));
+        Assert.Equal(new[] { SoupRecipe, BakeRecipe },
+            settlements.Select(settlement => settlement.Recipe));
+        Assert.Equal(150, fixture.Simulation.Snapshot().TotalScore);
+        Assert.Equal(1, fixture.Simulation.Snapshot().Stars);
     }
 
     [Fact]
@@ -485,7 +511,7 @@ public sealed class CookingLevelClosedLoopTests
     /// <paramref name="submit"/> 为 true 时提交烤面包（被蛋花汤订单要求拒绝），否则只推进一个时钟帧。
     /// 返回该臂结束时的 canonical 文本；宿主随 using 在方法内释放。
     /// </summary>
-    private static string RunBreadArm(bool submit, EvidenceScope? evidence, string? testId)
+    private static string RunBreadArm(bool submit, EvidenceScope? evidence, string? testId, bool toastOrder = false)
     {
         var content = LoadContent();
         var fixture = CreateFixture(content);
@@ -494,12 +520,12 @@ public sealed class CookingLevelClosedLoopTests
         var simulation = fixture.Simulation;
 
         // 同一开场：干净池的碗上台面。
-        Execute(fixture, evidence, testId, "pickup-pool-bowl", CookingRecipeOperation.Pickup,
-            item: Bowl, expectedVersion: ItemState(simulation, Bowl).Version,
-            summary: "pick up a clean bowl from the pool");
-        Execute(fixture, evidence, testId, "drop-bowl", CookingRecipeOperation.Drop,
-            item: Bowl, station: Counter, expectedVersion: ItemState(simulation, Bowl).Version,
-            summary: "put the bowl on the counter");
+        Execute(fixture, evidence, testId, "pickup-pool-plate", CookingRecipeOperation.Pickup,
+            item: Plate, expectedVersion: ItemState(simulation, Plate).Version,
+            summary: "pick up a clean plate from the pool");
+        Execute(fixture, evidence, testId, "drop-plate", CookingRecipeOperation.Drop,
+            item: Plate, station: Counter, expectedVersion: ItemState(simulation, Plate).Version,
+            summary: "put the plate on the counter");
 
         // 正式内容的烤面包配方：面包片（标准初始供应）放入烤箱，消耗输入并在烤箱生成烤面包。
         var slice = ItemState(simulation, new ItemId("bread-slice-1"));
@@ -520,23 +546,37 @@ public sealed class CookingLevelClosedLoopTests
 
         Execute(fixture, evidence, testId, "pickup-bread", CookingRecipeOperation.Pickup,
             item: bread.Id, expectedVersion: bread.Version, summary: "pick up the toasted bread");
-        Execute(fixture, evidence, testId, "bread-into-bowl", CookingRecipeOperation.PutIn,
-            item: bread.Id, container: Bowl, expectedVersion: ItemState(simulation, bread.Id).Version,
-            summary: "put the toasted bread into the bowl");
+        Execute(fixture, evidence, testId, "bread-onto-plate", CookingRecipeOperation.PutIn,
+            item: bread.Id, container: Plate, expectedVersion: ItemState(simulation, bread.Id).Version,
+            summary: "put the toasted bread onto the plate");
 
         // 订单簿要求番茄蛋花汤：开单后提交烤面包被领域拒绝，已装盘菜品不回滚。
-        Assert.True(simulation.OpenOrder(SoupOrder, SoupOrderTemplate).Accepted);
+        var orderTemplate = toastOrder ? ToastOrderTemplate : SoupOrderTemplate;
+        Assert.True(simulation.OpenOrder(SoupOrder, orderTemplate).Accepted);
         if (submit)
         {
             Execute(fixture, evidence, testId, "submit-bread", CookingRecipeOperation.SubmitOrder,
                 item: bread.Id, order: SoupOrder, expectedVersion: ItemState(simulation, bread.Id).Version,
-                summary: "the order requires the soup recipe, so the toasted-bread submission is rejected",
-                expectedRejection: CookingRecipeRejectionReason.OrderRequirementMismatch);
-            Assert.Empty(simulation.SettlementHistory);
-            Assert.Empty(fixture.WashPort.Requests);
-            Assert.Equal(new[] { bread.Id }, simulation.ItemsInContainer(Bowl));
-            Assert.Equal(CookingOrderStatus.Open.ToString(),
-                simulation.Snapshot().Orders.Single(order => order.Id == SoupOrder).Status);
+                summary: toastOrder ? "submit toasted bread on a plate" :
+                    "the order requires the soup recipe, so the toasted-bread submission is rejected",
+                expectedRejection: toastOrder ? CookingRecipeRejectionReason.None :
+                    CookingRecipeRejectionReason.OrderRequirementMismatch);
+            if (toastOrder)
+            {
+                var settlement = Assert.Single(simulation.SettlementHistory);
+                Assert.Equal(ToastOrderTemplate, settlement.Template);
+                Assert.Equal(BakeRecipe, settlement.Recipe);
+                Assert.Equal(50, simulation.Snapshot().TotalScore);
+                Assert.Equal(new[] { Plate }, fixture.WashPort.Requests);
+            }
+            else
+            {
+                Assert.Empty(simulation.SettlementHistory);
+                Assert.Empty(fixture.WashPort.Requests);
+                Assert.Equal(new[] { bread.Id }, simulation.ItemsInContainer(Plate));
+                Assert.Equal(CookingOrderStatus.Open.ToString(),
+                    simulation.Snapshot().Orders.Single(order => order.Id == SoupOrder).Status);
+            }
         }
         else
         {
@@ -546,6 +586,52 @@ public sealed class CookingLevelClosedLoopTests
         }
 
         return simulation.Snapshot().CanonicalText();
+    }
+
+    private static void CompleteToastOrder(Fixture fixture)
+    {
+        var simulation = fixture.Simulation;
+        Execute(fixture, null, null, "multi-toast-drop-pot", CookingRecipeOperation.Drop,
+            item: Pot, station: Stove, expectedVersion: ItemState(simulation, Pot).Version,
+            summary: "put the emptied pot back on the stove");
+
+        var plate = ItemState(simulation, Plate);
+        Execute(fixture, null, null, "multi-toast-pickup-plate", CookingRecipeOperation.Pickup,
+            item: plate.Id, expectedVersion: plate.Version, summary: "pick up a clean plate");
+        Execute(fixture, null, null, "multi-toast-drop-plate", CookingRecipeOperation.Drop,
+            item: plate.Id, station: Counter, expectedVersion: ItemState(simulation, plate.Id).Version,
+            summary: "put the plate on the counter");
+
+        var slice = ItemState(simulation, new ItemId("bread-slice-1"));
+        Execute(fixture, null, null, "multi-toast-pickup-slice", CookingRecipeOperation.Pickup,
+            item: slice.Id, expectedVersion: slice.Version, summary: "pick up a bread slice");
+        Execute(fixture, null, null, "multi-toast-drop-slice", CookingRecipeOperation.Drop,
+            item: slice.Id, station: Oven, expectedVersion: ItemState(simulation, slice.Id).Version,
+            summary: "drop the bread slice onto the oven");
+        Execute(fixture, null, null, "multi-toast-bake", CookingRecipeOperation.StartProcess,
+            recipe: BakeRecipe, item: slice.Id, station: Oven,
+            expectedVersion: ItemState(simulation, slice.Id).Version, summary: "bake the bread slice");
+        AdvanceClock(fixture, BakeTicks);
+
+        var bread = Assert.Single(simulation.Snapshot().Items, item => item.Definition == ToastedBread);
+        Execute(fixture, null, null, "multi-toast-pickup-bread", CookingRecipeOperation.Pickup,
+            item: bread.Id, expectedVersion: bread.Version, summary: "pick up the toasted bread");
+        Execute(fixture, null, null, "multi-toast-bread-onto-plate", CookingRecipeOperation.PutIn,
+            item: bread.Id, container: plate.Id, expectedVersion: ItemState(simulation, bread.Id).Version,
+            summary: "put the toasted bread onto the plate");
+
+        Assert.True(simulation.OpenOrder(ToastOrder, ToastOrderTemplate).Accepted);
+        Execute(fixture, null, null, "multi-toast-submit", CookingRecipeOperation.SubmitOrder,
+            item: bread.Id, order: ToastOrder, expectedVersion: ItemState(simulation, bread.Id).Version,
+            summary: "submit the toasted bread on the plate");
+
+        var settlement = Assert.Single(simulation.SettlementHistory.Skip(1));
+        Assert.Equal(ToastOrder, settlement.Order);
+        Assert.Equal(ToastOrderTemplate, settlement.Template);
+        Assert.Equal(BakeRecipe, settlement.Recipe);
+        Assert.Equal(plate.Id, fixture.WashPort.Requests[^1]);
+        Assert.True(simulation.CompleteWash(plate.Id).Accepted);
+        Assert.Equal(2, simulation.CleanContainerCount(new DefinitionId("plate")));
     }
 
     [Fact]

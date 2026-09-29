@@ -14,6 +14,24 @@ public readonly record struct CookingCompanionId(string Value)
     public override string ToString() => Value;
 }
 
+public sealed record CookingFrontOfHouseMenu
+{
+    public CookingFrontOfHouseMenu(IReadOnlyList<OrderTemplateId> templates)
+    {
+        ArgumentNullException.ThrowIfNull(templates);
+        if (templates.Count == 0 || templates.Any(template => string.IsNullOrWhiteSpace(template.Value)) ||
+            templates.Distinct().Count() != templates.Count)
+        {
+            throw new ArgumentException("A front-of-house menu requires unique, nonblank templates.", nameof(templates));
+        }
+        Templates = templates.ToArray();
+    }
+
+    public IReadOnlyList<OrderTemplateId> Templates { get; }
+
+    public static CookingFrontOfHouseMenu Single(OrderTemplateId template) => new(new[] { template });
+}
+
 /// <summary>
 /// 一位固定伙伴的前厅节奏：问完才开单，没有询问才洗碗。
 /// 伙伴成长只覆盖当前 Level 的任务计数与洗碗加速；收益、评价和失败条件不在这里。
@@ -34,6 +52,7 @@ public sealed class CookingFrontOfHouse
     private bool _closing;
     private int _nextGuest;
     private int _completedCompanionTasks;
+    private OrderTemplateId[] _orderMenu = Array.Empty<OrderTemplateId>();
 
     public CookingFrontOfHouse(CookingFrontOfHouseSchedule schedule)
         : this(schedule, DefaultCompanion)
@@ -77,6 +96,7 @@ public sealed class CookingFrontOfHouse
             _ticksUntilNextGuest,
             _closing,
             _nextGuest,
+            _orderMenu.ToArray(),
             customers,
             new CookingCompanionSnapshot(_companion, _work.Kind, _work.TargetCustomer, _work.TargetTable,
                 _work.Bowl, _work.Elapsed, _work.RequiredTicks, _completedCompanionTasks, WashSpeedUnlocked),
@@ -85,10 +105,12 @@ public sealed class CookingFrontOfHouse
     }
 
     public CookingFrontOfHouseCheckpoint ExportCheckpoint(OrderTemplateId activeOrderTemplate)
+        => ExportCheckpoint(CookingFrontOfHouseMenu.Single(activeOrderTemplate));
+
+    public CookingFrontOfHouseCheckpoint ExportCheckpoint(CookingFrontOfHouseMenu menu)
     {
-        if (string.IsNullOrWhiteSpace(activeOrderTemplate.Value))
-            throw new ArgumentException("An active order template is required.", nameof(activeOrderTemplate));
-        return new CookingFrontOfHouseCheckpoint(activeOrderTemplate, Snapshot());
+        BindMenu(menu);
+        return new CookingFrontOfHouseCheckpoint(_orderMenu[0], Snapshot());
     }
 
     public CookingFrontOfHouseRestoreResult RestoreCheckpoint(
@@ -130,14 +152,18 @@ public sealed class CookingFrontOfHouse
 
     /// <summary>运行帧走一步。暂停或厨房已关闭时调用方不要进来。</summary>
     public CookingFrontOfHouseStep Step(CookingRecipeSimulation kitchen, OrderTemplateId template)
+        => Step(kitchen, CookingFrontOfHouseMenu.Single(template));
+
+    public CookingFrontOfHouseStep Step(CookingRecipeSimulation kitchen, CookingFrontOfHouseMenu menu)
     {
         ArgumentNullException.ThrowIfNull(kitchen);
+        BindMenu(menu);
         NoticeDirtyBowls(kitchen);
         AdvanceGuests(kitchen);
         if (_work.Kind != CookingCompanionWorkKind.Idle)
-            AdvanceCompanion(kitchen, template);
+            AdvanceCompanion(kitchen);
         if (_work.Kind == CookingCompanionWorkKind.Idle)
-            StartNextJob(kitchen, template);
+            StartNextJob(kitchen);
         if (!_closing)
             TrySeatGuest();
         if (!_closing && _serviceTicks >= _schedule.ServiceTicks)
@@ -163,8 +189,11 @@ public sealed class CookingFrontOfHouse
 
     /// <summary>下一小关：先收完正在做的询问或洗碗，再清掉座位、未满足和营业时钟。厨房里的脏碗保留。</summary>
     public void ResetForNextLevel(CookingRecipeSimulation kitchen, OrderTemplateId template)
+        => ResetForNextLevel(kitchen, CookingFrontOfHouseMenu.Single(template));
+
+    public void ResetForNextLevel(CookingRecipeSimulation kitchen, CookingFrontOfHouseMenu menu)
     {
-        FinishInProgress(kitchen, template);
+        FinishInProgress(kitchen, menu);
         foreach (var table in _tables)
             table.Reset();
         _unsatisfied.Clear();
@@ -178,18 +207,22 @@ public sealed class CookingFrontOfHouse
 
     /// <summary>成功收口前把做到一半的询问和洗碗按完成处理。</summary>
     public void FinishInProgress(CookingRecipeSimulation kitchen, OrderTemplateId template)
+        => FinishInProgress(kitchen, CookingFrontOfHouseMenu.Single(template));
+
+    public void FinishInProgress(CookingRecipeSimulation kitchen, CookingFrontOfHouseMenu menu)
     {
         ArgumentNullException.ThrowIfNull(kitchen);
+        BindMenu(menu);
         NoticeDirtyBowls(kitchen);
         foreach (var table in _tables.Where(table => table.Customer is { Order: null }).ToArray())
-            CompleteInquiry(kitchen, template, table);
+            CompleteInquiry(kitchen, table);
 
         if (_work.Kind == CookingCompanionWorkKind.Washing && _work.Bowl is { } finishingBowl)
             CompleteWash(kitchen, finishingBowl);
         _work = CookingCompanionWork.Idle();
     }
 
-    private void AdvanceCompanion(CookingRecipeSimulation kitchen, OrderTemplateId template)
+    private void AdvanceCompanion(CookingRecipeSimulation kitchen)
     {
         if (_work.Kind == CookingCompanionWorkKind.Idle)
             return;
@@ -201,7 +234,7 @@ public sealed class CookingFrontOfHouse
         if (_work.Kind == CookingCompanionWorkKind.Inquiring &&
             FindTable(_work.TargetTable, _work.TargetCustomer) is { } table)
         {
-            CompleteInquiry(kitchen, template, table);
+            CompleteInquiry(kitchen, table);
         }
         else if (_work.Bowl is { } bowl)
         {
@@ -210,11 +243,12 @@ public sealed class CookingFrontOfHouse
         _work = CookingCompanionWork.Idle();
     }
 
-    private void CompleteInquiry(CookingRecipeSimulation kitchen, OrderTemplateId template, CookingTable table)
+    private void CompleteInquiry(CookingRecipeSimulation kitchen, CookingTable table)
     {
         if (table.Customer is not { } customer)
             return;
 
+        var template = TemplateFor(customer.ArrivalOrder);
         var order = CustomerOrder(customer.Id);
         var opened = kitchen.OpenOrder(order, template);
         if (!opened.Accepted)
@@ -222,6 +256,7 @@ public sealed class CookingFrontOfHouse
 
         customer.Phase = CookingTablePhase.Ordered;
         customer.Order = order;
+        customer.OrderTemplate = template;
         customer.ElapsedTicks = 0;
         _completedCompanionTasks++;
     }
@@ -239,7 +274,7 @@ public sealed class CookingFrontOfHouse
         _completedCompanionTasks++;
     }
 
-    private void StartNextJob(CookingRecipeSimulation kitchen, OrderTemplateId template)
+    private void StartNextJob(CookingRecipeSimulation kitchen)
     {
         var waiting = _tables
             .Where(table => table.Customer?.Phase == CookingTablePhase.WaitingForInquiry)
@@ -249,7 +284,7 @@ public sealed class CookingFrontOfHouse
         {
             customer.Phase = CookingTablePhase.InquiryInProgress;
             _work = CookingCompanionWork.Inquiry(customer.Id, waiting.Id, _schedule.InquiryTicks);
-            AdvanceCompanion(kitchen, template);
+            AdvanceCompanion(kitchen);
             return;
         }
 
@@ -263,7 +298,7 @@ public sealed class CookingFrontOfHouse
             }
 
             _work = CookingCompanionWork.Wash(bowl, RequiredWashTicks());
-            AdvanceCompanion(kitchen, template);
+            AdvanceCompanion(kitchen);
             return;
         }
     }
@@ -391,6 +426,7 @@ public sealed class CookingFrontOfHouse
         _closing = source._closing;
         _nextGuest = source._nextGuest;
         _completedCompanionTasks = source._completedCompanionTasks;
+        _orderMenu = source._orderMenu.ToArray();
     }
 
     private void Apply(CookingFrontOfHouseSnapshot state)
@@ -419,6 +455,7 @@ public sealed class CookingFrontOfHouse
         _closing = state.Closing;
         _nextGuest = state.NextCustomerSequence;
         _completedCompanionTasks = state.Companion.CompletedTaskCount;
+        _orderMenu = state.OrderMenu.ToArray();
     }
 
     private static CookingFrontOfHouseRestoreReason ValidateCheckpoint(
@@ -428,6 +465,12 @@ public sealed class CookingFrontOfHouse
         if (string.IsNullOrWhiteSpace(checkpoint.ActiveOrderTemplate.Value))
             return CookingFrontOfHouseRestoreReason.IdentityInvalid;
         var state = checkpoint.State;
+        if (state.OrderMenu is null || state.OrderMenu.Count == 0 ||
+            state.OrderMenu.Any(template => string.IsNullOrWhiteSpace(template.Value)) ||
+            state.OrderMenu.Distinct().Count() != state.OrderMenu.Count ||
+            state.OrderMenu.Any(template => !kitchen.HasOrderTemplate(template)) ||
+            checkpoint.ActiveOrderTemplate != state.OrderMenu[0])
+            return CookingFrontOfHouseRestoreReason.IdentityInvalid;
         try
         {
             ValidateSchedule(state.Schedule);
@@ -478,11 +521,14 @@ public sealed class CookingFrontOfHouse
             {
                 case CookingTablePhase.WaitingForInquiry:
                 case CookingTablePhase.InquiryInProgress:
-                    if (customer.Order is not null || customer.ElapsedTicks >= state.Schedule.WaitLimitTicks)
+                    if (customer.Order is not null || customer.OrderTemplate is not null ||
+                        customer.ElapsedTicks >= state.Schedule.WaitLimitTicks)
                         return CookingFrontOfHouseRestoreReason.OrderInvalid;
                     break;
                 case CookingTablePhase.Ordered:
+                    var expectedTemplate = state.OrderMenu[(customer.ArrivalOrder - 1) % state.OrderMenu.Count];
                     if (customer.Order != expectedOrder || order is null ||
+                        customer.OrderTemplate != expectedTemplate || order.Template != expectedTemplate ||
                         order.Status is not (nameof(CookingOrderStatus.Open) or nameof(CookingOrderStatus.Completed)) ||
                         customer.ElapsedTicks >= state.Schedule.WaitLimitTicks)
                     {
@@ -490,7 +536,9 @@ public sealed class CookingFrontOfHouse
                     }
                     break;
                 case CookingTablePhase.Dining:
-                    if (customer.Order != expectedOrder || order?.Status != nameof(CookingOrderStatus.Completed) ||
+                    var diningTemplate = state.OrderMenu[(customer.ArrivalOrder - 1) % state.OrderMenu.Count];
+                    if (customer.Order != expectedOrder || customer.OrderTemplate != diningTemplate ||
+                        order?.Template != diningTemplate || order.Status != nameof(CookingOrderStatus.Completed) ||
                         customer.ElapsedTicks >= state.Schedule.DiningTicks)
                         return CookingFrontOfHouseRestoreReason.OrderInvalid;
                     break;
@@ -586,6 +634,25 @@ public sealed class CookingFrontOfHouse
 
     private static OrderId CustomerOrder(CookingCustomerId customer) => new($"{customer.Value}-order");
 
+    private void BindMenu(CookingFrontOfHouseMenu menu)
+    {
+        ArgumentNullException.ThrowIfNull(menu);
+        if (_orderMenu.Length == 0)
+        {
+            _orderMenu = menu.Templates.ToArray();
+            return;
+        }
+        if (!_orderMenu.SequenceEqual(menu.Templates))
+            throw new InvalidOperationException("The front-of-house menu cannot change during a Level.");
+    }
+
+    private OrderTemplateId TemplateFor(int arrivalOrder)
+    {
+        if (_orderMenu.Length == 0)
+            throw new InvalidOperationException("The front-of-house menu has not been configured.");
+        return _orderMenu[(arrivalOrder - 1) % _orderMenu.Length];
+    }
+
     private bool WashSpeedUnlocked =>
         _completedCompanionTasks >= _schedule.CompanionGrowthTaskThreshold;
 
@@ -630,13 +697,14 @@ public sealed class CookingFrontOfHouse
     private sealed class CookingCustomer
     {
         public CookingCustomer(CookingCustomerId id, int arrivalOrder, CookingTablePhase phase, int elapsedTicks,
-            OrderId? order)
+            OrderId? order, OrderTemplateId? orderTemplate = null)
         {
             Id = id;
             ArrivalOrder = arrivalOrder;
             Phase = phase;
             ElapsedTicks = elapsedTicks;
             Order = order;
+            OrderTemplate = orderTemplate;
         }
 
         public CookingCustomerId Id { get; }
@@ -644,14 +712,16 @@ public sealed class CookingFrontOfHouse
         public CookingTablePhase Phase { get; set; }
         public int ElapsedTicks { get; set; }
         public OrderId? Order { get; set; }
+        public OrderTemplateId? OrderTemplate { get; set; }
 
         public CookingCustomerSnapshot Snapshot(string tableId) =>
-            new(Id, tableId, ArrivalOrder, Phase, ElapsedTicks, Order);
+            new(Id, tableId, ArrivalOrder, Phase, ElapsedTicks, Order, OrderTemplate);
 
-        public CookingCustomer Copy() => new(Id, ArrivalOrder, Phase, ElapsedTicks, Order);
+        public CookingCustomer Copy() => new(Id, ArrivalOrder, Phase, ElapsedTicks, Order, OrderTemplate);
 
         public static CookingCustomer From(CookingCustomerSnapshot snapshot) =>
-            new(snapshot.Id, snapshot.ArrivalOrder, snapshot.Phase, snapshot.ElapsedTicks, snapshot.Order);
+            new(snapshot.Id, snapshot.ArrivalOrder, snapshot.Phase, snapshot.ElapsedTicks, snapshot.Order,
+                snapshot.OrderTemplate);
     }
 
     private struct CookingCompanionWork
@@ -707,7 +777,8 @@ public sealed record CookingCustomerSnapshot(
     int ArrivalOrder,
     CookingTablePhase Phase,
     int ElapsedTicks,
-    OrderId? Order);
+    OrderId? Order,
+    OrderTemplateId? OrderTemplate = null);
 
 public sealed record CookingCompanionSnapshot(
     CookingCompanionId Id,
@@ -726,6 +797,7 @@ public sealed record CookingFrontOfHouseSnapshot(
     int TicksUntilNextGuest,
     bool Closing,
     int NextCustomerSequence,
+    IReadOnlyList<OrderTemplateId> OrderMenu,
     IReadOnlyList<CookingCustomerSnapshot> Customers,
     CookingCompanionSnapshot Companion,
     IReadOnlyList<ItemId> WashQueue,
@@ -750,11 +822,13 @@ public sealed record CookingFrontOfHouseSnapshot(
         TicksUntilNextGuest,
         Closing,
         NextCustomerSequence,
+        OrderMenu.Select(template => template.Value).ToArray(),
         Customers
             .OrderBy(customer => customer.TableId, StringComparer.Ordinal)
             .ThenBy(customer => customer.Id.Value, StringComparer.Ordinal)
             .Select(customer => new CanonicalCustomer(customer.Id.Value, customer.TableId, customer.ArrivalOrder,
-                customer.Phase.ToString(), customer.ElapsedTicks, customer.Order?.Value))
+                customer.Phase.ToString(), customer.ElapsedTicks, customer.Order?.Value,
+                customer.OrderTemplate?.Value))
             .ToArray(),
         new CanonicalCompanion(Companion.Id.Value, Companion.Work.ToString(), Companion.TargetCustomer?.Value,
             Companion.TargetTable, Companion.Bowl?.Value, Companion.ElapsedTicks, Companion.RequiredTicks,
@@ -777,6 +851,7 @@ public sealed record CookingFrontOfHouseSnapshot(
         int TicksUntilNextGuest,
         bool Closing,
         int NextCustomerSequence,
+        IReadOnlyList<string> OrderMenu,
         IReadOnlyList<CanonicalCustomer> Customers,
         CanonicalCompanion Companion,
         IReadOnlyList<string> WashQueue,
@@ -788,7 +863,8 @@ public sealed record CookingFrontOfHouseSnapshot(
         int ArrivalOrder,
         string Phase,
         int ElapsedTicks,
-        string? OrderId);
+        string? OrderId,
+        string? OrderTemplateId);
 
     private sealed record CanonicalCompanion(
         string Id,

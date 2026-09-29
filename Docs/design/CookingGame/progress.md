@@ -193,15 +193,25 @@ Owner 批准 Trellis task `09-28-cooking-companion-level-growth` 后，固定伙
 
 以上不包含 LAN/session 前厅投影、Unity 表现、更多伙伴能力、跨 Level 或长期成长、收益/评价、Profile/SaveSlot、durable store 或 process-crash 恢复。
 
+## 23. 2026-09-29 单机多订单菜单纵切
+
+Owner 批准 Trellis task `09-29-cooking-singleplayer-multi-order-menu` 后，既有烤面包配方被提升为第二种可直接点单菜品。正式内容增加容量 1、只接受烤面包的 `plate`，碗不再接受烤面包；标准供应增加 2 个干净盘。订单模板增加 `toasted-bread-order`，临时基础分 50；番茄蛋花汤保持临时 100 分，星级阈值仍为 100/200/300。
+
+前厅现在显式绑定有序菜单，按顾客 Level-local `ArrivalOrder` 派生模板，临时序列为汤、面包、汤、面包。菜单顺序和每位已开单顾客的实际模板进入 snapshot/canonical/SHA-256；ET host 复用同一领域菜单，不维护第二模板游标。`CookingLevelCheckpoint` 格式升至 v3，同 Level 恢复校验菜单、顾客模板和厨房订单一致性，并证明恢复后下一顾客模板与不中断基线一致。
+
+验收覆盖同一 Level 完成一份汤和一份烤面包：两笔 settlement 分别保存正确模板/recipe，总分累计 150；盘子提交后进入既有清洗流并只恢复 plate clean-pool。聚焦验证为 Cooking 33/33、ET Runtime 24/24。`cooking-kitchen-loop`（focused 105/105、Cooking 226/226、ET Runtime 67/67）与 `cooking-et-level-runtime`（Cooking 226/226、ET Runtime 67/67）均构建 0 警告、0 错误并 exit 0；日志在 `local/Logs/test-gates/20260929-165608-cooking-kitchen-loop` 与 `local/Logs/test-gates/20260929-165643-cooking-et-level-runtime`。
+
+固定轮换、汤 100、面包 50、星级阈值、干净盘 2 个以及既有 recipe/前厅 Tick 全部是临时测试基线，不代表正式菜单、平衡或经济设计。LAN/session wire、UDP/KCP、Unity、第三种菜品、顾客偏好、收益/经济、Profile/SaveSlot 与 durable/process-crash 恢复均未修改。
+
 ### Non-Unity successor backlog
 
-P1–P6 尚可另行审议的工作包括两台物理 PC LAN 验收、Room/Match 产品语义、durable store、process-crash 恢复、批准 workload/threshold 和非 Unity 优化验证。原 UDP task 曾提供 LiteNetLib minimal wire/adapter、loopback 与 same-machine harness，但未替代两 PC 证据，也未解决完整 production transport 的认证、安全、重连或产品生命周期语义；该方向已于 2026-09-21 放弃，传输计划改用 KCP，属未启动、未批准、无时间表的后续工作。基础积分/星级和固定伙伴首个 Level-local 洗碗加速已完成，正常产品流程不设置业务失败。更多伙伴能力、长期成长、LAN 投影、收益/评价、顾客内容类型、Profile/SaveSlot、真实断电恢复、connection→PlayerId 绑定与 ECS 清退仍需分别审议。
+P1–P6 尚可另行审议的工作包括两台物理 PC LAN 验收、Room/Match 产品语义、durable store、process-crash 恢复、批准 workload/threshold 和非 Unity 优化验证。原 UDP task 曾提供 LiteNetLib minimal wire/adapter、loopback 与 same-machine harness，但未替代两 PC 证据，也未解决完整 production transport 的认证、安全、重连或产品生命周期语义；该方向已于 2026-09-21 放弃，传输计划改用 KCP，属未启动、未批准、无时间表的后续工作。基础积分/星级、固定伙伴首个 Level-local 洗碗加速和单机两菜品订单纵切已完成，正常产品流程不设置业务失败。正式菜单生成与平衡、更多伙伴能力、长期成长、LAN 投影、收益/评价、更多顾客内容、Profile/SaveSlot、真实断电恢复、connection→PlayerId 绑定与 ECS 清退仍需分别审议。
 
 ### Prohibited Unity scope
 
 Cooking Unity 应用层、场景、authoring/export、projection、UI、动画、EditMode 与 scene smoke 长期禁止实施，不再作为旧 task、successor 或完整出口的当前 blocker。其历史来源、跨宿主 authority/identity/stale-input 不变量和重新授权条件见 [future scope](future-scope.md)。
 
-## 23. 后续读取顺序
+## 24. 后续读取顺序
 
 1. 读取本文确认三类状态。
 2. 读取 [技术路线](technical-roadmap.md)、[交付计划](delivery-plan.md) 与 [Cooking spec index](../../../.trellis/spec/cooking/index.md)。
@@ -209,7 +219,7 @@ Cooking Unity 应用层、场景、authoring/export、projection、UI、动画�
 4. 只有 owner 明确批准新范围后才新建 Trellis task；不要恢复已归档 task。
 5. Unity 重新授权必须满足 [future scope](future-scope.md) 的独立条件；non-Unity 后续从 [successor backlog](successor-backlog.md) 选择并重新审议。
 
-## 24. 维护规则
+## 25. 维护规则
 
 - 本文只汇总状态与链接，不复制行为契约、测试矩阵或未来 checklist。
 - 未实际运行的 Unity、两 PC LAN、durability 或 global gate 继续是 not-run/未完成；本次同机 loopback protocol 证据不能替代这些出口。

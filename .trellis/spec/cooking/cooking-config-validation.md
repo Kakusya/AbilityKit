@@ -1,4 +1,16 @@
 # P3 数据配置验证：cooking-config-validation
+## 2026-09-29 多订单内容身份修约（任务 09-29-cooking-singleplayer-multi-order-menu）
+
+来源：第二订单模板使用不同基础分，配置身份必须能区分“相同 recipe/容器但分值不同”的内容，否则恢复或协同兼容判断会错误接受不一致配置。
+
+| 位置 | 旧条款 | 新条款 | 来源 |
+|---|---|---|---|
+| 订单模板 canonical | 只包含模板 ID、recipe 和容器定义 | 增加 `BaseScore`；任何订单基础分变化都必须改变配置 canonical/SHA-256 | task design §2.3 |
+| 正式内容 | 1 个订单模板、碗可接受烤面包、无盘子供应 | 增加 `plate`、`toasted-bread-order` 与 `plate x2 cleanPool`；碗移除烤面包接受项，盘子只接受烤面包 | task design §2.1–2.2 |
+| schema 身份 | `cooking-definition-v2` | 保持 v2；这是既有 v2 内容形状扩展，不提供旧内容迁移或兼容转换 | 既有 v2 边界 + task scope |
+
+全部基础分、供应数量与星级阈值仍是临时测试基线，配置 identity 覆盖这些值不表示平衡已定稿。
+
 ## 2026-09-21 容器即物品修约（任务 09-21-cooking-kitchen-loop-simulation）
 
 来源：owner 已确认结构“容器是带容器能力的 Item”（ET 参考 product-lifetimes.md §6）在任务②落地为配置形状。本次修约把容器从“与物品并列的第二身份”改为“物品定义的容器能力”，并新增配方的工位要求字段。

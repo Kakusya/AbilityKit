@@ -32,6 +32,7 @@ public sealed class CookingLevelCheckpointTests
     private static readonly RecipeId SoupRecipe = new("tomato-egg-soup");
     private static readonly RecipeId BakeRecipe = new("bake-bread");
     private static readonly OrderTemplateId SoupOrderTemplate = new("tomato-egg-soup-order");
+    private static readonly OrderTemplateId ToastOrderTemplate = new("toasted-bread-order");
     private static readonly OrderId SoupOrder = new("order-soup-1");
     private static readonly ItemId Pot = new("pot-1");
     private static readonly ItemId Bowl = new("pool-bowl-1");
@@ -485,6 +486,70 @@ public sealed class CookingLevelCheckpointTests
             AdvanceClock(recovered, 2);
             recoveredFrontCanonical = restoredHost.FrontOfHouseSnapshot!.CanonicalText();
             recoveredKitchenCanonical = recovered.Simulation.Snapshot().CanonicalText();
+        }
+
+        Assert.Equal(baselineFrontCanonical, recoveredFrontCanonical);
+        Assert.Equal(baselineKitchenCanonical, recoveredKitchenCanonical);
+    }
+
+    [Fact]
+    public void R08_multi_menu_checkpoint_recovery_preserves_the_next_order_template()
+    {
+        var content = LoadContent();
+        var schedule = new CookingFrontOfHouseSchedule(1, 20, 1, 1, 2, 1, 20);
+        var menu = new CookingFrontOfHouseMenu(new[] { SoupOrderTemplate, ToastOrderTemplate });
+
+        string baselineFrontCanonical;
+        string baselineKitchenCanonical;
+        OrderTemplateId baselineNextTemplate;
+        {
+            using var baseline = CreateFixture(content);
+            using var baselineHost = baseline.CreateStartedHost(state =>
+                CookingContentCatalog.ApplyStandardInitialSupply(state, content));
+            baselineHost.UseFrontOfHouse(new CookingFrontOfHouse(schedule), menu);
+            AdvanceClock(baseline, 3);
+            var first = Assert.Single(baselineHost.FrontOfHouseSnapshot!.Customers);
+            Assert.Equal(SoupOrderTemplate, first.OrderTemplate);
+            baseline.Simulation.MarkOrderCompletedForTest(first.Order!.Value);
+            AdvanceClock(baseline, 3);
+
+            var next = Assert.Single(baselineHost.FrontOfHouseSnapshot.Customers);
+            baselineNextTemplate = next.OrderTemplate!.Value;
+            baselineFrontCanonical = baselineHost.FrontOfHouseSnapshot.CanonicalText();
+            baselineKitchenCanonical = baseline.Simulation.Snapshot().CanonicalText();
+        }
+
+        string recoveredFrontCanonical;
+        string recoveredKitchenCanonical;
+        {
+            using var source = CreateFixture(content);
+            using var sourceHost = source.CreateStartedHost(state =>
+                CookingContentCatalog.ApplyStandardInitialSupply(state, content));
+            sourceHost.UseFrontOfHouse(new CookingFrontOfHouse(schedule), menu);
+            AdvanceClock(source, 3);
+            var first = Assert.Single(sourceHost.FrontOfHouseSnapshot!.Customers);
+            Assert.Equal(SoupOrderTemplate, first.OrderTemplate);
+
+            var exported = sourceHost.ExportCheckpoint();
+            Assert.True(exported.Accepted);
+            var checkpoint = CookingLevelCheckpointCodec.Deserialize(CookingLevelCheckpointCodec.Serialize(
+                CookingLevelCheckpointCodec.CreateEnvelope(exported.Checkpoint!))).Checkpoint!;
+            sourceHost.Dispose();
+
+            using var recovered = CreateFixture(content, checkpoint.LastCommittedSimulationBatch);
+            var restored = CookingLevelEtHost.Restore(checkpoint, content.Snapshot, recovered.Factory);
+            Assert.True(restored.Accepted);
+            using var restoredHost = restored.Host!;
+            recovered.AdoptHost(restoredHost);
+
+            recovered.Simulation.MarkOrderCompletedForTest(first.Order!.Value);
+            AdvanceClock(recovered, 3);
+            var next = Assert.Single(restoredHost.FrontOfHouseSnapshot!.Customers);
+            recoveredFrontCanonical = restoredHost.FrontOfHouseSnapshot.CanonicalText();
+            recoveredKitchenCanonical = recovered.Simulation.Snapshot().CanonicalText();
+
+            Assert.Equal(baselineNextTemplate, next.OrderTemplate!.Value);
+            Assert.Equal(ToastOrderTemplate, next.OrderTemplate.Value);
         }
 
         Assert.Equal(baselineFrontCanonical, recoveredFrontCanonical);

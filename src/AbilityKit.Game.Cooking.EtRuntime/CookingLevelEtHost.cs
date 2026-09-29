@@ -386,14 +386,18 @@ public sealed class CookingLevelEtHost : IDisposable
         return kitchen;
     }
     private CookingFrontOfHouse? _frontOfHouse;
-    private OrderTemplateId _frontOfHouseTemplate = new("unused");
+    private CookingFrontOfHouseMenu _frontOfHouseMenu = CookingFrontOfHouseMenu.Single(new("unused"));
 
     /// <summary>运行帧结束后推进前厅。暂停帧不会调用 Tick 的成功路径。模板必须已在厨房内容里。</summary>
     public void UseFrontOfHouse(CookingFrontOfHouse house, OrderTemplateId template)
+        => UseFrontOfHouse(house, CookingFrontOfHouseMenu.Single(template));
+
+    public void UseFrontOfHouse(CookingFrontOfHouse house, CookingFrontOfHouseMenu menu)
     {
         ArgumentNullException.ThrowIfNull(house);
+        ArgumentNullException.ThrowIfNull(menu);
         _frontOfHouse = house;
-        _frontOfHouseTemplate = template;
+        _frontOfHouseMenu = menu;
     }
 
     public long HostFrameSequence { get; private set; }
@@ -738,7 +742,7 @@ public sealed class CookingLevelEtHost : IDisposable
         if (!installed.Accepted)
             return installed;
 
-        _frontOfHouse?.FinishInProgress(_ownedSimulation, _frontOfHouseTemplate);
+        _frontOfHouse?.FinishInProgress(_ownedSimulation, _frontOfHouseMenu);
         var clearedOrders = _ownedSimulation.Orders.Count;
         var handoff = _ownedSimulation.ExportSuccessHandoff();
         var adopted = candidate.AdoptSuccessorKitchen(_ownedSimulation);
@@ -755,7 +759,7 @@ public sealed class CookingLevelEtHost : IDisposable
                 $"The successor kitchen could not be adopted: {adopted}; handoff {accepted.Reason}."));
         }
 
-        _frontOfHouse?.ResetForNextLevel(_ownedSimulation, _frontOfHouseTemplate);
+        _frontOfHouse?.ResetForNextLevel(_ownedSimulation, _frontOfHouseMenu);
         return installed with
         {
             RetainedProcessCount = handoff.Processes.Count,
@@ -794,7 +798,7 @@ public sealed class CookingLevelEtHost : IDisposable
                 HostFrameSequence,
                 LastCommittedSimulationBatch,
                 _ownedSimulation.ExportCheckpoint(),
-                _frontOfHouse?.ExportCheckpoint(_frontOfHouseTemplate)));
+                _frontOfHouse?.ExportCheckpoint(_frontOfHouseMenu)));
     }
 
     /// <summary>
@@ -885,7 +889,8 @@ public sealed class CookingLevelEtHost : IDisposable
                         FrontOfHouseRestoreReason: frontOfHouse.Reason);
                 }
 
-                host.UseFrontOfHouse(frontOfHouse.FrontOfHouse, frontOfHouse.ActiveOrderTemplate.Value);
+                host.UseFrontOfHouse(frontOfHouse.FrontOfHouse,
+                    new CookingFrontOfHouseMenu(frontOfHouse.FrontOfHouse.Snapshot().OrderMenu));
             }
 
             host.AdoptRecoveredCheckpoint(checkpoint);
@@ -1018,7 +1023,7 @@ public sealed class CookingLevelEtHost : IDisposable
         }
 
         HostFrameSequence = candidateFrame;
-        _frontOfHouse?.Step(simulation, _frontOfHouseTemplate);
+        _frontOfHouse?.Step(simulation, _frontOfHouseMenu);
         if (_inFlight is not null)
             LastCommittedSimulationBatch = _inFlight.SimulationBatch;
         _inFlight = null;

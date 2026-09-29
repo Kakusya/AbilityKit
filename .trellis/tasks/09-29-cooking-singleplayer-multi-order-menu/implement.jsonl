@@ -1,0 +1,8 @@
+{"file":".trellis/spec/cooking/index.md","reason":"Cooking 当前已验证范围、单机 successor 边界和禁止提前宣称完成的状态入口"}
+{"file":".trellis/spec/cooking/cooking-recipe-loop.md","reason":"正式内容、订单模板、前厅、评分、可洗容器与 checkpoint 的稳定行为契约"}
+{"file":".trellis/spec/cooking/cooking-config-validation.md","reason":"配置 canonical/hash、订单模板外键和正式内容校验契约"}
+{"file":"Docs/design/CookingGame/reference/product-lifetimes.md","reason":"订单和前厅属于 Level-local 状态、同 Level 恢复与跨 Level 清除边界"}
+{"file":".trellis/tasks/09-19-cooking-productization-network-slice-planning/prd.md","reason":"Owner 已确认的订单、评分、自然完成与单机产品边界"}
+{"file":".trellis/tasks/09-19-cooking-productization-network-slice-planning/research/discussion-notes.md","reason":"烤面包原始定位、订单通用化前置与最新 owner 覆盖决定的讨论来源"}
+{"file":".trellis/spec/guides/cross-layer-thinking-guide.md","reason":"检查内容配置、领域订单、前厅 snapshot、checkpoint 与 ET 恢复的数据流"}
+{"file":".trellis/spec/guides/code-reuse-thinking-guide.md","reason":"复用现有 order book、评分与可洗容器机制，避免 plate-specific 状态机"}

@@ -57,7 +57,7 @@ public sealed class CookingCheckpointRecoveryTests
         Assert.Equal(21, checkpoint.EventSequence);
 
         // 物品/tombstone：7 在册 + 2 墓碑（切番茄消耗的 tomato-1、打蛋消耗的 egg-1）。
-        Assert.Equal(11, checkpoint.Items.Count);
+        Assert.Equal(13, checkpoint.Items.Count);
         Assert.True(Assert.Single(checkpoint.Items, item => item.Id == Tomato).Removed);
         Assert.True(Assert.Single(checkpoint.Items, item => item.Id == Egg).Removed);
 
@@ -74,8 +74,8 @@ public sealed class CookingCheckpointRecoveryTests
         Assert.Equal(Pot, process.Container);
         Assert.Equal(new[] { Pot, new ItemId("product-1"), new ItemId("product-2") }, process.LockedInputs);
 
-        // 容器：有序内容物（番茄块、蛋液按入锅顺序）+ 两只空碗池。
-        Assert.Equal(3, checkpoint.Containers.Count);
+        // 容器：有序内容物（番茄块、蛋液按入锅顺序）+ 两只空碗 + 两只空盘。
+        Assert.Equal(5, checkpoint.Containers.Count);
         Assert.Equal(new[] { new ItemId("product-1"), new ItemId("product-2") },
             Assert.Single(checkpoint.Containers, container => container.Id == Pot).ItemIds);
         Assert.Empty(Assert.Single(checkpoint.Containers, container => container.Id == Bowl).ItemIds);
@@ -87,9 +87,11 @@ public sealed class CookingCheckpointRecoveryTests
         // 消耗产物账与干净池：无消耗；在册干净碗仍为 2——一只已上台面备用、一只池中，
         // 取出干净碗不改变在册计数（该计数与“在册干净容器”不是同一集合，必须显式入账）。
         Assert.Empty(checkpoint.ConsumedProducts);
-        var pool = Assert.Single(checkpoint.CleanContainerCounts);
-        Assert.Equal(BowlDefinition, pool.Definition);
-        Assert.Equal(2, pool.Count);
+        Assert.Equal(2, checkpoint.CleanContainerCounts.Count);
+        Assert.Equal(2, Assert.Single(checkpoint.CleanContainerCounts,
+            pool => pool.Definition == BowlDefinition).Count);
+        Assert.Equal(2, Assert.Single(checkpoint.CleanContainerCounts,
+            pool => pool.Definition == new DefinitionId("plate")).Count);
 
         // 去重账本与事件/tick 历史：14 条命令逐条入账；tick 也各消耗一个事件序列号。
         Assert.Equal(14, checkpoint.Deduplication.Count);
@@ -195,10 +197,10 @@ public sealed class CookingCheckpointRecoveryTests
         Assert.Equal(CookingCheckpointReadReason.RecordTruncated,
             CookingLevelCheckpointCodec.Deserialize(serialized[..(serialized.Length / 2)]).Reason);
         Assert.Equal(CookingCheckpointReadReason.UnknownFormatVersion,
-            CookingLevelCheckpointCodec.Deserialize(serialized.Replace("\"formatVersion\":2", "\"formatVersion\":99",
+            CookingLevelCheckpointCodec.Deserialize(serialized.Replace("\"formatVersion\":3", "\"formatVersion\":99",
                 StringComparison.Ordinal)).Reason);
         Assert.Equal(CookingCheckpointReadReason.UnknownFormatVersion,
-            CookingLevelCheckpointCodec.Deserialize(serialized.Replace("\"formatVersion\":2", "\"formatVersion\":1",
+            CookingLevelCheckpointCodec.Deserialize(serialized.Replace("\"formatVersion\":3", "\"formatVersion\":2",
                 StringComparison.Ordinal)).Reason);
         Assert.Equal(CookingCheckpointReadReason.IntegrityFailure,
             CookingLevelCheckpointCodec.Deserialize(serialized.Replace("\"stateVersion\":21", "\"stateVersion\":22",

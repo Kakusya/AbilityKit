@@ -31,18 +31,31 @@ public sealed class CookingContentCatalogTests
         Assert.Equal(first.Identity, second.Identity);
 
         Assert.Equal(4, first.Recipes.Count);
-        Assert.Equal(10, first.Items.Count);
+        Assert.Equal(11, first.Items.Count);
         Assert.Equal(4, first.Appliances.Count);
-        var template = Assert.Single(first.OrderTemplates);
-        Assert.Equal("tomato-egg-soup-order", template.Key.Value);
-        Assert.Equal("tomato-egg-soup", template.Value.RequiredRecipe.Value);
-        Assert.Equal("bowl", template.Value.RequiredContainerDefinition.Value);
+        Assert.Equal(2, first.OrderTemplates.Count);
+        var soupTemplate = first.OrderTemplates[new OrderTemplateId("tomato-egg-soup-order")];
+        Assert.Equal("tomato-egg-soup", soupTemplate.RequiredRecipe.Value);
+        Assert.Equal("bowl", soupTemplate.RequiredContainerDefinition.Value);
+        Assert.Equal(100, soupTemplate.BaseScore);
+        var toastTemplate = first.OrderTemplates[new OrderTemplateId("toasted-bread-order")];
+        Assert.Equal("bake-bread", toastTemplate.RequiredRecipe.Value);
+        Assert.Equal("plate", toastTemplate.RequiredContainerDefinition.Value);
+        Assert.Equal(50, toastTemplate.BaseScore);
 
-        Assert.Equal(5, first.StandardInitialSupply.Count);
+        Assert.Equal(6, first.StandardInitialSupply.Count);
         Assert.Contains(first.StandardInitialSupply, entry =>
             entry.Definition.Value == "pot" && entry.Location == "station:stove-a");
         Assert.Contains(first.StandardInitialSupply, entry =>
             entry.Definition.Value == "bowl" && entry.Location == CookingContentCatalog.CleanPoolLocation && entry.Count == 2);
+        Assert.Contains(first.StandardInitialSupply, entry =>
+            entry.Definition.Value == "plate" && entry.Location == CookingContentCatalog.CleanPoolLocation && entry.Count == 2);
+
+        var bowl = first.Items[new DefinitionId("bowl")].Container!;
+        Assert.DoesNotContain(new DefinitionId("toasted-bread"), bowl.AcceptedDefinitions);
+        var plate = first.Items[new DefinitionId("plate")].Container!;
+        Assert.Equal(1, plate.Capacity);
+        Assert.Equal(new[] { new DefinitionId("toasted-bread") }, plate.AcceptedDefinitions);
 
         var soup = first.Recipes[new RecipeId("tomato-egg-soup")];
         Assert.Equal(CookingRecipeCompletionKind.RetainInputs, soup.Completion);
@@ -157,6 +170,7 @@ public sealed class CookingContentCatalogTests
         var simulation = CreateSimulation(content);
 
         Assert.Equal(2, simulation.CleanContainerCount(new DefinitionId("bowl")));
+        Assert.Equal(2, simulation.CleanContainerCount(new DefinitionId("plate")));
         Assert.Equal(2, simulation.Snapshot().Items.Count(item => item.Definition.Value == "bowl"));
         Assert.Contains(simulation.Snapshot().Items,
             item => item.Id == new ItemId("pool-bowl-1") &&
@@ -167,6 +181,12 @@ public sealed class CookingContentCatalogTests
             item => item.Id == new ItemId("tomato-2") && item.Location == ItemLocation.World("pantry"));
         Assert.Contains(simulation.Snapshot().Items,
             item => item.Id == new ItemId("bread-slice-1") && item.Location == ItemLocation.World("pantry"));
+
+        simulation.MarkBowlDirtyForTest(new ItemId("pool-plate-1"));
+        Assert.Equal(1, simulation.CleanContainerCount(new DefinitionId("plate")));
+        Assert.Equal(2, simulation.CleanContainerCount(new DefinitionId("bowl")));
+        Assert.True(simulation.CompleteWash(new ItemId("pool-plate-1")).Accepted);
+        Assert.Equal(2, simulation.CleanContainerCount(new DefinitionId("plate")));
 
         // 内容数值只来自文档：切 2、打蛋 2、煮 6、烤 2。
         Assert.Equal(2, content.Recipes[new RecipeId("chop-tomato")].RequiredTicks);
