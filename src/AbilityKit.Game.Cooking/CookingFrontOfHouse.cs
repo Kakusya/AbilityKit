@@ -16,7 +16,7 @@ public readonly record struct CookingCompanionId(string Value)
 
 /// <summary>
 /// 一位固定伙伴的前厅节奏：问完才开单，没有询问才洗碗。
-/// 收益、评价、伙伴成长和失败条件不在这里。
+/// 伙伴成长只覆盖当前 Level 的任务计数与洗碗加速；收益、评价和失败条件不在这里。
 /// </summary>
 public sealed class CookingFrontOfHouse
 {
@@ -33,6 +33,7 @@ public sealed class CookingFrontOfHouse
     private int _ticksUntilNextGuest;
     private bool _closing;
     private int _nextGuest;
+    private int _completedCompanionTasks;
 
     public CookingFrontOfHouse(CookingFrontOfHouseSchedule schedule)
         : this(schedule, DefaultCompanion)
@@ -70,12 +71,6 @@ public sealed class CookingFrontOfHouse
             .OrderBy(table => table.Id, StringComparer.Ordinal)
             .Select(table => table.Customer!.Snapshot(table.Id))
             .ToArray();
-        var requiredTicks = _work.Kind switch
-        {
-            CookingCompanionWorkKind.Inquiring => _schedule.InquiryTicks,
-            CookingCompanionWorkKind.Washing => _schedule.WashTicks,
-            _ => 0,
-        };
         return new CookingFrontOfHouseSnapshot(
             _schedule,
             _serviceTicks,
@@ -84,7 +79,7 @@ public sealed class CookingFrontOfHouse
             _nextGuest,
             customers,
             new CookingCompanionSnapshot(_companion, _work.Kind, _work.TargetCustomer, _work.TargetTable,
-                _work.Bowl, _work.Elapsed, requiredTicks),
+                _work.Bowl, _work.Elapsed, _work.RequiredTicks, _completedCompanionTasks, WashSpeedUnlocked),
             _washQueue.ToArray(),
             _unsatisfied.ToArray());
     }
@@ -163,6 +158,7 @@ public sealed class CookingFrontOfHouse
         _closing = false;
         _nextGuest = 0;
         _work = CookingCompanionWork.Idle();
+        _completedCompanionTasks = 0;
     }
 
     /// <summary>下一小关：先收完正在做的询问或洗碗，再清掉座位、未满足和营业时钟。厨房里的脏碗保留。</summary>
@@ -177,6 +173,7 @@ public sealed class CookingFrontOfHouse
         _closing = false;
         _nextGuest = 0;
         _work = CookingCompanionWork.Idle();
+        _completedCompanionTasks = 0;
     }
 
     /// <summary>成功收口前把做到一半的询问和洗碗按完成处理。</summary>
@@ -198,10 +195,7 @@ public sealed class CookingFrontOfHouse
             return;
 
         _work.Elapsed++;
-        var required = _work.Kind == CookingCompanionWorkKind.Inquiring
-            ? _schedule.InquiryTicks
-            : _schedule.WashTicks;
-        if (_work.Elapsed < required)
+        if (_work.Elapsed < _work.RequiredTicks)
             return;
 
         if (_work.Kind == CookingCompanionWorkKind.Inquiring &&
@@ -229,6 +223,7 @@ public sealed class CookingFrontOfHouse
         customer.Phase = CookingTablePhase.Ordered;
         customer.Order = order;
         customer.ElapsedTicks = 0;
+        _completedCompanionTasks++;
     }
 
     private void CompleteWash(CookingRecipeSimulation kitchen, ItemId bowl)
@@ -241,6 +236,7 @@ public sealed class CookingFrontOfHouse
         }
 
         _queuedBowls.Remove(bowl);
+        _completedCompanionTasks++;
     }
 
     private void StartNextJob(CookingRecipeSimulation kitchen, OrderTemplateId template)
@@ -252,7 +248,7 @@ public sealed class CookingFrontOfHouse
         if (waiting?.Customer is { } customer)
         {
             customer.Phase = CookingTablePhase.InquiryInProgress;
-            _work = CookingCompanionWork.Inquiry(customer.Id, waiting.Id);
+            _work = CookingCompanionWork.Inquiry(customer.Id, waiting.Id, _schedule.InquiryTicks);
             AdvanceCompanion(kitchen, template);
             return;
         }
@@ -266,7 +262,7 @@ public sealed class CookingFrontOfHouse
                 continue;
             }
 
-            _work = CookingCompanionWork.Wash(bowl);
+            _work = CookingCompanionWork.Wash(bowl, RequiredWashTicks());
             AdvanceCompanion(kitchen, template);
             return;
         }
@@ -394,6 +390,7 @@ public sealed class CookingFrontOfHouse
         _ticksUntilNextGuest = source._ticksUntilNextGuest;
         _closing = source._closing;
         _nextGuest = source._nextGuest;
+        _completedCompanionTasks = source._completedCompanionTasks;
     }
 
     private void Apply(CookingFrontOfHouseSnapshot state)
@@ -421,6 +418,7 @@ public sealed class CookingFrontOfHouse
         _ticksUntilNextGuest = state.TicksUntilNextGuest;
         _closing = state.Closing;
         _nextGuest = state.NextCustomerSequence;
+        _completedCompanionTasks = state.Companion.CompletedTaskCount;
     }
 
     private static CookingFrontOfHouseRestoreReason ValidateCheckpoint(
@@ -502,7 +500,9 @@ public sealed class CookingFrontOfHouse
         }
 
         var companion = state.Companion;
-        if (companion.ElapsedTicks < 0 || companion.RequiredTicks < 0)
+        var expectedUnlocked = companion.CompletedTaskCount >= state.Schedule.CompanionGrowthTaskThreshold;
+        if (companion.ElapsedTicks < 0 || companion.RequiredTicks < 0 || companion.CompletedTaskCount < 0 ||
+            companion.WashSpeedUnlocked != expectedUnlocked)
             return CookingFrontOfHouseRestoreReason.CompanionInvalid;
         switch (companion.Work)
         {
@@ -525,8 +525,9 @@ public sealed class CookingFrontOfHouse
                 }
                 break;
             case CookingCompanionWorkKind.Washing:
+                var expectedWashTicks = RequiredWashTicks(state.Schedule, companion.WashSpeedUnlocked);
                 if (companion.TargetCustomer is not null || companion.TargetTable is not null || companion.Bowl is null ||
-                    companion.RequiredTicks != state.Schedule.WashTicks || companion.ElapsedTicks < 1 ||
+                    companion.RequiredTicks != expectedWashTicks || companion.ElapsedTicks < 1 ||
                     companion.ElapsedTicks >= companion.RequiredTicks ||
                     !kitchen.DirtyBowlsAwaitingWash().Contains(companion.Bowl.Value))
                 {
@@ -575,13 +576,23 @@ public sealed class CookingFrontOfHouse
         if (schedule.TableCount < 1)
             throw new ArgumentOutOfRangeException(nameof(schedule), "At least one table is required.");
         if (schedule.ServiceTicks < 1 || schedule.ArrivalIntervalTicks < 1 || schedule.InquiryTicks < 1 ||
-            schedule.WashTicks < 1 || schedule.DiningTicks < 1 || schedule.WaitLimitTicks < 1)
+            schedule.WashTicks < 1 || schedule.DiningTicks < 1 || schedule.WaitLimitTicks < 1 ||
+            schedule.CompanionGrowthTaskThreshold < 1)
         {
-            throw new ArgumentOutOfRangeException(nameof(schedule), "Front-of-house timings must be positive.");
+            throw new ArgumentOutOfRangeException(nameof(schedule),
+                "Front-of-house timings and the companion growth threshold must be positive.");
         }
     }
 
     private static OrderId CustomerOrder(CookingCustomerId customer) => new($"{customer.Value}-order");
+
+    private bool WashSpeedUnlocked =>
+        _completedCompanionTasks >= _schedule.CompanionGrowthTaskThreshold;
+
+    private int RequiredWashTicks() => RequiredWashTicks(_schedule, WashSpeedUnlocked);
+
+    private static int RequiredWashTicks(CookingFrontOfHouseSchedule schedule, bool unlocked) =>
+        unlocked ? Math.Max(1, schedule.WashTicks / 2 + schedule.WashTicks % 2) : schedule.WashTicks;
 
     private static bool TryGetCustomerSequence(OrderId order, out int sequence)
     {
@@ -650,14 +661,21 @@ public sealed class CookingFrontOfHouse
         public string? TargetTable { get; private set; }
         public ItemId? Bowl { get; private set; }
         public int Elapsed { get; set; }
+        public int RequiredTicks { get; private set; }
 
         public static CookingCompanionWork Idle() => new() { Kind = CookingCompanionWorkKind.Idle };
 
-        public static CookingCompanionWork Inquiry(CookingCustomerId customer, string table) =>
-            new() { Kind = CookingCompanionWorkKind.Inquiring, TargetCustomer = customer, TargetTable = table };
+        public static CookingCompanionWork Inquiry(CookingCustomerId customer, string table, int requiredTicks) =>
+            new()
+            {
+                Kind = CookingCompanionWorkKind.Inquiring,
+                TargetCustomer = customer,
+                TargetTable = table,
+                RequiredTicks = requiredTicks,
+            };
 
-        public static CookingCompanionWork Wash(ItemId bowl) =>
-            new() { Kind = CookingCompanionWorkKind.Washing, Bowl = bowl };
+        public static CookingCompanionWork Wash(ItemId bowl, int requiredTicks) =>
+            new() { Kind = CookingCompanionWorkKind.Washing, Bowl = bowl, RequiredTicks = requiredTicks };
 
         public static CookingCompanionWork From(CookingCompanionSnapshot snapshot) => new()
         {
@@ -666,6 +684,7 @@ public sealed class CookingFrontOfHouse
             TargetTable = snapshot.TargetTable,
             Bowl = snapshot.Bowl,
             Elapsed = snapshot.ElapsedTicks,
+            RequiredTicks = snapshot.RequiredTicks,
         };
     }
 }
@@ -677,7 +696,8 @@ public sealed record CookingFrontOfHouseSchedule(
     int InquiryTicks,
     int WashTicks,
     int DiningTicks,
-    int WaitLimitTicks);
+    int WaitLimitTicks,
+    int CompanionGrowthTaskThreshold = 3);
 
 public sealed record CookingFrontOfHouseStep(int SeatedCount, bool Closing, bool CanSucceed, int UnsatisfiedCount);
 
@@ -696,7 +716,9 @@ public sealed record CookingCompanionSnapshot(
     string? TargetTable,
     ItemId? Bowl,
     int ElapsedTicks,
-    int RequiredTicks);
+    int RequiredTicks,
+    int CompletedTaskCount,
+    bool WashSpeedUnlocked);
 
 public sealed record CookingFrontOfHouseSnapshot(
     CookingFrontOfHouseSchedule Schedule,
@@ -723,6 +745,7 @@ public sealed record CookingFrontOfHouseSnapshot(
         Schedule.WashTicks,
         Schedule.DiningTicks,
         Schedule.WaitLimitTicks,
+        Schedule.CompanionGrowthTaskThreshold,
         ServiceTicks,
         TicksUntilNextGuest,
         Closing,
@@ -734,7 +757,8 @@ public sealed record CookingFrontOfHouseSnapshot(
                 customer.Phase.ToString(), customer.ElapsedTicks, customer.Order?.Value))
             .ToArray(),
         new CanonicalCompanion(Companion.Id.Value, Companion.Work.ToString(), Companion.TargetCustomer?.Value,
-            Companion.TargetTable, Companion.Bowl?.Value, Companion.ElapsedTicks, Companion.RequiredTicks),
+            Companion.TargetTable, Companion.Bowl?.Value, Companion.ElapsedTicks, Companion.RequiredTicks,
+            Companion.CompletedTaskCount, Companion.WashSpeedUnlocked),
         WashQueue.Select(bowl => bowl.Value).ToArray(),
         UnsatisfiedOrders.Select(order => order.Value).ToArray()), CanonicalJsonOptions);
 
@@ -748,6 +772,7 @@ public sealed record CookingFrontOfHouseSnapshot(
         int WashTicks,
         int DiningTicks,
         int WaitLimitTicks,
+        int CompanionGrowthTaskThreshold,
         int ServiceTicks,
         int TicksUntilNextGuest,
         bool Closing,
@@ -772,7 +797,9 @@ public sealed record CookingFrontOfHouseSnapshot(
         string? TargetTableId,
         string? BowlId,
         int ElapsedTicks,
-        int RequiredTicks);
+        int RequiredTicks,
+        int CompletedTaskCount,
+        bool WashSpeedUnlocked);
 }
 
 public sealed record CookingFrontOfHouseCheckpoint(

@@ -435,6 +435,62 @@ public sealed class CookingLevelCheckpointTests
         using var restoredHost = accepted.Host!;
     }
 
+    [Fact]
+    public void R07_recovered_host_preserves_unlocked_growth_and_active_wash_duration()
+    {
+        var content = LoadContent();
+        var schedule = new CookingFrontOfHouseSchedule(1, 10, 10, 1, 5, 3, 20, 1);
+
+        string baselineFrontCanonical;
+        string baselineKitchenCanonical;
+        {
+            using var baseline = CreateFixture(content);
+            using var baselineHost = baseline.CreateStartedHost(state =>
+                CookingContentCatalog.ApplyStandardInitialSupply(state, content));
+            baselineHost.UseFrontOfHouse(new CookingFrontOfHouse(schedule), SoupOrderTemplate);
+            AdvanceClock(baseline, 2);
+            Assert.True(baselineHost.FrontOfHouseSnapshot!.Companion.WashSpeedUnlocked);
+            baseline.Simulation.MarkBowlDirtyForTest(Bowl);
+            AdvanceClock(baseline, 3);
+            baselineFrontCanonical = baselineHost.FrontOfHouseSnapshot!.CanonicalText();
+            baselineKitchenCanonical = baseline.Simulation.Snapshot().CanonicalText();
+        }
+
+        string recoveredFrontCanonical;
+        string recoveredKitchenCanonical;
+        {
+            using var source = CreateFixture(content);
+            using var sourceHost = source.CreateStartedHost(state =>
+                CookingContentCatalog.ApplyStandardInitialSupply(state, content));
+            sourceHost.UseFrontOfHouse(new CookingFrontOfHouse(schedule), SoupOrderTemplate);
+            AdvanceClock(source, 2);
+            source.Simulation.MarkBowlDirtyForTest(Bowl);
+            AdvanceClock(source, 1);
+            var active = sourceHost.FrontOfHouseSnapshot!.Companion;
+            Assert.Equal(1, active.CompletedTaskCount);
+            Assert.True(active.WashSpeedUnlocked);
+            Assert.Equal(CookingCompanionWorkKind.Washing, active.Work);
+            Assert.Equal(1, active.ElapsedTicks);
+            Assert.Equal(3, active.RequiredTicks);
+
+            var checkpoint = sourceHost.ExportCheckpoint().Checkpoint!;
+            sourceHost.Dispose();
+            using var recovered = CreateFixture(content, checkpoint.LastCommittedSimulationBatch);
+            var restored = CookingLevelEtHost.Restore(checkpoint, content.Snapshot, recovered.Factory);
+            Assert.True(restored.Accepted);
+            using var restoredHost = restored.Host!;
+            recovered.AdoptHost(restoredHost);
+            Assert.Equal(checkpoint.FrontOfHouse!.State.CanonicalText(),
+                restoredHost.FrontOfHouseSnapshot!.CanonicalText());
+            AdvanceClock(recovered, 2);
+            recoveredFrontCanonical = restoredHost.FrontOfHouseSnapshot!.CanonicalText();
+            recoveredKitchenCanonical = recovered.Simulation.Snapshot().CanonicalText();
+        }
+
+        Assert.Equal(baselineFrontCanonical, recoveredFrontCanonical);
+        Assert.Equal(baselineKitchenCanonical, recoveredKitchenCanonical);
+    }
+
     private sealed record FinalState(string Canonical, string Hash, long StateVersion, long LogicalTick, ItemId NextProductId);
 
     /// <summary>

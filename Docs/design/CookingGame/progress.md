@@ -157,7 +157,13 @@ Owner 于 2026-09-22 批准 Trellis task `09-22-cooking-checkpoint-recovery`（T
 
 门禁：`cooking-kitchen-loop`（focused 80/80、Cooking 201/201、ET runtime 61/61）与 `cooking-et-level-runtime`（Cooking 201/201、ET runtime 61/61）均 exit 0。日志在 `local/Logs/test-gates/20260923-093600-cooking-kitchen-loop` 与 `local/Logs/test-gates/20260923-093617-cooking-et-level-runtime`。失败条件、评分和可见顾客仍未做。
 
-## 19. 2026-09-28 跨关选择与状态承接 LAN 纵切
+## 19. 2026-09-24 基础积分与星级网络共识
+
+归档 task `09-24-cooking-scoring-network-slice` 已实现第一版积分/星级合同：订单模板配置固定基础分，成功结算只计分一次，未满足订单 0 分且不倒扣；当前小关总分按配置阈值映射为 0–3 星，0 星仍自然完成。`CookingRecipeSnapshot` canonical/SHA-256 包含总分和星级，同机 Loopback UDP Host/Client 已验证相同投影。`cooking-kitchen-loop` 当时通过（Cooking 208、ET Runtime 61）。
+
+以上不包含收益、货币、小费、长期进度奖励、速度/连击/品质倍率或复杂评价平衡。
+
+## 20. 2026-09-28 跨关选择与状态承接 LAN 纵切
 
 Owner 批准 Trellis task `09-28-cooking-level-transition-choices-lan` 后，既有单机跨关领域能力接入生产 `CookingSessionHost`/`CookingSessionClient`。完整会话投影现在包含 Level scope、generation、sequence、装修/解锁/Buff 和厨房快照，并以稳定 canonical 计算 SHA-256；Recipe command 携带 Level identity，旧 Level 命令、旧 generation 和乱序/重复快照不能覆盖下一 Level。
 
@@ -167,7 +173,7 @@ Host 的跨关提交复用 `ExportSuccessHandoff`/`AcceptSuccessHandoff`、`Cook
 
 以上只证明同一台电脑上的生产 Cooking session + LiteNet loopback 跨 Level 技术纵切成立，不改变当前产品传输选型，不证明两台物理 PC LAN、主机迁移、Profile/SaveSlot、真实断电恢复或 Unity 可玩版本。
 
-## 20. 2026-09-28 可见顾客与固定伙伴运行时纵切
+## 21. 2026-09-28 可见顾客与固定伙伴运行时纵切
 
 Owner 批准 Trellis task `09-28-cooking-customer-companion-runtime-slice` 后，既有 `CookingFrontOfHouse` 从匿名桌位状态升级为稳定的 Level-local 顾客实体和固定伙伴工作投影。每次入座分配新的 `customer-N`，订单身份跟随顾客；同一桌连续接待不会复用订单。snapshot 可观察等待询问、询问中、已开单、用餐四阶段，以及伙伴的询问/洗碗目标和 elapsed/required tick，并以稳定 canonical 计算 SHA-256。
 
@@ -177,17 +183,25 @@ Owner 批准 Trellis task `09-28-cooking-customer-companion-runtime-slice` 后�
 
 以上只证明单机纯 C# 的运行态可观察性与同 Level 销毁重建恢复成立。不证明 Unity 表现、坐标/寻路/动画、伙伴成长与关系、收益/小费/评价、LAN wire、两台物理 PC LAN、durable store 或 process-crash 恢复。
 
-## 21. 未完成范围
+## 22. 2026-09-29 固定伙伴小关内成长增量
+
+Owner 批准 Trellis task `09-28-cooking-companion-level-growth` 后，固定伙伴获得第一项 Level-local 成长。询问成功开单和洗碗成功完成各累计一次；累计完成 3 个任务后派生解锁洗碗加速，之后新认领洗碗所需 Tick 为基础值的一半、向上取整且最低 1 Tick。任务认领时冻结 `RequiredTicks`，已经开始的任务不会因之后解锁而改速；第三次完成后同一固定 Tick 新认领的洗碗立即使用加速值。
+
+成长完成计数是 `CookingFrontOfHouse` 内唯一可变来源，解锁状态只从计数和 schedule 阈值派生。前厅 snapshot/canonical/SHA-256 包含阈值、完成计数、解锁状态和冻结耗时；同 Level checkpoint 保留这些状态并原子拒绝负计数、派生不一致和非法耗时。失败重开和下一 Level 清零成长；ET host 无需新增生产状态，继续透传领域前厅 snapshot/checkpoint。
+
+验证：领域聚焦 `CookingFrontOfHouseTests` 20/20，ET checkpoint 聚焦 7/7。`cooking-kitchen-loop`（focused 104/104、Cooking 225/225、ET Runtime 64/64）与 `cooking-et-level-runtime`（Cooking 225/225、ET Runtime 64/64）均构建 0 警告、0 错误并 exit 0。日志见 task `check.jsonl` 与 `local/Logs/test-gates/20260929-094117-cooking-kitchen-loop`、`local/Logs/test-gates/20260929-094410-cooking-et-level-runtime`。
+
+以上不包含 LAN/session 前厅投影、Unity 表现、更多伙伴能力、跨 Level 或长期成长、收益/评价、Profile/SaveSlot、durable store 或 process-crash 恢复。
 
 ### Non-Unity successor backlog
 
-P1–P6 尚可另行审议的工作包括两台物理 PC LAN 验收、Room/Match 产品语义、durable store、process-crash 恢复、批准 workload/threshold 和非 Unity 优化验证。原 UDP task 曾提供 LiteNetLib minimal wire/adapter、loopback 与 same-machine harness，但未替代两 PC 证据，也未解决完整 production transport 的认证、安全、重连或产品生命周期语义；该方向已于 2026-09-21 放弃，传输计划改用 KCP，属未启动、未批准、无时间表的后续工作。其两机执行入口见 [UDP two-PC LAN acceptance](udp-two-pc-lan-acceptance.md)（已退役，仅作历史参考）。其余工作均未启动、未批准、没有时间表，详见 [successor backlog](successor-backlog.md)。与现状衔接最直接的是评分、收益、评价与失败条件（均需重新审议后立项），以及伙伴成长/关系、顾客内容类型、Profile/SaveSlot、真实断电恢复、connection→PlayerId 绑定与 ECS 清退。可见顾客与固定伙伴当前工作投影已由本节纵切落地，但不包含 Unity 表现或长期成长。
+P1–P6 尚可另行审议的工作包括两台物理 PC LAN 验收、Room/Match 产品语义、durable store、process-crash 恢复、批准 workload/threshold 和非 Unity 优化验证。原 UDP task 曾提供 LiteNetLib minimal wire/adapter、loopback 与 same-machine harness，但未替代两 PC 证据，也未解决完整 production transport 的认证、安全、重连或产品生命周期语义；该方向已于 2026-09-21 放弃，传输计划改用 KCP，属未启动、未批准、无时间表的后续工作。基础积分/星级和固定伙伴首个 Level-local 洗碗加速已完成，正常产品流程不设置业务失败。更多伙伴能力、长期成长、LAN 投影、收益/评价、顾客内容类型、Profile/SaveSlot、真实断电恢复、connection→PlayerId 绑定与 ECS 清退仍需分别审议。
 
 ### Prohibited Unity scope
 
 Cooking Unity 应用层、场景、authoring/export、projection、UI、动画、EditMode 与 scene smoke 长期禁止实施，不再作为旧 task、successor 或完整出口的当前 blocker。其历史来源、跨宿主 authority/identity/stale-input 不变量和重新授权条件见 [future scope](future-scope.md)。
 
-## 22. 后续读取顺序
+## 23. 后续读取顺序
 
 1. 读取本文确认三类状态。
 2. 读取 [技术路线](technical-roadmap.md)、[交付计划](delivery-plan.md) 与 [Cooking spec index](../../../.trellis/spec/cooking/index.md)。
@@ -195,7 +209,7 @@ Cooking Unity 应用层、场景、authoring/export、projection、UI、动画�
 4. 只有 owner 明确批准新范围后才新建 Trellis task；不要恢复已归档 task。
 5. Unity 重新授权必须满足 [future scope](future-scope.md) 的独立条件；non-Unity 后续从 [successor backlog](successor-backlog.md) 选择并重新审议。
 
-## 23. 维护规则
+## 24. 维护规则
 
 - 本文只汇总状态与链接，不复制行为契约、测试矩阵或未来 checklist。
 - 未实际运行的 Unity、两 PC LAN、durability 或 global gate 继续是 not-run/未完成；本次同机 loopback protocol 证据不能替代这些出口。

@@ -1,0 +1,11 @@
+{"file":".trellis/spec/cooking/cooking-recipe-loop.md","reason":"核对任务计数、洗碗耗时、生命周期与 checkpoint 实现符合既有前厅契约"}
+{"file":"Docs/design/CookingGame/reference/product-lifetimes.md","reason":"核对成长只在当前 Level 保留，同 Level 恢复保留而失败/下一 Level 清零"}
+{"file":"Docs/AbilityKit测试门禁与批量回归规范.md","reason":"选择并记录 Cooking 与 ET runtime 权威门禁，禁止把跳过记录为通过"}
+{"file":".trellis/spec/guides/cross-layer-thinking-guide.md","reason":"检查领域 snapshot、宿主信封、恢复原子性和测试数据流完整"}
+{"file":".trellis/spec/guides/code-reuse-thinking-guide.md","reason":"检查无第二份成长状态、无 LAN/Unity 范围扩张和既有机制复用"}
+{"time":"2026-09-29T09:36:00+08:00","command":"dotnet test src/AbilityKit.Game.Cooking.Tests/AbilityKit.Game.Cooking.Tests.csproj --filter FullyQualifiedName~CookingFrontOfHouseTests -v minimal","passed":true,"summary":"20/20 front-of-house domain tests passed, covering G1-G7 and lifecycle reset"}
+{"time":"2026-09-29T09:36:30+08:00","command":"dotnet test src/AbilityKit.ET.Runtime.Tests/AbilityKit.ET.Runtime.Tests.csproj --filter FullyQualifiedName~CookingLevelCheckpointTests -v minimal","passed":true,"summary":"7/7 ET checkpoint tests passed, including unlocked active-wash restore equivalence"}
+{"time":"2026-09-29T09:41:50+08:00","command":"powershell -ExecutionPolicy Bypass -File tools/run_test_gate.ps1 -Gate cooking-kitchen-loop","passed":true,"summary":"builds 0 warnings/0 errors; focused 104/104; Cooking 225/225; ET Runtime 64/64; gate exit 0"}
+{"time":"2026-09-29T09:44:30+08:00","command":"powershell -ExecutionPolicy Bypass -File tools/run_test_gate.ps1 -Gate cooking-et-level-runtime","passed":true,"summary":"builds 0 warnings/0 errors; Cooking 225/225; ET Runtime 64/64; gate exit 0"}
+{"time":"2026-09-29T09:45:00+08:00","command":"trellis channel impl-cooking-companion-growth implement worker","passed":false,"status":"blocked","summary":"Codex implement worker was blocked by managed read-only policy before repository reads; main session implemented and verified the task"}
+{"time":"2026-09-29T09:55:00+08:00","command":"trellis channel check-cooking-companion-growth check worker","passed":false,"status":"blocked","summary":"Codex check worker exited before terminal event; main session completed the prescribed scope, contract, manifest, and diff review after both authoritative gates passed"}

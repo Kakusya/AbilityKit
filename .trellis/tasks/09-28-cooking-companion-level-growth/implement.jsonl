@@ -1,0 +1,7 @@
+{"file":".trellis/spec/cooking/index.md","reason":"Cooking 当前已验证范围、伙伴成长 successor 边界与禁止提前宣称完成的状态入口"}
+{"file":".trellis/spec/cooking/cooking-recipe-loop.md","reason":"前厅询问、洗碗、snapshot、checkpoint、失败重开与跨 Level 清理的稳定行为契约"}
+{"file":"Docs/design/CookingGame/reference/product-lifetimes.md","reason":"Level-local 状态、同代际恢复、失败换代与下一 Level 重置边界"}
+{"file":".trellis/tasks/09-19-cooking-productization-network-slice-planning/prd.md","reason":"Owner 已确认的伙伴成长产品规则、阈值、加速公式、生效时点和范围边界"}
+{"file":".trellis/tasks/09-19-cooking-productization-network-slice-planning/research/discussion-notes.md","reason":"伙伴成长讨论脉络与已排除方向，防止实现扩大到长期成长、LAN 或 Unity"}
+{"file":".trellis/spec/guides/cross-layer-thinking-guide.md","reason":"检查领域状态、ET 宿主 checkpoint 和测试之间的数据流唯一性"}
+{"file":".trellis/spec/guides/code-reuse-thinking-guide.md","reason":"复用现有前厅 snapshot/checkpoint，不在 ET 或测试中复制成长状态机"}

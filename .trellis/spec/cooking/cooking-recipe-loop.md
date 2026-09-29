@@ -1,4 +1,31 @@
 # P2 一条完整配方：cooking-recipe-loop
+
+## 2026-09-29 固定伙伴小关内成长修约（任务 09-28-cooking-companion-level-growth）
+
+来源：owner 已确认固定伙伴第一项成长能力为当前 Level 内完成任务后提升洗碗速度。本次只实现纯 C# 前厅领域状态与 ET 同 Level checkpoint，不扩展 LAN、Unity、长期成长或经济系统。
+
+| 位置 | 旧条款 | 新条款 | 来源 |
+|---|---|---|---|
+| 成长来源 | 固定伙伴只有身份、当前工作目标与 elapsed/required tick，无成长状态 | `CookingFrontOfHouse` 以单一 `CompletedTaskCount` 统计成功完成的询问和洗碗；取消、未完成、失败或重复路径不计数 | task PRD R1/R2 |
+| 解锁与耗时 | 洗碗任务始终使用 `Schedule.WashTicks` | 完成 3 个伙伴任务后派生解锁；之后新认领的洗碗使用 `max(1, ceil(WashTicks / 2))`。工作认领时冻结 `RequiredTicks`，已开始任务不追溯改速；第三次完成后同 Tick 新认领洗碗立即加速 | task PRD R3/R4 |
+| 投影与确定性 | snapshot/canonical 只含伙伴当前工作进度 | snapshot/canonical/SHA-256 增加 schedule 阈值、完成计数、派生解锁状态和冻结耗时；相同状态确定性一致 | task PRD R5 |
+| 同 Level 恢复 | checkpoint 恢复当前伙伴工作，但 required tick 从 schedule 推导 | checkpoint 保存完成计数和冻结耗时；负计数、解锁派生不一致或非法 required tick 原子拒绝，ET host 继续复用同一前厅 checkpoint | task PRD R6 |
+| 生命周期 | 失败重开和下一 Level 清除前厅工作 | 同时清零完成计数和解锁状态；同 Level checkpoint 恢复保留成长 | task PRD R7 |
+
+### 实现状态声明
+
+- 已实现并验证（单机纯 C# + ET checkpoint）：0–2 次完成保持基础洗碗耗时；第 3 次成功完成解锁；奇数向上取整和 1 Tick 下限；询问/洗碗精确计数；同 Tick 生效；snapshot/canonical/SHA-256；解锁前后与进行中洗碗 checkpoint 往返；投毒原子拒绝；失败重开和下一 Level 清零。
+- `CookingLevelEtHost` 无需新增生产状态或恢复分支；既有 `FrontOfHouseSnapshot` 与 `FrontOfHouseCheckpoint` 透传已覆盖成长状态。
+- 门禁 `cooking-kitchen-loop`：focused 104/104、Cooking 225/225、ET Runtime 64/64；门禁 `cooking-et-level-runtime`：Cooking 225/225、ET Runtime 64/64；两者构建均 0 警告、0 错误并 exit 0。
+- 仍未实现：LAN/session 前厅投影与双端共识、Unity 表现、更多伙伴能力、跨 Level/长期成长、收益/评价、Profile/SaveSlot、durable/process-crash 恢复。
+
+## 2026-09-24 基础积分与星级修约（任务 09-24-cooking-scoring-network-slice）
+
+- 每个订单模板声明固定 `BaseScore`；只有成功结算的订单计分一次，未满足订单 0 分且不倒扣。
+- 当前小关总分为结算订单基础分之和，按配置阈值映射为 0–3 星；0 星仍是自然完成，不构成业务失败。
+- `CookingRecipeSnapshot` canonical/SHA-256 包含 `TotalScore` 与 `Stars`，同机 Host/Client 已验证共识。
+- 该第一版不包含收益、货币、小费、长期进度奖励、速度/连击/品质倍率或复杂评价平衡。
+
 ## 2026-09-28 可见顾客与固定伙伴运行态修约（任务 09-28-cooking-customer-companion-runtime-slice）
 
 来源：owner 已确认“可见顾客 + 自动服务 + 餐桌控制客流”和少量固定伙伴方向。本次只把既有前厅节奏升级为稳定、可观察、可恢复的单机纯 C# 权威运行态，不加入表现坐标、寻路、成长、收益或网络协议。
@@ -15,7 +42,7 @@
 
 - 已实现并验证（单机纯 C#）：同桌两批顾客身份/订单不复用，四阶段投影，伙伴询问/洗碗进度，canonical/SHA-256，询问/洗碗/用餐 checkpoint，投毒拒绝零变更，ET host 厨房+前厅共同恢复。
 - checkpoint wire 版本从 v1 升至 v2；v1 明确以 `UnknownFormatVersion` 拒绝，不提供迁移。
-- 仍未实现：顾客/伙伴 Unity 表现、位置/寻路/动画、伙伴成长与关系、收益/小费/评价、LAN wire 投影、两 PC LAN、durable store 与 process-crash 恢复。
+- 仍未实现：顾客/伙伴 Unity 表现、位置/寻路/动画、伙伴长期成长与关系、更多小关内能力、收益/小费/评价、LAN wire 投影、两 PC LAN、durable store 与 process-crash 恢复。
 
 ## 2026-09-23 失败重开带走当前进程选择修约（任务 09-23-cooking-retry-keeps-choices）
 

@@ -249,9 +249,11 @@ public sealed class CookingFrontOfHouseTests
     {
         var first = House();
         var second = House();
+        var differentThreshold = new CookingFrontOfHouse(Schedule(companionGrowthTaskThreshold: 4));
         var firstKitchen = Kitchen();
         var secondKitchen = Kitchen();
 
+        Assert.NotEqual(first.Snapshot().CanonicalText(), differentThreshold.Snapshot().CanonicalText());
         first.Step(firstKitchen, Template);
         second.Step(secondKitchen, Template);
         Assert.Equal(first.Snapshot().CanonicalText(), second.Snapshot().CanonicalText());
@@ -267,6 +269,7 @@ public sealed class CookingFrontOfHouseTests
     {
         AssertInquiryRoundTrip();
         AssertWashingRoundTrip();
+        AssertGrowthWashingRoundTrip();
         AssertDiningRoundTrip();
     }
 
@@ -345,6 +348,182 @@ public sealed class CookingFrontOfHouseTests
         }
     }
 
+    [Fact]
+    public void C01_three_completed_tasks_unlock_rounded_half_washing_for_new_work()
+    {
+        var house = new CookingFrontOfHouse(Schedule(tableCount: 3, serviceTicks: 20,
+            arrivalIntervalTicks: 1, inquiryTicks: 2, washTicks: 5, waitLimitTicks: 50));
+        var kitchen = Kitchen();
+        var initial = house.Snapshot();
+        Assert.Equal(0, initial.Companion.CompletedTaskCount);
+        Assert.False(initial.Companion.WashSpeedUnlocked);
+
+        CompleteInquiryTasks(house, kitchen, 2);
+        var beforeUnlock = house.Snapshot();
+        Assert.Equal(2, beforeUnlock.Companion.CompletedTaskCount);
+        Assert.False(beforeUnlock.Companion.WashSpeedUnlocked);
+        Assert.NotEqual(initial.Sha256(), beforeUnlock.Sha256());
+
+        house.Step(kitchen, Template);
+        Dirty(kitchen);
+        house.Step(kitchen, Template);
+        Assert.Equal(CookingCompanionWorkKind.Inquiring, house.Snapshot().Companion.Work);
+        house.Step(kitchen, Template);
+        var accelerated = house.Snapshot().Companion;
+        Assert.Equal(3, accelerated.CompletedTaskCount);
+        Assert.True(accelerated.WashSpeedUnlocked);
+        Assert.Equal(CookingCompanionWorkKind.Washing, accelerated.Work);
+        Assert.Equal(1, accelerated.ElapsedTicks);
+        Assert.Equal(3, accelerated.RequiredTicks);
+        house.Step(kitchen, Template);
+        house.Step(kitchen, Template);
+        Assert.DoesNotContain(Bowl, kitchen.DirtyBowlsAwaitingWash());
+        Assert.Equal(4, house.Snapshot().Companion.CompletedTaskCount);
+
+        var minimum = new CookingFrontOfHouse(Schedule(tableCount: 1, serviceTicks: 10,
+            arrivalIntervalTicks: 10, inquiryTicks: 1, washTicks: 1, waitLimitTicks: 20,
+            companionGrowthTaskThreshold: 1));
+        var minimumKitchen = Kitchen();
+        minimum.Step(minimumKitchen, Template);
+        minimum.Step(minimumKitchen, Template);
+        Assert.True(minimum.Snapshot().Companion.WashSpeedUnlocked);
+        Dirty(minimumKitchen);
+        minimum.Step(minimumKitchen, Template);
+        Assert.DoesNotContain(Bowl, minimumKitchen.DirtyBowlsAwaitingWash());
+    }
+
+    [Theory]
+    [InlineData(0)]
+    [InlineData(1)]
+    [InlineData(2)]
+    public void C00_zero_to_two_completed_tasks_keep_base_wash_duration(int completedTasks)
+    {
+        var house = new CookingFrontOfHouse(Schedule(tableCount: Math.Max(1, completedTasks), serviceTicks: 20,
+            arrivalIntervalTicks: 1, inquiryTicks: 20, washTicks: 5, waitLimitTicks: 50));
+        var kitchen = Kitchen();
+        if (completedTasks > 0)
+            CompleteInquiryTasks(house, kitchen, completedTasks);
+
+        Assert.Equal(completedTasks, house.Snapshot().Companion.CompletedTaskCount);
+        Dirty(kitchen);
+        house.Step(kitchen, Template);
+        Assert.Equal(5, house.Snapshot().Companion.RequiredTicks);
+        Assert.False(house.Snapshot().Companion.WashSpeedUnlocked);
+    }
+
+    [Fact]
+    public void C02_only_successful_inquiries_and_washes_increment_growth_once()
+    {
+        var cancelled = new CookingFrontOfHouse(Schedule(tableCount: 1, serviceTicks: 10,
+            arrivalIntervalTicks: 10, inquiryTicks: 5, washTicks: 2, waitLimitTicks: 2));
+        var cancelledKitchen = Kitchen();
+        cancelled.Step(cancelledKitchen, Template);
+        cancelled.Step(cancelledKitchen, Template);
+        cancelled.Step(cancelledKitchen, Template);
+        Assert.Equal(0, cancelled.Snapshot().Companion.CompletedTaskCount);
+
+        var failedWash = new CookingFrontOfHouse(Schedule(serviceTicks: 1, inquiryTicks: 20, washTicks: 2));
+        var failedWashKitchen = Kitchen();
+        Dirty(failedWashKitchen);
+        failedWash.Step(failedWashKitchen, Template);
+        Assert.True(failedWashKitchen.CompleteWash(Bowl).Accepted);
+        failedWash.Step(failedWashKitchen, Template);
+        Assert.Equal(0, failedWash.Snapshot().Companion.CompletedTaskCount);
+
+        var successfulInquiry = new CookingFrontOfHouse(Schedule(tableCount: 1, serviceTicks: 10,
+            arrivalIntervalTicks: 10, inquiryTicks: 1, waitLimitTicks: 20));
+        var inquiryKitchen = Kitchen();
+        successfulInquiry.Step(inquiryKitchen, Template);
+        successfulInquiry.Step(inquiryKitchen, Template);
+        Assert.Equal(1, successfulInquiry.Snapshot().Companion.CompletedTaskCount);
+        successfulInquiry.Step(inquiryKitchen, Template);
+        Assert.Equal(1, successfulInquiry.Snapshot().Companion.CompletedTaskCount);
+
+        var successfulWash = new CookingFrontOfHouse(Schedule(serviceTicks: 1, inquiryTicks: 20, washTicks: 1));
+        var washKitchen = Kitchen();
+        Dirty(washKitchen);
+        successfulWash.Step(washKitchen, Template);
+        Assert.Equal(1, successfulWash.Snapshot().Companion.CompletedTaskCount);
+        successfulWash.Step(washKitchen, Template);
+        Assert.Equal(1, successfulWash.Snapshot().Companion.CompletedTaskCount);
+    }
+
+    [Fact]
+    public void C03_growth_checkpoint_round_trips_and_rejects_poison_without_mutation()
+    {
+        var schedule = Schedule(tableCount: 3, serviceTicks: 20, arrivalIntervalTicks: 1,
+            inquiryTicks: 20, washTicks: 5, waitLimitTicks: 50);
+        var house = new CookingFrontOfHouse(schedule);
+        var kitchen = Kitchen();
+        CompleteInquiryTasks(house, kitchen, 3);
+        Dirty(kitchen);
+        house.Step(kitchen, Template);
+        var checkpoint = house.ExportCheckpoint(Template);
+        Assert.Equal(3, checkpoint.State.Companion.CompletedTaskCount);
+        Assert.True(checkpoint.State.Companion.WashSpeedUnlocked);
+        Assert.Equal(3, checkpoint.State.Companion.RequiredTicks);
+
+        var restored = CookingFrontOfHouse.Restore(checkpoint, kitchen);
+        Assert.True(restored.Accepted);
+        Assert.Equal(house.Snapshot().CanonicalText(), restored.FrontOfHouse!.Snapshot().CanonicalText());
+
+        var before = house.Snapshot().CanonicalText();
+        AssertRejected(checkpoint with
+        {
+            State = checkpoint.State with
+            {
+                Companion = checkpoint.State.Companion with
+                {
+                    CompletedTaskCount = -1,
+                    WashSpeedUnlocked = false,
+                },
+            },
+        });
+        AssertRejected(checkpoint with
+        {
+            State = checkpoint.State with
+            {
+                Companion = checkpoint.State.Companion with { WashSpeedUnlocked = false },
+            },
+        });
+        AssertRejected(checkpoint with
+        {
+            State = checkpoint.State with
+            {
+                Companion = checkpoint.State.Companion with { RequiredTicks = 99 },
+            },
+        });
+
+        void AssertRejected(CookingFrontOfHouseCheckpoint poisoned)
+        {
+            var result = house.RestoreCheckpoint(poisoned, kitchen);
+            Assert.False(result.Accepted);
+            Assert.Equal(CookingFrontOfHouseRestoreReason.CompanionInvalid, result.Reason);
+            Assert.Equal(before, house.Snapshot().CanonicalText());
+        }
+    }
+
+    [Fact]
+    public void C04_failure_retry_and_next_level_reset_growth()
+    {
+        var failed = new CookingFrontOfHouse(Schedule(tableCount: 3, serviceTicks: 20,
+            arrivalIntervalTicks: 1, inquiryTicks: 20, waitLimitTicks: 50));
+        var failedKitchen = Kitchen();
+        CompleteInquiryTasks(failed, failedKitchen, 3);
+        Assert.True(failed.Snapshot().Companion.WashSpeedUnlocked);
+        failed.DropFailedScene();
+        Assert.Equal(0, failed.Snapshot().Companion.CompletedTaskCount);
+        Assert.False(failed.Snapshot().Companion.WashSpeedUnlocked);
+
+        var next = new CookingFrontOfHouse(Schedule(tableCount: 3, serviceTicks: 20,
+            arrivalIntervalTicks: 1, inquiryTicks: 20, waitLimitTicks: 50));
+        var nextKitchen = Kitchen();
+        CompleteInquiryTasks(next, nextKitchen, 3);
+        next.ResetForNextLevel(nextKitchen, Template);
+        Assert.Equal(0, next.Snapshot().Companion.CompletedTaskCount);
+        Assert.False(next.Snapshot().Companion.WashSpeedUnlocked);
+    }
+
     private static void AssertInquiryRoundTrip()
     {
         var source = new CookingFrontOfHouse(Schedule(tableCount: 1, inquiryTicks: 3));
@@ -374,6 +553,33 @@ public sealed class CookingFrontOfHouseTests
         var checkpoint = source.ExportCheckpoint(Template);
 
         var restoredKitchen = Kitchen();
+        Dirty(restoredKitchen);
+        var restored = CookingFrontOfHouse.Restore(checkpoint, restoredKitchen);
+        Assert.True(restored.Accepted);
+        Assert.Equal(source.Snapshot().CanonicalText(), restored.FrontOfHouse!.Snapshot().CanonicalText());
+
+        source.Step(sourceKitchen, Template);
+        restored.FrontOfHouse.Step(restoredKitchen, Template);
+        Assert.Equal(source.Snapshot().CanonicalText(), restored.FrontOfHouse.Snapshot().CanonicalText());
+    }
+
+    private static void AssertGrowthWashingRoundTrip()
+    {
+        var schedule = Schedule(tableCount: 1, serviceTicks: 10, arrivalIntervalTicks: 10,
+            inquiryTicks: 1, washTicks: 5, waitLimitTicks: 20, companionGrowthTaskThreshold: 1);
+        var source = new CookingFrontOfHouse(schedule);
+        var sourceKitchen = Kitchen();
+        source.Step(sourceKitchen, Template);
+        source.Step(sourceKitchen, Template);
+        Dirty(sourceKitchen);
+        source.Step(sourceKitchen, Template);
+        var checkpoint = source.ExportCheckpoint(Template);
+        Assert.Equal(1, checkpoint.State.Companion.CompletedTaskCount);
+        Assert.True(checkpoint.State.Companion.WashSpeedUnlocked);
+        Assert.Equal(3, checkpoint.State.Companion.RequiredTicks);
+
+        var restoredKitchen = Kitchen();
+        Assert.True(restoredKitchen.OpenOrder(new OrderId("customer-1-order"), Template).Accepted);
         Dirty(restoredKitchen);
         var restored = CookingFrontOfHouse.Restore(checkpoint, restoredKitchen);
         Assert.True(restored.Accepted);
@@ -415,8 +621,9 @@ public sealed class CookingFrontOfHouseTests
 
     private static CookingFrontOfHouseSchedule Schedule(int tableCount = 2, int serviceTicks = 8,
         int arrivalIntervalTicks = 2, int inquiryTicks = 2, int washTicks = 2, int diningTicks = 1,
-        int waitLimitTicks = 9) =>
-        new(tableCount, serviceTicks, arrivalIntervalTicks, inquiryTicks, washTicks, diningTicks, waitLimitTicks);
+        int waitLimitTicks = 9, int companionGrowthTaskThreshold = 3) =>
+        new(tableCount, serviceTicks, arrivalIntervalTicks, inquiryTicks, washTicks, diningTicks, waitLimitTicks,
+            companionGrowthTaskThreshold);
 
     private static CookingRecipeSimulation Kitchen()
     {
@@ -433,6 +640,13 @@ public sealed class CookingFrontOfHouseTests
     }
 
     private static void Dirty(CookingRecipeSimulation kitchen) => kitchen.MarkBowlDirtyForTest(Bowl);
+
+    private static void CompleteInquiryTasks(CookingFrontOfHouse house, CookingRecipeSimulation kitchen, int count)
+    {
+        for (var task = 0; task < count; task++)
+            house.Step(kitchen, Template);
+        house.FinishInProgress(kitchen, Template);
+    }
 
     private static string Status(CookingRecipeSimulation kitchen, OrderId order) =>
         kitchen.Orders.Single(candidate => candidate.Id == order).Status;
