@@ -1,3 +1,5 @@
+> 2026-10-03 N02 intermediate: assembled network-sdk actually311/311 passed, zero failures/skips; rich independent-process preparation failed and four Session review blockers remain. [Current evidence](../../../.trellis/tasks/10-02-cooking-network-gameplay-loop/research/process-integration-verification.md). No network production accepted on master; no physical two-PC/Unity claim.
+
 > 2026-10-03: N01 contract accepted; N02 bounded production in_progress. Read [root acceptance](../../../.trellis/tasks/10-02-cooking-network-contract-review/research/root-contract-acceptance.md). Actual current network gates and physical two-PC LAN remain unverified; S01-S14 accepted source4dadd25c8 unchanged.
 
 > Current pure C# singleplayer exit: S01-S14 completed on source4dadd25c8 with actual final gates644/772/299 and772/299, zero failures/skips. [Exact scope, evidence and next network exits](../../../.trellis/tasks/10-02-cooking-gameplay-menu-plan/research/master-singleplayer-exit-verification.md). Unity/S15 remain deferred; two-PC LAN unverified. Earlier singleplayer-in-progress entries below are historical.

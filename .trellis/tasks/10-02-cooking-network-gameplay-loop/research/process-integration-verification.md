@@ -1,0 +1,11 @@
+# N02 assembled process verification — in progress
+
+2026-10-03. Root managed tree: `C:/Users/Administrator/orca/workspaces/AbilityKit/cooking-network-process-current`. This record is intermediate evidence, not acceptance or N02 completion. Master has no network production merge yet.
+
+- Authority producer: 15/15 actual focused tests; transport producer: 18/18; Session initial increment: 19/19. Session independent review found four blockers; read `session-independent-review.md`. Corrections are under production review and not yet accepted.
+- First root `network-sdk` gate failed 145/146 at the SDK architecture test because repository discovery only accepted a `.git` directory. Root correction accepts the native worktree `.git` file while retaining Unity/src markers.
+- Second gate exposed the historical Battle fixture: it never connected or raised Connected, so the real authentication gate blocked input. It was interrupted; no pass is claimed. Test-only correction in `0d076d9ef` drives the real Connect/authentication lifecycle and retains assertions.
+- Final assembled `network-sdk`: actual **311/311 passed, zero failed/skipped**, across 12 TRX, 40.4 seconds. Evidence: `local/Logs/test-gates/20261003-035826-network-sdk/network-sdk`; producer detail `sdk-battle-fixture-gate.md` in the managed tree. No production authentication bypass was added.
+- New independent-process runner compiled after real compiler corrections (`local/Logs/network-process-build-v4.log`). First and second runs exceeded the original 30-second readiness budget. Third run with explicit 120-second preparation budget proved local framed synchronization and finite procurement, then **failed** while preparing the shared manual handoff: an accepted Move did not reach the passive client projection within 30 seconds. Authoritative evidence is the retained `network-process-third.log` and corresponding host report/stdout/stderr. The suspected full-state decoding bound is not yet proven; root is adding encode/decode diagnostics.
+
+Physical two-PC LAN, rich process completion, final cooking broad gates, master post-merge verification and Unity remain unverified. Performance acceptance thresholds remain UNSET.
