@@ -331,7 +331,8 @@ public sealed class CookingMenuCatalog
     /// <summary>
     /// Projects into the actual content document. The core-owner adapter supplies new schema fields;
     /// no serializer/reflection trick may silently drop Manual or YieldPortions. Initial supply is a
-    /// test fixture (8 material portions, one carrier, two serving containers), not procurement balance.
+    /// compatibility fixture (8 material portions, one carrier, two serving containers), not spatial
+    /// stock/refill proof or procurement balance. Spatial fixtures use unique anchors/S07 packages.
     /// </summary>
     public CookingContentDocument ToContentDocument(CookingContentDocument baseline, IEnumerable<string> sourceIds,
         Func<CookingMenuStep, CookingContentRecipe>? recipeFactory = null)
@@ -342,12 +343,13 @@ public sealed class CookingMenuCatalog
         var selectedMenus = selected.Select(x => menus[x]).ToArray();
         var definitions = steps.SelectMany(x => x.Inputs.Select(i => i.Definition).Append(x.Output)).ToHashSet();
         var carrierDefs = document.Containers.Where(x => required.Containers.Contains(x.Id)).ToArray();
-        var projectedRecipes = steps.Select(x => (recipeFactory ?? MapLegacyRecipe)(CloneStep(x))).ToArray();
+        var projectedRecipes = steps.Select(x => (recipeFactory ?? MapRuntimeRecipe)(CloneStep(x))).ToArray();
         // Adapters are allowed to add runtime fields, never to alter recipe identity or its multiset.
         foreach (var pair in steps.Zip(projectedRecipes))
             if (pair.Second.Id != pair.First.Id.Value || pair.Second.ProductDefinition != pair.First.Output.Value ||
                 pair.Second.Process != pair.First.Process.Value || pair.Second.RequiredApplianceCapability != pair.First.Capability ||
                 pair.Second.RequiredTicks != pair.First.RequiredTicks || pair.Second.DefaultInputs?.Count > 0 ||
+                pair.Second.Execution != pair.First.ExecutionKind.ToString() || pair.Second.YieldPortions != pair.First.YieldPortions ||
                 !pair.Second.RequiresStation || pair.Second.Completion != Completion(pair.First) ||
                 !pair.Second.Inputs.Order(StringComparer.Ordinal).SequenceEqual(ExpandInputs(pair.First).Order(StringComparer.Ordinal)))
                 throw new ArgumentException($"InvalidRuntimeAdapter/{pair.First.Id.Value}", nameof(recipeFactory));
@@ -384,13 +386,10 @@ public sealed class CookingMenuCatalog
     public static string Completion(CookingMenuStep step) => step.YieldPortions > 1
         ? nameof(CookingRecipeCompletionKind.RetainInputs) : nameof(CookingRecipeCompletionKind.ConsumeInputs);
 
-    private static CookingContentRecipe MapLegacyRecipe(CookingMenuStep step)
-    {
-        if (step.ExecutionKind != CookingMenuExecutionKind.Automatic || step.YieldPortions != 1 || step.Inputs.Any(x => x.Portions != 1))
-            throw new InvalidOperationException($"UnsupportedRuntimeContract/{step.Id.Value}: core execution/portions adapter required.");
-        return new(step.Id.Value, ExpandInputs(step), step.Output.Value, step.Process.Value,
-            step.Capability, step.RequiredTicks, Completion: Completion(step));
-    }
+    private static CookingContentRecipe MapRuntimeRecipe(CookingMenuStep step) =>
+        new(step.Id.Value, ExpandInputs(step), step.Output.Value, step.Process.Value,
+            step.Capability, step.RequiredTicks, Completion: Completion(step),
+            Execution: step.ExecutionKind.ToString(), YieldPortions: step.YieldPortions);
 
     private static CookingMenuStep CloneStep(CookingMenuStep step) => step with { Inputs = step.Inputs.ToArray() };
     private static T[] Sort<T>(IEnumerable<T> values, Func<T, string> key) => values.OrderBy(key, StringComparer.Ordinal).ToArray();

@@ -52,8 +52,7 @@ public sealed class CookingMenuCatalogTests
             x.Inputs.Any(i => i.Definition.Value == definition));
         Assert.Equal(portions, step.Inputs.Single(x => x.Definition.Value == definition).Portions);
         Assert.Equal(portions, CookingMenuCatalog.ExpandInputs(step).Count(x => x == definition));
-        // Projection contract only: the core adapter adds Manual/Yield fields when published.
-        var projected = catalog.ToContentDocument(Baseline(), new[] { menu }, ProjectionShape);
+        var projected = catalog.ToContentDocument(Baseline(), new[] { menu });
         Assert.Equal(portions, projected.Recipes.Single(x => x.Id == step.Id.Value).Inputs.Count(x => x == definition));
         Assert.Contains(step.Id, recipes);
     }
@@ -266,11 +265,22 @@ public sealed class CookingMenuCatalogTests
     }
 
     [Fact]
-    public void Unsupported_core_contract_cannot_silently_drop_manual_batch_or_repeated_inputs()
+    public void Typed_core_projection_cannot_silently_drop_manual_batch_or_repeated_inputs()
     {
         var catalog = Catalog();
-        Assert.Throws<InvalidOperationException>(() => catalog.LoadContent(Baseline(), new[] { "F01" }));
-        Assert.Throws<InvalidOperationException>(() => catalog.LoadContent(Baseline(), new[] { "D31" }));
+        var content = catalog.LoadContent(Baseline(), catalog.Document.Menus.Select(x => x.SourceId));
+        Assert.Equal(89, content.OrderTemplates.Count);
+        foreach (var step in catalog.Document.Steps)
+        {
+            var mapped = content.Recipes[step.Id];
+            Assert.Equal(step.ExecutionKind.ToString(), mapped.Execution.ToString());
+            Assert.Equal(step.YieldPortions, mapped.YieldPortions);
+            Assert.Equal(CookingMenuCatalog.ExpandInputs(step).Order(), mapped.Inputs.Select(x => x.Value).Order());
+        }
+        Assert.Throws<ArgumentException>(() => catalog.ToContentDocument(Baseline(), new[] { "F01" }, step =>
+            ProjectionShape(step) with { Execution = "Automatic" }));
+        Assert.Throws<ArgumentException>(() => catalog.ToContentDocument(Baseline(), new[] { "D31" }, step =>
+            ProjectionShape(step) with { YieldPortions = 1 }));
         Assert.Throws<ArgumentException>(() => catalog.ToContentDocument(Baseline(), new[] { "D12" }, step =>
             ProjectionShape(step) with { Inputs = CookingMenuCatalog.ExpandInputs(step).Distinct().ToArray() }));
     }
@@ -340,5 +350,6 @@ public sealed class CookingMenuCatalogTests
 
     private static CookingContentRecipe ProjectionShape(CookingMenuStep step) => new(step.Id.Value,
         CookingMenuCatalog.ExpandInputs(step), step.Output.Value, step.Process.Value, step.Capability,
-        step.RequiredTicks, Completion: CookingMenuCatalog.Completion(step));
+        step.RequiredTicks, Completion: CookingMenuCatalog.Completion(step),
+        Execution: step.ExecutionKind.ToString(), YieldPortions: step.YieldPortions);
 }

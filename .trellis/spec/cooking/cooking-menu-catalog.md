@@ -1,6 +1,6 @@
 # Menu catalog source and mapping contract
 
-S04 source catalog, not a level menu or a second kitchen authority. Production acceptance remains pending core Execution/YieldPortions/multiset/processing-vessel and S05 binding/disposal/identity hooks. Original v0.1 Markdown/Excel are immutable design sources.
+S04 source catalog, not a level menu or a second kitchen authority. Published core Execution/YieldPortions/multiset now map into actual content loading. Production acceptance remains pending processing-vessel and S05 binding/disposal/source-identity hooks. Original v0.1 Markdown/Excel are immutable design sources.
 
 - Source IDs plus expected names select explicit stable runtime identities. Row order cannot assign identity. Unknown/missing/duplicate IDs or ambiguous names reject; changes require explicit manifest review.
 - Preserve original attachment hashes and all367 node cell/row provenance. Each node maps to shared/expanded recipes or a distinct delivery operation; count equality alone is insufficient.
