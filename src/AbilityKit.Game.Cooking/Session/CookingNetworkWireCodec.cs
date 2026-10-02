@@ -1,4 +1,6 @@
 using System.Buffers.Binary;
+using System.Collections.Concurrent;
+using System.Reflection;
 using System.Security.Cryptography;
 using System.Text;
 using System.Text.Json;
@@ -119,9 +121,17 @@ public static class CookingNetworkWireCodec
         try { var value = envelope.Payload.Deserialize<T>(JsonOptions); return value is not null && ValidNullability(value) ? value : null; }
         catch (Exception e) when (e is JsonException or ArgumentException or InvalidOperationException or NullReferenceException or System.Reflection.TargetInvocationException) { return null; }
     }
+    private sealed record PropertyValidation(PropertyInfo Property, bool AllowsNull);
+    private static readonly ConcurrentDictionary<Type, PropertyValidation[]> PropertyValidations = new();
+    private static PropertyValidation[] PropertiesFor(Type type) => PropertyValidations.GetOrAdd(type, static current => {
+        var nullability = new NullabilityInfoContext();
+        return current.GetProperties(BindingFlags.Public | BindingFlags.Instance)
+            .Where(property => property.GetIndexParameters().Length == 0 && property.GetMethod is not null)
+            .Select(property => new PropertyValidation(property, nullability.Create(property).ReadState != NullabilityState.NotNull))
+            .ToArray();
+    });
     private static bool ValidNullability(object value)
     {
-        var nullability = new System.Reflection.NullabilityInfoContext();
         bool Visit(object? current, int depth)
         {
             if (current is null || depth > 32) return false;
@@ -131,10 +141,10 @@ public static class CookingNetworkWireCodec
                 foreach (var element in collection) if (element is null || !Visit(element, depth + 1)) return false;
                 return true;
             }
-            foreach (var property in type.GetProperties(System.Reflection.BindingFlags.Public | System.Reflection.BindingFlags.Instance)) {
-                if (property.GetIndexParameters().Length != 0 || property.GetMethod is null) continue;
-                var child = property.GetValue(current);
-                if (child is null) { if (nullability.Create(property).ReadState == System.Reflection.NullabilityState.NotNull) return false; }
+            foreach (var descriptor in PropertiesFor(type)) {
+                // Metadata is shared; values and collection elements are always validated for this instance.
+                var child = descriptor.Property.GetValue(current);
+                if (child is null) { if (!descriptor.AllowsNull) return false; }
                 else if (!Visit(child, depth + 1)) return false;
             }
             return true;

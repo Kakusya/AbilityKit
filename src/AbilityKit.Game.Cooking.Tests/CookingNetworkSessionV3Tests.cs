@@ -11,6 +11,8 @@ namespace AbilityKit.Game.Cooking.Tests;
 
 public sealed class CookingNetworkSessionV3Tests
 {
+    private readonly Xunit.Abstractions.ITestOutputHelper _output;
+    public CookingNetworkSessionV3Tests(Xunit.Abstractions.ITestOutputHelper output) => _output = output;
     private static readonly PlayerId A = new("a"), Z = new("z");
     private static readonly CookingLevelScope Scope = new(new(new("session-v3"), new("world"), new("match")), new(1), new("level"), 1);
     private static readonly DefinitionId Raw = new("raw"), Cooked = new("cooked");
@@ -401,6 +403,13 @@ public sealed class CookingNetworkSessionV3Tests
         var decoded = CookingNetworkWireCodec.Read<CookingNetworkBaseline>(envelope!)!;
         Assert.Equal(state.FullRecipe!.CanonicalText(), decoded.State.FullRecipe!.CanonicalText());
         Assert.Equal(state.ResumableCheckpoint!.CanonicalText(), decoded.State.ResumableCheckpoint!.CanonicalText());
+        // Diagnostic only: no timing assertion or acceptance threshold. Same actual rich image in both source runs.
+        var watch = System.Diagnostics.Stopwatch.StartNew();
+        for (var i = 0; i < 5; i++) Assert.NotNull(CookingNetworkWireCodec.Read<CookingNetworkBaseline>(envelope!));
+        watch.Stop(); var readMilliseconds = watch.Elapsed.TotalMilliseconds;
+        watch.Restart(); for (var i = 0; i < 5; i++) _ = CookingNetworkWireCodec.Freeze(decoded); watch.Stop();
+        _output.WriteLine("Rich baseline diagnostics: bytes={0}; tokens={1}; repeatedReads=5; readTotalMs={2:F3}; freezes=5; freezeTotalMs={3:F3}",
+            bytes.Length, TokenCount(bytes), readMilliseconds, watch.Elapsed.TotalMilliseconds);
     }
     [Fact]
     public async Task Actual_outbound_full_state_excess_is_explicit_before_issued_ack_or_new_join_permission()

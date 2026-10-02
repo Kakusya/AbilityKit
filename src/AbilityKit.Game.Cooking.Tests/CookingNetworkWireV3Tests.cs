@@ -54,4 +54,39 @@ public sealed class CookingNetworkWireV3Tests
         Assert.False(CookingNetworkWireCodec.TryDecode(Envelope("Join"), new(), out _));
     }
 
+    private static CookingNetworkWireEnvelope TypedEnvelope<T>(T payload)
+    {
+        var bytes = CookingNetworkWireCodec.Encode(CookingNetworkMessageKind.Baseline, "typed-read", payload);
+        Assert.True(CookingNetworkWireCodec.TryDecode(bytes, new(), out var envelope)); return envelope!;
+    }
+    [Fact]
+    public void Cached_type_metadata_still_rejects_later_instance_null_fields_and_nested_collection_nulls()
+    {
+        var valid = new CookingNetworkJoin(new("p"), "credential", null, null);
+        Assert.NotNull(CookingNetworkWireCodec.Read<CookingNetworkJoin>(TypedEnvelope(valid)));
+        Assert.Null(CookingNetworkWireCodec.Read<CookingNetworkJoin>(TypedEnvelope(valid with { JoinCredential = null! })));
+        Assert.Null(CookingNetworkWireCodec.Read<CookingNetworkJoin>(TypedEnvelope(valid with { Participant = new(null!) })));
+        Assert.NotNull(CookingNetworkWireCodec.Read<CookingNetworkJoin>(TypedEnvelope(valid))); // Present nullable fields remain legal after invalid instances.
+        var participant = new CookingNetworkParticipantProjection(new("p"), true, 1, 0, 0, false, false);
+        var projection = new CookingNetworkSessionProjection("instance", Array.AsReadOnly(new[] { participant }));
+        Assert.NotNull(CookingNetworkWireCodec.Read<CookingNetworkSessionProjection>(TypedEnvelope(projection)));
+        Assert.Null(CookingNetworkWireCodec.Read<CookingNetworkSessionProjection>(TypedEnvelope(projection with {
+            Participants = Array.AsReadOnly(new[] { participant with { Participant = new(null!) } }) })));
+        Assert.Null(CookingNetworkWireCodec.Read<CookingNetworkSessionProjection>(TypedEnvelope(projection with {
+            Participants = Array.AsReadOnly(new CookingNetworkParticipantProjection[] { null! }) })));
+        Assert.NotNull(CookingNetworkWireCodec.Read<CookingNetworkSessionProjection>(TypedEnvelope(projection)));
+    }
+    [Fact]
+    public void Concurrent_typed_reads_share_only_metadata_and_validate_every_instance()
+    {
+        var participant = new CookingNetworkParticipantProjection(new("parallel"), true, 1, 0, 0, false, false);
+        var valid = TypedEnvelope(new CookingNetworkSessionProjection("instance", Array.AsReadOnly(new[] { participant })));
+        var bad = TypedEnvelope(new CookingNetworkSessionProjection("instance", Array.AsReadOnly(new[] {
+            participant with { Participant = new(null!) } })));
+        Parallel.For(0, 128, i => {
+            Assert.NotNull(CookingNetworkWireCodec.Read<CookingNetworkSessionProjection>(valid));
+            Assert.Null(CookingNetworkWireCodec.Read<CookingNetworkSessionProjection>(bad));
+        });
+    }
+
 }
