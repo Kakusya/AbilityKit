@@ -4,6 +4,14 @@
 
 ## 最新恢复指令
 
+### 审议完成后的实际恢复回执
+
+规划审议提交为 `8eb7203b6`；全部21个Task context manifests实际validate通过，S01大源文件超过32KiB注入上限的警告已明确通知核心worker以直接读源作为fallback。规划static verifier通过21Task/20children/124功能ID/87菜单ID/依赖无环/附件byte-identical；该检查不证明产品实现。
+
+Orca已按停止事实重试现有worktree：核心 `ctx_4e56ba63e0df`（原task_3539e6eaa06f），菜单 `ctx_cf4084e88097`（原task_0b550b23177b）；启动均ready、input_accepted、turnStart observed。已发送主分支审议文档和修正项，fleet实际显示两者working/live；没有重复使用旧dispatch凭证。旧网络dispatch仍exited，保留其worktree等待S14后恢复。
+
+整合分支 `cooking-integration-s06-s14` 已合入最新规划，并提交 `83a514e83`：静态布局净空、可信设备占地与对应测试，实际focused13/13、0skip，exit0；日志在该worktree `local/Logs/cooking-execution/layout-clearance.log`，既有CS1591警告未抑制。此仍非S08完整ET出口，未回并master，不标任务完成。
+
 Owner 明确要求“继续审计，直到各个议题都审议清楚，然后执行直至完成，中间不要停下来”。本次不再只登记 Task；先完成各 Task 的具体设计、实施清单及 manifests 审阅，再按既有依赖执行和验证。单机优先，网络随后；Unity 继续作为后置独立阶段，不提前启动。架构不变，未提细节由助手按已确认产品边界补足。
 
 旧三个 Orca dispatch 已被主动停止，不能视为存活或重用其凭证。保留 worktree 的改动需要审阅、恢复研究和实际复跑；历史 worker 自报测试不算协调者验证。当前三个只读审计分工分别负责核心、菜单、经营整合，研究成果写入本 task 的 research，不写产品代码。
