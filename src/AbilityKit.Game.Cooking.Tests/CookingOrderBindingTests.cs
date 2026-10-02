@@ -160,6 +160,37 @@ public sealed class CookingOrderBindingTests
         var tombstone=s.ExportCheckpoint().Items.Single(i=>i.Id==cup); Assert.True(tombstone.Removed); Assert.False(tombstone.IsDirty);
     }
 
+    [Theory]
+    [InlineData(false)]
+    [InlineData(true)]
+    public void Disposable_hand_tombstones_preserve_history_without_occupying_restored_hands(bool carryingNextItem)
+    {
+        var original = Create(disposable: true);
+        var food = Produce(original, "disposed");
+        var cup = new ItemId("cup-disposed");
+        Accept(original.Submit(Cmd(original, CookingRecipeOperation.Pickup, "hold-disposable", cup, player: B)));
+        Assert.True(original.OpenOrder(One, Drink).Accepted);
+        Accept(original.Submit(Cmd(original, CookingRecipeOperation.BindOrder, "bind-disposable", food, One, B)));
+        Accept(original.Submit(Cmd(original, CookingRecipeOperation.SubmitOrder, "deliver-disposable", food, One, B)));
+        Assert.Null(original.ItemInHand(B));
+        var next = new ItemId("next-raw");
+        original.AddItem(next, Raw, ItemLocation.Station(Counter));
+        if (carryingNextItem)
+            Accept(original.Submit(Cmd(original, CookingRecipeOperation.Pickup, "hold-next", next, player: B)));
+        var checkpoint = original.ExportCheckpoint();
+        Assert.Contains(checkpoint.Items, item => item.Id == cup && item.Removed && item.Location == ItemLocation.Hand(B));
+        var restored = Create(disposable: true);
+        var result = restored.RestoreCheckpoint(checkpoint);
+        Assert.True(result.Accepted, result.ToString());
+        Assert.Equal(checkpoint.CanonicalText(), restored.ExportCheckpoint().CanonicalText());
+        Assert.Equal(carryingNextItem ? next : (ItemId?)null, restored.ItemInHand(B));
+        var command = Cmd(original, carryingNextItem ? CookingRecipeOperation.Drop : CookingRecipeOperation.Pickup,
+            "continue-after-disposal", next, player: B) with { Station = Counter };
+        Accept(original.Submit(command));
+        Accept(restored.Submit(command));
+        Assert.Equal(original.ExportCheckpoint().CanonicalText(), restored.ExportCheckpoint().CanonicalText());
+    }
+
     [Fact]
     public void Every_binding_operation_rechecks_reach_and_bound_food_requires_explicit_unbind_before_removal()
     {

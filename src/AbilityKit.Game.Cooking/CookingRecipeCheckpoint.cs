@@ -503,7 +503,7 @@ public sealed partial class CookingRecipeSimulation
                 return CookingCheckpointRestoreReason.DuplicateProcessIdentity;
             if (!_fixture.Recipes.TryGetValue(process.Recipe, out var recipe))
                 return CookingCheckpointRestoreReason.ProcessRecipeNotFound;
-            if (recipe.RequiredTicks != process.RequiredTicks)
+            if (!IsSupportedProcessDuration(recipe, process.RequiredTicks))
                 return CookingCheckpointRestoreReason.ProcessTicksMismatch;
             if (recipe.Completion != process.Completion)
                 return CookingCheckpointRestoreReason.ProcessCompletionMismatch;
@@ -717,7 +717,7 @@ public sealed partial class CookingRecipeSimulation
     private static IEnumerable<IGrouping<string, CookingRecipeCheckpointItem>> GroupByHandOccupancy(
         IReadOnlyList<CookingRecipeCheckpointItem> items) =>
         items
-            .Where(item => item.Location.Kind == LocationKind.PlayerHand && item.Location.OwnerId is { } owner)
+            .Where(item => !item.Removed && item.Location.Kind == LocationKind.PlayerHand && item.Location.OwnerId is { } owner)
             .GroupBy(item => item.Location.OwnerId!, StringComparer.Ordinal);
 
     private void InstallCheckpointState(CookingRecipeCheckpoint checkpoint)
@@ -727,7 +727,7 @@ public sealed partial class CookingRecipeSimulation
             hands.Add(player, null);
         foreach (var item in checkpoint.Items)
         {
-            if (item.Location.Kind == LocationKind.PlayerHand && item.Location.OwnerId is { } owner)
+            if (!item.Removed && item.Location.Kind == LocationKind.PlayerHand && item.Location.OwnerId is { } owner)
                 hands[new PlayerId(owner)] = item.Id;
         }
 

@@ -10,12 +10,12 @@ public sealed partial class CookingRecipeSimulation
         copy._menuPolicy = _menuPolicy;
         copy._menuPolicyRecipeIds = _menuPolicyRecipeIds;
         copy._menuPolicyMaterialDefinitions = _menuPolicyMaterialDefinitions;
+        copy._majorProgress = _majorProgress;
         var restored = copy.RestoreExportedCheckpoint(ExportCheckpoint());
         if (restored != CookingCheckpointRestoreReason.None)
             throw new InvalidOperationException($"The transition source cannot be staged: {restored}.");
         copy._isClosing = _isClosing;
         copy._isCompleted = _isCompleted;
-        copy._majorProgress = _majorProgress;
         return copy;
     }
 

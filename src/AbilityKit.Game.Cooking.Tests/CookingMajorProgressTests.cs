@@ -157,6 +157,41 @@ public sealed class CookingMajorProgressTests
         Assert.False(unknownStation.Locked);
     }
 
+    [Theory]
+    [InlineData(false)]
+    [InlineData(true)]
+    public void Rejected_retry_choice_keeps_existing_process_binding_and_full_checkpoint(bool duplicateUnlock)
+    {
+        var content = CookingContentCatalog.Load(File.ReadAllText(ContentPath()));
+        var simulation = Supplied(content);
+        if (duplicateUnlock)
+        {
+            var previous = new CookingMajorProgress(); Assert.True(previous.Unlock(new("bread-slice")).Accepted);
+            Assert.True(simulation.ApplyRetryChoices(content, previous).Accepted);
+        }
+        var scope = simulation.Snapshot().Scope; var chef = new PlayerId("chef"); var slice = new ItemId("bread-slice-1");
+        var pickup = new CookingRecipeCommand(scope, 1, chef, new("atomic-pickup"), CookingRecipeOperation.Pickup,
+            Item: slice, ExpectedItemVersion: simulation.Snapshot().Items.Single(i => i.Id == slice).Version);
+        Assert.Equal(CookingRecipeOutcome.Accepted, simulation.Submit(pickup).Outcome);
+        var drop = pickup with { Command = new("atomic-drop"), Operation = CookingRecipeOperation.Drop, Station = new("oven-a"),
+            ExpectedItemVersion = simulation.Snapshot().Items.Single(i => i.Id == slice).Version };
+        Assert.Equal(CookingRecipeOutcome.Accepted, simulation.Submit(drop).Outcome);
+        var start = drop with { Command = new("atomic-bake"), Operation = CookingRecipeOperation.StartProcess, Recipe = new("bake-bread"),
+            ExpectedItemVersion = simulation.Snapshot().Items.Single(i => i.Id == slice).Version };
+        Assert.Equal(CookingRecipeOutcome.Accepted, simulation.Submit(start).Outcome);
+        var before = simulation.ExportCheckpoint().CanonicalText();
+        var progress = new CookingMajorProgress();
+        Assert.True(progress.ChooseDecoration(new[] { new CookingStationReplacement(new("oven-a"), new("counter-a")) }).Accepted);
+        Assert.True(progress.Unlock(new(duplicateUnlock ? "bread-slice" : "missing-pan")).Accepted);
+        var choices = CookingMajorBaselineChoices.Capture(progress);
+        var result = simulation.ApplyRetryChoices(content, progress);
+        Assert.False(result.Accepted);
+        Assert.Equal(duplicateUnlock ? CookingMajorProgressReason.StationConflict : CookingMajorProgressReason.UnknownChoice, result.Reason);
+        Assert.Equal(before, simulation.ExportCheckpoint().CanonicalText());
+        Assert.Equal(System.Text.Json.JsonSerializer.Serialize(choices),
+            System.Text.Json.JsonSerializer.Serialize(CookingMajorBaselineChoices.Capture(progress)));
+    }
+
     private static CookingRecipeSimulation Supplied(CookingContent content)
     {
         var scope = new CookingScope(new SessionId("session"), new WorldId("world"), new MatchId("match"));

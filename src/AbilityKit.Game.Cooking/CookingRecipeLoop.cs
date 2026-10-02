@@ -861,7 +861,7 @@ public sealed partial class CookingRecipeSimulation
     /// 任一拒绝时厨房保持调用前的现场，进度对象也不改。
     /// 调用方必须还没把这间厨房安装到下一代。
     /// </summary>
-    public CookingMajorProgressResult ApplyRetryChoices(CookingContent content, CookingMajorProgress progress)
+    private CookingMajorProgressResult ApplyRetryChoicesCore(CookingContent content, CookingMajorProgress progress, IReadOnlySet<DefinitionId>? eligibleUnlocks)
     {
         ArgumentNullException.ThrowIfNull(content);
         ArgumentNullException.ThrowIfNull(progress);
@@ -877,7 +877,7 @@ public sealed partial class CookingRecipeSimulation
 
         var planned = new List<(ItemId Id, ItemLocation Location, DefinitionId Definition)>();
         var reserved = new HashSet<ItemId>();
-        foreach (var definition in progress.Unlocks)
+        foreach (var definition in progress.Unlocks.Where(d => eligibleUnlocks is null || eligibleUnlocks.Contains(d)))
         {
             var entries = content.StandardInitialSupply.Where(entry => entry.Definition == definition).ToArray();
             if (entries.Length == 0 || !_fixture.Items.ContainsKey(definition))
@@ -1335,6 +1335,13 @@ public sealed partial class CookingRecipeSimulation
         }
     }
 
+    private bool IsSupportedProcessDuration(CookingRecipeDefinition recipe, int requiredTicks) =>
+        requiredTicks == recipe.RequiredTicks ||
+        requiredTicks == (_majorProgress?.CookTicks(recipe.Id, recipe.RequiredTicks) ?? recipe.RequiredTicks);
+
+    // Existing base-duration work can precede a confirmed modifier. Saved durations are not grants.
+    internal CookingMajorProgress? MajorProgressForGeneration => _majorProgress;
+
     private void ValidateProcessForFixedTick(ProcessState process)
     {
         if (string.IsNullOrWhiteSpace(process.Id.Value))
@@ -1358,7 +1365,7 @@ public sealed partial class CookingRecipeSimulation
 
         if (!_fixture.Recipes.TryGetValue(process.Recipe, out var recipe))
             throw new InvalidOperationException($"Process '{process.Id}' references unknown recipe '{process.Recipe}'.");
-        if (process.RequiredTicks != recipe.RequiredTicks || process.ElapsedTicks < 0 || process.ElapsedTicks >= process.RequiredTicks)
+        if (!IsSupportedProcessDuration(recipe, process.RequiredTicks) || process.ElapsedTicks < 0 || process.ElapsedTicks >= process.RequiredTicks)
             throw new InvalidOperationException($"Process '{process.Id}' has invalid progress invariants.");
         if (recipe.RequiresStation != (process.Station is not null))
             throw new InvalidOperationException($"Process '{process.Id}' station binding disagrees with its recipe.");

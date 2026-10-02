@@ -1099,17 +1099,47 @@ public sealed class CookingLevelEtHost : IDisposable
             acquired = true;
             if (!Equals(kitchen.Snapshot().Scope, candidate.Scope.MatchScope))
                 return RejectGeneration(CookingLevelLifecycleReason.GameplayInitializationFailed);
-            if (retry)
-            {
-                CookingContentCatalog.ApplyStandardInitialSupply(kitchen, content!);
-                if (progress is not null && !kitchen.ApplyRetryChoices(content!, progress).Accepted)
-                    return RejectGeneration(CookingLevelLifecycleReason.InvalidState);
-            }
-            CookingInstalledLayoutCheckpoint? installed = null;
             var nextFront = ScopedFront(candidate.GameplayFactory, candidate.Scope, candidate.Configuration);
             var (nextCatalog, nextMenu) = ScopedMenu(candidate.GameplayFactory, candidate.Scope, candidate.Configuration);
             if (nextCatalog is not null && nextMenu is not null && MenuPolicyDiagnostics(nextCatalog, nextMenu, candidate.Configuration, nextFront).Any(d => d.Blocking))
                 return RejectGeneration(CookingLevelLifecycleReason.InvalidState);
+            if (store is not null) kitchen.UseMajorProgress(confirmedChoices!.CreateProgress());
+            else if (!retry && _ownedSimulation!.MajorProgressForGeneration is { } inheritedProgress)
+                kitchen.UseMajorProgress(inheritedProgress);
+            if (retry)
+            {
+                var seed = kitchen.Snapshot();
+                bool SeedProvides(CookingSupplyEntryDefinition entry)
+                {
+                    if (entry.Location == CookingContentCatalog.CleanPoolLocation) return false;
+                    ItemLocation location;
+                    if (entry.Location.StartsWith("world:", StringComparison.Ordinal)) location = ItemLocation.World(entry.Location[6..]);
+                    else if (entry.Location.StartsWith("station:", StringComparison.Ordinal)) location = ItemLocation.Station(new(entry.Location[8..]));
+                    else return false;
+                    var matching = seed.Items.Where(i => i.Definition == entry.Definition && i.Location == location).ToArray();
+                    return matching.Length == entry.Count && matching.All(i => i.Version == 1 && !i.IsProduct && !i.IsDirty &&
+                        !i.ContainerCompleted && i.RemainingPortions == 0 && i.BoundOrder is null && i.SupplyProvenance is null &&
+                        !seed.Processes.Any(p => p.Anchor == i.Id) &&
+                        !seed.Containers.Any(c => c.Id == i.Id && c.ItemIds.Count != 0));
+                }
+                // Trusted factories may already seed declared empty tools/stock. Fill only missing entries.
+                var missing = content! with { StandardInitialSupply = Array.AsReadOnly(content!.StandardInitialSupply.Where(entry => !SeedProvides(entry)).ToArray()) };
+                var unlocked = progress?.Unlocks.ToHashSet();
+                var eligibleUnlocks = unlocked?.Where(d => missing.Items.ContainsKey(d) &&
+                    missing.StandardInitialSupply.Any(entry => entry.Definition == d) &&
+                    (nextMenu is null || nextMenu.AllowedMaterialDefinitions.Contains(d) &&
+                        (nextMenu.BaseAuthorizedMaterialDefinitions.Contains(d) || nextMenu.ConfirmedMaterialUnlocks.Contains(d)))).ToHashSet();
+                var standard = unlocked is null ? missing : missing with
+                {
+                    StandardInitialSupply = Array.AsReadOnly(missing.StandardInitialSupply
+                        .Where(entry => entry.Location == CookingContentCatalog.CleanPoolLocation || !unlocked.Contains(entry.Definition)).ToArray())
+                };
+                // Confirmed unlock entries are placed once by ApplyRetryChoices, not again as base stock.
+                CookingContentCatalog.ApplyStandardInitialSupply(kitchen, standard);
+                if (progress is not null && !kitchen.ApplyRetryChoicesForLevel(missing, progress, eligibleUnlocks!).Accepted)
+                    return RejectGeneration(CookingLevelLifecycleReason.InvalidState);
+            }
+            CookingInstalledLayoutCheckpoint? installed = null;
             if (confirmedChoices is not null && nextMenu is not null && nextMenu.ConfirmedMaterialUnlocks.Any(d => !confirmedChoices.Unlocks.Contains(d)))
                 return RejectGeneration(CookingLevelLifecycleReason.InvalidState);
             if (nextCatalog is not null && nextMenu is not null) kitchen.ConfigureMenuPolicy(nextCatalog, nextMenu);
@@ -1153,9 +1183,8 @@ public sealed class CookingLevelEtHost : IDisposable
             CookingMajorBaselinePayload? baseline = null;
             if (store is not null)
             {
-                var stagedProgress = confirmedChoices!.CreateProgress(); kitchen.UseMajorProgress(stagedProgress);
                 baseline = new(Binding.LevelScope, candidate.Scope, frozenPreparation!, candidate.Configuration.Identity,
-                    policy?.Identity(), nextFront?.Identity(), nextMenu?.Identity(), installed, kitchen.ExportSuccessHandoff(), confirmedChoices, HostFrameSequence: HostFrameSequence);
+                    policy?.Identity(), nextFront?.Identity(), nextMenu?.Identity(), installed, kitchen.ExportSuccessHandoff(), confirmedChoices!, HostFrameSequence: HostFrameSequence);
             }
             var result = InstallGeneration(candidate, retry, store, baseline, ref baselineCommitted);
             if (!result.Accepted) return result;
@@ -1278,8 +1307,8 @@ public sealed class CookingLevelEtHost : IDisposable
             if (preparation is null && !payload.Kitchen.Poses!.OrderBy(p => p.Player.Value, StringComparer.Ordinal).SequenceEqual(
                 (kitchen.SpatialConfiguration?.InitialPoses ?? Array.Empty<CookingPlayerPose>()).OrderBy(p => p.Player.Value, StringComparer.Ordinal)))
                 return new(false, CookingMajorBaselineHostLoadReason.ConfigurationMismatch);
-            if (!kitchen.AcceptSuccessHandoff(payload.Kitchen).Accepted) return new(false, CookingMajorBaselineHostLoadReason.GameplayRestoreRejected);
             kitchen.UseMajorProgress(progress!);
+            if (!kitchen.AcceptSuccessHandoff(payload.Kitchen).Accepted) return new(false, CookingMajorBaselineHostLoadReason.GameplayRestoreRejected);
             var front = effective is null ? null : CreateInitialFront(effective);
             var frontMenu = effective is null ? host._frontOfHouseMenu : new CookingFrontOfHouseMenu(effective.Menu);
             if (front is not null)
@@ -1351,6 +1380,20 @@ public sealed class CookingLevelEtHost : IDisposable
                 return new(false, CookingLevelCheckpointRestoreReason.ConfigurationIdentityMismatch);
         }
         catch (ArgumentException) { return new(false, CookingLevelCheckpointRestoreReason.ConfigurationIdentityMismatch); }
+        CookingMajorProgress? trustedProgress = null;
+        if (factory is ICookingConfirmedMajorChoicesGameplayFactory confirmedFactory)
+        {
+            try
+            {
+                var choices = confirmedFactory.CreateConfirmedMajorChoices(checkpoint.Scope, configuration);
+                if (choices is null || choices.Unlocks is null || choices.Unlocks.Count != choices.Unlocks.Distinct().Count())
+                    return new(false, CookingLevelCheckpointRestoreReason.ConfigurationIdentityMismatch);
+                trustedProgress = choices.CreateProgress();
+                if (trustedMenu.Policy is not null && trustedMenu.Policy.ConfirmedMaterialUnlocks.Any(d => !choices.Unlocks.Contains(d)))
+                    return new(false, CookingLevelCheckpointRestoreReason.ConfigurationIdentityMismatch);
+            }
+            catch (Exception) { return new(false, CookingLevelCheckpointRestoreReason.ConfigurationIdentityMismatch); }
+        }
         var preparing = checkpoint.State == CookingLevelState.Preparing;
         if (preparing && trustedPreparation is null)
             return new(false, CookingLevelCheckpointRestoreReason.ConfigurationIdentityMismatch);
@@ -1457,6 +1500,7 @@ public sealed class CookingLevelEtHost : IDisposable
                     CookingLevelCheckpointRestoreReason.GameplayUnavailable);
             }
 
+            if (trustedProgress is not null) simulation.UseMajorProgress(trustedProgress);
             var restored = simulation.RestoreCheckpoint(checkpoint.Recipe);
             if (!restored.Accepted)
             {
