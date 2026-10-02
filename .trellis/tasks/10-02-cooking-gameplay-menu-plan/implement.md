@@ -1,6 +1,20 @@
 > Current owner instruction (2026-10-02): continue auditing all topics, resolve their plans, then implement and verify to completion without stopping for routine confirmations. Preserve architecture and stage order: singleplayer -> network -> singleplayer Unity -> network Unity. Current stage: singleplayer. Older planning-only notices below are historical. Unity remains deferred under its separate gate.
 
-# 规划维护清单与将来验证入口
+# 规划维护清单与验证入口
+
+## 最新实施清单（2026-10-02）
+
+- [x] 审阅并合并 S01–S03 核心；master 两门禁实际验证。
+- [x] 审阅并合并 87 菜制作/盛装/ET 恢复与 S05 核心，修复嵌套容器归属；master kitchen 340/462/166。
+- [ ] 独立审阅 31 饮品实际绑定交付，完成五批内容出口。
+- [ ] 完成 S06 同一 ET 入口、受信恢复、厨房/前厅人工排他与营业收尾。
+- [ ] 完成 S07 实物包装/原料、准备与营业采购、供应守恒及成功/失败恢复。
+- [ ] 完成 S08 准备态原子空间安装、布局/路径/带料迁移、装修与解锁失败原子性。
+- [ ] 完成 S14 同一固定 Tick 完整营业、许可与可观察数据、重放和恢复。
+- [ ] 单机出口后完成 N01–N03 实际网络；物理两机验收未具备不能冒充通过。
+- [ ] Unity 条件性记录继续后置，由独立执行门控制。
+
+以上完成项以 execution.md、progress.md 和具体门禁证据为准。以下初始“只记录/不执行”段落保留为较早规划快照。
 
 本任务只记录，未执行产品实施。已完成记录工作不代表子 Task 已实施。
 
