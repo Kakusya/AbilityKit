@@ -21,7 +21,8 @@ public sealed record CookingLevelCheckpoint(
     long HostFrameSequence,
     long LastCommittedSimulationBatch,
     CookingRecipeCheckpoint Recipe,
-    CookingFrontOfHouseCheckpoint? FrontOfHouse = null)
+    CookingFrontOfHouseCheckpoint? FrontOfHouse = null,
+    [property: System.Text.Json.Serialization.JsonRequired] string? FrontOfHouseConfigurationIdentity = null)
 {
     private static readonly JsonSerializerOptions CanonicalJsonOptions = new()
     {
@@ -49,7 +50,7 @@ public sealed record CookingLevelCheckpoint(
         HostFrameSequence,
         LastCommittedSimulationBatch,
         Recipe.CanonicalText(),
-        FrontOfHouse?.CanonicalText()),
+        FrontOfHouse?.CanonicalText(), FrontOfHouseConfigurationIdentity),
         CanonicalJsonOptions);
 
     public string Sha256() => Convert.ToHexString(SHA256.HashData(Encoding.UTF8.GetBytes(CanonicalText())));
@@ -59,7 +60,7 @@ public sealed record CookingLevelCheckpoint(
         string PreparationLevelId, string PreparationMapId, string PreparationLayoutId,
         IReadOnlyList<string> PreparationStations, IReadOnlyList<string> PreparationContainers,
         string State, string? Outcome, long LifecycleVersion, long HostFrameSequence,
-        long LastCommittedSimulationBatch, string RecipeCanonical, string? FrontOfHouseCanonical);
+        long LastCommittedSimulationBatch, string RecipeCanonical, string? FrontOfHouseCanonical, string? FrontOfHouseConfigurationIdentity);
 }
 
 public enum CookingCheckpointReadReason
@@ -82,7 +83,7 @@ public sealed record CookingCheckpointReadResult(
 /// </summary>
 public static class CookingLevelCheckpointCodec
 {
-    public const int CurrentFormatVersion = 5;
+    public const int CurrentFormatVersion = 6;
     public const int MaximumRecordCharacters = 1024 * 1024;
 
     private static readonly JsonSerializerOptions Options = new()

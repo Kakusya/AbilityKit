@@ -160,6 +160,12 @@ public interface ICookingLevelGameplayFactory
     CookingRecipeSimulation Create(CookingLevelScope scope, CookingConfigurationSnapshot configuration);
 }
 
+/// <summary>Optional trusted front-of-house configuration on the existing factory; legacy factories are unchanged.</summary>
+public interface ICookingFrontOfHouseGameplayFactory : ICookingLevelGameplayFactory
+{
+    CookingFrontOfHouseConfiguration FrontOfHouseConfiguration { get; }
+}
+
 internal interface ICookingLevelGameplayPublicationGuard
 {
     bool TryAcquire(CookingRecipeSimulation gameplay);

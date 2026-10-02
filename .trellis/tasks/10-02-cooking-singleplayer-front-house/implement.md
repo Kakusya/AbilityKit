@@ -24,3 +24,7 @@ Owner authorizes audit then implementation. Follow the reviewed design and paren
 - [ ] 主 owner 接入统一 ET ingress、核心 geometry/布局适配与跨厨房 worker 互斥。
 - [ ] 主 owner 接入统一 Level 配置身份/checkpoint/wire 版本；真实 ET 完整营业与成功跨关门禁。
 - [ ] 独立审阅受限增量与组合门禁后方可判断 S06 完整出口；本记录不改 task 状态。
+
+## ET/Level integration increment
+
+Canonical ET ingress, initial trusted geometry, front/kitchen work exclusion and Level codec6 restoration are implemented. Actual pass/fail evidence and the remaining independent review/full gate boundary are recorded in research/et-integration-verification.md. No Task status change is made from these focused counts.

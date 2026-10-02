@@ -1,0 +1,18 @@
+# S06 ET/Level integration verification — 2026-10-02
+
+This is an implementation increment on the existing singleplayer owners. It does not add Unity/network or complete S08 dynamic layout installation.
+
+Implemented: operations 17/18/19 Claim/Continue/StopFrontWork use existing command ingress, WorldAnchor as WorkId, unchanged fingerprint structure, arbitration/dedup/scope/event ledger. Shape rejects unrelated kitchen/movement fields. Kitchen manual processes and front work exclude one another in both command orders. The canonical Level fixed tick alone advances front work; pause preserves both owners. Existing low-level RecipeTickHost has no front owner and rejects these operations as FrontOfHouseUnavailable.
+
+Trusted ICookingFrontOfHouseGameplayFactory supplies immutable initial configuration. Paths bind to the current S01 geometry and matching entrance/queue/exit/table anchors. Manual reach reads current kitchen poses. Checkpoint Level codec 6 requires front configuration identity and extended state fields; Recipe checkpoint remains 4. Restore validates the trusted factory configuration, active manual player reach/exclusion, and service-clock agreement. Recipe closing/completed flags are derived from restored front state using existing RestoreFrontOfHouseState without incrementing StateVersion; they are not present in Recipe checkpoint 4. Callbacks are rebound to the restored kitchen, never a captured old owner. New Success rejects until CanSucceed; unmet orders do not add business failure. Legacy no-Flow factory behavior remains.
+
+Actual checks so far:
+
+- New ET tests: 9/9, 0 skipped, `local/Logs/cooking-execution/front-et-focused-detail.log`.
+- Front domain regression: 37/37, 0 skipped, `local/Logs/cooking-execution/front-domain-final.log`.
+- Full ET runtime tests: 175/175, 0 skipped, `local/Logs/cooking-execution/front-et-all.log`.
+- First cooking-et-level-runtime gate: FAILED, domain 460/462. Exactly two old enum-array/count expectations omitted the new tail values. Failure preserved in `local/Logs/cooking-execution/front-et-level-gate.log` and `local/Logs/test-gates/20261002-195813-cooking-et-level-runtime`.
+- Corrected command-shape focused tests: 13/13, 0 skipped, `local/Logs/cooking-execution/front-command-shape.log`; existing numeric expectations retained, exact appended values and malformed front payload covered.
+
+Full applicable gate must be rerun after all shared source files are stable. Independent review and root integration remain required before S06 complete status. The concurrent S08 geometry helper, if included by project glob in the next gate, is separate evidence, not an S06 capability claim. Existing S08 ChooseDecoration empty rollback / Unlock ordering deficiencies are not changed by this increment.
+Final applicable gate actually PASSED, exit 0: `powershell -ExecutionPolicy Bypass -File tools/run_test_gate.ps1 -Gate cooking-et-level-runtime`, 21.5 seconds, `local/Logs/test-gates/20261002-200306-cooking-et-level-runtime/cooking-et-level-runtime/gate-summary.json` and TRX. Relation analyzer build and Cooking ET runtime build passed; domain 477/477, ET runtime 175/175, 0 failed, 0 skipped. Domain count includes 12 separately owned S08 geometry helper tests and 3 newly added S06 shape cases, versus the previous 462 baseline. ET count includes the 9 new S06 ingress/recovery/natural service cases. This gate incorporates the final service-clock tamper rejection assertion. Root independent review, composite schema changes when S07 merges, and dynamic S08 layout adaptation remain separate. No task status/commit was changed.

@@ -58,6 +58,14 @@ public sealed class CookingFrontOfHouse
     private CookingFrontOfHouseFlow? _flow;
     private string? _manualPolicy;
     private Func<PlayerId, string, bool>? _canWork;
+    private ICookingRecipeAuthorityGate? _frontAuthorityGate;
+    internal void BindAuthorityGate(ICookingRecipeAuthorityGate gate) => _frontAuthorityGate = gate;
+    public bool HasPlayerWork(PlayerId player) => _jobs.Values.Any(x => x.Player == player);
+    private void EnsureFrontMutation()
+    {
+        if (_frontAuthorityGate is not null && !_frontAuthorityGate.IsAuthorityMutationOpen)
+            throw new InvalidOperationException("Front-of-house writes require the owning level authority operation.");
+    }
 
     public CookingFrontOfHouse(CookingFrontOfHouseSchedule schedule)
         : this(schedule, DefaultCompanion)
@@ -92,6 +100,7 @@ public sealed class CookingFrontOfHouse
     /// <summary>Preparation-only path input. Every edge is checked against the owner's immutable geometry.</summary>
     public void ConfigureFlow(CookingFrontOfHouseFlow flow)
     {
+        EnsureFrontMutation();
         if (_nextGuest != 0 || _serviceTicks != 0) throw new InvalidOperationException("Flow cannot change during service.");
         _flow = FreezeFlow(flow, _schedule.TableCount);
     }
@@ -99,6 +108,7 @@ public sealed class CookingFrontOfHouse
     /// <summary>The read-only predicate checks player existence, kitchen work exclusion, facing, and reach.</summary>
     public void ConfigureManualWork(string policyIdentity, Func<PlayerId, string, bool> canWork)
     {
+        EnsureFrontMutation();
         if (string.IsNullOrWhiteSpace(policyIdentity)) throw new ArgumentException("Policy identity is required.");
         ArgumentNullException.ThrowIfNull(canWork);
         if (_manualPolicy is null && _serviceTicks != 0) throw new InvalidOperationException("Manual policy must be configured before service.");
@@ -109,6 +119,7 @@ public sealed class CookingFrontOfHouse
 
     public CookingFrontWorkResult ClaimFrontWork(CookingRecipeSimulation kitchen, PlayerId player, string workId)
     {
+        EnsureFrontMutation();
         if (_manualPolicy is null || _canWork is null || string.IsNullOrWhiteSpace(player.Value))
             return new(false, CookingFrontWorkRejection.PolicyMissing);
         if (!_jobs.TryGetValue(workId ?? "", out var job)) return new(false, CookingFrontWorkRejection.WorkMissing);
@@ -124,6 +135,7 @@ public sealed class CookingFrontOfHouse
 
     public CookingFrontWorkResult ContinueFrontWork(PlayerId player, string workId)
     {
+        EnsureFrontMutation();
         if (!_jobs.TryGetValue(workId ?? "", out var job)) return new(false, CookingFrontWorkRejection.WorkMissing);
         if (job.Player != player) return new(false, CookingFrontWorkRejection.NotOwner);
         if (_canWork is null || !_canWork(player, job.Target)) return new(false, CookingFrontWorkRejection.OutOfReach);
@@ -132,6 +144,7 @@ public sealed class CookingFrontOfHouse
 
     public CookingFrontWorkResult StopFrontWork(PlayerId player, string workId)
     {
+        EnsureFrontMutation();
         if (!_jobs.TryGetValue(workId ?? "", out var job)) return new(false, CookingFrontWorkRejection.WorkMissing);
         if (job.Player != player) return new(false, CookingFrontWorkRejection.NotOwner);
         PauseJob(job);
@@ -174,6 +187,7 @@ public sealed class CookingFrontOfHouse
 
     public CookingFrontOfHouseCheckpoint ExportCheckpoint(CookingFrontOfHouseMenu menu)
     {
+        EnsureFrontMutation();
         BindMenu(menu);
         return new CookingFrontOfHouseCheckpoint(_orderMenu[0], Snapshot());
     }
@@ -182,6 +196,7 @@ public sealed class CookingFrontOfHouse
         CookingFrontOfHouseCheckpoint checkpoint,
         CookingRecipeSimulation kitchen)
     {
+        EnsureFrontMutation();
         ArgumentNullException.ThrowIfNull(kitchen);
         if (checkpoint?.State is null)
             return CookingFrontOfHouseRestoreResult.Reject(CookingFrontOfHouseRestoreReason.CheckpointNull);
@@ -223,6 +238,7 @@ public sealed class CookingFrontOfHouse
 
     public CookingFrontOfHouseStep Step(CookingRecipeSimulation kitchen, CookingFrontOfHouseMenu menu)
     {
+        EnsureFrontMutation();
         ArgumentNullException.ThrowIfNull(kitchen);
         if (_manualPolicy is not null && _canWork is null)
             throw new InvalidOperationException("Restore requires rebinding the read-only manual-work policy before ticking.");
@@ -249,6 +265,7 @@ public sealed class CookingFrontOfHouse
     /// <summary>失败重开：丢掉座位、未满足、营业时钟和洗碗队列。不给新厨房开单，也不洗旧碗。</summary>
     public void DropFailedScene()
     {
+        EnsureFrontMutation();
         foreach (var table in _tables)
             table.Reset();
         _unsatisfied.Clear();
@@ -270,6 +287,7 @@ public sealed class CookingFrontOfHouse
 
     public void ResetForNextLevel(CookingRecipeSimulation kitchen, CookingFrontOfHouseMenu menu)
     {
+        EnsureFrontMutation();
         if ((_flow is not null || _manualPolicy is not null) && !CanSucceed)
             throw new InvalidOperationException("The new front-of-house flow must naturally finish before a successful level reset.");
         FinishInProgress(kitchen, menu);
@@ -292,6 +310,7 @@ public sealed class CookingFrontOfHouse
 
     public void FinishInProgress(CookingRecipeSimulation kitchen, CookingFrontOfHouseMenu menu)
     {
+        EnsureFrontMutation();
         ArgumentNullException.ThrowIfNull(kitchen);
         BindMenu(menu);
         if (_flow is not null || _manualPolicy is not null) return;
@@ -1254,6 +1273,35 @@ public sealed record CookingFrontOfHouseSchedule(
     int WaitLimitTicks,
     int CompanionGrowthTaskThreshold = 3);
 
+public enum CookingFrontDeliveryMode { ServingAnchor, CustomerTable }
+
+/// <summary>Content-owned service destination. Customer tables come from the current order owner.</summary>
+public sealed record CookingFrontDeliveryPolicy(CookingFrontDeliveryMode Mode, string? ServingAnchor = null);
+
+/// <summary>Trusted application configuration; it is provided by the existing gameplay factory, never inferred from a checkpoint.</summary>
+public sealed record CookingFrontOfHouseConfiguration(CookingFrontOfHouseSchedule Schedule,
+    IReadOnlyList<OrderTemplateId> Menu, CookingFrontOfHouseFlow? Flow = null,
+    string? ManualPolicyIdentity = null, string WashingAnchor = "washing",
+    string EntranceAnchor = "customer-entrance", string QueueAnchor = "queue", string ExitAnchor = "exit",
+    CookingFrontDeliveryPolicy? DeliveryPolicy = null)
+{
+    public CookingFrontOfHouseConfiguration Freeze()
+    {
+        var house = new CookingFrontOfHouse(Schedule);
+        var menu = new CookingFrontOfHouseMenu(Menu);
+        if (Flow is not null) house.ConfigureFlow(Flow);
+        if ((ManualPolicyIdentity is not null && string.IsNullOrWhiteSpace(ManualPolicyIdentity)) || string.IsNullOrWhiteSpace(WashingAnchor)
+            || string.IsNullOrWhiteSpace(EntranceAnchor) || string.IsNullOrWhiteSpace(QueueAnchor) || string.IsNullOrWhiteSpace(ExitAnchor))
+            throw new ArgumentException("Front work policy and washing anchor must be valid.");
+        if (DeliveryPolicy is { } delivery && (!Enum.IsDefined(delivery.Mode) ||
+            (delivery.Mode == CookingFrontDeliveryMode.ServingAnchor ? string.IsNullOrWhiteSpace(delivery.ServingAnchor) : delivery.ServingAnchor is not null)))
+            throw new ArgumentException("Delivery mode and service anchor must be valid.");
+        return this with { Menu = Array.AsReadOnly(menu.Templates.ToArray()), Flow = house.Snapshot().Flow };
+    }
+    public string CanonicalText() => JsonSerializer.Serialize(Freeze());
+    public string Identity() => Convert.ToHexString(SHA256.HashData(Encoding.UTF8.GetBytes(CanonicalText())));
+}
+
 public sealed record CookingFrontOfHouseStep(int SeatedCount, bool Closing, bool CanSucceed, int UnsatisfiedCount);
 
 public readonly record struct CookingFrontPoint(int X, int Y);
@@ -1294,8 +1342,8 @@ public sealed record CookingCustomerSnapshot(
     OrderId? Order,
     OrderTemplateId? OrderTemplate = null)
 {
-    public int PathIndex { get; init; }
-    public string? RouteTable { get; init; }
+    [System.Text.Json.Serialization.JsonRequired] public int PathIndex { get; init; }
+    [System.Text.Json.Serialization.JsonRequired] public string? RouteTable { get; init; }
 }
 
 public sealed record CookingCompanionSnapshot(
@@ -1321,10 +1369,10 @@ public sealed record CookingFrontOfHouseSnapshot(
     IReadOnlyList<ItemId> WashQueue,
     IReadOnlyList<OrderId> UnsatisfiedOrders)
 {
-    public CookingFrontOfHouseFlow? Flow { get; init; }
-    public string? ManualPolicyIdentity { get; init; }
-    public IReadOnlyList<CookingFrontWorkSnapshot> Work { get; init; } = Array.Empty<CookingFrontWorkSnapshot>();
-    public IReadOnlyList<CookingFrontTableSnapshot> Tables { get; init; } = Array.Empty<CookingFrontTableSnapshot>();
+    [System.Text.Json.Serialization.JsonRequired] public CookingFrontOfHouseFlow? Flow { get; init; }
+    [System.Text.Json.Serialization.JsonRequired] public string? ManualPolicyIdentity { get; init; }
+    [System.Text.Json.Serialization.JsonRequired] public IReadOnlyList<CookingFrontWorkSnapshot> Work { get; init; } = Array.Empty<CookingFrontWorkSnapshot>();
+    [System.Text.Json.Serialization.JsonRequired] public IReadOnlyList<CookingFrontTableSnapshot> Tables { get; init; } = Array.Empty<CookingFrontTableSnapshot>();
     private static readonly JsonSerializerOptions CanonicalJsonOptions = new()
     {
         PropertyNamingPolicy = JsonNamingPolicy.CamelCase,

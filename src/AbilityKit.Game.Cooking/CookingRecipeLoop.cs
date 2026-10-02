@@ -153,6 +153,9 @@ public enum CookingRecipeOperation
     BindOrder,
     UnbindOrder,
     RebindOrder,
+    ClaimFrontWork,
+    ContinueFrontWork,
+    StopFrontWork,
 }
 
 public enum CookingRecipeOutcome
@@ -201,6 +204,8 @@ public enum CookingRecipeRejectionReason
     BindingRequired,
     BindingConflict,
     BindingNotFound,
+    FrontOfHouseUnavailable,
+    FrontWorkNotFound,
 }
 
 public sealed record CookingRecipeCommand(
@@ -302,7 +307,12 @@ public static class CookingRecipeCommandValidation
             return false;
         }
 
-        if (command.WorldAnchor is not null && (command.Operation != CookingRecipeOperation.Drop || string.IsNullOrWhiteSpace(command.WorldAnchor) || command.Station is not null)) return false;
+        var frontOperation = command.Operation is CookingRecipeOperation.ClaimFrontWork or CookingRecipeOperation.ContinueFrontWork or CookingRecipeOperation.StopFrontWork;
+        if (command.WorldAnchor is not null && ((!frontOperation && command.Operation != CookingRecipeOperation.Drop) || string.IsNullOrWhiteSpace(command.WorldAnchor) || command.Station is not null)) return false;
+        if (frontOperation) return !string.IsNullOrWhiteSpace(command.WorldAnchor) && command.Item is null && command.Process is null
+            && command.Recipe is null && command.Container is null && command.Station is null && command.Order is null
+            && command.ExpectedItemVersion == 0 && command.TickCount == 0 && command.MoveX == 0 && command.MoveY == 0
+            && command.FacingX == 0 && command.FacingY == 0;
         if (command.Operation != CookingRecipeOperation.Move &&
             (command.MoveX != 0 || command.MoveY != 0 || command.FacingX != 0 || command.FacingY != 0))
             return false;
@@ -420,6 +430,15 @@ public sealed class SequentialCookingProductIdAllocator : ICookingProductIdAlloc
 
 public sealed partial class CookingRecipeSimulation
 {
+    private Func<CookingRecipeCommand, CookingFrontWorkResult>? _frontWorkDispatch;
+    private Func<PlayerId, bool>? _frontWorkerBusy;
+    private Func<PlayerId, OrderId, CookingRecipeRejectionReason>? _frontDeliveryPredicate;
+    internal void BindFrontDeliveryAuthority(Func<PlayerId, OrderId, CookingRecipeRejectionReason>? predicate) =>
+        _frontDeliveryPredicate = predicate;
+    public bool IsPlayerAvailable(PlayerId player) => _fixture.Players.TryGetValue(player, out var configured) && configured.IsAvailable;
+    public bool HasManualWork(PlayerId player) => AllProcesses().Any(x => x.ActiveWorker == player);
+    internal void BindFrontWorkAuthority(Func<CookingRecipeCommand, CookingFrontWorkResult> dispatch, Func<PlayerId, bool> workerBusy)
+    { _frontWorkDispatch = dispatch; _frontWorkerBusy = workerBusy; }
     private static readonly JsonSerializerOptions CanonicalJsonOptions = new()
     {
         PropertyNamingPolicy = JsonNamingPolicy.CamelCase,
@@ -989,6 +1008,24 @@ public sealed partial class CookingRecipeSimulation
     private CookingRecipeCommandResult ExecuteValidatedCommand(CookingRecipeCommand command)
     {
         if (!TryValidateCommandScopeAndPlayer(command, out _, out var scopeReason)) return Reject(scopeReason);
+        if (command.Operation is CookingRecipeOperation.ClaimFrontWork or CookingRecipeOperation.ContinueFrontWork or CookingRecipeOperation.StopFrontWork)
+        {
+            if (_frontWorkDispatch is null) return Reject(CookingRecipeRejectionReason.FrontOfHouseUnavailable);
+            if (command.Operation != CookingRecipeOperation.StopFrontWork && HasManualWork(command.Player))
+                return Reject(CookingRecipeRejectionReason.WorkerUnavailable);
+            _ = checked(_stateVersion + 1); _ = checked(_eventSequence + 1);
+            var front = _frontWorkDispatch(command);
+            if (!front.Accepted) return Reject(front.Reason switch
+            {
+                CookingFrontWorkRejection.WorkMissing => CookingRecipeRejectionReason.FrontWorkNotFound,
+                CookingFrontWorkRejection.OutOfReach => CookingRecipeRejectionReason.TargetOutOfRange,
+                CookingFrontWorkRejection.PolicyMissing => CookingRecipeRejectionReason.FrontOfHouseUnavailable,
+                _ => CookingRecipeRejectionReason.WorkerUnavailable
+            });
+            return Commit(command, null, null, null, "front-work-" + command.Operation);
+        }
+        if (command.Operation == CookingRecipeOperation.ContinueProcess && (_frontWorkerBusy?.Invoke(command.Player) ?? false))
+            return Reject(CookingRecipeRejectionReason.WorkerUnavailable);
         if (!CommandIsReachable(command)) return Reject(CookingRecipeRejectionReason.TargetOutOfRange);
         return command.Operation switch
         {
@@ -1474,7 +1511,7 @@ public sealed partial class CookingRecipeSimulation
         }
 
         if (anchorItem.ContainerCompleted) return Reject(CookingRecipeRejectionReason.BatchCompleted);
-        if (recipe.Execution == CookingRecipeExecutionKind.Manual && AllProcesses().Any(p => p.ActiveWorker == command.Player))
+        if (recipe.Execution == CookingRecipeExecutionKind.Manual && (AllProcesses().Any(p => p.ActiveWorker == command.Player) || (_frontWorkerBusy?.Invoke(command.Player) ?? false)))
             return Reject(CookingRecipeRejectionReason.WorkerUnavailable);
         var lockedInputs = new List<ItemId> { anchorId };
         lockedInputs.AddRange(ItemsInContainer(anchorId));
@@ -1966,6 +2003,8 @@ public sealed partial class CookingRecipeSimulation
             return Reject(CookingRecipeRejectionReason.BindingRequired);
         if (_items.Any(p => p.Value.BoundOrder == orderId && p.Key != productId))
             return Reject(CookingRecipeRejectionReason.BindingConflict);
+        if (_frontDeliveryPredicate?.Invoke(command.Player, orderId) is { } deliveryReason && deliveryReason != CookingRecipeRejectionReason.None)
+            return Reject(deliveryReason);
         _ = checked(product.Version + 1); _ = checked(containerState.Version + 1);
         _ = checked(_stateVersion + 1); _ = checked(_eventSequence + 1); _ = checked(_nextSettlementSequence + 1);
         if (_containerItems.TryGetValue(container, out var contents))

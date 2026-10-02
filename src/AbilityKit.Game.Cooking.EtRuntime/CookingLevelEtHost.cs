@@ -320,6 +320,9 @@ public sealed class CookingLevelEtHost : IDisposable
     private bool _ticking;
     private bool _executingAuthorityMutation;
     private bool _executingLifecycleOperation;
+    private bool _executingFrontOperation;
+    private readonly CookingFrontOfHouseConfiguration? _frontConfiguration;
+    private readonly string? _frontConfigurationIdentity;
 
     public CookingLevelEtHost(
         CookingLevelLifecycle lifecycle,
@@ -327,6 +330,8 @@ public sealed class CookingLevelEtHost : IDisposable
         ICookingLevelEtHostFailureInjector? failureInjector = null)
     {
         _lifecycle = lifecycle ?? throw new ArgumentNullException(nameof(lifecycle));
+        _frontConfiguration = (lifecycle.GameplayFactory as ICookingFrontOfHouseGameplayFactory)?.FrontOfHouseConfiguration.Freeze();
+        _frontConfigurationIdentity = _frontConfiguration?.Identity();
         if (queueCapacity <= 0)
             throw new ArgumentOutOfRangeException(nameof(queueCapacity));
         _queueCapacity = queueCapacity;
@@ -399,10 +404,109 @@ public sealed class CookingLevelEtHost : IDisposable
 
     public void UseFrontOfHouse(CookingFrontOfHouse house, CookingFrontOfHouseMenu menu)
     {
+        Check();
         ArgumentNullException.ThrowIfNull(house);
         ArgumentNullException.ThrowIfNull(menu);
+        if (_frontOfHouse is not null && _lifecycle.State != CookingLevelState.Created)
+            throw new InvalidOperationException("An active front-of-house owner cannot be replaced.");
+        ValidateFrontConfiguration(house, menu, _ownedSimulation);
         _frontOfHouse = house;
         _frontOfHouseMenu = menu;
+        if (_ownedSimulation is not null) BindFrontOfHouse(_ownedSimulation);
+    }
+
+    private T RunFrontOperation<T>(Func<T> operation)
+    {
+        if (_executingFrontOperation) throw new InvalidOperationException("Front owner operation cannot be reentered.");
+        _executingFrontOperation = true;
+        try { return operation(); } finally { _executingFrontOperation = false; }
+    }
+
+    private void ValidateFrontConfiguration(CookingFrontOfHouse house, CookingFrontOfHouseMenu menu, CookingRecipeSimulation? kitchen)
+    {
+        var snapshot = house.Snapshot();
+        if (_frontConfiguration is null)
+        {
+            if (snapshot.Flow is not null || snapshot.ManualPolicyIdentity is not null)
+                throw new ArgumentException("New front gameplay requires trusted factory configuration.");
+            return;
+        }
+        if (snapshot.Schedule != _frontConfiguration.Schedule || !menu.Templates.SequenceEqual(_frontConfiguration.Menu)
+            || System.Text.Json.JsonSerializer.Serialize(snapshot.Flow) != System.Text.Json.JsonSerializer.Serialize(_frontConfiguration.Flow)
+            || (snapshot.ManualPolicyIdentity is not null && snapshot.ManualPolicyIdentity != _frontConfiguration.ManualPolicyIdentity))
+            throw new ArgumentException("Front gameplay differs from the trusted factory configuration.");
+        if (kitchen is null) return;
+        if (menu.Templates.Any(x => !kitchen.HasOrderTemplate(x))) throw new ArgumentException("Front menu references unavailable orders.");
+        if (_frontConfiguration.Flow is { } flow)
+        {
+            if (kitchen.SpatialConfiguration is not { } spatial || CookingFrontOfHouseFlow.SpatialIdentity(spatial) != flow.GeometryIdentity)
+                throw new ArgumentException("Front paths must use the active kitchen geometry.");
+            void Endpoint(string id, CookingFrontPoint point)
+            {
+                var x = (long)point.X * flow.CellSize + flow.CellSize / 2;
+                var y = (long)point.Y * flow.CellSize + flow.CellSize / 2;
+                if (!spatial.Anchors.Any(a => a.Id == id && a.X == x && a.Y == y))
+                    throw new ArgumentException("Front path endpoint has no matching authoritative anchor.");
+            }
+            Endpoint(_frontConfiguration.EntranceAnchor, flow.EntranceToQueue[0]);
+            Endpoint(_frontConfiguration.QueueAnchor, flow.EntranceToQueue[^1]);
+            Endpoint(_frontConfiguration.ExitAnchor, flow.QueueToExit[^1]);
+            foreach (var table in flow.Tables) Endpoint(table.TableId, table.QueueToTable[^1]);
+        }
+        if (_frontConfiguration.DeliveryPolicy is { } delivery)
+        {
+            var spatial = kitchen.SpatialConfiguration ?? throw new ArgumentException("Service delivery requires kitchen geometry.");
+            var required = delivery.Mode == CookingFrontDeliveryMode.ServingAnchor
+                ? new[] { delivery.ServingAnchor! }
+                : Enumerable.Range(1, snapshot.Schedule.TableCount).Select(x => $"table-{x}");
+            if (required.Any(id => spatial.Anchors.Count(a => a.Id == id) != 1))
+                throw new ArgumentException("A unique authoritative service anchor is required.");
+        }
+        if (_frontConfiguration.ManualPolicyIdentity is not null)
+        {
+            var spatial = kitchen.SpatialConfiguration ?? throw new ArgumentException("Manual front work requires kitchen geometry.");
+            var required = Enumerable.Range(1, snapshot.Schedule.TableCount).Select(x => $"table-{x}").Append(_frontConfiguration.WashingAnchor);
+            if (required.Any(id => !spatial.Anchors.Any(a => a.Id == id))) throw new ArgumentException("A front work anchor is missing.");
+        }
+    }
+
+    private void BindFrontOfHouse(CookingRecipeSimulation kitchen)
+    {
+        if (_frontOfHouse is not { } house) return;
+        var snapshot = house.Snapshot();
+        ValidateFrontConfiguration(house, _frontOfHouseMenu, kitchen);
+        if (_frontConfiguration?.ManualPolicyIdentity is { } policy)
+            RunFrontOperation(() => { house.ConfigureManualWork(policy, (player, target) => CanFrontWork(kitchen, player, target)); return true; });
+        kitchen.BindFrontDeliveryAuthority(_frontConfiguration?.DeliveryPolicy is { } delivery
+            ? (player, order) => ValidateFrontDelivery(kitchen, house, delivery, player, order)
+            : null);
+        house.BindAuthorityGate(new FrontAuthorityGate(this));
+        kitchen.BindFrontWorkAuthority(command => command.Operation switch
+        {
+            CookingRecipeOperation.ClaimFrontWork => house.ClaimFrontWork(kitchen, command.Player, command.WorldAnchor!),
+            CookingRecipeOperation.ContinueFrontWork => house.ContinueFrontWork(command.Player, command.WorldAnchor!),
+            CookingRecipeOperation.StopFrontWork => house.StopFrontWork(command.Player, command.WorldAnchor!),
+            _ => new(false, CookingFrontWorkRejection.WorkMissing)
+        }, house.HasPlayerWork);
+    }
+
+    private static CookingRecipeRejectionReason ValidateFrontDelivery(CookingRecipeSimulation kitchen,
+        CookingFrontOfHouse house, CookingFrontDeliveryPolicy policy, PlayerId player, OrderId order)
+    {
+        var customer = house.Snapshot().Customers.SingleOrDefault(c => c.Order == order && c.Phase == CookingTablePhase.Ordered);
+        if (customer is null) return CookingRecipeRejectionReason.OrderRejected;
+        var target = policy.Mode == CookingFrontDeliveryMode.ServingAnchor ? policy.ServingAnchor! : customer.TableId;
+        var anchor = kitchen.SpatialConfiguration?.Anchors.SingleOrDefault(a => a.Id == target);
+        return anchor is not null && kitchen.ValidateSpatialReach(player, anchor.Kind, anchor.Id)
+            ? CookingRecipeRejectionReason.None : CookingRecipeRejectionReason.TargetOutOfRange;
+    }
+
+    private bool CanFrontWork(CookingRecipeSimulation kitchen, PlayerId player, string target)
+    {
+        if (!kitchen.IsPlayerAvailable(player) || kitchen.HasManualWork(player)) return false;
+        var anchorId = target == "washing" ? _frontConfiguration?.WashingAnchor ?? target : target;
+        var anchor = kitchen.SpatialConfiguration?.Anchors.Where(x => x.Id == anchorId).OrderBy(x => x.Kind).FirstOrDefault();
+        return anchor is not null && kitchen.ValidateSpatialReach(player, anchor.Kind, anchor.Id);
     }
 
     public long HostFrameSequence { get; private set; }
@@ -440,6 +544,13 @@ public sealed class CookingLevelEtHost : IDisposable
             _failureInjector?.ThrowIfRequested(CookingLevelEtHostFailurePoint.BeforeSimulationPublish);
             _ownedSimulation = simulation;
             Driver.Simulation = simulation;
+            if (_frontConfiguration is { } configured && _frontOfHouse is null)
+            {
+                _frontOfHouse = new(configured.Schedule);
+                if (configured.Flow is not null) _frontOfHouse.ConfigureFlow(configured.Flow);
+                _frontOfHouseMenu = new(configured.Menu);
+            }
+            BindFrontOfHouse(simulation);
         }
         catch (Exception exception)
         {
@@ -562,6 +673,8 @@ public sealed class CookingLevelEtHost : IDisposable
     public CookingLevelHostOperationResult BeginEnd(CookingLevelOutcome outcome)
     {
         Check();
+        if (outcome == CookingLevelOutcome.Success && _frontConfiguration is not null && _frontOfHouse is { CanSucceed: false })
+            return new(false, "ServiceNotFinished", _lifecycle.State.ToString(), _lifecycle.Version, Array.Empty<CookingLevelPendingDisposition>());
         var result = RunLifecycleOperation(() => _lifecycle.BeginEnd(outcome));
         var dispositions = result.Accepted ? CancelPending("level-ending") : Array.Empty<CookingLevelPendingDisposition>();
         return Operation(result, dispositions);
@@ -724,7 +837,7 @@ public sealed class CookingLevelEtHost : IDisposable
                 $"The rebuilt kitchen could not be adopted: {adopted}."));
         }
 
-        _frontOfHouse?.DropFailedScene();
+        if (_frontOfHouse is not null) RunFrontOperation(() => { _frontOfHouse.DropFailedScene(); return true; });
         return installed;
     }
 
@@ -747,7 +860,7 @@ public sealed class CookingLevelEtHost : IDisposable
         if (!installed.Accepted)
             return installed;
 
-        _frontOfHouse?.FinishInProgress(_ownedSimulation, _frontOfHouseMenu);
+        if (_frontOfHouse is not null) RunFrontOperation(() => { _frontOfHouse.FinishInProgress(_ownedSimulation, _frontOfHouseMenu); return true; });
         var clearedOrders = _ownedSimulation.Orders.Count;
         var handoff = _ownedSimulation.ExportSuccessHandoff();
         var adopted = candidate.AdoptSuccessorKitchen(_ownedSimulation);
@@ -764,7 +877,7 @@ public sealed class CookingLevelEtHost : IDisposable
                 $"The successor kitchen could not be adopted: {adopted}; handoff {accepted.Reason}."));
         }
 
-        _frontOfHouse?.ResetForNextLevel(_ownedSimulation, _frontOfHouseMenu);
+        if (_frontOfHouse is not null) RunFrontOperation(() => { _frontOfHouse.ResetForNextLevel(_ownedSimulation, _frontOfHouseMenu); return true; });
         return installed with
         {
             RetainedProcessCount = handoff.Processes.Count,
@@ -803,7 +916,8 @@ public sealed class CookingLevelEtHost : IDisposable
                 HostFrameSequence,
                 LastCommittedSimulationBatch,
                 _ownedSimulation.ExportCheckpoint(),
-                _frontOfHouse?.ExportCheckpoint(_frontOfHouseMenu)));
+                _frontOfHouse is null ? null : RunFrontOperation(() => _frontOfHouse.ExportCheckpoint(_frontOfHouseMenu)),
+                _frontConfigurationIdentity));
     }
 
     /// <summary>
@@ -823,6 +937,12 @@ public sealed class CookingLevelEtHost : IDisposable
         if (!Equals(configuration.Identity, checkpoint.ConfigIdentity))
             return new CookingLevelCheckpointRestoreResult(false,
                 CookingLevelCheckpointRestoreReason.ConfigurationIdentityMismatch);
+        var trustedFront = (factory as ICookingFrontOfHouseGameplayFactory)?.FrontOfHouseConfiguration;
+        if (checkpoint.FrontOfHouseConfigurationIdentity != trustedFront?.Identity()
+            || (trustedFront is not null && checkpoint.FrontOfHouse is null)
+            || (trustedFront is null && checkpoint.FrontOfHouse?.State is { } untrusted && (untrusted.Flow is not null || untrusted.ManualPolicyIdentity is not null)))
+            return new(false, CookingLevelCheckpointRestoreReason.FrontOfHouseRestoreRejected,
+                FrontOfHouseRestoreReason: CookingFrontOfHouseRestoreReason.ConfigurationMismatch);
         // 载荷必须属于信封声明的同一 match，且已经绑定的 Level scope（含 epoch）必须就是本代际。
         // 只改 epoch、载荷 match 不变的 checkpoint 不能绕过这里被建成另一代宿主。
         // 尚未推进 fixed tick 的载荷没有代际绑定，同样拒绝：宿主恢复要求这一代已经被记录。
@@ -894,8 +1014,20 @@ public sealed class CookingLevelEtHost : IDisposable
                         FrontOfHouseRestoreReason: frontOfHouse.Reason);
                 }
 
-                host.UseFrontOfHouse(frontOfHouse.FrontOfHouse,
-                    new CookingFrontOfHouseMenu(frontOfHouse.FrontOfHouse.Snapshot().OrderMenu));
+                host._frontOfHouse = frontOfHouse.FrontOfHouse;
+                host._frontOfHouseMenu = new(frontOfHouse.FrontOfHouse.Snapshot().OrderMenu);
+                var frontState = host._frontOfHouse.Snapshot();
+                if (frontState.Work.Where(x => x.Player is not null).Any(x => !host.CanFrontWork(simulation, x.Player!.Value, x.Target))
+                    || frontState.ManualPolicyIdentity != trustedFront?.ManualPolicyIdentity
+                    || (trustedFront is not null && frontState.ServiceTicks != Math.Min(checkpoint.Recipe.LogicalTick, trustedFront.Schedule.ServiceTicks)))
+                {
+                    host.Dispose();
+                    return new(false, CookingLevelCheckpointRestoreReason.FrontOfHouseRestoreRejected,
+                        FrontOfHouseRestoreReason: CookingFrontOfHouseRestoreReason.WorkInvalid);
+                }
+                host.BindFrontOfHouse(simulation);
+                if (trustedFront is not null)
+                    simulation.RestoreFrontOfHouseState(frontState.Closing, host._frontOfHouse.CanSucceed, checkpoint.Recipe.StateVersion);
             }
 
             host.AdoptRecoveredCheckpoint(checkpoint);
@@ -1029,6 +1161,8 @@ public sealed class CookingLevelEtHost : IDisposable
 
         HostFrameSequence = candidateFrame;
         _frontOfHouse?.Step(simulation, _frontOfHouseMenu);
+        if (_frontConfiguration is not null && _frontOfHouse is not null)
+            simulation.UpdateFrontOfHouseState(_frontOfHouse.IsClosing, _frontOfHouse.CanSucceed);
         if (_inFlight is not null)
             LastCommittedSimulationBatch = _inFlight.SimulationBatch;
         _inFlight = null;
@@ -1480,6 +1614,12 @@ public sealed class CookingLevelEtHost : IDisposable
 
         public bool IsLifecycleOperationOpen =>
             _host._executingLifecycleOperation && !_host._disposed;
+    }
+
+    private sealed class FrontAuthorityGate(CookingLevelEtHost host) : ICookingRecipeAuthorityGate
+    {
+        public bool IsAuthorityMutationOpen => !host._disposed && host._tickFailure is null &&
+            (host._executingFrontOperation || (host._ticking && host._executingAuthorityMutation));
     }
 
     private sealed class HostAuthorityGate : ICookingRecipeAuthorityGate

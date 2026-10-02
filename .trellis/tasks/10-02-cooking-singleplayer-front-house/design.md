@@ -61,3 +61,23 @@ Wrong：多个问单入口直接开同一顾客的订单；伙伴与玩家各有
 - malformed flow、null work/table/space、缺桌字段、重号/多人占工、路径进度不一致、伪造工作编号均被恢复预检拒绝；旧对象 canonical 保持不变。恢复的人工回调按同策略身份重新绑定。
 - 最后聚焦命令实际 exit 0，**36 passed / 0 failed / 0 skipped**（旧21 + 新15）；同一日志覆盖最终源码：`local/Logs/cooking-execution/front-house-component.log`。`git diff --check` 实际 exit 0，仅文档 CRLF 正常化提示。未 suppress 新警告；当前前厅源没有新的 nullable warning。
 - 本受限增量尚未接入统一 ET ingress/指纹/跨厨房唯一 worker、Level 版本与网络 codec；路径配置与初始/新布局的自动适配由主 owner 完成。不同 logical 玩家争抢域测试不宣称真实联机。未提交、未合并、未改 S06 task metadata，不能据此标完整 S06 已通过。
+
+## S06 实际 ET 接线设计（执行中）
+
+追加 `ClaimFrontWork` / `ContinueFrontWork` / `StopFrontWork` 到 CookingRecipeOperation 末尾，保持既有 numeric ID。三者唯一动作参数为 `WorldAnchor=workId`（该字段在这三类操作里是稳定前厅工作编号，并不是空间 anchor）；其余 item/process/recipe/container/station/order/version/tick/move 参数必须为空/零。既有 WorldAnchor canonical 指纹已包含该值；执行时根据前厅当前 Work.Target 映射到受信空间锚点，不能把 workId 当场景位置。
+
+仍通过 CookingLevelEtHost 同一 ingress/freeze/group/order/dedup 与 simulation.Submit 缓存结果；外部前厅委托只有在既有 authority frame 中被调用，不另建队列或时钟。新增已接受前厅指令同时生成厨房 command event 与版本，重复或冲突复用既有 ledger；纯前厅工作推进发生在同一 ET fixed Tick 之后。两个 owner 的工作排他均从当前状态只读判断，拒绝不能先释放另一份工作。
+
+新增可选 `ICookingFrontOfHouseGameplayFactory` 由既有 factory 提供受信前厅配置（Schedule/Menu/Flow/manual policy/wash anchor），不是新的世界工厂。首次 Start 自动构造前厅并绑定当前 simulation 的只读 reach/worker predicate。Level checkpoint 格式6新增必需 FrontOfHouseConfigurationIdentity 字段（legacy可null），恢复比较受信factory身份及每项配置，不相信checkpoint自报hash。Flow还必须匹配同一配置和厨房实际 SpatialIdentity；恢复后重新绑定新simulation回调并检查不存在厨房/前厅双worker。
+
+无可选配置的原factory保留历史自动前厅路径；具有 Flow 或手工策略的新checkpoint必须有可选factory受信配置才能恢复。旧格式5明确拒绝，Recipe checkpoint格式4不无故升级。恢复前厅后再Adopt宿主水位，任何阶段失败释放候选host；既有Running-only checkpoint导出语义保持。Pause阻止命令入队且不推进厨房/顾客/工作时间。新的正常Success开始/后续成功交接不得绕过前厅CanSucceed。
+
+## F08 可信服务目的地实施合同（2026-10-02）
+
+在既有 CookingFrontOfHouseConfiguration 追加可选 DeliveryPolicy，模式 ServingAnchor/CustomerTable。null 为历史兼容路径。ServingAnchor 必须提供非空唯一空间anchor ID；CustomerTable 不接受额外anchor，目标由当前前厅 Order→Ordered顾客→TableId 导出。Freeze 校验字段互斥与enum，Identity/canonical包含完整策略；绑定厨房时必须有同一权威空间及唯一目标anchor，缺失或跨Kind同名歧义拒绝。
+
+host为当前 kitchen 绑定只读 Func<PlayerId,OrderId,CookingRecipeRejectionReason>，在SubmitOrder所有现有纯前置验证后、首个结算/容器修改前调用。前厅无该开放订单的Ordered顾客（已离席、用餐或未点单）返回OrderRejected；当前姿态对可信anchor距离/朝向不符返回TargetOutOfRange。订单参数足够，不增加command目的地字段，不信调用者桌号。不改变容器所有权、绑定要求、洗碗和结算；拒绝无业务状态变化，保留既有去重回执。
+
+恢复/跨关BindFrontOfHouse重新绑定当前实例，可信factory配置身份涵盖策略。格式6仍未发布，复用其已required FrontOfHouseConfigurationIdentity验证，不默默放行不匹配。无前厅policy的旧S05与legacy通用fixtures保持原提交规则。仅补服务目的地，不强制贴票工位、不加正常营业失败、不声明S14或Unity完成。
+
+新增专属ETtests走真实 ingress+固定Tick，使用从raw经工序得到的成品：远端/错误桌拒绝，正确桌/出餐口交付，旧订单离席拒绝、同identity拒绝重放不变、同Level restore重绑/配置身份拒绝，以及legacynull策略控制。实际结果另记。

@@ -28,6 +28,23 @@ public sealed class CookingRecipeCommandShapeTests
     private static readonly RecipeId SoupRecipe = new("tomato-egg-soup");
     private static readonly RecipeId ChopRecipe = new("chop-tomato");
 
+    [Theory]
+    [InlineData(CookingRecipeOperation.ClaimFrontWork, 17)]
+    [InlineData(CookingRecipeOperation.ContinueFrontWork, 18)]
+    [InlineData(CookingRecipeOperation.StopFrontWork, 19)]
+    public void Front_work_payload_has_one_work_id_and_no_kitchen_or_movement_fields(CookingRecipeOperation operation, int numeric)
+    {
+        Assert.Equal(numeric, (int)operation);
+        var command = Command(operation, "front-shape") with { WorldAnchor = "inquiry:customer-1" };
+        Assert.True(CookingRecipeCommandValidation.IsWellFormed(command));
+        Assert.False(CookingRecipeCommandValidation.IsWellFormed(command with { WorldAnchor = null }));
+        Assert.False(CookingRecipeCommandValidation.IsWellFormed(command with { WorldAnchor = " " }));
+        Assert.False(CookingRecipeCommandValidation.IsWellFormed(command with { Item = new ItemId("item") }));
+        Assert.False(CookingRecipeCommandValidation.IsWellFormed(command with { Station = Station }));
+        Assert.False(CookingRecipeCommandValidation.IsWellFormed(command with { ExpectedItemVersion = 1 }));
+        Assert.False(CookingRecipeCommandValidation.IsWellFormed(command with { TickCount = 1 }));
+        Assert.False(CookingRecipeCommandValidation.IsWellFormed(command with { FacingX = 1 }));
+    }
     [Fact]
     public void S01_well_formed_start_process_accepts_missing_recipe()
     {
@@ -197,7 +214,9 @@ public sealed class CookingRecipeCommandShapeTests
         Assert.Equal(CookingRecipeRejectionReason.BindingRequired, (CookingRecipeRejectionReason)(queueFull + 10));
         Assert.Equal(CookingRecipeRejectionReason.BindingConflict, (CookingRecipeRejectionReason)(queueFull + 11));
         Assert.Equal(CookingRecipeRejectionReason.BindingNotFound, (CookingRecipeRejectionReason)(queueFull + 12));
-        Assert.Equal(queueFull + 13, Enum.GetValues<CookingRecipeRejectionReason>().Length);
+        Assert.Equal(CookingRecipeRejectionReason.FrontOfHouseUnavailable, (CookingRecipeRejectionReason)(queueFull + 13));
+        Assert.Equal(CookingRecipeRejectionReason.FrontWorkNotFound, (CookingRecipeRejectionReason)(queueFull + 14));
+        Assert.Equal(queueFull + 15, Enum.GetValues<CookingRecipeRejectionReason>().Length);
     }
 
     [Fact]
@@ -271,6 +290,7 @@ public sealed class CookingRecipeCommandShapeTests
                 CookingRecipeOperation.ContinueProcess, CookingRecipeOperation.StopProcess, CookingRecipeOperation.ServePortion,
                 CookingRecipeOperation.ClearContents, CookingRecipeOperation.DiscardItem,
                 CookingRecipeOperation.BindOrder, CookingRecipeOperation.UnbindOrder, CookingRecipeOperation.RebindOrder,
+                CookingRecipeOperation.ClaimFrontWork, CookingRecipeOperation.ContinueFrontWork, CookingRecipeOperation.StopFrontWork,
             },
             Enum.GetValues<CookingRecipeOperation>());
 
