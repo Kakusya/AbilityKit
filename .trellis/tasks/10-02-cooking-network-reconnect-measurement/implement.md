@@ -1,6 +1,6 @@
 ﻿# N03 实施顺序与验证清单
 
-当前in_progress，仅root2026-10-03批准的本地确定性恢复/边界工程增量。N02整体仍in_progress，物理gate未满足；这个局部依赖例外不表示N02完成。当前root独占.NET双进程复跑，worker先准备测试，显式授窗后才执行。
+当前in_progress，仅root2026-10-03批准的本地确定性恢复/边界工程增量。N02整体仍in_progress，物理gate未满足；这个局部依赖例外不表示N02完成。.NET由root串行授窗。最新master实测和剩余出口见research/master-local-recovery-verification.md；旧授窗记录不代表当前进程仍在运行。
 
 1. 复读N01最终design（含baseline budget补充）、N02独立review/process实测报告与冻结publication源码（本次路由8d3261af1及后继）；核对实际commit/dirty状态、停止和活跃worker。对齐existing API/Reason，审阅N03 PRD/design，root决定本地提前范围与测量档。
 2. 只在批准范围创建受管独立tree，保留其他worker编辑；先确定测试/runner所有权和.NET串行窗口。不要改metadata/manifests代表已执行，未经授权不启动Unity。
@@ -12,5 +12,5 @@
 8. root审核后同机独立进程UDP有界故障和负载3重复；再物理两PC配对执行。日志按拓扑分目录，进程deadline/cleanup只处理自己启动的具体PID对象，避免全机dotnet终止。
 9. 汇总测量口径/样本/峰值与失败矩阵，逐项review。root才决定集成/合并并复跑master门禁；本地绿不写整体完成，物理缺失保留NOT_VERIFIED，性能阈值UNSET保留无结论。
 
-本轮实际动作只有源契约/现有证据只读审议和这些文档更新；无 .NET、源码、Task状态或manifest修改。
+历史规划阶段仅进行了只读审议。随后已获准执行并合入cold4、live6与测量工具，最新master ET808/324和两拓扑容量控制实际通过；不是未执行计划。第5项丰富链四断点仍在实施，独立进程故障/负载、物理两PC和正式性能验收尚未关闭，不得由受限测试推导整体完成。
 

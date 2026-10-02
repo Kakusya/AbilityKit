@@ -15,7 +15,7 @@
     "branch":  "cooking-network-recovery-current",
     "base_branch":  "master",
     "worktree_path":  "C:/Users/Administrator/orca/workspaces/AbilityKit/cooking-network-recovery-current",
-    "commit":  null,
+    "commit":  "8c9903488",
     "pr_url":  null,
     "subtasks":  [
 
@@ -27,7 +27,7 @@
     "relatedFiles":  [
 
                      ],
-    "notes":  "Root2026-10-03 authorizes bounded local deterministic recovery engineering on reviewed assembled b6e102ac9. N02 endpoint flows passed but paired wrapper/final gates/physical LAN pending. This is a scoped dependency exception, not N02 completion; .NET serialized; Unity deferred.",
+    "notes":  "Root authorized bounded local recovery. Reviewed cold4/live6 and measurement increments merged; actual master ET808/324 and both capacity controls passed. N02 independent-process paired command passed. Overall N02/N03 remain in_progress: rich four-cutpoint recovery ongoing, physical two-PC not verified, performance thresholds unset; Unity deferred.",
     "meta":  {
                  "plan_id":  "N03",
                  "stage":  "network",
@@ -40,6 +40,8 @@
                  "planning_maturity":  "reviewed-contract",
                  "owner_delegated_details":  true,
                  "execution_authorization":  "Latest owner: audit every topic then execute through completion. Task planning review and dependency checks precede execution; Unity and optional reference pool remain deferred.",
-                 "local_dependency_exception":  "N02 source corrections reviewed and frozen; only local recovery/boundary engineering may precede whole N02/physical exit"
+                 "local_dependency_exception":  "N02 source corrections reviewed and frozen; only local recovery/boundary engineering may precede whole N02/physical exit",
+                 "local_increment_status":  "merged-and-master-verified-cold4-live6-measurement-control",
+                 "remaining_exit":  "rich-four-cutpoint-recovery; independent-process-fault-load; physical-two-PC-NOT_VERIFIED; performance-threshold-UNSET"
              }
 }
