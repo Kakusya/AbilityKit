@@ -3,7 +3,7 @@
   "name": "cooking-gameplay-menu-plan",
   "title": "Cooking 功能基线与菜单分阶段规划",
   "description": "比对 A-K 玩法与 87 款候选菜单，记录架构边界并建立只规划不执行的 Task 清单",
-  "status": "planning",
+  "status": "in_progress",
   "dev_type": null,
   "scope": null,
   "package": null,

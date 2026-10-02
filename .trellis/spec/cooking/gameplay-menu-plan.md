@@ -2,9 +2,9 @@
 
 # Cooking 功能与菜单推进计划
 
-日期：2026-10-02。当前仅规划、记录 Task，不实施、不改变架构、不合并；先单机，再网络，再单机 Unity、网络 Unity。先前执行记录仅保留历史，停止情况见 [执行记录](../../tasks/10-02-cooking-gameplay-menu-plan/execution.md)。
+日期：2026-10-02。当前owner明确要求全部审议后实施到完成；架构保持，先单机，再网络，再单机Unity、网络Unity。审议结论见总任务research/final-review.md，实际实施与停止/恢复回执见[执行记录](../../tasks/10-02-cooking-gameplay-menu-plan/execution.md)。Unity独立执行门未解除。
 
-当前审议：Task S01 已核对主分支空间缺口，细化逻辑移动、朝向、碰撞、统一目标解析与恢复验收；仍为 planning，未批准实施。下一项为 Task S02 手工作业与接续加工；详见 [S01 设计](../../tasks/10-02-cooking-singleplayer-spatial-interaction/design.md)。
+本次审议：S01–S14/N01–N03的设计与范围已细化，审阅发现的保留分支缺口须在合入前修正。核心与菜单恢复实施，经营整合按依赖推进；详见[S01设计](../../tasks/10-02-cooking-singleplayer-spatial-interaction/design.md)及各子Task。
 
 ## 目标与范围
 
