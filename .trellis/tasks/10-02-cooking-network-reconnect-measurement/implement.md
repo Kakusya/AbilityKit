@@ -1,16 +1,16 @@
-> Current owner instruction (2026-10-02): continue auditing all topics, resolve their plans, then implement and verify to completion without stopping for routine confirmations. Preserve architecture and stage order: singleplayer -> network -> singleplayer Unity -> network Unity. Current stage: network contract review; S01-S14 accepted at 4dadd25c8 with evidence routed by master-singleplayer-exit-verification.md. Older planning-only notices below are historical. Unity remains deferred under its separate gate.
+﻿# N03 实施顺序与验证清单
 
-# N03 待执行清单
+当前 planning；本轮仅完善设计。不得由此文推导 start 或通过。N02仍in_progress，物理 gate 未满足；root 可明确批准有界本地工程增量，但整体完成仍按依赖与物理出口判断。
 
-- [ ] 核对依赖、历史 check 与实际代码；解决本 Task 的契约差异。
-- [ ] 补齐具体设计、验收场景与影响的 snapshot/checkpoint/schema。
-- [ ] 最终规划审阅及 owner 批准；当前不可 start。
-- [ ] 批准后按独立纵切实现：断线、旧局输入、负载与延迟。
-- [ ] 实际运行聚焦 .NET 测试与适用 gate；记录 pass/fail/blocked/skip。
-- [ ] 核对 完整基线恢复，旧 epoch/sequence 拒绝，断线队列明确；真实拓扑测量不冒充 InProcess 结果。
+1. 复读N01最终design（含baseline budget补充）、N02独立review/process实测报告与冻结publication源码（本次路由8d3261af1及后继）；核对实际commit/dirty状态、停止和活跃worker。对齐existing API/Reason，审阅N03 PRD/design，root决定本地提前范围与测量档。
+2. 只在批准范围创建受管独立tree，保留其他worker编辑；先确定测试/runner所有权和.NET串行窗口。不要改metadata/manifests代表已执行，未经授权不启动Unity。
+3. 先确定性InProcess矩阵：issued ack/SingleAwaitingAck publication、live generation/token轮换、旧scope/sequence/identity conflict、partial/all source取消、paused cleanup priority、Busy/Faulted/null capture。每拒绝比较前后完整业务canonical，另外检查合法Session bookkeeping终态。
+4. cold矩阵：旧成功基线实际落盘→Dispose旧Host→新store+trusted factory LoadMajorBaseline→新的SessionInstance；先真实旧token/ID拒绝，再新join/完整ack/新ID合法command，验证receipt隔离。不得替换为同Host CreateSuccessor 或模拟改字符串。
+5. rich live恢复：沿F01+D31 finite suppliers真实备料、manual暂停/换人、automatic离开、portion剩余、unbound成品换人bind/submit。选择至少manual paused、自动加工中、unbound杯、已提交但应答丢失四个断点；恢复后自然1unmet/2delivery/0star close，随后实际successor新scope；检查全recipe/front/supply/tombstone/allocator+Session view，不从hash单独推断完整性。
+6. 边界：实际receipt增长超过历史65536 tokens（参考N02真实1600次），默认合法完整baseline roundtrip；注入小byte/token/collection预算覆盖首次/new join和原Ready连接；business/perconnection/control/outbox/receipt limit±1。保存真实红与绿，不扩大预算或删除receipt来绕过既有契约。
+7. 在以上聚焦实际绿后跑适用Cooking/ET/network-sdk门禁（使用tools/test-gates.json真实配置，不发明gate名）；每次保存命令、stdout、TRX、计数、exit、commit、环境。编译通过不算玩法通过；中断/环境不足分别记aborted/blocked。
+8. root审核后同机独立进程UDP有界故障和负载3重复；再物理两PC配对执行。日志按拓扑分目录，进程deadline/cleanup只处理自己启动的具体PID对象，避免全机dotnet终止。
+9. 汇总测量口径/样本/峰值与失败矩阵，逐项review。root才决定集成/合并并复跑master门禁；本地绿不写整体完成，物理缺失保留NOT_VERIFIED，性能阈值UNSET保留无结论。
 
-当前所有实现与测试步骤均未执行。命令选择见总任务 implement.md；Unity 必须解除禁令并确认环境后补齐场景命令。
+本轮实际动作只有源契约/现有证据只读审议和这些文档更新；无 .NET、源码、Task状态或manifest修改。
 
-## Current execution sequence after review
-
-Owner authorizes audit then implementation. Follow the reviewed design and parent research/final-review.md; historical planning-only text is superseded. Check actual dependency evidence before starting, preserve stopped worktree edits, fix review findings before accepting prior implementation, update payload/fingerprints/config identity/canonical/checkpoint together, run focused behavioral and applicable integration gates, record actual pass/fail/blocked/skip and commit evidence. Never declare this Task complete from metadata or directory counts.
