@@ -1,3 +1,5 @@
+> Current incremental execution: reviewed master125ffe906 has immutable Observe, generation transaction and pure menu Ready validator with actual kitchen605/733/254 and ET733/254 gates. Typed baseline2 store is verified separately. Host Ready/runtime permissions/checkpoint8, durable Host restart and natural combined operating acceptance remain in progress. Historical unexecuted checklists below are retained as planning history, not current implementation status. Parent evidence: ../10-02-cooking-gameplay-menu-plan/research/master-generation-menu-verification.md.
+
 > Current owner instruction (2026-10-02): continue auditing all topics, resolve their plans, then implement and verify to completion without stopping for routine confirmations. Preserve architecture and stage order: singleplayer -> network -> singleplayer Unity -> network Unity. Current stage: singleplayer. Older planning-only notices below are historical. Unity remains deferred under its separate gate.
 
 # S14 待执行清单

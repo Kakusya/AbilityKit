@@ -11,11 +11,11 @@
 | S03 分装与恢复 | 多份产出/分装/最后份争抢守恒、清空保留容器、错误零变更、allocator 不泄漏 | 本地 master 已合并 S03 核心并验证守恒与恢复 |
 | S04 内容闭合 | 87 菜来源、工位、容器、数量和阶段映射；可运行配置校验及现有菜回归 | 来源校验及 87 菜实际制作/盛装/ET 恢复已合并 cfd107c75；完整 87 菜已在 master 实际提交并验证 121 ET 恢复；见 master-complete-menu-verification.md |
 | S05 制作与交付 | 未绑定暂存、饮品绑定/解绑/换绑、餐食无需贴票、重复交付一次、恢复 | 核心绑定/换绑/解绑/恢复与嵌套交付修复已合并 cfd107c75；31 饮品 binding/disposable 映射及实际提交/恢复已独立验证合并 |
-| S06 前厅营业 | 到店/队列/入座/询问/用餐/离开/清理，人工与伙伴互斥，停止接单后自然收尾 | Master7a043b6cb 已合并前厅 ET/manual/recovery 与可信交付地点，实际386/511/213和ET511/213通过；准备时钟集成在585e15982验证，完整动态空间营业与S14出口仍待 |
-| S07 供应 | 有限/无限显式区分、申请/到货/接收、物理包装/份数/仓储、补货和恢复守恒 | Integration4e32fbe61 实物供应、全局分配水位、ET指纹/关闭/恢复经过438/563/218和ET563/218；585e15982准备供应经过462/589/223和ET589/223。尚未回并master，完整布局/跨关经营出口仍待 |
-| S08 布局 | 准备态安装真实空间配置、旋转占位、交互面、玩家与顾客通路、扩建、拒绝零变更及恢复 | 静态布局/通路辅助已合并；585e15982可信配置与Preparing运行、d9b0e5603准备恢复均通过完整门禁；伪造前厅初态漏洞已红测修复。真实布局安装与动态布局恢复仍待完成 |
+| S06 前厅营业 | 到店/队列/入座/询问/用餐/离开/清理，人工与伙伴互斥，停止接单后自然收尾 | Master125ffe906 includes trusted Preparing/service clock offset, Front/manual/recovery and recoverable generation staging. Final master kitchen605/733/254 and ET733/254 passed. Natural combined F01+D31 service exit remains open. |
+| S07 供应 | 有限/无限显式区分、申请/到货/接收、物理包装/份数/仓储、补货和恢复守恒 | Master125ffe906 includes actual finite/infinite supply, material packages, global allocator and Preparing/Running recovery; success transaction preserves pending delivery RemainingTicks. Full natural service and runtime scope permissions remain open. |
+| S08 布局 | 准备态安装真实空间配置、旋转占位、交互面、玩家与顾客通路、扩建、拒绝零变更及恢复 | Master125ffe906 includes actual trusted layout installation, same-Level geometry recovery and next-generation trusted seed projection with rollback. Per-Level equipment/material narrowing and full natural Front route acceptance remain open. |
 | S09–S13 内容 | 44 正餐/12 甜品/31 饮品逐条供应→加工→容器→交付实跑，独立分支和最后收尾正确 | 87 菜实际生产与盛装、56 正餐甜品提交及 87 ET 恢复已验证；31 饮品绑定后提交与恢复已在 master 验证 |
-| S14 单机完整出口 | ET 固定 Tick 营业闭环、许可交集、可观察数据、重放与 checkpoint、失败/成功跨关 | 尚未整合新增功能 |
+| S14 单机完整出口 | ET 固定 Tick 营业闭环、许可交集、可观察数据、重放与 checkpoint、失败/成功跨关 | Master125ffe906 includes frozen Observe, pure Ready validator, typed baseline2 store and reviewed generation transaction. Host Ready/runtime policy/checkpoint8 integration, durable Host restart and natural operating replay/restore exit remain open. |
 | N01 网络契约 | 较晚 owner 决定同步 ADR/spec；同一 Host 本地/远端入口、固定 Tick 队列、传输边界 | 研究结论已定位；正式修约及实现待单机后 |
 | N02 网络闭环 | 全部新状态 wire round-trip，同机双进程真实 UDP，物理两机 LAN 争抢/并行/交付/跨关 | 第二物理主机当前不可用，不可标通过 |
 | N03 恢复测量 | 身份重绑定、断线队列丢弃、暂停不消费、旧局拒绝、完整 baseline、真实拓扑指标 | 未重新验证新增功能 |

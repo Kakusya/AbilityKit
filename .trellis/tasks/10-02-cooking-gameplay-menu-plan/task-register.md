@@ -1,3 +1,5 @@
+> Current incremental baseline: master125ffe906 reviewed generation staging, actual supply/preparation/layout, immutable Observe and pure Ready validator. Master kitchen605/733/254 and ET733/254 passed. S06/S07/S08/S14 remain in progress for scope permissions, trusted Host Ready/restart and natural service exit. Read [latest evidence](research/master-generation-menu-verification.md) and [complete remaining exits](research/completion-contract.md); older introductory statuses below are historical.
+
 > Current owner instruction (2026-10-02): continue auditing all topics, resolve their plans, then implement and verify to completion without stopping for routine confirmations. Preserve architecture and stage order: singleplayer -> network -> singleplayer Unity -> network Unity. Current stage: singleplayer. Older planning-only notices below are historical. Unity remains deferred under its separate gate.
 
 # Cooking Task 注册表
