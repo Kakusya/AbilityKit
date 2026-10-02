@@ -48,3 +48,5 @@ Source **b6e102ac9**, actual command `powershell -ExecutionPolicy Bypass -File t
 Host424406ms / Client403729ms, remote386 responses, mean568.89ms, Host701 timings, queue high-water3, final Created baseline153921bytes. These are diagnostic observed values, not an approved performance PASS. All complete endpoint checks described above passed again. No physical LAN or Unity evidence is inferred.
 
 Now running final assembled Cooking/ET/network-sdk gates. Reviewed production merge and master post-merge gates remain required. N02 overall remains in_progress because physical two-PC exit is NOT_VERIFIED. N03's separately recorded local deterministic recovery dependency exception does not change that status.
+
+Later master acceptance: reviewed production merged as f6922712a, test-only cold increment as c7ffb49ee. Actual master kitchen644/808/314, ET808/318 and network-sdk311 all passed zero failed/skipped. Read [master evidence](master-network-verification.md) for exact run directories and scope; preceding pending statements are historical. N02 remains in_progress with physical LAN NOT_VERIFIED.
