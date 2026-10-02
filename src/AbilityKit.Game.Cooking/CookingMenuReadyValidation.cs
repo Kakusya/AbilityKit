@@ -98,12 +98,13 @@ public static class CookingMenuReadyValidation
             var found = sources.Where(s => s.Definition == definition).Any(s => ReachableByQualified(new[] { definition }, s.Location, menu, node));
             if (kitchen.CleanContainerSupply.GetValueOrDefault(definition) > 0)
                 found |= ReachableByQualified(new[] { definition }, ItemLocation.World(kitchen.CleanPoolLocation), menu, node);
-            foreach (var supplier in kitchen.SupplyConfiguration?.Suppliers.Where(s => s.UnitDefinition == definition || s.PackageDefinition == definition)
+            foreach (var supplier in kitchen.SupplyConfiguration?.Suppliers.Where(s => s.UnitDefinition == definition || !s.Infinite && s.PackageDefinition == definition)
                 ?? Enumerable.Empty<CookingSupplierDefinition>())
             {
-                if (!authorized.Contains(supplier.UnitDefinition) || !authorized.Contains(supplier.PackageDefinition)) continue;
-                if (!kitchen.ItemDefinitions.TryGetValue(supplier.PackageDefinition, out var package) || package.Container is not { } container ||
-                    container.Capacity < supplier.UnitsPerPackage || !container.AcceptedDefinitions.Contains(supplier.UnitDefinition)) continue;
+                if (!authorized.Contains(supplier.UnitDefinition)) continue;
+                if (!supplier.Infinite && (!authorized.Contains(supplier.PackageDefinition) ||
+                    !kitchen.ItemDefinitions.TryGetValue(supplier.PackageDefinition, out var package) || package.Container is not { } container ||
+                    container.Capacity < supplier.UnitsPerPackage || !container.AcceptedDefinitions.Contains(supplier.UnitDefinition))) continue;
                 ItemLocation? Anchor(string id)
                 {
                     if (kitchen.CurrentSpatial is null) return ItemLocation.World(id);
@@ -111,9 +112,12 @@ public static class CookingMenuReadyValidation
                     return anchors.Length != 1 ? null : anchors[0].Kind == LocationKind.StationSlot
                         ? ItemLocation.Station(new(id)) : ItemLocation.World(id);
                 }
-                var from = Anchor(supplier.SourceAnchor); var to = Anchor(supplier.ReceivingAnchor);
-                if (from is null || to is null || !ReachableByQualified(new[] { supplier.UnitDefinition, supplier.PackageDefinition }, from, menu, node) ||
-                    !ReachableByQualified(new[] { supplier.UnitDefinition, supplier.PackageDefinition }, to, menu, node)) continue;
+                var from = Anchor(supplier.SourceAnchor);
+                if (from is null || !ReachableByQualified(new[] { supplier.UnitDefinition }, from, menu, node)) continue;
+                if (!supplier.Infinite) {
+                    var to = Anchor(supplier.ReceivingAnchor);
+                    if (to is null || !ReachableByQualified(new[] { supplier.UnitDefinition, supplier.PackageDefinition }, to, menu, node)) continue;
+                }
                 found = true;
                 var balance = kitchen.Current.Supply?.Ledger.Balances.FirstOrDefault(b => b.SupplierId == supplier.SupplierId)?.AvailableUnits ?? supplier.FiniteAvailable;
                 if (!supplier.Infinite && balance < supplier.UnitsPerPackage) Error(menu, node, "SupplyExhausted", supplier.SupplierId, false);
@@ -145,7 +149,7 @@ public static class CookingMenuReadyValidation
                 if (step.OutputStorageContainer is { } storage) Container(menuId, node, storage, new[] { step.Output });
                 if (!kitchen.Recipes.TryGetValue(recipeId, out var recipe)) { Error(menuId, node, "MissingRecipe", recipeId.Value); continue; }
                 static bool Same(IEnumerable<DefinitionId> a, IEnumerable<DefinitionId> b) => a.Select(d => d.Value).Order(StringComparer.Ordinal).SequenceEqual(b.Select(d => d.Value).Order(StringComparer.Ordinal));
-                if (recipe.Id != recipeId || !Same(recipe.Inputs, inputs) || recipe.DefaultInputs is { } defaults && !Same(defaults, inputs) ||
+                if (recipe.Id != recipeId || !Same(recipe.Inputs, inputs) || recipe.DefaultInputs is { Count: > 0 } ||
                     recipe.ProductDefinition != step.Output || recipe.Process != step.Process || recipe.RequiredApplianceCapability != step.Capability ||
                     recipe.RequiredProcessingContainerDefinition != step.Carrier || recipe.YieldPortions != step.YieldPortions ||
                     recipe.Completion.ToString() != CookingMenuCatalog.Completion(step) || recipe.Execution.ToString() != step.ExecutionKind.ToString() ||
@@ -159,6 +163,8 @@ public static class CookingMenuReadyValidation
                     Error(menuId, node, "UnreachableAppliance", step.Capability);
             }
             Container(menuId, "Delivery", menu.ServingContainer, new[] { menu.Product });
+            if (!kitchen.Players.Values.Any(p => Qualified(p, new[] { menu.Product, menu.ServingContainer })))
+                Error(menuId, "Delivery", "NoEligibleDeliveryPlayer", menu.Product.Value + "/" + menu.ServingContainer.Value);
             if (!kitchen.OrderTemplates.TryGetValue(menu.OrderTemplate, out var order) || order.RequiredRecipe != menu.FinalRecipe ||
                 order.RequiredContainerDefinition != menu.ServingContainer || order.RequiresBinding != menu.RequiresBinding ||
                 !kitchen.Recipes.TryGetValue(menu.FinalRecipe, out var final) || final.ProductDefinition != menu.Product)

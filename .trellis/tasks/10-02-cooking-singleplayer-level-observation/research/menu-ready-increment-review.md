@@ -31,3 +31,15 @@ Final: 117 passed / 0 failed / 0 skipped. Logs: TEMP/menu-ready-production-final
 Historical actual runs retained: first 110/110; second 114/114; pre-extra-test 116/116. Additional real-source tests initially failed compilation because test used Execute/Committed instead of Submit/Accepted (TEMP/menu-ready-source-final.log; no TRX), then ran 116 pass/1 fail because the real supplier fixture lacked mandatory spatial anchors (TEMP/menu-ready-source-fixed.log/TRX). Corrected the fixture with actual source/receiving/station/seed/clean-pool anchors; production rules were not relaxed. Final 117/117 is the current evidence.
 
 No complete integration gate, host Ready/factory trust/checkpoint rebind, operating flow, Unity or network exit was claimed. Root owns subsequent serial Host/format wiring and independent review/gates. These helper tests validate the increment, not full S14.
+
+## Independent review corrections (2026-10-02)
+
+Root review found three execution-model mapping defects; no existing execution rule was changed.
+
+1. Catalog projection has no implicit defaults. A null or empty runtime DefaultInputs collection is allowed; any nonempty collection is RecipeMismatch, including one equal to the declared multiset. Previous validation had wrongly rejected empty and accepted equal nonempty defaults.
+2. Supply eligibility now follows actual ExecuteSupply: infinite Take uses only unit authorization/qualification and source reach, never receiving reach or package acquisition. Infinite supplier metadata cannot witness an unmaterialized package source. Finite Request requires unit/source qualification; Receive separately requires unit+package/receiving qualification, and these may be different available players. Finite package compatibility/authorization checks remain. Actual production Request/Receive and Take acceptance are directly compared with readiness in the new regression fixtures.
+3. Final delivery requires at least one available player qualified for both final product and required serving container. NoEligibleDeliveryPlayer diagnoses unsupported final output or split qualifications; the delivery player may differ from manufacturing workers. This follows existing SubmitOrder and adds no ServePortion eligibility rule.
+
+Real red run: 7 failed / 118 passed / 0 skipped (125 total), TEMP/menu-ready-review-red-seven.log and TEMP/menu-ready-results/menu-ready-review-red-seven.trx. An earlier six-failure red was retained too; the package-source fixture was then made unobstructed to isolate unmaterialized Infinite package availability rather than also failing an unrelated receiving path.
+
+After the three focused fixes: 125 passed / 0 failed / 0 skipped. Final log TEMP/menu-ready-review-fixed.log and TRX TEMP/menu-ready-results/menu-ready-review-fixed.trx. The original 117 evidence remains historical. Three helper source files frozen; only validator/tests/report changed in this correction. Host/format and complete S14 exit still pending root integration/review.

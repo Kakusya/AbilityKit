@@ -255,4 +255,96 @@ public sealed class CookingMenuReadyValidationTests
         Assert.True(resultReady.IsReady); Assert.Contains(resultReady.Diagnostics, d => d.Code == "NoCurrentStock" && d.Relation == raw.Value && !d.Blocking);
         Assert.Equal(before, sim.ExportCheckpoint().CanonicalText());
     }
+
+    [Theory][InlineData(false)][InlineData(true)]
+    public void Catalog_has_no_implicit_defaults_empty_is_valid_any_nonempty_is_invalid(bool nonempty)
+    {
+        var (catalog, sim, policy) = Kitchen("F01"); var view = sim.DescribeManufacturingAvailability();
+        var id = catalog.Requirements(new[] { "F01" }).Recipes.First(); var recipes = view.Recipes.ToDictionary();
+        recipes[id] = recipes[id] with { DefaultInputs = nonempty ? recipes[id].Inputs.ToArray() : Array.Empty<DefinitionId>() };
+        var result = CookingMenuReadyValidation.Validate(catalog, policy, view with { Recipes = recipes });
+        Assert.Equal(!nonempty, result.IsReady);
+        Assert.Equal(nonempty, result.Diagnostics.Any(d => d.Code == "RecipeMismatch" && d.NodeId == id.Value));
+    }
+
+    private static (CookingMenuCatalog Catalog, CookingRecipeSimulation Sim, CookingLevelMenuConfiguration Policy, DefinitionId Raw, DefinitionId Package)
+        ActualSupplyKitchen(bool infinite, bool packageIsRequiredCarrier = false)
+    {
+        var (catalog, legacy, policy) = Kitchen("F01"); var view = legacy.DescribeManufacturingAvailability();
+        var req = catalog.Requirements(new[] { "F01" }); var raw = req.Supplies.First();
+        var package = packageIsRequiredCarrier ? catalog.Document.Steps.First(s => s.Inputs.Any(i => i.Definition == raw)).Carrier : new DefinitionId("package");
+        var items = view.ItemDefinitions.ToDictionary();
+        if (!packageIsRequiredCarrier) items[package] = new(package, new HashSet<string> { "package-handler" }, new(3, new HashSet<DefinitionId> { raw }));
+        var receiver = new PlayerId("receiver");
+        var players = new Dictionary<PlayerId, CookingPlayerConfig> { [Chef] = view.Players[Chef] };
+        if (!infinite) players[receiver] = view.Players[Chef] with { Id = receiver, Capabilities = view.Players[Chef].Capabilities.Append("package-handler").ToHashSet() };
+        var seeds = req.Supplies.Concat(req.Containers).Distinct().Where(d => d != raw && (!packageIsRequiredCarrier || d != package)).ToArray();
+        var anchors = seeds.Select((d, i) => new CookingSpatialAnchor(LocationKind.WorldPosition, $"seed-{d.Value}", 1000, 2000 + i * 700))
+            .Concat(view.Appliances.Keys.Select((s, i) => new CookingSpatialAnchor(LocationKind.StationSlot, s.Value, 3000, 1000 + i * 700)))
+            .Concat(new[] { new CookingSpatialAnchor(LocationKind.WorldPosition, "source", 1200, 1000),
+                new CookingSpatialAnchor(LocationKind.WorldPosition, "receiving", 6200, 1000) }).ToArray();
+        var poses = players.Keys.Select(p => new CookingPlayerPose(p, p == Chef ? 1000 : 6000, 1000, 1, 0)).ToArray();
+        var spatial = new CookingSpatialConfiguration(0, 0, 10000, 10000, 100, 500, poses, anchors,
+            packageIsRequiredCarrier ? Array.Empty<CookingSpatialObstacle>() : new[] { new CookingSpatialObstacle(4500, 0, 5500, 10000) });
+        var fixture = new CookingRecipeFixture(Scope, players, items, view.Appliances, view.Recipes, orderTemplates: view.OrderTemplates, spatial: spatial,
+            supply: new(new[] { new CookingSupplierDefinition("supplier", "source", "receiving", raw, package, 1, 0, infinite ? 0 : 1, infinite) }));
+        var sim = new CookingRecipeSimulation(fixture);
+        foreach (var definition in seeds) sim.AddItem(new($"seed-{definition.Value}"), definition, ItemLocation.World($"seed-{definition.Value}"));
+        if (!infinite) policy = policy with { BaseAuthorizedMaterialDefinitions = policy.BaseAuthorizedMaterialDefinitions.Append(package).ToHashSet(),
+            AllowedMaterialDefinitions = policy.AllowedMaterialDefinitions.Append(package).ToHashSet() };
+        return (catalog, sim, policy, raw, package);
+    }
+
+    [Fact]
+    public void Actual_infinite_take_uses_only_unit_source_not_package_permission_or_unused_receiving_path()
+    {
+        var (catalog, sim, policy, raw, package) = ActualSupplyKitchen(true);
+        var take = sim.Submit(new(Scope, 1, Chef, new("take"), CookingRecipeOperation.TakeSupply, SupplierId: "supplier", SupplyRequestId: "request"));
+        Assert.Equal(CookingRecipeOutcome.Accepted, take.Outcome); Assert.Null(take.Supply!.Package);
+        Assert.DoesNotContain(sim.Snapshot().Items, i => i.Definition == package);
+        // Validate before the take's current raw object can hide an incorrect supplier-source verdict.
+        var fresh = ActualSupplyKitchen(true); var result = CookingMenuReadyValidation.Validate(fresh.Catalog, fresh.Policy, fresh.Sim.DescribeManufacturingAvailability());
+        Assert.True(result.IsReady, string.Join(" | ", result.Diagnostics));
+    }
+
+    [Fact]
+    public void Actual_finite_request_unit_worker_and_receive_unit_package_worker_can_be_different_people()
+    {
+        var (catalog, sim, policy, raw, package) = ActualSupplyKitchen(false);
+        var before = sim.DescribeManufacturingAvailability();
+        var request = sim.Submit(new(Scope, 1, Chef, new("request"), CookingRecipeOperation.RequestSupply, SupplierId: "supplier", SupplyRequestId: "request"));
+        Assert.Equal(CookingRecipeOutcome.Accepted, request.Outcome);
+        sim.AdvanceFixedTick(new(Scope, new(1), new("level"), 1), 1);
+        var receive = sim.Submit(new(Scope, 2, new("receiver"), new("receive"), CookingRecipeOperation.ReceiveSupply, DeliveryId: request.Supply!.DeliveryId));
+        Assert.Equal(CookingRecipeOutcome.Accepted, receive.Outcome); Assert.NotNull(receive.Supply!.Package);
+        var result = CookingMenuReadyValidation.Validate(catalog, policy, before);
+        Assert.True(result.IsReady, string.Join(" | ", result.Diagnostics));
+    }
+
+    [Fact]
+    public void Infinite_supplier_never_provides_its_unmaterialized_package_as_a_working_carrier()
+    {
+        var (catalog, sim, policy, raw, package) = ActualSupplyKitchen(true, true);
+        var take = sim.Submit(new(Scope, 1, Chef, new("take"), CookingRecipeOperation.TakeSupply, SupplierId: "supplier", SupplyRequestId: "take"));
+        Assert.Equal(CookingRecipeOutcome.Accepted, take.Outcome); Assert.Null(take.Supply!.Package);
+        var result = CookingMenuReadyValidation.Validate(catalog, policy, sim.DescribeManufacturingAvailability());
+        Assert.False(result.IsReady); Assert.Contains(result.Diagnostics, d => d.Code == "MissingSource" && d.Relation == package.Value);
+    }
+
+    [Theory][InlineData("none")][InlineData("split")][InlineData("other-worker")]
+    public void Delivery_requires_one_available_player_with_final_product_and_serving_container_qualifications(string variant)
+    {
+        var (catalog, sim, policy) = Kitchen("F01"); var view = sim.DescribeManufacturingAvailability(); var menu = catalog.Document.Menus.Single(m => m.SourceId == "F01");
+        var items = view.ItemDefinitions.ToDictionary(); items[menu.Product] = items[menu.Product] with { AllowedPlayerCapabilities = new HashSet<string> { "product-handler" } };
+        var players = view.Players.ToDictionary(); var second = new PlayerId("delivery");
+        if (variant == "split") {
+            items[menu.ServingContainer] = items[menu.ServingContainer] with { AllowedPlayerCapabilities = new HashSet<string> { "vessel-handler" } };
+            players[Chef] = players[Chef] with { Capabilities = players[Chef].Capabilities.Append("vessel-handler").ToHashSet() };
+            players[second] = players[Chef] with { Id = second, Capabilities = new HashSet<string> { "product-handler" } };
+        }
+        else if (variant == "other-worker") players[second] = players[Chef] with { Id = second, Capabilities = players[Chef].Capabilities.Append("product-handler").ToHashSet() };
+        var result = CookingMenuReadyValidation.Validate(catalog, policy, view with { ItemDefinitions = items, Players = players });
+        Assert.Equal(variant == "other-worker", result.IsReady);
+        Assert.Equal(variant != "other-worker", result.Diagnostics.Any(d => d.Code == "NoEligibleDeliveryPlayer" && d.NodeId == "Delivery"));
+    }
 }
