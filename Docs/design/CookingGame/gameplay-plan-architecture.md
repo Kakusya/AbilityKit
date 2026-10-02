@@ -7,9 +7,9 @@
 ## 保留的结构
 
 - 纯 C# `AbilityKit.Game.Cooking` 拥有物品/容器/加工/订单/前厅规则；`CookingLevelEtHost` 负责 Level 固定 Tick 与命令入口。先扩展既有 owner，不建立平行厨房运行时。
-- `CookingRecipeCommand` 已有 Pickup、Drop、PutIn、TakeOut、Pour、StartProcess、SubmitOrder，以及本轮已合并的 Move、ContinueProcess、StopProcess、ServePortion、ClearContents、DiscardItem；AdvanceTicks 为 legacy 自动加工测试路径，不能推进 Manual。动作仍经过同一 owner 的验证、原子提交、幂等及 scope/version 校验；订单绑定动作尚在 S05 分支。
+- `CookingRecipeCommand` 已有 Pickup、Drop、PutIn、TakeOut、Pour、StartProcess、SubmitOrder，以及本轮已合并的 Move、ContinueProcess、StopProcess、ServePortion、ClearContents、DiscardItem；AdvanceTicks 为 legacy 自动加工测试路径，不能推进 Manual。动作仍经过同一 owner 的验证、原子提交、幂等及 scope/version 校验；BindOrder、UnbindOrder、RebindOrder 已在本地 master 合并验证；它们复用 Item/Order/ExpectedItemVersion，fingerprint 覆盖既有字段。
 - 运行态、快照与恢复 checkpoint 分开；新增状态必须评估 snapshot/canonical/SHA-256/checkpoint、同 Level 恢复、成功交接与失败重开的取舍，不能只加 UI 字段。
-- 正式内容使用 `CookingContentDocument`、配置候选及加载校验。master 当前身份是 `cooking-definition-v3`，Recipe checkpoint schema3、Level envelope format4；不支持旧格式时显式拒绝。Execution/YieldPortions/RequiredProcessingContainerDefinition 和可选 ContentProvenance 经既有配置校验、冻结与 canonical identity，不另造菜单配置 authority。S05 等后续格式变更必须再按实际提交和验证更新，不把分支候选先写成 master 现状。
+- 正式内容使用 `CookingContentDocument`、配置候选及加载校验。master 当前身份是 `cooking-definition-v3`，Recipe checkpoint schema4、Level envelope format5；不支持旧格式时显式拒绝。Execution/YieldPortions/RequiredProcessingContainerDefinition 和可选 ContentProvenance 经既有配置校验、冻结与 canonical identity，不另造菜单配置 authority。S05 新增必需 BoundOrder checkpoint 字段与可选 RequiresBinding/DisposableOnSubmission 内容字段已同步 canonical 和恢复校验；S06 分支 format6 尚未交付。
 - Match、Connection、Participant、RestaurantRuntime、Kitchen、Level 语义见 [reference/product-lifetimes.md](reference/product-lifetimes.md)；ET 所有权见 [reference/et-entity-tree.md](reference/et-entity-tree.md)。这是设计参考，不宣称完整目标树已经落地。
 - 通用 AbilityKit、Network 和 Server 不拥有菜品、顾客、票据或营业规则。现有应用层对框架的组合方式保持。
 
