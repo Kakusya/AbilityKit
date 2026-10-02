@@ -1,0 +1,793 @@
+{
+  "schema": "cooking-menu-production-evidence-v1",
+  "menuSourceId": "D11",
+  "status": "produced-plated-binding-pending",
+  "scope": {
+    "session": {
+      "value": "menu-production"
+    },
+    "world": {
+      "value": "menu-world"
+    },
+    "match": {
+      "value": "D11"
+    }
+  },
+  "contentIdentity": {
+    "schema": "cooking-definition-v3",
+    "sha256": "E4F4F4AECB763D135C1ADB5371F9C503D00D076B83BABFFB2D8253BED4BC2145"
+  },
+  "catalogSha256": "bcadc77368b284cfafe273b608c56d9d6d3a312fa456abf49b1f831133eb5374",
+  "sources": [
+    {
+      "path": "Docs/design/CookingGame/reference/menu-v0.1/Cooking_\u5B8C\u6574\u83DC\u54C1\u4E0E\u52A0\u5DE5\u8FC7\u7A0B_v0.1.md",
+      "sha256": "8d503eeaaf5c2de3e326762beb9b1bf305342b1095b0ba9fcabcde230f902cc2"
+    },
+    {
+      "path": "Docs/design/CookingGame/reference/menu-v0.1/Cooking_\u5B8C\u6574\u83DC\u54C1\u4E0E\u52A0\u5DE5\u8FC7\u7A0B_v0.1.xlsx",
+      "sha256": "5268130330044901cfaecf3cbd7ab048432030ef03c6f17cf3a793d3d744232d"
+    }
+  ],
+  "fixtureValues": "raw-eight-per-definition-serving-two-not-balanced",
+  "initialSupply": [
+    {
+      "definition": {
+        "value": "menu-supply-ice"
+      },
+      "count": 1,
+      "location": "world:initial-menu-supply-ice-1"
+    },
+    {
+      "definition": {
+        "value": "menu-supply-ice"
+      },
+      "count": 1,
+      "location": "world:initial-menu-supply-ice-2"
+    },
+    {
+      "definition": {
+        "value": "menu-supply-ice"
+      },
+      "count": 1,
+      "location": "world:initial-menu-supply-ice-3"
+    },
+    {
+      "definition": {
+        "value": "menu-supply-ice"
+      },
+      "count": 1,
+      "location": "world:initial-menu-supply-ice-4"
+    },
+    {
+      "definition": {
+        "value": "menu-supply-ice"
+      },
+      "count": 1,
+      "location": "world:initial-menu-supply-ice-5"
+    },
+    {
+      "definition": {
+        "value": "menu-supply-ice"
+      },
+      "count": 1,
+      "location": "world:initial-menu-supply-ice-6"
+    },
+    {
+      "definition": {
+        "value": "menu-supply-ice"
+      },
+      "count": 1,
+      "location": "world:initial-menu-supply-ice-7"
+    },
+    {
+      "definition": {
+        "value": "menu-supply-ice"
+      },
+      "count": 1,
+      "location": "world:initial-menu-supply-ice-8"
+    },
+    {
+      "definition": {
+        "value": "menu-supply-strawberry"
+      },
+      "count": 1,
+      "location": "world:initial-menu-supply-strawberry-1"
+    },
+    {
+      "definition": {
+        "value": "menu-supply-strawberry"
+      },
+      "count": 1,
+      "location": "world:initial-menu-supply-strawberry-2"
+    },
+    {
+      "definition": {
+        "value": "menu-supply-strawberry"
+      },
+      "count": 1,
+      "location": "world:initial-menu-supply-strawberry-3"
+    },
+    {
+      "definition": {
+        "value": "menu-supply-strawberry"
+      },
+      "count": 1,
+      "location": "world:initial-menu-supply-strawberry-4"
+    },
+    {
+      "definition": {
+        "value": "menu-supply-strawberry"
+      },
+      "count": 1,
+      "location": "world:initial-menu-supply-strawberry-5"
+    },
+    {
+      "definition": {
+        "value": "menu-supply-strawberry"
+      },
+      "count": 1,
+      "location": "world:initial-menu-supply-strawberry-6"
+    },
+    {
+      "definition": {
+        "value": "menu-supply-strawberry"
+      },
+      "count": 1,
+      "location": "world:initial-menu-supply-strawberry-7"
+    },
+    {
+      "definition": {
+        "value": "menu-supply-strawberry"
+      },
+      "count": 1,
+      "location": "world:initial-menu-supply-strawberry-8"
+    },
+    {
+      "definition": {
+        "value": "menu-supply-yogurt"
+      },
+      "count": 1,
+      "location": "world:initial-menu-supply-yogurt-1"
+    },
+    {
+      "definition": {
+        "value": "menu-supply-yogurt"
+      },
+      "count": 1,
+      "location": "world:initial-menu-supply-yogurt-2"
+    },
+    {
+      "definition": {
+        "value": "menu-supply-yogurt"
+      },
+      "count": 1,
+      "location": "world:initial-menu-supply-yogurt-3"
+    },
+    {
+      "definition": {
+        "value": "menu-supply-yogurt"
+      },
+      "count": 1,
+      "location": "world:initial-menu-supply-yogurt-4"
+    },
+    {
+      "definition": {
+        "value": "menu-supply-yogurt"
+      },
+      "count": 1,
+      "location": "world:initial-menu-supply-yogurt-5"
+    },
+    {
+      "definition": {
+        "value": "menu-supply-yogurt"
+      },
+      "count": 1,
+      "location": "world:initial-menu-supply-yogurt-6"
+    },
+    {
+      "definition": {
+        "value": "menu-supply-yogurt"
+      },
+      "count": 1,
+      "location": "world:initial-menu-supply-yogurt-7"
+    },
+    {
+      "definition": {
+        "value": "menu-supply-yogurt"
+      },
+      "count": 1,
+      "location": "world:initial-menu-supply-yogurt-8"
+    },
+    {
+      "definition": {
+        "value": "menu-container-drink-jug"
+      },
+      "count": 1,
+      "location": "world:initial-D11-menu-container-drink-jug"
+    },
+    {
+      "definition": {
+        "value": "menu-container-prep-box"
+      },
+      "count": 1,
+      "location": "world:initial-P13-menu-container-prep-box"
+    },
+    {
+      "definition": {
+        "value": "menu-container-prep-box"
+      },
+      "count": 1,
+      "location": "world:initial-storage-menu-recipe-preparation-cut-strawberry"
+    },
+    {
+      "definition": {
+        "value": "menu-container-cold-cup"
+      },
+      "count": 1,
+      "location": "world:initial-cup-1"
+    },
+    {
+      "definition": {
+        "value": "menu-container-cold-cup"
+      },
+      "count": 1,
+      "location": "world:initial-cup-2"
+    }
+  ],
+  "executedRecipes": [
+    "menu-recipe-preparation-cut-strawberry",
+    "menu-recipe-finished-strawberry-yogurt-slush"
+  ],
+  "productId": "product-2",
+  "servingVesselId": "fixture-cup-1",
+  "logicalTick": 190,
+  "settlements": [],
+  "remainingItems": [
+    {
+      "id": {
+        "value": "fixture-D11-menu-container-drink-jug"
+      },
+      "definition": {
+        "value": "menu-container-drink-jug"
+      },
+      "version": 3,
+      "location": {
+        "kind": 0,
+        "ownerId": null,
+        "slotId": "initial-D11-menu-container-drink-jug"
+      },
+      "recipe": null,
+      "isProduct": false,
+      "originStation": null,
+      "containerCompleted": false,
+      "isDirty": false,
+      "remainingPortions": 0
+    },
+    {
+      "id": {
+        "value": "fixture-P13-menu-container-prep-box"
+      },
+      "definition": {
+        "value": "menu-container-prep-box"
+      },
+      "version": 3,
+      "location": {
+        "kind": 0,
+        "ownerId": null,
+        "slotId": "initial-P13-menu-container-prep-box"
+      },
+      "recipe": null,
+      "isProduct": false,
+      "originStation": null,
+      "containerCompleted": false,
+      "isDirty": false,
+      "remainingPortions": 0
+    },
+    {
+      "id": {
+        "value": "fixture-cup-1"
+      },
+      "definition": {
+        "value": "menu-container-cold-cup"
+      },
+      "version": 3,
+      "location": {
+        "kind": 0,
+        "ownerId": null,
+        "slotId": "serving-D11"
+      },
+      "recipe": null,
+      "isProduct": false,
+      "originStation": null,
+      "containerCompleted": false,
+      "isDirty": false,
+      "remainingPortions": 0
+    },
+    {
+      "id": {
+        "value": "fixture-cup-2"
+      },
+      "definition": {
+        "value": "menu-container-cold-cup"
+      },
+      "version": 1,
+      "location": {
+        "kind": 0,
+        "ownerId": null,
+        "slotId": "initial-cup-2"
+      },
+      "recipe": null,
+      "isProduct": false,
+      "originStation": null,
+      "containerCompleted": false,
+      "isDirty": false,
+      "remainingPortions": 0
+    },
+    {
+      "id": {
+        "value": "fixture-menu-supply-ice-2"
+      },
+      "definition": {
+        "value": "menu-supply-ice"
+      },
+      "version": 1,
+      "location": {
+        "kind": 0,
+        "ownerId": null,
+        "slotId": "initial-menu-supply-ice-2"
+      },
+      "recipe": null,
+      "isProduct": false,
+      "originStation": null,
+      "containerCompleted": false,
+      "isDirty": false,
+      "remainingPortions": 0
+    },
+    {
+      "id": {
+        "value": "fixture-menu-supply-ice-3"
+      },
+      "definition": {
+        "value": "menu-supply-ice"
+      },
+      "version": 1,
+      "location": {
+        "kind": 0,
+        "ownerId": null,
+        "slotId": "initial-menu-supply-ice-3"
+      },
+      "recipe": null,
+      "isProduct": false,
+      "originStation": null,
+      "containerCompleted": false,
+      "isDirty": false,
+      "remainingPortions": 0
+    },
+    {
+      "id": {
+        "value": "fixture-menu-supply-ice-4"
+      },
+      "definition": {
+        "value": "menu-supply-ice"
+      },
+      "version": 1,
+      "location": {
+        "kind": 0,
+        "ownerId": null,
+        "slotId": "initial-menu-supply-ice-4"
+      },
+      "recipe": null,
+      "isProduct": false,
+      "originStation": null,
+      "containerCompleted": false,
+      "isDirty": false,
+      "remainingPortions": 0
+    },
+    {
+      "id": {
+        "value": "fixture-menu-supply-ice-5"
+      },
+      "definition": {
+        "value": "menu-supply-ice"
+      },
+      "version": 1,
+      "location": {
+        "kind": 0,
+        "ownerId": null,
+        "slotId": "initial-menu-supply-ice-5"
+      },
+      "recipe": null,
+      "isProduct": false,
+      "originStation": null,
+      "containerCompleted": false,
+      "isDirty": false,
+      "remainingPortions": 0
+    },
+    {
+      "id": {
+        "value": "fixture-menu-supply-ice-6"
+      },
+      "definition": {
+        "value": "menu-supply-ice"
+      },
+      "version": 1,
+      "location": {
+        "kind": 0,
+        "ownerId": null,
+        "slotId": "initial-menu-supply-ice-6"
+      },
+      "recipe": null,
+      "isProduct": false,
+      "originStation": null,
+      "containerCompleted": false,
+      "isDirty": false,
+      "remainingPortions": 0
+    },
+    {
+      "id": {
+        "value": "fixture-menu-supply-ice-7"
+      },
+      "definition": {
+        "value": "menu-supply-ice"
+      },
+      "version": 1,
+      "location": {
+        "kind": 0,
+        "ownerId": null,
+        "slotId": "initial-menu-supply-ice-7"
+      },
+      "recipe": null,
+      "isProduct": false,
+      "originStation": null,
+      "containerCompleted": false,
+      "isDirty": false,
+      "remainingPortions": 0
+    },
+    {
+      "id": {
+        "value": "fixture-menu-supply-ice-8"
+      },
+      "definition": {
+        "value": "menu-supply-ice"
+      },
+      "version": 1,
+      "location": {
+        "kind": 0,
+        "ownerId": null,
+        "slotId": "initial-menu-supply-ice-8"
+      },
+      "recipe": null,
+      "isProduct": false,
+      "originStation": null,
+      "containerCompleted": false,
+      "isDirty": false,
+      "remainingPortions": 0
+    },
+    {
+      "id": {
+        "value": "fixture-menu-supply-strawberry-2"
+      },
+      "definition": {
+        "value": "menu-supply-strawberry"
+      },
+      "version": 1,
+      "location": {
+        "kind": 0,
+        "ownerId": null,
+        "slotId": "initial-menu-supply-strawberry-2"
+      },
+      "recipe": null,
+      "isProduct": false,
+      "originStation": null,
+      "containerCompleted": false,
+      "isDirty": false,
+      "remainingPortions": 0
+    },
+    {
+      "id": {
+        "value": "fixture-menu-supply-strawberry-3"
+      },
+      "definition": {
+        "value": "menu-supply-strawberry"
+      },
+      "version": 1,
+      "location": {
+        "kind": 0,
+        "ownerId": null,
+        "slotId": "initial-menu-supply-strawberry-3"
+      },
+      "recipe": null,
+      "isProduct": false,
+      "originStation": null,
+      "containerCompleted": false,
+      "isDirty": false,
+      "remainingPortions": 0
+    },
+    {
+      "id": {
+        "value": "fixture-menu-supply-strawberry-4"
+      },
+      "definition": {
+        "value": "menu-supply-strawberry"
+      },
+      "version": 1,
+      "location": {
+        "kind": 0,
+        "ownerId": null,
+        "slotId": "initial-menu-supply-strawberry-4"
+      },
+      "recipe": null,
+      "isProduct": false,
+      "originStation": null,
+      "containerCompleted": false,
+      "isDirty": false,
+      "remainingPortions": 0
+    },
+    {
+      "id": {
+        "value": "fixture-menu-supply-strawberry-5"
+      },
+      "definition": {
+        "value": "menu-supply-strawberry"
+      },
+      "version": 1,
+      "location": {
+        "kind": 0,
+        "ownerId": null,
+        "slotId": "initial-menu-supply-strawberry-5"
+      },
+      "recipe": null,
+      "isProduct": false,
+      "originStation": null,
+      "containerCompleted": false,
+      "isDirty": false,
+      "remainingPortions": 0
+    },
+    {
+      "id": {
+        "value": "fixture-menu-supply-strawberry-6"
+      },
+      "definition": {
+        "value": "menu-supply-strawberry"
+      },
+      "version": 1,
+      "location": {
+        "kind": 0,
+        "ownerId": null,
+        "slotId": "initial-menu-supply-strawberry-6"
+      },
+      "recipe": null,
+      "isProduct": false,
+      "originStation": null,
+      "containerCompleted": false,
+      "isDirty": false,
+      "remainingPortions": 0
+    },
+    {
+      "id": {
+        "value": "fixture-menu-supply-strawberry-7"
+      },
+      "definition": {
+        "value": "menu-supply-strawberry"
+      },
+      "version": 1,
+      "location": {
+        "kind": 0,
+        "ownerId": null,
+        "slotId": "initial-menu-supply-strawberry-7"
+      },
+      "recipe": null,
+      "isProduct": false,
+      "originStation": null,
+      "containerCompleted": false,
+      "isDirty": false,
+      "remainingPortions": 0
+    },
+    {
+      "id": {
+        "value": "fixture-menu-supply-strawberry-8"
+      },
+      "definition": {
+        "value": "menu-supply-strawberry"
+      },
+      "version": 1,
+      "location": {
+        "kind": 0,
+        "ownerId": null,
+        "slotId": "initial-menu-supply-strawberry-8"
+      },
+      "recipe": null,
+      "isProduct": false,
+      "originStation": null,
+      "containerCompleted": false,
+      "isDirty": false,
+      "remainingPortions": 0
+    },
+    {
+      "id": {
+        "value": "fixture-menu-supply-yogurt-2"
+      },
+      "definition": {
+        "value": "menu-supply-yogurt"
+      },
+      "version": 1,
+      "location": {
+        "kind": 0,
+        "ownerId": null,
+        "slotId": "initial-menu-supply-yogurt-2"
+      },
+      "recipe": null,
+      "isProduct": false,
+      "originStation": null,
+      "containerCompleted": false,
+      "isDirty": false,
+      "remainingPortions": 0
+    },
+    {
+      "id": {
+        "value": "fixture-menu-supply-yogurt-3"
+      },
+      "definition": {
+        "value": "menu-supply-yogurt"
+      },
+      "version": 1,
+      "location": {
+        "kind": 0,
+        "ownerId": null,
+        "slotId": "initial-menu-supply-yogurt-3"
+      },
+      "recipe": null,
+      "isProduct": false,
+      "originStation": null,
+      "containerCompleted": false,
+      "isDirty": false,
+      "remainingPortions": 0
+    },
+    {
+      "id": {
+        "value": "fixture-menu-supply-yogurt-4"
+      },
+      "definition": {
+        "value": "menu-supply-yogurt"
+      },
+      "version": 1,
+      "location": {
+        "kind": 0,
+        "ownerId": null,
+        "slotId": "initial-menu-supply-yogurt-4"
+      },
+      "recipe": null,
+      "isProduct": false,
+      "originStation": null,
+      "containerCompleted": false,
+      "isDirty": false,
+      "remainingPortions": 0
+    },
+    {
+      "id": {
+        "value": "fixture-menu-supply-yogurt-5"
+      },
+      "definition": {
+        "value": "menu-supply-yogurt"
+      },
+      "version": 1,
+      "location": {
+        "kind": 0,
+        "ownerId": null,
+        "slotId": "initial-menu-supply-yogurt-5"
+      },
+      "recipe": null,
+      "isProduct": false,
+      "originStation": null,
+      "containerCompleted": false,
+      "isDirty": false,
+      "remainingPortions": 0
+    },
+    {
+      "id": {
+        "value": "fixture-menu-supply-yogurt-6"
+      },
+      "definition": {
+        "value": "menu-supply-yogurt"
+      },
+      "version": 1,
+      "location": {
+        "kind": 0,
+        "ownerId": null,
+        "slotId": "initial-menu-supply-yogurt-6"
+      },
+      "recipe": null,
+      "isProduct": false,
+      "originStation": null,
+      "containerCompleted": false,
+      "isDirty": false,
+      "remainingPortions": 0
+    },
+    {
+      "id": {
+        "value": "fixture-menu-supply-yogurt-7"
+      },
+      "definition": {
+        "value": "menu-supply-yogurt"
+      },
+      "version": 1,
+      "location": {
+        "kind": 0,
+        "ownerId": null,
+        "slotId": "initial-menu-supply-yogurt-7"
+      },
+      "recipe": null,
+      "isProduct": false,
+      "originStation": null,
+      "containerCompleted": false,
+      "isDirty": false,
+      "remainingPortions": 0
+    },
+    {
+      "id": {
+        "value": "fixture-menu-supply-yogurt-8"
+      },
+      "definition": {
+        "value": "menu-supply-yogurt"
+      },
+      "version": 1,
+      "location": {
+        "kind": 0,
+        "ownerId": null,
+        "slotId": "initial-menu-supply-yogurt-8"
+      },
+      "recipe": null,
+      "isProduct": false,
+      "originStation": null,
+      "containerCompleted": false,
+      "isDirty": false,
+      "remainingPortions": 0
+    },
+    {
+      "id": {
+        "value": "fixture-storage-menu-recipe-preparation-cut-strawberry"
+      },
+      "definition": {
+        "value": "menu-container-prep-box"
+      },
+      "version": 1,
+      "location": {
+        "kind": 0,
+        "ownerId": null,
+        "slotId": "initial-storage-menu-recipe-preparation-cut-strawberry"
+      },
+      "recipe": null,
+      "isProduct": false,
+      "originStation": null,
+      "containerCompleted": false,
+      "isDirty": false,
+      "remainingPortions": 0
+    },
+    {
+      "id": {
+        "value": "product-2"
+      },
+      "definition": {
+        "value": "menu-finished-strawberry-yogurt-slush"
+      },
+      "version": 3,
+      "location": {
+        "kind": 3,
+        "ownerId": "fixture-cup-1",
+        "slotId": "slot-0"
+      },
+      "recipe": {
+        "value": "menu-recipe-finished-strawberry-yogurt-slush"
+      },
+      "isProduct": true,
+      "originStation": {
+        "value": "menu-station-blend"
+      },
+      "containerCompleted": false,
+      "isDirty": false,
+      "remainingPortions": 0
+    }
+  ],
+  "snapshotSha256": "F6701DE7D136FB30FB0E8B97ADC7CF6564030FDB4356D603629AD137FB93DDA7",
+  "pending": "S05-drink-binding-disposal-and-all-87-ET-recovery-S07-procurement-S14-exit"
+}

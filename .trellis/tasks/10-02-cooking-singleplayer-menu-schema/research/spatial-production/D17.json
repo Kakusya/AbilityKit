@@ -1,0 +1,688 @@
+{
+  "schema": "cooking-menu-production-evidence-v1",
+  "menuSourceId": "D17",
+  "status": "produced-plated-binding-pending",
+  "scope": {
+    "session": {
+      "value": "menu-production"
+    },
+    "world": {
+      "value": "menu-world"
+    },
+    "match": {
+      "value": "D17"
+    }
+  },
+  "contentIdentity": {
+    "schema": "cooking-definition-v3",
+    "sha256": "B959A0955385D6E5DA5ADA55ACD4054AEB739616601CCA8579FA8E6252AC445D"
+  },
+  "catalogSha256": "bcadc77368b284cfafe273b608c56d9d6d3a312fa456abf49b1f831133eb5374",
+  "sources": [
+    {
+      "path": "Docs/design/CookingGame/reference/menu-v0.1/Cooking_\u5B8C\u6574\u83DC\u54C1\u4E0E\u52A0\u5DE5\u8FC7\u7A0B_v0.1.md",
+      "sha256": "8d503eeaaf5c2de3e326762beb9b1bf305342b1095b0ba9fcabcde230f902cc2"
+    },
+    {
+      "path": "Docs/design/CookingGame/reference/menu-v0.1/Cooking_\u5B8C\u6574\u83DC\u54C1\u4E0E\u52A0\u5DE5\u8FC7\u7A0B_v0.1.xlsx",
+      "sha256": "5268130330044901cfaecf3cbd7ab048432030ef03c6f17cf3a793d3d744232d"
+    }
+  ],
+  "fixtureValues": "raw-eight-per-definition-serving-two-not-balanced",
+  "initialSupply": [
+    {
+      "definition": {
+        "value": "menu-supply-coffee-bean"
+      },
+      "count": 1,
+      "location": "world:initial-menu-supply-coffee-bean-1"
+    },
+    {
+      "definition": {
+        "value": "menu-supply-coffee-bean"
+      },
+      "count": 1,
+      "location": "world:initial-menu-supply-coffee-bean-2"
+    },
+    {
+      "definition": {
+        "value": "menu-supply-coffee-bean"
+      },
+      "count": 1,
+      "location": "world:initial-menu-supply-coffee-bean-3"
+    },
+    {
+      "definition": {
+        "value": "menu-supply-coffee-bean"
+      },
+      "count": 1,
+      "location": "world:initial-menu-supply-coffee-bean-4"
+    },
+    {
+      "definition": {
+        "value": "menu-supply-coffee-bean"
+      },
+      "count": 1,
+      "location": "world:initial-menu-supply-coffee-bean-5"
+    },
+    {
+      "definition": {
+        "value": "menu-supply-coffee-bean"
+      },
+      "count": 1,
+      "location": "world:initial-menu-supply-coffee-bean-6"
+    },
+    {
+      "definition": {
+        "value": "menu-supply-coffee-bean"
+      },
+      "count": 1,
+      "location": "world:initial-menu-supply-coffee-bean-7"
+    },
+    {
+      "definition": {
+        "value": "menu-supply-coffee-bean"
+      },
+      "count": 1,
+      "location": "world:initial-menu-supply-coffee-bean-8"
+    },
+    {
+      "definition": {
+        "value": "menu-supply-milk"
+      },
+      "count": 1,
+      "location": "world:initial-menu-supply-milk-1"
+    },
+    {
+      "definition": {
+        "value": "menu-supply-milk"
+      },
+      "count": 1,
+      "location": "world:initial-menu-supply-milk-2"
+    },
+    {
+      "definition": {
+        "value": "menu-supply-milk"
+      },
+      "count": 1,
+      "location": "world:initial-menu-supply-milk-3"
+    },
+    {
+      "definition": {
+        "value": "menu-supply-milk"
+      },
+      "count": 1,
+      "location": "world:initial-menu-supply-milk-4"
+    },
+    {
+      "definition": {
+        "value": "menu-supply-milk"
+      },
+      "count": 1,
+      "location": "world:initial-menu-supply-milk-5"
+    },
+    {
+      "definition": {
+        "value": "menu-supply-milk"
+      },
+      "count": 1,
+      "location": "world:initial-menu-supply-milk-6"
+    },
+    {
+      "definition": {
+        "value": "menu-supply-milk"
+      },
+      "count": 1,
+      "location": "world:initial-menu-supply-milk-7"
+    },
+    {
+      "definition": {
+        "value": "menu-supply-milk"
+      },
+      "count": 1,
+      "location": "world:initial-menu-supply-milk-8"
+    },
+    {
+      "definition": {
+        "value": "menu-container-drink-jug"
+      },
+      "count": 1,
+      "location": "world:initial-D17-menu-container-drink-jug"
+    },
+    {
+      "definition": {
+        "value": "menu-container-powder-box"
+      },
+      "count": 1,
+      "location": "world:initial-P49-menu-container-powder-box"
+    },
+    {
+      "definition": {
+        "value": "menu-container-powder-box"
+      },
+      "count": 1,
+      "location": "world:initial-storage-menu-recipe-preparation-coffee-powder"
+    },
+    {
+      "definition": {
+        "value": "menu-container-extract-cup"
+      },
+      "count": 1,
+      "location": "world:initial-P50-menu-container-extract-cup"
+    },
+    {
+      "definition": {
+        "value": "menu-container-extract-cup"
+      },
+      "count": 1,
+      "location": "world:initial-storage-menu-recipe-preparation-espresso"
+    },
+    {
+      "definition": {
+        "value": "menu-container-milk-jug"
+      },
+      "count": 1,
+      "location": "world:initial-P51-menu-container-milk-jug"
+    },
+    {
+      "definition": {
+        "value": "menu-container-milk-jug"
+      },
+      "count": 1,
+      "location": "world:initial-storage-menu-recipe-preparation-hot-milk"
+    },
+    {
+      "definition": {
+        "value": "menu-container-hot-cup"
+      },
+      "count": 1,
+      "location": "world:initial-cup-1"
+    },
+    {
+      "definition": {
+        "value": "menu-container-hot-cup"
+      },
+      "count": 1,
+      "location": "world:initial-cup-2"
+    }
+  ],
+  "executedRecipes": [
+    "menu-recipe-preparation-coffee-powder",
+    "menu-recipe-preparation-espresso",
+    "menu-recipe-preparation-hot-milk",
+    "menu-recipe-preparation-hot-milk",
+    "menu-recipe-finished-latte"
+  ],
+  "productId": "product-5",
+  "servingVesselId": "fixture-cup-1",
+  "logicalTick": 173,
+  "settlements": [],
+  "remainingItems": [
+    {
+      "id": {
+        "value": "fixture-D17-menu-container-drink-jug"
+      },
+      "definition": {
+        "value": "menu-container-drink-jug"
+      },
+      "version": 3,
+      "location": {
+        "kind": 0,
+        "ownerId": null,
+        "slotId": "initial-D17-menu-container-drink-jug"
+      },
+      "recipe": null,
+      "isProduct": false,
+      "originStation": null,
+      "containerCompleted": false,
+      "isDirty": false,
+      "remainingPortions": 0
+    },
+    {
+      "id": {
+        "value": "fixture-P49-menu-container-powder-box"
+      },
+      "definition": {
+        "value": "menu-container-powder-box"
+      },
+      "version": 3,
+      "location": {
+        "kind": 0,
+        "ownerId": null,
+        "slotId": "initial-P49-menu-container-powder-box"
+      },
+      "recipe": null,
+      "isProduct": false,
+      "originStation": null,
+      "containerCompleted": false,
+      "isDirty": false,
+      "remainingPortions": 0
+    },
+    {
+      "id": {
+        "value": "fixture-P50-menu-container-extract-cup"
+      },
+      "definition": {
+        "value": "menu-container-extract-cup"
+      },
+      "version": 3,
+      "location": {
+        "kind": 0,
+        "ownerId": null,
+        "slotId": "initial-P50-menu-container-extract-cup"
+      },
+      "recipe": null,
+      "isProduct": false,
+      "originStation": null,
+      "containerCompleted": false,
+      "isDirty": false,
+      "remainingPortions": 0
+    },
+    {
+      "id": {
+        "value": "fixture-P51-menu-container-milk-jug"
+      },
+      "definition": {
+        "value": "menu-container-milk-jug"
+      },
+      "version": 5,
+      "location": {
+        "kind": 0,
+        "ownerId": null,
+        "slotId": "initial-P51-menu-container-milk-jug"
+      },
+      "recipe": null,
+      "isProduct": false,
+      "originStation": null,
+      "containerCompleted": false,
+      "isDirty": false,
+      "remainingPortions": 0
+    },
+    {
+      "id": {
+        "value": "fixture-cup-1"
+      },
+      "definition": {
+        "value": "menu-container-hot-cup"
+      },
+      "version": 3,
+      "location": {
+        "kind": 0,
+        "ownerId": null,
+        "slotId": "serving-D17"
+      },
+      "recipe": null,
+      "isProduct": false,
+      "originStation": null,
+      "containerCompleted": false,
+      "isDirty": false,
+      "remainingPortions": 0
+    },
+    {
+      "id": {
+        "value": "fixture-cup-2"
+      },
+      "definition": {
+        "value": "menu-container-hot-cup"
+      },
+      "version": 1,
+      "location": {
+        "kind": 0,
+        "ownerId": null,
+        "slotId": "initial-cup-2"
+      },
+      "recipe": null,
+      "isProduct": false,
+      "originStation": null,
+      "containerCompleted": false,
+      "isDirty": false,
+      "remainingPortions": 0
+    },
+    {
+      "id": {
+        "value": "fixture-menu-supply-coffee-bean-2"
+      },
+      "definition": {
+        "value": "menu-supply-coffee-bean"
+      },
+      "version": 1,
+      "location": {
+        "kind": 0,
+        "ownerId": null,
+        "slotId": "initial-menu-supply-coffee-bean-2"
+      },
+      "recipe": null,
+      "isProduct": false,
+      "originStation": null,
+      "containerCompleted": false,
+      "isDirty": false,
+      "remainingPortions": 0
+    },
+    {
+      "id": {
+        "value": "fixture-menu-supply-coffee-bean-3"
+      },
+      "definition": {
+        "value": "menu-supply-coffee-bean"
+      },
+      "version": 1,
+      "location": {
+        "kind": 0,
+        "ownerId": null,
+        "slotId": "initial-menu-supply-coffee-bean-3"
+      },
+      "recipe": null,
+      "isProduct": false,
+      "originStation": null,
+      "containerCompleted": false,
+      "isDirty": false,
+      "remainingPortions": 0
+    },
+    {
+      "id": {
+        "value": "fixture-menu-supply-coffee-bean-4"
+      },
+      "definition": {
+        "value": "menu-supply-coffee-bean"
+      },
+      "version": 1,
+      "location": {
+        "kind": 0,
+        "ownerId": null,
+        "slotId": "initial-menu-supply-coffee-bean-4"
+      },
+      "recipe": null,
+      "isProduct": false,
+      "originStation": null,
+      "containerCompleted": false,
+      "isDirty": false,
+      "remainingPortions": 0
+    },
+    {
+      "id": {
+        "value": "fixture-menu-supply-coffee-bean-5"
+      },
+      "definition": {
+        "value": "menu-supply-coffee-bean"
+      },
+      "version": 1,
+      "location": {
+        "kind": 0,
+        "ownerId": null,
+        "slotId": "initial-menu-supply-coffee-bean-5"
+      },
+      "recipe": null,
+      "isProduct": false,
+      "originStation": null,
+      "containerCompleted": false,
+      "isDirty": false,
+      "remainingPortions": 0
+    },
+    {
+      "id": {
+        "value": "fixture-menu-supply-coffee-bean-6"
+      },
+      "definition": {
+        "value": "menu-supply-coffee-bean"
+      },
+      "version": 1,
+      "location": {
+        "kind": 0,
+        "ownerId": null,
+        "slotId": "initial-menu-supply-coffee-bean-6"
+      },
+      "recipe": null,
+      "isProduct": false,
+      "originStation": null,
+      "containerCompleted": false,
+      "isDirty": false,
+      "remainingPortions": 0
+    },
+    {
+      "id": {
+        "value": "fixture-menu-supply-coffee-bean-7"
+      },
+      "definition": {
+        "value": "menu-supply-coffee-bean"
+      },
+      "version": 1,
+      "location": {
+        "kind": 0,
+        "ownerId": null,
+        "slotId": "initial-menu-supply-coffee-bean-7"
+      },
+      "recipe": null,
+      "isProduct": false,
+      "originStation": null,
+      "containerCompleted": false,
+      "isDirty": false,
+      "remainingPortions": 0
+    },
+    {
+      "id": {
+        "value": "fixture-menu-supply-coffee-bean-8"
+      },
+      "definition": {
+        "value": "menu-supply-coffee-bean"
+      },
+      "version": 1,
+      "location": {
+        "kind": 0,
+        "ownerId": null,
+        "slotId": "initial-menu-supply-coffee-bean-8"
+      },
+      "recipe": null,
+      "isProduct": false,
+      "originStation": null,
+      "containerCompleted": false,
+      "isDirty": false,
+      "remainingPortions": 0
+    },
+    {
+      "id": {
+        "value": "fixture-menu-supply-milk-3"
+      },
+      "definition": {
+        "value": "menu-supply-milk"
+      },
+      "version": 1,
+      "location": {
+        "kind": 0,
+        "ownerId": null,
+        "slotId": "initial-menu-supply-milk-3"
+      },
+      "recipe": null,
+      "isProduct": false,
+      "originStation": null,
+      "containerCompleted": false,
+      "isDirty": false,
+      "remainingPortions": 0
+    },
+    {
+      "id": {
+        "value": "fixture-menu-supply-milk-4"
+      },
+      "definition": {
+        "value": "menu-supply-milk"
+      },
+      "version": 1,
+      "location": {
+        "kind": 0,
+        "ownerId": null,
+        "slotId": "initial-menu-supply-milk-4"
+      },
+      "recipe": null,
+      "isProduct": false,
+      "originStation": null,
+      "containerCompleted": false,
+      "isDirty": false,
+      "remainingPortions": 0
+    },
+    {
+      "id": {
+        "value": "fixture-menu-supply-milk-5"
+      },
+      "definition": {
+        "value": "menu-supply-milk"
+      },
+      "version": 1,
+      "location": {
+        "kind": 0,
+        "ownerId": null,
+        "slotId": "initial-menu-supply-milk-5"
+      },
+      "recipe": null,
+      "isProduct": false,
+      "originStation": null,
+      "containerCompleted": false,
+      "isDirty": false,
+      "remainingPortions": 0
+    },
+    {
+      "id": {
+        "value": "fixture-menu-supply-milk-6"
+      },
+      "definition": {
+        "value": "menu-supply-milk"
+      },
+      "version": 1,
+      "location": {
+        "kind": 0,
+        "ownerId": null,
+        "slotId": "initial-menu-supply-milk-6"
+      },
+      "recipe": null,
+      "isProduct": false,
+      "originStation": null,
+      "containerCompleted": false,
+      "isDirty": false,
+      "remainingPortions": 0
+    },
+    {
+      "id": {
+        "value": "fixture-menu-supply-milk-7"
+      },
+      "definition": {
+        "value": "menu-supply-milk"
+      },
+      "version": 1,
+      "location": {
+        "kind": 0,
+        "ownerId": null,
+        "slotId": "initial-menu-supply-milk-7"
+      },
+      "recipe": null,
+      "isProduct": false,
+      "originStation": null,
+      "containerCompleted": false,
+      "isDirty": false,
+      "remainingPortions": 0
+    },
+    {
+      "id": {
+        "value": "fixture-menu-supply-milk-8"
+      },
+      "definition": {
+        "value": "menu-supply-milk"
+      },
+      "version": 1,
+      "location": {
+        "kind": 0,
+        "ownerId": null,
+        "slotId": "initial-menu-supply-milk-8"
+      },
+      "recipe": null,
+      "isProduct": false,
+      "originStation": null,
+      "containerCompleted": false,
+      "isDirty": false,
+      "remainingPortions": 0
+    },
+    {
+      "id": {
+        "value": "fixture-storage-menu-recipe-preparation-coffee-powder"
+      },
+      "definition": {
+        "value": "menu-container-powder-box"
+      },
+      "version": 1,
+      "location": {
+        "kind": 0,
+        "ownerId": null,
+        "slotId": "initial-storage-menu-recipe-preparation-coffee-powder"
+      },
+      "recipe": null,
+      "isProduct": false,
+      "originStation": null,
+      "containerCompleted": false,
+      "isDirty": false,
+      "remainingPortions": 0
+    },
+    {
+      "id": {
+        "value": "fixture-storage-menu-recipe-preparation-espresso"
+      },
+      "definition": {
+        "value": "menu-container-extract-cup"
+      },
+      "version": 1,
+      "location": {
+        "kind": 0,
+        "ownerId": null,
+        "slotId": "initial-storage-menu-recipe-preparation-espresso"
+      },
+      "recipe": null,
+      "isProduct": false,
+      "originStation": null,
+      "containerCompleted": false,
+      "isDirty": false,
+      "remainingPortions": 0
+    },
+    {
+      "id": {
+        "value": "fixture-storage-menu-recipe-preparation-hot-milk"
+      },
+      "definition": {
+        "value": "menu-container-milk-jug"
+      },
+      "version": 1,
+      "location": {
+        "kind": 0,
+        "ownerId": null,
+        "slotId": "initial-storage-menu-recipe-preparation-hot-milk"
+      },
+      "recipe": null,
+      "isProduct": false,
+      "originStation": null,
+      "containerCompleted": false,
+      "isDirty": false,
+      "remainingPortions": 0
+    },
+    {
+      "id": {
+        "value": "product-5"
+      },
+      "definition": {
+        "value": "menu-finished-latte"
+      },
+      "version": 3,
+      "location": {
+        "kind": 3,
+        "ownerId": "fixture-cup-1",
+        "slotId": "slot-0"
+      },
+      "recipe": {
+        "value": "menu-recipe-finished-latte"
+      },
+      "isProduct": true,
+      "originStation": {
+        "value": "menu-station-drink-mix"
+      },
+      "containerCompleted": false,
+      "isDirty": false,
+      "remainingPortions": 0
+    }
+  ],
+  "snapshotSha256": "39D12DC74AC22EC03647CA22FEB3559DF9135CDD9B6C04F49FBD9B96625D1080",
+  "pending": "S05-drink-binding-disposal-and-all-87-ET-recovery-S07-procurement-S14-exit"
+}

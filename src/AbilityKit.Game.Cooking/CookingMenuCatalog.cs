@@ -365,7 +365,10 @@ public sealed class CookingMenuCatalog
             .Select(x => new CookingContentAppliance(x.Id.Value, x.Capabilities));
         return baseline with
         {
-            SupportedApplianceCapabilities = baseline.SupportedApplianceCapabilities.Concat(required.Capabilities).Distinct(StringComparer.Ordinal).ToArray(),
+            // A physical multi-mode station retains its declared modes even when the selected
+            // menu only needs one; every declared mode must remain in the supported vocabulary.
+            SupportedApplianceCapabilities = baseline.SupportedApplianceCapabilities.Concat(required.Capabilities)
+                .Concat(appliances.SelectMany(x => x.Capabilities)).Distinct(StringComparer.Ordinal).ToArray(),
             Items = baseline.Items.Concat(additions).ToArray(),
             Appliances = baseline.Appliances.Concat(appliances).ToArray(),
             Recipes = baseline.Recipes.Concat(projectedRecipes).ToArray(),

@@ -1,0 +1,373 @@
+{
+  "schema": "cooking-menu-production-evidence-v1",
+  "menuSourceId": "F32",
+  "status": "produced-plated-submitted",
+  "scope": {
+    "session": {
+      "value": "menu-production"
+    },
+    "world": {
+      "value": "menu-world"
+    },
+    "match": {
+      "value": "F32"
+    }
+  },
+  "contentIdentity": {
+    "schema": "cooking-definition-v3",
+    "sha256": "B3E92DE38F5A864D922014AC4A69A9E939EB192A89427F7C37D6ED0E6C6E1094"
+  },
+  "catalogSha256": "bcadc77368b284cfafe273b608c56d9d6d3a312fa456abf49b1f831133eb5374",
+  "sources": [
+    {
+      "path": "Docs/design/CookingGame/reference/menu-v0.1/Cooking_\u5B8C\u6574\u83DC\u54C1\u4E0E\u52A0\u5DE5\u8FC7\u7A0B_v0.1.md",
+      "sha256": "8d503eeaaf5c2de3e326762beb9b1bf305342b1095b0ba9fcabcde230f902cc2"
+    },
+    {
+      "path": "Docs/design/CookingGame/reference/menu-v0.1/Cooking_\u5B8C\u6574\u83DC\u54C1\u4E0E\u52A0\u5DE5\u8FC7\u7A0B_v0.1.xlsx",
+      "sha256": "5268130330044901cfaecf3cbd7ab048432030ef03c6f17cf3a793d3d744232d"
+    }
+  ],
+  "fixtureValues": "raw-eight-per-definition-serving-two-not-balanced",
+  "initialSupply": [
+    {
+      "definition": {
+        "value": "menu-supply-raw-fries"
+      },
+      "count": 1,
+      "location": "world:initial-menu-supply-raw-fries-1"
+    },
+    {
+      "definition": {
+        "value": "menu-supply-raw-fries"
+      },
+      "count": 1,
+      "location": "world:initial-menu-supply-raw-fries-2"
+    },
+    {
+      "definition": {
+        "value": "menu-supply-raw-fries"
+      },
+      "count": 1,
+      "location": "world:initial-menu-supply-raw-fries-3"
+    },
+    {
+      "definition": {
+        "value": "menu-supply-raw-fries"
+      },
+      "count": 1,
+      "location": "world:initial-menu-supply-raw-fries-4"
+    },
+    {
+      "definition": {
+        "value": "menu-supply-raw-fries"
+      },
+      "count": 1,
+      "location": "world:initial-menu-supply-raw-fries-5"
+    },
+    {
+      "definition": {
+        "value": "menu-supply-raw-fries"
+      },
+      "count": 1,
+      "location": "world:initial-menu-supply-raw-fries-6"
+    },
+    {
+      "definition": {
+        "value": "menu-supply-raw-fries"
+      },
+      "count": 1,
+      "location": "world:initial-menu-supply-raw-fries-7"
+    },
+    {
+      "definition": {
+        "value": "menu-supply-raw-fries"
+      },
+      "count": 1,
+      "location": "world:initial-menu-supply-raw-fries-8"
+    },
+    {
+      "definition": {
+        "value": "menu-container-mix-bowl"
+      },
+      "count": 1,
+      "location": "world:initial-F32-menu-container-mix-bowl"
+    },
+    {
+      "definition": {
+        "value": "menu-container-fry-basket"
+      },
+      "count": 1,
+      "location": "world:initial-P34-menu-container-fry-basket"
+    },
+    {
+      "definition": {
+        "value": "menu-container-prep-plate"
+      },
+      "count": 1,
+      "location": "world:initial-storage-menu-recipe-preparation-fried-fries"
+    },
+    {
+      "definition": {
+        "value": "menu-container-plate"
+      },
+      "count": 2,
+      "location": "cleanPool"
+    }
+  ],
+  "executedRecipes": [
+    "menu-recipe-preparation-fried-fries",
+    "menu-recipe-finished-fries"
+  ],
+  "productId": "product-2",
+  "servingVesselId": "pool-menu-container-plate-1",
+  "logicalTick": 149,
+  "settlements": [
+    {
+      "sequence": 1,
+      "order": {
+        "value": "order-F32"
+      },
+      "template": {
+        "value": "menu-order-fries"
+      },
+      "recipe": {
+        "value": "menu-recipe-finished-fries"
+      },
+      "product": {
+        "value": "product-2"
+      },
+      "player": {
+        "value": "menu-chef"
+      },
+      "container": {
+        "value": "pool-menu-container-plate-1"
+      },
+      "logicalTick": 148
+    }
+  ],
+  "remainingItems": [
+    {
+      "id": {
+        "value": "fixture-F32-menu-container-mix-bowl"
+      },
+      "definition": {
+        "value": "menu-container-mix-bowl"
+      },
+      "version": 3,
+      "location": {
+        "kind": 0,
+        "ownerId": null,
+        "slotId": "initial-F32-menu-container-mix-bowl"
+      },
+      "recipe": null,
+      "isProduct": false,
+      "originStation": null,
+      "containerCompleted": false,
+      "isDirty": false,
+      "remainingPortions": 0
+    },
+    {
+      "id": {
+        "value": "fixture-P34-menu-container-fry-basket"
+      },
+      "definition": {
+        "value": "menu-container-fry-basket"
+      },
+      "version": 3,
+      "location": {
+        "kind": 0,
+        "ownerId": null,
+        "slotId": "initial-P34-menu-container-fry-basket"
+      },
+      "recipe": null,
+      "isProduct": false,
+      "originStation": null,
+      "containerCompleted": false,
+      "isDirty": false,
+      "remainingPortions": 0
+    },
+    {
+      "id": {
+        "value": "fixture-menu-supply-raw-fries-2"
+      },
+      "definition": {
+        "value": "menu-supply-raw-fries"
+      },
+      "version": 1,
+      "location": {
+        "kind": 0,
+        "ownerId": null,
+        "slotId": "initial-menu-supply-raw-fries-2"
+      },
+      "recipe": null,
+      "isProduct": false,
+      "originStation": null,
+      "containerCompleted": false,
+      "isDirty": false,
+      "remainingPortions": 0
+    },
+    {
+      "id": {
+        "value": "fixture-menu-supply-raw-fries-3"
+      },
+      "definition": {
+        "value": "menu-supply-raw-fries"
+      },
+      "version": 1,
+      "location": {
+        "kind": 0,
+        "ownerId": null,
+        "slotId": "initial-menu-supply-raw-fries-3"
+      },
+      "recipe": null,
+      "isProduct": false,
+      "originStation": null,
+      "containerCompleted": false,
+      "isDirty": false,
+      "remainingPortions": 0
+    },
+    {
+      "id": {
+        "value": "fixture-menu-supply-raw-fries-4"
+      },
+      "definition": {
+        "value": "menu-supply-raw-fries"
+      },
+      "version": 1,
+      "location": {
+        "kind": 0,
+        "ownerId": null,
+        "slotId": "initial-menu-supply-raw-fries-4"
+      },
+      "recipe": null,
+      "isProduct": false,
+      "originStation": null,
+      "containerCompleted": false,
+      "isDirty": false,
+      "remainingPortions": 0
+    },
+    {
+      "id": {
+        "value": "fixture-menu-supply-raw-fries-5"
+      },
+      "definition": {
+        "value": "menu-supply-raw-fries"
+      },
+      "version": 1,
+      "location": {
+        "kind": 0,
+        "ownerId": null,
+        "slotId": "initial-menu-supply-raw-fries-5"
+      },
+      "recipe": null,
+      "isProduct": false,
+      "originStation": null,
+      "containerCompleted": false,
+      "isDirty": false,
+      "remainingPortions": 0
+    },
+    {
+      "id": {
+        "value": "fixture-menu-supply-raw-fries-6"
+      },
+      "definition": {
+        "value": "menu-supply-raw-fries"
+      },
+      "version": 1,
+      "location": {
+        "kind": 0,
+        "ownerId": null,
+        "slotId": "initial-menu-supply-raw-fries-6"
+      },
+      "recipe": null,
+      "isProduct": false,
+      "originStation": null,
+      "containerCompleted": false,
+      "isDirty": false,
+      "remainingPortions": 0
+    },
+    {
+      "id": {
+        "value": "fixture-menu-supply-raw-fries-7"
+      },
+      "definition": {
+        "value": "menu-supply-raw-fries"
+      },
+      "version": 1,
+      "location": {
+        "kind": 0,
+        "ownerId": null,
+        "slotId": "initial-menu-supply-raw-fries-7"
+      },
+      "recipe": null,
+      "isProduct": false,
+      "originStation": null,
+      "containerCompleted": false,
+      "isDirty": false,
+      "remainingPortions": 0
+    },
+    {
+      "id": {
+        "value": "fixture-menu-supply-raw-fries-8"
+      },
+      "definition": {
+        "value": "menu-supply-raw-fries"
+      },
+      "version": 1,
+      "location": {
+        "kind": 0,
+        "ownerId": null,
+        "slotId": "initial-menu-supply-raw-fries-8"
+      },
+      "recipe": null,
+      "isProduct": false,
+      "originStation": null,
+      "containerCompleted": false,
+      "isDirty": false,
+      "remainingPortions": 0
+    },
+    {
+      "id": {
+        "value": "fixture-storage-menu-recipe-preparation-fried-fries"
+      },
+      "definition": {
+        "value": "menu-container-prep-plate"
+      },
+      "version": 1,
+      "location": {
+        "kind": 0,
+        "ownerId": null,
+        "slotId": "initial-storage-menu-recipe-preparation-fried-fries"
+      },
+      "recipe": null,
+      "isProduct": false,
+      "originStation": null,
+      "containerCompleted": false,
+      "isDirty": false,
+      "remainingPortions": 0
+    },
+    {
+      "id": {
+        "value": "pool-menu-container-plate-2"
+      },
+      "definition": {
+        "value": "menu-container-plate"
+      },
+      "version": 1,
+      "location": {
+        "kind": 0,
+        "ownerId": null,
+        "slotId": "clean-pool"
+      },
+      "recipe": null,
+      "isProduct": false,
+      "originStation": null,
+      "containerCompleted": false,
+      "isDirty": false,
+      "remainingPortions": 0
+    }
+  ],
+  "snapshotSha256": "D340BA3761B32515EF3F2AD42ABDB1962D8C97F4A3FEA2F92FBE9432E8C9CA72",
+  "pending": "S05-drink-binding-disposal-and-all-87-ET-recovery-S07-procurement-S14-exit"
+}

@@ -348,6 +348,75 @@ public sealed class CookingMenuCatalogTests
         Assert.Empty(simulation.ItemsInContainer(vessel));
     }
 
+    public static IEnumerable<object[]> MenuSources() => Catalog().Document.Menus.Select(x => new object[] { x.SourceId });
+
+    [Theory]
+    [MemberData(nameof(MenuSources))]
+    public void All_candidates_produce_and_plate_via_spatial_commands_with_drink_delivery_pending_S05(string sourceId)
+    {
+        var catalog = Catalog();
+        var fixture = new CookingMenuProductionFixture(catalog, Baseline(), sourceId);
+        var product = fixture.ProduceAndPlate();
+        Assert.Equal(catalog.Requirements(new[] { sourceId }).Recipes.Select(x => x.Value).Order(),
+            fixture.ExecutedRecipes.Select(x => x.Value).Distinct().Order());
+        Assert.NotNull(fixture.Content.Snapshot.Spatial);
+        if (fixture.Menu.RequiresBinding)
+        {
+            Assert.Empty(fixture.Simulation.SettlementHistory);
+            Assert.Contains(fixture.Simulation.Snapshot().Items, x => x.Id == product);
+        }
+        else
+        {
+            fixture.SubmitMeal(product);
+            Assert.DoesNotContain(fixture.Simulation.Snapshot().Items, x => x.Id == product);
+        }
+        fixture.WriteEvidence(product);
+    }
+
+    [Theory]
+    [InlineData("D31", "menu-preparation-cheese-cap")]
+    [InlineData("D18", "menu-preparation-milk-foam")]
+    [InlineData("D20", "menu-preparation-whipped-cream")]
+    [InlineData("D02", "menu-preparation-dispensed-soda")]
+    public void Premature_actual_topping_rejects_without_mutation_and_recovers_via_public_transfers(string sourceId, string addition)
+    {
+        var fixture = new CookingMenuProductionFixture(Catalog(), Baseline(), sourceId, additionalWorkingCapacity: 1);
+        fixture.RejectPrematureAdditionThenRecover(new DefinitionId(addition));
+        var product = fixture.ProduceAndPlate();
+        Assert.Equal(fixture.Menu.Product, fixture.Items.Single(x => x.Id == product).Definition);
+        Assert.Empty(fixture.Simulation.SettlementHistory); // Binding/ET integration still pending.
+    }
+
+    [Fact]
+    public void Independent_pasta_and_sauce_branches_work_in_both_real_spatial_orders()
+    {
+        var normal = new CookingMenuProductionFixture(Catalog(), Baseline(), "F21");
+        var reverse = new CookingMenuProductionFixture(Catalog(), Baseline(), "F21", reverseBranches: true);
+        normal.SubmitMeal(normal.ProduceAndPlate());
+        reverse.SubmitMeal(reverse.ProduceAndPlate());
+        var pasta = new RecipeId("menu-recipe-preparation-cooked-pasta");
+        var sauce = new RecipeId("menu-recipe-preparation-hot-tomato-sauce");
+        Assert.True(normal.ExecutedRecipes.IndexOf(pasta) < normal.ExecutedRecipes.IndexOf(sauce));
+        Assert.True(reverse.ExecutedRecipes.IndexOf(sauce) < reverse.ExecutedRecipes.IndexOf(pasta));
+        Assert.Equal(normal.Items.GroupBy(x => x.Definition.Value).Select(x => (x.Key, x.Count())).OrderBy(x => x.Key),
+            reverse.Items.GroupBy(x => x.Definition.Value).Select(x => (x.Key, x.Count())).OrderBy(x => x.Key));
+        Assert.Equal(normal.Simulation.Snapshot().TotalScore, reverse.Simulation.Snapshot().TotalScore);
+    }
+
+    [Theory]
+    [InlineData("D12")]
+    [InlineData("D13")]
+    [InlineData("D31")]
+    [InlineData("S11")]
+    public void Missing_second_real_portion_rejects_and_existing_inputs_recover_without_free_defaults(string sourceId)
+    {
+        var fixture = new CookingMenuProductionFixture(Catalog(), Baseline(), sourceId);
+        fixture.RejectInsufficientCountThenRecover();
+        var product = fixture.ProduceAndPlate();
+        Assert.Equal(fixture.Menu.Product, fixture.Items.Single(x => x.Id == product).Definition);
+        if (!fixture.Menu.RequiresBinding) fixture.SubmitMeal(product);
+    }
+
     private static CookingContentRecipe ProjectionShape(CookingMenuStep step) => new(step.Id.Value,
         CookingMenuCatalog.ExpandInputs(step), step.Output.Value, step.Process.Value, step.Capability,
         step.RequiredTicks, Completion: CookingMenuCatalog.Completion(step),

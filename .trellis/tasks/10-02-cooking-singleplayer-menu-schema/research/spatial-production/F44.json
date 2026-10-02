@@ -1,0 +1,1126 @@
+{
+  "schema": "cooking-menu-production-evidence-v1",
+  "menuSourceId": "F44",
+  "status": "produced-plated-submitted",
+  "scope": {
+    "session": {
+      "value": "menu-production"
+    },
+    "world": {
+      "value": "menu-world"
+    },
+    "match": {
+      "value": "F44"
+    }
+  },
+  "contentIdentity": {
+    "schema": "cooking-definition-v3",
+    "sha256": "A36C4DF6EC302CEA0009A7C885F2BEBA83906CAECE307953948141EE75449F38"
+  },
+  "catalogSha256": "bcadc77368b284cfafe273b608c56d9d6d3a312fa456abf49b1f831133eb5374",
+  "sources": [
+    {
+      "path": "Docs/design/CookingGame/reference/menu-v0.1/Cooking_\u5B8C\u6574\u83DC\u54C1\u4E0E\u52A0\u5DE5\u8FC7\u7A0B_v0.1.md",
+      "sha256": "8d503eeaaf5c2de3e326762beb9b1bf305342b1095b0ba9fcabcde230f902cc2"
+    },
+    {
+      "path": "Docs/design/CookingGame/reference/menu-v0.1/Cooking_\u5B8C\u6574\u83DC\u54C1\u4E0E\u52A0\u5DE5\u8FC7\u7A0B_v0.1.xlsx",
+      "sha256": "5268130330044901cfaecf3cbd7ab048432030ef03c6f17cf3a793d3d744232d"
+    }
+  ],
+  "fixtureValues": "raw-eight-per-definition-serving-two-not-balanced",
+  "initialSupply": [
+    {
+      "definition": {
+        "value": "menu-supply-bacon"
+      },
+      "count": 1,
+      "location": "world:initial-menu-supply-bacon-1"
+    },
+    {
+      "definition": {
+        "value": "menu-supply-bacon"
+      },
+      "count": 1,
+      "location": "world:initial-menu-supply-bacon-2"
+    },
+    {
+      "definition": {
+        "value": "menu-supply-bacon"
+      },
+      "count": 1,
+      "location": "world:initial-menu-supply-bacon-3"
+    },
+    {
+      "definition": {
+        "value": "menu-supply-bacon"
+      },
+      "count": 1,
+      "location": "world:initial-menu-supply-bacon-4"
+    },
+    {
+      "definition": {
+        "value": "menu-supply-bacon"
+      },
+      "count": 1,
+      "location": "world:initial-menu-supply-bacon-5"
+    },
+    {
+      "definition": {
+        "value": "menu-supply-bacon"
+      },
+      "count": 1,
+      "location": "world:initial-menu-supply-bacon-6"
+    },
+    {
+      "definition": {
+        "value": "menu-supply-bacon"
+      },
+      "count": 1,
+      "location": "world:initial-menu-supply-bacon-7"
+    },
+    {
+      "definition": {
+        "value": "menu-supply-bacon"
+      },
+      "count": 1,
+      "location": "world:initial-menu-supply-bacon-8"
+    },
+    {
+      "definition": {
+        "value": "menu-supply-egg"
+      },
+      "count": 1,
+      "location": "world:initial-menu-supply-egg-1"
+    },
+    {
+      "definition": {
+        "value": "menu-supply-egg"
+      },
+      "count": 1,
+      "location": "world:initial-menu-supply-egg-2"
+    },
+    {
+      "definition": {
+        "value": "menu-supply-egg"
+      },
+      "count": 1,
+      "location": "world:initial-menu-supply-egg-3"
+    },
+    {
+      "definition": {
+        "value": "menu-supply-egg"
+      },
+      "count": 1,
+      "location": "world:initial-menu-supply-egg-4"
+    },
+    {
+      "definition": {
+        "value": "menu-supply-egg"
+      },
+      "count": 1,
+      "location": "world:initial-menu-supply-egg-5"
+    },
+    {
+      "definition": {
+        "value": "menu-supply-egg"
+      },
+      "count": 1,
+      "location": "world:initial-menu-supply-egg-6"
+    },
+    {
+      "definition": {
+        "value": "menu-supply-egg"
+      },
+      "count": 1,
+      "location": "world:initial-menu-supply-egg-7"
+    },
+    {
+      "definition": {
+        "value": "menu-supply-egg"
+      },
+      "count": 1,
+      "location": "world:initial-menu-supply-egg-8"
+    },
+    {
+      "definition": {
+        "value": "menu-supply-toast-slice"
+      },
+      "count": 1,
+      "location": "world:initial-menu-supply-toast-slice-1"
+    },
+    {
+      "definition": {
+        "value": "menu-supply-toast-slice"
+      },
+      "count": 1,
+      "location": "world:initial-menu-supply-toast-slice-2"
+    },
+    {
+      "definition": {
+        "value": "menu-supply-toast-slice"
+      },
+      "count": 1,
+      "location": "world:initial-menu-supply-toast-slice-3"
+    },
+    {
+      "definition": {
+        "value": "menu-supply-toast-slice"
+      },
+      "count": 1,
+      "location": "world:initial-menu-supply-toast-slice-4"
+    },
+    {
+      "definition": {
+        "value": "menu-supply-toast-slice"
+      },
+      "count": 1,
+      "location": "world:initial-menu-supply-toast-slice-5"
+    },
+    {
+      "definition": {
+        "value": "menu-supply-toast-slice"
+      },
+      "count": 1,
+      "location": "world:initial-menu-supply-toast-slice-6"
+    },
+    {
+      "definition": {
+        "value": "menu-supply-toast-slice"
+      },
+      "count": 1,
+      "location": "world:initial-menu-supply-toast-slice-7"
+    },
+    {
+      "definition": {
+        "value": "menu-supply-toast-slice"
+      },
+      "count": 1,
+      "location": "world:initial-menu-supply-toast-slice-8"
+    },
+    {
+      "definition": {
+        "value": "menu-supply-tomato"
+      },
+      "count": 1,
+      "location": "world:initial-menu-supply-tomato-1"
+    },
+    {
+      "definition": {
+        "value": "menu-supply-tomato"
+      },
+      "count": 1,
+      "location": "world:initial-menu-supply-tomato-2"
+    },
+    {
+      "definition": {
+        "value": "menu-supply-tomato"
+      },
+      "count": 1,
+      "location": "world:initial-menu-supply-tomato-3"
+    },
+    {
+      "definition": {
+        "value": "menu-supply-tomato"
+      },
+      "count": 1,
+      "location": "world:initial-menu-supply-tomato-4"
+    },
+    {
+      "definition": {
+        "value": "menu-supply-tomato"
+      },
+      "count": 1,
+      "location": "world:initial-menu-supply-tomato-5"
+    },
+    {
+      "definition": {
+        "value": "menu-supply-tomato"
+      },
+      "count": 1,
+      "location": "world:initial-menu-supply-tomato-6"
+    },
+    {
+      "definition": {
+        "value": "menu-supply-tomato"
+      },
+      "count": 1,
+      "location": "world:initial-menu-supply-tomato-7"
+    },
+    {
+      "definition": {
+        "value": "menu-supply-tomato"
+      },
+      "count": 1,
+      "location": "world:initial-menu-supply-tomato-8"
+    },
+    {
+      "definition": {
+        "value": "menu-container-mix-bowl"
+      },
+      "count": 1,
+      "location": "world:initial-F44-menu-container-mix-bowl"
+    },
+    {
+      "definition": {
+        "value": "menu-container-pan"
+      },
+      "count": 1,
+      "location": "world:initial-P29-menu-container-pan"
+    },
+    {
+      "definition": {
+        "value": "menu-container-prep-plate"
+      },
+      "count": 1,
+      "location": "world:initial-storage-menu-recipe-preparation-cooked-bacon"
+    },
+    {
+      "definition": {
+        "value": "menu-container-prep-box"
+      },
+      "count": 1,
+      "location": "world:initial-P02-menu-container-prep-box"
+    },
+    {
+      "definition": {
+        "value": "menu-container-prep-box"
+      },
+      "count": 1,
+      "location": "world:initial-storage-menu-recipe-preparation-cut-tomato"
+    },
+    {
+      "definition": {
+        "value": "menu-container-pan"
+      },
+      "count": 1,
+      "location": "world:initial-P28-menu-container-pan"
+    },
+    {
+      "definition": {
+        "value": "menu-container-prep-plate"
+      },
+      "count": 1,
+      "location": "world:initial-storage-menu-recipe-preparation-fried-egg"
+    },
+    {
+      "definition": {
+        "value": "menu-container-bake-tray"
+      },
+      "count": 1,
+      "location": "world:initial-P30-menu-container-bake-tray"
+    },
+    {
+      "definition": {
+        "value": "menu-container-prep-plate"
+      },
+      "count": 1,
+      "location": "world:initial-storage-menu-recipe-preparation-toasted-slice"
+    },
+    {
+      "definition": {
+        "value": "menu-container-plate"
+      },
+      "count": 2,
+      "location": "cleanPool"
+    }
+  ],
+  "executedRecipes": [
+    "menu-recipe-preparation-cooked-bacon",
+    "menu-recipe-preparation-cut-tomato",
+    "menu-recipe-preparation-fried-egg",
+    "menu-recipe-preparation-toasted-slice",
+    "menu-recipe-finished-bacon-breakfast"
+  ],
+  "productId": "product-5",
+  "servingVesselId": "pool-menu-container-plate-1",
+  "logicalTick": 286,
+  "settlements": [
+    {
+      "sequence": 1,
+      "order": {
+        "value": "order-F44"
+      },
+      "template": {
+        "value": "menu-order-bacon-breakfast"
+      },
+      "recipe": {
+        "value": "menu-recipe-finished-bacon-breakfast"
+      },
+      "product": {
+        "value": "product-5"
+      },
+      "player": {
+        "value": "menu-chef"
+      },
+      "container": {
+        "value": "pool-menu-container-plate-1"
+      },
+      "logicalTick": 285
+    }
+  ],
+  "remainingItems": [
+    {
+      "id": {
+        "value": "fixture-F44-menu-container-mix-bowl"
+      },
+      "definition": {
+        "value": "menu-container-mix-bowl"
+      },
+      "version": 3,
+      "location": {
+        "kind": 0,
+        "ownerId": null,
+        "slotId": "initial-F44-menu-container-mix-bowl"
+      },
+      "recipe": null,
+      "isProduct": false,
+      "originStation": null,
+      "containerCompleted": false,
+      "isDirty": false,
+      "remainingPortions": 0
+    },
+    {
+      "id": {
+        "value": "fixture-P02-menu-container-prep-box"
+      },
+      "definition": {
+        "value": "menu-container-prep-box"
+      },
+      "version": 3,
+      "location": {
+        "kind": 0,
+        "ownerId": null,
+        "slotId": "initial-P02-menu-container-prep-box"
+      },
+      "recipe": null,
+      "isProduct": false,
+      "originStation": null,
+      "containerCompleted": false,
+      "isDirty": false,
+      "remainingPortions": 0
+    },
+    {
+      "id": {
+        "value": "fixture-P28-menu-container-pan"
+      },
+      "definition": {
+        "value": "menu-container-pan"
+      },
+      "version": 3,
+      "location": {
+        "kind": 0,
+        "ownerId": null,
+        "slotId": "initial-P28-menu-container-pan"
+      },
+      "recipe": null,
+      "isProduct": false,
+      "originStation": null,
+      "containerCompleted": false,
+      "isDirty": false,
+      "remainingPortions": 0
+    },
+    {
+      "id": {
+        "value": "fixture-P29-menu-container-pan"
+      },
+      "definition": {
+        "value": "menu-container-pan"
+      },
+      "version": 3,
+      "location": {
+        "kind": 0,
+        "ownerId": null,
+        "slotId": "initial-P29-menu-container-pan"
+      },
+      "recipe": null,
+      "isProduct": false,
+      "originStation": null,
+      "containerCompleted": false,
+      "isDirty": false,
+      "remainingPortions": 0
+    },
+    {
+      "id": {
+        "value": "fixture-P30-menu-container-bake-tray"
+      },
+      "definition": {
+        "value": "menu-container-bake-tray"
+      },
+      "version": 3,
+      "location": {
+        "kind": 0,
+        "ownerId": null,
+        "slotId": "initial-P30-menu-container-bake-tray"
+      },
+      "recipe": null,
+      "isProduct": false,
+      "originStation": null,
+      "containerCompleted": false,
+      "isDirty": false,
+      "remainingPortions": 0
+    },
+    {
+      "id": {
+        "value": "fixture-menu-supply-bacon-2"
+      },
+      "definition": {
+        "value": "menu-supply-bacon"
+      },
+      "version": 1,
+      "location": {
+        "kind": 0,
+        "ownerId": null,
+        "slotId": "initial-menu-supply-bacon-2"
+      },
+      "recipe": null,
+      "isProduct": false,
+      "originStation": null,
+      "containerCompleted": false,
+      "isDirty": false,
+      "remainingPortions": 0
+    },
+    {
+      "id": {
+        "value": "fixture-menu-supply-bacon-3"
+      },
+      "definition": {
+        "value": "menu-supply-bacon"
+      },
+      "version": 1,
+      "location": {
+        "kind": 0,
+        "ownerId": null,
+        "slotId": "initial-menu-supply-bacon-3"
+      },
+      "recipe": null,
+      "isProduct": false,
+      "originStation": null,
+      "containerCompleted": false,
+      "isDirty": false,
+      "remainingPortions": 0
+    },
+    {
+      "id": {
+        "value": "fixture-menu-supply-bacon-4"
+      },
+      "definition": {
+        "value": "menu-supply-bacon"
+      },
+      "version": 1,
+      "location": {
+        "kind": 0,
+        "ownerId": null,
+        "slotId": "initial-menu-supply-bacon-4"
+      },
+      "recipe": null,
+      "isProduct": false,
+      "originStation": null,
+      "containerCompleted": false,
+      "isDirty": false,
+      "remainingPortions": 0
+    },
+    {
+      "id": {
+        "value": "fixture-menu-supply-bacon-5"
+      },
+      "definition": {
+        "value": "menu-supply-bacon"
+      },
+      "version": 1,
+      "location": {
+        "kind": 0,
+        "ownerId": null,
+        "slotId": "initial-menu-supply-bacon-5"
+      },
+      "recipe": null,
+      "isProduct": false,
+      "originStation": null,
+      "containerCompleted": false,
+      "isDirty": false,
+      "remainingPortions": 0
+    },
+    {
+      "id": {
+        "value": "fixture-menu-supply-bacon-6"
+      },
+      "definition": {
+        "value": "menu-supply-bacon"
+      },
+      "version": 1,
+      "location": {
+        "kind": 0,
+        "ownerId": null,
+        "slotId": "initial-menu-supply-bacon-6"
+      },
+      "recipe": null,
+      "isProduct": false,
+      "originStation": null,
+      "containerCompleted": false,
+      "isDirty": false,
+      "remainingPortions": 0
+    },
+    {
+      "id": {
+        "value": "fixture-menu-supply-bacon-7"
+      },
+      "definition": {
+        "value": "menu-supply-bacon"
+      },
+      "version": 1,
+      "location": {
+        "kind": 0,
+        "ownerId": null,
+        "slotId": "initial-menu-supply-bacon-7"
+      },
+      "recipe": null,
+      "isProduct": false,
+      "originStation": null,
+      "containerCompleted": false,
+      "isDirty": false,
+      "remainingPortions": 0
+    },
+    {
+      "id": {
+        "value": "fixture-menu-supply-bacon-8"
+      },
+      "definition": {
+        "value": "menu-supply-bacon"
+      },
+      "version": 1,
+      "location": {
+        "kind": 0,
+        "ownerId": null,
+        "slotId": "initial-menu-supply-bacon-8"
+      },
+      "recipe": null,
+      "isProduct": false,
+      "originStation": null,
+      "containerCompleted": false,
+      "isDirty": false,
+      "remainingPortions": 0
+    },
+    {
+      "id": {
+        "value": "fixture-menu-supply-egg-2"
+      },
+      "definition": {
+        "value": "menu-supply-egg"
+      },
+      "version": 1,
+      "location": {
+        "kind": 0,
+        "ownerId": null,
+        "slotId": "initial-menu-supply-egg-2"
+      },
+      "recipe": null,
+      "isProduct": false,
+      "originStation": null,
+      "containerCompleted": false,
+      "isDirty": false,
+      "remainingPortions": 0
+    },
+    {
+      "id": {
+        "value": "fixture-menu-supply-egg-3"
+      },
+      "definition": {
+        "value": "menu-supply-egg"
+      },
+      "version": 1,
+      "location": {
+        "kind": 0,
+        "ownerId": null,
+        "slotId": "initial-menu-supply-egg-3"
+      },
+      "recipe": null,
+      "isProduct": false,
+      "originStation": null,
+      "containerCompleted": false,
+      "isDirty": false,
+      "remainingPortions": 0
+    },
+    {
+      "id": {
+        "value": "fixture-menu-supply-egg-4"
+      },
+      "definition": {
+        "value": "menu-supply-egg"
+      },
+      "version": 1,
+      "location": {
+        "kind": 0,
+        "ownerId": null,
+        "slotId": "initial-menu-supply-egg-4"
+      },
+      "recipe": null,
+      "isProduct": false,
+      "originStation": null,
+      "containerCompleted": false,
+      "isDirty": false,
+      "remainingPortions": 0
+    },
+    {
+      "id": {
+        "value": "fixture-menu-supply-egg-5"
+      },
+      "definition": {
+        "value": "menu-supply-egg"
+      },
+      "version": 1,
+      "location": {
+        "kind": 0,
+        "ownerId": null,
+        "slotId": "initial-menu-supply-egg-5"
+      },
+      "recipe": null,
+      "isProduct": false,
+      "originStation": null,
+      "containerCompleted": false,
+      "isDirty": false,
+      "remainingPortions": 0
+    },
+    {
+      "id": {
+        "value": "fixture-menu-supply-egg-6"
+      },
+      "definition": {
+        "value": "menu-supply-egg"
+      },
+      "version": 1,
+      "location": {
+        "kind": 0,
+        "ownerId": null,
+        "slotId": "initial-menu-supply-egg-6"
+      },
+      "recipe": null,
+      "isProduct": false,
+      "originStation": null,
+      "containerCompleted": false,
+      "isDirty": false,
+      "remainingPortions": 0
+    },
+    {
+      "id": {
+        "value": "fixture-menu-supply-egg-7"
+      },
+      "definition": {
+        "value": "menu-supply-egg"
+      },
+      "version": 1,
+      "location": {
+        "kind": 0,
+        "ownerId": null,
+        "slotId": "initial-menu-supply-egg-7"
+      },
+      "recipe": null,
+      "isProduct": false,
+      "originStation": null,
+      "containerCompleted": false,
+      "isDirty": false,
+      "remainingPortions": 0
+    },
+    {
+      "id": {
+        "value": "fixture-menu-supply-egg-8"
+      },
+      "definition": {
+        "value": "menu-supply-egg"
+      },
+      "version": 1,
+      "location": {
+        "kind": 0,
+        "ownerId": null,
+        "slotId": "initial-menu-supply-egg-8"
+      },
+      "recipe": null,
+      "isProduct": false,
+      "originStation": null,
+      "containerCompleted": false,
+      "isDirty": false,
+      "remainingPortions": 0
+    },
+    {
+      "id": {
+        "value": "fixture-menu-supply-toast-slice-2"
+      },
+      "definition": {
+        "value": "menu-supply-toast-slice"
+      },
+      "version": 1,
+      "location": {
+        "kind": 0,
+        "ownerId": null,
+        "slotId": "initial-menu-supply-toast-slice-2"
+      },
+      "recipe": null,
+      "isProduct": false,
+      "originStation": null,
+      "containerCompleted": false,
+      "isDirty": false,
+      "remainingPortions": 0
+    },
+    {
+      "id": {
+        "value": "fixture-menu-supply-toast-slice-3"
+      },
+      "definition": {
+        "value": "menu-supply-toast-slice"
+      },
+      "version": 1,
+      "location": {
+        "kind": 0,
+        "ownerId": null,
+        "slotId": "initial-menu-supply-toast-slice-3"
+      },
+      "recipe": null,
+      "isProduct": false,
+      "originStation": null,
+      "containerCompleted": false,
+      "isDirty": false,
+      "remainingPortions": 0
+    },
+    {
+      "id": {
+        "value": "fixture-menu-supply-toast-slice-4"
+      },
+      "definition": {
+        "value": "menu-supply-toast-slice"
+      },
+      "version": 1,
+      "location": {
+        "kind": 0,
+        "ownerId": null,
+        "slotId": "initial-menu-supply-toast-slice-4"
+      },
+      "recipe": null,
+      "isProduct": false,
+      "originStation": null,
+      "containerCompleted": false,
+      "isDirty": false,
+      "remainingPortions": 0
+    },
+    {
+      "id": {
+        "value": "fixture-menu-supply-toast-slice-5"
+      },
+      "definition": {
+        "value": "menu-supply-toast-slice"
+      },
+      "version": 1,
+      "location": {
+        "kind": 0,
+        "ownerId": null,
+        "slotId": "initial-menu-supply-toast-slice-5"
+      },
+      "recipe": null,
+      "isProduct": false,
+      "originStation": null,
+      "containerCompleted": false,
+      "isDirty": false,
+      "remainingPortions": 0
+    },
+    {
+      "id": {
+        "value": "fixture-menu-supply-toast-slice-6"
+      },
+      "definition": {
+        "value": "menu-supply-toast-slice"
+      },
+      "version": 1,
+      "location": {
+        "kind": 0,
+        "ownerId": null,
+        "slotId": "initial-menu-supply-toast-slice-6"
+      },
+      "recipe": null,
+      "isProduct": false,
+      "originStation": null,
+      "containerCompleted": false,
+      "isDirty": false,
+      "remainingPortions": 0
+    },
+    {
+      "id": {
+        "value": "fixture-menu-supply-toast-slice-7"
+      },
+      "definition": {
+        "value": "menu-supply-toast-slice"
+      },
+      "version": 1,
+      "location": {
+        "kind": 0,
+        "ownerId": null,
+        "slotId": "initial-menu-supply-toast-slice-7"
+      },
+      "recipe": null,
+      "isProduct": false,
+      "originStation": null,
+      "containerCompleted": false,
+      "isDirty": false,
+      "remainingPortions": 0
+    },
+    {
+      "id": {
+        "value": "fixture-menu-supply-toast-slice-8"
+      },
+      "definition": {
+        "value": "menu-supply-toast-slice"
+      },
+      "version": 1,
+      "location": {
+        "kind": 0,
+        "ownerId": null,
+        "slotId": "initial-menu-supply-toast-slice-8"
+      },
+      "recipe": null,
+      "isProduct": false,
+      "originStation": null,
+      "containerCompleted": false,
+      "isDirty": false,
+      "remainingPortions": 0
+    },
+    {
+      "id": {
+        "value": "fixture-menu-supply-tomato-2"
+      },
+      "definition": {
+        "value": "menu-supply-tomato"
+      },
+      "version": 1,
+      "location": {
+        "kind": 0,
+        "ownerId": null,
+        "slotId": "initial-menu-supply-tomato-2"
+      },
+      "recipe": null,
+      "isProduct": false,
+      "originStation": null,
+      "containerCompleted": false,
+      "isDirty": false,
+      "remainingPortions": 0
+    },
+    {
+      "id": {
+        "value": "fixture-menu-supply-tomato-3"
+      },
+      "definition": {
+        "value": "menu-supply-tomato"
+      },
+      "version": 1,
+      "location": {
+        "kind": 0,
+        "ownerId": null,
+        "slotId": "initial-menu-supply-tomato-3"
+      },
+      "recipe": null,
+      "isProduct": false,
+      "originStation": null,
+      "containerCompleted": false,
+      "isDirty": false,
+      "remainingPortions": 0
+    },
+    {
+      "id": {
+        "value": "fixture-menu-supply-tomato-4"
+      },
+      "definition": {
+        "value": "menu-supply-tomato"
+      },
+      "version": 1,
+      "location": {
+        "kind": 0,
+        "ownerId": null,
+        "slotId": "initial-menu-supply-tomato-4"
+      },
+      "recipe": null,
+      "isProduct": false,
+      "originStation": null,
+      "containerCompleted": false,
+      "isDirty": false,
+      "remainingPortions": 0
+    },
+    {
+      "id": {
+        "value": "fixture-menu-supply-tomato-5"
+      },
+      "definition": {
+        "value": "menu-supply-tomato"
+      },
+      "version": 1,
+      "location": {
+        "kind": 0,
+        "ownerId": null,
+        "slotId": "initial-menu-supply-tomato-5"
+      },
+      "recipe": null,
+      "isProduct": false,
+      "originStation": null,
+      "containerCompleted": false,
+      "isDirty": false,
+      "remainingPortions": 0
+    },
+    {
+      "id": {
+        "value": "fixture-menu-supply-tomato-6"
+      },
+      "definition": {
+        "value": "menu-supply-tomato"
+      },
+      "version": 1,
+      "location": {
+        "kind": 0,
+        "ownerId": null,
+        "slotId": "initial-menu-supply-tomato-6"
+      },
+      "recipe": null,
+      "isProduct": false,
+      "originStation": null,
+      "containerCompleted": false,
+      "isDirty": false,
+      "remainingPortions": 0
+    },
+    {
+      "id": {
+        "value": "fixture-menu-supply-tomato-7"
+      },
+      "definition": {
+        "value": "menu-supply-tomato"
+      },
+      "version": 1,
+      "location": {
+        "kind": 0,
+        "ownerId": null,
+        "slotId": "initial-menu-supply-tomato-7"
+      },
+      "recipe": null,
+      "isProduct": false,
+      "originStation": null,
+      "containerCompleted": false,
+      "isDirty": false,
+      "remainingPortions": 0
+    },
+    {
+      "id": {
+        "value": "fixture-menu-supply-tomato-8"
+      },
+      "definition": {
+        "value": "menu-supply-tomato"
+      },
+      "version": 1,
+      "location": {
+        "kind": 0,
+        "ownerId": null,
+        "slotId": "initial-menu-supply-tomato-8"
+      },
+      "recipe": null,
+      "isProduct": false,
+      "originStation": null,
+      "containerCompleted": false,
+      "isDirty": false,
+      "remainingPortions": 0
+    },
+    {
+      "id": {
+        "value": "fixture-storage-menu-recipe-preparation-cooked-bacon"
+      },
+      "definition": {
+        "value": "menu-container-prep-plate"
+      },
+      "version": 1,
+      "location": {
+        "kind": 0,
+        "ownerId": null,
+        "slotId": "initial-storage-menu-recipe-preparation-cooked-bacon"
+      },
+      "recipe": null,
+      "isProduct": false,
+      "originStation": null,
+      "containerCompleted": false,
+      "isDirty": false,
+      "remainingPortions": 0
+    },
+    {
+      "id": {
+        "value": "fixture-storage-menu-recipe-preparation-cut-tomato"
+      },
+      "definition": {
+        "value": "menu-container-prep-box"
+      },
+      "version": 1,
+      "location": {
+        "kind": 0,
+        "ownerId": null,
+        "slotId": "initial-storage-menu-recipe-preparation-cut-tomato"
+      },
+      "recipe": null,
+      "isProduct": false,
+      "originStation": null,
+      "containerCompleted": false,
+      "isDirty": false,
+      "remainingPortions": 0
+    },
+    {
+      "id": {
+        "value": "fixture-storage-menu-recipe-preparation-fried-egg"
+      },
+      "definition": {
+        "value": "menu-container-prep-plate"
+      },
+      "version": 1,
+      "location": {
+        "kind": 0,
+        "ownerId": null,
+        "slotId": "initial-storage-menu-recipe-preparation-fried-egg"
+      },
+      "recipe": null,
+      "isProduct": false,
+      "originStation": null,
+      "containerCompleted": false,
+      "isDirty": false,
+      "remainingPortions": 0
+    },
+    {
+      "id": {
+        "value": "fixture-storage-menu-recipe-preparation-toasted-slice"
+      },
+      "definition": {
+        "value": "menu-container-prep-plate"
+      },
+      "version": 1,
+      "location": {
+        "kind": 0,
+        "ownerId": null,
+        "slotId": "initial-storage-menu-recipe-preparation-toasted-slice"
+      },
+      "recipe": null,
+      "isProduct": false,
+      "originStation": null,
+      "containerCompleted": false,
+      "isDirty": false,
+      "remainingPortions": 0
+    },
+    {
+      "id": {
+        "value": "pool-menu-container-plate-2"
+      },
+      "definition": {
+        "value": "menu-container-plate"
+      },
+      "version": 1,
+      "location": {
+        "kind": 0,
+        "ownerId": null,
+        "slotId": "clean-pool"
+      },
+      "recipe": null,
+      "isProduct": false,
+      "originStation": null,
+      "containerCompleted": false,
+      "isDirty": false,
+      "remainingPortions": 0
+    }
+  ],
+  "snapshotSha256": "ED2981AC67DDC6C909BBFD40D1C8C541E772527D0EB0BC759201E03A26CA1B99",
+  "pending": "S05-drink-binding-disposal-and-all-87-ET-recovery-S07-procurement-S14-exit"
+}

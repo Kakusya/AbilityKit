@@ -12,3 +12,5 @@
 - [ ] Run cooking-kitchen-loop / cooking-et-level-runtime gates as applicable, self-review, commit worker increment and report exact remaining blockers.
 
 Commands: python tools/generate-cooking-menu.py --check; python tools/test_cooking_menu_generator.py; dotnet test src/AbilityKit.Game.Cooking.Tests --filter FullyQualifiedName~CookingMenuCatalogTests; powershell -ExecutionPolicy Bypass -File tools/run_test_gate.ps1 -Gate cooking-kitchen-loop. Actual results go into research/verification.md and check.jsonl; planned commands are never recorded as passes. Unity remains out of authorized scope.
+
+Progress: published core typed mapping implemented and real spatial domain runner now produces/plates87;56meal/dessert delivery proven,31drinkbinding and all87ETrecovery pending. Validated501bf383d hooks received, not yet mapped at this commit.
