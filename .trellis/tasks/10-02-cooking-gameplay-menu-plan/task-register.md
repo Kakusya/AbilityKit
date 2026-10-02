@@ -2,7 +2,7 @@
 
 # Cooking Task 注册表
 
-当前已验证状态：S01–S03 纯 C# 核心已本地合并并通过 master 门禁；S04/S05 实施中，S06 域组件待独立复核与 ET 接入，S07/S08 已有受限辅助而完整出口未完成。准确证据见 [master-core-integration-verification.md](research/master-core-integration-verification.md)；下面初版注册表的“无执行许可”等表述仅保留历史含义。
+当前已验证状态：S01–S03 纯 C# 核心已本地合并并通过 master 门禁；S04/S05 核心与菜单生产恢复已合并，31 饮品最终绑定交付待独立审阅；S06 域组件已独立复核，ET 接入中，S07/S08 已有受限辅助而完整出口未完成。准确证据见 [master-core-integration-verification.md](research/master-core-integration-verification.md)；下面初版注册表的“无执行许可”等表述仅保留历史含义。
 
 > 最新授权：owner 已要求实施、验证并合并 master；S01–S14/N01–N03 获执行授权，按依赖与文件冲突分波，U01/U02 后置不执行、S15 为参考池。以下初版状态为登记时快照；当前状态和验证/合并证据见 [execution.md](execution.md) 及各 Task metadata/check.jsonl。
 
@@ -23,7 +23,7 @@
 | S11 | [候选甜品内容](../10-02-cooking-singleplayer-menu-desserts/prd.md) | M3：S01–S12 | S10 | 面糊共享分流、模具/脱模/裹粉/收尾可组合；不增加精准操作或冷却巡检 |
 | S12 | [候选饮品基础内容](../10-02-cooking-singleplayer-menu-drinks-basic/prd.md) | M4：D01–D14 | S11, S05 | 榨汁/搅打/冲调区别、杯型与冷热状态明确，全部饮品独立贴单；共享果汁按份守恒 |
 | S13 | [候选咖啡与茶饮内容](../10-02-cooking-singleplayer-menu-drinks-tea/prd.md) | M5：D15–D31 | S12 | 研磨/萃取、加热/打泡模式、茶/珍珠共享，奶盖最后加、奶茶与冲调及鲜奶来源不混写 |
-| S14 | [单机关卡许可与可观察闭环](../10-02-cooking-singleplayer-level-observation/prd.md) | J01–J08 的数据面/K01–K02/K06/完整验收 | S06, S08, S13 | 单机 ET 命令→Tick→提示数据→营业收尾可重放；checkpoint 重建等价；已解锁与本关允许取交集 |
+| S14 | [单机关卡许可与可观察闭环](../10-02-cooking-singleplayer-level-observation/prd.md) | J01–J08 的数据面/K01–K02/K06/完整验收 | S05–S13 | 单机 ET 命令→Tick→提示数据→营业收尾可重放；checkpoint 重建等价；已解锁与本关允许取交集 |
 | S15 | [单机成长与额外机制参考池](../10-02-cooking-singleplayer-growth-reference/prd.md) | K03–K14/H03–H06/I12/投掷接取冲刺/DLC | S14 | 先保留既有评分/伙伴 Level-local 成长，再逐项审议扩展；任何风险/失败/随机/经济规则不默认为基础 |
 | N01 | [网络范围与历史冲突收敛](../10-02-cooking-network-contract-review/prd.md) | KCP/LiteNet、先到先得/稳定仲裁冲突 | S14 | 更新权威决定与唯一传输方向，确定身份、命令/快照契约和真实 LAN 验收；不以旧纪要自动执行 |
 | N02 | [网络厨房与营业闭环](../10-02-cooking-network-gameplay-loop/prd.md) | 同一玩法的 listen host/remote 客户端 | N01 | 两台物理 PC 争抢/并行/绑定/提交/跨关状态一致；host 本地与远端共享验证；拒绝不丢料 |

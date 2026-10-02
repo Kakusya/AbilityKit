@@ -15,3 +15,10 @@
 单机 ET 命令→Tick→提示数据→营业收尾可重放；checkpoint 重建等价；已解锁与本关允许取交集。
 
 沿用 [规划架构记录](../../../Docs/design/CookingGame/gameplay-plan-architecture.md) 的 owner 与数据边界，不创建平行模拟，不修改通用框架的产品职责。具体 API/数据形状、错误矩阵、版本迁移、恢复/跨关状态与测试断言在执行前补齐；本初稿不声称已达到实施就绪。
+
+
+## 精确出口研究与接入顺序（2026-10-02）
+
+完整数据复用、最小API、许可交集、受信可用性和真实营业验收方案见 [s14-runtime-exit-research.md](../10-02-cooking-gameplay-menu-plan/research/s14-runtime-exit-research.md)。Readonly observation从既有Recipe/Front/Supply/layout owner同一完整帧捕获，不再建业务owner；容器内容和订单绑定只按现有实例关系派生，当前worker使用ActiveWorker，finite库存从未移除真实物件推导。许可检查不把全部菜单原料数量求和当准备库存门，不因缺料/未满足新增正常业务失败。
+
+分阶段先做UnknownMenu/逐菜缺项/基础授权加unlock与LevelAllowed交集，再等S06/S07/S08 stable接口接实际Prepare前验证与Observe。最终F01+D31代表经营fixture覆盖自然未满足离开/清桌/0星成功、同Level销毁恢复、成功在途承接、技术Failed基线重开，87内容另由逐菜真实生产交付fixture覆盖。观察或catalog验证辅助通过不等于S14完成。

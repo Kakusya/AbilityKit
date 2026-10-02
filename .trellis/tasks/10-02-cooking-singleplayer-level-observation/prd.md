@@ -12,7 +12,7 @@ J01–J08 的数据面/K01–K02/K06/完整验收。以单机→网络→单机 
 
 ## 前置
 
-依赖：S06, S08, S13。必须读取 [总 plan](../../spec/cooking/gameplay-menu-plan.md)、[注册表](../10-02-cooking-gameplay-menu-plan/task-register.md)、相关生效 spec 与历史 check。
+依赖：S05、S06、S07、S08、S09、S10、S11、S12、S13。原初稿仅列 S06/S08/S13，现已按完整单机出口同步 metadata；详情见 [精准出口研究](../10-02-cooking-gameplay-menu-plan/research/s14-runtime-exit-research.md)。必须读取 [总 plan](../../spec/cooking/gameplay-menu-plan.md)、[注册表](../10-02-cooking-gameplay-menu-plan/task-register.md)、相关生效 spec 与历史 check。
 
 ## 验收
 
