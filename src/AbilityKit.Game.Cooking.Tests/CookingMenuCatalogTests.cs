@@ -176,6 +176,27 @@ public sealed class CookingMenuCatalogTests
         Assert.Empty(catalog.Requirements(new[] { "F01" }).DeliveryCapabilities);
     }
 
+    [Theory]
+    [InlineData("P19", "menu-container-rice-tub", "F08")]
+    [InlineData("P20", "menu-container-prep-bowl", "F21")]
+    [InlineData("P35", "menu-container-sauce-bowl", "F21")]
+    [InlineData("P53", "menu-container-pearl-jar", "D25")]
+    public void Source_storage_vessels_are_typed_batch_dependency_and_accept_the_actual_output(
+        string preparation, string storageId, string menuId)
+    {
+        var catalog = Catalog();
+        var doc = catalog.Document;
+        var step = doc.Steps.Single(x => x.SourceId == preparation && x.YieldPortions > 1);
+        Assert.Equal(new DefinitionId(storageId), step.OutputStorageContainer);
+        Assert.Contains(new DefinitionId(storageId), catalog.Requirements(new[] { menuId }).Containers);
+        var storage = doc.Containers.Single(x => x.Id.Value == storageId);
+        Assert.Contains(step.Output, storage.AcceptedDefinitions);
+        Assert.True(storage.Capacity >= step.YieldPortions);
+        var bad = doc with { Containers = doc.Containers.Select(x => x.Id == storage.Id
+            ? x with { AcceptedDefinitions = x.AcceptedDefinitions.Where(d => d != step.Output).ToArray() } : x).ToArray() };
+        Assert.Contains(CookingMenuCatalog.Validate(bad), x => x.Code == "InvalidOutputStorage");
+    }
+
     [Fact]
     public void Graph_cycle_and_missing_material_producer_are_rejected_before_load()
     {

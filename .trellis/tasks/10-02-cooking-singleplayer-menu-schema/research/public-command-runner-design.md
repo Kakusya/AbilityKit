@@ -55,3 +55,7 @@ All87 can use one checkpoint at a deterministic graph-ready boundary; representa
 ## Exit and pending interfaces
 
 No case is marked passed until production and restore arms run. Static source/graph tests are already evidence for the source increment only. Waiting for validated core recipe/multiset/portion/spatial/vessel commit, coordinator S05 binding/disposal/ContentProvenance hook, and S07 stock or reviewed individual-anchor fixture. S14 integrates physical supply and full-level behavior; no network/Unity code belongs to this runner.
+
+### Working-vessel fixture refinement
+
+Catalog now preserves final-preparation OutputStorageContainer. Before starting another recipe in the same physical cook-pot, move completed batches to that real storage vessel using ServePortion until the source is empty, reading remaining authority counts after every command. P19 -> rice-tub; P20 -> prep-bowl; P35 -> sauce-bowl; P53 -> pearl-jar. Source storage choices equal to processing definition need a distinct empty supplied instance when transferring. Provide enough **unique anchored empty instances** for retained shared batches; derive fixture provision from selected producers, not a fixed one-per-definition count. Driver selects actual empty unlocked vessels and fails if none exists, rather than clearing valuable contents or spawning replacements mid-run. F21 specifically demonstrates independent pasta/sauce batches with conserved stored leftovers and correct final product.

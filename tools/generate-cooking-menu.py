@@ -274,6 +274,13 @@ def project(sheets, audit):
             step_id = 'menu-recipe-' + output.removeprefix('menu-') + ('' if last else f'-stage-{index + 1}')
             steps.append(dict(id=step_id, sourceId=key, sourceLocator=('半成品/' if prep else '加工节点/' + key + '/') + (key if prep else 'FINAL'), inputs=current_inputs, output=product, process='menu-process-' + cap, capability='menu-capability-' + cap, carrier=container, executionKind='Manual' if cap in {'chop', 'assemble', 'drink-mix'} else 'Automatic', requiredTicks=1, yieldPortions=2 if last and key in batch_preps else 1, mustLast=not prep and last and len(plan) > 1, operation=row[3] if prep else row[5]))
             previous = product
+        if prep:
+            # Source column lists processing/storage alternatives. Preserve the storage end,
+            # not just the appliance's working vessel; batches can be extracted into it.
+            storage = carrier(row[5].split('/')[-1].strip())
+            containers[storage]['acceptedDefinitions'].append(output)
+            containers[storage]['capacity'] = max(containers[storage]['capacity'], steps[-1]['yieldPortions'])
+            steps[-1]['outputStorageContainer'] = storage
         if not prep:
             serving = carrier(row[8])
             containers[serving]['acceptedDefinitions'].append(output)

@@ -13,3 +13,5 @@ S04 source catalog, not a level menu or a second kitchen authority. Production a
 - Full S09-S13 acceptance requires public-command production/submission and ET checkpoint equivalence per all87 routes; static graph/catalog loads never substitute for those results.
 
 Implementation and outstanding exact hooks: .trellis/tasks/10-02-cooking-singleplayer-menu-schema/design.md and research/core-integration-request.md. Verified commands/results stay in task check evidence, not this spec.
+
+Preparation final recipes carry typed OutputStorageContainer from source vessel alternatives. Storage output acceptance/capacity and level dependency closure are validated separately from processing Carrier. Batch extraction must preserve units and free working vessels or use real independently supplied instances; one carrier definition is not instance-availability proof.

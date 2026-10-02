@@ -1945,6 +1945,25 @@
       "disposable": false
     },
     {
+      "id": "menu-container-rice-tub",
+      "name": "饭桶",
+      "capacity": 2,
+      "acceptedDefinitions": [
+        "menu-preparation-cooked-rice"
+      ],
+      "disposable": false
+    },
+    {
+      "id": "menu-container-prep-bowl",
+      "name": "备料盆",
+      "capacity": 2,
+      "acceptedDefinitions": [
+        "menu-preparation-apple-filling",
+        "menu-preparation-cooked-pasta"
+      ],
+      "disposable": false
+    },
+    {
       "id": "menu-container-pan",
       "name": "平底锅",
       "capacity": 2,
@@ -1981,6 +2000,28 @@
         "menu-supply-raw-beef-patty",
         "menu-supply-raw-sausage",
         "menu-supply-shrimp"
+      ],
+      "disposable": false
+    },
+    {
+      "id": "menu-container-prep-plate",
+      "name": "备料盘",
+      "capacity": 1,
+      "acceptedDefinitions": [
+        "menu-preparation-cooked-bacon",
+        "menu-preparation-cooked-beef",
+        "menu-preparation-cooked-chicken",
+        "menu-preparation-cooked-mushroom",
+        "menu-preparation-cooked-patty",
+        "menu-preparation-cooked-sausage",
+        "menu-preparation-cooked-shrimp",
+        "menu-preparation-cooked-white-fish",
+        "menu-preparation-fried-chicken",
+        "menu-preparation-fried-cutlet",
+        "menu-preparation-fried-egg",
+        "menu-preparation-fried-fish",
+        "menu-preparation-fried-fries",
+        "menu-preparation-toasted-slice"
       ],
       "disposable": false
     },
@@ -2044,6 +2085,17 @@
         "menu-supply-raw-fries",
         "menu-supply-strawberry-jam",
         "menu-supply-white-fish"
+      ],
+      "disposable": false
+    },
+    {
+      "id": "menu-container-sauce-bowl",
+      "name": "酱料盆",
+      "capacity": 2,
+      "acceptedDefinitions": [
+        "menu-preparation-beef-tomato-sauce",
+        "menu-preparation-cream-mushroom-sauce",
+        "menu-preparation-hot-tomato-sauce"
       ],
       "disposable": false
     },
@@ -2144,6 +2196,18 @@
       "disposable": false
     },
     {
+      "id": "menu-container-topping-jar",
+      "name": "配料罐",
+      "capacity": 2,
+      "acceptedDefinitions": [
+        "menu-preparation-cheese-cap",
+        "menu-preparation-mango-puree",
+        "menu-preparation-strawberry-puree",
+        "menu-preparation-whipped-cream"
+      ],
+      "disposable": false
+    },
+    {
       "id": "menu-container-water-jug",
       "name": "壶",
       "capacity": 1,
@@ -2156,7 +2220,7 @@
     {
       "id": "menu-container-juice-jug",
       "name": "果汁壶",
-      "capacity": 1,
+      "capacity": 2,
       "acceptedDefinitions": [
         "menu-preparation-apple-juice",
         "menu-preparation-carrot-juice",
@@ -2212,6 +2276,16 @@
         "menu-preparation-hot-milk",
         "menu-preparation-milk-foam",
         "menu-supply-milk"
+      ],
+      "disposable": false
+    },
+    {
+      "id": "menu-container-pearl-jar",
+      "name": "小料罐",
+      "capacity": 2,
+      "acceptedDefinitions": [
+        "menu-preparation-brown-sugar-pearl",
+        "menu-preparation-cooked-pearl"
       ],
       "disposable": false
     },
@@ -2584,7 +2658,8 @@
       "requiredTicks": 1,
       "yieldPortions": 1,
       "mustLast": false,
-      "operation": "生菜→切配→生菜片"
+      "operation": "生菜→切配→生菜片",
+      "outputStorageContainer": "menu-container-prep-box"
     },
     {
       "id": "menu-recipe-preparation-cut-tomato",
@@ -2604,7 +2679,8 @@
       "requiredTicks": 1,
       "yieldPortions": 1,
       "mustLast": false,
-      "operation": "番茄→切配→番茄块"
+      "operation": "番茄→切配→番茄块",
+      "outputStorageContainer": "menu-container-prep-box"
     },
     {
       "id": "menu-recipe-preparation-cut-cucumber",
@@ -2624,7 +2700,8 @@
       "requiredTicks": 1,
       "yieldPortions": 1,
       "mustLast": false,
-      "operation": "黄瓜→切配→黄瓜片"
+      "operation": "黄瓜→切配→黄瓜片",
+      "outputStorageContainer": "menu-container-prep-box"
     },
     {
       "id": "menu-recipe-preparation-cut-onion",
@@ -2644,7 +2721,8 @@
       "requiredTicks": 1,
       "yieldPortions": 1,
       "mustLast": false,
-      "operation": "洋葱→切配→洋葱块"
+      "operation": "洋葱→切配→洋葱块",
+      "outputStorageContainer": "menu-container-prep-box"
     },
     {
       "id": "menu-recipe-preparation-cut-mushroom",
@@ -2664,7 +2742,8 @@
       "requiredTicks": 1,
       "yieldPortions": 1,
       "mustLast": false,
-      "operation": "蘑菇→切配→蘑菇片"
+      "operation": "蘑菇→切配→蘑菇片",
+      "outputStorageContainer": "menu-container-prep-box"
     },
     {
       "id": "menu-recipe-preparation-cut-carrot",
@@ -2684,7 +2763,8 @@
       "requiredTicks": 1,
       "yieldPortions": 1,
       "mustLast": false,
-      "operation": "胡萝卜→切配→胡萝卜块"
+      "operation": "胡萝卜→切配→胡萝卜块",
+      "outputStorageContainer": "menu-container-prep-box"
     },
     {
       "id": "menu-recipe-preparation-cut-potato",
@@ -2704,7 +2784,8 @@
       "requiredTicks": 1,
       "yieldPortions": 1,
       "mustLast": false,
-      "operation": "土豆→切配→土豆块"
+      "operation": "土豆→切配→土豆块",
+      "outputStorageContainer": "menu-container-prep-box"
     },
     {
       "id": "menu-recipe-preparation-cut-broccoli",
@@ -2724,7 +2805,8 @@
       "requiredTicks": 1,
       "yieldPortions": 1,
       "mustLast": false,
-      "operation": "西兰花→切配→西兰花块"
+      "operation": "西兰花→切配→西兰花块",
+      "outputStorageContainer": "menu-container-prep-box"
     },
     {
       "id": "menu-recipe-preparation-cut-orange",
@@ -2744,7 +2826,8 @@
       "requiredTicks": 1,
       "yieldPortions": 1,
       "mustLast": false,
-      "operation": "橙子→切配→橙块"
+      "operation": "橙子→切配→橙块",
+      "outputStorageContainer": "menu-container-prep-box"
     },
     {
       "id": "menu-recipe-preparation-cut-lemon",
@@ -2764,7 +2847,8 @@
       "requiredTicks": 1,
       "yieldPortions": 1,
       "mustLast": false,
-      "operation": "柠檬→切配→柠檬片"
+      "operation": "柠檬→切配→柠檬片",
+      "outputStorageContainer": "menu-container-prep-box"
     },
     {
       "id": "menu-recipe-preparation-cut-apple",
@@ -2784,7 +2868,8 @@
       "requiredTicks": 1,
       "yieldPortions": 1,
       "mustLast": false,
-      "operation": "苹果→切配→苹果块"
+      "operation": "苹果→切配→苹果块",
+      "outputStorageContainer": "menu-container-prep-box"
     },
     {
       "id": "menu-recipe-preparation-cut-banana",
@@ -2804,7 +2889,8 @@
       "requiredTicks": 1,
       "yieldPortions": 1,
       "mustLast": false,
-      "operation": "香蕉→切配→香蕉块"
+      "operation": "香蕉→切配→香蕉块",
+      "outputStorageContainer": "menu-container-prep-box"
     },
     {
       "id": "menu-recipe-preparation-cut-strawberry",
@@ -2824,7 +2910,8 @@
       "requiredTicks": 1,
       "yieldPortions": 1,
       "mustLast": false,
-      "operation": "草莓→切配→草莓块"
+      "operation": "草莓→切配→草莓块",
+      "outputStorageContainer": "menu-container-prep-box"
     },
     {
       "id": "menu-recipe-preparation-cut-mango",
@@ -2844,7 +2931,8 @@
       "requiredTicks": 1,
       "yieldPortions": 1,
       "mustLast": false,
-      "operation": "芒果→切配→芒果块"
+      "operation": "芒果→切配→芒果块",
+      "outputStorageContainer": "menu-container-prep-box"
     },
     {
       "id": "menu-recipe-preparation-cut-beef",
@@ -2864,7 +2952,8 @@
       "requiredTicks": 1,
       "yieldPortions": 1,
       "mustLast": false,
-      "operation": "牛肉块→切配→牛肉切配件"
+      "operation": "牛肉块→切配→牛肉切配件",
+      "outputStorageContainer": "menu-container-prep-box"
     },
     {
       "id": "menu-recipe-preparation-cut-chicken",
@@ -2884,7 +2973,8 @@
       "requiredTicks": 1,
       "yieldPortions": 1,
       "mustLast": false,
-      "operation": "鸡肉块→切配→鸡肉切配件"
+      "operation": "鸡肉块→切配→鸡肉切配件",
+      "outputStorageContainer": "menu-container-prep-box"
     },
     {
       "id": "menu-recipe-preparation-cut-salmon",
@@ -2904,7 +2994,8 @@
       "requiredTicks": 1,
       "yieldPortions": 1,
       "mustLast": false,
-      "operation": "三文鱼肉→切配→三文鱼片"
+      "operation": "三文鱼肉→切配→三文鱼片",
+      "outputStorageContainer": "menu-container-prep-box"
     },
     {
       "id": "menu-recipe-preparation-cut-white-fish",
@@ -2924,7 +3015,8 @@
       "requiredTicks": 1,
       "yieldPortions": 1,
       "mustLast": false,
-      "operation": "白身鱼肉→切配→白鱼切配件"
+      "operation": "白身鱼肉→切配→白鱼切配件",
+      "outputStorageContainer": "menu-container-prep-box"
     },
     {
       "id": "menu-recipe-preparation-cooked-rice",
@@ -2944,7 +3036,8 @@
       "requiredTicks": 1,
       "yieldPortions": 2,
       "mustLast": false,
-      "operation": "米入锅→煮熟→可按份取用"
+      "operation": "米入锅→煮熟→可按份取用",
+      "outputStorageContainer": "menu-container-rice-tub"
     },
     {
       "id": "menu-recipe-preparation-cooked-pasta",
@@ -2964,7 +3057,8 @@
       "requiredTicks": 1,
       "yieldPortions": 2,
       "mustLast": false,
-      "operation": "干意面入锅→煮熟→按份取用"
+      "operation": "干意面入锅→煮熟→按份取用",
+      "outputStorageContainer": "menu-container-prep-bowl"
     },
     {
       "id": "menu-recipe-preparation-cooked-patty",
@@ -2984,7 +3078,8 @@
       "requiredTicks": 1,
       "yieldPortions": 1,
       "mustLast": false,
-      "operation": "生牛肉饼→煎熟"
+      "operation": "生牛肉饼→煎熟",
+      "outputStorageContainer": "menu-container-prep-plate"
     },
     {
       "id": "menu-recipe-preparation-cooked-chicken",
@@ -3004,7 +3099,8 @@
       "requiredTicks": 1,
       "yieldPortions": 1,
       "mustLast": false,
-      "operation": "鸡肉切配件→煎熟"
+      "operation": "鸡肉切配件→煎熟",
+      "outputStorageContainer": "menu-container-prep-plate"
     },
     {
       "id": "menu-recipe-preparation-cooked-beef",
@@ -3024,7 +3120,8 @@
       "requiredTicks": 1,
       "yieldPortions": 1,
       "mustLast": false,
-      "operation": "牛肉切配件→煎熟"
+      "operation": "牛肉切配件→煎熟",
+      "outputStorageContainer": "menu-container-prep-plate"
     },
     {
       "id": "menu-recipe-preparation-cooked-mushroom",
@@ -3044,7 +3141,8 @@
       "requiredTicks": 1,
       "yieldPortions": 1,
       "mustLast": false,
-      "operation": "蘑菇片→煎熟"
+      "operation": "蘑菇片→煎熟",
+      "outputStorageContainer": "menu-container-prep-plate"
     },
     {
       "id": "menu-recipe-preparation-cooked-shrimp",
@@ -3064,7 +3162,8 @@
       "requiredTicks": 1,
       "yieldPortions": 1,
       "mustLast": false,
-      "operation": "虾仁→煎熟"
+      "operation": "虾仁→煎熟",
+      "outputStorageContainer": "menu-container-prep-plate"
     },
     {
       "id": "menu-recipe-preparation-cooked-white-fish",
@@ -3084,7 +3183,8 @@
       "requiredTicks": 1,
       "yieldPortions": 1,
       "mustLast": false,
-      "operation": "白鱼切配件→煎熟"
+      "operation": "白鱼切配件→煎熟",
+      "outputStorageContainer": "menu-container-prep-plate"
     },
     {
       "id": "menu-recipe-preparation-cooked-sausage",
@@ -3104,7 +3204,8 @@
       "requiredTicks": 1,
       "yieldPortions": 1,
       "mustLast": false,
-      "operation": "生香肠→煎熟"
+      "operation": "生香肠→煎熟",
+      "outputStorageContainer": "menu-container-prep-plate"
     },
     {
       "id": "menu-recipe-preparation-fried-egg",
@@ -3124,7 +3225,8 @@
       "requiredTicks": 1,
       "yieldPortions": 1,
       "mustLast": false,
-      "operation": "鸡蛋→煎熟；不独立模拟敲壳和翻面"
+      "operation": "鸡蛋→煎熟；不独立模拟敲壳和翻面",
+      "outputStorageContainer": "menu-container-prep-plate"
     },
     {
       "id": "menu-recipe-preparation-cooked-bacon",
@@ -3144,7 +3246,8 @@
       "requiredTicks": 1,
       "yieldPortions": 1,
       "mustLast": false,
-      "operation": "培根→煎熟"
+      "operation": "培根→煎熟",
+      "outputStorageContainer": "menu-container-prep-plate"
     },
     {
       "id": "menu-recipe-preparation-toasted-slice",
@@ -3164,7 +3267,8 @@
       "requiredTicks": 1,
       "yieldPortions": 1,
       "mustLast": false,
-      "operation": "吐司片→烤制"
+      "operation": "吐司片→烤制",
+      "outputStorageContainer": "menu-container-prep-plate"
     },
     {
       "id": "menu-recipe-preparation-fried-cutlet-stage-1",
@@ -3208,7 +3312,8 @@
       "requiredTicks": 1,
       "yieldPortions": 1,
       "mustLast": false,
-      "operation": "生鸡排加炸粉→一次裹粉→炸熟"
+      "operation": "生鸡排加炸粉→一次裹粉→炸熟",
+      "outputStorageContainer": "menu-container-prep-plate"
     },
     {
       "id": "menu-recipe-preparation-fried-chicken-stage-1",
@@ -3252,7 +3357,8 @@
       "requiredTicks": 1,
       "yieldPortions": 1,
       "mustLast": false,
-      "operation": "鸡肉切配件加炸粉→一次裹粉→炸熟"
+      "operation": "鸡肉切配件加炸粉→一次裹粉→炸熟",
+      "outputStorageContainer": "menu-container-prep-plate"
     },
     {
       "id": "menu-recipe-preparation-fried-fish-stage-1",
@@ -3296,7 +3402,8 @@
       "requiredTicks": 1,
       "yieldPortions": 1,
       "mustLast": false,
-      "operation": "白身鱼肉加炸粉→一次裹粉→炸熟"
+      "operation": "白身鱼肉加炸粉→一次裹粉→炸熟",
+      "outputStorageContainer": "menu-container-prep-plate"
     },
     {
       "id": "menu-recipe-preparation-fried-fries",
@@ -3316,7 +3423,8 @@
       "requiredTicks": 1,
       "yieldPortions": 1,
       "mustLast": false,
-      "operation": "供应的生薯条→炸熟"
+      "operation": "供应的生薯条→炸熟",
+      "outputStorageContainer": "menu-container-prep-plate"
     },
     {
       "id": "menu-recipe-preparation-hot-tomato-sauce",
@@ -3336,7 +3444,8 @@
       "requiredTicks": 1,
       "yieldPortions": 2,
       "mustLast": false,
-      "operation": "番茄块入锅→熬成热酱；与供应的番茄酱是不同物件"
+      "operation": "番茄块入锅→熬成热酱；与供应的番茄酱是不同物件",
+      "outputStorageContainer": "menu-container-sauce-bowl"
     },
     {
       "id": "menu-recipe-preparation-beef-tomato-sauce-stage-1",
@@ -3380,7 +3489,8 @@
       "requiredTicks": 1,
       "yieldPortions": 2,
       "mustLast": false,
-      "operation": "牛肉末煎熟→加入番茄块→熬成肉酱"
+      "operation": "牛肉末煎熟→加入番茄块→熬成肉酱",
+      "outputStorageContainer": "menu-container-sauce-bowl"
     },
     {
       "id": "menu-recipe-preparation-cream-mushroom-sauce-stage-1",
@@ -3424,7 +3534,8 @@
       "requiredTicks": 1,
       "yieldPortions": 2,
       "mustLast": false,
-      "operation": "蘑菇片煎制→加淡奶油→熬成酱"
+      "operation": "蘑菇片煎制→加淡奶油→熬成酱",
+      "outputStorageContainer": "menu-container-sauce-bowl"
     },
     {
       "id": "menu-recipe-preparation-sweet-batter",
@@ -3452,7 +3563,8 @@
       "requiredTicks": 1,
       "yieldPortions": 2,
       "mustLast": false,
-      "operation": "预拌粉+鸡蛋+牛奶→搅拌；松饼与蛋糕共用该游戏抽象基底"
+      "operation": "预拌粉+鸡蛋+牛奶→搅拌；松饼与蛋糕共用该游戏抽象基底",
+      "outputStorageContainer": "menu-container-mix-bowl"
     },
     {
       "id": "menu-recipe-preparation-whipped-cream",
@@ -3472,7 +3584,8 @@
       "requiredTicks": 1,
       "yieldPortions": 2,
       "mustLast": false,
-      "operation": "淡奶油→打发"
+      "operation": "淡奶油→打发",
+      "outputStorageContainer": "menu-container-topping-jar"
     },
     {
       "id": "menu-recipe-preparation-cheese-cap",
@@ -3496,7 +3609,8 @@
       "requiredTicks": 1,
       "yieldPortions": 2,
       "mustLast": false,
-      "operation": "淡奶油+软芝士→搅拌成奶盖"
+      "operation": "淡奶油+软芝士→搅拌成奶盖",
+      "outputStorageContainer": "menu-container-topping-jar"
     },
     {
       "id": "menu-recipe-preparation-hot-water",
@@ -3516,7 +3630,8 @@
       "requiredTicks": 1,
       "yieldPortions": 1,
       "mustLast": false,
-      "operation": "取水台热水档→取得热水"
+      "operation": "取水台热水档→取得热水",
+      "outputStorageContainer": "menu-container-water-jug"
     },
     {
       "id": "menu-recipe-preparation-orange-juice",
@@ -3536,7 +3651,8 @@
       "requiredTicks": 1,
       "yieldPortions": 2,
       "mustLast": false,
-      "operation": "橙块→榨汁→橙汁"
+      "operation": "橙块→榨汁→橙汁",
+      "outputStorageContainer": "menu-container-juice-jug"
     },
     {
       "id": "menu-recipe-preparation-lemon-juice",
@@ -3556,7 +3672,8 @@
       "requiredTicks": 1,
       "yieldPortions": 2,
       "mustLast": false,
-      "operation": "柠檬片→榨汁→柠檬汁"
+      "operation": "柠檬片→榨汁→柠檬汁",
+      "outputStorageContainer": "menu-container-juice-jug"
     },
     {
       "id": "menu-recipe-preparation-carrot-juice",
@@ -3576,7 +3693,8 @@
       "requiredTicks": 1,
       "yieldPortions": 2,
       "mustLast": false,
-      "operation": "胡萝卜块→榨汁→胡萝卜汁"
+      "operation": "胡萝卜块→榨汁→胡萝卜汁",
+      "outputStorageContainer": "menu-container-juice-jug"
     },
     {
       "id": "menu-recipe-preparation-apple-juice",
@@ -3596,7 +3714,8 @@
       "requiredTicks": 1,
       "yieldPortions": 2,
       "mustLast": false,
-      "operation": "苹果块→榨汁→苹果汁"
+      "operation": "苹果块→榨汁→苹果汁",
+      "outputStorageContainer": "menu-container-juice-jug"
     },
     {
       "id": "menu-recipe-preparation-black-tea",
@@ -3620,7 +3739,8 @@
       "requiredTicks": 1,
       "yieldPortions": 2,
       "mustLast": false,
-      "operation": "红茶叶+热水→泡茶→红茶底"
+      "operation": "红茶叶+热水→泡茶→红茶底",
+      "outputStorageContainer": "menu-container-tea-tub"
     },
     {
       "id": "menu-recipe-preparation-green-tea",
@@ -3644,7 +3764,8 @@
       "requiredTicks": 1,
       "yieldPortions": 2,
       "mustLast": false,
-      "operation": "绿茶叶+热水→泡茶→绿茶底"
+      "operation": "绿茶叶+热水→泡茶→绿茶底",
+      "outputStorageContainer": "menu-container-tea-tub"
     },
     {
       "id": "menu-recipe-preparation-oolong-tea",
@@ -3668,7 +3789,8 @@
       "requiredTicks": 1,
       "yieldPortions": 2,
       "mustLast": false,
-      "operation": "乌龙茶叶+热水→泡茶→乌龙茶底"
+      "operation": "乌龙茶叶+热水→泡茶→乌龙茶底",
+      "outputStorageContainer": "menu-container-tea-tub"
     },
     {
       "id": "menu-recipe-preparation-coffee-powder",
@@ -3688,7 +3810,8 @@
       "requiredTicks": 1,
       "yieldPortions": 1,
       "mustLast": false,
-      "operation": "咖啡豆→研磨"
+      "operation": "咖啡豆→研磨",
+      "outputStorageContainer": "menu-container-powder-box"
     },
     {
       "id": "menu-recipe-preparation-espresso",
@@ -3708,7 +3831,8 @@
       "requiredTicks": 1,
       "yieldPortions": 1,
       "mustLast": false,
-      "operation": "咖啡粉→萃取；用水计入设备背景"
+      "operation": "咖啡粉→萃取；用水计入设备背景",
+      "outputStorageContainer": "menu-container-extract-cup"
     },
     {
       "id": "menu-recipe-preparation-hot-milk",
@@ -3728,7 +3852,8 @@
       "requiredTicks": 1,
       "yieldPortions": 1,
       "mustLast": false,
-      "operation": "牛奶入奶缸→加热模式"
+      "operation": "牛奶入奶缸→加热模式",
+      "outputStorageContainer": "menu-container-milk-jug"
     },
     {
       "id": "menu-recipe-preparation-milk-foam",
@@ -3748,7 +3873,8 @@
       "requiredTicks": 1,
       "yieldPortions": 1,
       "mustLast": false,
-      "operation": "牛奶入奶缸→打泡模式"
+      "operation": "牛奶入奶缸→打泡模式",
+      "outputStorageContainer": "menu-container-milk-jug"
     },
     {
       "id": "menu-recipe-preparation-cooked-pearl",
@@ -3768,7 +3894,8 @@
       "requiredTicks": 1,
       "yieldPortions": 2,
       "mustLast": false,
-      "operation": "生珍珠→煮熟→转入小料罐"
+      "operation": "生珍珠→煮熟→转入小料罐",
+      "outputStorageContainer": "menu-container-pearl-jar"
     },
     {
       "id": "menu-recipe-preparation-brown-sugar-pearl",
@@ -3792,7 +3919,8 @@
       "requiredTicks": 1,
       "yieldPortions": 2,
       "mustLast": false,
-      "operation": "熟珍珠+黑糖浆→混合"
+      "operation": "熟珍珠+黑糖浆→混合",
+      "outputStorageContainer": "menu-container-pearl-jar"
     },
     {
       "id": "menu-recipe-preparation-fresh-milk-tea",
@@ -3820,7 +3948,8 @@
       "requiredTicks": 1,
       "yieldPortions": 2,
       "mustLast": false,
-      "operation": "红茶底+牛奶+糖浆→定份混合"
+      "operation": "红茶底+牛奶+糖浆→定份混合",
+      "outputStorageContainer": "menu-container-drink-jug"
     },
     {
       "id": "menu-recipe-preparation-strawberry-puree",
@@ -3840,7 +3969,8 @@
       "requiredTicks": 1,
       "yieldPortions": 2,
       "mustLast": false,
-      "operation": "草莓块→短搅打成泥"
+      "operation": "草莓块→短搅打成泥",
+      "outputStorageContainer": "menu-container-topping-jar"
     },
     {
       "id": "menu-recipe-preparation-mango-puree",
@@ -3860,7 +3990,8 @@
       "requiredTicks": 1,
       "yieldPortions": 2,
       "mustLast": false,
-      "operation": "芒果块→短搅打成泥"
+      "operation": "芒果块→短搅打成泥",
+      "outputStorageContainer": "menu-container-topping-jar"
     },
     {
       "id": "menu-recipe-preparation-dispensed-cola",
@@ -3880,7 +4011,8 @@
       "requiredTicks": 1,
       "yieldPortions": 1,
       "mustLast": false,
-      "operation": "汽水机分装可乐"
+      "operation": "汽水机分装可乐",
+      "outputStorageContainer": "menu-container-dispense-cup"
     },
     {
       "id": "menu-recipe-preparation-dispensed-soda",
@@ -3900,7 +4032,8 @@
       "requiredTicks": 1,
       "yieldPortions": 1,
       "mustLast": false,
-      "operation": "汽水机分装苏打水"
+      "operation": "汽水机分装苏打水",
+      "outputStorageContainer": "menu-container-dispense-cup"
     },
     {
       "id": "menu-recipe-preparation-apple-filling",
@@ -3924,7 +4057,8 @@
       "requiredTicks": 1,
       "yieldPortions": 2,
       "mustLast": false,
-      "operation": "苹果块+蜂蜜→煎台短时熬制成馅"
+      "operation": "苹果块+蜂蜜→煎台短时熬制成馅",
+      "outputStorageContainer": "menu-container-prep-bowl"
     },
     {
       "id": "menu-recipe-finished-iced-cola-stage-1",

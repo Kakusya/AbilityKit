@@ -43,3 +43,9 @@ Catalog v1 has no migration from unknown catalog versions. Core owner alone choo
 ## Decisions and limitations
 
 Actual source audit found31 computedStationClosure differences, exactly D01-D31 missing binding station from source directory. Preserve originals and source cells; distinguish production and delivery closure. Treat mold load/bake/unmold as operations with container enforcement; treat compound rows as linked stage recipes. New numeric values: ticks1, selected shared-prep yield2, raw initial8, serving vessels2, score100; all fixtures. Tests cannot convert these to balance or supply-operation claims.
+
+## Preparation output storage and working-vessel availability
+
+Further source reading preserved P19 cook-pot/rice-tub, P20 cook-pot/prep-bowl, P35 cook-pot/sauce-bowl and P53 pearl-jar. CookingMenuStep.OutputStorageContainer on the final preparation recipe selects the source carrier column storage end (last alternative), adds it to selected dependency closure, validates its output acceptance and fixture yield capacity, and projects a real empty item-container. Processing Carrier remains independent. The runner extracts real batch portions into storage with public commands before reusing the working vessel; it never creates stored preparation objects directly.
+
+Source lists a single vessel for some shared batches (mix-bowl/tea-tub); that can remain the live batch anchor. Spatial fixture must allocate sufficient distinct working instances for concurrent retained batches or completely extract a batch to legal storage before reuse. One definition in closure does not establish instance availability. F21 pasta/sauce must not be declared producible merely because both can use cook-pot capability; real runner will demonstrate output storage and empty-vessel availability. Catalog v1 remains prerelease; source increment is not runtime compatibility acceptance.

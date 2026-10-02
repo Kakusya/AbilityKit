@@ -20,7 +20,7 @@ public sealed record CookingMenuSourceNode(string Menu, string SourceNode, int E
 public sealed record CookingMenuStep(RecipeId Id, string SourceId, string SourceLocator,
     IReadOnlyList<CookingMenuInput> Inputs, DefinitionId Output, ProcessId Process, string Capability,
     DefinitionId Carrier, CookingMenuExecutionKind ExecutionKind, int RequiredTicks, int YieldPortions,
-    bool MustLast, string Operation);
+    bool MustLast, string Operation, DefinitionId? OutputStorageContainer = null);
 public sealed record CookingMenuEntry(string SourceId, string Name, CookingMenuCategory Category,
     DefinitionId Product, RecipeId FinalRecipe, DefinitionId ServingContainer, OrderTemplateId OrderTemplate,
     bool RequiresBinding, int BaseScore, string SourceLocator, bool RequiresStagedFinal,
@@ -221,6 +221,13 @@ public sealed class CookingMenuCatalog
                     if (!carrier.AcceptedDefinitions.Contains(definition))
                         Error("ContainerRejectsMaterial", record, definition.Value);
             }
+            if (step.OutputStorageContainer is { } storageId)
+            {
+                if (!carriers.TryGetValue(storageId, out var storage))
+                    Error("MissingContainer", record, storageId.Value);
+                else if (!storage.AcceptedDefinitions.Contains(step.Output) || storage.Capacity < step.YieldPortions)
+                    Error("InvalidOutputStorage", record, storageId.Value);
+            }
             if (step.MustLast)
             {
                 if (outputs.Values.Any(x => x.Inputs.Any(i => i.Definition == step.Output)))
@@ -292,6 +299,7 @@ public sealed class CookingMenuCatalog
             if (!recipes.Add(step.Id)) return;
             caps.Add(step.Capability);
             carriers.Add(step.Carrier);
+            if (step.OutputStorageContainer is { } storage) carriers.Add(storage);
             foreach (var input in step.Inputs) Visit(input.Definition);
         }
         foreach (var sourceId in sourceIds.Distinct(StringComparer.Ordinal))
