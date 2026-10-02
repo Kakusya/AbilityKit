@@ -2,6 +2,8 @@
 
 # Cooking Task 注册表
 
+当前已验证状态：S01–S03 纯 C# 核心已本地合并并通过 master 门禁；S04/S05 实施中，S06 域组件待独立复核与 ET 接入，S07/S08 已有受限辅助而完整出口未完成。准确证据见 [master-core-integration-verification.md](research/master-core-integration-verification.md)；下面初版注册表的“无执行许可”等表述仅保留历史含义。
+
 > 最新授权：owner 已要求实施、验证并合并 master；S01–S14/N01–N03 获执行授权，按依赖与文件冲突分波，U01/U02 后置不执行、S15 为参考池。以下初版状态为登记时快照；当前状态和验证/合并证据见 [execution.md](execution.md) 及各 Task metadata/check.jsonl。
 
 2026-10-02。以下均为真实 Trellis `planning` 初稿；无活动实施 Task，无执行许可，无时间表。单机优先；网络延期；Unity 条件性记录但仍禁止实施。PRD/design/implement/manifests 已建，具体 API、错误矩阵、版本与测试场景须在各 Task 执行前收敛，不冒充 ready。

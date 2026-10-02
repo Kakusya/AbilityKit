@@ -59,6 +59,6 @@ Reviewed planning is authorized by current dispatch; actual evidence will be app
 - [x] Read reviewed design and reconciled retained candidate against current authorization.
 - [x] Implemented corresponding authority, command, configuration, canonical and coordinated checkpoint changes.
 - [x] Added domain and real ET ingress/recovery behavioral tests; ran actual cooking-kitchen-loop and cooking-et-level-runtime gates successfully.
-- [ ] Coordinator review and merge to master (worker does not merge).
+- [x] Coordinator reviewed repairs, merged locally to master and reran both applicable gates.
 
 Detailed commands, counts, failures and logs: research/verification.md. This record supersedes the historical unexecuted checklist above only for the worker implementation scope.

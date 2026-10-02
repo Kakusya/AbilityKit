@@ -28,6 +28,14 @@ Owner 明确要求“继续审计，直到各个议题都审议清楚，然后�
 
 ## 当前目标
 
+### 19:13 本地 master 核心增量已验证
+
+`501bf383d` 在独立干净检出通过 kitchen 门禁（207 focused / 328 Cooking / 73 ET），排除前厅未提交修改；协调者随后合并为 master `79d93c923`，实际复跑 kitchen 和 ET Level 两门禁，Cooking 328/328、ET 73/73，无失败/跳过。准确结果及两份摘要见 [master-core-integration-verification.md](research/master-core-integration-verification.md)。S01–S03 仅按已审议纯 C# 核心范围置 completed；其目录保留以维护现有依赖和证据路由，整体目标继续 active。
+
+S05 已实际监督启动：`ctx_20fd4aef295e` / `task_fb06a0f6f8d2` / `term_d61992ca-ba80-4a2e-8f6d-c70f532286e5`，worktree `cooking-order-s05` 从 `501bf383d` 建立，ready/input_accepted/turn_started observed。负责绑定/一次性杯及对应指纹/恢复格式；主协调者暂不并发修改该 Host/Recipe 入口。菜单 worker 继续独占目录、graph driver 与新 ET 菜单验收文件。
+
+前厅独立审阅发现同一脏碗可恢复多个未完工作，已交实现者修复，新增轮次毒化反例自报聚焦 37/37；尚待协调者复跑和接入 ET，未合并该增量。菜单 worker 自报 87 制作盛装及 56 餐食交付，尚待提交审阅，不记为 master 全量菜单验收。31 饮品仍待 S05 正式绑定。完整出口表继续约束 S04–S14/N01–N03。
+
 ### 18:58 核心审阅后的修复工作
 
 核心 worker 提交 `8111472f2`，已接入整合分支为 `be82b22ae`；完成消息已处理，dispatch `ctx_4e56ba63e0df` 的监督终端实际 release，输出归档保留。其自报 domain 28 / ET 新增 6 及两门禁均通过，独立审阅记录见 [core-increment-review.md](research/core-increment-review.md)，不得把 worker 自报当组合版本已通过。

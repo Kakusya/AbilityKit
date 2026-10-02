@@ -2,6 +2,8 @@
 
 # Cooking Game 当前工程进度
 
+> 2026-10-02 19:13 最新已合并增量：本地 master `79d93c923` 已接收审阅后的 S01–S03 纯 C# 核心及恢复修复；合并后 kitchen 与 ET Level 两门禁实际通过，Cooking 328/328、ET 73/73，无失败/跳过。证据与准确范围见 [master-core-integration-verification.md](../../../.trellis/tasks/10-02-cooking-gameplay-menu-plan/research/master-core-integration-verification.md)。S04 菜单全量运行、S05 绑定及 S06–S14 经营整合仍待完成；菜单/布局/供应辅助已合并不等于其完整产品出口。网络尚未接续执行，Unity 仍后置。
+
 > 2026-10-02 18:45 当前执行检查点：单机整合分支已有菜单来源、F31 兼容路线、布局校验和供应组件受限增量，组合门禁实际 focused 155/155、Cooking 276/276、ET 67/67。尚未回并 master；核心空间/手工/份数接口及完整 87 菜、前厅/供应/布局 ET 闭环仍未证明完成。当前监督对象、提交和证据目录见 [execution.md](../../../.trellis/tasks/10-02-cooking-gameplay-menu-plan/execution.md)，完整剩余出口见 [completion-contract.md](../../../.trellis/tasks/10-02-cooking-gameplay-menu-plan/research/completion-contract.md)。下列“只列 Task 不执行”是本日较早的历史范围，已被最新实施授权更新。
 
 > 2026-10-02 规划补充（不改变下列实际交付）：owner 确认不改架构、当前专注单机，按“单机 → 网络 → 单机 Unity → 网络 Unity”缓慢推进，只列 Task 不执行。功能/菜单/架构及既有 plan 接续见 [总 plan](../../../.trellis/spec/cooking/gameplay-menu-plan.md)，已登记 20 个 planning 初稿。网络延期，Unity 条件性记录仍禁止执行。87 款菜单尚未导入 runtime；本轮只有资料/规划静态检查，没有新增产品验证。

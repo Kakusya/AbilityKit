@@ -3,7 +3,7 @@
   "name": "cooking-singleplayer-manual-process",
   "title": "单机手工作业与接续加工",
   "description": "C02–C04/D01–D09/I02–I06",
-  "status": "in_progress",
+  "status": "completed",
   "dev_type": null,
   "scope": null,
   "package": null,
@@ -11,17 +11,17 @@
   "creator": "Li He",
   "assignee": "Li He",
   "createdAt": "2026-10-02",
-  "completedAt": null,
+  "completedAt": "2026-10-02",
   "branch": "cooking-core-s01-s03",
   "base_branch": "master",
   "worktree_path": "C:/Users/Administrator/orca/workspaces/AbilityKit/cooking-core-s01-s03",
-  "commit": null,
+  "commit": "79d93c923",
   "pr_url": null,
   "subtasks": [],
   "children": [],
   "parent": "10-02-cooking-gameplay-menu-plan",
   "relatedFiles": [],
-  "notes": "Reviewed planning authorization from current dispatch; worker S01?S03 implementation verified with actual gates, pending coordinator review/merge. See research/verification.md; old stopped-run evidence not accepted.",
+  "notes": "Coordinator reviewed and locally merged pure-C# S01-S03 plus required checkpoint repairs. Master kitchen and ET Level gates passed; see master-core-integration-verification.md. Product-level S04-S14 consumers, network and Unity are not declared complete.",
   "meta": {
     "plan_id": "S02",
     "stage": "singleplayer",
@@ -33,7 +33,8 @@
     "execution_gate": "reviewed-contract-and-dependencies",
     "planning_maturity": "reviewed-contract",
     "owner_delegated_details": true,
-    "execution_authorization": "Latest owner: audit every topic then execute through completion. Task planning review and dependency checks precede execution; Unity and optional reference pool remain deferred."
+    "execution_authorization": "Latest owner: audit every topic then execute through completion. Task planning review and dependency checks precede execution; Unity and optional reference pool remain deferred.",
+    "verification_scope": "singleplayer-pure-csharp-core"
   },
   "planning_maturity": "reviewed-contract"
 }
