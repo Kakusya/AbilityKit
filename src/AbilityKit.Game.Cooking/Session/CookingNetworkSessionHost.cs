@@ -31,7 +31,7 @@ public sealed class CookingNetworkSessionHost : IDisposable
     private sealed class Participant(string credential)
     {
         public string Credential { get; } = credential;
-        public string Token { get; } = Guid.NewGuid().ToString("N");
+        public string Token { get; set; } = Guid.NewGuid().ToString("N");
         public long Generation;
         public long LastValidatedSequence;
         public long LastTerminalSequence;
@@ -66,6 +66,7 @@ public sealed class CookingNetworkSessionHost : IDisposable
     private long _ordinal, _snapshotSequence, _rejected, _receivedBytes, _sentBytes;
     private int _highWater;
     private bool _disposed;
+    private string? _captureUnavailable;
     public string ServerSessionInstance { get; } = Guid.NewGuid().ToString("N");
     public CookingNetworkAuthorityCapture? LatestCapture { get; private set; }
     public CookingNetworkSessionProjection LatestSessionProjection { get; private set; } = null!;
@@ -137,7 +138,7 @@ public sealed class CookingNetworkSessionHost : IDisposable
     }
     private void Publish(Connection connection)
     {
-        if (LatestCapture is null || connection.Participant is null || (!connection.Ready && connection.Issued is not null)) return;
+        if (_captureUnavailable is not null || LatestCapture is null || connection.Participant is null || (!connection.Ready && connection.Issued is not null)) return;
         RefreshSessionProjection();
         var identity = new CookingNetworkBaselineIdentity(ServerSessionInstance, connection.Participant.Value, connection.Generation,
             LatestCapture.Observation.Scope, LatestCapture.Observation.Scope.LevelEpoch, checked(++_snapshotSequence),
@@ -148,6 +149,8 @@ public sealed class CookingNetworkSessionHost : IDisposable
     }
     private void Join(Ingress input)
     {
+        if (input.Connection.Participant is not null) { Reject(input.Connection, input.Envelope.CorrelationId, "AlreadyBound"); return; }
+        if (_captureUnavailable is not null) { Reject(input.Connection, input.Envelope.CorrelationId, _captureUnavailable); return; }
         var join = CookingNetworkWireCodec.Read<CookingNetworkJoin>(input.Envelope);
         if (join is null || !_participants.TryGetValue(join.Participant, out var participant) ||
             join.JoinCredential != participant.Credential ||
@@ -160,6 +163,7 @@ public sealed class CookingNetworkSessionHost : IDisposable
         }
         var connection = input.Connection;
         connection.Participant = join.Participant; connection.Generation = checked(++participant.Generation);
+        participant.Token = Guid.NewGuid().ToString("N");
         connection.Source = ServerSessionInstance + ":" + connection.PhysicalId + ":" + connection.Generation;
         connection.Sequence = 0; connection.LastTerminalSequence = 0; connection.TransportRepliedWatermark = null;
         participant.LastValidatedSequence = 0; participant.LastTerminalSequence = 0; connection.Ready = false; participant.Active = connection;
@@ -206,6 +210,11 @@ public sealed class CookingNetworkSessionHost : IDisposable
             }
             var prefix = new List<Ingress>();
             while (prefix.Count < _options.MaximumPrefix && _ingress.TryDequeue(out var input)) prefix.Add(input);
+            AcceptCapture(_authority.CaptureFullState());
+            if (_captureUnavailable is not null) {
+                foreach (var input in prefix.Where(i => i.Connection.ClosedOrdinal == 0)) Reject(input.Connection, input.Envelope.CorrelationId, _captureUnavailable);
+                RefreshSessionProjection(); return null;
+            }
             foreach (var input in prefix.Where(i => i.Envelope.Kind != CookingNetworkMessageKind.Command)) {
                 if (input.Connection.ClosedOrdinal != 0) continue;
                 if (input.Envelope.Kind == CookingNetworkMessageKind.Join) Join(input);
@@ -232,8 +241,7 @@ public sealed class CookingNetworkSessionHost : IDisposable
             foreach (var disposition in result.Dispositions) Complete(disposition);
             foreach (var caller in result.CancelledCallers) CancelCaller(caller);
             if (!result.Accepted) foreach (var entry in mapped) Complete(new CookingNetworkDisposition(entry.Envelope.LevelScope, entry.Envelope.Command.Player, entry.Envelope.Command.Command, entry.Envelope.SourceConnectionId, entry.Envelope.CorrelationId, CookingNetworkDispositionKind.Cancelled, result.Reason.ToString(), null));
-            if (result.Capture.Accepted && result.Capture.State is { } capture) {
-                InstallCapture(capture);
+            if (AcceptCapture(result.Capture)) {
                 foreach (var connection in _connections.Values.Where(c => c.Participant is not null && c.ClosedOrdinal == 0)) Publish(connection);
             }
             RefreshSessionProjection(); return result;
@@ -288,7 +296,7 @@ public sealed class CookingNetworkSessionHost : IDisposable
         lock (_gate) {
             var result = _authority.ApplyControl(control);
             foreach (var disposition in result.Dispositions) Complete(disposition);
-            if (result.Capture.Accepted && result.Capture.State is { } capture) InstallCapture(capture);
+            AcceptCapture(result.Capture);
             if (result.Accepted && control.Kind == CookingNetworkControlKind.Pause) {
                 foreach (var c in _connections.Values.Where(c => c.Participant is not null)) { var cancelled = _authority.CancelSources(new[] { new CookingNetworkCancellation(c.Source, c.Generation, CookingNetworkCallerCancellationReason.Paused) }); foreach (var caller in cancelled.CancelledCallers) CancelCaller(caller); }
                 var controlInputs = new List<Ingress>(); while (_ingress.TryDequeue(out var input)) { if (input.Envelope.Kind == CookingNetworkMessageKind.Command) Reject(input.Connection, input.Envelope.CorrelationId, "LevelPaused"); else controlInputs.Add(input); } foreach (var input in controlInputs) _ingress.Enqueue(input);
@@ -296,6 +304,24 @@ public sealed class CookingNetworkSessionHost : IDisposable
             foreach (var c in _connections.Values.Where(c => c.Participant is not null && c.ClosedOrdinal == 0)) Publish(c);
             RefreshSessionProjection(); return result;
         }
+    }
+    private bool AcceptCapture(CookingNetworkCaptureResult capture)
+    {
+        // Fault/dispose is terminal for this Session. Busy is temporary and never republishes stale state.
+        if (_captureUnavailable is "AuthorityFaulted" or "Disposed") return false;
+        if (capture.Accepted && capture.State is { } state) { _captureUnavailable = null; InstallCapture(state); return true; }
+        _captureUnavailable = capture.Reason.ToString();
+        foreach (var entry in _waiting.ToArray()) {
+            var wire = CookingNetworkWireCodec.Read<CookingNetworkWireCommand>(entry.Value.Envelope)!;
+            var id = CookingNetworkWireCodec.DomainId(ServerSessionInstance, wire.Scope, wire.Command.Player, wire.StableCommandId);
+            Complete(new(wire.Scope, wire.Command.Player, id, entry.Key.Source, entry.Key.Correlation,
+                CookingNetworkDispositionKind.Cancelled, _captureUnavailable, null));
+        }
+        foreach (var connection in _connections.Values.Where(c => c.ClosedOrdinal == 0 && c.Participant is not null)) {
+            connection.Ready = false; connection.Issued = null;
+            Reject(connection, "authority", _captureUnavailable);
+        }
+        return false;
     }
     private void MarkTerminal(Connection connection, long sequence)
     {

@@ -18,6 +18,8 @@ public sealed class CookingNetworkSessionClient : IDisposable
     private ConnectionManager? _connection;
     private TaskCompletionSource<bool> _ready = NewCompletion();
     private CookingNetworkJoined? _binding;
+    private CookingLevelScope? _acceptedScope;
+    private string? _authorityUnavailable;
     private long _sequence, _correlation;
     public CookingNetworkBaseline? LatestBaseline { get; private set; }
     public bool IsSynchronized { get; private set; }
@@ -63,6 +65,7 @@ public sealed class CookingNetworkSessionClient : IDisposable
                 case CookingNetworkMessageKind.Joined:
                     var joined = CookingNetworkWireCodec.Read<CookingNetworkJoined>(envelope);
                     if (joined is null || joined.Participant != _participant || joined.ConnectionGeneration <= 0) return;
+                    if (_binding is not null && _binding.ServerSessionInstance != joined.ServerSessionInstance) { _acceptedScope = null; _authorityUnavailable = null; }
                     _binding = joined; LatestBaseline = null; break;
                 case CookingNetworkMessageKind.Baseline:
                     var baseline = CookingNetworkWireCodec.Read<CookingNetworkBaseline>(envelope);
@@ -70,11 +73,15 @@ public sealed class CookingNetworkSessionClient : IDisposable
                     Send(CookingNetworkMessageKind.BaselineAck, "ack-" + baseline.Identity.SnapshotSequence, baseline.Identity); break;
                 case CookingNetworkMessageKind.Ready:
                     var ack = CookingNetworkWireCodec.Read<CookingNetworkBaselineIdentity>(envelope);
-                    if (ack is not null && ack == LatestBaseline?.Identity) { IsSynchronized = true; _ready.TrySetResult(true); }
+                    if (_authorityUnavailable is null && ack is not null && ack == LatestBaseline?.Identity) { IsSynchronized = true; _ready.TrySetResult(true); }
                     break;
                 case CookingNetworkMessageKind.CommandResult:
                 case CookingNetworkMessageKind.Rejected:
                     var result = CookingNetworkWireCodec.Read<CookingNetworkWireResult>(envelope);
+                    if (result?.Reason is "AuthorityFaulted" or "Disposed" or "Busy") {
+                        _authorityUnavailable = result.Reason; IsSynchronized = false;
+                        foreach (var entry in _requests.ToArray()) if (_requests.TryRemove(entry.Key, out var waiting)) waiting.TrySetResult(result);
+                    }
                     if (result is not null && _requests.TryRemove(envelope.CorrelationId, out var pending)) pending.TrySetResult(result);
                     if (envelope.CorrelationId == "join" && envelope.Kind == CookingNetworkMessageKind.Rejected)
                         _ready.TrySetException(new InvalidOperationException(result?.Reason ?? "Join rejected."));
@@ -84,9 +91,14 @@ public sealed class CookingNetworkSessionClient : IDisposable
     }
     internal bool TryInstallBaseline(CookingNetworkBaseline? baseline)
     {
-        if (baseline is null || _binding is null || baseline.Identity.ServerSessionInstance != _binding.ServerSessionInstance ||
+        if (_authorityUnavailable is "AuthorityFaulted" or "Disposed" || baseline is null || _binding is null || baseline.Identity.ServerSessionInstance != _binding.ServerSessionInstance ||
                         baseline.Identity.ConnectionGeneration != _binding.ConnectionGeneration || baseline.Identity.Participant != _participant ||
                         baseline.LevelFormatVersion != CookingLevelCheckpointCodec.CurrentFormatVersion || baseline.RecipeSchemaVersion != 5 ||
+                        !ScopesAgree(baseline) ||
+                        (_acceptedScope is { } accepted && (baseline.Identity.Scope.MatchScope != accepted.MatchScope ||
+                            baseline.Identity.Scope.RestaurantRuntime != accepted.RestaurantRuntime ||
+                            baseline.Identity.Scope.LevelEpoch < accepted.LevelEpoch ||
+                            (baseline.Identity.Scope != accepted && baseline.Identity.Scope.LevelEpoch <= accepted.LevelEpoch))) ||
                         baseline.Identity.Scope != baseline.State.Observation.Scope || baseline.Identity.Epoch != baseline.Identity.Scope.LevelEpoch ||
                         baseline.Identity.StateHash != CookingNetworkWireCodec.BaselineHash(baseline.State, baseline.Session) ||
                         baseline.Session.ServerSessionInstance != _binding.ServerSessionInstance ||
@@ -99,7 +111,19 @@ public sealed class CookingNetworkSessionClient : IDisposable
                             baseline.Identity.Scope.LevelEpoch < previous.Identity.Scope.LevelEpoch))) { IsSynchronized = false; return false; }
         if (LatestBaseline is { } oldBaseline && oldBaseline.Identity.Scope != baseline.Identity.Scope) IsSynchronized = false;
         LatestBaseline = CookingNetworkWireCodec.Freeze(baseline);
+        _acceptedScope = baseline.Identity.Scope; _authorityUnavailable = null;
         return true;
+    }
+    private static bool ScopesAgree(CookingNetworkBaseline baseline)
+    {
+        var scope = baseline.Identity.Scope; var state = baseline.State;
+        return state.Observation.Lifecycle.Scope == scope &&
+            (state.Observation.Recipe is null || state.Observation.Recipe.Scope == scope.MatchScope) &&
+            (state.FullRecipe is null || (state.FullRecipe.Scope == scope.MatchScope &&
+                (state.FullRecipe.LevelScope is null || state.FullRecipe.LevelScope == scope))) &&
+            (state.ResumableCheckpoint is null || (state.ResumableCheckpoint.Scope == scope &&
+                state.ResumableCheckpoint.Recipe.Scope == scope.MatchScope &&
+                (state.ResumableCheckpoint.Recipe.LevelScope is null || state.ResumableCheckpoint.Recipe.LevelScope == scope)));
     }
     public Task<CookingNetworkWireResult> SendCommandAsync(string stableWireId, CookingRecipeCommand command, CancellationToken cancellationToken = default)
     {

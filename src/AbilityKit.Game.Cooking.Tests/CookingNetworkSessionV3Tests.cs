@@ -17,15 +17,15 @@ public sealed class CookingNetworkSessionV3Tests
     private static readonly StationSlotId Stove = new("stove");
     private static readonly ItemId Food = new("food");
     private static readonly RecipeId Recipe = new("cook");
-    private sealed class Factory(CookingRecipeFixture fixture, CookingMajorProgress? progress = null) : ICookingLevelGameplayFactory
+    private sealed class Factory(CookingRecipeFixture fixture, CookingMajorProgress? progress = null, ICookingProductIdAllocator? allocator = null) : ICookingLevelGameplayFactory
     {
         public CookingRecipeSimulation Create(CookingLevelScope scope, CookingConfigurationSnapshot configuration)
         {
-            var kitchen = new CookingRecipeSimulation(fixture);
-            kitchen.AddWorldIngredient(Food, Raw, "spawn"); if (progress is not null) kitchen.UseMajorProgress(progress); return kitchen;
+            var kitchen = new CookingRecipeSimulation(fixture, allocator);
+            if (allocator is null) kitchen.AddWorldIngredient(Food, Raw, "spawn"); else kitchen.AddItem(Food, Raw, ItemLocation.Station(Stove)); if (progress is not null) kitchen.UseMajorProgress(progress); return kitchen;
         }
     }
-    private static CookingLevelEtHost Host(CookingMajorProgress? progress = null)
+    private static CookingLevelEtHost Host(CookingMajorProgress? progress = null, ICookingProductIdAllocator? allocator = null)
     {
         var items = new Dictionary<DefinitionId, CookingItemDefinition> { [Raw] = new(Raw, new HashSet<string> { "cook" }), [Cooked] = new(Cooked, new HashSet<string> { "cook" }) };
         var stations = new Dictionary<StationSlotId, CookingApplianceDefinition> { [Stove] = new(Stove, new HashSet<string> { "heat" }) };
@@ -34,7 +34,7 @@ public sealed class CookingNetworkSessionV3Tests
         Assert.True(registry.Submit(new(new[] { "heat" }, items.Values.ToArray(), stations.Values.ToArray(), recipes.Values.ToArray())).Accepted);
         var players = new[] { A, Z }.ToDictionary(p => p, p => new CookingPlayerConfig(p, new HashSet<string> { "cook" }, new HashSet<string> { "spawn", "stove" }));
         var fixture = new CookingRecipeFixture(Scope.MatchScope, players, items, stations, recipes);
-        var host = new CookingLevelEtHost(new CookingLevelLifecycle(Scope, registry.Current!, new Factory(fixture, progress)));
+        var host = new CookingLevelEtHost(new CookingLevelLifecycle(Scope, registry.Current!, new Factory(fixture, progress, allocator)));
         Assert.True(host.Prepare(new(Scope.Level, new("map"), new(new("layout"), new[] { Stove }, Array.Empty<DefinitionId>()), registry.Current!.Identity)).Accepted);
         Assert.True(host.Start().Accepted); return host;
     }
@@ -113,7 +113,7 @@ public sealed class CookingNetworkSessionV3Tests
         Assert.True(session.ApplyControl(new(CookingNetworkControlKind.Resume, "resume")).Accepted);
         var instance = a.ServerSessionInstance; var token = a.RebindToken;
         var reconnect = a.ReconnectAsync("inprocess", 1); Pump(session, reconnect);
-        Assert.Equal(instance, a.ServerSessionInstance); Assert.Equal(token, a.RebindToken);
+        Assert.Equal(instance, a.ServerSessionInstance); Assert.NotEqual(token, a.RebindToken);
         var duplicate = a.SendCommandAsync("same", Pickup(A)); Pump(session, duplicate);
         Assert.True((await duplicate).Result!.IsDuplicate);
         Assert.Equal((await pickup).DomainCommandId, (await duplicate).DomainCommandId);
@@ -281,4 +281,98 @@ public sealed class CookingNetworkSessionV3Tests
         Assert.True(CookingNetworkWireCodec.TryDecode(System.Text.Encoding.UTF8.GetBytes(missing.ToJsonString()), new(), out envelope));
         Assert.Null(CookingNetworkWireCodec.Read<CookingNetworkBaseline>(envelope!));
     }
+    [Fact]
+    public void Bound_physical_connection_rejects_repeated_or_different_participant_join_without_ghost()
+    {
+        using var host = Host(); using var session = Session(host); session.Start();
+        using var connection = new ConnectionManager(session.CreateLocalClientTransport, new ConnectionOptions { EnableReconnect = false });
+        var packets = new List<CookingNetworkWireEnvelope>();
+        connection.ServerPushReceived += (_, bytes) => { Assert.True(CookingNetworkWireCodec.TryDecode(bytes.AsSpan(), new(), out var e)); packets.Add(e!); };
+        void Join(string correlation, PlayerId p, string credential) => connection.Send(CookingNetworkWireCodec.OpCode,
+            new ArraySegment<byte>(CookingNetworkWireCodec.Encode(CookingNetworkMessageKind.Join, correlation, new CookingNetworkJoin(p, credential, null, null))), (ushort)NetworkPacketFlags.ServerPush);
+        connection.Open("inprocess", 1); Join("join", A, "join-a"); session.ProcessOwnerFrame();
+        var before = session.LatestSessionProjection;
+        Join("repeat", A, "join-a"); Join("switch", Z, "join-z"); session.ProcessOwnerFrame();
+        Assert.Single(packets, p => p.Kind == CookingNetworkMessageKind.Joined);
+        foreach (var id in new[] { "repeat", "switch" }) Assert.Equal("AlreadyBound", CookingNetworkWireCodec.Read<CookingNetworkWireResult>(packets.Single(p => p.CorrelationId == id))!.Reason);
+        Assert.Equal(before.Participants.ToArray(), session.LatestSessionProjection.Participants.ToArray());
+        connection.Dispose(); session.ProcessOwnerFrame();
+        Assert.All(session.LatestSessionProjection.Participants, p => Assert.False(p.ConnectedOwnerBinding));
+    }
+    [Fact]
+    public void Rebind_rotates_token_and_old_token_cannot_supersede_the_current_generation()
+    {
+        using var host = Host(); using var session = Session(host); session.Start(); using var a = Local(session, A);
+        Pump(session, a.ConnectAsync("inprocess", 1)); var old = a.RebindToken;
+        Pump(session, a.ReconnectAsync("inprocess", 1)); Assert.NotEqual(old, a.RebindToken);
+        using var stale = new ConnectionManager(session.CreateLocalClientTransport, new ConnectionOptions { EnableReconnect = false });
+        var packets = new List<CookingNetworkWireEnvelope>();
+        stale.ServerPushReceived += (_, bytes) => { Assert.True(CookingNetworkWireCodec.TryDecode(bytes.AsSpan(), new(), out var e)); packets.Add(e!); };
+        stale.Open("inprocess", 1); stale.Send(CookingNetworkWireCodec.OpCode,
+            new ArraySegment<byte>(CookingNetworkWireCodec.Encode(CookingNetworkMessageKind.Join, "stale", new CookingNetworkJoin(A, "join-a", a.ServerSessionInstance, old))), (ushort)NetworkPacketFlags.ServerPush);
+        session.ProcessOwnerFrame();
+        Assert.Equal("Unauthorized", CookingNetworkWireCodec.Read<CookingNetworkWireResult>(Assert.Single(packets, p => p.Kind == CookingNetworkMessageKind.Rejected))!.Reason);
+        Assert.True(a.IsSynchronized); Assert.Equal(2, session.LatestSessionProjection.Participants.Single(p => p.Participant == A).ConnectionGeneration);
+    }
+    [Fact]
+    public void Rehashed_wrong_match_runtime_level_epoch_or_nested_scope_never_replaces_passive_projection()
+    {
+        using var host = Host(); using var session = Session(host); session.Start(); using var a = Local(session, A);
+        Pump(session, a.ConnectAsync("inprocess", 1)); var baseline = a.LatestBaseline!;
+        var otherMatch = new CookingScope(new("other"), new("world"), new("match"));
+        var variants = new[] {
+            new CookingLevelScope(otherMatch, Scope.RestaurantRuntime, Scope.Level, 2),
+            new CookingLevelScope(Scope.MatchScope, new(2), Scope.Level, 2),
+            new CookingLevelScope(Scope.MatchScope, Scope.RestaurantRuntime, new("other-level"), 1)
+        };
+        foreach (var scope in variants) {
+            var state = baseline.State with { Observation = baseline.State.Observation with {
+                Scope = scope, Lifecycle = baseline.State.Observation.Lifecycle with { Scope = scope },
+                Recipe = baseline.State.Observation.Recipe! with { Scope = scope.MatchScope } },
+                FullRecipe = baseline.State.FullRecipe! with { Scope = scope.MatchScope, LevelScope = scope },
+                ResumableCheckpoint = baseline.State.ResumableCheckpoint! with { Scope = scope,
+                    Recipe = baseline.State.ResumableCheckpoint.Recipe with { Scope = scope.MatchScope, LevelScope = scope } } };
+            var candidate = baseline with { State = state, Identity = baseline.Identity with {
+                Scope = scope, Epoch = scope.LevelEpoch, SnapshotSequence = baseline.Identity.SnapshotSequence + 1,
+                StateHash = CookingNetworkWireCodec.BaselineHash(state, baseline.Session) } };
+            Assert.False(a.TryInstallBaseline(candidate)); Assert.Same(baseline, a.LatestBaseline); Assert.False(a.IsSynchronized);
+        }
+        var wrongNested = baseline.State with { FullRecipe = baseline.State.FullRecipe! with { Scope = otherMatch } };
+        Assert.False(a.TryInstallBaseline(baseline with { State = wrongNested, Identity = baseline.Identity with {
+            SnapshotSequence = baseline.Identity.SnapshotSequence + 1, StateHash = CookingNetworkWireCodec.BaselineHash(wrongNested, baseline.Session) } }));
+        Assert.Same(baseline, a.LatestBaseline);
+        var nextScope = new CookingLevelScope(Scope.MatchScope, Scope.RestaurantRuntime, Scope.Level, 2);
+        var nextState = baseline.State with { Observation = baseline.State.Observation with { Scope = nextScope,
+            Lifecycle = baseline.State.Observation.Lifecycle with { Scope = nextScope } },
+            FullRecipe = baseline.State.FullRecipe! with { LevelScope = nextScope },
+            ResumableCheckpoint = baseline.State.ResumableCheckpoint! with { Scope = nextScope,
+                Recipe = baseline.State.ResumableCheckpoint.Recipe with { LevelScope = nextScope } } };
+        var next = baseline with { State = nextState, Identity = baseline.Identity with { Scope = nextScope, Epoch = 2,
+            SnapshotSequence = baseline.Identity.SnapshotSequence + 2, StateHash = CookingNetworkWireCodec.BaselineHash(nextState, baseline.Session) } };
+        Assert.True(a.TryInstallBaseline(next)); var installed = a.LatestBaseline;
+        Assert.False(a.TryInstallBaseline(baseline with { Identity = baseline.Identity with { SnapshotSequence = next.Identity.SnapshotSequence + 1 } }));
+        Assert.Same(installed, a.LatestBaseline); Assert.False(a.IsSynchronized);
+    }
+    private sealed class ThrowingAllocator : ICookingProductIdAllocator
+    {
+        public ItemId GetProductId(long productSequence) => throw new IOException("real Session allocation fault");
+    }
+    [Fact]
+    public async Task Actual_allocator_fault_revokes_existing_ready_rejects_new_join_and_retains_only_unsynchronized_display()
+    {
+        using var host = Host(allocator: new ThrowingAllocator()); using var session = Session(host); session.Start(); using var a = Local(session, A);
+        Pump(session, a.ConnectAsync("inprocess", 1));
+        var start = a.SendCommandAsync("start", new(Scope.MatchScope, 0, A, new("unused"), CookingRecipeOperation.StartProcess,
+            Recipe: Recipe, Item: Food, Station: Stove, ExpectedItemVersion: 1)); Pump(session, start);
+        Assert.Equal(CookingRecipeOutcome.Accepted, (await start).Result!.Outcome);
+        for (var i = 0; i < 4 && !host.IsFaulted; i++) session.ProcessOwnerFrame();
+        Assert.True(host.IsFaulted); Assert.False(a.IsSynchronized); Assert.NotNull(a.LatestBaseline);
+        Assert.All(session.LatestSessionProjection.Participants, p => Assert.False(p.Ready));
+        Assert.Throws<InvalidOperationException>(() => { _ = a.SendCommandAsync("after-fault", Pickup(A)); });
+        using var z = Local(session, Z); var joining = z.ConnectAsync("inprocess", 1);
+        for (var i = 0; i < 100 && !joining.IsCompleted; i++) { session.ProcessOwnerFrame(); Thread.Sleep(2); }
+        var error = await Assert.ThrowsAsync<InvalidOperationException>(() => joining);
+        Assert.Contains("AuthorityFaulted", error.Message); Assert.Null(z.LatestBaseline); Assert.False(z.IsSynchronized);
+    }
+
 }
