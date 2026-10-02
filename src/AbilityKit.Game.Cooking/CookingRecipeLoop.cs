@@ -1170,7 +1170,7 @@ public sealed partial class CookingRecipeSimulation
                     false,
                     recipe.Id,
                     true,
-                    process.Station));
+                    process.Station, AllocationSequence: productSequence));
                 if (productLocation is { Kind: LocationKind.ContainerSlot, OwnerId: { } productOwner })
                     StageContainerContents(replacementContainerItems, new ItemId(productOwner), productId.Value);
             }
@@ -1695,7 +1695,7 @@ public sealed partial class CookingRecipeSimulation
 
             var productLocation = ProductLocationFor(process);
             _items.Add(allocated, new ItemState(recipe.ProductDefinition, 1, productLocation, false,
-                recipe.Id, true, process.Station));
+                recipe.Id, true, process.Station, AllocationSequence: nextSequence));
             if (productLocation is { Kind: LocationKind.ContainerSlot, OwnerId: { } productOwner })
                 EnsureContainerList(new ItemId(productOwner)).Add(allocated);
         }
@@ -2200,7 +2200,7 @@ public sealed partial class CookingRecipeSimulation
         StationSlotId? OriginStation,
         bool ContainerCompleted = false,
         bool IsDirty = false,
-        int RemainingPortions = 0, OrderId? BoundOrder = null, CookingSupplyItemProvenance? SupplyProvenance = null);
+        int RemainingPortions = 0, OrderId? BoundOrder = null, CookingSupplyItemProvenance? SupplyProvenance = null, long AllocationSequence = 0);
 
     private sealed record ProcessState(
         ProcessId Id,

@@ -56,6 +56,24 @@ public sealed class CookingRecipeSupplyTests
         return Accept(sim, Cmd(CookingRecipeOperation.ReceiveSupply, "receive-" + request, delivery: delivery)).Supply!;
     }
 
+    [Fact]
+    public void Supply_and_ordinary_products_share_one_global_unique_allocation_sequence()
+    {
+        var sim = new CookingRecipeSimulation(Fixture()); var received = Receive(sim);
+        sim.AddItem(new("ordinary-raw"), Raw, ItemLocation.Station(Stove));
+        Accept(sim, Cmd(CookingRecipeOperation.StartProcess, "cook-ordinary", item: new("ordinary-raw"), station: Stove, version: 1));
+        sim.AdvanceFixedTick(Level, 3);
+        var before = sim.ExportCheckpoint();
+        var product = before.Items.Single(i => i.IsProduct);
+        Assert.Equal(5, product.AllocationSequence);
+        var collision = before.Items.Single(i => i.Id == received.Package).AllocationSequence;
+        Assert.False(sim.RestoreCheckpoint(before with { Items = before.Items.Select(i => i.Id == product.Id
+            ? i with { AllocationSequence = collision } : i).ToArray() }).Accepted);
+        Assert.Equal(before.CanonicalText(), sim.ExportCheckpoint().CanonicalText());
+        var restored = new CookingRecipeSimulation(Fixture());
+        Assert.True(restored.RestoreCheckpoint(before).Accepted);
+        Assert.Equal(before.CanonicalText(), restored.ExportCheckpoint().CanonicalText());
+    }
     [Theory]
     [InlineData("zero")]
     [InlineData("negative")]

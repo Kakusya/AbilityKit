@@ -125,7 +125,7 @@ public sealed partial class CookingRecipeSimulation
             var id = _productIdAllocator.GetProductId(sequence);
             if (string.IsNullOrWhiteSpace(id.Value) || items.ContainsKey(id)) throw new InvalidOperationException("Supply allocator identity collision.");
             items.Add(id, new(def, 1, location, false, null, false, null,
-                SupplyProvenance: new(request, supplier.SupplierId, receive?.DeliveryId, unitIndex, sequence)));
+                SupplyProvenance: new(request, supplier.SupplierId, receive?.DeliveryId, unitIndex, sequence), AllocationSequence: sequence));
             return id;
         }
         ItemId? package = null;
@@ -192,6 +192,7 @@ public sealed partial class CookingRecipeSimulation
                 return item.Definition == def && !item.IsProduct && provenance is not null
                     && provenance.RequestId == origin.RequestId && provenance.SupplierId == origin.SupplierId
                     && provenance.DeliveryId == origin.DeliveryId && provenance.UnitIndex == index
+                    && provenance.AllocationSequence == item.AllocationSequence
                     && provenance.AllocationSequence > 0 && provenance.AllocationSequence <= checkpoint.NextProductId
                     && allocationSequences.Add(provenance.AllocationSequence);
             }

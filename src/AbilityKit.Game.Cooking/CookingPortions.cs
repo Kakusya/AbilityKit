@@ -140,7 +140,7 @@ public sealed partial class CookingRecipeSimulation
             var slotIndex = 0;
             while (occupied.Contains($"slot-{slotIndex}")) slotIndex = checked(slotIndex + 1);
             var slot = $"slot-{slotIndex}"; occupied.Add(slot);
-            stagedItems.Add(product, new ItemState(recipe.ProductDefinition, 1, ItemLocation.Container(target, slot), false, recipe.Id, true, null));
+            stagedItems.Add(product, new ItemState(recipe.ProductDefinition, 1, ItemLocation.Container(target, slot), false, recipe.Id, true, null, AllocationSequence: sequence));
             StageContainerContents(stagedContents, target, product); products.Add(product);
         }
         var remaining = source.RemainingPortions - count;

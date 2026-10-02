@@ -21,7 +21,8 @@ public sealed record CookingRecipeCheckpointItem(
     bool IsDirty = false,
     [property: System.Text.Json.Serialization.JsonRequired] int RemainingPortions = 0,
     [property: System.Text.Json.Serialization.JsonRequired] OrderId? BoundOrder = null,
-    [property: System.Text.Json.Serialization.JsonRequired] CookingSupplyItemProvenance? SupplyProvenance = null);
+    [property: System.Text.Json.Serialization.JsonRequired] CookingSupplyItemProvenance? SupplyProvenance = null,
+    [property: System.Text.Json.Serialization.JsonRequired] long AllocationSequence = 0);
 
 /// <summary>恢复载荷中的活动加工：含完成形态、容器锚点与被锁输入集合。</summary>
 public sealed record CookingRecipeCheckpointProcess(
@@ -114,7 +115,7 @@ public sealed record CookingRecipeCheckpoint(
         Items.OrderBy(item => item.Id.Value, StringComparer.Ordinal)
             .Select(item => new CanonicalItem(item.Id.Value, item.Definition.Value, item.Version, item.Location.Kind.ToString(),
                 item.Location.OwnerId, item.Location.SlotId, item.Removed, item.Recipe?.Value, item.IsProduct,
-                item.OriginStation?.Value, item.ContainerCompleted, item.IsDirty, item.RemainingPortions, item.BoundOrder?.Value, item.SupplyProvenance)).ToArray(),
+                item.OriginStation?.Value, item.ContainerCompleted, item.IsDirty, item.RemainingPortions, item.BoundOrder?.Value, item.SupplyProvenance, item.AllocationSequence)).ToArray(),
         Processes.OrderBy(process => process.Id.Value, StringComparer.Ordinal)
             .Select(process => new CanonicalProcess(process.Id.Value, process.Recipe.Value, process.Player.Value,
                 process.Anchor.Value, process.Station?.Value, process.ElapsedTicks, process.RequiredTicks,
@@ -174,7 +175,7 @@ public sealed record CookingRecipeCheckpoint(
         long AfterLogicalTick, long BeforeStateVersion, long AfterStateVersion, int ProcessCount);
     private sealed record CanonicalItem(string ItemId, string DefinitionId, int Version, string LocationKind,
         string? OwnerId, string? SlotId, bool Removed, string? RecipeId, bool IsProduct, string? OriginStation,
-        bool ContainerCompleted, bool IsDirty, int RemainingPortions, string? BoundOrder, CookingSupplyItemProvenance? SupplyProvenance);
+        bool ContainerCompleted, bool IsDirty, int RemainingPortions, string? BoundOrder, CookingSupplyItemProvenance? SupplyProvenance, long AllocationSequence);
     private sealed record CanonicalProcess(string ProcessId, string RecipeId, string PlayerId, string AnchorItemId,
         string? StationId, int ElapsedTicks, int RequiredTicks, string Completion, string? ContainerId,
         IReadOnlyList<string> LockedInputs, string? ActiveWorker);
@@ -261,7 +262,7 @@ public sealed partial class CookingRecipeSimulation
         _items.OrderBy(pair => pair.Key.Value, StringComparer.Ordinal)
             .Select(pair => new CookingRecipeCheckpointItem(pair.Key, pair.Value.Definition, pair.Value.Version,
                 pair.Value.Location, pair.Value.Removed, pair.Value.Recipe, pair.Value.IsProduct,
-                pair.Value.OriginStation, pair.Value.ContainerCompleted, pair.Value.IsDirty, pair.Value.RemainingPortions, pair.Value.BoundOrder, pair.Value.SupplyProvenance))
+                pair.Value.OriginStation, pair.Value.ContainerCompleted, pair.Value.IsDirty, pair.Value.RemainingPortions, pair.Value.BoundOrder, pair.Value.SupplyProvenance, pair.Value.AllocationSequence))
             .ToArray(),
         AllProcesses()
             .OrderBy(process => process.Id.Value, StringComparer.Ordinal)
@@ -434,6 +435,13 @@ public sealed partial class CookingRecipeSimulation
 
     private CookingCheckpointRestoreReason ValidateCheckpoint(CookingRecipeCheckpoint checkpoint)
     {
+        if (checkpoint.Items is null || checkpoint.Items.Any(i => i is null))
+            return CookingCheckpointRestoreReason.CounterInvalid;
+        var allocationSequences = new HashSet<long>();
+        foreach (var item in checkpoint.Items)
+            if (item.AllocationSequence < 0 || item.AllocationSequence > checkpoint.NextProductId
+                || (item.AllocationSequence > 0 && !allocationSequences.Add(item.AllocationSequence)))
+                return CookingCheckpointRestoreReason.CounterInvalid;
         var supplyValidation = ValidateSupplyCheckpoint(checkpoint);
         if (supplyValidation != CookingCheckpointRestoreReason.None) return supplyValidation;
         var extended = ValidateExtendedCheckpoint(checkpoint);
@@ -754,7 +762,7 @@ public sealed partial class CookingRecipeSimulation
         _poses = checkpoint.Poses!.ToDictionary(p => p.Player);
         _items = checkpoint.Items.ToDictionary(item => item.Id, item => new ItemState(item.Definition, item.Version,
             item.Location, item.Removed, item.Recipe, item.IsProduct, item.OriginStation,
-            item.ContainerCompleted, item.IsDirty, item.RemainingPortions, item.BoundOrder, item.SupplyProvenance));
+            item.ContainerCompleted, item.IsDirty, item.RemainingPortions, item.BoundOrder, item.SupplyProvenance, item.AllocationSequence));
         _hands.Clear();
         foreach (var (player, held) in hands)
             _hands[player] = held;
