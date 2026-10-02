@@ -470,6 +470,43 @@ public sealed class CookingLevelLifecycleTests
         Assert.Empty(result.SourceResult.Events);
     }
 
+    [Fact]
+    public void Initialized_preparation_kitchen_is_created_once_and_reused_by_start()
+    {
+        var factory = new CountingFactory();
+        var lifecycle = CreateLifecycle(factory);
+        var guard = new PreparationPublicationGuard(true);
+        Assert.True(lifecycle.InitializePreparationKitchen(guard).Accepted);
+        Assert.True(lifecycle.InitializePreparationKitchen(guard).Accepted);
+        Assert.True(lifecycle.TryPeekBoundKitchen(out var prepared));
+        Assert.False(lifecycle.TryGetGameplay(out _));
+        Assert.Throws<InvalidOperationException>(() => prepared!.AddWorldIngredient(new("closed-prep-item"), Raw, "source"));
+        Assert.True(lifecycle.BeginPreparation(Preparation()).Accepted);
+        Assert.True(lifecycle.CompletePreparation().Accepted);
+        Assert.True(lifecycle.Start(guard).Accepted);
+        Assert.True(lifecycle.TryGetGameplay(out var running));
+        Assert.Same(prepared, running);
+        Assert.Equal(1, factory.CreateCount);
+    }
+
+    [Fact]
+    public void Rejected_preparation_publication_does_not_bind_or_close_a_foreign_candidate()
+    {
+        var factory = new CountingFactory();
+        var lifecycle = CreateLifecycle(factory);
+        var before = lifecycle.Snapshot();
+        Assert.False(lifecycle.InitializePreparationKitchen(new PreparationPublicationGuard(false)).Accepted);
+        Assert.False(lifecycle.TryPeekBoundKitchen(out _));
+        Assert.Equal(before, lifecycle.Snapshot());
+        factory.Gameplay!.AddWorldIngredient(new("still-unbound"), Raw, "source");
+    }
+
+    private sealed class PreparationPublicationGuard(bool accepted) : ICookingLevelGameplayPublicationGuard
+    {
+        public bool TryAcquire(CookingRecipeSimulation gameplay) => accepted;
+        public void Release(CookingRecipeSimulation gameplay) { }
+    }
+
     private static CookingLevelLifecycle CreateLifecycle(ICookingLevelGameplayFactory? factory = null) =>
         new(LevelScope(), Configuration(), factory ?? new CountingFactory());
 

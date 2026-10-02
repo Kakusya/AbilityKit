@@ -4,6 +4,19 @@ using System.Text.Json;
 
 namespace AbilityKit.Game.Cooking;
 
+/// <summary>Installed layout and its frozen geometry seeds; trusted policy remains external.</summary>
+public sealed record CookingInstalledLayoutCheckpoint(
+    [property: System.Text.Json.Serialization.JsonRequired] CookingRestaurantLayout Layout,
+    [property: System.Text.Json.Serialization.JsonRequired] IReadOnlyList<CookingPlayerPose> GeometrySeedPoses)
+{
+    public string CanonicalText() => JsonSerializer.Serialize(new
+    {
+        Layout = Layout.CanonicalText(),
+        GeometrySeedPoses = GeometrySeedPoses.OrderBy(p => p.Player.Value, StringComparer.Ordinal)
+            .Select(p => new { Player = p.Player.Value, p.X, p.Y, p.FacingX, p.FacingY, p.LastMovementTick }).ToArray()
+    });
+}
+
 /// <summary>
 /// 宿主级恢复信封内容：一代 Level 运行态的完整恢复描述。
 /// 与 <see cref="CookingLevelLifecycleSnapshot"/>（每帧同步投影）分工不同：同步快照服务远端对齐，
@@ -22,7 +35,10 @@ public sealed record CookingLevelCheckpoint(
     long LastCommittedSimulationBatch,
     CookingRecipeCheckpoint Recipe,
     CookingFrontOfHouseCheckpoint? FrontOfHouse = null,
-    [property: System.Text.Json.Serialization.JsonRequired] string? FrontOfHouseConfigurationIdentity = null)
+    [property: System.Text.Json.Serialization.JsonRequired] string? FrontOfHouseConfigurationIdentity = null,
+    [property: System.Text.Json.Serialization.JsonRequired] long ServiceStartLogicalTick = 0,
+    [property: System.Text.Json.Serialization.JsonRequired] string? PreparationConfigurationIdentity = null,
+    [property: System.Text.Json.Serialization.JsonRequired] CookingInstalledLayoutCheckpoint? InstalledLayout = null)
 {
     private static readonly JsonSerializerOptions CanonicalJsonOptions = new()
     {
@@ -50,7 +66,8 @@ public sealed record CookingLevelCheckpoint(
         HostFrameSequence,
         LastCommittedSimulationBatch,
         Recipe.CanonicalText(),
-        FrontOfHouse?.CanonicalText(), FrontOfHouseConfigurationIdentity),
+        FrontOfHouse?.CanonicalText(), FrontOfHouseConfigurationIdentity, ServiceStartLogicalTick, PreparationConfigurationIdentity,
+        InstalledLayout?.CanonicalText()),
         CanonicalJsonOptions);
 
     public string Sha256() => Convert.ToHexString(SHA256.HashData(Encoding.UTF8.GetBytes(CanonicalText())));
@@ -60,7 +77,8 @@ public sealed record CookingLevelCheckpoint(
         string PreparationLevelId, string PreparationMapId, string PreparationLayoutId,
         IReadOnlyList<string> PreparationStations, IReadOnlyList<string> PreparationContainers,
         string State, string? Outcome, long LifecycleVersion, long HostFrameSequence,
-        long LastCommittedSimulationBatch, string RecipeCanonical, string? FrontOfHouseCanonical, string? FrontOfHouseConfigurationIdentity);
+        long LastCommittedSimulationBatch, string RecipeCanonical, string? FrontOfHouseCanonical, string? FrontOfHouseConfigurationIdentity,
+        long ServiceStartLogicalTick, string? PreparationConfigurationIdentity, string? InstalledLayoutCanonical);
 }
 
 public enum CookingCheckpointReadReason

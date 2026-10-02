@@ -367,6 +367,8 @@ public sealed class CookingLevelLifecycle
     private bool _gameplayClosed;
     private bool _hasCreatedNextGeneration;
     private bool _receivesSuccessorKitchen;
+    private bool _preparationKitchenInitialized;
+    private bool _preparationGameplayEnabled;
     private bool _isStarting;
     private bool _startReentered;
 
@@ -397,6 +399,15 @@ public sealed class CookingLevelLifecycle
     public long Version { get; private set; }
     public IReadOnlyList<CookingLevelLifecycleEvent> EventHistory => _events.AsReadOnly();
     public bool IsGameplayAdmissionOpen => State == CookingLevelState.Running && _gameplay is not null && !_gameplayClosed;
+    internal bool IsPreparationAdmissionOpen => _preparationGameplayEnabled && State == CookingLevelState.Preparing &&
+        _gameplay is not null && !_gameplayClosed;
+
+    internal void EnablePreparationGameplay()
+    {
+        if (State != CookingLevelState.Created || _gameplay is null || _gameplayClosed)
+            throw new InvalidOperationException("Preparation gameplay requires an initialized Created kitchen.");
+        _preparationGameplayEnabled = true;
+    }
     public bool HasCreatedNextGeneration => _hasCreatedNextGeneration;
 
     /// <summary>
@@ -447,6 +458,39 @@ public sealed class CookingLevelLifecycle
         return kitchen is not null;
     }
 
+    internal CookingLevelLifecycleResult InitializePreparationKitchen(ICookingLevelGameplayPublicationGuard publicationGuard)
+    {
+        ArgumentNullException.ThrowIfNull(publicationGuard);
+        if (RejectBlockedLifecycleOperation() is { } blocked) return blocked;
+        if (State != CookingLevelState.Created) return Reject(CookingLevelLifecycleReason.InvalidState);
+        if (_gameplay is not null)
+            return new(true, CookingLevelLifecycleReason.None, State, Outcome, Version, Array.Empty<CookingLevelLifecycleEvent>());
+        CookingRecipeSimulation? candidate = null;
+        _startReentered = false;
+        _isStarting = true;
+        try { candidate = _gameplayFactory.Create(Scope, _configuration); }
+        catch (Exception) { return Reject(CookingLevelLifecycleReason.GameplayInitializationFailed); }
+        finally { _isStarting = false; }
+        if (candidate is null || _startReentered || State != CookingLevelState.Created || _gameplay is not null)
+            return Reject(CookingLevelLifecycleReason.GameplayInitializationFailed);
+        var acquired = false;
+        try
+        {
+            if (!publicationGuard.TryAcquire(candidate)) return Reject(CookingLevelLifecycleReason.GameplayInitializationFailed);
+            acquired = true;
+            candidate.BindLifecycleGate(_gameplayGate);
+        }
+        catch (Exception)
+        {
+            if (acquired) publicationGuard.Release(candidate);
+            return Reject(CookingLevelLifecycleReason.GameplayInitializationFailed);
+        }
+        _gameplay = candidate;
+        _gameplayClosed = false;
+        _preparationKitchenInitialized = true;
+        return new(true, CookingLevelLifecycleReason.None, State, Outcome, Version, Array.Empty<CookingLevelLifecycleEvent>());
+    }
+
     public CookingLevelLifecycleResult BeginPreparation(CookingLevelPreparation preparation)
     {
         ArgumentNullException.ThrowIfNull(preparation);
@@ -458,6 +502,9 @@ public sealed class CookingLevelLifecycle
         _preparation = CopyPreparation(preparation);
         return Commit(CookingLevelState.Preparing, "level-preparation-began", "stored an immutable level preparation candidate");
     }
+
+    internal CookingLevelLifecycleReason ValidatePreparationCandidate(CookingLevelPreparation preparation) =>
+        ValidatePreparation(Scope, _configuration, preparation, _allowPreparationLevelMismatch);
 
     public CookingLevelLifecycleResult CompletePreparation()
     {
@@ -492,12 +539,13 @@ public sealed class CookingLevelLifecycle
         if (_receivesSuccessorKitchen && _gameplay is null)
             return Reject(CookingLevelLifecycleReason.GameplayUnavailable);
 
-        CookingRecipeSimulation? gameplay = _receivesSuccessorKitchen ? _gameplay : null;
+        var reuseKitchen = _receivesSuccessorKitchen || _preparationKitchenInitialized;
+        CookingRecipeSimulation? gameplay = reuseKitchen ? _gameplay : null;
         _startReentered = false;
         _isStarting = true;
         try
         {
-            if (!_receivesSuccessorKitchen)
+            if (!reuseKitchen)
                 gameplay = _gameplayFactory.Create(Scope, _configuration);
         }
         catch (Exception)
@@ -528,12 +576,12 @@ public sealed class CookingLevelLifecycle
         }
 
         if (_startReentered || State != CookingLevelState.Ready ||
-            (!_receivesSuccessorKitchen && _gameplay is not null) ||
-            (_receivesSuccessorKitchen && !ReferenceEquals(_gameplay, gameplay)))
+            (!reuseKitchen && _gameplay is not null) ||
+            (reuseKitchen && !ReferenceEquals(_gameplay, gameplay)))
         {
             if (publicationAcquired)
                 publicationGuard!.Release(gameplay);
-            if (!_receivesSuccessorKitchen)
+            if (!reuseKitchen)
                 gameplay.CloseLifecycle();
             return Reject(CookingLevelLifecycleReason.GameplayInitializationFailed);
         }
@@ -952,7 +1000,8 @@ public sealed class CookingLevelLifecycle
         public LifecycleGameplayGate(CookingLevelLifecycle owner) => _owner = owner;
 
         public bool IsGameplayMutationOpen =>
-            _owner.IsGameplayAdmissionOpen && (_owner._ownerGameplayGate?.IsGameplayMutationOpen ?? true);
+            (_owner.IsGameplayAdmissionOpen || _owner.IsPreparationAdmissionOpen) &&
+            (_owner._ownerGameplayGate?.IsGameplayMutationOpen ?? true);
 
         public CookingLevelScope LevelScope => _owner.Scope;
     }

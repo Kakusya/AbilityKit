@@ -330,6 +330,9 @@ public sealed class CookingLevelEtHost : IDisposable
     private bool _executingLifecycleOperation;
     private bool _executingFrontOperation;
     private bool _executingPreparationMutation;
+    private bool _initializingPreparation;
+    private CookingPreparationConfiguration? _preparationConfiguration;
+    private long _serviceStartLogicalTick;
     private readonly CookingFrontOfHouseConfiguration? _frontConfiguration;
     private readonly string? _frontConfigurationIdentity;
 
@@ -528,14 +531,48 @@ public sealed class CookingLevelEtHost : IDisposable
 
     public CookingLevelHostOperationResult Prepare(CookingLevelPreparation preparation)
     {
-        Check();
-        ArgumentNullException.ThrowIfNull(preparation);
-        var begin = RunLifecycleOperation(() => _lifecycle.BeginPreparation(preparation));
-        if (!begin.Accepted)
-            return Operation(begin);
-        return Operation(RunLifecycleOperation(_lifecycle.CompletePreparation));
+        var begun = BeginPreparation(preparation);
+        return begun.Accepted ? CompletePreparation() : begun;
     }
 
+    public CookingLevelHostOperationResult BeginPreparation(CookingLevelPreparation preparation)
+    {
+        Check(); ArgumentNullException.ThrowIfNull(preparation);
+        if (_lifecycle.State != CookingLevelState.Created)
+            return Operation(new(false, CookingLevelLifecycleReason.InvalidState, _lifecycle.State, _lifecycle.Outcome, _lifecycle.Version, Array.Empty<CookingLevelLifecycleEvent>()));
+        var validation = _lifecycle.ValidatePreparationCandidate(preparation);
+        if (validation != CookingLevelLifecycleReason.None)
+            return Operation(new(false, validation, _lifecycle.State, _lifecycle.Outcome, _lifecycle.Version, Array.Empty<CookingLevelLifecycleEvent>()));
+        if (_lifecycle.GameplayFactory is ICookingPreparationGameplayFactory factory)
+        {
+            _initializingPreparation = true;
+            try
+            {
+                var configuration = factory.CreatePreparationConfiguration(Binding.LevelScope, _lifecycle.Configuration).Freeze();
+                var initialized = RunLifecycleOperation(() => _lifecycle.InitializePreparationKitchen(_gameplayPublicationGuard));
+                if (!initialized.Accepted) return Operation(initialized);
+                if (!_lifecycle.TryPeekBoundKitchen(out var simulation) || simulation is null)
+                    throw Fault(new InvalidOperationException("Preparation kitchen was not published."));
+                PublishKitchen(simulation);
+                _preparationConfiguration = configuration;
+                _lifecycle.EnablePreparationGameplay();
+            }
+            finally { _initializingPreparation = false; }
+        }
+        return Operation(RunLifecycleOperation(() => _lifecycle.BeginPreparation(preparation)));
+    }
+
+    public CookingLevelHostOperationResult CompletePreparation()
+    {
+        Check(); return Operation(RunLifecycleOperation(_lifecycle.CompletePreparation));
+    }
+
+    private static bool AllowedDuringPreparation(CookingRecipeOperation operation) => operation is
+        CookingRecipeOperation.Move or CookingRecipeOperation.Pickup or CookingRecipeOperation.Drop or
+        CookingRecipeOperation.PutIn or CookingRecipeOperation.TakeOut or CookingRecipeOperation.Pour or
+        CookingRecipeOperation.StartProcess or CookingRecipeOperation.ContinueProcess or CookingRecipeOperation.StopProcess or
+        CookingRecipeOperation.ServePortion or CookingRecipeOperation.ClearContents or CookingRecipeOperation.DiscardItem or
+        CookingRecipeOperation.RequestSupply or CookingRecipeOperation.ReceiveSupply or CookingRecipeOperation.TakeSupply;
     public CookingLevelHostOperationResult Start()
     {
         Check();
@@ -546,6 +583,14 @@ public sealed class CookingLevelEtHost : IDisposable
         if (!_lifecycle.TryGetGameplay(out var simulation))
             throw Fault(new InvalidOperationException("A running CookingLevelLifecycle did not expose its gameplay simulation."));
 
+        PublishKitchen(simulation);
+        _serviceStartLogicalTick = simulation.LogicalTick;
+
+        return Operation(result);
+    }
+
+    private void PublishKitchen(CookingRecipeSimulation simulation)
+    {
         try
         {
             _failureInjector?.ThrowIfRequested(CookingLevelEtHostFailurePoint.SimulationOwnershipAcquired);
@@ -571,7 +616,6 @@ public sealed class CookingLevelEtHost : IDisposable
             throw Fault(new InvalidOperationException("The level gameplay simulation could not be bound to its ET driver.", exception));
         }
 
-        return Operation(result);
     }
 
     public CookingLevelAdmissionResult TryEnqueue(CookingLevelCommandEnvelope envelope)
@@ -584,7 +628,7 @@ public sealed class CookingLevelEtHost : IDisposable
         var state = _lifecycle.State;
         if (state == CookingLevelState.Paused)
             return CookingLevelAdmissionResult.Reject(CookingLevelAdmissionReason.LevelPaused);
-        if (state != CookingLevelState.Running || _ownedSimulation is null)
+        if ((state != CookingLevelState.Running && !_lifecycle.IsPreparationAdmissionOpen) || _ownedSimulation is null)
             return CookingLevelAdmissionResult.Reject(CookingLevelAdmissionReason.LevelNotRunning);
         if (!Equals(envelope.LevelScope, Binding.LevelScope) ||
             !Equals(envelope.Command.Scope, Binding.LegacySimulationScope))
@@ -593,6 +637,8 @@ public sealed class CookingLevelEtHost : IDisposable
         }
         if (!CookingRecipeCommandValidation.IsWellFormed(envelope.Command))
             return CookingLevelAdmissionResult.Reject(CookingLevelAdmissionReason.MalformedCommand);
+        if (_lifecycle.IsPreparationAdmissionOpen && !AllowedDuringPreparation(envelope.Command.Operation))
+            return CookingLevelAdmissionResult.Reject(CookingLevelAdmissionReason.LevelNotRunning);
         if (envelope.Command.Operation == CookingRecipeOperation.AdvanceTicks)
             return CookingLevelAdmissionResult.Reject(CookingLevelAdmissionReason.ReservedClockOperation);
 
@@ -639,7 +685,7 @@ public sealed class CookingLevelEtHost : IDisposable
         var state = _lifecycle.State;
         if (state == CookingLevelState.Paused)
             return CookingLevelFrameResult.Reject(CookingLevelFrameReason.LevelPaused, Binding.LevelScope, HostFrameSequence);
-        if (state != CookingLevelState.Running || _ownedSimulation is null)
+        if ((state != CookingLevelState.Running && !_lifecycle.IsPreparationAdmissionOpen) || _ownedSimulation is null)
             return CookingLevelFrameResult.Reject(CookingLevelFrameReason.LevelNotRunning, Binding.LevelScope, HostFrameSequence);
 
         _ticking = true;
@@ -925,7 +971,7 @@ public sealed class CookingLevelEtHost : IDisposable
                 LastCommittedSimulationBatch,
                 _ownedSimulation.ExportCheckpoint(),
                 _frontOfHouse is null ? null : RunFrontOperation(() => _frontOfHouse.ExportCheckpoint(_frontOfHouseMenu)),
-                _frontConfigurationIdentity));
+                _frontConfigurationIdentity, _serviceStartLogicalTick, _preparationConfiguration?.Identity(), null));
     }
 
     /// <summary>
@@ -945,21 +991,36 @@ public sealed class CookingLevelEtHost : IDisposable
         if (!Equals(configuration.Identity, checkpoint.ConfigIdentity))
             return new CookingLevelCheckpointRestoreResult(false,
                 CookingLevelCheckpointRestoreReason.ConfigurationIdentityMismatch);
+        if (checkpoint.Recipe is null || !Equals(checkpoint.Recipe.Scope, checkpoint.Scope.MatchScope))
+            return new CookingLevelCheckpointRestoreResult(false,
+                CookingLevelCheckpointRestoreReason.CheckpointPayloadScopeMismatch);
+        CookingPreparationConfiguration? trustedPreparation;
+        try { trustedPreparation = (factory as ICookingPreparationGameplayFactory)?.CreatePreparationConfiguration(checkpoint.Scope, configuration).Freeze(); }
+        catch (ArgumentException) { return new(false, CookingLevelCheckpointRestoreReason.ConfigurationIdentityMismatch); }
+        if (checkpoint.PreparationConfigurationIdentity != trustedPreparation?.Identity())
+            return new(false, CookingLevelCheckpointRestoreReason.ConfigurationIdentityMismatch);
+        if (checkpoint.ServiceStartLogicalTick < 0 ||
+            checkpoint.ServiceStartLogicalTick > checkpoint.Recipe.LogicalTick ||
+            (trustedPreparation is null && checkpoint.ServiceStartLogicalTick != 0))
+            return new(false, CookingLevelCheckpointRestoreReason.GameplayRestoreRejected,
+                RecipeRestoreReason: CookingCheckpointRestoreReason.CounterInvalid);
         var trustedFront = (factory as ICookingFrontOfHouseGameplayFactory)?.FrontOfHouseConfiguration;
+        if (trustedFront is not null && checkpoint.FrontOfHouse is { } clock &&
+            clock.State.ServiceTicks != Math.Min(checkpoint.Recipe.LogicalTick - checkpoint.ServiceStartLogicalTick, trustedFront.Schedule.ServiceTicks))
+            return new(false, CookingLevelCheckpointRestoreReason.FrontOfHouseRestoreRejected,
+                FrontOfHouseRestoreReason: CookingFrontOfHouseRestoreReason.ConfigurationMismatch);
         if (checkpoint.FrontOfHouseConfigurationIdentity != trustedFront?.Identity()
             || (trustedFront is not null && checkpoint.FrontOfHouse is null)
             || (trustedFront is null && checkpoint.FrontOfHouse?.State is { } untrusted && (untrusted.Flow is not null || untrusted.ManualPolicyIdentity is not null)))
             return new(false, CookingLevelCheckpointRestoreReason.FrontOfHouseRestoreRejected,
                 FrontOfHouseRestoreReason: CookingFrontOfHouseRestoreReason.ConfigurationMismatch);
-        if (checkpoint.FrontOfHouse?.State.Closing == true && checkpoint.Recipe?.Supply is { Closing: false })
+        if (checkpoint.FrontOfHouse?.State.Closing == true && checkpoint.Recipe.Supply is { Closing: false })
             return new(false, CookingLevelCheckpointRestoreReason.GameplayRestoreRejected,
                 RecipeRestoreReason: CookingCheckpointRestoreReason.SupplyStateInvalid);
         // 载荷必须属于信封声明的同一 match，且已经绑定的 Level scope（含 epoch）必须就是本代际。
         // 只改 epoch、载荷 match 不变的 checkpoint 不能绕过这里被建成另一代宿主。
         // 尚未推进 fixed tick 的载荷没有代际绑定，同样拒绝：宿主恢复要求这一代已经被记录。
-        if (checkpoint.Recipe is null || !Equals(checkpoint.Recipe.Scope, checkpoint.Scope.MatchScope))
-            return new CookingLevelCheckpointRestoreResult(false,
-                CookingLevelCheckpointRestoreReason.CheckpointPayloadScopeMismatch);
+
         if (checkpoint.Recipe.LevelScope is not { } levelScope || !Equals(levelScope, checkpoint.Scope))
             return new CookingLevelCheckpointRestoreResult(false,
                 CookingLevelCheckpointRestoreReason.TickHistoryScopeMismatch);
@@ -1030,7 +1091,7 @@ public sealed class CookingLevelEtHost : IDisposable
                 var frontState = host._frontOfHouse.Snapshot();
                 if (frontState.Work.Where(x => x.Player is not null).Any(x => !host.CanFrontWork(simulation, x.Player!.Value, x.Target))
                     || frontState.ManualPolicyIdentity != trustedFront?.ManualPolicyIdentity
-                    || (trustedFront is not null && frontState.ServiceTicks != Math.Min(checkpoint.Recipe.LogicalTick, trustedFront.Schedule.ServiceTicks)))
+                    || (trustedFront is not null && frontState.ServiceTicks != Math.Min(checkpoint.Recipe.LogicalTick - checkpoint.ServiceStartLogicalTick, trustedFront.Schedule.ServiceTicks)))
                 {
                     host.Dispose();
                     return new(false, CookingLevelCheckpointRestoreReason.FrontOfHouseRestoreRejected,
@@ -1061,6 +1122,7 @@ public sealed class CookingLevelEtHost : IDisposable
         if (HostFrameSequence > checkpoint.HostFrameSequence)
             throw new InvalidOperationException("A recovered checkpoint must not move the host frame sequence backwards.");
 
+        _serviceStartLogicalTick = checkpoint.ServiceStartLogicalTick;
         HostFrameSequence = checkpoint.HostFrameSequence;
         LastCommittedSimulationBatch = checkpoint.LastCommittedSimulationBatch;
         _lifecycle.AdoptRecoveredVersion(checkpoint.LifecycleVersion);
@@ -1171,9 +1233,9 @@ public sealed class CookingLevelEtHost : IDisposable
         }
 
         HostFrameSequence = candidateFrame;
-        _frontOfHouse?.Step(simulation, _frontOfHouseMenu);
-        if (_frontOfHouse?.IsClosing == true) simulation.StopNewSupplyRequests();
-        if (_frontConfiguration is not null && _frontOfHouse is not null)
+        if (_lifecycle.State == CookingLevelState.Running) _frontOfHouse?.Step(simulation, _frontOfHouseMenu);
+        if (_lifecycle.State == CookingLevelState.Running && _frontOfHouse?.IsClosing == true) simulation.StopNewSupplyRequests();
+        if (_lifecycle.State == CookingLevelState.Running && _frontConfiguration is not null && _frontOfHouse is not null)
             simulation.UpdateFrontOfHouseState(_frontOfHouse.IsClosing, _frontOfHouse.CanSucceed);
         if (_inFlight is not null)
             LastCommittedSimulationBatch = _inFlight.SimulationBatch;
@@ -1564,7 +1626,7 @@ public sealed class CookingLevelEtHost : IDisposable
         ObjectDisposedException.ThrowIf(_disposed, this);
         if (Environment.CurrentManagedThreadId != _ownerThread)
             throw new InvalidOperationException("Cooking level host operations require the owner thread.");
-        if (_ticking)
+        if (_ticking || _executingPreparationMutation || _initializingPreparation)
             throw new InvalidOperationException("Cooking level host operations cannot be reentered.");
         if (_tickFailure is not null)
             throw new InvalidOperationException("Cooking level host is faulted.", _tickFailure);
@@ -1574,7 +1636,7 @@ public sealed class CookingLevelEtHost : IDisposable
     {
         if (_disposed)
             return;
-        if (Environment.CurrentManagedThreadId != _ownerThread || _ticking || _executingPreparationMutation)
+        if (Environment.CurrentManagedThreadId != _ownerThread || _ticking || _executingPreparationMutation || _initializingPreparation)
             throw new InvalidOperationException("Dispose requires the idle owner thread.");
 
         CancelPending("host-disposed");
