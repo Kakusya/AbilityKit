@@ -25,3 +25,7 @@ G02–G10。以单机→网络→单机 Unity→网络 Unity 顺序推进。
 ## 执行门
 
 这是可审议的初始记录，不是最终实施批准。开始前细化具体 API/错误矩阵/测试与版本策略，重新核查依赖及环境，审阅最终 planning summary 后由 owner 明确批准。
+
+## 2026-10-02 supervised domain increment
+
+Latest owner dispatch authorizes the reviewed domain scope. Exact pre-code contract: [runtime-increment.md](runtime-increment.md). Delivered behavior, actual verification and remaining coordinator host/config hooks: [domain-increment-report.md](domain-increment-report.md). Historical planning-only/component-only paragraphs above are superseded for this increment; full S07 remains in progress, not complete.

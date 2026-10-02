@@ -4,7 +4,7 @@ public sealed partial class CookingRecipeSimulation
 {
     private CookingCheckpointRestoreReason ValidateExtendedCheckpoint(CookingRecipeCheckpoint checkpoint)
     {
-        if (checkpoint.SchemaVersion != 4 || checkpoint.Poses is null) return CookingCheckpointRestoreReason.UnsupportedSchema;
+        if (checkpoint.SchemaVersion != 5 || checkpoint.Poses is null) return CookingCheckpointRestoreReason.UnsupportedSchema;
         if (checkpoint.Items is null || checkpoint.Processes is null) return CookingCheckpointRestoreReason.CounterInvalid;
         var bindings = ValidateCheckpointBindings(checkpoint);
         if (bindings != CookingCheckpointRestoreReason.None) return bindings;

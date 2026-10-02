@@ -45,3 +45,7 @@ Good：先申请两箱、Tick后到货、一次接收一箱、玩家搬到备料
 ## Wrong vs Correct
 
 Wrong：请求到货就 `inventory += amount`，另在厨房凭空生成，或任何 box 操作都无限取物。Correct：待到货订单、接收生成实物包装与份实例、后续既有移动命令消费同一物件身份；只有配置为 infinite 的来源能产生新份。
+
+## 2026-10-02 supervised domain increment
+
+Latest owner dispatch authorizes the reviewed domain scope. Exact pre-code contract: [runtime-increment.md](runtime-increment.md). Delivered behavior, actual verification and remaining coordinator host/config hooks: [domain-increment-report.md](domain-increment-report.md). Historical planning-only/component-only paragraphs above are superseded for this increment; full S07 remains in progress, not complete.

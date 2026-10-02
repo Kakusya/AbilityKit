@@ -216,7 +216,7 @@ public sealed class CookingRecipeCommandShapeTests
         Assert.Equal(CookingRecipeRejectionReason.BindingNotFound, (CookingRecipeRejectionReason)(queueFull + 12));
         Assert.Equal(CookingRecipeRejectionReason.FrontOfHouseUnavailable, (CookingRecipeRejectionReason)(queueFull + 13));
         Assert.Equal(CookingRecipeRejectionReason.FrontWorkNotFound, (CookingRecipeRejectionReason)(queueFull + 14));
-        Assert.Equal(queueFull + 15, Enum.GetValues<CookingRecipeRejectionReason>().Length);
+        Assert.Equal(queueFull + 17, Enum.GetValues<CookingRecipeRejectionReason>().Length);
     }
 
     [Fact]
@@ -291,6 +291,7 @@ public sealed class CookingRecipeCommandShapeTests
                 CookingRecipeOperation.ClearContents, CookingRecipeOperation.DiscardItem,
                 CookingRecipeOperation.BindOrder, CookingRecipeOperation.UnbindOrder, CookingRecipeOperation.RebindOrder,
                 CookingRecipeOperation.ClaimFrontWork, CookingRecipeOperation.ContinueFrontWork, CookingRecipeOperation.StopFrontWork,
+                CookingRecipeOperation.RequestSupply, CookingRecipeOperation.ReceiveSupply, CookingRecipeOperation.TakeSupply,
             },
             Enum.GetValues<CookingRecipeOperation>());
 

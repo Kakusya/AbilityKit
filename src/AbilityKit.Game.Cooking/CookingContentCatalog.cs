@@ -41,6 +41,7 @@ public sealed record CookingContentDocument(
     CookingSpatialConfiguration? Spatial = null)
 {
     public CookingContentProvenance? ContentProvenance { get; init; }
+    public CookingSupplyConfiguration? Supply { get; init; }
 }
 
 /// <summary>
@@ -126,7 +127,7 @@ public static class CookingContentCatalog
                 new DefinitionId(template.RequiredContainerDefinition),
                 template.BaseScore ?? 100, template.RequiresBinding)).ToArray(),
             document.StandardInitialSupply.Select(entry => new CookingSupplyEntryDefinition(
-                new DefinitionId(entry.Definition), entry.Count, entry.Location)).ToArray(), document.Spatial) { ContentProvenance = document.ContentProvenance };
+                new DefinitionId(entry.Definition), entry.Count, entry.Location)).ToArray(), document.Spatial) { ContentProvenance = document.ContentProvenance, Supply = document.Supply };
 
         var registry = new CookingConfigurationRegistry();
         var submission = registry.Submit(candidate);
@@ -160,7 +161,7 @@ public static class CookingContentCatalog
             WashableDefinitions(content),
             CleanContainerSupply(content),
             cleanPoolLocation ?? CleanPoolLocation,
-            content.OrderTemplates, spatial: spatial ?? content.Snapshot.Spatial);
+            content.OrderTemplates, spatial: spatial ?? content.Snapshot.Spatial, supply: content.Snapshot.Supply);
 
     /// <summary>
     /// 按内容的标准初始供应实例化物品：cleanPool 项由仿真构造器自动建池，此处跳过；

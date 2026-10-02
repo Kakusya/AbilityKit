@@ -22,3 +22,7 @@
 ## Current execution sequence after review
 
 Owner authorizes audit then implementation. Follow the reviewed design and parent research/final-review.md; historical planning-only text is superseded. Check actual dependency evidence before starting, preserve stopped worktree edits, fix review findings before accepting prior implementation, update payload/fingerprints/config identity/canonical/checkpoint together, run focused behavioral and applicable integration gates, record actual pass/fail/blocked/skip and commit evidence. Never declare this Task complete from metadata or directory counts.
+
+## 2026-10-02 supervised domain increment
+
+Latest owner dispatch authorizes the reviewed domain scope. Exact pre-code contract: [runtime-increment.md](runtime-increment.md). Delivered behavior, actual verification and remaining coordinator host/config hooks: [domain-increment-report.md](domain-increment-report.md). Historical planning-only/component-only paragraphs above are superseded for this increment; full S07 remains in progress, not complete.

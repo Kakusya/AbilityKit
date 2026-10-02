@@ -20,7 +20,8 @@ public sealed record CookingRecipeCheckpointItem(
     bool ContainerCompleted = false,
     bool IsDirty = false,
     [property: System.Text.Json.Serialization.JsonRequired] int RemainingPortions = 0,
-    [property: System.Text.Json.Serialization.JsonRequired] OrderId? BoundOrder = null);
+    [property: System.Text.Json.Serialization.JsonRequired] OrderId? BoundOrder = null,
+    [property: System.Text.Json.Serialization.JsonRequired] CookingSupplyItemProvenance? SupplyProvenance = null);
 
 /// <summary>恢复载荷中的活动加工：含完成形态、容器锚点与被锁输入集合。</summary>
 public sealed record CookingRecipeCheckpointProcess(
@@ -66,7 +67,8 @@ public sealed record CookingRecipeCheckpointDeduplication(
     string Fingerprint,
     CookingRecipeOutcome Outcome,
     CookingRecipeRejectionReason Reason,
-    long StateVersion);
+    long StateVersion,
+    [property: System.Text.Json.Serialization.JsonRequired] CookingSupplyPhysicalResult? Supply = null);
 
 /// <summary>
 /// 仿真权威状态的恢复载荷。与 <see cref="CookingRecipeSnapshot"/>（每帧同步投影）分工不同：
@@ -93,7 +95,9 @@ public sealed record CookingRecipeCheckpoint(
     long NextSettlementSequence,
     CookingLevelScope? LevelScope = null,
     [property: System.Text.Json.Serialization.JsonRequired] IReadOnlyList<CookingPlayerPose>? Poses = null,
-    [property: System.Text.Json.Serialization.JsonRequired] int SchemaVersion = 4)
+    [property: System.Text.Json.Serialization.JsonRequired] int SchemaVersion = 5,
+    [property: System.Text.Json.Serialization.JsonRequired] CookingSupplyCheckpoint? Supply = null,
+    [property: System.Text.Json.Serialization.JsonRequired] IReadOnlyList<CookingSupplyOrigin>? SupplyOrigins = null)
 {
     private static readonly JsonSerializerOptions CanonicalJsonOptions = new()
     {
@@ -110,7 +114,7 @@ public sealed record CookingRecipeCheckpoint(
         Items.OrderBy(item => item.Id.Value, StringComparer.Ordinal)
             .Select(item => new CanonicalItem(item.Id.Value, item.Definition.Value, item.Version, item.Location.Kind.ToString(),
                 item.Location.OwnerId, item.Location.SlotId, item.Removed, item.Recipe?.Value, item.IsProduct,
-                item.OriginStation?.Value, item.ContainerCompleted, item.IsDirty, item.RemainingPortions, item.BoundOrder?.Value)).ToArray(),
+                item.OriginStation?.Value, item.ContainerCompleted, item.IsDirty, item.RemainingPortions, item.BoundOrder?.Value, item.SupplyProvenance)).ToArray(),
         Processes.OrderBy(process => process.Id.Value, StringComparer.Ordinal)
             .Select(process => new CanonicalProcess(process.Id.Value, process.Recipe.Value, process.Player.Value,
                 process.Anchor.Value, process.Station?.Value, process.ElapsedTicks, process.RequiredTicks,
@@ -135,7 +139,7 @@ public sealed record CookingRecipeCheckpoint(
             .ThenBy(entry => entry.Player.Value, StringComparer.Ordinal)
             .ThenBy(entry => entry.Command.Value, StringComparer.Ordinal)
             .Select(entry => new CanonicalDeduplication(entry.Session.Value, entry.Player.Value, entry.Command.Value,
-                entry.Fingerprint, entry.Outcome.ToString(), entry.Reason.ToString(), entry.StateVersion)).ToArray(),
+                entry.Fingerprint, entry.Outcome.ToString(), entry.Reason.ToString(), entry.StateVersion, entry.Supply)).ToArray(),
         Events.Select(entry => new CanonicalEvent(entry.Sequence, entry.SimulationBatch, entry.Player.Value,
             entry.Command.Value, entry.Operation.ToString(), entry.Recipe?.Value, entry.Process?.Value, entry.Item?.Value,
             entry.Summary)).ToArray(),
@@ -151,7 +155,7 @@ public sealed record CookingRecipeCheckpoint(
         NextProcessId,
         NextProductId,
         NextSettlementSequence,
-        (Poses ?? Array.Empty<CookingPlayerPose>()).OrderBy(p => p.Player.Value, StringComparer.Ordinal).ToArray(), SchemaVersion),
+        (Poses ?? Array.Empty<CookingPlayerPose>()).OrderBy(p => p.Player.Value, StringComparer.Ordinal).ToArray(), SchemaVersion, Supply, SupplyOrigins),
         CanonicalJsonOptions);
 
     public string Sha256() => Convert.ToHexString(SHA256.HashData(Encoding.UTF8.GetBytes(CanonicalText())));
@@ -162,7 +166,7 @@ public sealed record CookingRecipeCheckpoint(
         IReadOnlyList<CanonicalSettlement> Settlements, IReadOnlyList<string> ConsumedProducts,
         IReadOnlyList<CanonicalCleanPool> CleanContainerCounts, IReadOnlyList<CanonicalDeduplication> Deduplication,
         IReadOnlyList<CanonicalEvent> Events, long EventSequence, IReadOnlyList<CanonicalTickEvent> TickEvents,
-        CanonicalLevelBinding? LevelScope, long NextProcessId, long NextProductId, long NextSettlementSequence, IReadOnlyList<CookingPlayerPose> Poses, int SchemaVersion);
+        CanonicalLevelBinding? LevelScope, long NextProcessId, long NextProductId, long NextSettlementSequence, IReadOnlyList<CookingPlayerPose> Poses, int SchemaVersion, CookingSupplyCheckpoint? Supply, IReadOnlyList<CookingSupplyOrigin>? SupplyOrigins);
     private sealed record CanonicalLevelBinding(string SessionId, string WorldId, string MatchId,
         long RestaurantRuntimeId, string LevelId, long LevelEpoch);
     private sealed record CanonicalTickEvent(long Sequence, string SessionId, string WorldId, string MatchId,
@@ -170,7 +174,7 @@ public sealed record CookingRecipeCheckpoint(
         long AfterLogicalTick, long BeforeStateVersion, long AfterStateVersion, int ProcessCount);
     private sealed record CanonicalItem(string ItemId, string DefinitionId, int Version, string LocationKind,
         string? OwnerId, string? SlotId, bool Removed, string? RecipeId, bool IsProduct, string? OriginStation,
-        bool ContainerCompleted, bool IsDirty, int RemainingPortions, string? BoundOrder);
+        bool ContainerCompleted, bool IsDirty, int RemainingPortions, string? BoundOrder, CookingSupplyItemProvenance? SupplyProvenance);
     private sealed record CanonicalProcess(string ProcessId, string RecipeId, string PlayerId, string AnchorItemId,
         string? StationId, int ElapsedTicks, int RequiredTicks, string Completion, string? ContainerId,
         IReadOnlyList<string> LockedInputs, string? ActiveWorker);
@@ -181,7 +185,7 @@ public sealed record CookingRecipeCheckpoint(
         string ProductId, string PlayerId, string ContainerId, long LogicalTick);
     private sealed record CanonicalCleanPool(string DefinitionId, int Count);
     private sealed record CanonicalDeduplication(string SessionId, string PlayerId, string CommandId,
-        string Fingerprint, string Outcome, string Reason, long StateVersion);
+        string Fingerprint, string Outcome, string Reason, long StateVersion, CookingSupplyPhysicalResult? Supply);
     private sealed record CanonicalEvent(long Sequence, long SimulationBatch, string PlayerId, string CommandId,
         string Operation, string? RecipeId, string? ProcessId, string? ItemId, string Summary);
 }
@@ -228,6 +232,7 @@ public enum CookingCheckpointRestoreReason
     PortionStateInvalid,
     UnsupportedSchema,
     BindingStateInvalid,
+    SupplyStateInvalid,
 }
 
 public sealed record CookingRecipeCheckpointRestoreResult(
@@ -256,7 +261,7 @@ public sealed partial class CookingRecipeSimulation
         _items.OrderBy(pair => pair.Key.Value, StringComparer.Ordinal)
             .Select(pair => new CookingRecipeCheckpointItem(pair.Key, pair.Value.Definition, pair.Value.Version,
                 pair.Value.Location, pair.Value.Removed, pair.Value.Recipe, pair.Value.IsProduct,
-                pair.Value.OriginStation, pair.Value.ContainerCompleted, pair.Value.IsDirty, pair.Value.RemainingPortions, pair.Value.BoundOrder))
+                pair.Value.OriginStation, pair.Value.ContainerCompleted, pair.Value.IsDirty, pair.Value.RemainingPortions, pair.Value.BoundOrder, pair.Value.SupplyProvenance))
             .ToArray(),
         AllProcesses()
             .OrderBy(process => process.Id.Value, StringComparer.Ordinal)
@@ -285,7 +290,7 @@ public sealed partial class CookingRecipeSimulation
             .ThenBy(pair => pair.Key.Player.Value, StringComparer.Ordinal)
             .ThenBy(pair => pair.Key.Command.Value, StringComparer.Ordinal)
             .Select(pair => new CookingRecipeCheckpointDeduplication(pair.Key.Session, pair.Key.Player, pair.Key.Command,
-                pair.Value.Fingerprint, pair.Value.Result.Outcome, pair.Value.Result.Reason, pair.Value.Result.StateVersion))
+                pair.Value.Fingerprint, pair.Value.Result.Outcome, pair.Value.Result.Reason, pair.Value.Result.StateVersion, pair.Value.Result.Supply))
             .ToArray(),
         _events.ToArray(),
         _eventSequence,
@@ -294,7 +299,7 @@ public sealed partial class CookingRecipeSimulation
         _nextProductId,
         _nextSettlementSequence,
         _levelScope,
-        _poses.Values.OrderBy(p => p.Player.Value, StringComparer.Ordinal).ToArray());
+        _poses.Values.OrderBy(p => p.Player.Value, StringComparer.Ordinal).ToArray(), 5, _supply?.ExportCheckpoint(), SupplySnapshot()?.Origins ?? Array.Empty<CookingSupplyOrigin>());
 
     /// <summary>
     /// 把一份恢复载荷整册换入本实例：构造期状态被完全替换，替换是原子的（先构建全部新字典/列表再整体赋值）。
@@ -385,6 +390,11 @@ public sealed partial class CookingRecipeSimulation
             _lifecycleClosed = false;
             _lifecycleGate = null;
             _levelScope = null;
+            if (_supply is not null)
+            {
+                CookingSupplyState.TryRestore(_supply.Configuration, _supply.ExportCheckpoint() with { Closing = false }, out var reopened);
+                _supply = reopened;
+            }
             _isClosing = false;
             _isCompleted = false;
         }
@@ -424,6 +434,8 @@ public sealed partial class CookingRecipeSimulation
 
     private CookingCheckpointRestoreReason ValidateCheckpoint(CookingRecipeCheckpoint checkpoint)
     {
+        var supplyValidation = ValidateSupplyCheckpoint(checkpoint);
+        if (supplyValidation != CookingCheckpointRestoreReason.None) return supplyValidation;
         var extended = ValidateExtendedCheckpoint(checkpoint);
         if (extended != CookingCheckpointRestoreReason.None) return extended;
         if (!Equals(checkpoint.Scope, _fixture.Scope))
@@ -738,10 +750,11 @@ public sealed partial class CookingRecipeSimulation
                 inputsByProcessItem[input] = process.Id;
         }
 
+        InstallSupplyCheckpoint(checkpoint);
         _poses = checkpoint.Poses!.ToDictionary(p => p.Player);
         _items = checkpoint.Items.ToDictionary(item => item.Id, item => new ItemState(item.Definition, item.Version,
             item.Location, item.Removed, item.Recipe, item.IsProduct, item.OriginStation,
-            item.ContainerCompleted, item.IsDirty, item.RemainingPortions, item.BoundOrder));
+            item.ContainerCompleted, item.IsDirty, item.RemainingPortions, item.BoundOrder, item.SupplyProvenance));
         _hands.Clear();
         foreach (var (player, held) in hands)
             _hands[player] = held;
@@ -775,7 +788,7 @@ public sealed partial class CookingRecipeSimulation
         {
             _processedCommands[new RecipeCommandKey(entry.Session, entry.Player, entry.Command)] =
                 new ProcessedCommand(entry.Fingerprint, new CookingRecipeCommandResult(
-                    entry.Outcome, entry.Reason, entry.StateVersion, false, Array.Empty<CookingRecipeEvent>()));
+                    entry.Outcome, entry.Reason, entry.StateVersion, false, Array.Empty<CookingRecipeEvent>()) { Supply = entry.Supply is null ? null : entry.Supply with { Units = Array.AsReadOnly(entry.Supply.Units.ToArray()) } });
         }
 
         _events.Clear();

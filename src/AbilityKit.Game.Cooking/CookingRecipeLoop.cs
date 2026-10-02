@@ -76,7 +76,7 @@ public sealed record CookingRecipeFixture
         string? cleanPoolLocation = null,
         IReadOnlyDictionary<OrderTemplateId, CookingOrderTemplateDefinition>? orderTemplates = null,
         CookingScoreThresholds? scoreThresholds = null,
-        CookingSpatialConfiguration? spatial = null)
+        CookingSpatialConfiguration? spatial = null, CookingSupplyConfiguration? supply = null)
     {
         ArgumentNullException.ThrowIfNull(scope);
         ArgumentNullException.ThrowIfNull(players);
@@ -105,6 +105,7 @@ public sealed record CookingRecipeFixture
                 throw new ArgumentException("Disposable vessels cannot be supplied by the clean pool or washed.", nameof(items));
         Spatial = spatial?.Freeze();
         Spatial?.Validate(players, appliances);
+        Supply = CookingSupplyIntegration.ValidateAndFreeze(supply, items, Spatial);
         Scope = scope;
         Players = players;
         Items = items;
@@ -117,6 +118,7 @@ public sealed record CookingRecipeFixture
         ScoreThresholds = scoreThresholds ?? CookingScoreThresholds.Default;
     }
 
+    public CookingSupplyConfiguration? Supply { get; init; }
     public CookingSpatialConfiguration? Spatial { get; init; }
     public CookingScope Scope { get; init; }
     public IReadOnlyDictionary<PlayerId, CookingPlayerConfig> Players { get; init; }
@@ -156,6 +158,9 @@ public enum CookingRecipeOperation
     ClaimFrontWork,
     ContinueFrontWork,
     StopFrontWork,
+    RequestSupply = 20,
+    ReceiveSupply = 21,
+    TakeSupply = 22,
 }
 
 public enum CookingRecipeOutcome
@@ -206,6 +211,8 @@ public enum CookingRecipeRejectionReason
     BindingNotFound,
     FrontOfHouseUnavailable,
     FrontWorkNotFound,
+    SupplyRejected,
+    SupplyAllocationFailed,
 }
 
 public sealed record CookingRecipeCommand(
@@ -226,7 +233,8 @@ public sealed record CookingRecipeCommand(
     int MoveY = 0,
     int FacingX = 0,
     int FacingY = 0,
-    string? WorldAnchor = null);
+    string? WorldAnchor = null,
+    string? SupplierId = null, string? DeliveryId = null, string? SupplyRequestId = null);
 
 public sealed record CookingRecipeEvent(
     long Sequence,
@@ -252,6 +260,7 @@ public sealed record CookingRecipeCommandResult(
     bool IsDuplicate,
     IReadOnlyList<CookingRecipeEvent> Events)
 {
+    public CookingSupplyPhysicalResult? Supply { get; init; }
     public static CookingRecipeCommandResult Reject(CookingRecipeRejectionReason reason, long stateVersion) =>
         new(CookingRecipeOutcome.Rejected, reason, stateVersion, false, Array.Empty<CookingRecipeEvent>());
 }
@@ -307,6 +316,13 @@ public static class CookingRecipeCommandValidation
             return false;
         }
 
+        var supplyOperation = command.Operation is CookingRecipeOperation.RequestSupply or CookingRecipeOperation.ReceiveSupply or CookingRecipeOperation.TakeSupply;
+        if (!supplyOperation && (command.SupplierId is not null || command.DeliveryId is not null || command.SupplyRequestId is not null)) return false;
+        if (supplyOperation) return command.Item is null && command.Station is null && command.Container is null && command.Recipe is null &&
+            command.Process is null && command.Order is null && command.WorldAnchor is null && command.ExpectedItemVersion == 0 && command.TickCount == 0 &&
+            command.MoveX == 0 && command.MoveY == 0 && command.FacingX == 0 && command.FacingY == 0 &&
+            (command.Operation == CookingRecipeOperation.ReceiveSupply ? !string.IsNullOrWhiteSpace(command.DeliveryId) && command.SupplierId is null && command.SupplyRequestId is null :
+                !string.IsNullOrWhiteSpace(command.SupplierId) && !string.IsNullOrWhiteSpace(command.SupplyRequestId) && command.DeliveryId is null);
         var frontOperation = command.Operation is CookingRecipeOperation.ClaimFrontWork or CookingRecipeOperation.ContinueFrontWork or CookingRecipeOperation.StopFrontWork;
         if (command.WorldAnchor is not null && ((!frontOperation && command.Operation != CookingRecipeOperation.Drop) || string.IsNullOrWhiteSpace(command.WorldAnchor) || command.Station is not null)) return false;
         if (frontOperation) return !string.IsNullOrWhiteSpace(command.WorldAnchor) && command.Item is null && command.Process is null
@@ -484,6 +500,8 @@ public sealed partial class CookingRecipeSimulation
         ICookingBowlWashingPort? bowlWashingPort = null)
     {
         _fixture = fixture ?? throw new ArgumentNullException(nameof(fixture));
+        var frozenSupply = CookingSupplyIntegration.ValidateAndFreeze(fixture.Supply, fixture.Items, fixture.Spatial);
+        _supply = frozenSupply is null ? null : new CookingSupplyState(frozenSupply);
         if (fixture.Spatial is { } spatial)
             foreach (var pose in spatial.InitialPoses) _poses.Add(pose.Player, pose);
         _productIdAllocator = productIdAllocator ?? SequentialCookingProductIdAllocator.Instance;
@@ -628,7 +646,7 @@ public sealed partial class CookingRecipeSimulation
         _items.Where(pair => !pair.Value.Removed)
             .OrderBy(pair => pair.Key.Value, StringComparer.Ordinal)
             .Select(pair => new CookingRecipeSnapshotItem(pair.Key, pair.Value.Definition, pair.Value.Version, pair.Value.Location,
-                pair.Value.Recipe, pair.Value.IsProduct, pair.Value.OriginStation, pair.Value.ContainerCompleted, pair.Value.IsDirty, pair.Value.RemainingPortions, pair.Value.BoundOrder))
+                pair.Value.Recipe, pair.Value.IsProduct, pair.Value.OriginStation, pair.Value.ContainerCompleted, pair.Value.IsDirty, pair.Value.RemainingPortions, pair.Value.BoundOrder, pair.Value.SupplyProvenance))
             .ToArray(),
         AllProcesses()
             .OrderBy(process => process.Id.Value, StringComparer.Ordinal)
@@ -646,7 +664,7 @@ public sealed partial class CookingRecipeSimulation
         CalculateStars(),
         _isClosing,
         _isCompleted,
-        _poses.Values.OrderBy(p => p.Player.Value, StringComparer.Ordinal).ToArray());
+        _poses.Values.OrderBy(p => p.Player.Value, StringComparer.Ordinal).ToArray(), SupplySnapshot());
 
     public void UpdateFrontOfHouseState(bool isClosing, bool isCompleted)
     {
@@ -1044,6 +1062,7 @@ public sealed partial class CookingRecipeSimulation
             CookingRecipeOperation.ServePortion => ServePortion(command),
             CookingRecipeOperation.ClearContents => ClearContents(command),
             CookingRecipeOperation.DiscardItem => DiscardItem(command),
+            CookingRecipeOperation.RequestSupply or CookingRecipeOperation.ReceiveSupply or CookingRecipeOperation.TakeSupply => ExecuteSupply(command),
             _ => throw new ArgumentOutOfRangeException(nameof(command.Operation), command.Operation, null),
         };
     }
@@ -1076,6 +1095,8 @@ public sealed partial class CookingRecipeSimulation
 
     private FixedTickPlan BuildFixedTickPlan(CookingLevelScope levelScope, long hostFrameSequence)
     {
+        var replacementSupply = CloneSupply();
+        replacementSupply?.AdvanceFixedTick();
         var beforeLogicalTick = LogicalTick;
         var afterLogicalTick = checked(beforeLogicalTick + 1);
         var beforeStateVersion = _stateVersion;
@@ -1218,7 +1239,7 @@ public sealed partial class CookingRecipeSimulation
             immutableResults,
             tickEvent,
             result,
-            completedProcesses);
+            completedProcesses, replacementSupply);
     }
 
     /// <summary>
@@ -1383,6 +1404,7 @@ public sealed partial class CookingRecipeSimulation
 
     private void CommitFixedTick(FixedTickPlan plan)
     {
+        _supply = plan.ReplacementSupply;
         _items = plan.ReplacementItems;
         _processesByStation = plan.ReplacementProcessesByStation;
         _stationsByProcess = plan.ReplacementStationsByProcess;
@@ -2178,7 +2200,7 @@ public sealed partial class CookingRecipeSimulation
         StationSlotId? OriginStation,
         bool ContainerCompleted = false,
         bool IsDirty = false,
-        int RemainingPortions = 0, OrderId? BoundOrder = null);
+        int RemainingPortions = 0, OrderId? BoundOrder = null, CookingSupplyItemProvenance? SupplyProvenance = null);
 
     private sealed record ProcessState(
         ProcessId Id,
@@ -2218,7 +2240,7 @@ public sealed partial class CookingRecipeSimulation
         IReadOnlyList<CookingRecipeProcessTickResult> ProcessResults,
         CookingRecipeTickEvent TickEvent,
         CookingRecipeTickResult Result,
-        IReadOnlyList<ProcessId> CompletedProcesses);
+        IReadOnlyList<ProcessId> CompletedProcesses, CookingSupplyState? ReplacementSupply);
 
     private sealed record RecipeCommandKey(SessionId Session, PlayerId Player, RecipeCommandId Command);
 
@@ -2239,7 +2261,7 @@ public sealed record CookingRecipeSnapshot(
     int Stars = 0,
     bool IsClosing = false,
     bool IsCompleted = false,
-    IReadOnlyList<CookingPlayerPose>? Poses = null)
+    IReadOnlyList<CookingPlayerPose>? Poses = null, CookingSupplySnapshot? Supply = null)
 {
     private static readonly JsonSerializerOptions CanonicalJsonOptions = new()
     {
@@ -2260,7 +2282,7 @@ public sealed record CookingRecipeSnapshot(
         Items.OrderBy(item => item.Id.Value, StringComparer.Ordinal)
             .Select(item => new CanonicalItem(item.Id.Value, item.Definition.Value, item.Version, item.Location.Kind.ToString(),
                 item.Location.OwnerId, item.Location.SlotId, item.Recipe?.Value, item.IsProduct, item.OriginStation?.Value,
-                item.ContainerCompleted, item.IsDirty, item.RemainingPortions, item.BoundOrder?.Value)).ToArray(),
+                item.ContainerCompleted, item.IsDirty, item.RemainingPortions, item.BoundOrder?.Value, item.SupplyProvenance)).ToArray(),
         Processes.OrderBy(process => process.Id.Value, StringComparer.Ordinal)
             .Select(process => new CanonicalProcess(process.Id.Value, process.Recipe.Value, process.Player.Value,
                 process.Anchor.Value, process.Station?.Value, process.ElapsedTicks, process.RequiredTicks, process.ActiveWorker?.Value)).ToArray(),
@@ -2275,7 +2297,7 @@ public sealed record CookingRecipeSnapshot(
             .Select(settlement => new CanonicalSettlement(settlement.Sequence, settlement.Order.Value,
                 settlement.Template.Value, settlement.Recipe.Value, settlement.Product.Value, settlement.Player.Value,
                 settlement.Container.Value, settlement.LogicalTick)).ToArray(),
-        (Poses ?? Array.Empty<CookingPlayerPose>()).OrderBy(p => p.Player.Value, StringComparer.Ordinal).ToArray()),
+        (Poses ?? Array.Empty<CookingPlayerPose>()).OrderBy(p => p.Player.Value, StringComparer.Ordinal).ToArray(), Supply),
         CanonicalJsonOptions);
 
     public string Sha256() => Convert.ToHexString(SHA256.HashData(Encoding.UTF8.GetBytes(CanonicalText())));
@@ -2283,9 +2305,9 @@ public sealed record CookingRecipeSnapshot(
     private sealed record CanonicalSnapshot(string SessionId, string WorldId, string MatchId, long Version, long LogicalTick,
         int TotalScore, int Stars, bool IsClosing, bool IsCompleted,
         IReadOnlyList<CanonicalItem> Items, IReadOnlyList<CanonicalProcess> Processes, IReadOnlyList<CanonicalContainer> Containers,
-        IReadOnlyList<string> AcceptedOrders, IReadOnlyList<CanonicalOrder> Orders, IReadOnlyList<CanonicalSettlement> Settlements, IReadOnlyList<CookingPlayerPose> Poses);
+        IReadOnlyList<string> AcceptedOrders, IReadOnlyList<CanonicalOrder> Orders, IReadOnlyList<CanonicalSettlement> Settlements, IReadOnlyList<CookingPlayerPose> Poses, CookingSupplySnapshot? Supply);
     private sealed record CanonicalItem(string ItemId, string DefinitionId, int Version, string LocationKind, string? OwnerId,
-        string? SlotId, string? RecipeId, bool IsProduct, string? OriginStation, bool ContainerCompleted, bool IsDirty, int RemainingPortions, string? BoundOrder);
+        string? SlotId, string? RecipeId, bool IsProduct, string? OriginStation, bool ContainerCompleted, bool IsDirty, int RemainingPortions, string? BoundOrder, CookingSupplyItemProvenance? SupplyProvenance);
     private sealed record CanonicalProcess(string ProcessId, string RecipeId, string PlayerId, string AnchorItemId,
         string? StationId, int ElapsedTicks, int RequiredTicks, string? ActiveWorker);
     private sealed record CanonicalContainer(string ContainerId, int Capacity, IReadOnlyList<string> ItemIds);
@@ -2306,7 +2328,7 @@ public sealed record CookingOrderSnapshotOrder(
 
 public sealed record CookingRecipeSnapshotItem(ItemId Id, DefinitionId Definition, int Version, ItemLocation Location,
     RecipeId? Recipe, bool IsProduct, StationSlotId? OriginStation, bool ContainerCompleted = false, bool IsDirty = false,
-        int RemainingPortions = 0, OrderId? BoundOrder = null);
+        int RemainingPortions = 0, OrderId? BoundOrder = null, CookingSupplyItemProvenance? SupplyProvenance = null);
 
 public sealed record CookingRecipeSnapshotProcess(ProcessId Id, RecipeId Recipe, PlayerId Player, ItemId Anchor,
     StationSlotId? Station, int ElapsedTicks, int RequiredTicks, PlayerId? ActiveWorker = null);

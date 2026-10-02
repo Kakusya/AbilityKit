@@ -1,40 +1,47 @@
 {
-  "id": "cooking-singleplayer-supply",
-  "name": "cooking-singleplayer-supply",
-  "title": "\u5355\u673a\u6709\u9650\u4f9b\u5e94\u4e0e\u5907\u6599",
-  "description": "G02\u2013G10",
-  "status": "planning",
-  "dev_type": null,
-  "scope": null,
-  "package": null,
-  "priority": "P2",
-  "creator": "Li He",
-  "assignee": "Li He",
-  "createdAt": "2026-10-02",
-  "completedAt": null,
-  "branch": null,
-  "base_branch": "master",
-  "worktree_path": null,
-  "commit": null,
-  "pr_url": null,
-  "subtasks": [],
-  "children": [],
-  "parent": "10-02-cooking-gameplay-menu-plan",
-  "relatedFiles": [],
-  "notes": "Reviewed integration checkpoint 4e32fbe61: physical supply/provenance/unified allocator sequence, ET fingerprint/closing/Level7 candidate passed actual kitchen438/563/218 and ET563/218. Not merged to master. Preparing procurement and first-kitchen reuse, full layout and natural operating S14 exit remain incomplete; S07 not complete.",
-  "meta": {
-    "plan_id": "S07",
-    "stage": "singleplayer",
-    "planning_only": false,
-    "implementation_authorized": true,
-    "dependencies": [
-      "S03",
-      "S04"
-    ],
-    "execution_gate": "reviewed-contract-and-dependencies",
-    "planning_maturity": "reviewed-contract",
-    "owner_delegated_details": true,
-    "execution_authorization": "Latest owner: audit every topic then execute through completion. Task planning review and dependency checks precede execution; Unity and optional reference pool remain deferred.",
-    "coordinator_verification": ".trellis/tasks/10-02-cooking-gameplay-menu-plan/research/supply-composite-verification.md"
-  }
+    "id":  "cooking-singleplayer-supply",
+    "name":  "cooking-singleplayer-supply",
+    "title":  "单机有限供应与备料",
+    "description":  "G02–G10",
+    "status":  "in_progress",
+    "dev_type":  null,
+    "scope":  null,
+    "package":  null,
+    "priority":  "P2",
+    "creator":  "Li He",
+    "assignee":  "Li He",
+    "createdAt":  "2026-10-02",
+    "completedAt":  null,
+    "branch":  null,
+    "base_branch":  "master",
+    "worktree_path":  null,
+    "commit":  null,
+    "pr_url":  null,
+    "subtasks":  [
+
+                 ],
+    "children":  [
+
+                 ],
+    "parent":  "10-02-cooking-gameplay-menu-plan",
+    "relatedFiles":  [
+
+                     ],
+    "notes":  "Reviewed integration checkpoint 4e32fbe61: physical supply/provenance/unified allocator sequence, ET fingerprint/closing/Level7 candidate passed actual kitchen438/563/218 and ET563/218. Not merged to master. Preparing procurement and first-kitchen reuse, full layout and natural operating S14 exit remain incomplete; S07 not complete.",
+    "meta":  {
+                 "plan_id":  "S07",
+                 "stage":  "singleplayer",
+                 "planning_only":  false,
+                 "implementation_authorized":  true,
+                 "dependencies":  [
+                                      "S03",
+                                      "S04"
+                                  ],
+                 "execution_gate":  "reviewed-contract-and-dependencies",
+                 "planning_maturity":  "reviewed-contract",
+                 "owner_delegated_details":  true,
+                 "execution_authorization":  "Latest owner: audit every topic then execute through completion. Task planning review and dependency checks precede execution; Unity and optional reference pool remain deferred.",
+                 "coordinator_verification":  ".trellis/tasks/10-02-cooking-gameplay-menu-plan/research/supply-composite-verification.md",
+                 "domain_increment_status":  "verified"
+             }
 }

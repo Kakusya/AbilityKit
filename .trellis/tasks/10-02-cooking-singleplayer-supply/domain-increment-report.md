@@ -1,0 +1,36 @@
+# S07 physical supply domain increment
+
+2026-10-02, dispatch ctx_aa1cb5f5926a, supervised Orca worktree `cooking-supply-s07`, base `901f465b57230063466d65036e69df974aaa382f`. Scope is the reviewed domain increment, not full S07 product exit.
+
+## Delivered behavior
+
+Optional trusted content/validated configuration/fixture Supply is frozen and part of canonical configuration identity. It requires non-container raw units, capacity-compatible package containers accepting those exact definitions, and actual world source/receiving anchors. Existing no-supply fixtures remain valid. Menu data is untouched.
+
+Operations preserve 0..16 and explicitly append 20=RequestSupply, 21=ReceiveSupply, 22=TakeSupply, leaving 17..19 to S06. Commands have explicit SupplierId/DeliveryId/SupplyRequestId. Domain JSON fingerprint includes every new field; ET's manual fingerprint still needs coordinator integration.
+
+One request reserves one package of external finite units; candidate Supply advances inside kitchen fixed-tick plan and commits in the same installation. Receive creates a real package and N raw objects using the existing monotonically incremented product allocator watermark and container index. Complete candidate allocation rejects blank IDs, intra-batch duplicates, registry/tombstone collisions, allocator throws and overflow without changing physical state, ledger, watermark, versions or events. Standard rejected-command dedup receipts are retained by existing SubmitCore semantics. Finite TakeOut moves existing objects; only explicit infinite Take creates one raw into an empty hand.
+
+Immutable origins link requests/deliveries to original package/raw ItemIds; every supply-created item has matching immutable provenance and unit index. Restore checks both directions and rejects missing/aliased/ghost/foreign identities, while allowing movement, processing and tombstones. Different-command delivery retry and same-command retry after restore return original physical identities. Restored cached result arrays are copied/frozen. Snapshot/canonical expose supply ledger, origins and per-item provenance without a second consumable stock balance.
+
+Recipe schema is explicitly 5. Required Supply/SupplyOrigins/item provenance/dedup result fields and nested ledger/provenance/result fields reject missing JSON. Same-Level restore preserves Closing, pending remaining ticks and all watermarks. Successful handoff retains ledger/origins and reopens reservations only after accepted handoff; ordinary restore leaves Closing intact. No Level format or production ET edit was made.
+
+## Actual verification
+
+- Initial no-restore build failed with NETSDK1004 because the fresh worktree had no assets; normal restore/build succeeded. First clean dependency build emitted 1,829 existing XML/comment warnings, zero errors; no claim of universally warning-free clean build.
+- First supply run reproduced allocator watermark mismatch (used current rather than next sequence); corrected to the existing kitchen allocator convention. Read-only Trellis reviewer found lost cached physical results, ordinary same-definition alias corruption, inappropriate Recipe=null restriction on processed packages, malformed-null Items, restored mutable receipt arrays and nested missing fields. All corrected with regression coverage.
+- Final focused `dotnet test src/AbilityKit.Game.Cooking.Tests/AbilityKit.Game.Cooking.Tests.csproj --filter FullyQualifiedName~CookingRecipeSupplyTests -v quiet`: **21/21 passed, 0 skipped, exit 0**, `supply-focused.log` in this worktree. Includes request/tick/receive/pickup/drop/takeout/process/order, second receive after processing, finite exhaustion, full slot, semantic duplicates, five allocator faults, infinite source/empty hand, same-Level and handoff, aliases/ghosts/missing identity/schema, RetainInputs package restore, trusted content identity/freeze, required nested fields, receipt immutability, scope/permissions and fixed-tick kitchen fault preserving pending supply.
+- Final `powershell -ExecutionPolicy Bypass -File tools/run_test_gate.ps1 -Gate cooking-kitchen-loop`: **Passed, exit 0**. Domain and ET runtime builds passed; kitchen focused **361/361**, complete Cooking **483/483**, ET runtime **166/166**, no skips. Durable actual summary/TRX/logs: `local/Logs/test-gates/20261002-200445-cooking-kitchen-loop/cooking-kitchen-loop/gate-summary.json` and adjacent files.
+- `git diff --check`: passed. No Unity/network/production ET changes or tests; Unity remains deferred. Gate green is existing integration regression evidence, not new supply ET acceptance.
+
+## Exact coordinator integration hooks still required
+
+1. `CookingLevelEtHost.cs` `CookingCommandFingerprint.CanonicalBytes`: append SupplierId, DeliveryId, SupplyRequestId; verify same command identity with each changed field conflicts before authority mutation. Replay/store payload must roundtrip those fields.
+2. Level factory/config preparation path: carry `CookingConfigurationSnapshot.Supply` into fixture. Trusted catalog `BuildFixture` already does so; any factory rebuilding fixtures/config or installing layouts must preserve Supply and validate current source/receiving anchors instead of silently discarding definitions/deliveries.
+3. Preparing authority: create/retain the same kitchen used at Start, allow only explicitly approved preparation supply operations through scoped ingress, preserve dedup/ledger/watermarks, and do not create a second kitchen at Start. No wall-clock delivery timer; arrival requires the shared fixed-step policy.
+4. Front closing transition: call `CookingRecipeSimulation.StopNewSupplyRequests()` once when stopping new admission. It increments version once and closes only reservations; approved deliveries still advance and infinite taking for admitted work remains permitted by Level gating. Do not fake front completion or require all deliveries received before success.
+5. Pause/closed gameplay: existing Level mutation gate must prevent tick/commands while paused/ended and preserve pending progress. Add real ET supply request→wait→receive→move package→TakeOut→process→order and pause/resume tests after S06 owns stable host changes.
+6. Level checkpoint/store: include Recipe schema5 required fields under the new integrity/version envelope; S06 is raising format6, coordinator decides format7 for combined supply contract. Propagate Supply config identity and required nested fields to load/compatibility gates; same-Level restore is all-or-nothing with front/geometry. No legacy migration implemented.
+7. Success and failure: domain `ExportSuccessHandoff`/`AcceptSuccessHandoff` already carry supply and reopen only accepted success. Coordinator must prove ET durable-success handoff rollback and next-Level reopen retain balances/pending/origins, and failed retry rebuilds standard supply or the existing successful baseline without failed-level purchases. No bypass storage or host recreation added here.
+8. Menu/S08/S14 owners decide supplier contents and supply closure (including disposable vessel replenishment); this increment does not author menu supply data or expand raw-unit semantics into container-unit spawning.
+
+Parent S07 remains **in_progress / domain increment verified / full ET and preparation exit pending**. No task archive or full S07 completion claim is appropriate.

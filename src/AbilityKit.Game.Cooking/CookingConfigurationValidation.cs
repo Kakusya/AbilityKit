@@ -68,6 +68,7 @@ public sealed record CookingConfigurationCandidate(
     CookingSpatialConfiguration? Spatial = null)
 {
     public CookingContentProvenance? ContentProvenance { get; init; }
+    public CookingSupplyConfiguration? Supply { get; init; }
 }
 
 public sealed record CookingConfigurationIdentity(string Schema, string Sha256)
@@ -92,10 +93,11 @@ public sealed class CookingConfigurationSnapshot
         IReadOnlyDictionary<RecipeId, CookingRecipeDefinition> recipes,
         IReadOnlyDictionary<OrderTemplateId, CookingOrderTemplateDefinition>? orderTemplates = null,
         IReadOnlyList<CookingSupplyEntryDefinition>? standardInitialSupply = null,
-        CookingSpatialConfiguration? spatial = null, CookingContentProvenance? contentProvenance = null)
+        CookingSpatialConfiguration? spatial = null, CookingContentProvenance? contentProvenance = null, CookingSupplyConfiguration? supply = null)
     {
         ContentProvenance = contentProvenance?.Freeze();
         Spatial = spatial?.Freeze();
+        Supply = CookingSupplyIntegration.ValidateAndFreeze(supply, items, Spatial);
         SupportedApplianceCapabilities = supportedApplianceCapabilities;
         Items = items;
         Appliances = appliances;
@@ -111,6 +113,7 @@ public sealed class CookingConfigurationSnapshot
     public IReadOnlyDictionary<RecipeId, CookingRecipeDefinition> Recipes { get; }
     public IReadOnlyDictionary<OrderTemplateId, CookingOrderTemplateDefinition> OrderTemplates { get; }
     public IReadOnlyList<CookingSupplyEntryDefinition> StandardInitialSupply { get; }
+    public CookingSupplyConfiguration? Supply { get; }
     public CookingSpatialConfiguration? Spatial { get; }
     public CookingConfigurationIdentity Identity { get; }
     public CookingContentProvenance? ContentProvenance { get; }
@@ -146,7 +149,7 @@ public sealed class CookingConfigurationSnapshot
         Spatial is null ? null : Spatial with {
             InitialPoses = Spatial.InitialPoses.OrderBy(p => p.Player.Value, StringComparer.Ordinal).ToArray(),
             Anchors = Spatial.Anchors.OrderBy(a => a.Kind).ThenBy(a => a.Id, StringComparer.Ordinal).ToArray(),
-            Obstacles = Spatial.Obstacles.OrderBy(o => o.MinX).ThenBy(o => o.MinY).ThenBy(o => o.MaxX).ThenBy(o => o.MaxY).ToArray() }, ContentProvenance),
+            Obstacles = Spatial.Obstacles.OrderBy(o => o.MinX).ThenBy(o => o.MinY).ThenBy(o => o.MaxX).ThenBy(o => o.MaxY).ToArray() }, ContentProvenance, Supply),
         CanonicalJsonOptions);
 
     private static IReadOnlyList<string> NormalizeDefinitionList(IReadOnlyList<DefinitionId>? definitions) =>
@@ -163,7 +166,7 @@ public sealed class CookingConfigurationSnapshot
         IReadOnlyList<CanonicalAppliance> Appliances,
         IReadOnlyList<CanonicalRecipe> Recipes,
         IReadOnlyList<CanonicalOrderTemplate> OrderTemplates,
-        IReadOnlyList<CanonicalSupplyEntry> StandardInitialSupply, CookingSpatialConfiguration? Spatial, CookingContentProvenance? ContentProvenance);
+        IReadOnlyList<CanonicalSupplyEntry> StandardInitialSupply, CookingSpatialConfiguration? Spatial, CookingContentProvenance? ContentProvenance, CookingSupplyConfiguration? Supply);
 
     private sealed record CanonicalItem(string Id, IReadOnlyList<string> AllowedPlayerCapabilities,
         CanonicalItemContainer? Container);
@@ -215,6 +218,8 @@ public sealed class CookingConfigurationRegistry
         var recipes = ValidateRecipes(candidate.Recipes, items, appliances, supportedCapabilities, diagnostics);
         ValidateOrderTemplates(candidate.OrderTemplates, recipes, items, diagnostics);
         ValidateStandardInitialSupply(candidate.StandardInitialSupply, items, appliances, diagnostics);
+        try { CookingSupplyIntegration.ValidateAndFreeze(candidate.Supply, items, candidate.Spatial); }
+        catch (ArgumentException e) { diagnostics.Add(Diagnostic(CookingConfigurationDiagnosticCodes.InvalidValue, "Supply", "configuration", "Suppliers", null, e.Message)); }
         if (candidate.Spatial is { } spatial)
         {
             try
@@ -284,7 +289,7 @@ public sealed class CookingConfigurationRegistry
         var orderTemplates = (candidate.OrderTemplates ?? Array.Empty<CookingOrderTemplateDefinition>())
             .ToFrozenDictionary(template => template.Id);
         var standardInitialSupply = (candidate.StandardInitialSupply ?? Array.Empty<CookingSupplyEntryDefinition>()).ToArray();
-        return new CookingConfigurationSnapshot(capabilities, items, appliances, recipes, orderTemplates, standardInitialSupply, candidate.Spatial, candidate.ContentProvenance);
+        return new CookingConfigurationSnapshot(capabilities, items, appliances, recipes, orderTemplates, standardInitialSupply, candidate.Spatial, candidate.ContentProvenance, candidate.Supply);
     }
 
     private static HashSet<string> ValidateCapabilities(IReadOnlyList<string> capabilities,

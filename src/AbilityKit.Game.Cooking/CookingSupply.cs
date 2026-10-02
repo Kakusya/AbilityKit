@@ -24,9 +24,14 @@ public sealed record CookingSupplyDelivery(string DeliveryId, long Sequence, str
 public sealed record CookingSupplyRequestReceipt(string RequestId, string SupplierId, int PackageCount,
     string? DeliveryId, long InfiniteSequence = 0);
 public sealed record CookingSupplierBalance(string SupplierId, long AvailableUnits);
-public sealed record CookingSupplyCheckpoint(string ConfigurationIdentity, long NextDeliverySequence,
-    long NextInfiniteSequence, bool Closing, IReadOnlyList<CookingSupplierBalance> Balances,
-    IReadOnlyList<CookingSupplyDelivery> Deliveries, IReadOnlyList<CookingSupplyRequestReceipt> Requests);
+public sealed record CookingSupplyCheckpoint(
+    [property: System.Text.Json.Serialization.JsonRequired] string ConfigurationIdentity,
+    [property: System.Text.Json.Serialization.JsonRequired] long NextDeliverySequence,
+    [property: System.Text.Json.Serialization.JsonRequired] long NextInfiniteSequence,
+    [property: System.Text.Json.Serialization.JsonRequired] bool Closing,
+    [property: System.Text.Json.Serialization.JsonRequired] IReadOnlyList<CookingSupplierBalance> Balances,
+    [property: System.Text.Json.Serialization.JsonRequired] IReadOnlyList<CookingSupplyDelivery> Deliveries,
+    [property: System.Text.Json.Serialization.JsonRequired] IReadOnlyList<CookingSupplyRequestReceipt> Requests);
 
 /// <summary>Read-only creation terms. Only the originating state can commit this plan.</summary>
 public sealed class CookingSupplyReceivePlan
