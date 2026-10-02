@@ -1,3 +1,5 @@
+> Latest root acceptance2026-10-03: N01 completed contract reconciliation at bdd5cbede; bounded N02 production is authorized. Read [root acceptance](research/root-contract-acceptance.md) and [independent final review](research/final-contract-review.md). Earlier planning/not-ready notices below are historical revisions. This is not network implementation or verification acceptance.
+
 ﻿> Current owner instruction (2026-10-02): continue auditing all topics, resolve their plans, then implement and verify to completion without stopping for routine confirmations. Preserve architecture and stage order: singleplayer -> network -> singleplayer Unity -> network Unity. Current stage: network contract review; S01-S14 accepted at 4dadd25c8 with evidence routed by master-singleplayer-exit-verification.md. Older planning-only notices below are historical. Unity remains deferred under its separate gate.
 
 # N01 初始设计
@@ -248,3 +250,13 @@ wire businessidentity显式含ServerSessionInstance。domain RecipeCommandId确�
 pending冲突唯一规则：保留首次mapping/domainID/batch/ordinal，仅将真实冲突payload重新计算domain fingerprint后交同Host，使既有group全部Conflicted；不能在Session只reject新包。terminal冲突保留真正terminal结果并返回terminalConflict，不制造execution。outbox仅容已admitted旧caller，未admitted新冲突caller即时Admission带其disposition；结果按source+correlation去重。这些规则同时已修订前文，不能把旧相反句当另一实现路径。无持久化/恢复schema扩展。
 
 mapping前typed DTO先freeze：服务端验证wire placeholder、完整scope/participant并覆盖domain RecipeCommandId/batch，客户端自报domainID不采信。SHA仅用于身份无歧义映射，不用于仲裁排序；排序仍首次trusted ordinal。layout独立审议已确认69ASCII映射及pending冲突/2048额外caller边界方案可接受，最终正文待复读。
+
+## Accepted full-baseline display completeness supplement - 2026-10-03
+
+Root source review found two omitted fields already required by the full-state checklist: trusted major-progress display and owner-committed network participant/sequence display. These supplement the accepted contract; they do not create another gameplay authority, grant, persisted ledger or restore schema.
+
+AuthorityCapture adds a required nullable MajorProgress display projection: Locked, CookFaster, copied Decoration and Unlocks from the actual trusted generation progress. Null explicitly means no attached grant. It cannot become client authority or a restore provider. Recipe5/Level8 remain unchanged.
+
+Baseline adds required CookingNetworkSessionProjection(ServerSessionInstance, sorted immutable Participants), with each participant's owner-committed connected binding, ConnectionGeneration, LastValidatedClientSequence, LastTerminalClientSequence, Ready and CleanupPending. No token, credential or private source IDs. Callback close markers remain queued transport facts until the owner commits binding changes. LastValidated is validated transport ingress, not domain commit; LastTerminal is the maximum sequence with an owner terminal reply, not a contiguous acknowledgment or proof all earlier operations executed. A new connection generation resets sequence fields.
+
+Baseline StateHash covers the typed AuthorityCapture plus SessionProjection. Snapshot sequence remains outside this content hash to avoid self-reference. Issued-baseline ack still matches every recorded identity field, including the combined hash; no latest-world guessing. Independent process gameplay consensus separately compares complete AuthorityCapture hashes, while reporting the connection projection and protocol provenance. Tests cover required missing/null semantics, projection tampering, callback-before-owner isolation, live rebind/watermarks and no permission inferred from display. These are implementation requirements, not current test claims.

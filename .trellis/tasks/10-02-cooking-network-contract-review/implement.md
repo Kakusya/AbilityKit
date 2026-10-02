@@ -1,3 +1,5 @@
+> Latest root acceptance2026-10-03: N01 completed contract reconciliation at bdd5cbede; bounded N02 production is authorized. Read [root acceptance](research/root-contract-acceptance.md) and [independent final review](research/final-contract-review.md). Earlier planning/not-ready notices below are historical revisions. This is not network implementation or verification acceptance.
+
 > Current owner instruction (2026-10-02): continue auditing all topics, resolve their plans, then implement and verify to completion without stopping for routine confirmations. Preserve architecture and stage order: singleplayer -> network -> singleplayer Unity -> network Unity. Current stage: network contract review; S01-S14 accepted at 4dadd25c8 with evidence routed by master-singleplayer-exit-verification.md. Older planning-only notices below are historical. Unity remains deferred under its separate gate.
 
 # N01 待执行清单
