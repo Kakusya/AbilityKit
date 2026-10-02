@@ -260,3 +260,12 @@ AuthorityCapture adds a required nullable MajorProgress display projection: Lock
 Baseline adds required CookingNetworkSessionProjection(ServerSessionInstance, sorted immutable Participants), with each participant's owner-committed connected binding, ConnectionGeneration, LastValidatedClientSequence, LastTerminalClientSequence, Ready and CleanupPending. No token, credential or private source IDs. Callback close markers remain queued transport facts until the owner commits binding changes. LastValidated is validated transport ingress, not domain commit; LastTerminal is the maximum sequence with an owner terminal reply, not a contiguous acknowledgment or proof all earlier operations executed. A new connection generation resets sequence fields.
 
 Baseline StateHash covers the typed AuthorityCapture plus SessionProjection. Snapshot sequence remains outside this content hash to avoid self-reference. Issued-baseline ack still matches every recorded identity field, including the combined hash; no latest-world guessing. Independent process gameplay consensus separately compares complete AuthorityCapture hashes, while reporting the connection projection and protocol provenance. Tests cover required missing/null semantics, projection tampering, callback-before-owner isolation, live rebind/watermarks and no permission inferred from display. These are implementation requirements, not current test claims.
+
+## 2026-10-03 实际富流程证据后的 bounded baseline 修订
+
+本节覆盖前文对所有报文统一使用65536 tokens/4096 collection的初稿，不修改应用架构、Recipe5/Level8或wire v3。第171条真实帧化操作后的完整baseline为828796 bytes/65672 Utf8JsonReader tokens，低于8MiB但被旧结构阈值拒绝；业务已Accepted而客户端保持旧Version。精确证据由N02 `research/process-integration-verification.md` 路由。
+
+- baseline结构预算：默认最多1048576 JSON tokens、任一collection最多16384 entries；配置可注入更小预算以验证边界。命令/控制仍最多65536 tokens/4096 entries；字节预算继续8MiB/16KiB/4KiB，深度32与各字段长度规则不变。
+- receipt每Level最多16384 identity是数量上限，与完整状态字节/token/collection预算取交集；不保证任意16384条复杂历史都能装进8MiB，不承诺无限营业。不得截断完整状态、删除有效domain receipt、静默驱逐mapping来使校验通过。
+- 出站baseline必须经同一codec预算自校验，验证完成后才提交Issued/snapshot sequence。超限进入明确Session unavailable：结构化FullStateExceedsWireBounds，等待调用终结、现有客户端unsynchronized，新Join明确拒绝。故障属于Session发布容量，不伪造ET权威域故障或业务回滚。
+- 此修订是明确设计决定；实际实现、负例、富流程绿与独立复审仍须分别记录，本文不是通过证据。
