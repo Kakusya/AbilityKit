@@ -160,6 +160,7 @@ public sealed class CookingNetworkSessionHost : IDisposable
         var join = CookingNetworkWireCodec.Read<CookingNetworkJoin>(input.Envelope);
         if (join is null || !_participants.TryGetValue(join.Participant, out var participant) ||
             join.JoinCredential != participant.Credential ||
+            (participant.Generation == 0 && (join.ServerSessionInstance is not null || join.RebindToken is not null)) ||
             (join.RebindToken is not null && join.ServerSessionInstance != ServerSessionInstance) ||
             (participant.Generation > 0 && (join.ServerSessionInstance != ServerSessionInstance || join.RebindToken != participant.Token))) {
             Reject(input.Connection, input.Envelope.CorrelationId, "Unauthorized"); return;

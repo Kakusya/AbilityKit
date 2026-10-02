@@ -527,4 +527,45 @@ public sealed class CookingNetworkSessionV3Tests
         else Assert.Null(a.LatestBaseline!.State.FullRecipe);
     }
 
+    [Theory]
+    [InlineData(0)]
+    [InlineData(1)]
+    [InlineData(2)]
+    [InlineData(3)]
+    public void First_join_rejects_supplied_old_identity_or_token_without_binding_then_accepts_only_null_pair(int combination)
+    {
+        string oldInstance, oldToken;
+        using (var oldHost = Host(initialCreated: true))
+        using (var oldSession = Session(oldHost))
+        using (var oldClient = Local(oldSession, A)) {
+            oldSession.Start(); Pump(oldSession, oldClient.ConnectAsync("inprocess", 1));
+            oldInstance = oldClient.ServerSessionInstance!; oldToken = oldClient.RebindToken!;
+        }
+        // A genuine new Host and Session after disposal; no durable-store recovery claim is made here.
+        using var host = Host(initialCreated: true); using var session = Session(host); session.Start();
+        Assert.NotEqual(oldInstance, session.ServerSessionInstance);
+        using var connection = new ConnectionManager(session.CreateLocalClientTransport, new ConnectionOptions { EnableReconnect = false });
+        var packets = new List<CookingNetworkWireEnvelope>();
+        connection.ServerPushReceived += (_, bytes) => { Assert.True(CookingNetworkWireCodec.TryDecode(bytes.AsSpan(), new(), out var e)); packets.Add(e!); };
+        void Send<T>(CookingNetworkMessageKind kind, string correlation, T payload) => connection.Send(CookingNetworkWireCodec.OpCode,
+            new ArraySegment<byte>(CookingNetworkWireCodec.Encode(kind, correlation, payload)), (ushort)NetworkPacketFlags.ServerPush);
+        var instance = combination switch { 0 or 2 => oldInstance, 1 => session.ServerSessionInstance, _ => null };
+        var token = combination == 2 ? null : oldToken;
+        var before = host.Observe().CanonicalText(); var projection = session.LatestSessionProjection;
+        connection.Open("inprocess", 1); Send(CookingNetworkMessageKind.Join, "old-identity", new CookingNetworkJoin(A, "join-a", instance, token));
+        session.ProcessOwnerFrame();
+        Assert.DoesNotContain(packets, p => p.Kind is CookingNetworkMessageKind.Joined or CookingNetworkMessageKind.Baseline or CookingNetworkMessageKind.Ready);
+        Assert.Equal("Unauthorized", CookingNetworkWireCodec.Read<CookingNetworkWireResult>(Assert.Single(packets, p => p.CorrelationId == "old-identity"))!.Reason);
+        Assert.Equal(projection.Participants.ToArray(), session.LatestSessionProjection.Participants.ToArray());
+        Assert.All(session.LatestSessionProjection.Participants, p => { Assert.Equal(0, p.ConnectionGeneration); Assert.False(p.ConnectedOwnerBinding); Assert.False(p.Ready); });
+        Assert.Equal(before, host.Observe().CanonicalText()); Assert.Equal(0, host.HostFrameSequence);
+        Send(CookingNetworkMessageKind.Join, "fresh", new CookingNetworkJoin(A, "join-a", null, null)); session.ProcessOwnerFrame();
+        var binding = CookingNetworkWireCodec.Read<CookingNetworkJoined>(Assert.Single(packets, p => p.Kind == CookingNetworkMessageKind.Joined))!;
+        Assert.Equal(1, binding.ConnectionGeneration); Assert.Equal(session.ServerSessionInstance, binding.ServerSessionInstance); Assert.NotEqual(oldToken, binding.RebindToken);
+        var issued = CookingNetworkWireCodec.Read<CookingNetworkBaseline>(Assert.Single(packets, p => p.Kind == CookingNetworkMessageKind.Baseline))!;
+        Send(CookingNetworkMessageKind.BaselineAck, "fresh-ack", issued.Identity); session.ProcessOwnerFrame();
+        Assert.Contains(packets, p => p.Kind == CookingNetworkMessageKind.Ready);
+        Assert.Equal(before, host.Observe().CanonicalText()); Assert.Equal(0, host.HostFrameSequence);
+    }
+
 }
