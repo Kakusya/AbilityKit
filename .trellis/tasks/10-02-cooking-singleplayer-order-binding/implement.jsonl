@@ -6,3 +6,8 @@
 {"file": ".trellis/tasks/10-02-cooking-gameplay-menu-plan/research/core-review.md", "reason": "Reviewed implementation boundary and required behavior evidence"}
 {"file": ".trellis/tasks/10-02-cooking-gameplay-menu-plan/research/menu-review.md", "reason": "Reviewed implementation boundary and required behavior evidence"}
 {"file": ".trellis/tasks/10-02-cooking-gameplay-menu-plan/research/operation-review.md", "reason": "Reviewed implementation boundary and required behavior evidence"}
+{"file": ".trellis/spec/cooking/cooking-recipe-loop.md", "reason": "S05 binding/disposable/checkpoint stable contract"}
+{"file": "src/AbilityKit.Game.Cooking/CookingOrderBinding.cs", "reason": "Existing Recipe owner binding/restore authority"}
+{"file": "src/AbilityKit.Game.Cooking.Tests/CookingOrderBindingTests.cs", "reason": "Domain rejection, contention and recovery matrix"}
+{"file": "src/AbilityKit.ET.Runtime.Tests/CookingOrderBindingEtTests.cs", "reason": "Actual ET ingress codec destroy restore proof and fingerprint vector"}
+{"file": ".trellis/tasks/10-02-cooking-singleplayer-order-binding/research/verification.md", "reason": "Actual S05 final gate pass counts, failure history and evidence paths"}
