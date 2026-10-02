@@ -38,9 +38,20 @@ public sealed class CookingMenuProductionEtTests
         Assert.Equal(uninterrupted, recovered);
     }
 
-    private static string Run(string sourceId, bool recover)
+    [Theory]
+    [InlineData("F01")]
+    [InlineData("D31")]
+    public void Menu_manual_pause_change_player_resume_survives_ET_checkpoint(string sourceId)
+        => Assert.Equal(Run(sourceId, false, true), Run(sourceId, true, true));
+
+    [Theory]
+    [InlineData("D31")]
+    public void Partially_served_menu_batch_survives_ET_checkpoint(string sourceId)
+        => Assert.Equal(Run(sourceId, false, partialBatch: true), Run(sourceId, true, partialBatch: true));
+
+    private static string Run(string sourceId, bool recover, bool handoff = false, bool partialBatch = false)
     {
-        var driver = new CookingMenuProductionFixture(Catalog(), Baseline(), sourceId);
+        var driver = new CookingMenuProductionFixture(Catalog(), Baseline(), sourceId, manualHandoff: handoff);
         var factory = new Factory(driver, true);
         var host = new CookingLevelEtHost(new CookingLevelLifecycle(driver.Level, driver.Content.Snapshot, factory));
         var recovered = false;
@@ -61,7 +72,11 @@ public sealed class CookingMenuProductionEtTests
             driver.FrameAdvance = () => Assert.True(host.Tick().Accepted);
             driver.AfterFrame = () =>
             {
-                if (!recover || recovered || !driver.Items.Any(x => x.IsProduct || x.ContainerCompleted)) return;
+                var snapshot = driver.Simulation.Snapshot();
+                var checkpointPoint = handoff ? snapshot.Processes.Any(x => x.ActiveWorker is null)
+                    : partialBatch ? driver.Items.Any(x => x.ContainerCompleted && x.RemainingPortions == 1)
+                    : driver.Items.Any(x => x.IsProduct || x.ContainerCompleted);
+                if (!recover || recovered || !checkpointPoint) return;
                 var checkpoint = host.ExportCheckpoint().Checkpoint!;
                 var decoded = CookingLevelCheckpointCodec.Deserialize(CookingLevelCheckpointCodec.Serialize(
                     CookingLevelCheckpointCodec.CreateEnvelope(checkpoint)));
@@ -76,6 +91,7 @@ public sealed class CookingMenuProductionEtTests
                 recovered = true;
             };
             var product = driver.ProduceAndPlate();
+            Assert.Equal(handoff, driver.HandedOff);
             if (!driver.Menu.RequiresBinding) driver.SubmitMeal(product);
             Assert.Equal(recover, recovered);
             // Drinks are produced and plated here; S05 owns binding and drink settlement.

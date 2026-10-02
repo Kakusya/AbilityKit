@@ -18,7 +18,9 @@ internal sealed class CookingMenuProductionFixture
     private readonly Dictionary<RecipeId, ItemId> storage = new();
     private readonly Dictionary<ItemId, string> homes = new();
     private readonly HashSet<ItemId> reserved = new();
-    private readonly PlayerId player = new("menu-chef");
+    private PlayerId player = new("menu-chef");
+    private readonly bool manualHandoff;
+    private bool handedOff;
     private readonly CookingScope scope;
     private readonly CookingLevelScope level;
     private readonly IReadOnlyList<CookingSpatialAnchor> anchors;
@@ -28,9 +30,11 @@ internal sealed class CookingMenuProductionFixture
     private long frame;
 
     public CookingMenuProductionFixture(CookingMenuCatalog catalog, CookingContentDocument baseline, string sourceId,
-        bool reverseBranches = false, int additionalWorkingCapacity = 0, RecipeId? counterfeitFor = null)
+        bool reverseBranches = false, int additionalWorkingCapacity = 0, RecipeId? counterfeitFor = null,
+        bool manualHandoff = false)
     {
         this.reverseBranches = reverseBranches;
+        this.manualHandoff = manualHandoff;
         catalogHash = catalog.Sha256;
         graph = catalog.Document;
         Menu = graph.Menus.Single(x => x.SourceId == sourceId);
@@ -39,6 +43,9 @@ internal sealed class CookingMenuProductionFixture
         scope = new(new SessionId("menu-production"), new WorldId("menu-world"), new MatchId(sourceId));
         level = new(scope, new RestaurantRuntimeId(1), new LevelId("menu-fixture"), 1);
         var projected = catalog.ToContentDocument(baseline, new[] { sourceId });
+        if (manualHandoff)
+            projected = projected with { Recipes = projected.Recipes.Select(x => x.Execution == "Manual"
+                ? x with { RequiredTicks = 4 } : x).ToArray() }; // Explicit progress-test fixture, not balance.
         if (counterfeitFor is { } recipe)
         {
             var required = producers.Values.Single(x => x.Id == recipe).Carrier;
@@ -91,15 +98,19 @@ internal sealed class CookingMenuProductionFixture
         else supply.Add(new(vessel.Id.Value, 2, CookingContentCatalog.CleanPoolLocation));
         foreach (var appliance in projected.Appliances.OrderBy(x => x.Station, StringComparer.Ordinal))
             Anchor(LocationKind.StationSlot, appliance.Station);
+        if (manualHandoff) geometry.Add(new(LocationKind.WorldPosition, "partner-parking", 25000, 1000));
         anchors = geometry;
         var spatial = new CookingSpatialConfiguration(-1000, -1000, 26000, (geometry.Count / 12 + 2) * 2000,
-            40, 900, new[] { new CookingPlayerPose(player, 0, 0, 0, 1) }, geometry,
+            40, manualHandoff ? 1200 : 900, manualHandoff ? new[] { new CookingPlayerPose(player, 0, 0, 0, 1),
+                new CookingPlayerPose(new("menu-partner"), 25000, 1000, 0, 1) } : new[] { new CookingPlayerPose(player, 0, 0, 0, 1) }, geometry,
             Array.Empty<CookingSpatialObstacle>());
         Content = CookingContentCatalog.Load(projected with { StandardInitialSupply = supply, Spatial = spatial });
         var players = new Dictionary<PlayerId, CookingPlayerConfig>
         {
             [player] = new(player, new HashSet<string> { "cook" }, Content.Appliances.Keys.Select(x => x.Value).ToHashSet()),
         };
+        if (manualHandoff) players.Add(new("menu-partner"), new(new("menu-partner"),
+            new HashSet<string> { "cook" }, Content.Appliances.Keys.Select(x => x.Value).ToHashSet()));
         RecipeFixture = CookingContentCatalog.BuildFixture(Content, scope, players, "clean-pool");
         Simulation = new(RecipeFixture);
         // The stock plan is the validated document above. Its repeated-definition unit entries
@@ -126,6 +137,7 @@ internal sealed class CookingMenuProductionFixture
     public IReadOnlyList<CookingRecipeSnapshotItem> Items => Simulation.Snapshot().Items;
     public ItemId? ServingVessel { get; private set; }
     public ItemId? CounterfeitWorkingVessel { get; }
+    public bool HandedOff => handedOff;
 
     public ItemId ProduceAndPlate()
     {
@@ -314,13 +326,34 @@ internal sealed class CookingMenuProductionFixture
         Pick(vessel);
         var station = Content.Appliances.Values.First(x => x.Capabilities.Contains(step.Capability)).Station;
         Go(LocationKind.StationSlot, station.Value);
+        var willHandoff = manualHandoff && !handedOff && step.ExecutionKind == CookingMenuExecutionKind.Manual;
+        if (willHandoff) Act(CookingRecipeOperation.Drop, vessel, station: station);
         Act(CookingRecipeOperation.StartProcess, vessel, station: station, recipe: step.Id);
-        var budget = step.RequiredTicks + 1;
+        var originalPlayer = player;
+        if (willHandoff)
+        {
+            var process = Simulation.Snapshot().Processes.Single(x => x.Anchor == vessel);
+            Assert.Equal(CookingRecipeOutcome.Accepted, Dispatch(new(scope, ++commandSequence, player,
+                new("pause-" + commandSequence), CookingRecipeOperation.StopProcess, Process: process.Id)).Outcome);
+            var elapsed = Simulation.Snapshot().Processes.Single(x => x.Id == process.Id).ElapsedTicks;
+            Tick();
+            Assert.Equal(elapsed, Simulation.Snapshot().Processes.Single(x => x.Id == process.Id).ElapsedTicks);
+            player = new("menu-partner");
+            Go(LocationKind.StationSlot, station.Value);
+            Assert.Equal(elapsed, Simulation.Snapshot().Processes.Single(x => x.Id == process.Id).ElapsedTicks);
+            Assert.Equal(CookingRecipeOutcome.Accepted, Dispatch(new(scope, ++commandSequence, player,
+                new("resume-" + commandSequence), CookingRecipeOperation.ContinueProcess, Process: process.Id)).Outcome);
+            handedOff = true;
+        }
+        var budget = Content.Recipes[step.Id].RequiredTicks + 1;
         while (Simulation.Snapshot().Processes.Any(x => x.Anchor == vessel))
         {
             Assert.True(budget-- > 0, $"Process did not progress: {step.Id}");
             Tick();
         }
+        if (player != originalPlayer) Go(LocationKind.WorldPosition, "partner-parking");
+        player = originalPlayer;
+        if (willHandoff) Pick(vessel);
         Go(LocationKind.WorldPosition, homes[vessel]);
         Act(CookingRecipeOperation.Drop, vessel, world: homes[vessel]);
         ExecutedRecipes.Add(step.Id);
@@ -382,7 +415,9 @@ internal sealed class CookingMenuProductionFixture
         while (true)
         {
             Assert.True(budget-- > 0, $"Navigation did not converge: {Menu.SourceId}/{id}");
-            var pose = Simulation.Snapshot().Poses!.Single();
+            var pose = Simulation.Snapshot().Poses!.Single(x => x.Player == player);
+            if (player.Value == "menu-partner" && kind == LocationKind.StationSlot &&
+                Math.Abs(anchor.X - pose.X) + Math.Abs(anchor.Y - pose.Y) <= 1000) break;
             var dx = Math.Clamp(anchor.X - pose.X, -1000, 1000);
             var dy = dx == 0 ? Math.Clamp(anchor.Y - pose.Y, -1000, 1000) : 0;
             if (dx == 0 && dy == 0) break;
