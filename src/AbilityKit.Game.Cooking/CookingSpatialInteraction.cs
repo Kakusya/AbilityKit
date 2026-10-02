@@ -74,13 +74,15 @@ public sealed record CookingInteractionPreview(string TargetId, CookingRecipeCom
 public sealed partial class CookingRecipeSimulation
 {
     private Dictionary<PlayerId, CookingPlayerPose> _poses = new();
+    private CookingSpatialConfiguration? _installedSpatial;
+    private CookingSpatialConfiguration? EffectiveSpatial => _installedSpatial ?? _fixture.Spatial;
 
     private bool IsManagedPoolLocation(ItemLocation location, DefinitionId definition) =>
         location == ItemLocation.World(_fixture.CleanPoolLocation) && _fixture.CleanContainerSupply.ContainsKey(definition);
 
     private void ValidateSpatialItemLocation(ItemLocation location, DefinitionId definition)
     {
-        if (_fixture.Spatial is not { } spatial) return;
+        if (EffectiveSpatial is not { } spatial) return;
         if (location.Kind is LocationKind.WorldPosition or LocationKind.StationSlot)
         {
             if (!spatial.Anchors.Any(a => a.Kind == location.Kind && a.Id == location.SlotId))
@@ -91,7 +93,7 @@ public sealed partial class CookingRecipeSimulation
     }
 
     private bool StationIsReachable(CookingPlayerConfig player, StationSlotId station) =>
-        _fixture.Spatial is null ? player.ReachableStations.Contains(station.Value) :
+        EffectiveSpatial is null ? player.ReachableStations.Contains(station.Value) :
         LocationIsReachable(ItemLocation.Station(station), player.Id);
 
     private bool ItemIsReachable(ItemId id, PlayerId player) =>
@@ -99,7 +101,7 @@ public sealed partial class CookingRecipeSimulation
 
     private bool LocationIsReachable(ItemLocation location, PlayerId player)
     {
-        if (_fixture.Spatial is null)
+        if (EffectiveSpatial is null)
             return location.Kind switch
             {
                 LocationKind.PlayerHand => location.OwnerId == player.Value,
@@ -128,14 +130,14 @@ public sealed partial class CookingRecipeSimulation
             if (!_poses.TryGetValue(new PlayerId(handOwner ?? ""), out var p)) return false;
             x = p.X; y = p.Y; return true;
         }
-        var anchor = _fixture.Spatial!.Anchors.FirstOrDefault(a => a.Kind == location.Kind && a.Id == location.SlotId);
+        var anchor = EffectiveSpatial!.Anchors.FirstOrDefault(a => a.Kind == location.Kind && a.Id == location.SlotId);
         if (anchor is null) return false;
         x = anchor.X; y = anchor.Y; return true;
     }
 
     private bool GeometryReach(CookingPlayerPose pose, int x, int y)
     {
-        var spatial = _fixture.Spatial!;
+        var spatial = EffectiveSpatial!;
         var dx = (long)x - pose.X; var dy = (long)y - pose.Y;
         return (BigInteger)dx * dx + (BigInteger)dy * dy <= (BigInteger)spatial.InteractionRadius * spatial.InteractionRadius &&
             ((dx == 0 && dy == 0) || dx * pose.FacingX + dy * pose.FacingY > 0) &&
@@ -144,7 +146,7 @@ public sealed partial class CookingRecipeSimulation
 
     private bool CommandIsReachable(CookingRecipeCommand command)
     {
-        if (_fixture.Spatial is null || command.Operation is CookingRecipeOperation.Move or CookingRecipeOperation.AdvanceTicks or
+        if (EffectiveSpatial is null || command.Operation is CookingRecipeOperation.Move or CookingRecipeOperation.AdvanceTicks or
             CookingRecipeOperation.StopProcess) return true;
         if (command.Item is { } id && _items.TryGetValue(id, out var item) && !item.Removed && !ItemIsReachable(id, command.Player)) return false;
         if (command.Container is { } container && _items.TryGetValue(container, out var c) && !c.Removed && !ItemIsReachable(container, command.Player)) return false;
@@ -161,7 +163,7 @@ public sealed partial class CookingRecipeSimulation
 
     private CookingRecipeCommandResult Move(CookingRecipeCommand command)
     {
-        if (_fixture.Spatial is not { } spatial || !_poses.TryGetValue(command.Player, out var before))
+        if (EffectiveSpatial is not { } spatial || !_poses.TryGetValue(command.Player, out var before))
             return Reject(CookingRecipeRejectionReason.MovementBlocked);
         var translating = command.MoveX != 0 || command.MoveY != 0;
         if (translating && before.LastMovementTick == LogicalTick) return Reject(CookingRecipeRejectionReason.MovementBlocked);

@@ -151,6 +151,10 @@ public sealed class CookingFrontDeliveryEtTests
         Accept(Execute(active, ItemCommand(fresh, active, CookingRecipeOperation.SubmitOrder, "serve", food, order)));
         Assert.Single(fresh.Simulation.SettlementHistory);
         Assert.Equal(CookingOrderStatus.Completed.ToString(), fresh.Simulation.Orders.Single(x => x.Id == order).Status);
+        var final = active.ExportCheckpoint().Checkpoint!; active.Dispose();
+        var finalFactory = new Factory(policy); var finalRestore = CookingLevelEtHost.Restore(final, finalFactory.Config, finalFactory);
+        Assert.True(finalRestore.Accepted, finalRestore.ToString()); using var finalHost = finalRestore.Host!;
+        Assert.Equal(final.CanonicalText(), finalHost.ExportCheckpoint().Checkpoint!.CanonicalText());
     }
 
     [Fact]

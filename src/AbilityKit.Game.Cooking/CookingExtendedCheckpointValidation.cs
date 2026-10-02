@@ -38,7 +38,7 @@ public sealed partial class CookingRecipeSimulation
         var poses = new Dictionary<PlayerId, CookingPlayerPose>();
         foreach (var pose in checkpoint.Poses)
             if (!poses.TryAdd(pose.Player, pose)) return CookingCheckpointRestoreReason.SpatialStateInvalid;
-        if (_fixture.Spatial is { } spatial)
+        if (EffectiveSpatial is { } spatial)
         {
             if (poses.Count != _fixture.Players.Count || poses.Values.Any(p => !_fixture.Players.ContainsKey(p.Player) || !spatial.ValidPose(p) || p.LastMovementTick < -1 || p.LastMovementTick > checkpoint.LogicalTick) ||
                 poses.Values.Any(p => poses.Values.Any(q => p.Player != q.Player && spatial.Overlap(p, q))))
@@ -70,9 +70,9 @@ public sealed partial class CookingRecipeSimulation
                     location = parent.Location;
                 }
                 if (location.Kind == LocationKind.PlayerHand) return location.OwnerId == worker.Value;
-                if (_fixture.Spatial is null) return location.Kind == LocationKind.WorldPosition ||
+                if (EffectiveSpatial is null) return location.Kind == LocationKind.WorldPosition ||
                     (location.Kind == LocationKind.StationSlot && config.ReachableStations.Contains(location.SlotId ?? ""));
-                var a = _fixture.Spatial.Anchors.FirstOrDefault(a => a.Kind == location.Kind && a.Id == location.SlotId);
+                var a = EffectiveSpatial.Anchors.FirstOrDefault(a => a.Kind == location.Kind && a.Id == location.SlotId);
                 return a is not null && GeometryReach(poses[worker], a.X, a.Y);
             }
             if (!Reach(anchor.Location) || (process.Station is { } station && !Reach(ItemLocation.Station(station))))

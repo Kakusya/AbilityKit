@@ -4,7 +4,7 @@ using System.Numerics;
 
 public sealed partial class CookingRecipeSimulation
 {
-    public CookingSpatialConfiguration? SpatialConfiguration => _fixture.Spatial;
+    public CookingSpatialConfiguration? SpatialConfiguration => EffectiveSpatial;
 
     /// <summary>Shared read-only reach query for application-owned World/Station anchors.</summary>
     public bool ValidateSpatialReach(PlayerId player, LocationKind kind, string anchorId) =>
@@ -45,7 +45,7 @@ public sealed partial class CookingRecipeSimulation
         }
         if (held is { } hand)
         {
-            if (_fixture.Spatial is { } map)
+            if (EffectiveSpatial is { } map)
                 foreach (var anchor in map.Anchors.Where(a => a.Kind == LocationKind.WorldPosition))
                     commands.Add((anchor.Id, C(CookingRecipeOperation.Drop, hand) with { WorldAnchor = anchor.Id }));
             foreach (var station in _fixture.Appliances.Keys.OrderBy(s => s.Value, StringComparer.Ordinal)) commands.Add((station.Value, C(CookingRecipeOperation.Drop, hand, station: station)));
@@ -66,7 +66,7 @@ public sealed partial class CookingRecipeSimulation
             try { if (sandbox.ExecuteValidatedCommand(command).Outcome != CookingRecipeOutcome.Accepted) continue; }
             catch (Exception error) when (error is OverflowException or InvalidOperationException) { continue; }
             long distance = 0, dot = 0;
-            if (_fixture.Spatial is not null && _poses.TryGetValue(player, out var pose))
+            if (EffectiveSpatial is not null && _poses.TryGetValue(player, out var pose))
             {
                 ItemLocation? location = command.Process is { } pr && TryGetProcess(pr, out var ps) ? _items[ps.Anchor].Location :
                     command.WorldAnchor is { } world ? ItemLocation.World(world) : command.Station is { } st ? ItemLocation.Station(st) :

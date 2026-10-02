@@ -41,17 +41,36 @@ public sealed class CookingMajorProgress
 
     public CookingMajorProgressResult ChooseDecoration(IReadOnlyList<CookingStationReplacement> replacements)
     {
-        ArgumentNullException.ThrowIfNull(replacements);
-        if (_locked)
-            return Reject(CookingMajorProgressReason.InvalidState);
-        if (replacements.Any(item => item is null))
-            return Reject(CookingMajorProgressReason.UnknownChoice);
+        var validation = ValidateDecoration(replacements);
+        if (!validation.Accepted)
+            return validation;
         _decoration.Clear();
         _decoration.AddRange(replacements);
         return Accept();
     }
 
+    /// <summary>Checks a decoration choice without changing the persistent preferences.</summary>
+    public CookingMajorProgressResult ValidateDecoration(IReadOnlyList<CookingStationReplacement> replacements)
+    {
+        ArgumentNullException.ThrowIfNull(replacements);
+        if (_locked)
+            return Reject(CookingMajorProgressReason.InvalidState);
+        if (replacements.Any(item => item is null))
+            return Reject(CookingMajorProgressReason.UnknownChoice);
+        return Accept();
+    }
+
     public CookingMajorProgressResult Unlock(DefinitionId definition)
+    {
+        var validation = ValidateUnlock(definition);
+        if (!validation.Accepted || validation.Reason == CookingMajorProgressReason.Duplicate)
+            return validation;
+        _unlocks.Add(definition);
+        return Accept();
+    }
+
+    /// <summary>Checks an unlock before the Level owner attempts physical placement.</summary>
+    public CookingMajorProgressResult ValidateUnlock(DefinitionId definition)
     {
         if (string.IsNullOrWhiteSpace(definition.Value))
             return Reject(CookingMajorProgressReason.UnknownChoice);
@@ -59,7 +78,6 @@ public sealed class CookingMajorProgress
             return Reject(CookingMajorProgressReason.InvalidState);
         if (_unlocks.Contains(definition))
             return new CookingMajorProgressResult(true, CookingMajorProgressReason.Duplicate);
-        _unlocks.Add(definition);
         return Accept();
     }
 

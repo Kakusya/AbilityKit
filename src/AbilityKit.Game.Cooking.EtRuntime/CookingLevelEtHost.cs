@@ -88,6 +88,14 @@ public readonly record struct CookingCommandFingerprint(string Value)
         writer.Int32(command.FacingX);
         writer.Int32(command.FacingY);
         writer.NullableString(command.WorldAnchor);
+        // Absent extension preserves every legacy golden byte; SUPP marks presence and version.
+        if (command.SupplierId is not null || command.DeliveryId is not null || command.SupplyRequestId is not null)
+        {
+            writer.Int32(0x53555050); writer.Int32(1);
+            writer.NullableString(command.SupplierId);
+            writer.NullableString(command.DeliveryId);
+            writer.NullableString(command.SupplyRequestId);
+        }
         return stream.ToArray();
     }
 
@@ -321,6 +329,7 @@ public sealed class CookingLevelEtHost : IDisposable
     private bool _executingAuthorityMutation;
     private bool _executingLifecycleOperation;
     private bool _executingFrontOperation;
+    private bool _executingPreparationMutation;
     private readonly CookingFrontOfHouseConfiguration? _frontConfiguration;
     private readonly string? _frontConfigurationIdentity;
 
@@ -734,14 +743,11 @@ public sealed class CookingLevelEtHost : IDisposable
         ArgumentNullException.ThrowIfNull(progress);
         if (_lifecycle.State != CookingLevelState.Created || _ownedSimulation is null)
             return new CookingMajorProgressResult(false, CookingMajorProgressReason.InvalidState);
-        var previous = progress.Decoration;
-        var chosen = progress.ChooseDecoration(replacements);
-        if (!chosen.Accepted)
-            return chosen;
-        var moved = _ownedSimulation.MigrateStations(replacements);
-        if (!moved.Accepted && previous.Count > 0)
-            progress.ChooseDecoration(previous);
-        return moved;
+        var validation = progress.ValidateDecoration(replacements);
+        if (!validation.Accepted) return validation;
+        var moved = RunPreparationMutation(() => _ownedSimulation.MigrateStations(replacements));
+        if (!moved.Accepted) return moved;
+        return progress.ChooseDecoration(replacements);
     }
 
     public CookingMajorProgressResult Unlock(
@@ -754,7 +760,9 @@ public sealed class CookingLevelEtHost : IDisposable
         ArgumentNullException.ThrowIfNull(content);
         if (_lifecycle.State != CookingLevelState.Created || _ownedSimulation is null)
             return new CookingMajorProgressResult(false, CookingMajorProgressReason.InvalidState);
-        var placed = _ownedSimulation.PlaceUnlock(content, definition);
+        var validation = progress.ValidateUnlock(definition);
+        if (!validation.Accepted || validation.Reason == CookingMajorProgressReason.Duplicate) return validation;
+        var placed = RunPreparationMutation(() => _ownedSimulation.PlaceUnlock(content, definition));
         if (!placed.Accepted)
             return placed;
         return progress.Unlock(definition);
@@ -943,6 +951,9 @@ public sealed class CookingLevelEtHost : IDisposable
             || (trustedFront is null && checkpoint.FrontOfHouse?.State is { } untrusted && (untrusted.Flow is not null || untrusted.ManualPolicyIdentity is not null)))
             return new(false, CookingLevelCheckpointRestoreReason.FrontOfHouseRestoreRejected,
                 FrontOfHouseRestoreReason: CookingFrontOfHouseRestoreReason.ConfigurationMismatch);
+        if (checkpoint.FrontOfHouse?.State.Closing == true && checkpoint.Recipe?.Supply is { Closing: false })
+            return new(false, CookingLevelCheckpointRestoreReason.GameplayRestoreRejected,
+                RecipeRestoreReason: CookingCheckpointRestoreReason.SupplyStateInvalid);
         // 载荷必须属于信封声明的同一 match，且已经绑定的 Level scope（含 epoch）必须就是本代际。
         // 只改 epoch、载荷 match 不变的 checkpoint 不能绕过这里被建成另一代宿主。
         // 尚未推进 fixed tick 的载荷没有代际绑定，同样拒绝：宿主恢复要求这一代已经被记录。
@@ -1161,6 +1172,7 @@ public sealed class CookingLevelEtHost : IDisposable
 
         HostFrameSequence = candidateFrame;
         _frontOfHouse?.Step(simulation, _frontOfHouseMenu);
+        if (_frontOfHouse?.IsClosing == true) simulation.StopNewSupplyRequests();
         if (_frontConfiguration is not null && _frontOfHouse is not null)
             simulation.UpdateFrontOfHouseState(_frontOfHouse.IsClosing, _frontOfHouse.CanSucceed);
         if (_inFlight is not null)
@@ -1498,6 +1510,14 @@ public sealed class CookingLevelEtHost : IDisposable
             Driver.Simulation = null;
     }
 
+    private T RunPreparationMutation<T>(Func<T> operation)
+    {
+        if (_executingPreparationMutation || _lifecycle.State != CookingLevelState.Created)
+            throw new InvalidOperationException("Preparation mutation is unavailable or reentered.");
+        _executingPreparationMutation = true;
+        try { return operation(); } finally { _executingPreparationMutation = false; }
+    }
+
     private T RunLifecycleOperation<T>(Func<T> operation)
     {
         ArgumentNullException.ThrowIfNull(operation);
@@ -1554,7 +1574,7 @@ public sealed class CookingLevelEtHost : IDisposable
     {
         if (_disposed)
             return;
-        if (Environment.CurrentManagedThreadId != _ownerThread || _ticking)
+        if (Environment.CurrentManagedThreadId != _ownerThread || _ticking || _executingPreparationMutation)
             throw new InvalidOperationException("Dispose requires the idle owner thread.");
 
         CancelPending("host-disposed");
@@ -1629,7 +1649,9 @@ public sealed class CookingLevelEtHost : IDisposable
         public HostAuthorityGate(CookingLevelEtHost host) => _host = host;
 
         public bool IsAuthorityMutationOpen =>
-            _host._ticking && _host._executingAuthorityMutation && _host._tickFailure is null && !_host._disposed;
+            !_host._disposed && _host._tickFailure is null &&
+            ((_host._ticking && _host._executingAuthorityMutation) ||
+             (_host._executingPreparationMutation && _host._lifecycle.State == CookingLevelState.Created));
     }
 
     private sealed class HostGameplayGate : ICookingRecipeLifecycleGate

@@ -1,4 +1,4 @@
-﻿using AbilityKit.Game.Cooking;
+using AbilityKit.Game.Cooking;
 using AbilityKit.Game.Cooking.EtRuntime;
 using Xunit;
 
@@ -76,7 +76,7 @@ public sealed class CookingCoreEtExpansionTests
             checkpoint=host.ExportCheckpoint().Checkpoint!;
             var serialized=CookingLevelCheckpointCodec.Serialize(CookingLevelCheckpointCodec.CreateEnvelope(checkpoint));
             var decoded=CookingLevelCheckpointCodec.Deserialize(serialized);Assert.True(decoded.Accepted);checkpoint=decoded.Checkpoint!;
-            Assert.False(CookingLevelCheckpointCodec.Deserialize(serialized.Replace("\"formatVersion\":6","\"formatVersion\":5")).Accepted);
+            Assert.False(CookingLevelCheckpointCodec.Deserialize(serialized.Replace("\"formatVersion\":7","\"formatVersion\":5")).Accepted);
             Assert.False(CookingLevelCheckpointCodec.Deserialize(serialized.Replace("\"remainingPortions\":0", "\"removedPortions\":0")).Accepted);
             Finish(f,host,process);expected=f.Simulation.Snapshot().CanonicalText();
         }

@@ -119,8 +119,8 @@ public sealed class CookingOrderBindingEtTests
                 { Items = checkpoint.Recipe.Items.Select(x => x.Id == product ? x with { BoundOrder = new("missing-order") } : x).ToArray() } };
             var badFactory = new Factory();
             Assert.False(CookingLevelEtHost.Restore(tampered, badFactory.Config, badFactory).Accepted);
-            Assert.Equal(6, CookingLevelCheckpointCodec.CurrentFormatVersion);
-            Assert.False(CookingLevelCheckpointCodec.Deserialize(encoded.Replace("\"formatVersion\":6", "\"formatVersion\":5")).Accepted);
+            Assert.Equal(7, CookingLevelCheckpointCodec.CurrentFormatVersion);
+            Assert.False(CookingLevelCheckpointCodec.Deserialize(encoded.Replace("\"formatVersion\":7", "\"formatVersion\":5")).Accepted);
             Finish(factory, host, product);
             expected = factory.Simulation.Snapshot().CanonicalText();
         }

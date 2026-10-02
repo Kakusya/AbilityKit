@@ -83,7 +83,7 @@ public sealed record CookingCheckpointReadResult(
 /// </summary>
 public static class CookingLevelCheckpointCodec
 {
-    public const int CurrentFormatVersion = 6;
+    public const int CurrentFormatVersion = 7;
     public const int MaximumRecordCharacters = 1024 * 1024;
 
     private static readonly JsonSerializerOptions Options = new()
@@ -115,7 +115,7 @@ public static class CookingLevelCheckpointCodec
             var envelope = JsonSerializer.Deserialize<CookingCheckpointEnvelope>(serialized, Options);
             if (envelope?.Checkpoint is null || string.IsNullOrWhiteSpace(envelope.IntegritySha256))
                 return new CookingCheckpointReadResult(false, CookingCheckpointReadReason.RecordTruncated, null);
-            if (envelope.FormatVersion != CurrentFormatVersion)
+            if (envelope.FormatVersion != CurrentFormatVersion || envelope.Checkpoint.Recipe?.SchemaVersion != 5)
                 return new CookingCheckpointReadResult(false, CookingCheckpointReadReason.UnknownFormatVersion, null);
             if (!StringComparer.Ordinal.Equals(envelope.IntegritySha256, envelope.Checkpoint.Sha256()))
                 return new CookingCheckpointReadResult(false, CookingCheckpointReadReason.IntegrityFailure, null);

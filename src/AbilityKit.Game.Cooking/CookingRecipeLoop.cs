@@ -1544,7 +1544,7 @@ public sealed partial class CookingRecipeSimulation
                 return Reject(CookingRecipeRejectionReason.PlayerIneligible);
         }
 
-        if (_fixture.Spatial is not null && containerId is null && anchorItem.Location.Kind == LocationKind.PlayerHand &&
+        if (EffectiveSpatial is not null && containerId is null && anchorItem.Location.Kind == LocationKind.PlayerHand &&
             stationId is { } target && _items.Values.Any(i => !i.Removed && i.Location == ItemLocation.Station(target)))
             return Reject(CookingRecipeRejectionReason.ContainerFull);
         _ = checked(_nextProcessId + 1); _ = checked(anchorItem.Version + 1); _ = checked(_stateVersion + 1); _ = checked(_eventSequence + 1);
@@ -1762,7 +1762,7 @@ public sealed partial class CookingRecipeSimulation
         {
             var location = ItemLocation.World(world);
             if (world == _fixture.CleanPoolLocation && _fixture.CleanContainerSupply.Count > 0) return Reject(CookingRecipeRejectionReason.ContainerRejectsItem);
-            if (_fixture.Spatial is null || !LocationIsReachable(location, command.Player)) return Reject(CookingRecipeRejectionReason.TargetOutOfRange);
+            if (EffectiveSpatial is null || !LocationIsReachable(location, command.Player)) return Reject(CookingRecipeRejectionReason.TargetOutOfRange);
             if (_items.Values.Any(i => !i.Removed && i.Location == location)) return Reject(CookingRecipeRejectionReason.ContainerFull);
             var version = checked(item.Version + 1); _ = checked(_stateVersion + 1); _ = checked(_eventSequence + 1);
             _hands[command.Player] = null;
@@ -1775,7 +1775,7 @@ public sealed partial class CookingRecipeSimulation
         if (!StationIsReachable(player, stationId))
             return Reject(CookingRecipeRejectionReason.TargetOutOfRange);
 
-        if (_fixture.Spatial is not null && _items.Values.Any(i => !i.Removed && i.Location == ItemLocation.Station(stationId)))
+        if (EffectiveSpatial is not null && _items.Values.Any(i => !i.Removed && i.Location == ItemLocation.Station(stationId)))
             return Reject(CookingRecipeRejectionReason.ContainerFull);
         return CommitMoveToStation(command, itemId, item, stationId);
     }
