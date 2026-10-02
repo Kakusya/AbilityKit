@@ -14,3 +14,13 @@
 ## Current execution sequence after review
 
 Owner authorizes audit then implementation. Follow the reviewed design and parent research/final-review.md; historical planning-only text is superseded. Check actual dependency evidence before starting, preserve stopped worktree edits, fix review findings before accepting prior implementation, update payload/fingerprints/config identity/canonical/checkpoint together, run focused behavioral and applicable integration gates, record actual pass/fail/blocked/skip and commit evidence. Never declare this Task complete from metadata or directory counts.
+
+## 受限域增量实际进度（不代替完整出口）
+
+- [x] 现有前厅 owner 中补有界 FIFO、路径/桌位与真实清桌状态。
+- [x] 补人工认领/持续/停手与伙伴互斥、保留进度、人工不增长；脏轮 WorkId 独立。
+- [x] snapshot/canonical/前厅 checkpoint 含新状态，malformed 候选拒绝零替换。
+- [x] 聚焦前厅域实际 36/36 pass，0 skipped；日志和命令见 design 最后域层证据。
+- [ ] 主 owner 接入统一 ET ingress、核心 geometry/布局适配与跨厨房 worker 互斥。
+- [ ] 主 owner 接入统一 Level 配置身份/checkpoint/wire 版本；真实 ET 完整营业与成功跨关门禁。
+- [ ] 独立审阅受限增量与组合门禁后方可判断 S06 完整出口；本记录不改 task 状态。
