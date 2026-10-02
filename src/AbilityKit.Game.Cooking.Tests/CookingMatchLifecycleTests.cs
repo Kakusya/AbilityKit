@@ -154,7 +154,7 @@ public sealed class CookingMatchLifecycleTests
         var v1 = v2 with { Schema = "cooking-definition-v1" };
 
         Assert.Equal(CookingConfigurationIdentity.CurrentSchema, v2.Schema);
-        Assert.Equal("cooking-definition-v2", v2.Schema);
+        Assert.Equal("cooking-definition-v3", v2.Schema);
 
         // Production rejection path 1: a preparation carrying a v1 config identity is refused
         // before any gameplay is created.

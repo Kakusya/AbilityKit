@@ -31,7 +31,7 @@ public sealed class CookingConfigurationSchemaV2Tests
         Assert.True(result.Accepted);
         Assert.NotNull(result.AfterIdentity);
         Assert.Equal(CookingConfigurationIdentity.CurrentSchema, result.AfterIdentity!.Schema);
-        Assert.Equal("cooking-definition-v2", CookingConfigurationIdentity.CurrentSchema);
+        Assert.Equal("cooking-definition-v3", CookingConfigurationIdentity.CurrentSchema);
 
         var snapshot = registry.Current!;
         var pot = snapshot.Items[Pot];
@@ -61,7 +61,7 @@ public sealed class CookingConfigurationSchemaV2Tests
         Assert.Contains("\"defaultInputs\"", canonical, StringComparison.Ordinal);
         Assert.Contains("\"completion\"", canonical, StringComparison.Ordinal);
         Assert.Contains("RetainInputs", canonical, StringComparison.Ordinal);
-        Assert.Contains("cooking-definition-v2", canonical, StringComparison.Ordinal);
+        Assert.Contains("cooking-definition-v3", canonical, StringComparison.Ordinal);
     }
 
     [Fact]
@@ -164,7 +164,7 @@ public sealed class CookingConfigurationSchemaV2Tests
         Assert.True(v2Registry.Submit(v1Candidate).Accepted);
         var v2Identity = v2Registry.Current!.Identity;
 
-        Assert.Equal("cooking-definition-v2", v2Identity.Schema);
+        Assert.Equal("cooking-definition-v3", v2Identity.Schema);
         Assert.DoesNotContain("cooking-definition-v1", v2Identity.ToString(), StringComparison.Ordinal);
     }
 
@@ -204,7 +204,7 @@ public sealed class CookingConfigurationSchemaV2Tests
         Assert.Contains(diagnostics, d => d.Code == CookingConfigurationDiagnosticCodes.MissingReference &&
             d.Table == "Recipe" && d.RecordId == "missing-input-ref" && d.Field == "Inputs" &&
             d.Relation == "absent-input");
-        Assert.Contains(diagnostics, d => d.Code == CookingConfigurationDiagnosticCodes.DuplicateId &&
+        Assert.DoesNotContain(diagnostics, d => d.Code == CookingConfigurationDiagnosticCodes.DuplicateId &&
             d.Table == "Recipe" && d.RecordId == "duplicate-inputs" && d.Field == "Inputs" && d.Relation == "tomato");
         Assert.Contains(diagnostics, d => d.Code == CookingConfigurationDiagnosticCodes.InvalidValue &&
             d.Table == "Recipe" && d.RecordId == "overlapping-defaults" && d.Field == "DefaultInputs" &&

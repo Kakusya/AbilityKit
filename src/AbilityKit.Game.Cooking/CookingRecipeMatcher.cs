@@ -22,13 +22,8 @@ public sealed record CookingRecipeMatchResult(
     RecipeId? Recipe,
     IReadOnlyList<RecipeId> Matches);
 
-/// <summary>
-/// 按输入集合匹配配方的纯函数：不依赖任何仿真状态，只依赖配置数据。
-/// 匹配规则是集合相等：presentInputs ∪ candidate.DefaultInputs 必须恰好等于
-/// candidate.Inputs ∪ candidate.DefaultInputs（即该配方声明的完整输入全集）。
-/// 默认供应不占物品、不占容量，但参与匹配；输入顺序与重复都不影响结果。
-/// 容器内容到本函数的接线属后续任务。
-/// </summary>
+/// <summary>Pure counted-multiset recipe matching. Input order is irrelevant; repeated definitions retain their counts.
+/// Default inputs provide the configured missing count without creating runtime objects.</summary>
 public static class CookingRecipeMatcher
 {
     /// <param name="presentInputs">容器内物品的定义集合；重复项折叠为集合。</param>
@@ -49,7 +44,7 @@ public static class CookingRecipeMatcher
         ArgumentNullException.ThrowIfNull(presentInputs);
         ArgumentNullException.ThrowIfNull(candidates);
 
-        var present = new HashSet<DefinitionId>(presentInputs);
+        var present = presentInputs.ToArray();
         var matched = new List<CookingRecipeDefinition>();
         foreach (var candidate in candidates)
         {
@@ -58,7 +53,7 @@ public static class CookingRecipeMatcher
             if (applianceCapabilities is not null &&
                 !applianceCapabilities.Contains(candidate.RequiredApplianceCapability))
                 continue;
-            if (!SetEqualsPresentPlusDefaults(present, candidate))
+            if (!MultisetEqualsPresentPlusDefaults(present, candidate))
                 continue;
             matched.Add(candidate);
         }
@@ -75,15 +70,20 @@ public static class CookingRecipeMatcher
             : new CookingRecipeMatchResult(CookingRecipeMatchOutcome.Ambiguous, null, ordered);
     }
 
-    private static bool SetEqualsPresentPlusDefaults(HashSet<DefinitionId> present, CookingRecipeDefinition candidate)
+    private static bool MultisetEqualsPresentPlusDefaults(IReadOnlyCollection<DefinitionId> present, CookingRecipeDefinition candidate)
     {
-        var defaults = candidate.DefaultInputs is { } declared ? new HashSet<DefinitionId>(declared) : new HashSet<DefinitionId>();
-        var effective = new HashSet<DefinitionId>(present);
-        effective.UnionWith(defaults);
-        var universe = new HashSet<DefinitionId>(candidate.Inputs);
-        universe.UnionWith(defaults);
-        return effective.SetEquals(universe);
+        static Dictionary<DefinitionId, int> Counts(IEnumerable<DefinitionId> values) =>
+            values.GroupBy(v => v).ToDictionary(g => g.Key, g => g.Count());
+        var effective = Counts(present);
+        var expected = Counts(candidate.Inputs);
+        foreach (var (definition, count) in Counts(candidate.DefaultInputs ?? Array.Empty<DefinitionId>()))
+        {
+            expected[definition] = expected.GetValueOrDefault(definition) + count;
+            effective[definition] = Math.Max(effective.GetValueOrDefault(definition), count);
+        }
+        return effective.Count == expected.Count && expected.All(p => effective.GetValueOrDefault(p.Key) == p.Value);
     }
+
 }
 
 public sealed record CookingRecipeMatchAcceptanceEvidence(
