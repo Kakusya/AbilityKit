@@ -36,6 +36,7 @@ $clientReportPath = Join-Path $runDirectory 'client.json'
 $hostStdout = Join-Path $runDirectory 'host.stdout.log'
 $hostArguments = (Quote-Argument $dll) + ' host --ip 127.0.0.1 --port ' + $Port + ' --report ' + (Quote-Argument $hostReportPath) + ' --topology SameMachineIndependentProcessesUdp'
 $hostProcess = Start-Process dotnet -ArgumentList $hostArguments -WindowStyle Hidden -PassThru -RedirectStandardOutput $hostStdout -RedirectStandardError (Join-Path $runDirectory 'host.stderr.log')
+$null = $hostProcess.Handle # Retain the native handle before Refresh observes exit.
 $clientProcess = $null
 try {
     $readyPort = $null
@@ -56,6 +57,7 @@ try {
     if ($null -eq $readyPort -or $readyPort -le 0) { throw 'Host readiness deadline expired.' }
     $clientArguments = (Quote-Argument $dll) + ' client --ip 127.0.0.1 --port ' + $readyPort + ' --report ' + (Quote-Argument $clientReportPath) + ' --topology SameMachineIndependentProcessesUdp'
     $clientProcess = Start-Process dotnet -ArgumentList $clientArguments -WindowStyle Hidden -PassThru -RedirectStandardOutput (Join-Path $runDirectory 'client.stdout.log') -RedirectStandardError (Join-Path $runDirectory 'client.stderr.log')
+    $null = $clientProcess.Handle
     $exitDeadline = [DateTime]::UtcNow.AddSeconds(600)
     while ([DateTime]::UtcNow -lt $exitDeadline) {
         $hostProcess.Refresh(); $clientProcess.Refresh()
@@ -71,10 +73,11 @@ try {
         Start-Sleep -Milliseconds 100
     }
     if (!$hostProcess.HasExited -or !$clientProcess.HasExited) { throw 'Independent-process acceptance deadline expired.' }
+    $hostProcess.WaitForExit(); $clientProcess.WaitForExit()
     if (!(Test-Path -LiteralPath $hostReportPath) -or !(Test-Path -LiteralPath $clientReportPath)) { throw 'One or both endpoint reports are absent.' }
     $hostReport = Get-Content -LiteralPath $hostReportPath -Raw | ConvertFrom-Json
     $clientReport = Get-Content -LiteralPath $clientReportPath -Raw | ConvertFrom-Json
-    if ($hostProcess.ExitCode -ne 0 -or $clientProcess.ExitCode -ne 0 -or !$hostReport.passed -or !$clientReport.passed) { throw 'Endpoint acceptance failed; inspect JSON and stderr artifacts.' }
+    if ($null -eq $hostProcess.ExitCode -or $null -eq $clientProcess.ExitCode -or $hostProcess.ExitCode -ne 0 -or $clientProcess.ExitCode -ne 0 -or !$hostReport.passed -or !$clientReport.passed) { throw "Endpoint acceptance failed (Host exit=$($hostProcess.ExitCode), Client exit=$($clientProcess.ExitCode)); inspect JSON and stderr artifacts." }
     if ($hostReport.pid -ne $hostProcess.Id -or $clientReport.pid -ne $clientProcess.Id -or $hostReport.pid -eq $clientReport.pid) { throw 'Reports do not prove separate launched processes.' }
     if ($hostReport.fixture -ne $clientReport.fixture -or $hostReport.protocol -ne 3 -or $clientReport.protocol -ne 3 -or $hostReport.topology -ne 'SameMachineIndependentProcessesUdp' -or $clientReport.topology -ne $hostReport.topology) { throw 'Fixture, protocol or topology provenance differs.' }
     if ([string]::IsNullOrWhiteSpace($hostReport.detail.hash) -or $hostReport.detail.hash -ne $clientReport.detail.hash) { throw 'Full gameplay-capture consensus hash differs.' }
@@ -89,6 +92,7 @@ try {
     }
     # Connection Ready/connected state may change after Client exits; each endpoint
     # reports its full hash-covered view, while exact consensus covers gameplay capture.
+    @{passed=$true;hostPid=$hostProcess.Id;clientPid=$clientProcess.Id;hostExitCode=$hostProcess.ExitCode;clientExitCode=$clientProcess.ExitCode;hash=$hostReport.detail.hash;topology='SameMachineIndependentProcessesUdp';physicalTwoPc='NOT_VERIFIED'} | ConvertTo-Json | Set-Content -LiteralPath (Join-Path $runDirectory 'paired.json') -Encoding UTF8
     Write-Output "PASS independent Host PID=$($hostReport.pid) Client PID=$($clientReport.pid) UDP=$readyPort hash=$($hostReport.detail.hash)"
     Write-Output "Artifacts: $runDirectory; physical two-PC LAN remains NOT_VERIFIED."
 } finally {
