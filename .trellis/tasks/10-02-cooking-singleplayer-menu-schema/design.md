@@ -6,6 +6,8 @@
 
 ## 本次审议：内容与运行契约
 
+工序容器约束采用既有Recipe的可选 `RequiredProcessingContainerDefinition`：领域 `DefinitionId?`、内容 `string?`，默认null兼容旧配方。指定模具/烤盘/蒸篮/炸篮的步骤仅在对应anchor容器启动；该字段参与配置外键/兼容性/canonical identity，StartProcess和预览的实际匹配必须考虑容器身份，错误载体拒绝且零变更。由核心owner统一实现，菜单映射只投影字段，不创建每菜专用命令。
+
 以原附件 SHA 和源编号建立稳定映射，禁止按 Excel 行序 zip 分配 ID。72 供应、60 准备状态、19 功能工位、87 成品各自身份独立；中文名冲突拒绝，别名显式声明。保留原367节点，对生成的共享/展开 recipe、交付操作、非独立步骤逐节点记录去向，不能只验生成210步的数量。
 
 Recipe 输入为正整数份数 multiset；展开重复项时校验器、matcher、输入锁、消耗、容量和恢复均保留次数。DefaultInputs 不能免费补成第二份。每个非供应状态有明确 producer，图无环；每关许可闭包包含供应、工位、加工及出餐容器，解锁与允许范围取交集。
