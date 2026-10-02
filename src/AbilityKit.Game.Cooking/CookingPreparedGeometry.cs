@@ -3,6 +3,8 @@ namespace AbilityKit.Game.Cooking;
 public sealed partial class CookingRecipeSimulation
 {
     internal IReadOnlyDictionary<StationSlotId, CookingApplianceDefinition> ConfiguredAppliances => _fixture.Appliances;
+    internal IReadOnlyList<PlayerId> ConfiguredPlayers =>
+        Array.AsReadOnly(_fixture.Players.Keys.OrderBy(p => p.Value, StringComparer.Ordinal).ToArray());
     // The Level owner builds this projection from trusted content and validates front routes
     // before calling the installer. No gameplay command accepts a caller-supplied projection.
     internal bool CanInstallPreparedGeometry(CookingLayoutGeometryResult projection,

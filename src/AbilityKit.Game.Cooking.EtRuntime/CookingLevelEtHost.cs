@@ -397,6 +397,17 @@ public sealed class CookingLevelEtHost : IDisposable
     public CookingLevelLifecycle Lifecycle => _lifecycle;
     public CookingFrontOfHouseSnapshot? FrontOfHouseSnapshot => _frontOfHouse?.Snapshot();
 
+    /// <summary>Reads the committed owner boundary without advancing simulation or lifecycle.</summary>
+    public CookingLevelObservation Observe()
+    {
+        Check();
+        var kitchen = _ownedSimulation;
+        return CookingLevelObservationProjector.Project(Binding.LevelScope, _lifecycle.Snapshot(), HostFrameSequence,
+            kitchen?.Snapshot(), _frontOfHouse?.Snapshot(), _installedLayout?.Layout, _preparationConfiguration?.Identity(),
+            kitchen?.SpatialConfiguration is { } geometry ? CookingFrontOfHouseFlow.SpatialIdentity(geometry) : null,
+            kitchen?.ConfiguredPlayers);
+    }
+
     /// <summary>
     /// 准备态只读观察。成功交接和失败重开在 <c>Created</c> 就已经挂上厨房，
     /// 此时 <see cref="CookingLevelLifecycle.TryGetGameplay"/> 仍关闭。
