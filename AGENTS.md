@@ -16,6 +16,8 @@
 
 # AbilityKit 工作区指引
 
+- 2026-10-03网络恢复接续：N02当前实际流程、独立审查与待完成出口读[process-integration-verification.md](.trellis/tasks/10-02-cooking-network-gameplay-loop/research/process-integration-verification.md)。N03仅获准先行本地确定性恢复/边界工程，读取其[PRD](.trellis/tasks/10-02-cooking-network-reconnect-measurement/prd.md)、[design](.trellis/tasks/10-02-cooking-network-reconnect-measurement/design.md)及[cold source map](.trellis/tasks/10-02-cooking-network-reconnect-measurement/research/cold-recovery-source-map.md)。这项局部依赖例外不表示N02或物理两PC出口完成；.NET验证窗口由root串行协调，Unity继续后置。
+
 - Cooking 本次最新指令是持续审计所有议题、审清后执行到完成。恢复时先读 [完整出口审计表](.trellis/tasks/10-02-cooking-gameplay-menu-plan/research/completion-contract.md)、[execution.md](.trellis/tasks/10-02-cooking-gameplay-menu-plan/execution.md)，再读各 Task 设计/manifests。不要把历史“只列不执行”重新当作当前指令，也不要把已停止 worker 当作存活；保留分支必须审阅和复跑。仍不改变架构，单机优先，Unity 由独立执行门控制。
 
 ## 项目与边界
