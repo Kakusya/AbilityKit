@@ -29,3 +29,7 @@ M3：S01–S12。以单机→网络→单机 Unity→网络 Unity 顺序推进�
 ## Authorized implementation refinement, dependency closure pending
 
 Owner subsequent approval and this Orca dispatch authorize implementation of S11; earlier planning-only wording above is historical. Scope is exactly 12 candidates: S01, S02, S03, S04, S05, S06, S07, S08, S09, S10, S11, S12. Shared batter, physical molds, demolding/coating, S11 biscuit times2, explicit final additions. Catalog coverage and per-menu preflight evidence exist under S04; full batch acceptance waits for validated S05 import, actual delivery/bound recovery and preceding task closure. This candidate set does not become a first-level menu. Unity, economics, precise minigames, procurement and full S14 level exit remain outside this task.
+
+## Current implementation acceptance pointer
+
+Coordinator-validated carrier/provenance/S05 hooks are now integrated into actual menu loading. All87 source-to-preparation-to-final-to-correct-vessel-to-delivery routes and121 actual ET recovery comparisons passed; current evidence and exact remaining S07/S14/Unity/balance boundaries: ../10-02-cooking-singleplayer-menu-schema/research/final-report.md and ../10-02-cooking-singleplayer-menu-schema/research/verification.md. Historical pending-hook/design-only statements above are superseded for worker menu acceptance; coordinator independent review/master integration still pending.

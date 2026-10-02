@@ -23,3 +23,14 @@ Owner authorizes audit then implementation. Follow the reviewed design and paren
 - [ ] Map actual requires-binding/disposable fields, produce and deliver every selected candidate, and restore relevant bound/plated/partial/manual state via real ET host.
 - [ ] Run actual appropriate gate and write batch-specific evidence index with commands/counts and remaining boundaries.
 - [ ] Review contracts and report commit to coordinator for local master integration; worker never merges/pushes master.
+
+## Actual authorized acceptance checkpoint
+
+- [x] Coordinator-validated core carrier/provenance and S05 binding/disposal/nested-vessel fixes imported; own core/schema mutations prohibited.
+- [x] Concrete API/error/version/source review and dependency closure completed under owner-approved Orca scope.
+- [x] All selected candidate routes execute finite supply -> preparation -> stage -> finished product -> correct vessel -> actual delivery.
+- [x] Domain rejection/rebind/unbind and true ET ingress/codec/dispose/restore canonical equality pass; drinking cups consumed, food vessels enter washing semantics.
+- [x] Actual final gate330 focused/452 Cooking/197 ET and generator5/5 passed; durable current per-menu evidence linked.
+- [ ] Coordinator independent review/local master integration and task closure/archive; worker does not merge or archive unmerged task.
+
+Current evidence supersedes historical pending-hook language above. Candidate counts do not define the initial level; direct order fixture setup/finite initial stock are not S07/S14 full procurement/front closure.

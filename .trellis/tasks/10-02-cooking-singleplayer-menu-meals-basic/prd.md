@@ -29,3 +29,7 @@ M1：F01–F16/F21–F27/F43–F44。以单机→网络→单机 Unity→网络 
 ## Authorized implementation refinement, dependency closure pending
 
 Owner subsequent approval and this Orca dispatch authorize implementation of S09; earlier planning-only wording above is historical. Scope is exactly 25 candidates: F01, F02, F03, F04, F05, F06, F07, F08, F09, F10, F11, F12, F13, F14, F15, F16, F21, F22, F23, F24, F25, F26, F27, F43, F44. F01/F11/F21 seed cases; chopping, boiling, frying, independent pasta/sauce branches and portioned staples. Catalog coverage and per-menu preflight evidence exist under S04; full batch acceptance waits for validated S05 import, actual delivery/bound recovery and preceding task closure. This candidate set does not become a first-level menu. Unity, economics, precise minigames, procurement and full S14 level exit remain outside this task.
+
+## Current implementation acceptance pointer
+
+Coordinator-validated carrier/provenance/S05 hooks are now integrated into actual menu loading. All87 source-to-preparation-to-final-to-correct-vessel-to-delivery routes and121 actual ET recovery comparisons passed; current evidence and exact remaining S07/S14/Unity/balance boundaries: ../10-02-cooking-singleplayer-menu-schema/research/final-report.md and ../10-02-cooking-singleplayer-menu-schema/research/verification.md. Historical pending-hook/design-only statements above are superseded for worker menu acceptance; coordinator independent review/master integration still pending.

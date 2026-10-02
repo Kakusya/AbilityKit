@@ -18,13 +18,14 @@
   ],
   "preflightCommit": "380f903b6dc1a91ea078b1cfee3ee0b646949cd6",
   "progressCommit": "a8976c6a22468a7490ce24e39cd9cea96182cf00",
-  "domainRecordRoot": ".trellis/tasks/10-02-cooking-singleplayer-menu-schema/research/spatial-production",
-  "domainRecordsBoundary": "Historical pre-carrier/provenance/S05 production records; not current all-menu delivery proof",
+  "domainRecordRoot": ".trellis/tasks/10-02-cooking-singleplayer-menu-schema/research/complete-domain-production",
+  "domainRecordsBoundary": "Actual formal content provenance/carrier/S05 hooks; complete submitted fixture production, not S07/S14 full level",
   "etTests": "src/AbilityKit.ET.Runtime.Tests/CookingMenuProductionEtTests.cs",
   "pending": [
-    "validated S05 opt-in binding/disposal",
-    "actual every candidate delivery including drinks",
-    "post-S05 bound checkpoint recovery",
-    "task dependency closure and final batch review"
-  ]
+    "coordinator independent review/master integration",
+    "S07 procurement and S14 full level lifecycle outside batch"
+  ],
+  "etRecordRoot": ".trellis/tasks/10-02-cooking-singleplayer-menu-schema/research/complete-et-production",
+  "gate": "330focused/452Cooking/197ET passed33.7s",
+  "workerAcceptance": "passed"
 }

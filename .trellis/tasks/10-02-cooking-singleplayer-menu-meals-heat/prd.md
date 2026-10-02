@@ -29,3 +29,7 @@ M2：F17–F20/F28–F42。以单机→网络→单机 Unity→网络 Unity 顺�
 ## Authorized implementation refinement, dependency closure pending
 
 Owner subsequent approval and this Orca dispatch authorize implementation of S10; earlier planning-only wording above is historical. Scope is exactly 19 candidates: F17, F18, F19, F20, F28, F29, F30, F31, F32, F33, F34, F35, F36, F37, F38, F39, F40, F41, F42. Uncooked pizza/dumpling stages, real bake/steam/fry/grill vessels, separate serving saucepan. Catalog coverage and per-menu preflight evidence exist under S04; full batch acceptance waits for validated S05 import, actual delivery/bound recovery and preceding task closure. This candidate set does not become a first-level menu. Unity, economics, precise minigames, procurement and full S14 level exit remain outside this task.
+
+## Current implementation acceptance pointer
+
+Coordinator-validated carrier/provenance/S05 hooks are now integrated into actual menu loading. All87 source-to-preparation-to-final-to-correct-vessel-to-delivery routes and121 actual ET recovery comparisons passed; current evidence and exact remaining S07/S14/Unity/balance boundaries: ../10-02-cooking-singleplayer-menu-schema/research/final-report.md and ../10-02-cooking-singleplayer-menu-schema/research/verification.md. Historical pending-hook/design-only statements above are superseded for worker menu acceptance; coordinator independent review/master integration still pending.

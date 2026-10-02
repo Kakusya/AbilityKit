@@ -29,3 +29,7 @@ M4：D01–D14。以单机→网络→单机 Unity→网络 Unity 顺序推进�
 ## Authorized implementation refinement, dependency closure pending
 
 Owner subsequent approval and this Orca dispatch authorize implementation of S12; earlier planning-only wording above is historical. Scope is exactly 14 candidates: D01, D02, D03, D04, D05, D06, D07, D08, D09, D10, D11, D12, D13, D14. Distinct juice/blend/instant mixing; correct hot/cold cup and mandatory binding; D12/D13 repeated hot liquid. Catalog coverage and per-menu preflight evidence exist under S04; full batch acceptance waits for validated S05 import, actual delivery/bound recovery and preceding task closure. This candidate set does not become a first-level menu. Unity, economics, precise minigames, procurement and full S14 level exit remain outside this task.
+
+## Current implementation acceptance pointer
+
+Coordinator-validated carrier/provenance/S05 hooks are now integrated into actual menu loading. All87 source-to-preparation-to-final-to-correct-vessel-to-delivery routes and121 actual ET recovery comparisons passed; current evidence and exact remaining S07/S14/Unity/balance boundaries: ../10-02-cooking-singleplayer-menu-schema/research/final-report.md and ../10-02-cooking-singleplayer-menu-schema/research/verification.md. Historical pending-hook/design-only statements above are superseded for worker menu acceptance; coordinator independent review/master integration still pending.

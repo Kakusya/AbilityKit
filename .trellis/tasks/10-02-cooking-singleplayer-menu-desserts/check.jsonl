@@ -11,3 +11,4 @@
 {"file": "src/AbilityKit.Game.Cooking.Tests/Fixtures/CookingMenuProductionFixture.cs", "reason": "Shared public command driver and physical storage"}
 {"file": "src/AbilityKit.ET.Runtime.Tests/CookingMenuProductionEtTests.cs", "reason": "Real host ingress, codec destroy/restore canonical comparison"}
 {"file": ".trellis/tasks/10-02-cooking-singleplayer-menu-schema/research/verification.md", "reason": "Actual checks and unresolved delivery/level boundaries"}
+{"file": ".trellis/tasks/10-02-cooking-singleplayer-menu-schema/research/complete-evidence-audit.json", "reason": "Actual87 deliveries and121 ET recovered canonical comparisons; finite fixture boundary"}
