@@ -9,7 +9,6 @@ namespace AbilityKit.Network.Transport.LiteNet.Tests;
 
 public sealed class LiteNetTransportTests
 {
-    private const int Port = 18766;
     private const string Key = "abilitykit-test";
 
     [Fact]
@@ -23,7 +22,7 @@ public sealed class LiteNetTransportTests
             AutoRecycle = true,
             BroadcastReceiveEnabled = false,
         };
-        Assert.True(server.Start(Port), "LiteNetLib server failed to start on port " + Port);
+        Assert.True(server.Start(0), "LiteNetLib server failed to bind an ephemeral port.");
 
         // echo received bytes back to the peer
         serverListener.NetworkReceiveEvent += (peer, reader, channel, method) =>
@@ -40,7 +39,7 @@ public sealed class LiteNetTransportTests
 
         try
         {
-            transport.Connect("127.0.0.1", Port);
+            transport.Connect("127.0.0.1", server.LocalPort);
             await connected.Task.WaitAsync(TimeSpan.FromSeconds(8));
 
             var payload = new byte[] { 10, 20, 30, 40 };

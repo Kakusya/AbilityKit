@@ -103,6 +103,7 @@ namespace AbilityKit.Network.Transport.LiteNet
 
         private void Report(Exception exception)
         {
+            if (Monitor.IsEntered(_gate)) { ThreadPool.QueueUserWorkItem(_ => Report(exception)); return; }
             var handlers = Error;
             if (handlers == null) return;
             foreach (Action<Exception> handler in handlers.GetInvocationList())
@@ -163,7 +164,7 @@ namespace AbilityKit.Network.Transport.LiteNet
             lock (_gate)
             {
                 if (_closed || bytes.Length == 0) return;
-                overflow = bytes.Length > _maximumBufferedReceiveBytes - _bufferedBytes;
+                overflow = _pending.Count >= 1024 || bytes.Length > _maximumBufferedReceiveBytes - _bufferedBytes;
                 if (!overflow) { _pending.Enqueue(bytes); _bufferedBytes += bytes.Length; }
             }
             if (overflow) { try { Report(new InvalidOperationException("Channel receive buffer limit exceeded.")); } finally { Close(); } }
@@ -188,6 +189,7 @@ namespace AbilityKit.Network.Transport.LiteNet
 
         private void Report(Exception exception)
         {
+            if (Monitor.IsEntered(_gate)) { ThreadPool.QueueUserWorkItem(_ => Report(exception)); return; }
             var handlers = Error;
             if (handlers == null) return;
             foreach (Action<Exception> handler in handlers.GetInvocationList()) try { handler(exception); } catch { }
