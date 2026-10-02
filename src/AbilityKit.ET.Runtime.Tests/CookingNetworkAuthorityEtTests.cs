@@ -202,6 +202,11 @@ public sealed class CookingNetworkAuthorityEtTests
         var discard = Mapped(host, A, "discard") with { Envelope = Mapped(host, A, "discard").Envelope with {
             Command = new(Scope, host.HostFrameSequence + 1, A, new("discard"), CookingRecipeOperation.DiscardItem, Item: Shared, ExpectedItemVersion: item.Version) } };
         Assert.Equal(CookingRecipeOutcome.Accepted, Assert.Single(port.ConsumeFrame(new[] { discard }, Array.Empty<PlayerId>()).Dispositions).Result!.Outcome);
+        var running = port.CaptureFullState().State!;
+        Assert.NotNull(running.ResumableCheckpoint);
+        Assert.Equal(f.Simulation.ExportCheckpoint().CanonicalText(), running.FullRecipe!.CanonicalText());
+        Assert.Equal(running.FullRecipe.CanonicalText(), running.ResumableCheckpoint.Recipe.CanonicalText());
+        Assert.Equal(running.FullFront!.CanonicalText(), running.ResumableCheckpoint.FrontOfHouse!.CanonicalText());
         Assert.True(host.Pause().Accepted);
         var before = f.Simulation.ExportCheckpoint().CanonicalText();
         var capture = port.CaptureFullState().State!;

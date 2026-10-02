@@ -398,9 +398,12 @@ public sealed class CookingLevelEtHost : IDisposable
         var unavailable = NetworkUnavailable();
         if (unavailable != CookingNetworkCaptureReason.None) return new(false, unavailable, null);
         var observation = Observe();
-        var recipe = _ownedSimulation?.ExportCheckpoint();
-        var front = _frontOfHouse is null ? null : RunFrontOperation(() => _frontOfHouse.ExportCheckpoint(_frontOfHouseMenu));
         var checkpoint = ExportCheckpoint();
+        // These are the same committed owner read. Reuse its already copied payload;
+        // non-resumable states still export their explicit readonly projections.
+        var recipe = checkpoint.Checkpoint?.Recipe ?? _ownedSimulation?.ExportCheckpoint();
+        var front = checkpoint.Checkpoint?.FrontOfHouse ?? (_frontOfHouse is null ? null
+            : RunFrontOperation(() => _frontOfHouse.ExportCheckpoint(_frontOfHouseMenu)));
         var reason = _ownedSimulation is null ? CookingNetworkCheckpointUnavailableReason.NotInitialized
             : Enum.Parse<CookingNetworkCheckpointUnavailableReason>(checkpoint.Reason.ToString());
         var progress = _ownedSimulation?.MajorProgressForGeneration;
