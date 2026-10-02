@@ -444,4 +444,42 @@ public sealed class CookingNetworkSessionV3Tests
         Assert.Contains("FullStateExceedsWireBounds", (await Assert.ThrowsAsync<InvalidOperationException>(() => joining)).Message);
     }
 
+    [Fact]
+    public void Ready_connection_has_one_awaiting_ack_full_baseline_while_commands_reply_and_next_ack_publishes_latest()
+    {
+        using var host = Host(); using var session = Session(host); session.Start();
+        using var connection = new ConnectionManager(session.CreateLocalClientTransport, new ConnectionOptions { EnableReconnect = false });
+        var packets = new List<CookingNetworkWireEnvelope>();
+        connection.ServerPushReceived += (_, bytes) => { Assert.True(CookingNetworkWireCodec.TryDecode(bytes.AsSpan(), new(), out var e)); packets.Add(e!); };
+        void Send<T>(CookingNetworkMessageKind kind, string correlation, T payload) => connection.Send(CookingNetworkWireCodec.OpCode,
+            new ArraySegment<byte>(CookingNetworkWireCodec.Encode(kind, correlation, payload)), (ushort)NetworkPacketFlags.ServerPush);
+        CookingNetworkBaseline[] Baselines() => packets.Where(p => p.Kind == CookingNetworkMessageKind.Baseline)
+            .Select(p => CookingNetworkWireCodec.Read<CookingNetworkBaseline>(p)!).ToArray();
+        connection.Open("inprocess", 1); Send(CookingNetworkMessageKind.Join, "join", new CookingNetworkJoin(A, "join-a", null, null));
+        session.ProcessOwnerFrame(); var first = Assert.Single(Baselines());
+        var binding = CookingNetworkWireCodec.Read<CookingNetworkJoined>(Assert.Single(packets, p => p.Kind == CookingNetworkMessageKind.Joined))!;
+        Send(CookingNetworkMessageKind.BaselineAck, "initial-ack", first.Identity); session.ProcessOwnerFrame();
+        Assert.Equal(2, Baselines().Length); var pending = Baselines()[1];
+        Assert.True(session.LatestSessionProjection.Participants.Single(p => p.Participant == A).Ready);
+        for (var i = 0; i < 12; i++) session.ProcessOwnerFrame();
+        Assert.Equal(2, Baselines().Length); // Drop/delay the second actual ACK; owner continues without more full frames.
+        Send(CookingNetworkMessageKind.Command, "during-backpressure", new CookingNetworkWireCommand(binding.ServerSessionInstance,
+            binding.ConnectionGeneration, 1, "pickup-during-backpressure", Scope, Pickup(A)));
+        session.ProcessOwnerFrame();
+        Assert.Equal(CookingRecipeOutcome.Accepted, CookingNetworkWireCodec.Read<CookingNetworkWireResult>(
+            Assert.Single(packets, p => p.CorrelationId == "during-backpressure"))!.Result!.Outcome);
+        Assert.Equal(2, Baselines().Length);
+        Send(CookingNetworkMessageKind.BaselineAck, "stale-ack", first.Identity); session.ProcessOwnerFrame();
+        Assert.Equal(2, Baselines().Length); Assert.Equal("BaselineRequired", CookingNetworkWireCodec.Read<CookingNetworkWireResult>(
+            Assert.Single(packets, p => p.CorrelationId == "stale-ack"))!.Reason);
+        Send(CookingNetworkMessageKind.BaselineAck, "release-pending", pending.Identity); session.ProcessOwnerFrame();
+        Assert.Equal(3, Baselines().Length); var latest = Baselines()[2];
+        Assert.Equal(pending.Identity.SnapshotSequence + 1, latest.Identity.SnapshotSequence);
+        Assert.Equal(session.LatestCapture!.Observation.CanonicalText(), latest.State.Observation.CanonicalText());
+        Assert.Equal(session.LatestCapture.FullRecipe!.CanonicalText(), latest.State.FullRecipe!.CanonicalText());
+        Assert.Equal(A.Value, latest.State.Observation.Items.Single(i => i.Id == Food).Location.OwnerId);
+        Send(CookingNetworkMessageKind.BaselineAck, "duplicate-ack", pending.Identity); session.ProcessOwnerFrame();
+        Assert.Equal(3, Baselines().Length); // Duplicate old ACK cannot release the new issued snapshot.
+    }
+
 }

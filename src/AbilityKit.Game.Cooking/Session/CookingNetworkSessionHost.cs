@@ -26,6 +26,7 @@ public sealed class CookingNetworkSessionHost : IDisposable
         public (long Generation, long Sequence)? TransportRepliedWatermark;
         public bool Ready;
         public CookingNetworkBaselineIdentity? Issued;
+        public bool BaselineAwaitingAck;
         public string Source = "";
     }
     private sealed class Participant(string credential)
@@ -139,7 +140,7 @@ public sealed class CookingNetworkSessionHost : IDisposable
     }
     private void Publish(Connection connection)
     {
-        if (_captureUnavailable is not null || LatestCapture is null || connection.Participant is null || (!connection.Ready && connection.Issued is not null)) return;
+        if (_captureUnavailable is not null || LatestCapture is null || connection.Participant is null || connection.BaselineAwaitingAck) return;
         RefreshSessionProjection();
         var identity = new CookingNetworkBaselineIdentity(ServerSessionInstance, connection.Participant.Value, connection.Generation,
             LatestCapture.Observation.Scope, LatestCapture.Observation.Scope.LevelEpoch, checked(_snapshotSequence + 1),
@@ -149,7 +150,7 @@ public sealed class CookingNetworkSessionHost : IDisposable
         try { bytes = CookingNetworkWireCodec.Encode(CookingNetworkMessageKind.Baseline, "baseline-" + identity.SnapshotSequence, baseline, _options); }
         catch (ArgumentException) { MakeUnavailable("FullStateExceedsWireBounds"); return; }
         // Issued identity and sequence become visible only after full outbound validation.
-        _snapshotSequence = identity.SnapshotSequence; connection.Issued = identity;
+        _snapshotSequence = identity.SnapshotSequence; connection.Issued = identity; connection.BaselineAwaitingAck = true;
         if (connection.Peer.IsConnected) { _sentBytes += bytes.Length; connection.Peer.SendPush(CookingNetworkWireCodec.OpCode, new ArraySegment<byte>(bytes)); }
     }
     private void Join(Ingress input)
@@ -178,7 +179,7 @@ public sealed class CookingNetworkSessionHost : IDisposable
     }
     private void CloseOwner(Connection connection, CookingNetworkCallerCancellationReason reason)
     {
-        connection.Ready = false; connection.Issued = null;
+        connection.Ready = false; connection.Issued = null; connection.BaselineAwaitingAck = false;
         if (connection.Participant is { } player) {
             if (_participants[player].Active == connection) _participants[player].Active = null;
             _cleanup.Add(player);
@@ -225,8 +226,8 @@ public sealed class CookingNetworkSessionHost : IDisposable
                 if (input.Envelope.Kind == CookingNetworkMessageKind.Join) Join(input);
                 else if (input.Envelope.Kind == CookingNetworkMessageKind.BaselineAck) {
                     var ack = CookingNetworkWireCodec.Read<CookingNetworkBaselineIdentity>(input.Envelope);
-                    if (ack is not null && ack == input.Connection.Issued && _cleanup.Count == 0) {
-                        input.Connection.Ready = true; Send(input.Connection, CookingNetworkMessageKind.Ready, input.Envelope.CorrelationId, ack);
+                    if (ack is not null && input.Connection.BaselineAwaitingAck && ack == input.Connection.Issued && _cleanup.Count == 0) {
+                        input.Connection.BaselineAwaitingAck = false; input.Connection.Ready = true; Send(input.Connection, CookingNetworkMessageKind.Ready, input.Envelope.CorrelationId, ack);
                     } else Reject(input.Connection, input.Envelope.CorrelationId, "BaselineRequired");
                 } else Reject(input.Connection, input.Envelope.CorrelationId, "MalformedCommand");
             }
@@ -327,7 +328,7 @@ public sealed class CookingNetworkSessionHost : IDisposable
                 CookingNetworkDispositionKind.Cancelled, _captureUnavailable, null));
         }
         foreach (var connection in _connections.Values.Where(c => c.ClosedOrdinal == 0 && c.Participant is not null)) {
-            connection.Ready = false; connection.Issued = null;
+            connection.Ready = false; connection.Issued = null; connection.BaselineAwaitingAck = false;
             Reject(connection, "authority", _captureUnavailable);
         }
         RefreshSessionProjection();
@@ -355,7 +356,7 @@ public sealed class CookingNetworkSessionHost : IDisposable
                 Complete(new CookingNetworkDisposition(wire.Scope, pair.Value.Connection.Participant.Value, domain, pair.Key.Source, pair.Key.Correlation, CookingNetworkDispositionKind.Cancelled, "ScopeRetired", null));
             }
             _mapping.Clear(); _domain.Clear(); _cleanup.Clear();
-            foreach (var c in _connections.Values) { c.Ready = false; c.Issued = null; }
+            foreach (var c in _connections.Values) { c.Ready = false; c.Issued = null; c.BaselineAwaitingAck = false; }
         }
         LatestCapture = capture;
     }
