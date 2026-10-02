@@ -57,4 +57,10 @@ The final three SameMachineUdp baseline repeats each accepted73/600 offered oppo
 
 See research/performance-followup-review.md. Production profiling hooks,20Hz publication,delta wire changes,audit deletion and budget increases are not authorized by this diagnostic increment. Subsequent production changes require a concrete reviewed contract and actual validation; Unity remains deferred.
 
+## 2026-10-03 independent-process local fault/load increment
+
+Root approves the minimal implementation proposed in research/process-fault-load-plan.md: a separate application runner project and owned wrapper, one real ET authority with local framed client and remote independent-process LiteNet client, genuine lost Submit response followed by live rebind/cached retry, and three fresh pairs with10-second warmup/60-second sample at5offered opportunities per second per participant. Initial, terminal and full-projection gates remain intact; a trusted final Pause may establish stable complete gameplay consensus after all issued work drains. Source/SDK/MVID/hash/PID/exit evidence and actual offered/admitted/completed accounting are mandatory.
+
+No existing production files, transport callback authority, wire contract or fixed-tick semantics change. This increment is local separate-process evidence; random packet delay/loss, physical two-PC and formal performance acceptance are still distinct unverified exits. All .NET execution windows remain root-serialized.
+
 Use deterministic scripted boundary injection before transport timing experiments. Distinguish failure of reliable delivery from intentional bounded rejection and from delayed client projection. Physical two-PC execution remains NOT_VERIFIED until paired artifacts exist. Unity remains deferred.
