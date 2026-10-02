@@ -2,7 +2,7 @@
 
 # Cooking Task 注册表
 
-当前已验证状态：S01–S03 纯 C# 核心已本地合并并通过 master 门禁；S04/S05 核心与菜单生产恢复已合并，31 饮品最终绑定交付待独立审阅；S06 域组件已独立复核，ET 接入中，S07/S08 已有受限辅助而完整出口未完成。准确证据见 [master-core-integration-verification.md](research/master-core-integration-verification.md)；下面初版注册表的“无执行许可”等表述仅保留历史含义。
+当前已验证状态：S01–S03 纯 C# 核心已本地合并并通过 master 门禁；S04/S05 核心与菜单生产恢复已合并，31 饮品绑定交付已独立验证，S04/S05/S09–S13 纯 C# 内容范围完成；S06 域组件已独立复核，ET 接入中，S07/S08 已有受限辅助而完整出口未完成。准确证据见 [master-complete-menu-verification.md](research/master-complete-menu-verification.md) 及 [核心证据](research/master-core-integration-verification.md)；下面初版注册表的“无执行许可”等表述仅保留历史含义。
 
 > 最新授权：owner 已要求实施、验证并合并 master；S01–S14/N01–N03 获执行授权，按依赖与文件冲突分波，U01/U02 后置不执行、S15 为参考池。以下初版状态为登记时快照；当前状态和验证/合并证据见 [execution.md](execution.md) 及各 Task metadata/check.jsonl。
 

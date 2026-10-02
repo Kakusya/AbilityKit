@@ -1,0 +1,9 @@
+# Reviewed complete-menu delivery — 2026-10-02 20:04
+
+Local master 7dd149b75 / 4b78e8467 contains reviewed source increments 868622cfc / 6e2ecdafe. Independent fixed-commit review: menu-production-increment-review.md. No network or Unity delivery is implied.
+
+Actual master kitchen gate: 372 focused, 494 Cooking, 197 ET, zero failed/skipped. Actual master ET-Level gate: both builds and complete domain/ET regression passed 494/197, zero skip. Evidence summaries preserve commands, exits, timing and log/TRX paths. Python generator tests 5/5 and deterministic --check passed; source differences31 are audited dependency dispositions.
+
+87 dishes were physically produced, plated and submitted through public spatial commands; 31 drink templates require binding and disposable cups. Meals/desserts use ordinary unlabelled delivery and washable serving vessels. Negative tests cover unbound/wrong-ticket submission, rebind/unbind, repeated delivery and bound checkpoint restore. 121 ET controls include87 production continuations,31 bound cups and3 real handoff/partial-batch cases. Tests compare full live final checkpoints; durable artifacts store summaries/digests and cannot alone recompute complete final canonical records.
+
+S04/S05/S09–S13 close only pure C# content/production/delivery scope. Task directories remain retained for stable references. Complete front-house ET integration, physical procurement, actual layout installation and S14 natural-business success/retry/replay remain separate work. Fixture raw8/cups2/yield2/ticks1/score100 are test defaults, not balance or level assignment. 87 candidates are not automatically allowed in every level.

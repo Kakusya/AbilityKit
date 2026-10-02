@@ -36,3 +36,16 @@ Lint未执行；TypeCheck为已有实际门禁证据，本审阅未复跑；Test
 - 固定 `et-progress-tests.log` 报告新增聚焦3/3；`et-progress-gate.log`报告完整ET163通过（新增3包含于其中，不将两项重复相加）。root报告对应integration `03b138cd2`独立组合340/462/166通过，本追加未自行复跑该组合，仍以root原证据为准。
 
 31饮品绑定交付仍未包含；新增手工及部分批次恢复是切点扩展，不能把S05或整个S14出口自动标已完成。本次未.NET、未生产修改。
+
+## 最终菜单提交与五批证据复审
+
+固定对象：生产/测试增量 `868622cfc228bcc47d2d4f273bac5558940652f3`，五批证据整理 `6e2ecdafec1529bb15bed78bd5d2b145492a91cf`。结论：可接收菜单生产与交付增量，未发现新阻断；本轮不主张 S06/S07/S08/S14 完成。
+
+- 唯一新增 formal adapter 行为是把 catalog Disposable 映射到 CookingContentContainer.DisposableOnSubmission、RequiresBinding 映射到 OrderTemplate：31饮品必须贴票/消费杯，56餐食甜品无需贴票/仍可洗。未替换authority、改工序或改变旧汤/吐司规则。原附件实测hash仍为先前两值，未改原文。
+- 真实driver用公开BindOrder/RebindOrder/UnbindOrder与SubmitOrder；31条域反例分别拒绝未贴、错误订单、改绑后旧票、解绑后裸提交，并比较拒绝前后snapshot canonical和空settlement。成功后断言唯一settlement/精确模板配方容器/score100、产品与容器离开active snapshot；从真实ExportCheckpoint读Removed tombstone，餐食Dirty=true，饮品Dirty=false。这是在核对核心已有提交退役状态，不是手写假状态或绕过洗池。它尚不证明后续实际清洗复用闭环。
+- ET87条现在全部实际SubmitDelivery；额外31条在真正BoundOrder出现后导出codec/dispose/empty factory恢复，继续匹配提交并消费杯。连同两手工与一部分批次，共121条恢复对照。写 evidence 前先Assert最终完整checkpoint等于不中断控制臂，`finalCanonicalEqualsUninterrupted=true`不是未经比较即打印。
+- 独立读87份domain artifact，均status submitted且有唯一settlement；读121份ET artifact，均有实际命令数、identity/provenance、intermediate/final SHA、compare=true和唯一settlement。逐份检查exported servingVessel Removed=true、Dirty按饮品/餐食区分，SHA为64位lowerhex。记录保存的是摘要而非完整canonical，无法仅用artifact离线重新计算最终SHA；可信关联来自受审源码在同次运行比较后对canonical直接Hash并写记录和实际测试结果，不声称文件自身包含完整可重算状态。
+- 原始worker日志160 catalog/121 ET子集通过。独立核对最后gate实际summary/TRX：330 focused、452Cooking、197ET Passed，failed/skipped均零，ET TRX实际31条bound-cup测试全部Passed；并非通过数量猜测覆盖。
+- 五batch索引覆盖各候选并路由新domain/ET证据；S04及五内容Task仍in_progress、completedAt=null，pending为协调复核/合并和其他单机出口，而不是提前completed。整理提交未将采购、完整前厅布局、正式平衡或Unity纳入其完成声明。
+
+建议主owner接收后在组合版本保存独立回归证据，并继续其它经营出口。Lint未新跑；TypeCheck/Tests只核对worker已有真实证据；本复审不修改生产代码或执行.NET。

@@ -3,7 +3,7 @@
   "name": "cooking-singleplayer-menu-drinks-basic",
   "title": "候选饮品基础内容",
   "description": "M4：D01–D14",
-  "status": "in_progress",
+  "status": "completed",
   "dev_type": null,
   "scope": null,
   "package": null,
@@ -11,11 +11,11 @@
   "creator": "Li He",
   "assignee": "Kakusya",
   "createdAt": "2026-10-02",
-  "completedAt": null,
+  "completedAt": "2026-10-02",
   "branch": "cooking-menu-s04",
   "base_branch": "master",
   "worktree_path": null,
-  "commit": null,
+  "commit": "7dd149b75",
   "pr_url": null,
   "subtasks": [],
   "children": [],
@@ -36,7 +36,9 @@
     "owner_delegated_details": true,
     "execution_authorization": "Latest owner: audit every topic then execute through completion. Task planning review and dependency checks precede execution; Unity and optional reference pool remain deferred.",
     "worker_acceptance": "passed-87-production-delivery-121-ET-recovery",
-    "integration_review_pending": true,
-    "verification": ".trellis/tasks/10-02-cooking-singleplayer-menu-schema/research/verification.md"
+    "integration_review_pending": false,
+    "verification": ".trellis/tasks/10-02-cooking-singleplayer-menu-schema/research/verification.md",
+    "verified_scope": "singleplayer-pure-csharp-content-and-delivery",
+    "coordinator_verification": ".trellis/tasks/10-02-cooking-gameplay-menu-plan/research/master-complete-menu-verification.md"
   }
 }

@@ -13,3 +13,4 @@
 {"file": ".trellis/tasks/10-02-cooking-singleplayer-menu-schema/research/verification.md", "reason": "actual source increment checks, runtime blockers explicitly pending"}
 {"file": ".trellis/tasks/10-02-cooking-singleplayer-menu-schema/research/integration-hooks-verification.md", "reason": "Coordinator actual hook and checkpoint repair tests; partial integration gate boundary and original failures"}
 {"file": ".trellis/tasks/10-02-cooking-singleplayer-menu-schema/research/complete-evidence-audit.json", "reason": "Actual87 deliveries and121 ET recovered canonical comparisons; finite fixture boundary"}
+{"file": ".trellis/tasks/10-02-cooking-gameplay-menu-plan/research/master-complete-menu-verification.md", "reason": "Coordinator-reviewed master content/delivery scope with actual kitchen and ET gate evidence"}

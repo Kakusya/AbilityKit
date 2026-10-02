@@ -4,10 +4,10 @@
 
 ## 2026-10-02 Cooking 玩法与菜单推进
 
-当前证据入口：[progress](design/CookingGame/progress.md) 与 [完整出口表](../.trellis/tasks/10-02-cooking-gameplay-menu-plan/research/completion-contract.md)。S01–S03 已完成受限纯 C# 核心，最新本地 master cfd107c75 门禁 340/462/166；S06 ET、S07 实物供应、S08 布局安装与 S14 完整营业仍待验证。以下其他日期及正文中的 KCP/旧运行状态保留为历史来源；网络最新取舍与冲突收敛以架构记录及 N01 任务为准。
+当前证据入口：[progress](design/CookingGame/progress.md) 与 [完整出口表](../.trellis/tasks/10-02-cooking-gameplay-menu-plan/research/completion-contract.md)。S01–S03 已完成受限纯 C# 核心，最新本地 master 7dd149b75 完整菜单门禁 372/494/197；S06 ET、S07 实物供应、S08 布局安装与 S14 完整营业仍待验证。以下其他日期及正文中的 KCP/旧运行状态保留为历史来源；网络最新取舍与冲突收敛以架构记录及 N01 任务为准。
 
 - [ ] 按 [总 plan](../.trellis/spec/cooking/gameplay-menu-plan.md) 和 [20 个 Task 注册表](../.trellis/tasks/10-02-cooking-gameplay-menu-plan/task-register.md) 逐项审阅推进；当前专注单机，按最新 owner 授权审议后实施并验证，不改变架构。网络在单机完整出口后接续，Unity 条件性 Task 仍禁止实施。
-- [ ] 完成 87 款候选的最终交付与经营整合；87 菜制作/盛装/恢复及 56 餐食交付已在 master 验证，31 饮品绑定后交付仍待独立审阅。候选文件与运行配置证据分开记录。见 [菜单整合](design/CookingGame/reference/menu-integration.md)。
+- [ ] 完成 87 款候选的最终交付与经营整合；87 菜制作/盛装/恢复及 56 餐食交付已在 master 验证，31 饮品绑定交付已独立验证，完整菜单内容范围见 master-complete-menu-verification。候选文件与运行配置证据分开记录。见 [菜单整合](design/CookingGame/reference/menu-integration.md)。
 - [ ] 网络重新立项前协调 KCP/LiteNet 及仲裁来源冲突，见 [架构记录](design/CookingGame/gameplay-plan-architecture.md)。旧任务与历史 check 保留，不自动删除旧代码。
 
 ## 1. 文件定位

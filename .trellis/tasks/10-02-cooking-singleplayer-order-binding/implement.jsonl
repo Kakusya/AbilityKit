@@ -11,3 +11,4 @@
 {"file": "src/AbilityKit.Game.Cooking.Tests/CookingOrderBindingTests.cs", "reason": "Domain rejection, contention and recovery matrix"}
 {"file": "src/AbilityKit.ET.Runtime.Tests/CookingOrderBindingEtTests.cs", "reason": "Actual ET ingress codec destroy restore proof and fingerprint vector"}
 {"file": ".trellis/tasks/10-02-cooking-singleplayer-order-binding/research/verification.md", "reason": "Actual S05 final gate pass counts, failure history and evidence paths"}
+{"file": ".trellis/tasks/10-02-cooking-gameplay-menu-plan/research/master-complete-menu-verification.md", "reason": "Coordinator-reviewed master content/delivery scope with actual kitchen and ET gate evidence"}

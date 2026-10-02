@@ -3,7 +3,7 @@
   "name": "cooking-singleplayer-order-binding",
   "title": "单机饮品贴单与交付分离",
   "description": "E01–E12/F07–F08",
-  "status": "in_progress",
+  "status": "completed",
   "dev_type": null,
   "scope": null,
   "package": null,
@@ -11,11 +11,11 @@
   "creator": "Li He",
   "assignee": "Li He",
   "createdAt": "2026-10-02",
-  "completedAt": null,
+  "completedAt": "2026-10-02",
   "branch": "cooking-order-s05",
   "base_branch": "master",
   "worktree_path": null,
-  "commit": "c6bc46c5b",
+  "commit": "7dd149b75",
   "pr_url": null,
   "subtasks": [],
   "children": [],
@@ -35,6 +35,9 @@
     "planning_maturity": "reviewed-contract",
     "owner_delegated_details": true,
     "execution_authorization": "Latest owner: audit every topic then execute through completion. Task planning review and dependency checks precede execution; Unity and optional reference pool remain deferred.",
-    "verification": "final-kitchen221-domain343-et76; final-et-domain343-et76; 0failed/skip"
+    "verification": "final-kitchen221-domain343-et76; final-et-domain343-et76; 0failed/skip",
+    "verified_scope": "singleplayer-pure-csharp-content-and-delivery",
+    "coordinator_verification": ".trellis/tasks/10-02-cooking-gameplay-menu-plan/research/master-complete-menu-verification.md",
+    "integration_review_pending": false
   }
 }

@@ -2,6 +2,8 @@
 
 # Cooking Game 当前工程进度
 
+> 2026-10-02 20:04 最新本地 master：完整 87 菜实际生产交付与恢复已审阅合并 `7dd149b75`，kitchen 实际 372/494/197、ET Level 实际 494/197，全通过且0跳过。S04/S05/S09–S13 按纯 C# 内容与交付范围完成，见 [准确范围与门禁](../../../.trellis/tasks/10-02-cooking-gameplay-menu-plan/research/master-complete-menu-verification.md)。S06 ET 接线和 S08 几何投影在集成分支待审阅；S07 供应、S08 原子安装与 S14 完整营业出口仍未完成。下面检查点为历史序列。
+
 > 2026-10-02 19:41 最新本地 master：`cfd107c75` 已合并审阅后的 87 菜制作/盛装/恢复、S05 绑定核心与嵌套容器交付修复、受限前厅域层；合并后 kitchen gate 实际 340/462/166，全通过且无跳过。证据见 [master-menu-binding-gate-summary.json](../../../.trellis/tasks/10-02-cooking-gameplay-menu-plan/research/master-menu-binding-gate-summary.json)。31 饮品绑定后交付、S06 ET 接线、S07/S08 实际供应布局和 S14 完整营业出口仍待完成；网络/Unity 后置。
 
 > 2026-10-02 19:36 集成分支检查点：S05 绑定及嵌套容器归属修复、87 菜 ET 恢复、真实手工交接已组合验证，kitchen gate 实际 340 focused / 462 Cooking / 166 ET，0 失败/跳过。尚未回并 master；31 款饮品绑定交付与 S06–S14 完整经营出口仍待完成。见 [组合验证记录](../../../.trellis/tasks/10-02-cooking-gameplay-menu-plan/research/s05-menu-composite-verification.md)。
