@@ -28,6 +28,16 @@ Owner 明确要求“继续审计，直到各个议题都审议清楚，然后�
 
 ## 当前目标
 
+### 19:25 已审阅前厅与菜单域增量
+
+前厅域增量 `4aadf7588` 已在 integration 提交；协调者实际聚焦 37/37、组合 kitchen focused223/Cooking344/ET73 全过，证据在 S06 `research/domain-increment-verification.md`。未合入 master、S06 未完成；真实 ET 工作入口、跨厨房互斥和布局路径安装仍待接入。
+
+菜单 driver `973cb3319` 经独立只读审阅接入 integration 为 `bddad6c9e`；87 条实际制作/盛装迹线、56 餐食/甜品提交与 31 饮品待绑定状态已核对。未注入中间成品或免费重置；39 个单份准备件尚未实跑其声明的可选存储路径，菜单 ContinueProcess 接手与 ET 流程尚未证明。该提交也早于 catalog 的 carrier/provenance 映射接线，不能把其结果移作后续契约的证明。
+
+协调者在组合版本实际运行 kitchen：focused319/319、Cooking440/440、ET73/73，两构建 exit0，失败/跳过0。摘要 [menu-front-integration-gate-summary.json](research/menu-front-integration-gate-summary.json)，实际日志/TRX 在 integration `local/Logs/test-gates/20261002-192434-cooking-kitchen-loop/`。这仍不是 S04–S14 完整出口，也不是 master 的 440 项验收。
+
+S05 与菜单监督 worker 当前分别 reviewing；暂无 worker_done。继续使用原 dispatch，不能因等待接口或历史 heartbeat 创建重复 worker。网络和 Unity 阶段未开始。
+
 ### 19:13 本地 master 核心增量已验证
 
 `501bf383d` 在独立干净检出通过 kitchen 门禁（207 focused / 328 Cooking / 73 ET），排除前厅未提交修改；协调者随后合并为 master `79d93c923`，实际复跑 kitchen 和 ET Level 两门禁，Cooking 328/328、ET 73/73，无失败/跳过。准确结果及两份摘要见 [master-core-integration-verification.md](research/master-core-integration-verification.md)。S01–S03 仅按已审议纯 C# 核心范围置 completed；其目录保留以维护现有依赖和证据路由，整体目标继续 active。
