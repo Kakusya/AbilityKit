@@ -16,6 +16,16 @@ Owner 明确要求“继续审计，直到各个议题都审议清楚，然后�
 
 旧三个 Orca dispatch 已被主动停止，不能视为存活或重用其凭证。保留 worktree 的改动需要审阅、恢复研究和实际复跑；历史 worker 自报测试不算协调者验证。当前三个只读审计分工分别负责核心、菜单、经营整合，研究成果写入本 task 的 research，不写产品代码。
 
+## 最新实际检查点（2026-10-02 18:45）
+
+当前核心 dispatch 为 `ctx_4e56ba63e0df`（reviewing），菜单 dispatch 为 `ctx_cf4084e88097`（waiting，等待核心接口并补充来源容器闭合）；旧网络 dispatch 保持停止。上述为当前消息证据，下面首次启动和停止记录属于历史。不得用历史 dispatch 替代当前监督对象。
+
+协调整合分支 `cooking-integration-s06-s14` 已接入菜单来源增量 `6eadb3396`、公开命令验收设计 `c2a98405f` 和 F31 兼容路线测试 `30be8312f`；此前含布局边界修复 `3684320d5`、供应恢复校验修复 `860aa9c54`。菜单独立审阅见 [menu-increment-review.md](research/menu-increment-review.md)。这些增量尚未合入 master，不表示整个 S04/S06/S07/S08 完成。
+
+协调者在组合版本 `30be8312f` 实际运行 `powershell -ExecutionPolicy Bypass -File tools/run_test_gate.ps1 -Gate cooking-kitchen-loop`：两项构建 exit 0、focused 155/155、Cooking 276/276、ET 67/67，失败与跳过均为 0。日志与 TRX 位于整合 worktree 的 `local/Logs/test-gates/20261002-184417-cooking-kitchen-loop/cooking-kitchen-loop/`，摘要为其中 `gate-summary.json`。该证据不覆盖仍在核心分支中的空间/手工/份数接口，也不覆盖全部 87 菜或新增 ET 接入。
+
+批量半成品输出暂存容器闭合正在补审；来源目录需要保留米饭桶、酱汁碗等输出选择，运行时必须真实分装和搬运，不能清空重置锅或注入成品绕过剩余份数。前厅增量继续扩展现有 `CookingFrontOfHouse` owner；其 ET payload、跨 owner 互斥和几何接入由协调者统一整合，未完成前不标 S06 出口通过。
+
 ## 当前目标
 
 2026-10-02 owner 在最终规划汇总后明确要求：列 Task，按实际情况用 worktree 并行实施，检测验证，通过后回并 master；先单机和联网，Unity 后做，活用 Orca。该回复是对上一轮 plan 的实施授权；此前助手获授权补足未提细节。当前不再受初版 planning-only 限制。
