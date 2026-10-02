@@ -42,3 +42,13 @@ receive→consume→commit 用同一个 Host Stopwatch 时间域；端到端 RTT
 2. 采样/负载档：建议采用上文2/4人、3重复、60秒和固定故障档；正式性能阈值先UNSET，收集基线后决定。
 3. 权威调度：建议沿N02单线程owner每10ms调度，区分业务frame推进与纯网络等待；不为性能报告改变生产tick规则。
 4. 多进程恢复超时：建议baseline/connect15秒、单操作30秒、准备120秒、整个故障场景240秒；超时保存artifact并只终止自己启动的Process对象。
+
+## Root planning review decisions (2026-10-03)
+
+The existing owner authorization covers N03. Once the assembled N02 source and rich process corrections are frozen and reviewed, local deterministic recovery/boundary engineering may proceed before physical LAN evidence is available. N02 remains in_progress and neither task's complete product exit is inferred. Task execution metadata/context must be updated when this bounded increment actually starts; this paragraph alone does not start it.
+
+Retain the existing single owner scheduling and Client's actual configured timeouts. Runner30-second operation guards do not override the production Client15-second timeout. The existing rich N02 preparation120/Host540/whole-process600-second diagnostic budget remains separate from short N03 fault-scene budgets; record the effective values in each artifact.
+
+First measurement increment uses2participants,10-second warmup,60-second sampling,5 offered commands/s/participant,3 repetitions, then a separately labelled capacity burst. Higher2/4participant20/50offered rates and fault combinations remain registered expansions after the first baseline. Record offered, admitted, accepted, rejected and completed separately: receipt16384 is a count bound intersecting the8MiB/token/collection bounds; no promise that a60-second high-rate run fits. Structured budget exhaustion is a boundedness result, not successful full-duration gameplay throughput. No history deletion, receipt reuse or larger budget to force a pass. Performance thresholds stay UNSET.
+
+Use deterministic scripted boundary injection before transport timing experiments. Distinguish failure of reliable delivery from intentional bounded rejection and from delayed client projection. Physical two-PC execution remains NOT_VERIFIED until paired artifacts exist. Unity remains deferred.
