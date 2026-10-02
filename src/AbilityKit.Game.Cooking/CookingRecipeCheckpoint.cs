@@ -468,9 +468,15 @@ public sealed partial class CookingRecipeSimulation
         }
 
         var processes = new Dictionary<ProcessId, CookingRecipeCheckpointProcess>();
+        var occupiedStations = new HashSet<StationSlotId>();
+        var occupiedAnchors = new HashSet<ItemId>();
+        var lockedOwners = new HashSet<ItemId>();
         foreach (var process in checkpoint.Processes)
         {
             if (string.IsNullOrWhiteSpace(process.Id.Value) || !processes.TryAdd(process.Id, process))
+                return CookingCheckpointRestoreReason.DuplicateProcessIdentity;
+            if (!occupiedAnchors.Add(process.Anchor) ||
+                (process.Station is { } occupiedStation && !occupiedStations.Add(occupiedStation)))
                 return CookingCheckpointRestoreReason.DuplicateProcessIdentity;
             if (!_fixture.Recipes.TryGetValue(process.Recipe, out var recipe))
                 return CookingCheckpointRestoreReason.ProcessRecipeNotFound;
@@ -480,8 +486,13 @@ public sealed partial class CookingRecipeSimulation
                 return CookingCheckpointRestoreReason.ProcessCompletionMismatch;
             if (recipe.RequiresStation != (process.Station is not null))
                 return CookingCheckpointRestoreReason.ProcessStationBindingMismatch;
-            if (process.Station is { } station && !_fixture.Appliances.ContainsKey(station))
-                return CookingCheckpointRestoreReason.ProcessStationNotFound;
+            if (process.Station is { } station)
+            {
+                if (!_fixture.Appliances.TryGetValue(station, out var appliance))
+                    return CookingCheckpointRestoreReason.ProcessStationNotFound;
+                if (!appliance.IsAvailable || !appliance.Capabilities.Contains(recipe.RequiredApplianceCapability))
+                    return CookingCheckpointRestoreReason.ProcessStationBindingMismatch;
+            }
             if (process.ElapsedTicks < 0 || process.ElapsedTicks >= process.RequiredTicks)
                 return CookingCheckpointRestoreReason.ProcessProgressInvalid;
 
@@ -496,11 +507,12 @@ public sealed partial class CookingRecipeSimulation
             var locked = new HashSet<ItemId>();
             foreach (var input in process.LockedInputs)
             {
-                if (!locked.Add(input))
+                if (!locked.Add(input) || !lockedOwners.Add(input))
                     return CookingCheckpointRestoreReason.ProcessInputUnavailable;
                 if (!items.TryGetValue(input, out var inputState) || inputState.Removed)
                     return CookingCheckpointRestoreReason.ProcessInputUnavailable;
-                if (input != process.Anchor && !recipe.Inputs.Contains(inputState.Definition))
+                if (input != process.Anchor && !recipe.Inputs.Contains(inputState.Definition) &&
+                    !(recipe.DefaultInputs?.Contains(inputState.Definition) ?? false))
                     return CookingCheckpointRestoreReason.ProcessInputNotInRecipe;
 
                 if (process.Container is { } anchorContainer)
@@ -521,6 +533,26 @@ public sealed partial class CookingRecipeSimulation
 
             if (!locked.Contains(process.Anchor))
                 return CookingCheckpointRestoreReason.ProcessInputUnavailable;
+            IReadOnlyList<DefinitionId> presentInputs;
+            if (process.Container is { } containerId)
+            {
+                if (containerId != process.Anchor || _fixture.Items[anchor.Definition].Container is null)
+                    return CookingCheckpointRestoreReason.ProcessContainerUnavailable;
+                var contents = items.Values.Where(item => !item.Removed &&
+                    item.Location.Kind == LocationKind.ContainerSlot && item.Location.OwnerId == containerId.Value).ToArray();
+                if (locked.Count != contents.Length + 1 || contents.Any(item => !locked.Contains(item.Id)))
+                    return CookingCheckpointRestoreReason.ProcessInputUnavailable;
+                presentInputs = contents.Select(item => item.Definition).ToArray();
+            }
+            else
+            {
+                if (locked.Count != 1 || _fixture.Items[anchor.Definition].Container is not null)
+                    return CookingCheckpointRestoreReason.ProcessInputUnavailable;
+                presentInputs = new[] { anchor.Definition };
+            }
+            if (CookingRecipeMatcher.Match(presentInputs, null, new[] { recipe },
+                process.Container is null ? null : anchor.Definition).Outcome != CookingRecipeMatchOutcome.Matched)
+                return CookingCheckpointRestoreReason.ProcessInputNotInRecipe;
         }
 
         var orders = new HashSet<OrderId>();

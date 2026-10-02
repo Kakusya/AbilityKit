@@ -55,7 +55,8 @@ public sealed record CookingRecipeDefinition(
     CookingRecipeCompletionKind Completion = CookingRecipeCompletionKind.ConsumeInputs,
     bool RequiresStation = true,
     CookingRecipeExecutionKind Execution = CookingRecipeExecutionKind.Automatic,
-    int YieldPortions = 1);
+    int YieldPortions = 1,
+    DefinitionId? RequiredProcessingContainerDefinition = null);
 
 public sealed record CookingApplianceDefinition(
     StationSlotId Station,
@@ -1288,6 +1289,10 @@ public sealed partial class CookingRecipeSimulation
             throw new InvalidOperationException($"Process '{process.Id}' has invalid progress invariants.");
         if (recipe.RequiresStation != (process.Station is not null))
             throw new InvalidOperationException($"Process '{process.Id}' station binding disagrees with its recipe.");
+        if (process.Station is { } requiredStation &&
+            (!_fixture.Appliances[requiredStation].IsAvailable ||
+             !_fixture.Appliances[requiredStation].Capabilities.Contains(recipe.RequiredApplianceCapability)))
+            throw new InvalidOperationException($"Process '{process.Id}' station cannot perform its recipe.");
 
         foreach (var input in process.LockedInputs)
         {
@@ -1295,7 +1300,8 @@ public sealed partial class CookingRecipeSimulation
                 throw new InvalidOperationException($"Process '{process.Id}' lost ownership of locked input '{input}'.");
             if (!_items.TryGetValue(input, out var inputState) || inputState.Removed)
                 throw new InvalidOperationException($"Process '{process.Id}' references unavailable input '{input}'.");
-            if (!recipe.Inputs.Contains(inputState.Definition) && input != process.Anchor)
+            if (!recipe.Inputs.Contains(inputState.Definition) &&
+                !(recipe.DefaultInputs?.Contains(inputState.Definition) ?? false) && input != process.Anchor)
                 throw new InvalidOperationException($"Process '{process.Id}' input '{input}' is inconsistent with its recipe.");
             if (process.Container is { } container)
             {
@@ -1313,6 +1319,17 @@ public sealed partial class CookingRecipeSimulation
                     $"Process '{process.Id}' input '{input}' is at unsupported location '{inputState.Location.Kind}'.");
             }
         }
+        if (!_items.TryGetValue(process.Anchor, out var anchor) || anchor.Removed)
+            throw new InvalidOperationException($"Process '{process.Id}' has an unavailable anchor.");
+        var physicalInputs = process.Container is { } vessel ? ItemsInContainer(vessel).ToArray() : new[] { process.Anchor };
+        var expectedLocks = physicalInputs.Append(process.Anchor).ToHashSet();
+        if (!expectedLocks.SetEquals(process.LockedInputs) || process.LockedInputs.Count != expectedLocks.Count)
+            throw new InvalidOperationException($"Process '{process.Id}' does not lock all physical inputs exactly once.");
+        if (process.Container is { } containerId && (containerId != process.Anchor || !TryGetContainerCapability(containerId, out _)))
+            throw new InvalidOperationException($"Process '{process.Id}' has an invalid carrier.");
+        if (CookingRecipeMatcher.Match(physicalInputs.Select(id => _items[id].Definition).ToArray(), null,
+                new[] { recipe }, process.Container is null ? null : anchor.Definition).Outcome != CookingRecipeMatchOutcome.Matched)
+            throw new InvalidOperationException($"Process '{process.Id}' input quantities or carrier disagree with its recipe.");
     }
 
     private void CommitFixedTick(FixedTickPlan plan)
@@ -1410,7 +1427,7 @@ public sealed partial class CookingRecipeSimulation
             stationId = requestedStation;
         }
 
-        if (!TryResolveStartRecipe(command, presentInputs, appliance, out var recipe, out rejection))
+        if (!TryResolveStartRecipe(command, presentInputs, appliance, containerCapability is null ? null : anchorItem.Definition, out var recipe, out rejection))
             return Reject(rejection);
 
         if (recipe.RequiresStation)
@@ -1489,7 +1506,7 @@ public sealed partial class CookingRecipeSimulation
     /// 显式 Recipe 直接采用并校验输入集合；缺省时按内容集合自动匹配，命中多个返回 RecipeAmbiguous。
     /// </summary>
     private bool TryResolveStartRecipe(CookingRecipeCommand command, IReadOnlyList<DefinitionId> presentInputs,
-        CookingApplianceDefinition? appliance, out CookingRecipeDefinition recipe,
+        CookingApplianceDefinition? appliance, DefinitionId? processingContainerDefinition, out CookingRecipeDefinition recipe,
         out CookingRecipeRejectionReason rejection)
     {
         if (command.Recipe is { } explicitRecipeId)
@@ -1500,7 +1517,7 @@ public sealed partial class CookingRecipeSimulation
                 rejection = CookingRecipeRejectionReason.RecipeNotFound;
                 return false;
             }
-            if (CookingRecipeMatcher.Match(presentInputs, null, new[] { explicitRecipe }).Outcome != CookingRecipeMatchOutcome.Matched)
+            if (CookingRecipeMatcher.Match(presentInputs, null, new[] { explicitRecipe }, processingContainerDefinition).Outcome != CookingRecipeMatchOutcome.Matched)
             {
                 recipe = null!;
                 rejection = CookingRecipeRejectionReason.RecipeNotMatched;
@@ -1514,7 +1531,7 @@ public sealed partial class CookingRecipeSimulation
         var stationBound = _fixture.Recipes.Values
             .Where(candidate => candidate.RequiresStation == (appliance is not null))
             .ToArray();
-        var match = CookingRecipeMatcher.Match(presentInputs, appliance?.Capabilities, stationBound);
+        var match = CookingRecipeMatcher.Match(presentInputs, appliance?.Capabilities, stationBound, processingContainerDefinition);
         switch (match.Outcome)
         {
             case CookingRecipeMatchOutcome.Matched:
@@ -1529,7 +1546,7 @@ public sealed partial class CookingRecipeSimulation
 
         // 未命中时分两级诊断：同侧候选忽略能力后能唯一命中，说明配方存在但该工位缺能力；
         // 对侧候选（工位绑定分歧）能唯一命中，说明配方存在但绑定与命令分歧。
-        var sameBinding = CookingRecipeMatcher.Match(presentInputs, null, stationBound);
+        var sameBinding = CookingRecipeMatcher.Match(presentInputs, null, stationBound, processingContainerDefinition);
         if (sameBinding.Outcome == CookingRecipeMatchOutcome.Ambiguous)
         {
             recipe = null!;
@@ -1548,7 +1565,7 @@ public sealed partial class CookingRecipeSimulation
         var oppositeBound = _fixture.Recipes.Values
             .Where(candidate => candidate.RequiresStation != (appliance is not null))
             .ToArray();
-        var opposite = CookingRecipeMatcher.Match(presentInputs, null, oppositeBound);
+        var opposite = CookingRecipeMatcher.Match(presentInputs, null, oppositeBound, processingContainerDefinition);
         if (opposite.Outcome == CookingRecipeMatchOutcome.Matched)
         {
             recipe = null!;

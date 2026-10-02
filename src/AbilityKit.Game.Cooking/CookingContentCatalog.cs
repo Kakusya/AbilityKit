@@ -23,7 +23,8 @@ public sealed record CookingContentRecipe(
     string Completion = nameof(CookingRecipeCompletionKind.ConsumeInputs),
     bool RequiresStation = true,
     string Execution = nameof(CookingRecipeExecutionKind.Automatic),
-    int YieldPortions = 1);
+    int YieldPortions = 1,
+    string? RequiredProcessingContainerDefinition = null);
 
 public sealed record CookingContentOrderTemplate(string Id, string RequiredRecipe, string RequiredContainerDefinition, int? BaseScore = null);
 
@@ -37,7 +38,10 @@ public sealed record CookingContentDocument(
     IReadOnlyList<CookingContentRecipe> Recipes,
     IReadOnlyList<CookingContentOrderTemplate> OrderTemplates,
     IReadOnlyList<CookingContentSupplyEntry> StandardInitialSupply,
-    CookingSpatialConfiguration? Spatial = null);
+    CookingSpatialConfiguration? Spatial = null)
+{
+    public CookingContentProvenance? ContentProvenance { get; init; }
+}
 
 /// <summary>
 /// 正式内容：经 <c>cooking-definition-v3</c> 校验的物品、工位、配方、订单模板与标准初始供应。
@@ -115,14 +119,14 @@ public static class CookingContentCatalog
                 recipe.RequiredTicks,
                 recipe.DefaultInputs?.Select(input => new DefinitionId(input)).ToArray(),
                 Enum.Parse<CookingRecipeCompletionKind>(recipe.Completion),
-                recipe.RequiresStation, Enum.Parse<CookingRecipeExecutionKind>(recipe.Execution), recipe.YieldPortions)).ToArray(),
+                recipe.RequiresStation, Enum.Parse<CookingRecipeExecutionKind>(recipe.Execution), recipe.YieldPortions, recipe.RequiredProcessingContainerDefinition is null ? null : new DefinitionId(recipe.RequiredProcessingContainerDefinition))).ToArray(),
             document.OrderTemplates.Select(template => new CookingOrderTemplateDefinition(
                 new OrderTemplateId(template.Id),
                 new RecipeId(template.RequiredRecipe),
                 new DefinitionId(template.RequiredContainerDefinition),
                 template.BaseScore ?? 100)).ToArray(),
             document.StandardInitialSupply.Select(entry => new CookingSupplyEntryDefinition(
-                new DefinitionId(entry.Definition), entry.Count, entry.Location)).ToArray(), document.Spatial);
+                new DefinitionId(entry.Definition), entry.Count, entry.Location)).ToArray(), document.Spatial) { ContentProvenance = document.ContentProvenance };
 
         var registry = new CookingConfigurationRegistry();
         var submission = registry.Submit(candidate);

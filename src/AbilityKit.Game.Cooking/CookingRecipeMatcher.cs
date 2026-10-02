@@ -39,7 +39,8 @@ public static class CookingRecipeMatcher
     public static CookingRecipeMatchResult Match(
         IReadOnlyCollection<DefinitionId> presentInputs,
         IReadOnlySet<string>? applianceCapabilities,
-        IReadOnlyCollection<CookingRecipeDefinition> candidates)
+        IReadOnlyCollection<CookingRecipeDefinition> candidates,
+        DefinitionId? processingContainerDefinition = null)
     {
         ArgumentNullException.ThrowIfNull(presentInputs);
         ArgumentNullException.ThrowIfNull(candidates);
@@ -52,6 +53,8 @@ public static class CookingRecipeMatcher
                 continue;
             if (applianceCapabilities is not null &&
                 !applianceCapabilities.Contains(candidate.RequiredApplianceCapability))
+                continue;
+            if (candidate.RequiredProcessingContainerDefinition is { } requiredCarrier && requiredCarrier != processingContainerDefinition)
                 continue;
             if (!MultisetEqualsPresentPlusDefaults(present, candidate))
                 continue;

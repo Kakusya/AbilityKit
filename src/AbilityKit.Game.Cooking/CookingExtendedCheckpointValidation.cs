@@ -11,6 +11,15 @@ public sealed partial class CookingRecipeSimulation
         {
             if (!items.TryAdd(item.Id, item)) return CookingCheckpointRestoreReason.DuplicateItemIdentity;
             if (item.Version <= 0 || item.RemainingPortions < 0) return CookingCheckpointRestoreReason.PortionStateInvalid;
+            if (item.IsProduct)
+            {
+                if (item.ContainerCompleted || item.Recipe is not { } productRecipeId ||
+                    !_fixture.Recipes.TryGetValue(productRecipeId, out var productRecipe) ||
+                    productRecipe.ProductDefinition != item.Definition)
+                    return CookingCheckpointRestoreReason.PortionStateInvalid;
+            }
+            else if (!item.ContainerCompleted && item.Recipe is not null)
+                return CookingCheckpointRestoreReason.PortionStateInvalid;
             if (item.ContainerCompleted)
             {
                 if (item.Removed || item.Recipe is not { } recipeId || !_fixture.Recipes.TryGetValue(recipeId, out var recipe) ||
@@ -18,7 +27,8 @@ public sealed partial class CookingRecipeSimulation
                     !_fixture.Items.TryGetValue(item.Definition, out var definition) || definition.Container is null)
                     return CookingCheckpointRestoreReason.PortionStateInvalid;
                 var contents = checkpoint.Items.Where(i => !i.Removed && i.Location.Kind == LocationKind.ContainerSlot && i.Location.OwnerId == item.Id.Value).ToArray();
-                if (CookingRecipeMatcher.Match(contents.Select(i => i.Definition).ToArray(), null, new[]{recipe}).Outcome != CookingRecipeMatchOutcome.Matched)
+                if (CookingRecipeMatcher.Match(contents.Select(i => i.Definition).ToArray(), null, new[]{recipe},
+                    item.Definition).Outcome != CookingRecipeMatchOutcome.Matched)
                     return CookingCheckpointRestoreReason.PortionStateInvalid;
             }
             else if (item.RemainingPortions != 0) return CookingCheckpointRestoreReason.PortionStateInvalid;
