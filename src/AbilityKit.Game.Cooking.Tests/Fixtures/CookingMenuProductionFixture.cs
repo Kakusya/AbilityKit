@@ -28,7 +28,7 @@ internal sealed class CookingMenuProductionFixture
     private long frame;
 
     public CookingMenuProductionFixture(CookingMenuCatalog catalog, CookingContentDocument baseline, string sourceId,
-        bool reverseBranches = false, int additionalWorkingCapacity = 0)
+        bool reverseBranches = false, int additionalWorkingCapacity = 0, RecipeId? counterfeitFor = null)
     {
         this.reverseBranches = reverseBranches;
         catalogHash = catalog.Sha256;
@@ -39,6 +39,12 @@ internal sealed class CookingMenuProductionFixture
         scope = new(new SessionId("menu-production"), new WorldId("menu-world"), new MatchId(sourceId));
         level = new(scope, new RestaurantRuntimeId(1), new LevelId("menu-fixture"), 1);
         var projected = catalog.ToContentDocument(baseline, new[] { sourceId });
+        if (counterfeitFor is { } recipe)
+        {
+            var required = producers.Values.Single(x => x.Id == recipe).Carrier;
+            var legitimate = projected.Items.Single(x => x.Id == required.Value);
+            projected = projected with { Items = projected.Items.Append(legitimate with { Id = "fixture-counterfeit-vessel" }).ToArray() };
+        }
         if (additionalWorkingCapacity > 0)
         {
             // An explicit negative-test fixture gives wrong early toppings room to be loaded,
@@ -75,6 +81,7 @@ internal sealed class CookingMenuProductionFixture
             if (step.OutputStorageContainer is { } outputStorage)
                 storage.Add(step.Id, EmptyOrRaw(outputStorage, "storage-" + step.Id.Value));
         }
+        if (counterfeitFor is not null) CounterfeitWorkingVessel = EmptyOrRaw(new DefinitionId("fixture-counterfeit-vessel"), "counterfeit");
         Anchor(LocationKind.WorldPosition, "clean-pool");
         servingHome = "serving-" + sourceId;
         Anchor(LocationKind.WorldPosition, servingHome);
@@ -93,13 +100,14 @@ internal sealed class CookingMenuProductionFixture
         {
             [player] = new(player, new HashSet<string> { "cook" }, Content.Appliances.Keys.Select(x => x.Value).ToHashSet()),
         };
-        Simulation = new(CookingContentCatalog.BuildFixture(Content, scope, players, "clean-pool"));
+        RecipeFixture = CookingContentCatalog.BuildFixture(Content, scope, players, "clean-pool");
+        Simulation = new(RecipeFixture);
         // The stock plan is the validated document above. Its repeated-definition unit entries
         // need distinct fixture IDs; the legacy standard spawner resets ordinals per entry.
         foreach (var entry in initial)
         {
             Assert.True(graph.Materials.Any(x => x.Id == entry.Definition && x.Kind == CookingMenuMaterialKind.Supply) ||
-                graph.Containers.Any(x => x.Id == entry.Definition));
+                Content.Items[entry.Definition].Container is not null);
             Simulation.AddItem(entry.Id, entry.Definition, ItemLocation.World(entry.Anchor));
         }
         Assert.Equal(supply.Sum(x => x.Count), Simulation.Snapshot().Items.Count);
@@ -107,10 +115,17 @@ internal sealed class CookingMenuProductionFixture
 
     public CookingMenuEntry Menu { get; }
     public CookingContent Content { get; }
-    public CookingRecipeSimulation Simulation { get; }
+    public CookingRecipeFixture RecipeFixture { get; }
+    public CookingLevelScope Level => level;
+    public CookingRecipeSimulation Simulation { get; private set; }
+    public Func<CookingRecipeCommand, CookingRecipeCommandResult>? CommandDispatcher { get; set; }
+    public Action? FrameAdvance { get; set; }
+    public Action? AfterFrame { get; set; }
+    public void UseRestoredSimulation(CookingRecipeSimulation simulation) => Simulation = simulation;
     public List<RecipeId> ExecutedRecipes { get; } = new();
     public IReadOnlyList<CookingRecipeSnapshotItem> Items => Simulation.Snapshot().Items;
     public ItemId? ServingVessel { get; private set; }
+    public ItemId? CounterfeitWorkingVessel { get; }
 
     public ItemId ProduceAndPlate()
     {
@@ -237,6 +252,40 @@ internal sealed class CookingMenuProductionFixture
         foreach (var unit in units) reserved.Remove(unit); // Release test intentions; actual units remain in the real vessel.
     }
 
+    public void RejectWrongCarrierThenRecover(RecipeId recipe)
+    {
+        var step = producers.Values.Single(x => x.Id == recipe);
+        var wrong = CounterfeitWorkingVessel!.Value;
+        var units = new List<ItemId>();
+        foreach (var input in step.Inputs)
+            for (var portion = 0; portion < input.Portions; portion++)
+            {
+                var unit = Acquire(input.Definition);
+                units.Add(unit);
+                Transfer(unit, wrong);
+            }
+        Pick(wrong);
+        var station = Content.Appliances.Values.First(x => x.Capabilities.Contains(step.Capability)).Station;
+        Go(LocationKind.StationSlot, station.Value);
+        var before = Simulation.Snapshot().CanonicalText();
+        Assert.DoesNotContain(Simulation.PreviewInteraction(player, commandSequence + 1, new RecipeCommandId("wrong-preview")),
+            x => x.Command.Operation == CookingRecipeOperation.StartProcess);
+        Assert.Equal(before, Simulation.Snapshot().CanonicalText());
+        var result = Simulation.Submit(new(scope, ++commandSequence, player, new RecipeCommandId("wrong-carrier-" + commandSequence),
+            CookingRecipeOperation.StartProcess, Recipe: recipe, Item: wrong, Station: station,
+            ExpectedItemVersion: State(wrong).Version));
+        Assert.Equal(CookingRecipeOutcome.Rejected, result.Outcome);
+        Assert.Equal(CookingRecipeRejectionReason.RecipeNotMatched, result.Reason);
+        Assert.Equal(before, Simulation.Snapshot().CanonicalText());
+        Go(LocationKind.WorldPosition, homes[wrong]);
+        Act(CookingRecipeOperation.Drop, wrong, world: homes[wrong]);
+        foreach (var unit in units)
+        {
+            Transfer(unit, working[WorkingKey(step)]);
+            reserved.Remove(unit);
+        }
+    }
+
     private ItemId Acquire(DefinitionId definition)
     {
         var found = Items.FirstOrDefault(x => x.Definition == definition && !reserved.Contains(x.Id));
@@ -291,6 +340,13 @@ internal sealed class CookingMenuProductionFixture
             Go(LocationKind.WorldPosition, homes[target]);
             Act(CookingRecipeOperation.Drop, target, world: homes[target]);
         }
+        else if (storage.TryGetValue(step.Id, out var singleStorage))
+        {
+            var output = Simulation.ItemsInContainer(vessel).Single(x => State(x).Definition == step.Output);
+            Transfer(output, singleStorage);
+            Assert.Empty(Simulation.ItemsInContainer(vessel));
+            Assert.Equal(singleStorage.Value, State(output).Location.OwnerId);
+        }
     }
 
     private void Transfer(ItemId item, ItemId vessel)
@@ -330,24 +386,39 @@ internal sealed class CookingMenuProductionFixture
             var dx = Math.Clamp(anchor.X - pose.X, -1000, 1000);
             var dy = dx == 0 ? Math.Clamp(anchor.Y - pose.Y, -1000, 1000) : 0;
             if (dx == 0 && dy == 0) break;
-            var result = Simulation.Submit(new(scope, ++commandSequence, player, new RecipeCommandId("move-" + commandSequence),
+            var result = Dispatch(new(scope, ++commandSequence, player, new RecipeCommandId("move-" + commandSequence),
                 CookingRecipeOperation.Move, MoveX: dx, MoveY: dy, FacingX: Math.Sign(dx), FacingY: Math.Sign(dy)));
             Assert.True(result.Outcome == CookingRecipeOutcome.Accepted, result.Reason.ToString());
-            Tick();
         }
     }
 
     private void Act(CookingRecipeOperation operation, ItemId item, ItemId? container = null,
         StationSlotId? station = null, RecipeId? recipe = null, OrderId? order = null, string? world = null)
     {
-        var result = Simulation.Submit(new(scope, ++commandSequence, player, new RecipeCommandId("action-" + commandSequence),
+        var result = Dispatch(new(scope, ++commandSequence, player, new RecipeCommandId("action-" + commandSequence),
             operation, Recipe: recipe, Item: item, Station: station, Container: container, Order: order,
             ExpectedItemVersion: State(item).Version, WorldAnchor: world));
         Assert.True(result.Outcome == CookingRecipeOutcome.Accepted, $"{Menu.SourceId}/{recipe}/{operation}: {result.Reason}");
-        Tick();
     }
 
-    private void Tick() => Simulation.AdvanceFixedTick(level, ++frame);
+    private CookingRecipeCommandResult Dispatch(CookingRecipeCommand command)
+    {
+        if (CommandDispatcher is { } dispatcher)
+        {
+            var result = dispatcher(command);
+            AfterFrame?.Invoke();
+            return result;
+        }
+        var directResult = Simulation.Submit(command);
+        Tick();
+        return directResult;
+    }
+    private void Tick()
+    {
+        if (FrameAdvance is { } advance) advance();
+        else Simulation.AdvanceFixedTick(level, ++frame);
+        AfterFrame?.Invoke();
+    }
     private CookingRecipeSnapshotItem State(ItemId id) => Items.Single(x => x.Id == id);
     private static string WorkingKey(CookingMenuStep step) => step.SourceId + "|" + step.Carrier.Value;
 }

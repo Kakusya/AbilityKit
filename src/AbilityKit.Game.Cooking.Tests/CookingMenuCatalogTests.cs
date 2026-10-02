@@ -275,12 +275,15 @@ public sealed class CookingMenuCatalogTests
             var mapped = content.Recipes[step.Id];
             Assert.Equal(step.ExecutionKind.ToString(), mapped.Execution.ToString());
             Assert.Equal(step.YieldPortions, mapped.YieldPortions);
+            Assert.Equal(step.Carrier, mapped.RequiredProcessingContainerDefinition);
             Assert.Equal(CookingMenuCatalog.ExpandInputs(step).Order(), mapped.Inputs.Select(x => x.Value).Order());
         }
         Assert.Throws<ArgumentException>(() => catalog.ToContentDocument(Baseline(), new[] { "F01" }, step =>
             ProjectionShape(step) with { Execution = "Automatic" }));
         Assert.Throws<ArgumentException>(() => catalog.ToContentDocument(Baseline(), new[] { "D31" }, step =>
             ProjectionShape(step) with { YieldPortions = 1 }));
+        Assert.Throws<ArgumentException>(() => catalog.ToContentDocument(Baseline(), new[] { "F31" }, step =>
+            ProjectionShape(step) with { RequiredProcessingContainerDefinition = null }));
         Assert.Throws<ArgumentException>(() => catalog.ToContentDocument(Baseline(), new[] { "D12" }, step =>
             ProjectionShape(step) with { Inputs = CookingMenuCatalog.ExpandInputs(step).Distinct().ToArray() }));
     }
@@ -417,8 +420,43 @@ public sealed class CookingMenuCatalogTests
         if (!fixture.Menu.RequiresBinding) fixture.SubmitMeal(product);
     }
 
+    [Fact]
+    public void Actual_content_identity_carries_catalog_and_source_hashes_and_normalizes_selection()
+    {
+        var catalog = Catalog();
+        var first = catalog.LoadContent(Baseline(), new[] { "F31", "F01" });
+        var reordered = catalog.LoadContent(Baseline(), new[] { "F01", "F31" });
+        Assert.Equal(first.Identity, reordered.Identity);
+        var provenance = first.Snapshot.ContentProvenance!;
+        Assert.Equal(catalog.Sha256, provenance.CatalogSha256);
+        Assert.Equal(new[] { "F01", "F31" }, provenance.SelectedMenus);
+        Assert.Equal(catalog.Document.Sources.Select(x => x.Sha256), provenance.Sources.Select(x => x.Sha256));
+        var doc = catalog.Document;
+        var changed = CookingMenuCatalog.Load(doc with { Sources = doc.Sources.Select((x, index) => index == 0
+            ? x with { Sha256 = new string('f', 64) } : x).ToArray() });
+        Assert.NotEqual(first.Identity, changed.LoadContent(Baseline(), new[] { "F01", "F31" }).Identity);
+        var upperCaseHash = CookingMenuCatalog.Load(doc with { Sources = doc.Sources.Select(x => x with { Sha256 = x.Sha256.ToUpperInvariant() }).ToArray() });
+        Assert.Equal(catalog.Sha256, upperCaseHash.Sha256);
+        Assert.Equal(first.Identity, upperCaseHash.LoadContent(Baseline(), new[] { "F31", "F01" }).Identity);
+    }
+
+    [Theory]
+    [InlineData("S04")]
+    [InlineData("S05")]
+    [InlineData("S06")]
+    public void Actual_unbaked_cake_in_equally_compatible_wrong_vessel_rejects_and_recovers_into_real_mold(string sourceId)
+    {
+        var catalog = Catalog();
+        var bake = catalog.Document.Steps.Single(x => x.SourceId == sourceId && x.Capability == "menu-capability-bake");
+        var fixture = new CookingMenuProductionFixture(catalog, Baseline(), sourceId, counterfeitFor: bake.Id);
+        fixture.RejectWrongCarrierThenRecover(bake.Id);
+        fixture.SubmitMeal(fixture.ProduceAndPlate());
+        Assert.Equal(100, fixture.Simulation.Snapshot().TotalScore);
+    }
+
     private static CookingContentRecipe ProjectionShape(CookingMenuStep step) => new(step.Id.Value,
         CookingMenuCatalog.ExpandInputs(step), step.Output.Value, step.Process.Value, step.Capability,
         step.RequiredTicks, Completion: CookingMenuCatalog.Completion(step),
-        Execution: step.ExecutionKind.ToString(), YieldPortions: step.YieldPortions);
+        Execution: step.ExecutionKind.ToString(), YieldPortions: step.YieldPortions,
+        RequiredProcessingContainerDefinition: step.Carrier.Value);
 }
