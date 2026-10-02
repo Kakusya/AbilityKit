@@ -1,16 +1,14 @@
-> Current owner instruction (2026-10-02): continue auditing all topics, resolve their plans, then implement and verify to completion without stopping for routine confirmations. Preserve architecture and stage order: singleplayer -> network -> singleplayer Unity -> network Unity. Current stage: singleplayer. Older planning-only notices below are historical. Unity remains deferred under its separate gate.
+# S04 execution
 
-# S04 待执行清单
+- [x] Read current reviewed design/research, task/spec/reference routes; preserve dirty candidate and other owners.
+- [x] Activate authorized S04 for Kakusya; isolate .NET package/content-copy boundary.
+- [x] Repair row-order slug mapping using explicit source-ID/name manifest; reject identity ambiguity.
+- [x] Audit all87/72/60/19 and367 nodes; retain31 delivery-closure source discrepancies.
+- [x] Embed367 source projections in typed catalog, separate delivery/refill closure, use actual thermal carriers.
+- [ ] Finish catalog runtime validation, canonical/production identity hook and direct typed core projection.
+- [ ] Integrate published core contract (Manual/YieldPortions/multiset/vessel), S05 binding/disposable policy without core ownership conflicts.
+- [ ] Run wrong-container, premature-topping and actual public-command production tests; all87 through simulation and ET checkpoint.
+- [ ] Complete S09-S13 batch artifacts only after real per-menu production evidence.
+- [ ] Run cooking-kitchen-loop / cooking-et-level-runtime gates as applicable, self-review, commit worker increment and report exact remaining blockers.
 
-- [ ] 核对依赖、历史 check 与实际代码；解决本 Task 的契约差异。
-- [ ] 补齐具体设计、验收场景与影响的 snapshot/checkpoint/schema。
-- [ ] 最终规划审阅及 owner 批准；当前不可 start。
-- [ ] 批准后按独立纵切实现：87 款/72 供应/60 准备状态/19 工位的候选映射。
-- [ ] 实际运行聚焦 .NET 测试与适用 gate；记录 pass/fail/blocked/skip。
-- [ ] 核对 逐菜来源拓扑无环、重复份数及阶段顺序正确；本关菜单闭合；旧汤/吐司回归不变；明确版本迁移。
-
-当前所有实现与测试步骤均未执行。命令选择见总任务 implement.md；Unity 必须解除禁令并确认环境后补齐场景命令。
-
-## Current execution sequence after review
-
-Owner authorizes audit then implementation. Follow the reviewed design and parent research/final-review.md; historical planning-only text is superseded. Check actual dependency evidence before starting, preserve stopped worktree edits, fix review findings before accepting prior implementation, update payload/fingerprints/config identity/canonical/checkpoint together, run focused behavioral and applicable integration gates, record actual pass/fail/blocked/skip and commit evidence. Never declare this Task complete from metadata or directory counts.
+Commands: python tools/generate-cooking-menu.py --check; python tools/test_cooking_menu_generator.py; dotnet test src/AbilityKit.Game.Cooking.Tests --filter FullyQualifiedName~CookingMenuCatalogTests; powershell -ExecutionPolicy Bypass -File tools/run_test_gate.ps1 -Gate cooking-kitchen-loop. Actual results go into research/verification.md and check.jsonl; planned commands are never recorded as passes. Unity remains out of authorized scope.

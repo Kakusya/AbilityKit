@@ -150,14 +150,17 @@ public sealed class CookingRecipeMatcherTests
     }
 
     [Fact]
-    public void M08_repeated_present_inputs_collapse_to_a_set_before_matching()
+    public void M08_repeated_present_inputs_are_counted_before_matching()
     {
         using var evidence = CreateEvidence("M08");
         var duplicated = Match(evidence, new[] { ChoppedTomato, BeatenEgg, ChoppedTomato }, "heat",
-            new[] { SoupRecipeDefinition() }, "repeated present inputs collapse to a set before matching");
+            new[] { SoupRecipeDefinition() }, "repeated present inputs retain their counts before matching");
 
-        Assert.Equal(CookingRecipeMatchOutcome.Matched, duplicated.Outcome);
-        Assert.Equal(SoupRecipe, duplicated.Recipe);
+        Assert.Equal(CookingRecipeMatchOutcome.NotMatched, duplicated.Outcome);
+        Assert.Null(duplicated.Recipe);
+        var counted = SoupRecipeDefinition() with { Inputs = new[] { ChoppedTomato, ChoppedTomato, BeatenEgg } };
+        Assert.Equal(CookingRecipeMatchOutcome.Matched, Match(evidence, new[] { ChoppedTomato, BeatenEgg, ChoppedTomato }, "heat",
+            new[] { counted }, "a recipe requiring two tomatoes retains exactly two inputs").Outcome);
     }
 
     private static CookingRecipeDefinition SoupRecipeDefinition() => new(

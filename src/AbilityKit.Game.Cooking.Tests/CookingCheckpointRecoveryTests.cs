@@ -197,10 +197,10 @@ public sealed class CookingCheckpointRecoveryTests
         Assert.Equal(CookingCheckpointReadReason.RecordTruncated,
             CookingLevelCheckpointCodec.Deserialize(serialized[..(serialized.Length / 2)]).Reason);
         Assert.Equal(CookingCheckpointReadReason.UnknownFormatVersion,
-            CookingLevelCheckpointCodec.Deserialize(serialized.Replace("\"formatVersion\":3", "\"formatVersion\":99",
+            CookingLevelCheckpointCodec.Deserialize(serialized.Replace("\"formatVersion\":4", "\"formatVersion\":99",
                 StringComparison.Ordinal)).Reason);
         Assert.Equal(CookingCheckpointReadReason.UnknownFormatVersion,
-            CookingLevelCheckpointCodec.Deserialize(serialized.Replace("\"formatVersion\":3", "\"formatVersion\":2",
+            CookingLevelCheckpointCodec.Deserialize(serialized.Replace("\"formatVersion\":4", "\"formatVersion\":2",
                 StringComparison.Ordinal)).Reason);
         Assert.Equal(CookingCheckpointReadReason.IntegrityFailure,
             CookingLevelCheckpointCodec.Deserialize(serialized.Replace("\"stateVersion\":21", "\"stateVersion\":22",

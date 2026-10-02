@@ -21,7 +21,10 @@ public sealed record CookingContentRecipe(
     int RequiredTicks,
     IReadOnlyList<string>? DefaultInputs = null,
     string Completion = nameof(CookingRecipeCompletionKind.ConsumeInputs),
-    bool RequiresStation = true);
+    bool RequiresStation = true,
+    string Execution = nameof(CookingRecipeExecutionKind.Automatic),
+    int YieldPortions = 1,
+    string? RequiredProcessingContainerDefinition = null);
 
 public sealed record CookingContentOrderTemplate(string Id, string RequiredRecipe, string RequiredContainerDefinition, int? BaseScore = null);
 
@@ -34,10 +37,14 @@ public sealed record CookingContentDocument(
     IReadOnlyList<CookingContentAppliance> Appliances,
     IReadOnlyList<CookingContentRecipe> Recipes,
     IReadOnlyList<CookingContentOrderTemplate> OrderTemplates,
-    IReadOnlyList<CookingContentSupplyEntry> StandardInitialSupply);
+    IReadOnlyList<CookingContentSupplyEntry> StandardInitialSupply,
+    CookingSpatialConfiguration? Spatial = null)
+{
+    public CookingContentProvenance? ContentProvenance { get; init; }
+}
 
 /// <summary>
-/// 正式内容：经 <c>cooking-definition-v2</c> 校验的物品、工位、配方、订单模板与标准初始供应。
+/// 正式内容：经 <c>cooking-definition-v3</c> 校验的物品、工位、配方、订单模板与标准初始供应。
 /// 内容文档是内部受信数据；加载失败（schema 不符或校验诊断）属于开发期错误，直接抛出。
 /// </summary>
 public sealed record CookingContent(
@@ -59,7 +66,7 @@ public sealed record CookingContent(
 
 public static class CookingContentCatalog
 {
-    public const string ContentFileName = "cooking-content-v2.json";
+    public const string ContentFileName = "cooking-content-v3.json";
     public const string CleanPoolLocation = "cleanPool";
     private const string StationLocationPrefix = "station:";
     private const string WorldLocationPrefix = "world:";
@@ -112,20 +119,20 @@ public static class CookingContentCatalog
                 recipe.RequiredTicks,
                 recipe.DefaultInputs?.Select(input => new DefinitionId(input)).ToArray(),
                 Enum.Parse<CookingRecipeCompletionKind>(recipe.Completion),
-                recipe.RequiresStation)).ToArray(),
+                recipe.RequiresStation, Enum.Parse<CookingRecipeExecutionKind>(recipe.Execution), recipe.YieldPortions, recipe.RequiredProcessingContainerDefinition is null ? null : new DefinitionId(recipe.RequiredProcessingContainerDefinition))).ToArray(),
             document.OrderTemplates.Select(template => new CookingOrderTemplateDefinition(
                 new OrderTemplateId(template.Id),
                 new RecipeId(template.RequiredRecipe),
                 new DefinitionId(template.RequiredContainerDefinition),
                 template.BaseScore ?? 100)).ToArray(),
             document.StandardInitialSupply.Select(entry => new CookingSupplyEntryDefinition(
-                new DefinitionId(entry.Definition), entry.Count, entry.Location)).ToArray());
+                new DefinitionId(entry.Definition), entry.Count, entry.Location)).ToArray(), document.Spatial) { ContentProvenance = document.ContentProvenance };
 
         var registry = new CookingConfigurationRegistry();
         var submission = registry.Submit(candidate);
         if (!submission.Accepted || registry.Current is not { } snapshot)
             throw new ArgumentException(
-                "The cooking content document failed cooking-definition-v2 validation: " +
+                "The cooking content document failed cooking-definition-v3 validation: " +
                 string.Join(" | ", submission.Validation.Diagnostics.Select(diagnostic =>
                     $"{diagnostic.Table}/{diagnostic.RecordId}/{diagnostic.Field}/{diagnostic.Code}/{diagnostic.Relation}")),
                 nameof(document));
@@ -144,7 +151,7 @@ public static class CookingContentCatalog
     /// 不引入第二套池规则；玩家与布局属宿主/测试关注点，由调用方提供。
     /// </summary>
     public static CookingRecipeFixture BuildFixture(CookingContent content, CookingScope scope,
-        IReadOnlyDictionary<PlayerId, CookingPlayerConfig> players, string? cleanPoolLocation = null) =>
+        IReadOnlyDictionary<PlayerId, CookingPlayerConfig> players, string? cleanPoolLocation = null, CookingSpatialConfiguration? spatial = null) =>
         new(scope,
             players,
             content.Items,
@@ -153,7 +160,7 @@ public static class CookingContentCatalog
             WashableDefinitions(content),
             CleanContainerSupply(content),
             cleanPoolLocation ?? CleanPoolLocation,
-            content.OrderTemplates);
+            content.OrderTemplates, spatial: spatial ?? content.Snapshot.Spatial);
 
     /// <summary>
     /// 按内容的标准初始供应实例化物品：cleanPool 项由仿真构造器自动建池，此处跳过；

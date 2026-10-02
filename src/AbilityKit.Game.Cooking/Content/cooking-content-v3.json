@@ -1,5 +1,5 @@
 {
-  "schema": "cooking-definition-v2",
+  "schema": "cooking-definition-v3",
   "supportedApplianceCapabilities": ["cut", "heat", "bake", "beat"],
   "items": [
     { "id": "tomato", "allowedPlayerCapabilities": ["cook"] },

@@ -383,14 +383,14 @@ public sealed class CookingLevelEtHostTests
         Assert.Equal(
             "0000000773657373696F6E00000005776F726C64000000056D617463680000000000000001" +
             "000000076C6576656C2D310000000000000001000000000000000100000002703100000006" +
-            "7069636B7570000000000000010000000C696E6772656469656E742D310000000000000100000000",
+            "7069636B7570000000000000010000000C696E6772656469656E742D3100000000000001000000000000000000000000000000000000000000",
             Convert.ToHexString(CookingCommandFingerprint.CanonicalBytes(envelope)));
-        Assert.Equal("6B91D5971AB4F9A4D32B27D892F20397D2D61B159C087A5166B121B3A043A6E6",
+        Assert.Equal("C667784F7C002F88319B60051778F3CAB0B37709ADAD84D87B8243EA7D8B46AB",
             CookingCommandFingerprint.Create(envelope).Value);
 
         AppendFingerprintEvidence(evidence, "Fingerprint_has_exact_canonical_bytes_and_sha256_golden_vector",
-            envelope, "pickup", "existing golden vector is byte-for-byte unchanged after the v2 contract task: the command "
-            + "record gained no field, so CanonicalBytes output is identical and this test remains the regression anchor");
+            envelope, "pickup", "v3 golden vector explicitly appends movement, facing and world-anchor payload: the command "
+            + "extension is included in canonical bytes and this test anchors the coordinated format change");
     }
 
     [Fact]
@@ -408,9 +408,9 @@ public sealed class CookingLevelEtHostTests
             "0000000773657373696F6E00000005776F726C64000000056D617463680000000000000001" +
             "000000076C6576656C2D310000000000000001000000000000000100000002703100000005" +
             "7374617274000000010000010000000C696E6772656469656E742D31010000000573746F7665" +
-            "00000000000100000000",
+            "000000000001000000000000000000000000000000000000000000",
             Convert.ToHexString(CookingCommandFingerprint.CanonicalBytes(envelope)));
-        Assert.Equal("10F9BAD37CEEB607ACA2860036F83244DD4E68D5DF35123C76D3016EAC8BE88C",
+        Assert.Equal("281BB35F965ECA74873B1554C79526B47E83E8DD0125C84FDA51FAF252F0D9CA",
             CookingCommandFingerprint.Create(envelope).Value);
 
         AppendFingerprintEvidence(evidence, "Fingerprint_recipe_less_start_process_has_exact_canonical_bytes_and_sha256_golden_vector",
@@ -434,9 +434,9 @@ public sealed class CookingLevelEtHostTests
             "0000000773657373696F6E00000005776F726C64000000056D617463680000000000000001" +
             "000000076C6576656C2D310000000000000001000000000000000100000002703100000006" +
             "7075742D696E000000050000010000000C696E6772656469656E742D31000100000005706C61" +
-            "7465000000000100000000",
+            "74650000000001000000000000000000000000000000000000000000",
             Convert.ToHexString(CookingCommandFingerprint.CanonicalBytes(envelope)));
-        Assert.Equal("70181A96B7A5E8775A764083D4D4B30FB0739CB0E67B636976239A8E6FBBF703",
+        Assert.Equal("3121A3BD55D51586AD49F27B59D8BDF2711FB1CAB2ED39320038AE6AD5AAED98",
             CookingCommandFingerprint.Create(envelope).Value);
 
         AppendFingerprintEvidence(evidence, "Fingerprint_put_in_has_exact_canonical_bytes_and_sha256_golden_vector",
@@ -852,7 +852,7 @@ public sealed class CookingLevelEtHostTests
 
     private static CookingContent EmptyContent() =>
         CookingContentCatalog.Load(new CookingContentDocument(
-            "cooking-definition-v2",
+            CookingConfigurationIdentity.CurrentSchema,
             new[] { "heat" },
             new[]
             {

@@ -18,7 +18,8 @@ public sealed record CookingRecipeCheckpointItem(
     bool IsProduct,
     StationSlotId? OriginStation,
     bool ContainerCompleted = false,
-    bool IsDirty = false);
+    bool IsDirty = false,
+    [property: System.Text.Json.Serialization.JsonRequired] int RemainingPortions = 0);
 
 /// <summary>恢复载荷中的活动加工：含完成形态、容器锚点与被锁输入集合。</summary>
 public sealed record CookingRecipeCheckpointProcess(
@@ -31,7 +32,8 @@ public sealed record CookingRecipeCheckpointProcess(
     int RequiredTicks,
     CookingRecipeCompletionKind Completion,
     ItemId? Container,
-    IReadOnlyList<ItemId> LockedInputs);
+    IReadOnlyList<ItemId> LockedInputs,
+    [property: System.Text.Json.Serialization.JsonRequired] PlayerId? ActiveWorker = null);
 
 /// <summary>
 /// 恢复载荷中的容器内容：列表有序。空槽名按各物品自己的 <c>Location.SlotId</c> 占用集分配，
@@ -88,7 +90,9 @@ public sealed record CookingRecipeCheckpoint(
     long NextProcessId,
     long NextProductId,
     long NextSettlementSequence,
-    CookingLevelScope? LevelScope = null)
+    CookingLevelScope? LevelScope = null,
+    [property: System.Text.Json.Serialization.JsonRequired] IReadOnlyList<CookingPlayerPose>? Poses = null,
+    [property: System.Text.Json.Serialization.JsonRequired] int SchemaVersion = 3)
 {
     private static readonly JsonSerializerOptions CanonicalJsonOptions = new()
     {
@@ -105,12 +109,12 @@ public sealed record CookingRecipeCheckpoint(
         Items.OrderBy(item => item.Id.Value, StringComparer.Ordinal)
             .Select(item => new CanonicalItem(item.Id.Value, item.Definition.Value, item.Version, item.Location.Kind.ToString(),
                 item.Location.OwnerId, item.Location.SlotId, item.Removed, item.Recipe?.Value, item.IsProduct,
-                item.OriginStation?.Value, item.ContainerCompleted, item.IsDirty)).ToArray(),
+                item.OriginStation?.Value, item.ContainerCompleted, item.IsDirty, item.RemainingPortions)).ToArray(),
         Processes.OrderBy(process => process.Id.Value, StringComparer.Ordinal)
             .Select(process => new CanonicalProcess(process.Id.Value, process.Recipe.Value, process.Player.Value,
                 process.Anchor.Value, process.Station?.Value, process.ElapsedTicks, process.RequiredTicks,
                 process.Completion.ToString(), process.Container?.Value,
-                process.LockedInputs.OrderBy(input => input.Value, StringComparer.Ordinal).Select(input => input.Value).ToArray()))
+                process.LockedInputs.OrderBy(input => input.Value, StringComparer.Ordinal).Select(input => input.Value).ToArray(), process.ActiveWorker?.Value))
             .ToArray(),
         Containers.OrderBy(container => container.Id.Value, StringComparer.Ordinal)
             .Select(container => new CanonicalContainer(container.Id.Value,
@@ -145,7 +149,8 @@ public sealed record CookingRecipeCheckpoint(
             LevelScope.RestaurantRuntime.Value, LevelScope.Level.Value, LevelScope.LevelEpoch),
         NextProcessId,
         NextProductId,
-        NextSettlementSequence),
+        NextSettlementSequence,
+        (Poses ?? Array.Empty<CookingPlayerPose>()).OrderBy(p => p.Player.Value, StringComparer.Ordinal).ToArray(), SchemaVersion),
         CanonicalJsonOptions);
 
     public string Sha256() => Convert.ToHexString(SHA256.HashData(Encoding.UTF8.GetBytes(CanonicalText())));
@@ -156,7 +161,7 @@ public sealed record CookingRecipeCheckpoint(
         IReadOnlyList<CanonicalSettlement> Settlements, IReadOnlyList<string> ConsumedProducts,
         IReadOnlyList<CanonicalCleanPool> CleanContainerCounts, IReadOnlyList<CanonicalDeduplication> Deduplication,
         IReadOnlyList<CanonicalEvent> Events, long EventSequence, IReadOnlyList<CanonicalTickEvent> TickEvents,
-        CanonicalLevelBinding? LevelScope, long NextProcessId, long NextProductId, long NextSettlementSequence);
+        CanonicalLevelBinding? LevelScope, long NextProcessId, long NextProductId, long NextSettlementSequence, IReadOnlyList<CookingPlayerPose> Poses, int SchemaVersion);
     private sealed record CanonicalLevelBinding(string SessionId, string WorldId, string MatchId,
         long RestaurantRuntimeId, string LevelId, long LevelEpoch);
     private sealed record CanonicalTickEvent(long Sequence, string SessionId, string WorldId, string MatchId,
@@ -164,10 +169,10 @@ public sealed record CookingRecipeCheckpoint(
         long AfterLogicalTick, long BeforeStateVersion, long AfterStateVersion, int ProcessCount);
     private sealed record CanonicalItem(string ItemId, string DefinitionId, int Version, string LocationKind,
         string? OwnerId, string? SlotId, bool Removed, string? RecipeId, bool IsProduct, string? OriginStation,
-        bool ContainerCompleted, bool IsDirty);
+        bool ContainerCompleted, bool IsDirty, int RemainingPortions);
     private sealed record CanonicalProcess(string ProcessId, string RecipeId, string PlayerId, string AnchorItemId,
         string? StationId, int ElapsedTicks, int RequiredTicks, string Completion, string? ContainerId,
-        IReadOnlyList<string> LockedInputs);
+        IReadOnlyList<string> LockedInputs, string? ActiveWorker);
     private sealed record CanonicalContainer(string ContainerId, IReadOnlyList<string> ItemIds);
     private sealed record CanonicalOrder(string OrderId, string TemplateId, string RequiredRecipeId,
         string RequiredContainerDefinitionId, string Status, long? CompletedAtLogicalTick);
@@ -217,6 +222,10 @@ public enum CookingCheckpointRestoreReason
     EventSequenceInvalid,
     CounterInvalid,
     NotSuccessHandoff,
+    SpatialStateInvalid,
+    WorkerStateInvalid,
+    PortionStateInvalid,
+    UnsupportedSchema,
 }
 
 public sealed record CookingRecipeCheckpointRestoreResult(
@@ -245,13 +254,13 @@ public sealed partial class CookingRecipeSimulation
         _items.OrderBy(pair => pair.Key.Value, StringComparer.Ordinal)
             .Select(pair => new CookingRecipeCheckpointItem(pair.Key, pair.Value.Definition, pair.Value.Version,
                 pair.Value.Location, pair.Value.Removed, pair.Value.Recipe, pair.Value.IsProduct,
-                pair.Value.OriginStation, pair.Value.ContainerCompleted, pair.Value.IsDirty))
+                pair.Value.OriginStation, pair.Value.ContainerCompleted, pair.Value.IsDirty, pair.Value.RemainingPortions))
             .ToArray(),
         AllProcesses()
             .OrderBy(process => process.Id.Value, StringComparer.Ordinal)
             .Select(process => new CookingRecipeCheckpointProcess(process.Id, process.Recipe, process.Player,
                 process.Anchor, process.Station, process.ElapsedTicks, process.RequiredTicks, process.Completion,
-                process.Container, process.LockedInputs.ToArray()))
+                process.Container, process.LockedInputs.ToArray(), process.ActiveWorker))
             .ToArray(),
         _containerItems.OrderBy(pair => pair.Key.Value, StringComparer.Ordinal)
             .Select(pair => new CookingRecipeCheckpointContainer(pair.Key, pair.Value.ToArray()))
@@ -282,7 +291,8 @@ public sealed partial class CookingRecipeSimulation
         _nextProcessId,
         _nextProductId,
         _nextSettlementSequence,
-        _levelScope);
+        _levelScope,
+        _poses.Values.OrderBy(p => p.Player.Value, StringComparer.Ordinal).ToArray());
 
     /// <summary>
     /// 把一份恢复载荷整册换入本实例：构造期状态被完全替换，替换是原子的（先构建全部新字典/列表再整体赋值）。
@@ -323,6 +333,7 @@ public sealed partial class CookingRecipeSimulation
         var checkpoint = ExportCheckpoint();
         return checkpoint with
         {
+            Processes = checkpoint.Processes.Select(p => p with { ActiveWorker = null }).ToArray(),
             StateVersion = 0,
             LogicalTick = 0,
             Orders = Array.Empty<CookingRecipeCheckpointOrder>(),
@@ -360,7 +371,7 @@ public sealed partial class CookingRecipeSimulation
             _lifecycleClosed = false;
             _lifecycleGate = null;
         }
-        var restored = RestoreCheckpoint(handoff);
+        var restored = RestoreCheckpoint(handoff with { Poses = _fixture.Spatial?.InitialPoses.ToArray() ?? Array.Empty<CookingPlayerPose>() });
         if (!restored.Accepted && closedForHandoff)
         {
             _lifecycleClosed = true;
@@ -406,10 +417,12 @@ public sealed partial class CookingRecipeSimulation
         handoff.Settlements.Count == 0 &&
         handoff.Deduplication.Count == 0 &&
         handoff.Events.Count == 0 &&
-        handoff.TickEvents.Count == 0;
+        handoff.TickEvents.Count == 0 && handoff.Processes.All(p => p.ActiveWorker is null);
 
     private CookingCheckpointRestoreReason ValidateCheckpoint(CookingRecipeCheckpoint checkpoint)
     {
+        var extended = ValidateExtendedCheckpoint(checkpoint);
+        if (extended != CookingCheckpointRestoreReason.None) return extended;
         if (!Equals(checkpoint.Scope, _fixture.Scope))
             return CookingCheckpointRestoreReason.ScopeMismatch;
 
@@ -455,9 +468,15 @@ public sealed partial class CookingRecipeSimulation
         }
 
         var processes = new Dictionary<ProcessId, CookingRecipeCheckpointProcess>();
+        var occupiedStations = new HashSet<StationSlotId>();
+        var occupiedAnchors = new HashSet<ItemId>();
+        var lockedOwners = new HashSet<ItemId>();
         foreach (var process in checkpoint.Processes)
         {
             if (string.IsNullOrWhiteSpace(process.Id.Value) || !processes.TryAdd(process.Id, process))
+                return CookingCheckpointRestoreReason.DuplicateProcessIdentity;
+            if (!occupiedAnchors.Add(process.Anchor) ||
+                (process.Station is { } occupiedStation && !occupiedStations.Add(occupiedStation)))
                 return CookingCheckpointRestoreReason.DuplicateProcessIdentity;
             if (!_fixture.Recipes.TryGetValue(process.Recipe, out var recipe))
                 return CookingCheckpointRestoreReason.ProcessRecipeNotFound;
@@ -467,8 +486,13 @@ public sealed partial class CookingRecipeSimulation
                 return CookingCheckpointRestoreReason.ProcessCompletionMismatch;
             if (recipe.RequiresStation != (process.Station is not null))
                 return CookingCheckpointRestoreReason.ProcessStationBindingMismatch;
-            if (process.Station is { } station && !_fixture.Appliances.ContainsKey(station))
-                return CookingCheckpointRestoreReason.ProcessStationNotFound;
+            if (process.Station is { } station)
+            {
+                if (!_fixture.Appliances.TryGetValue(station, out var appliance))
+                    return CookingCheckpointRestoreReason.ProcessStationNotFound;
+                if (!appliance.IsAvailable || !appliance.Capabilities.Contains(recipe.RequiredApplianceCapability))
+                    return CookingCheckpointRestoreReason.ProcessStationBindingMismatch;
+            }
             if (process.ElapsedTicks < 0 || process.ElapsedTicks >= process.RequiredTicks)
                 return CookingCheckpointRestoreReason.ProcessProgressInvalid;
 
@@ -483,11 +507,12 @@ public sealed partial class CookingRecipeSimulation
             var locked = new HashSet<ItemId>();
             foreach (var input in process.LockedInputs)
             {
-                if (!locked.Add(input))
+                if (!locked.Add(input) || !lockedOwners.Add(input))
                     return CookingCheckpointRestoreReason.ProcessInputUnavailable;
                 if (!items.TryGetValue(input, out var inputState) || inputState.Removed)
                     return CookingCheckpointRestoreReason.ProcessInputUnavailable;
-                if (input != process.Anchor && !recipe.Inputs.Contains(inputState.Definition))
+                if (input != process.Anchor && !recipe.Inputs.Contains(inputState.Definition) &&
+                    !(recipe.DefaultInputs?.Contains(inputState.Definition) ?? false))
                     return CookingCheckpointRestoreReason.ProcessInputNotInRecipe;
 
                 if (process.Container is { } anchorContainer)
@@ -508,6 +533,26 @@ public sealed partial class CookingRecipeSimulation
 
             if (!locked.Contains(process.Anchor))
                 return CookingCheckpointRestoreReason.ProcessInputUnavailable;
+            IReadOnlyList<DefinitionId> presentInputs;
+            if (process.Container is { } containerId)
+            {
+                if (containerId != process.Anchor || _fixture.Items[anchor.Definition].Container is null)
+                    return CookingCheckpointRestoreReason.ProcessContainerUnavailable;
+                var contents = items.Values.Where(item => !item.Removed &&
+                    item.Location.Kind == LocationKind.ContainerSlot && item.Location.OwnerId == containerId.Value).ToArray();
+                if (locked.Count != contents.Length + 1 || contents.Any(item => !locked.Contains(item.Id)))
+                    return CookingCheckpointRestoreReason.ProcessInputUnavailable;
+                presentInputs = contents.Select(item => item.Definition).ToArray();
+            }
+            else
+            {
+                if (locked.Count != 1 || _fixture.Items[anchor.Definition].Container is not null)
+                    return CookingCheckpointRestoreReason.ProcessInputUnavailable;
+                presentInputs = new[] { anchor.Definition };
+            }
+            if (CookingRecipeMatcher.Match(presentInputs, null, new[] { recipe },
+                process.Container is null ? null : anchor.Definition).Outcome != CookingRecipeMatchOutcome.Matched)
+                return CookingCheckpointRestoreReason.ProcessInputNotInRecipe;
         }
 
         var orders = new HashSet<OrderId>();
@@ -673,7 +718,7 @@ public sealed partial class CookingRecipeSimulation
         {
             var state = new ProcessState(process.Id, process.Recipe, process.Player, process.Anchor, process.Station,
                 process.ElapsedTicks, process.RequiredTicks, process.Completion, process.Container,
-                process.LockedInputs.ToArray());
+                process.LockedInputs.ToArray(), process.ActiveWorker);
             if (process.Station is { } station)
             {
                 processesByStation.Add(station, state);
@@ -690,9 +735,10 @@ public sealed partial class CookingRecipeSimulation
                 inputsByProcessItem[input] = process.Id;
         }
 
+        _poses = checkpoint.Poses!.ToDictionary(p => p.Player);
         _items = checkpoint.Items.ToDictionary(item => item.Id, item => new ItemState(item.Definition, item.Version,
             item.Location, item.Removed, item.Recipe, item.IsProduct, item.OriginStation,
-            item.ContainerCompleted, item.IsDirty));
+            item.ContainerCompleted, item.IsDirty, item.RemainingPortions));
         _hands.Clear();
         foreach (var (player, held) in hands)
             _hands[player] = held;

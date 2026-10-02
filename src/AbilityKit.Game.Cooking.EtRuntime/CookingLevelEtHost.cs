@@ -83,6 +83,11 @@ public readonly record struct CookingCommandFingerprint(string Value)
         writer.NullableString(command.Order?.Value);
         writer.Int32(command.ExpectedItemVersion);
         writer.Int32(command.TickCount);
+        writer.Int32(command.MoveX);
+        writer.Int32(command.MoveY);
+        writer.Int32(command.FacingX);
+        writer.Int32(command.FacingY);
+        writer.NullableString(command.WorldAnchor);
         return stream.ToArray();
     }
 

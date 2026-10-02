@@ -10,3 +10,5 @@
 {"file": ".trellis/tasks/10-02-cooking-gameplay-menu-plan/research/core-review.md", "reason": "Reviewed implementation boundary and required behavior evidence"}
 {"file": ".trellis/tasks/10-02-cooking-gameplay-menu-plan/research/menu-review.md", "reason": "Reviewed implementation boundary and required behavior evidence"}
 {"file": ".trellis/tasks/10-02-cooking-gameplay-menu-plan/research/operation-review.md", "reason": "Reviewed implementation boundary and required behavior evidence"}
+{"file": ".trellis/tasks/10-02-cooking-singleplayer-spatial-interaction/research/verification.md", "reason": "Fresh worker implementation boundary, actual gate counts/logs, failures and ET behavioral evidence"}
+{"file": ".trellis/tasks/10-02-cooking-singleplayer-menu-schema/research/integration-hooks-verification.md", "reason": "Coordinator actual hook and checkpoint repair tests; partial integration gate boundary and original failures"}

@@ -1,0 +1,16 @@
+  正在确定要还原的项目…
+  所有项目均是最新的，无法还原。
+  AbilityKit.Deterministic -> C:\Users\Administrator\orca\workspaces\AbilityKit\cooking-integration-s06-s14\src\AbilityKit.Deterministic\bin\Debug\net10.0\AbilityKit.Deterministic.dll
+  AbilityKit.ET.RelationAnalyzer -> C:\Users\Administrator\orca\workspaces\AbilityKit\cooking-integration-s06-s14\src\AbilityKit.ET.RelationAnalyzer\bin\Debug\netstandard2.0\AbilityKit.ET.RelationAnalyzer.dll
+  AbilityKit.ET.Runtime -> C:\Users\Administrator\orca\workspaces\AbilityKit\cooking-integration-s06-s14\src\AbilityKit.ET.Runtime\bin\Debug\net10.0\AbilityKit.ET.Runtime.dll
+  AbilityKit.Core -> C:\Users\Administrator\orca\workspaces\AbilityKit\cooking-integration-s06-s14\src\AbilityKit.Core\bin\Debug\net10.0\AbilityKit.Core.dll
+  AbilityKit.Protocol -> C:\Users\Administrator\orca\workspaces\AbilityKit\cooking-integration-s06-s14\src\AbilityKit.Protocol\bin\Debug\net10.0\AbilityKit.Protocol.dll
+  AbilityKit.Network.Runtime -> C:\Users\Administrator\orca\workspaces\AbilityKit\cooking-integration-s06-s14\src\AbilityKit.Network.Runtime\bin\Debug\net10.0\AbilityKit.Network.Runtime.dll
+  AbilityKit.Network.Transport.LiteNet -> C:\Users\Administrator\orca\workspaces\AbilityKit\cooking-integration-s06-s14\src\AbilityKit.Network.Transport.LiteNet\bin\Debug\net10.0\AbilityKit.Network.Transport.LiteNet.dll
+  AbilityKit.Game.Cooking -> C:\Users\Administrator\orca\workspaces\AbilityKit\cooking-integration-s06-s14\src\AbilityKit.Game.Cooking\bin\Debug\net10.0\AbilityKit.Game.Cooking.dll
+  AbilityKit.Game.Cooking.EtRuntime -> C:\Users\Administrator\orca\workspaces\AbilityKit\cooking-integration-s06-s14\src\AbilityKit.Game.Cooking.EtRuntime\bin\Debug\net10.0\AbilityKit.Game.Cooking.EtRuntime.dll
+  AbilityKit.ET.Runtime.Tests -> C:\Users\Administrator\orca\workspaces\AbilityKit\cooking-integration-s06-s14\src\AbilityKit.ET.Runtime.Tests\bin\Debug\net10.0\AbilityKit.ET.Runtime.Tests.dll
+C:\Users\Administrator\orca\workspaces\AbilityKit\cooking-integration-s06-s14\src\AbilityKit.ET.Runtime.Tests\bin\Debug\net10.0\AbilityKit.ET.Runtime.Tests.dll (.NETCoreApp,Version=v10.0)的测试运行
+总共 1 个测试文件与指定模式相匹配。
+
+已通过! - 失败:     0，通过:     6，已跳过:     0，总计:     6，持续时间: 355 ms - AbilityKit.ET.Runtime.Tests.dll (net10.0)

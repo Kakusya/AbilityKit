@@ -1,0 +1,962 @@
+{
+  "供应原料": {
+    "R01": {
+      "name": "生菜",
+      "slug": "lettuce"
+    },
+    "R02": {
+      "name": "番茄",
+      "slug": "tomato"
+    },
+    "R03": {
+      "name": "黄瓜",
+      "slug": "cucumber"
+    },
+    "R04": {
+      "name": "洋葱",
+      "slug": "onion"
+    },
+    "R05": {
+      "name": "蘑菇",
+      "slug": "mushroom"
+    },
+    "R06": {
+      "name": "胡萝卜",
+      "slug": "carrot"
+    },
+    "R07": {
+      "name": "土豆",
+      "slug": "potato"
+    },
+    "R08": {
+      "name": "西兰花",
+      "slug": "broccoli"
+    },
+    "R09": {
+      "name": "橙子",
+      "slug": "orange"
+    },
+    "R10": {
+      "name": "柠檬",
+      "slug": "lemon"
+    },
+    "R11": {
+      "name": "苹果",
+      "slug": "apple"
+    },
+    "R12": {
+      "name": "香蕉",
+      "slug": "banana"
+    },
+    "R13": {
+      "name": "草莓",
+      "slug": "strawberry"
+    },
+    "R14": {
+      "name": "芒果",
+      "slug": "mango"
+    },
+    "R15": {
+      "name": "生牛肉饼",
+      "slug": "raw-beef-patty"
+    },
+    "R16": {
+      "name": "牛肉块",
+      "slug": "beef"
+    },
+    "R17": {
+      "name": "牛肉末",
+      "slug": "mince"
+    },
+    "R18": {
+      "name": "鸡肉块",
+      "slug": "chicken"
+    },
+    "R19": {
+      "name": "生鸡排",
+      "slug": "raw-chicken-cutlet"
+    },
+    "R20": {
+      "name": "三文鱼肉",
+      "slug": "salmon"
+    },
+    "R21": {
+      "name": "白身鱼肉",
+      "slug": "white-fish"
+    },
+    "R22": {
+      "name": "虾仁",
+      "slug": "shrimp"
+    },
+    "R23": {
+      "name": "生香肠",
+      "slug": "raw-sausage"
+    },
+    "R24": {
+      "name": "培根",
+      "slug": "bacon"
+    },
+    "R25": {
+      "name": "鸡蛋",
+      "slug": "egg"
+    },
+    "R26": {
+      "name": "牛奶",
+      "slug": "milk"
+    },
+    "R27": {
+      "name": "淡奶油",
+      "slug": "cream"
+    },
+    "R28": {
+      "name": "芝士片",
+      "slug": "cheese"
+    },
+    "R29": {
+      "name": "软芝士",
+      "slug": "soft-cheese"
+    },
+    "R30": {
+      "name": "酸奶",
+      "slug": "yogurt"
+    },
+    "R31": {
+      "name": "香草冰淇淋",
+      "slug": "vanilla-icecream"
+    },
+    "R32": {
+      "name": "椰奶",
+      "slug": "coconut-milk"
+    },
+    "R33": {
+      "name": "米",
+      "slug": "rice"
+    },
+    "R34": {
+      "name": "干意面",
+      "slug": "dry-pasta"
+    },
+    "R35": {
+      "name": "汉堡面包",
+      "slug": "burger-bun"
+    },
+    "R36": {
+      "name": "热狗面包",
+      "slug": "hotdog-bun"
+    },
+    "R37": {
+      "name": "吐司片",
+      "slug": "toast-slice"
+    },
+    "R38": {
+      "name": "卷饼皮",
+      "slug": "tortilla"
+    },
+    "R39": {
+      "name": "饺子皮",
+      "slug": "dumpling-wrapper"
+    },
+    "R40": {
+      "name": "披萨面团",
+      "slug": "pizza-dough"
+    },
+    "R41": {
+      "name": "甜点预拌粉",
+      "slug": "sweet-premix"
+    },
+    "R42": {
+      "name": "生甜甜圈坯",
+      "slug": "raw-doughnut"
+    },
+    "R43": {
+      "name": "派皮",
+      "slug": "pie-crust"
+    },
+    "R44": {
+      "name": "饼干片",
+      "slug": "biscuit"
+    },
+    "R45": {
+      "name": "海苔",
+      "slug": "nori"
+    },
+    "R46": {
+      "name": "生薯条",
+      "slug": "raw-fries"
+    },
+    "R47": {
+      "name": "炸粉",
+      "slug": "coating"
+    },
+    "R48": {
+      "name": "清汤底",
+      "slug": "stock"
+    },
+    "R49": {
+      "name": "番茄酱",
+      "slug": "ketchup"
+    },
+    "R50": {
+      "name": "芥末酱",
+      "slug": "mustard"
+    },
+    "R51": {
+      "name": "糖浆",
+      "slug": "syrup"
+    },
+    "R52": {
+      "name": "黑糖浆",
+      "slug": "brown-sugar-syrup"
+    },
+    "R53": {
+      "name": "蜂蜜",
+      "slug": "honey"
+    },
+    "R54": {
+      "name": "可可粉",
+      "slug": "cocoa"
+    },
+    "R55": {
+      "name": "巧克力酱",
+      "slug": "chocolate-sauce"
+    },
+    "R56": {
+      "name": "草莓酱",
+      "slug": "strawberry-jam"
+    },
+    "R57": {
+      "name": "棉花糖",
+      "slug": "marshmallow"
+    },
+    "R58": {
+      "name": "巧克力块",
+      "slug": "chocolate"
+    },
+    "R59": {
+      "name": "红茶叶",
+      "slug": "black-tea-leaf"
+    },
+    "R60": {
+      "name": "绿茶叶",
+      "slug": "green-tea-leaf"
+    },
+    "R61": {
+      "name": "乌龙茶叶",
+      "slug": "oolong-leaf"
+    },
+    "R62": {
+      "name": "咖啡豆",
+      "slug": "coffee-bean"
+    },
+    "R63": {
+      "name": "速溶奶茶粉",
+      "slug": "instant-milk-tea"
+    },
+    "R64": {
+      "name": "抹茶粉",
+      "slug": "matcha"
+    },
+    "R65": {
+      "name": "生珍珠",
+      "slug": "raw-pearl"
+    },
+    "R66": {
+      "name": "椰果",
+      "slug": "nata"
+    },
+    "R67": {
+      "name": "仙草冻",
+      "slug": "grass-jelly"
+    },
+    "R68": {
+      "name": "饮用水",
+      "slug": "drinking-water"
+    },
+    "R69": {
+      "name": "冰块",
+      "slug": "ice"
+    },
+    "R70": {
+      "name": "可乐原液",
+      "slug": "cola-liquid"
+    },
+    "R71": {
+      "name": "苏打水原液",
+      "slug": "soda-liquid"
+    },
+    "R72": {
+      "name": "意式腊肠片",
+      "slug": "salami"
+    }
+  },
+  "半成品": {
+    "P01": {
+      "name": "生菜片",
+      "slug": "cut-lettuce"
+    },
+    "P02": {
+      "name": "番茄块",
+      "slug": "cut-tomato"
+    },
+    "P03": {
+      "name": "黄瓜片",
+      "slug": "cut-cucumber"
+    },
+    "P04": {
+      "name": "洋葱块",
+      "slug": "cut-onion"
+    },
+    "P05": {
+      "name": "蘑菇片",
+      "slug": "cut-mushroom"
+    },
+    "P06": {
+      "name": "胡萝卜块",
+      "slug": "cut-carrot"
+    },
+    "P07": {
+      "name": "土豆块",
+      "slug": "cut-potato"
+    },
+    "P08": {
+      "name": "西兰花块",
+      "slug": "cut-broccoli"
+    },
+    "P09": {
+      "name": "橙块",
+      "slug": "cut-orange"
+    },
+    "P10": {
+      "name": "柠檬片",
+      "slug": "cut-lemon"
+    },
+    "P11": {
+      "name": "苹果块",
+      "slug": "cut-apple"
+    },
+    "P12": {
+      "name": "香蕉块",
+      "slug": "cut-banana"
+    },
+    "P13": {
+      "name": "草莓块",
+      "slug": "cut-strawberry"
+    },
+    "P14": {
+      "name": "芒果块",
+      "slug": "cut-mango"
+    },
+    "P15": {
+      "name": "牛肉切配件",
+      "slug": "cut-beef"
+    },
+    "P16": {
+      "name": "鸡肉切配件",
+      "slug": "cut-chicken"
+    },
+    "P17": {
+      "name": "三文鱼片",
+      "slug": "cut-salmon"
+    },
+    "P18": {
+      "name": "白鱼切配件",
+      "slug": "cut-white-fish"
+    },
+    "P19": {
+      "name": "米饭",
+      "slug": "cooked-rice"
+    },
+    "P20": {
+      "name": "熟意面",
+      "slug": "cooked-pasta"
+    },
+    "P21": {
+      "name": "熟牛肉饼",
+      "slug": "cooked-patty"
+    },
+    "P22": {
+      "name": "熟鸡肉",
+      "slug": "cooked-chicken"
+    },
+    "P23": {
+      "name": "熟牛肉",
+      "slug": "cooked-beef"
+    },
+    "P24": {
+      "name": "熟蘑菇",
+      "slug": "cooked-mushroom"
+    },
+    "P25": {
+      "name": "熟虾仁",
+      "slug": "cooked-shrimp"
+    },
+    "P26": {
+      "name": "熟白鱼",
+      "slug": "cooked-white-fish"
+    },
+    "P27": {
+      "name": "熟香肠",
+      "slug": "cooked-sausage"
+    },
+    "P28": {
+      "name": "煎蛋",
+      "slug": "fried-egg"
+    },
+    "P29": {
+      "name": "煎培根",
+      "slug": "cooked-bacon"
+    },
+    "P30": {
+      "name": "烤吐司",
+      "slug": "toasted-slice"
+    },
+    "P31": {
+      "name": "炸鸡排",
+      "slug": "fried-cutlet"
+    },
+    "P32": {
+      "name": "炸鸡块",
+      "slug": "fried-chicken"
+    },
+    "P33": {
+      "name": "炸鱼排",
+      "slug": "fried-fish"
+    },
+    "P34": {
+      "name": "炸薯条",
+      "slug": "fried-fries"
+    },
+    "P35": {
+      "name": "番茄热酱",
+      "slug": "hot-tomato-sauce"
+    },
+    "P36": {
+      "name": "牛肉番茄肉酱",
+      "slug": "beef-tomato-sauce"
+    },
+    "P37": {
+      "name": "奶油蘑菇酱",
+      "slug": "cream-mushroom-sauce"
+    },
+    "P38": {
+      "name": "甜面糊",
+      "slug": "sweet-batter"
+    },
+    "P39": {
+      "name": "打发奶油",
+      "slug": "whipped-cream"
+    },
+    "P40": {
+      "name": "芝士奶盖",
+      "slug": "cheese-cap"
+    },
+    "P41": {
+      "name": "热水",
+      "slug": "hot-water"
+    },
+    "P42": {
+      "name": "橙汁",
+      "slug": "orange-juice"
+    },
+    "P43": {
+      "name": "柠檬汁",
+      "slug": "lemon-juice"
+    },
+    "P44": {
+      "name": "胡萝卜汁",
+      "slug": "carrot-juice"
+    },
+    "P45": {
+      "name": "苹果汁",
+      "slug": "apple-juice"
+    },
+    "P46": {
+      "name": "红茶底",
+      "slug": "black-tea"
+    },
+    "P47": {
+      "name": "绿茶底",
+      "slug": "green-tea"
+    },
+    "P48": {
+      "name": "乌龙茶底",
+      "slug": "oolong-tea"
+    },
+    "P49": {
+      "name": "咖啡粉",
+      "slug": "coffee-powder"
+    },
+    "P50": {
+      "name": "浓缩咖啡液",
+      "slug": "espresso"
+    },
+    "P51": {
+      "name": "热牛奶",
+      "slug": "hot-milk"
+    },
+    "P52": {
+      "name": "奶泡",
+      "slug": "milk-foam"
+    },
+    "P53": {
+      "name": "熟珍珠",
+      "slug": "cooked-pearl"
+    },
+    "P54": {
+      "name": "黑糖珍珠",
+      "slug": "brown-sugar-pearl"
+    },
+    "P55": {
+      "name": "奶茶基底",
+      "slug": "fresh-milk-tea"
+    },
+    "P56": {
+      "name": "草莓果泥",
+      "slug": "strawberry-puree"
+    },
+    "P57": {
+      "name": "芒果果泥",
+      "slug": "mango-puree"
+    },
+    "P58": {
+      "name": "可乐液",
+      "slug": "dispensed-cola"
+    },
+    "P59": {
+      "name": "苏打水",
+      "slug": "dispensed-soda"
+    },
+    "P60": {
+      "name": "苹果派馅",
+      "slug": "apple-filling"
+    }
+  },
+  "菜品目录": {
+    "F01": {
+      "name": "田园沙拉",
+      "slug": "garden-salad"
+    },
+    "F02": {
+      "name": "芝士蔬菜沙拉",
+      "slug": "cheese-salad"
+    },
+    "F03": {
+      "name": "煎鸡肉沙拉",
+      "slug": "chicken-salad"
+    },
+    "F04": {
+      "name": "番茄汤",
+      "slug": "tomato-soup"
+    },
+    "F05": {
+      "name": "奶油蘑菇汤",
+      "slug": "cream-mushroom-soup"
+    },
+    "F06": {
+      "name": "土豆蔬菜汤",
+      "slug": "potato-soup"
+    },
+    "F07": {
+      "name": "三文鱼刺身",
+      "slug": "salmon-sashimi"
+    },
+    "F08": {
+      "name": "三文鱼寿司卷",
+      "slug": "salmon-sushi"
+    },
+    "F09": {
+      "name": "黄瓜寿司卷",
+      "slug": "cucumber-sushi"
+    },
+    "F10": {
+      "name": "熟虾寿司卷",
+      "slug": "shrimp-sushi"
+    },
+    "F11": {
+      "name": "经典牛肉汉堡",
+      "slug": "beef-burger"
+    },
+    "F12": {
+      "name": "芝士牛肉汉堡",
+      "slug": "cheese-burger"
+    },
+    "F13": {
+      "name": "豪华蔬菜牛肉汉堡",
+      "slug": "deluxe-burger"
+    },
+    "F14": {
+      "name": "香脆鸡排汉堡",
+      "slug": "crispy-chicken-burger"
+    },
+    "F15": {
+      "name": "番茄酱热狗",
+      "slug": "ketchup-hotdog"
+    },
+    "F16": {
+      "name": "洋葱芥末热狗",
+      "slug": "mustard-hotdog"
+    },
+    "F17": {
+      "name": "芝士披萨",
+      "slug": "cheese-pizza"
+    },
+    "F18": {
+      "name": "蘑菇披萨",
+      "slug": "mushroom-pizza"
+    },
+    "F19": {
+      "name": "意式腊肠披萨",
+      "slug": "salami-pizza"
+    },
+    "F20": {
+      "name": "鸡肉蘑菇披萨",
+      "slug": "chicken-pizza"
+    },
+    "F21": {
+      "name": "番茄意面",
+      "slug": "tomato-pasta"
+    },
+    "F22": {
+      "name": "牛肉肉酱意面",
+      "slug": "beef-pasta"
+    },
+    "F23": {
+      "name": "奶油蘑菇意面",
+      "slug": "mushroom-pasta"
+    },
+    "F24": {
+      "name": "番茄海鲜意面",
+      "slug": "seafood-pasta"
+    },
+    "F25": {
+      "name": "牛肉卷饼",
+      "slug": "beef-burrito"
+    },
+    "F26": {
+      "name": "鸡肉卷饼",
+      "slug": "chicken-burrito"
+    },
+    "F27": {
+      "name": "蘑菇卷饼",
+      "slug": "mushroom-burrito"
+    },
+    "F28": {
+      "name": "牛肉蒸饺",
+      "slug": "beef-dumpling"
+    },
+    "F29": {
+      "name": "鲜虾蒸饺",
+      "slug": "shrimp-dumpling"
+    },
+    "F30": {
+      "name": "蘑菇胡萝卜蒸饺",
+      "slug": "vegetable-dumpling"
+    },
+    "F31": {
+      "name": "清蒸鱼",
+      "slug": "steamed-fish"
+    },
+    "F32": {
+      "name": "薯条",
+      "slug": "fries"
+    },
+    "F33": {
+      "name": "炸鸡块",
+      "slug": "chicken-nuggets"
+    },
+    "F34": {
+      "name": "鸡块薯条拼盘",
+      "slug": "chicken-fries"
+    },
+    "F35": {
+      "name": "炸鱼薯条",
+      "slug": "fish-fries"
+    },
+    "F36": {
+      "name": "牛肉蘑菇串",
+      "slug": "beef-skewer"
+    },
+    "F37": {
+      "name": "鸡肉蔬菜串",
+      "slug": "chicken-skewer"
+    },
+    "F38": {
+      "name": "三色蔬菜串",
+      "slug": "vegetable-skewer"
+    },
+    "F39": {
+      "name": "烤鸡蔬菜盘",
+      "slug": "roast-chicken"
+    },
+    "F40": {
+      "name": "香肠土豆烤盘",
+      "slug": "roast-sausage"
+    },
+    "F41": {
+      "name": "牛肉蔬菜小火锅",
+      "slug": "beef-hotpot"
+    },
+    "F42": {
+      "name": "海鲜蔬菜小火锅",
+      "slug": "seafood-hotpot"
+    },
+    "F43": {
+      "name": "香肠鸡蛋早餐",
+      "slug": "sausage-breakfast"
+    },
+    "F44": {
+      "name": "培根鸡蛋早餐",
+      "slug": "bacon-breakfast"
+    },
+    "S01": {
+      "name": "蜂蜜松饼",
+      "slug": "honey-pancake"
+    },
+    "S02": {
+      "name": "巧克力松饼",
+      "slug": "chocolate-pancake"
+    },
+    "S03": {
+      "name": "草莓奶油松饼",
+      "slug": "strawberry-pancake"
+    },
+    "S04": {
+      "name": "原味小蛋糕",
+      "slug": "plain-cake"
+    },
+    "S05": {
+      "name": "巧克力小蛋糕",
+      "slug": "chocolate-cake"
+    },
+    "S06": {
+      "name": "胡萝卜蛋糕",
+      "slug": "carrot-cake"
+    },
+    "S07": {
+      "name": "巧克力甜甜圈",
+      "slug": "chocolate-doughnut"
+    },
+    "S08": {
+      "name": "草莓甜甜圈",
+      "slug": "strawberry-doughnut"
+    },
+    "S09": {
+      "name": "鲜果拼盘",
+      "slug": "fruit-platter"
+    },
+    "S10": {
+      "name": "苹果派",
+      "slug": "apple-pie"
+    },
+    "S11": {
+      "name": "烤棉花糖巧克力夹心饼",
+      "slug": "smore"
+    },
+    "S12": {
+      "name": "水果香草圣代",
+      "slug": "sundae"
+    },
+    "D01": {
+      "name": "冰可乐",
+      "slug": "iced-cola"
+    },
+    "D02": {
+      "name": "柠檬苏打",
+      "slug": "lemon-soda"
+    },
+    "D03": {
+      "name": "橙味苏打",
+      "slug": "orange-soda"
+    },
+    "D04": {
+      "name": "鲜榨橙汁",
+      "slug": "orange-juice"
+    },
+    "D05": {
+      "name": "蜂蜜柠檬水",
+      "slug": "honey-lemon-water"
+    },
+    "D06": {
+      "name": "橙柠双果汁",
+      "slug": "mixed-citrus"
+    },
+    "D07": {
+      "name": "胡萝卜苹果汁",
+      "slug": "carrot-apple-juice"
+    },
+    "D08": {
+      "name": "香蕉奶昔",
+      "slug": "banana-shake"
+    },
+    "D09": {
+      "name": "草莓奶昔",
+      "slug": "strawberry-shake"
+    },
+    "D10": {
+      "name": "芒果冰沙",
+      "slug": "mango-slush"
+    },
+    "D11": {
+      "name": "草莓酸奶冰沙",
+      "slug": "strawberry-yogurt-slush"
+    },
+    "D12": {
+      "name": "热冲调奶茶",
+      "slug": "instant-hot-milk-tea"
+    },
+    "D13": {
+      "name": "热可可牛奶",
+      "slug": "hot-cocoa"
+    },
+    "D14": {
+      "name": "热抹茶拿铁",
+      "slug": "hot-matcha"
+    },
+    "D15": {
+      "name": "浓缩咖啡",
+      "slug": "espresso"
+    },
+    "D16": {
+      "name": "热美式",
+      "slug": "americano"
+    },
+    "D17": {
+      "name": "热拿铁",
+      "slug": "latte"
+    },
+    "D18": {
+      "name": "卡布奇诺",
+      "slug": "cappuccino"
+    },
+    "D19": {
+      "name": "冰生椰拿铁",
+      "slug": "coconut-latte"
+    },
+    "D20": {
+      "name": "热摩卡",
+      "slug": "mocha"
+    },
+    "D21": {
+      "name": "热红茶",
+      "slug": "black-tea"
+    },
+    "D22": {
+      "name": "热乌龙茶",
+      "slug": "oolong-tea"
+    },
+    "D23": {
+      "name": "冰柠檬红茶",
+      "slug": "lemon-black-tea"
+    },
+    "D24": {
+      "name": "冰鲜奶茶",
+      "slug": "fresh-milk-tea"
+    },
+    "D25": {
+      "name": "珍珠奶茶",
+      "slug": "pearl-milk-tea"
+    },
+    "D26": {
+      "name": "椰果奶茶",
+      "slug": "nata-milk-tea"
+    },
+    "D27": {
+      "name": "仙草奶茶",
+      "slug": "jelly-milk-tea"
+    },
+    "D28": {
+      "name": "黑糖珍珠鲜奶",
+      "slug": "brown-sugar-milk"
+    },
+    "D29": {
+      "name": "草莓红茶",
+      "slug": "strawberry-tea"
+    },
+    "D30": {
+      "name": "芒果绿茶",
+      "slug": "mango-tea"
+    },
+    "D31": {
+      "name": "芝士奶盖绿茶",
+      "slug": "cheese-cap-tea"
+    }
+  },
+  "工位": {
+    "T01": {
+      "name": "切配台",
+      "slug": "chop"
+    },
+    "T02": {
+      "name": "组装台",
+      "slug": "assemble"
+    },
+    "T03": {
+      "name": "煮锅",
+      "slug": "boil"
+    },
+    "T04": {
+      "name": "煎台",
+      "slug": "pan-cook"
+    },
+    "T05": {
+      "name": "烤箱",
+      "slug": "bake"
+    },
+    "T06": {
+      "name": "蒸锅",
+      "slug": "steam"
+    },
+    "T07": {
+      "name": "炸锅",
+      "slug": "fry"
+    },
+    "T08": {
+      "name": "烤架",
+      "slug": "grill"
+    },
+    "T09": {
+      "name": "搅拌机",
+      "slug": "mix"
+    },
+    "T10": {
+      "name": "榨汁机",
+      "slug": "juice"
+    },
+    "T11": {
+      "name": "搅打机",
+      "slug": "blend"
+    },
+    "T12": {
+      "name": "调饮台",
+      "slug": "drink-mix"
+    },
+    "T13": {
+      "name": "泡茶桶",
+      "slug": "brew"
+    },
+    "T14": {
+      "name": "磨豆机",
+      "slug": "grind"
+    },
+    "T15": {
+      "name": "咖啡机",
+      "slug": "extract"
+    },
+    "T16": {
+      "name": "蒸汽机",
+      "slug": "heat-milk"
+    },
+    "T17": {
+      "name": "取水台",
+      "slug": "hot-water"
+    },
+    "T18": {
+      "name": "汽水机",
+      "slug": "dispense"
+    },
+    "T19": {
+      "name": "贴单台",
+      "slug": "bind-order"
+    }
+  }
+}

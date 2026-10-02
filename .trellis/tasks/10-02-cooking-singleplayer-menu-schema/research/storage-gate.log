@@ -1,0 +1,90 @@
+>>> Gate: cooking-kitchen-loop [P1]
+Owner: Cooking Game Runtime
+Pure .NET kitchen-loop simulation contracts: container-as-item, the seven authoritative actions, put-in rejection, locked inputs, carry-away continuation, both completion kinds, the tomato-egg-soup closed-loop fixture and command arbitration, and the recovery checkpoint contract (snapshot/checkpoint separation, export-restore equivalence).
+Scope: cooking, kitchen-loop, container-as-item, seven-actions, closed-loop-fixture
+Required before: merge-cooking-kitchen-loop-simulation-change, claim-cooking-kitchen-loop-contract
+Failure policy: Block Cooking kitchen-loop simulation delivery until the domain and ET runtime builds succeed, the focused Gate=CookingKitchenLoop tests pass, and the complete Cooking and ET runtime test projects stay green. Do not substitute any transport-level gate for this runtime contract.
+Output directory: C:\Users\Administrator\orca\workspaces\AbilityKit\cooking-menu-s04\local\Logs\test-gates\20261002-184302-cooking-kitchen-loop\cooking-kitchen-loop
+=== Cooking domain build ===
+dotnet build C:\Users\Administrator\orca\workspaces\AbilityKit\cooking-menu-s04\src\AbilityKit.Game.Cooking\AbilityKit.Game.Cooking.csproj -c Debug
+  正在确定要还原的项目…
+  所有项目均是最新的，无法还原。
+  AbilityKit.Deterministic -> C:\Users\Administrator\orca\workspaces\AbilityKit\cooking-menu-s04\src\AbilityKit.Deterministic\bin\Debug\net10.0\AbilityKit.Deterministic.dll
+  AbilityKit.Core -> C:\Users\Administrator\orca\workspaces\AbilityKit\cooking-menu-s04\src\AbilityKit.Core\bin\Debug\net10.0\AbilityKit.Core.dll
+  AbilityKit.Protocol -> C:\Users\Administrator\orca\workspaces\AbilityKit\cooking-menu-s04\src\AbilityKit.Protocol\bin\Debug\net10.0\AbilityKit.Protocol.dll
+  AbilityKit.Network.Runtime -> C:\Users\Administrator\orca\workspaces\AbilityKit\cooking-menu-s04\src\AbilityKit.Network.Runtime\bin\Debug\net10.0\AbilityKit.Network.Runtime.dll
+  AbilityKit.Network.Transport.LiteNet -> C:\Users\Administrator\orca\workspaces\AbilityKit\cooking-menu-s04\src\AbilityKit.Network.Transport.LiteNet\bin\Debug\net10.0\AbilityKit.Network.Transport.LiteNet.dll
+  AbilityKit.Game.Cooking -> C:\Users\Administrator\orca\workspaces\AbilityKit\cooking-menu-s04\src\AbilityKit.Game.Cooking\bin\Debug\net10.0\AbilityKit.Game.Cooking.dll
+已成功生成。
+    0 个警告
+    0 个错误
+已用时间 00:00:01.40
+=== Cooking ET runtime build with relation analyzer ===
+dotnet build C:\Users\Administrator\orca\workspaces\AbilityKit\cooking-menu-s04\src\AbilityKit.Game.Cooking.EtRuntime\AbilityKit.Game.Cooking.EtRuntime.csproj -c Debug
+  正在确定要还原的项目…
+  所有项目均是最新的，无法还原。
+  AbilityKit.Deterministic -> C:\Users\Administrator\orca\workspaces\AbilityKit\cooking-menu-s04\src\AbilityKit.Deterministic\bin\Debug\net10.0\AbilityKit.Deterministic.dll
+  AbilityKit.Core -> C:\Users\Administrator\orca\workspaces\AbilityKit\cooking-menu-s04\src\AbilityKit.Core\bin\Debug\net10.0\AbilityKit.Core.dll
+  AbilityKit.ET.Runtime -> C:\Users\Administrator\orca\workspaces\AbilityKit\cooking-menu-s04\src\AbilityKit.ET.Runtime\bin\Debug\net10.0\AbilityKit.ET.Runtime.dll
+  AbilityKit.Protocol -> C:\Users\Administrator\orca\workspaces\AbilityKit\cooking-menu-s04\src\AbilityKit.Protocol\bin\Debug\net10.0\AbilityKit.Protocol.dll
+  AbilityKit.Network.Runtime -> C:\Users\Administrator\orca\workspaces\AbilityKit\cooking-menu-s04\src\AbilityKit.Network.Runtime\bin\Debug\net10.0\AbilityKit.Network.Runtime.dll
+  AbilityKit.Network.Transport.LiteNet -> C:\Users\Administrator\orca\workspaces\AbilityKit\cooking-menu-s04\src\AbilityKit.Network.Transport.LiteNet\bin\Debug\net10.0\AbilityKit.Network.Transport.LiteNet.dll
+  AbilityKit.Game.Cooking -> C:\Users\Administrator\orca\workspaces\AbilityKit\cooking-menu-s04\src\AbilityKit.Game.Cooking\bin\Debug\net10.0\AbilityKit.Game.Cooking.dll
+  AbilityKit.ET.RelationAnalyzer -> C:\Users\Administrator\orca\workspaces\AbilityKit\cooking-menu-s04\src\AbilityKit.ET.RelationAnalyzer\bin\Debug\netstandard2.0\AbilityKit.ET.RelationAnalyzer.dll
+  AbilityKit.Game.Cooking.EtRuntime -> C:\Users\Administrator\orca\workspaces\AbilityKit\cooking-menu-s04\src\AbilityKit.Game.Cooking.EtRuntime\bin\Debug\net10.0\AbilityKit.Game.Cooking.EtRuntime.dll
+已成功生成。
+    0 个警告
+    0 个错误
+已用时间 00:00:01.65
+=== Kitchen-loop focused contract tests ===
+dotnet test C:\Users\Administrator\orca\workspaces\AbilityKit\cooking-menu-s04\src\AbilityKit.Game.Cooking.Tests\AbilityKit.Game.Cooking.Tests.csproj -c Debug -v minimal --logger trx;LogFileName=03-Kitchen-loop_focused_contract_tests.trx --results-directory C:\Users\Administrator\orca\workspaces\AbilityKit\cooking-menu-s04\local\Logs\test-gates\20261002-184302-cooking-kitchen-loop\cooking-kitchen-loop\test-results --filter Gate=CookingKitchenLoop
+  正在确定要还原的项目…
+  所有项目均是最新的，无法还原。
+  AbilityKit.Deterministic -> C:\Users\Administrator\orca\workspaces\AbilityKit\cooking-menu-s04\src\AbilityKit.Deterministic\bin\Debug\net10.0\AbilityKit.Deterministic.dll
+  AbilityKit.Core -> C:\Users\Administrator\orca\workspaces\AbilityKit\cooking-menu-s04\src\AbilityKit.Core\bin\Debug\net10.0\AbilityKit.Core.dll
+  AbilityKit.Protocol -> C:\Users\Administrator\orca\workspaces\AbilityKit\cooking-menu-s04\src\AbilityKit.Protocol\bin\Debug\net10.0\AbilityKit.Protocol.dll
+  AbilityKit.Network.Runtime -> C:\Users\Administrator\orca\workspaces\AbilityKit\cooking-menu-s04\src\AbilityKit.Network.Runtime\bin\Debug\net10.0\AbilityKit.Network.Runtime.dll
+  AbilityKit.Network.Transport.InMemory -> C:\Users\Administrator\orca\workspaces\AbilityKit\cooking-menu-s04\src\AbilityKit.Network.Transport.InMemory\bin\Debug\net10.0\AbilityKit.Network.Transport.InMemory.dll
+  AbilityKit.Network.Transport.LiteNet -> C:\Users\Administrator\orca\workspaces\AbilityKit\cooking-menu-s04\src\AbilityKit.Network.Transport.LiteNet\bin\Debug\net10.0\AbilityKit.Network.Transport.LiteNet.dll
+  AbilityKit.Game.Cooking -> C:\Users\Administrator\orca\workspaces\AbilityKit\cooking-menu-s04\src\AbilityKit.Game.Cooking\bin\Debug\net10.0\AbilityKit.Game.Cooking.dll
+  AbilityKit.Game.Cooking.Tests -> C:\Users\Administrator\orca\workspaces\AbilityKit\cooking-menu-s04\src\AbilityKit.Game.Cooking.Tests\bin\Debug\net10.0\AbilityKit.Game.Cooking.Tests.dll
+C:\Users\Administrator\orca\workspaces\AbilityKit\cooking-menu-s04\src\AbilityKit.Game.Cooking.Tests\bin\Debug\net10.0\AbilityKit.Game.Cooking.Tests.dll (.NETCoreApp,Version=v10.0)的测试运行
+总共 1 个测试文件与指定模式相匹配。
+结果文件: C:\Users\Administrator\orca\workspaces\AbilityKit\cooking-menu-s04\local\Logs\test-gates\20261002-184302-cooking-kitchen-loop\cooking-kitchen-loop\test-results\03-Kitchen-loop_focused_contract_tests.trx
+已通过! - 失败:     0，通过:   133，已跳过:     0，总计:   133，持续时间: 2 s - AbilityKit.Game.Cooking.Tests.dll (net10.0)
+=== Cooking domain and Level lifecycle regression ===
+dotnet test C:\Users\Administrator\orca\workspaces\AbilityKit\cooking-menu-s04\src\AbilityKit.Game.Cooking.Tests\AbilityKit.Game.Cooking.Tests.csproj -c Debug -v minimal --logger trx;LogFileName=04-Cooking_domain_and_Level_lifecycle_regression.trx --results-directory C:\Users\Administrator\orca\workspaces\AbilityKit\cooking-menu-s04\local\Logs\test-gates\20261002-184302-cooking-kitchen-loop\cooking-kitchen-loop\test-results
+  正在确定要还原的项目…
+  所有项目均是最新的，无法还原。
+  AbilityKit.Deterministic -> C:\Users\Administrator\orca\workspaces\AbilityKit\cooking-menu-s04\src\AbilityKit.Deterministic\bin\Debug\net10.0\AbilityKit.Deterministic.dll
+  AbilityKit.Core -> C:\Users\Administrator\orca\workspaces\AbilityKit\cooking-menu-s04\src\AbilityKit.Core\bin\Debug\net10.0\AbilityKit.Core.dll
+  AbilityKit.Protocol -> C:\Users\Administrator\orca\workspaces\AbilityKit\cooking-menu-s04\src\AbilityKit.Protocol\bin\Debug\net10.0\AbilityKit.Protocol.dll
+  AbilityKit.Network.Runtime -> C:\Users\Administrator\orca\workspaces\AbilityKit\cooking-menu-s04\src\AbilityKit.Network.Runtime\bin\Debug\net10.0\AbilityKit.Network.Runtime.dll
+  AbilityKit.Network.Transport.InMemory -> C:\Users\Administrator\orca\workspaces\AbilityKit\cooking-menu-s04\src\AbilityKit.Network.Transport.InMemory\bin\Debug\net10.0\AbilityKit.Network.Transport.InMemory.dll
+  AbilityKit.Network.Transport.LiteNet -> C:\Users\Administrator\orca\workspaces\AbilityKit\cooking-menu-s04\src\AbilityKit.Network.Transport.LiteNet\bin\Debug\net10.0\AbilityKit.Network.Transport.LiteNet.dll
+  AbilityKit.Game.Cooking -> C:\Users\Administrator\orca\workspaces\AbilityKit\cooking-menu-s04\src\AbilityKit.Game.Cooking\bin\Debug\net10.0\AbilityKit.Game.Cooking.dll
+  AbilityKit.Game.Cooking.Tests -> C:\Users\Administrator\orca\workspaces\AbilityKit\cooking-menu-s04\src\AbilityKit.Game.Cooking.Tests\bin\Debug\net10.0\AbilityKit.Game.Cooking.Tests.dll
+C:\Users\Administrator\orca\workspaces\AbilityKit\cooking-menu-s04\src\AbilityKit.Game.Cooking.Tests\bin\Debug\net10.0\AbilityKit.Game.Cooking.Tests.dll (.NETCoreApp,Version=v10.0)的测试运行
+总共 1 个测试文件与指定模式相匹配。
+结果文件: C:\Users\Administrator\orca\workspaces\AbilityKit\cooking-menu-s04\local\Logs\test-gates\20261002-184302-cooking-kitchen-loop\cooking-kitchen-loop\test-results\04-Cooking_domain_and_Level_lifecycle_regression.trx
+已通过! - 失败:     0，通过:   254，已跳过:     0，总计:   254，持续时间: 2 s - AbilityKit.Game.Cooking.Tests.dll (net10.0)
+=== Cooking ET Level host and runtime regression ===
+dotnet test C:\Users\Administrator\orca\workspaces\AbilityKit\cooking-menu-s04\src\AbilityKit.ET.Runtime.Tests\AbilityKit.ET.Runtime.Tests.csproj -c Debug -v minimal --logger trx;LogFileName=05-Cooking_ET_Level_host_and_runtime_regression.trx --results-directory C:\Users\Administrator\orca\workspaces\AbilityKit\cooking-menu-s04\local\Logs\test-gates\20261002-184302-cooking-kitchen-loop\cooking-kitchen-loop\test-results
+  正在确定要还原的项目…
+  所有项目均是最新的，无法还原。
+  AbilityKit.ET.RelationAnalyzer -> C:\Users\Administrator\orca\workspaces\AbilityKit\cooking-menu-s04\src\AbilityKit.ET.RelationAnalyzer\bin\Debug\netstandard2.0\AbilityKit.ET.RelationAnalyzer.dll
+  AbilityKit.ET.Runtime -> C:\Users\Administrator\orca\workspaces\AbilityKit\cooking-menu-s04\src\AbilityKit.ET.Runtime\bin\Debug\net10.0\AbilityKit.ET.Runtime.dll
+  AbilityKit.Deterministic -> C:\Users\Administrator\orca\workspaces\AbilityKit\cooking-menu-s04\src\AbilityKit.Deterministic\bin\Debug\net10.0\AbilityKit.Deterministic.dll
+  AbilityKit.Core -> C:\Users\Administrator\orca\workspaces\AbilityKit\cooking-menu-s04\src\AbilityKit.Core\bin\Debug\net10.0\AbilityKit.Core.dll
+  AbilityKit.Protocol -> C:\Users\Administrator\orca\workspaces\AbilityKit\cooking-menu-s04\src\AbilityKit.Protocol\bin\Debug\net10.0\AbilityKit.Protocol.dll
+  AbilityKit.Network.Runtime -> C:\Users\Administrator\orca\workspaces\AbilityKit\cooking-menu-s04\src\AbilityKit.Network.Runtime\bin\Debug\net10.0\AbilityKit.Network.Runtime.dll
+  AbilityKit.Network.Transport.LiteNet -> C:\Users\Administrator\orca\workspaces\AbilityKit\cooking-menu-s04\src\AbilityKit.Network.Transport.LiteNet\bin\Debug\net10.0\AbilityKit.Network.Transport.LiteNet.dll
+  AbilityKit.Game.Cooking -> C:\Users\Administrator\orca\workspaces\AbilityKit\cooking-menu-s04\src\AbilityKit.Game.Cooking\bin\Debug\net10.0\AbilityKit.Game.Cooking.dll
+  AbilityKit.Game.Cooking.EtRuntime -> C:\Users\Administrator\orca\workspaces\AbilityKit\cooking-menu-s04\src\AbilityKit.Game.Cooking.EtRuntime\bin\Debug\net10.0\AbilityKit.Game.Cooking.EtRuntime.dll
+  AbilityKit.ET.Runtime.Tests -> C:\Users\Administrator\orca\workspaces\AbilityKit\cooking-menu-s04\src\AbilityKit.ET.Runtime.Tests\bin\Debug\net10.0\AbilityKit.ET.Runtime.Tests.dll
+C:\Users\Administrator\orca\workspaces\AbilityKit\cooking-menu-s04\src\AbilityKit.ET.Runtime.Tests\bin\Debug\net10.0\AbilityKit.ET.Runtime.Tests.dll (.NETCoreApp,Version=v10.0)的测试运行
+总共 1 个测试文件与指定模式相匹配。
+结果文件: C:\Users\Administrator\orca\workspaces\AbilityKit\cooking-menu-s04\local\Logs\test-gates\20261002-184302-cooking-kitchen-loop\cooking-kitchen-loop\test-results\05-Cooking_ET_Level_host_and_runtime_regression.trx
+已通过! - 失败:     0，通过:    67，已跳过:     0，总计:    67，持续时间: 1 s - AbilityKit.ET.Runtime.Tests.dll (net10.0)
+Gate 'cooking-kitchen-loop' passed in 17.9s.
+Summary: C:\Users\Administrator\orca\workspaces\AbilityKit\cooking-menu-s04\local\Logs\test-gates\20261002-184302-cooking-kitchen-loop\cooking-kitchen-loop\gate-summary.json

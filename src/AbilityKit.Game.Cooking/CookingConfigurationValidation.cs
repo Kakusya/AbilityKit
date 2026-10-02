@@ -63,11 +63,15 @@ public sealed record CookingConfigurationCandidate(
     IReadOnlyList<CookingApplianceDefinition> Appliances,
     IReadOnlyList<CookingRecipeDefinition> Recipes,
     IReadOnlyList<CookingOrderTemplateDefinition>? OrderTemplates = null,
-    IReadOnlyList<CookingSupplyEntryDefinition>? StandardInitialSupply = null);
+    IReadOnlyList<CookingSupplyEntryDefinition>? StandardInitialSupply = null,
+    CookingSpatialConfiguration? Spatial = null)
+{
+    public CookingContentProvenance? ContentProvenance { get; init; }
+}
 
 public sealed record CookingConfigurationIdentity(string Schema, string Sha256)
 {
-    public const string CurrentSchema = "cooking-definition-v2";
+    public const string CurrentSchema = "cooking-definition-v3";
 
     public override string ToString() => $"{Schema}:{Sha256}";
 }
@@ -86,8 +90,11 @@ public sealed class CookingConfigurationSnapshot
         IReadOnlyDictionary<StationSlotId, CookingApplianceDefinition> appliances,
         IReadOnlyDictionary<RecipeId, CookingRecipeDefinition> recipes,
         IReadOnlyDictionary<OrderTemplateId, CookingOrderTemplateDefinition>? orderTemplates = null,
-        IReadOnlyList<CookingSupplyEntryDefinition>? standardInitialSupply = null)
+        IReadOnlyList<CookingSupplyEntryDefinition>? standardInitialSupply = null,
+        CookingSpatialConfiguration? spatial = null, CookingContentProvenance? contentProvenance = null)
     {
+        ContentProvenance = contentProvenance?.Freeze();
+        Spatial = spatial?.Freeze();
         SupportedApplianceCapabilities = supportedApplianceCapabilities;
         Items = items;
         Appliances = appliances;
@@ -103,7 +110,9 @@ public sealed class CookingConfigurationSnapshot
     public IReadOnlyDictionary<RecipeId, CookingRecipeDefinition> Recipes { get; }
     public IReadOnlyDictionary<OrderTemplateId, CookingOrderTemplateDefinition> OrderTemplates { get; }
     public IReadOnlyList<CookingSupplyEntryDefinition> StandardInitialSupply { get; }
+    public CookingSpatialConfiguration? Spatial { get; }
     public CookingConfigurationIdentity Identity { get; }
+    public CookingContentProvenance? ContentProvenance { get; }
 
     public string CanonicalText() => JsonSerializer.Serialize(new CanonicalConfiguration(
         CookingConfigurationIdentity.CurrentSchema,
@@ -126,13 +135,17 @@ public sealed class CookingConfigurationSnapshot
                 NormalizeDefinitionList(recipe.DefaultInputs),
                 recipe.ProductDefinition.Value,
                 recipe.Process.Value, recipe.RequiredApplianceCapability,
-                recipe.Completion.ToString(), recipe.RequiredTicks, recipe.RequiresStation)).ToArray(),
+                recipe.Completion.ToString(), recipe.RequiredTicks, recipe.RequiresStation, recipe.Execution.ToString(), recipe.YieldPortions, recipe.RequiredProcessingContainerDefinition?.Value)).ToArray(),
         OrderTemplates.Values.OrderBy(template => template.Id.Value, StringComparer.Ordinal)
             .Select(template => new CanonicalOrderTemplate(template.Id.Value, template.RequiredRecipe.Value,
                 template.RequiredContainerDefinition.Value, template.BaseScore)).ToArray(),
         StandardInitialSupply.OrderBy(entry => entry.Definition.Value, StringComparer.Ordinal)
             .ThenBy(entry => entry.Location, StringComparer.Ordinal)
-            .Select(entry => new CanonicalSupplyEntry(entry.Definition.Value, entry.Count, entry.Location)).ToArray()),
+            .Select(entry => new CanonicalSupplyEntry(entry.Definition.Value, entry.Count, entry.Location)).ToArray(),
+        Spatial is null ? null : Spatial with {
+            InitialPoses = Spatial.InitialPoses.OrderBy(p => p.Player.Value, StringComparer.Ordinal).ToArray(),
+            Anchors = Spatial.Anchors.OrderBy(a => a.Kind).ThenBy(a => a.Id, StringComparer.Ordinal).ToArray(),
+            Obstacles = Spatial.Obstacles.OrderBy(o => o.MinX).ThenBy(o => o.MinY).ThenBy(o => o.MaxX).ThenBy(o => o.MaxY).ToArray() }, ContentProvenance),
         CanonicalJsonOptions);
 
     private static IReadOnlyList<string> NormalizeDefinitionList(IReadOnlyList<DefinitionId>? definitions) =>
@@ -149,7 +162,7 @@ public sealed class CookingConfigurationSnapshot
         IReadOnlyList<CanonicalAppliance> Appliances,
         IReadOnlyList<CanonicalRecipe> Recipes,
         IReadOnlyList<CanonicalOrderTemplate> OrderTemplates,
-        IReadOnlyList<CanonicalSupplyEntry> StandardInitialSupply);
+        IReadOnlyList<CanonicalSupplyEntry> StandardInitialSupply, CookingSpatialConfiguration? Spatial, CookingContentProvenance? ContentProvenance);
 
     private sealed record CanonicalItem(string Id, IReadOnlyList<string> AllowedPlayerCapabilities,
         CanonicalItemContainer? Container);
@@ -157,7 +170,7 @@ public sealed class CookingConfigurationSnapshot
     private sealed record CanonicalAppliance(string Station, IReadOnlyList<string> Capabilities, bool IsAvailable);
     private sealed record CanonicalRecipe(string Id, IReadOnlyList<string> Inputs, IReadOnlyList<string> DefaultInputs,
         string ProductDefinition, string Process, string RequiredApplianceCapability, string Completion, int RequiredTicks,
-        bool RequiresStation);
+        bool RequiresStation, string Execution, int YieldPortions, string? RequiredProcessingContainerDefinition);
     private sealed record CanonicalOrderTemplate(string Id, string RequiredRecipe, string RequiredContainerDefinition,
         int BaseScore);
     private sealed record CanonicalSupplyEntry(string Definition, int Count, string Location);
@@ -192,12 +205,40 @@ public sealed class CookingConfigurationRegistry
         ArgumentNullException.ThrowIfNull(candidate);
         ValidateCandidateShape(candidate);
         var diagnostics = new List<CookingConfigurationDiagnostic>();
+        if (candidate.ContentProvenance is { } provenance && !provenance.IsValid())
+            diagnostics.Add(Diagnostic(CookingConfigurationDiagnosticCodes.InvalidValue, "ContentProvenance", "catalog", "Sources/SelectedMenus", null,
+                "Provenance requires nonblank schema, lowercase SHA-256 hashes, unique source paths and selected menu IDs."));
         var supportedCapabilities = ValidateCapabilities(candidate.SupportedApplianceCapabilities, diagnostics);
         var items = ValidateItems(candidate.Items, diagnostics);
         var appliances = ValidateAppliances(candidate.Appliances, supportedCapabilities, diagnostics);
         var recipes = ValidateRecipes(candidate.Recipes, items, appliances, supportedCapabilities, diagnostics);
         ValidateOrderTemplates(candidate.OrderTemplates, recipes, items, diagnostics);
         ValidateStandardInitialSupply(candidate.StandardInitialSupply, items, appliances, diagnostics);
+        if (candidate.Spatial is { } spatial)
+        {
+            try
+            {
+                var players = spatial.InitialPoses.ToDictionary(p => p.Player,
+                    p => new CookingPlayerConfig(p.Player, new HashSet<string>(), new HashSet<string>()));
+                spatial.Validate(players, appliances);
+                var supply = candidate.StandardInitialSupply ?? Array.Empty<CookingSupplyEntryDefinition>();
+                if (supply.Where(e => e.Location != CookingContentCatalog.CleanPoolLocation).GroupBy(e => e.Location).Any(g => g.Sum(e => (long)e.Count) > 1))
+                    throw new ArgumentException("Ordinary spatial supply anchors hold one object.");
+                foreach (var entry in supply)
+                {
+                    var kind = entry.Location.StartsWith("station:", StringComparison.Ordinal) ? LocationKind.StationSlot : LocationKind.WorldPosition;
+                    var id = entry.Location.StartsWith("station:", StringComparison.Ordinal) ? entry.Location[8..] :
+                        entry.Location.StartsWith("world:", StringComparison.Ordinal) ? entry.Location[6..] :
+                        entry.Location == CookingContentCatalog.CleanPoolLocation ? "clean-pool" : entry.Location;
+                    if (!spatial.Anchors.Any(a => a.Kind == kind && a.Id == id))
+                        throw new ArgumentException("Initial supply location lacks spatial anchor.");
+                }
+            }
+            catch (ArgumentException e)
+            {
+                diagnostics.Add(Diagnostic(CookingConfigurationDiagnosticCodes.InvalidValue, "Spatial", "map", "Anchors/Poses", null, e.Message));
+            }
+        }
         return new CookingConfigurationValidationResult(diagnostics
             .OrderBy(diagnostic => diagnostic.Table, StringComparer.Ordinal)
             .ThenBy(diagnostic => diagnostic.RecordId, StringComparer.Ordinal)
@@ -238,11 +279,11 @@ public sealed class CookingConfigurationRegistry
         var recipes = candidate.Recipes.ToFrozenDictionary(recipe => recipe.Id,
             recipe => new CookingRecipeDefinition(recipe.Id, recipe.Inputs.ToArray(), recipe.ProductDefinition, recipe.Process,
                 recipe.RequiredApplianceCapability, recipe.RequiredTicks,
-                recipe.DefaultInputs?.ToArray(), recipe.Completion, recipe.RequiresStation));
+                recipe.DefaultInputs?.ToArray(), recipe.Completion, recipe.RequiresStation, recipe.Execution, recipe.YieldPortions, recipe.RequiredProcessingContainerDefinition));
         var orderTemplates = (candidate.OrderTemplates ?? Array.Empty<CookingOrderTemplateDefinition>())
             .ToFrozenDictionary(template => template.Id);
         var standardInitialSupply = (candidate.StandardInitialSupply ?? Array.Empty<CookingSupplyEntryDefinition>()).ToArray();
-        return new CookingConfigurationSnapshot(capabilities, items, appliances, recipes, orderTemplates, standardInitialSupply);
+        return new CookingConfigurationSnapshot(capabilities, items, appliances, recipes, orderTemplates, standardInitialSupply, candidate.Spatial, candidate.ContentProvenance);
     }
 
     private static HashSet<string> ValidateCapabilities(IReadOnlyList<string> capabilities,
@@ -368,6 +409,10 @@ public sealed class CookingConfigurationRegistry
             if (string.IsNullOrWhiteSpace(recipe.Process.Value))
                 diagnostics.Add(Diagnostic(CookingConfigurationDiagnosticCodes.RequiredFieldMissing, "Recipe", recordId, "Process", null,
                     "Recipe process ID must be nonblank."));
+            if (!Enum.IsDefined(recipe.Execution) || recipe.YieldPortions <= 0 ||
+                (recipe.YieldPortions > 1 && recipe.Completion != CookingRecipeCompletionKind.RetainInputs))
+                diagnostics.Add(Diagnostic(CookingConfigurationDiagnosticCodes.InvalidValue, "Recipe", recordId, "Execution/YieldPortions", null,
+                    "Invalid execution kind or unsupported yield/completion combination."));
             if (recipe.RequiredTicks <= 0)
                 diagnostics.Add(Diagnostic(CookingConfigurationDiagnosticCodes.InvalidValue, "Recipe", recordId, "RequiredTicks", null,
                     "Recipe required ticks must be positive."));
@@ -394,7 +439,6 @@ public sealed class CookingConfigurationRegistry
             }
             else
             {
-                var seenInputs = new HashSet<DefinitionId>();
                 foreach (var input in recipe.Inputs)
                 {
                     if (string.IsNullOrWhiteSpace(input.Value) || !items.ContainsKey(input))
@@ -403,9 +447,7 @@ public sealed class CookingConfigurationRegistry
                             input.Value, "Recipe references an item definition that is absent from this candidate batch."));
                         continue;
                     }
-                    if (!seenInputs.Add(input))
-                        diagnostics.Add(Diagnostic(CookingConfigurationDiagnosticCodes.DuplicateId, "Recipe", recordId, "Inputs",
-                            input.Value, "Recipe declares the same input definition more than once."));
+
                 }
             }
 
@@ -423,6 +465,15 @@ public sealed class CookingConfigurationRegistry
                         defaultInput.Value, "Recipe default input duplicates a declared item input."));
             }
 
+            if (recipe.RequiredProcessingContainerDefinition is { } carrier)
+            {
+                if (!items.TryGetValue(carrier, out var carrierItem) || carrierItem.Container is not { } capability)
+                    diagnostics.Add(Diagnostic(CookingConfigurationDiagnosticCodes.MissingReference, "Recipe", recordId,
+                        "RequiredProcessingContainerDefinition", carrier.Value, "The processing carrier must be a declared container."));
+                else if (capability.Capacity < recipe.Inputs.Count || !recipe.Inputs.All(capability.AcceptedDefinitions.Contains))
+                    diagnostics.Add(Diagnostic(CookingConfigurationDiagnosticCodes.InvalidValue, "Recipe", recordId,
+                        "RequiredProcessingContainerDefinition", carrier.Value, "The processing carrier must fit and accept every explicit input."));
+            }
             ValidateRecipeDefinitionReference(recipe.ProductDefinition, "ProductDefinition", recipe.Id, items, diagnostics);
             validated[recipe.Id] = recipe;
         }

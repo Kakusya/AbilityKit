@@ -3,7 +3,7 @@
   "name": "cooking-singleplayer-spatial-interaction",
   "title": "单机逻辑移动与交互目标",
   "description": "A02–A07/A10，网格放置与连续移动分离",
-  "status": "planning",
+  "status": "in_progress",
   "dev_type": null,
   "scope": null,
   "package": null,
@@ -12,16 +12,16 @@
   "assignee": "Li He",
   "createdAt": "2026-10-02",
   "completedAt": null,
-  "branch": null,
+  "branch": "cooking-core-s01-s03",
   "base_branch": "master",
-  "worktree_path": null,
+  "worktree_path": "C:/Users/Administrator/orca/workspaces/AbilityKit/cooking-core-s01-s03",
   "commit": null,
   "pr_url": null,
   "subtasks": [],
   "children": [],
   "parent": "10-02-cooking-gameplay-menu-plan",
   "relatedFiles": [],
-  "notes": "2026-10-02 owner 只授权记录规划与列 Task，不执行。全局路线与历史契约保持。",
+  "notes": "Reviewed planning authorization from current dispatch; worker S01?S03 implementation verified with actual gates, pending coordinator review/merge. See research/verification.md; old stopped-run evidence not accepted.",
   "meta": {
     "plan_id": "S01",
     "stage": "singleplayer",
@@ -32,5 +32,6 @@
     "planning_maturity": "reviewed-contract",
     "owner_delegated_details": true,
     "execution_authorization": "Latest owner: audit every topic then execute through completion. Task planning review and dependency checks precede execution; Unity and optional reference pool remain deferred."
-  }
+  },
+  "planning_maturity": "reviewed-contract"
 }

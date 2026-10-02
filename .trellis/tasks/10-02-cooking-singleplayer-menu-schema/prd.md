@@ -1,27 +1,22 @@
-> Current owner instruction (2026-10-02): continue auditing all topics, resolve their plans, then implement and verify to completion without stopping for routine confirmations. Preserve architecture and stage order: singleplayer -> network -> singleplayer Unity -> network Unity. Current stage: singleplayer. Older planning-only notices below are historical. Unity remains deferred under its separate gate.
+# S04: source-faithful menu catalog and production mapping
 
-# S04 单机菜单拓扑与配置映射
+Owner authorization: current Orca dispatch task_0b550b23177b / ctx_cf4084e88097 resumes the preserved candidate and authorizes source audit then full singleplayer implementation. The reviewed main task design and parent research/menu-review.md and final-review.md supersede historical planning-only notices. Unity remains deferred; no master merge or push by this worker.
 
-> 最新执行授权：2026-10-02 owner 后续明确实施单机与联网、worktree并行、验证后合并master；Unity后置。 下面初稿未执行表述为登记时历史；具体执行设计及证据按总任务 execution.md 与本 Task 后续修订。
+## Behavior gap and ownership
 
-状态：planning / draft / 未执行。
+The preserved candidate paired runtime slugs with Excel row order, lacked authoritative367-node provenance, and rejected required Manual/batch/multiset execution in its legacy adapter. Source-complete catalog is required, followed by actual public-command production of all87 menus through RecipeSimulation and ET host after the core contract is available.
 
-## 目标与范围
+This work owns CookingMenuCatalog.cs, deterministic generator/source identity manifest, Content/menu-catalog-v1.json, menu tests/spec, and S04/S09-S13 artifacts. Core RecipeLoop/Checkpoint/Domain/ContentCatalog/ConfigurationValidation remain with the core owner. Shared csproj content-copy addition is isolated; no existing content rename is owned here. This .NET-only package has no Cooking UPM/asmdef counterpart discovered; it references the shared transport project, which references Unity UPM sources.
 
-87 款/72 供应/60 准备状态/19 工位的候选映射。以单机→网络→单机 Unity→网络 Unity 顺序推进。
+## Acceptance
 
-## 前置
+- Explicit stable source-ID/name/runtime-ID mapping covers87 menus,72 supplies,60 preparations,19 functional stations; original Markdown/XLSX remain byte-identical.
+- Audit all367 source nodes and supply/preparation/station upstream closures; preserve discrepancies with source coordinates and decisions.
+- Strongly typed acyclic graph retains repeated portions, independent branches and actual stage outputs. Final-stage toppings cannot bypass previous stages.
+- Processing and serving containers differ; molds/trays/baskets correspond to actual load/heat/unload recipes. Core vessel enforcement required before runtime claims.
+- Drinks require binding at delivery, meals/desserts do not; cups disposable/refillable, plates/bowls washable. S05 carries policy into actual order/config/Submit.
+- Load validated selected closure through existing content registry; preserve old soup/toast IDs and behavior. Catalog canonical/source hash must be integrated into real compatibility identity or explicit production identity validation.
+- Missing supply/capability/container, unknown ID/name conflict, missing producer, cycle, invalid portions/mode/final/provenance and premature final additions fail before installation.
+- S09-S13 all87 recipes execute supply -> preparation -> stage -> product -> correct serving vessel -> binding if required -> submission -> checkpoint recovery. No injected intermediate/final products or second simulation.
 
-依赖：S02, S03。必须读取 [总 plan](../../spec/cooking/gameplay-menu-plan.md)、[注册表](../10-02-cooking-gameplay-menu-plan/task-register.md)、相关生效 spec 与历史 check。
-
-## 验收
-
-逐菜来源拓扑无环、重复份数及阶段顺序正确；本关菜单闭合；旧汤/吐司回归不变；明确版本迁移。拒绝零变更、幂等、canonical/hash、scope 与恢复覆盖随实际新增状态一起验证。
-
-## 范围外
-
-本轮不改产品代码，不执行该 Task；单机 Task 不做传输与 Unity，网络 Task 不做 Unity；额外机制只审议不默认纳入基础。
-
-## 执行门
-
-这是可审议的初始记录，不是最终实施批准。开始前细化具体 API/错误矩阵/测试与版本策略，重新核查依赖及环境，审阅最终 planning summary 后由 owner 明确批准。
+All new ticks/yield/supply/score values are fixture defaults, not balance or a level menu. No economy penalties, fine minigames, cooling checks, network or Unity work.
