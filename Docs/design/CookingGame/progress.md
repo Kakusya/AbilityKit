@@ -1,3 +1,5 @@
+> 2026-10-02 22:44: master e3a84d765 now includes reviewed frozen scoped Observe. Actual post-merge kitchen473/601/238 and ET601/238 passed, zero failures/skips. Formats definition3/Recipe5/Level7. Ready availability, cross-Level carry/permission/new geometry, failed baseline/durable load and full S14 operating exit remain open. [Evidence](../../../.trellis/tasks/10-02-cooking-gameplay-menu-plan/research/observation-composite-verification.md).
+
 > Current owner instruction (2026-10-02): continue auditing all topics, resolve their plans, then implement and verify to completion without stopping for routine confirmations. Preserve architecture and stage order: singleplayer -> network -> singleplayer Unity -> network Unity. Current stage: singleplayer. Older planning-only notices below are historical. Unity remains deferred under its separate gate.
 
 # Cooking Game 当前工程进度
