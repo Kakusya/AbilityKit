@@ -943,7 +943,7 @@ public sealed class CookingLevelEtHost : IDisposable
     /// <summary>
     /// 导出宿主级恢复 checkpoint：本代际的 Level scope/epoch、config identity、preparation、
     /// lifecycle 状态与版本、HostFrameSequence、命令水位与整册仿真载荷。
-    /// 前置条件：Level Running 且 admitted 命令已全部有终态（pending 与 in-flight 皆空）——
+    /// 前置条件：Level Running 或已初始化的 Preparing，且 admitted 命令已全部有终态（pending 与 in-flight 皆空）——
     /// 宿主 Dispose 对未决命令的既有语义是取消并返回有序 disposition，半途点不构成权威态记录。
     /// </summary>
     public CookingLevelCheckpointExportResult ExportCheckpoint()
@@ -952,24 +952,28 @@ public sealed class CookingLevelEtHost : IDisposable
         var state = _lifecycle.State;
         if (state == CookingLevelState.Paused)
             return new CookingLevelCheckpointExportResult(false, CookingLevelCheckpointExportReason.LevelPaused);
-        if (state != CookingLevelState.Running || _ownedSimulation is null)
+        if ((state != CookingLevelState.Running && !_lifecycle.IsPreparationAdmissionOpen) || _ownedSimulation is null)
             return new CookingLevelCheckpointExportResult(false, CookingLevelCheckpointExportReason.LevelNotRunning);
         if (_pending.Count > 0 || _inFlight is not null)
             return new CookingLevelCheckpointExportResult(false, CookingLevelCheckpointExportReason.PendingCommands);
         if (_lifecycle.Preparation is not { } preparation)
             return new CookingLevelCheckpointExportResult(false, CookingLevelCheckpointExportReason.PreparationMissing);
+        // Publication must bind the payload to this generation, including before its first fixed tick.
+        var recipeCheckpoint = _ownedSimulation.ExportCheckpoint();
+        if (!Equals(recipeCheckpoint.LevelScope, Binding.LevelScope))
+            return new CookingLevelCheckpointExportResult(false, CookingLevelCheckpointExportReason.LevelNotRunning);
 
         return new CookingLevelCheckpointExportResult(true, CookingLevelCheckpointExportReason.None,
             new CookingLevelCheckpoint(
                 Binding.LevelScope,
                 _lifecycle.Configuration.Identity,
                 CookingLevelLifecycle.CopyPreparation(preparation),
-                CookingLevelState.Running,
+                state,
                 null,
                 _lifecycle.Version,
                 HostFrameSequence,
                 LastCommittedSimulationBatch,
-                _ownedSimulation.ExportCheckpoint(),
+                recipeCheckpoint,
                 _frontOfHouse is null ? null : RunFrontOperation(() => _frontOfHouse.ExportCheckpoint(_frontOfHouseMenu)),
                 _frontConfigurationIdentity, _serviceStartLogicalTick, _preparationConfiguration?.Identity(), null));
     }
@@ -988,6 +992,9 @@ public sealed class CookingLevelEtHost : IDisposable
         ArgumentNullException.ThrowIfNull(checkpoint);
         ArgumentNullException.ThrowIfNull(configuration);
         ArgumentNullException.ThrowIfNull(factory);
+        if ((checkpoint.State != CookingLevelState.Running && checkpoint.State != CookingLevelState.Preparing)
+            || checkpoint.Outcome is not null || checkpoint.InstalledLayout is not null)
+            return new(false, CookingLevelCheckpointRestoreReason.CheckpointScopeInvalid);
         if (!Equals(configuration.Identity, checkpoint.ConfigIdentity))
             return new CookingLevelCheckpointRestoreResult(false,
                 CookingLevelCheckpointRestoreReason.ConfigurationIdentityMismatch);
@@ -999,14 +1006,18 @@ public sealed class CookingLevelEtHost : IDisposable
         catch (ArgumentException) { return new(false, CookingLevelCheckpointRestoreReason.ConfigurationIdentityMismatch); }
         if (checkpoint.PreparationConfigurationIdentity != trustedPreparation?.Identity())
             return new(false, CookingLevelCheckpointRestoreReason.ConfigurationIdentityMismatch);
+        var preparing = checkpoint.State == CookingLevelState.Preparing;
+        if (preparing && trustedPreparation is null)
+            return new(false, CookingLevelCheckpointRestoreReason.ConfigurationIdentityMismatch);
         if (checkpoint.ServiceStartLogicalTick < 0 ||
             checkpoint.ServiceStartLogicalTick > checkpoint.Recipe.LogicalTick ||
+            (preparing && checkpoint.ServiceStartLogicalTick != 0) ||
             (trustedPreparation is null && checkpoint.ServiceStartLogicalTick != 0))
             return new(false, CookingLevelCheckpointRestoreReason.GameplayRestoreRejected,
                 RecipeRestoreReason: CookingCheckpointRestoreReason.CounterInvalid);
         var trustedFront = (factory as ICookingFrontOfHouseGameplayFactory)?.FrontOfHouseConfiguration;
         if (trustedFront is not null && checkpoint.FrontOfHouse is { } clock &&
-            clock.State.ServiceTicks != Math.Min(checkpoint.Recipe.LogicalTick - checkpoint.ServiceStartLogicalTick, trustedFront.Schedule.ServiceTicks))
+            clock.State.ServiceTicks != (preparing ? 0 : Math.Min(checkpoint.Recipe.LogicalTick - checkpoint.ServiceStartLogicalTick, trustedFront.Schedule.ServiceTicks)))
             return new(false, CookingLevelCheckpointRestoreReason.FrontOfHouseRestoreRejected,
                 FrontOfHouseRestoreReason: CookingFrontOfHouseRestoreReason.ConfigurationMismatch);
         if (checkpoint.FrontOfHouseConfigurationIdentity != trustedFront?.Identity()
@@ -1014,6 +1025,23 @@ public sealed class CookingLevelEtHost : IDisposable
             || (trustedFront is null && checkpoint.FrontOfHouse?.State is { } untrusted && (untrusted.Flow is not null || untrusted.ManualPolicyIdentity is not null)))
             return new(false, CookingLevelCheckpointRestoreReason.FrontOfHouseRestoreRejected,
                 FrontOfHouseRestoreReason: CookingFrontOfHouseRestoreReason.ConfigurationMismatch);
+        if (preparing)
+        {
+            // Preparing has never advanced service. Compare every business field against
+            // the same trusted initial configuration used by PublishKitchen/BindFrontOfHouse.
+            CookingFrontOfHouseCheckpoint? pristine = null;
+            if (trustedFront is not null)
+            {
+                var initial = new CookingFrontOfHouse(trustedFront.Schedule);
+                if (trustedFront.Flow is not null) initial.ConfigureFlow(trustedFront.Flow);
+                if (trustedFront.ManualPolicyIdentity is { } policy)
+                    initial.ConfigureManualWork(policy, (_, _) => false);
+                pristine = initial.ExportCheckpoint(new CookingFrontOfHouseMenu(trustedFront.Menu));
+            }
+            if (checkpoint.FrontOfHouse?.CanonicalText() != pristine?.CanonicalText())
+                return new(false, CookingLevelCheckpointRestoreReason.FrontOfHouseRestoreRejected,
+                    FrontOfHouseRestoreReason: CookingFrontOfHouseRestoreReason.ConfigurationMismatch);
+        }
         if (checkpoint.FrontOfHouse?.State.Closing == true && checkpoint.Recipe.Supply is { Closing: false })
             return new(false, CookingLevelCheckpointRestoreReason.GameplayRestoreRejected,
                 RecipeRestoreReason: CookingCheckpointRestoreReason.SupplyStateInvalid);
@@ -1041,7 +1069,7 @@ public sealed class CookingLevelEtHost : IDisposable
         try
         {
             host = new CookingLevelEtHost(lifecycle);
-            var prepared = host.Prepare(checkpoint.Preparation);
+            var prepared = preparing ? host.BeginPreparation(checkpoint.Preparation) : host.Prepare(checkpoint.Preparation);
             if (!prepared.Accepted)
             {
                 host.Dispose();
@@ -1050,16 +1078,19 @@ public sealed class CookingLevelEtHost : IDisposable
                     CookingCheckpointRestoreReason.None, prepared.Reason);
             }
 
-            var started = host.Start();
-            if (!started.Accepted)
+            if (!preparing)
             {
-                host.Dispose();
-                return new CookingLevelCheckpointRestoreResult(false,
-                    CookingLevelCheckpointRestoreReason.LifecycleStartRejected, null,
-                    CookingCheckpointRestoreReason.None, started.Reason);
+                var started = host.Start();
+                if (!started.Accepted)
+                {
+                    host.Dispose();
+                    return new CookingLevelCheckpointRestoreResult(false,
+                        CookingLevelCheckpointRestoreReason.LifecycleStartRejected, null,
+                        CookingCheckpointRestoreReason.None, started.Reason);
+                }
             }
 
-            if (!lifecycle.TryGetGameplay(out var simulation))
+            if (!lifecycle.TryPeekBoundKitchen(out var simulation) || simulation is null)
             {
                 host.Dispose();
                 return new CookingLevelCheckpointRestoreResult(false,
@@ -1091,7 +1122,7 @@ public sealed class CookingLevelEtHost : IDisposable
                 var frontState = host._frontOfHouse.Snapshot();
                 if (frontState.Work.Where(x => x.Player is not null).Any(x => !host.CanFrontWork(simulation, x.Player!.Value, x.Target))
                     || frontState.ManualPolicyIdentity != trustedFront?.ManualPolicyIdentity
-                    || (trustedFront is not null && frontState.ServiceTicks != Math.Min(checkpoint.Recipe.LogicalTick - checkpoint.ServiceStartLogicalTick, trustedFront.Schedule.ServiceTicks)))
+                    || (trustedFront is not null && frontState.ServiceTicks != (preparing ? 0 : Math.Min(checkpoint.Recipe.LogicalTick - checkpoint.ServiceStartLogicalTick, trustedFront.Schedule.ServiceTicks))))
                 {
                     host.Dispose();
                     return new(false, CookingLevelCheckpointRestoreReason.FrontOfHouseRestoreRejected,
@@ -1117,8 +1148,9 @@ public sealed class CookingLevelEtHost : IDisposable
     internal void AdoptRecoveredCheckpoint(CookingLevelCheckpoint checkpoint)
     {
         ArgumentNullException.ThrowIfNull(checkpoint);
-        if (_lifecycle.State != CookingLevelState.Running)
-            throw new InvalidOperationException("Only a running level host can adopt a recovered checkpoint.");
+        if (_lifecycle.State != checkpoint.State ||
+            (_lifecycle.State != CookingLevelState.Running && !_lifecycle.IsPreparationAdmissionOpen))
+            throw new InvalidOperationException("Only a matching running or preparing level host can adopt a recovered checkpoint.");
         if (HostFrameSequence > checkpoint.HostFrameSequence)
             throw new InvalidOperationException("A recovered checkpoint must not move the host frame sequence backwards.");
 

@@ -743,8 +743,8 @@ public sealed class CookingLevelLifecycle
     /// </summary>
     internal void AdoptRecoveredVersion(long version)
     {
-        if (State != CookingLevelState.Running)
-            throw new InvalidOperationException("Only a running level generation can adopt a recovered lifecycle version.");
+        if (State is not (CookingLevelState.Preparing or CookingLevelState.Running))
+            throw new InvalidOperationException("Only a preparing or running level generation can adopt a recovered lifecycle version.");
         if (version < Version)
             throw new ArgumentOutOfRangeException(nameof(version),
                 "A recovered lifecycle version must not move the generation version backwards.");

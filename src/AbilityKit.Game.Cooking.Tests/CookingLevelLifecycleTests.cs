@@ -19,6 +19,22 @@ public sealed class CookingLevelLifecycleTests
     private static readonly RecipeId Recipe = new("recipe-a");
 
     [Fact]
+    public void recovered_preparing_version_preserves_state_and_rejects_backward_watermarks()
+    {
+        var lifecycle = CreateLifecycle();
+        Assert.Throws<InvalidOperationException>(() => lifecycle.AdoptRecoveredVersion(10));
+        AssertAccepted(lifecycle.BeginPreparation(Preparation()), CookingLevelState.Preparing);
+        lifecycle.AdoptRecoveredVersion(10);
+        Assert.Equal(CookingLevelState.Preparing, lifecycle.State);
+        Assert.Equal(10, lifecycle.Version);
+        var before = lifecycle.Snapshot();
+        Assert.Throws<ArgumentOutOfRangeException>(() => lifecycle.AdoptRecoveredVersion(9));
+        Assert.Equal(before, lifecycle.Snapshot());
+        AssertAccepted(lifecycle.CompletePreparation(), CookingLevelState.Ready);
+        Assert.Throws<InvalidOperationException>(() => lifecycle.AdoptRecoveredVersion(20));
+    }
+
+    [Fact]
     public void scope_requires_explicit_parent_runtime_level_and_epoch_identity()
     {
         Assert.Throws<ArgumentNullException>(() => new CookingLevelScope(null!, Runtime, Level, 1));

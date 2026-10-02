@@ -65,6 +65,12 @@ public sealed class CookingPreparingEtTests
                 new Dictionary<StationSlotId, DefinitionId> { [Stove] = Machine }, 2, 3);
         }
     }
+    private sealed class PreparingWithoutFrontFactory(PreparingFactory source) : ICookingPreparationGameplayFactory
+    {
+        public CookingRecipeSimulation Create(CookingLevelScope scope, CookingConfigurationSnapshot configuration) => source.Create(scope, configuration);
+        public CookingPreparationConfiguration CreatePreparationConfiguration(CookingLevelScope scope, CookingConfigurationSnapshot configuration) =>
+            source.CreatePreparationConfiguration(scope, configuration);
+    }
     private static CookingLevelPreparation Preparation() => new(Level.Level, new("map"), new(new("layout"), new[] { Stove }, new[] { Plate, Box }), new Factory().Config.Identity);
     private static CookingRecipeCommand Command(CookingLevelEtHost host, CookingRecipeOperation op, string? request = null, string? delivery = null) =>
         new(Scope, host.HostFrameSequence + 1, Player, new($"{op}-{host.HostFrameSequence}"), op,
@@ -167,5 +173,137 @@ public sealed class CookingPreparingEtTests
         Assert.False(CookingLevelEtHost.Restore(saved with { PreparationConfigurationIdentity = "forged" }, fresh.Config, fresh).Accepted);
         Assert.False(CookingLevelEtHost.Restore(saved with { ServiceStartLogicalTick = 0 }, fresh.Config, fresh).Accepted);
         active.Tick(); Assert.Equal(2, active.FrontOfHouseSnapshot!.ServiceTicks);
+    }
+
+    private static CookingLevelCheckpoint ContinuePreparation(PreparingFactory factory, CookingLevelEtHost host, string pendingDelivery)
+    {
+        var received = Execute(host, Command(host, CookingRecipeOperation.ReceiveSupply, delivery: pendingDelivery)).Supply!;
+        Assert.Equal(3, received.Units.Count);
+        Assert.Equal(2, Assert.Single(factory.Simulation.Snapshot().Processes).ElapsedTicks);
+        Assert.Equal(0, host.FrontOfHouseSnapshot!.ServiceTicks);
+        Assert.True(host.CompletePreparation().Accepted);
+        Assert.Equal(CookingLevelState.Ready, host.Lifecycle.State);
+        Assert.True(host.Start().Accepted); Assert.Equal(1, factory.CreateCount);
+        host.Tick(); Assert.Equal(1, host.FrontOfHouseSnapshot.ServiceTicks);
+        Assert.Single(factory.Simulation.Snapshot().Items, i => i.IsProduct);
+        return host.ExportCheckpoint().Checkpoint!;
+    }
+
+    [Fact]
+    public void Preparing_checkpoint_preserves_pending_delivery_partial_process_and_final_running_canonical()
+    {
+        var factory = new PreparingFactory(); CookingLevelCheckpoint saved, uninterrupted; string pending;
+        using (var host = factory.Host())
+        {
+            Assert.True(host.BeginPreparation(Preparation()).Accepted);
+            Assert.True(host.ExportCheckpoint().Accepted); // Publication already binds this generation, even before its first tick.
+            var first = Execute(host, Command(host, CookingRecipeOperation.RequestSupply, "first")).Supply!.DeliveryId;
+            host.Tick();
+            var received = Execute(host, Command(host, CookingRecipeOperation.ReceiveSupply, delivery: first)).Supply!;
+            var box = received.Package!.Value;
+            Item(factory, host, CookingRecipeOperation.Pickup, box);
+            Item(factory, host, CookingRecipeOperation.Drop, box, world: "storage");
+            Item(factory, host, CookingRecipeOperation.TakeOut, received.Units[0], container: box);
+            Item(factory, host, CookingRecipeOperation.Drop, received.Units[0], station: Stove);
+            pending = Assert.IsType<string>(Execute(host, Command(host, CookingRecipeOperation.RequestSupply, "pending")).Supply!.DeliveryId);
+            Item(factory, host, CookingRecipeOperation.StartProcess, received.Units[0], station: Stove);
+            saved = host.ExportCheckpoint().Checkpoint!;
+            Assert.Equal(CookingLevelState.Preparing, saved.State); Assert.Equal(0, saved.ServiceStartLogicalTick);
+            Assert.Equal(1, Assert.Single(factory.Simulation.Snapshot().Processes).ElapsedTicks);
+            uninterrupted = ContinuePreparation(factory, host, pending);
+        }
+        var fresh = new PreparingFactory(); var recovered = CookingLevelEtHost.Restore(saved, fresh.Config, fresh);
+        Assert.True(recovered.Accepted, recovered.ToString()); using var restored = recovered.Host!;
+        Assert.Equal(CookingLevelState.Preparing, restored.Lifecycle.State); Assert.Equal(1, fresh.CreateCount);
+        Assert.Same(fresh.Simulation, restored.Driver.Simulation);
+        Assert.Equal(saved.CanonicalText(), restored.ExportCheckpoint().Checkpoint!.CanonicalText());
+        Assert.Equal(uninterrupted.CanonicalText(), ContinuePreparation(fresh, restored, pending).CanonicalText());
+    }
+
+    [Fact]
+    public void Preparing_restore_rejects_unsupported_state_outcome_layout_and_clock_before_kitchen_creation()
+    {
+        var factory = new PreparingFactory(); CookingLevelCheckpoint saved;
+        using (var host = factory.Host())
+        {
+            Assert.True(host.BeginPreparation(Preparation()).Accepted); host.Tick();
+            saved = host.ExportCheckpoint().Checkpoint!;
+        }
+        var layout = factory.CreatePreparationConfiguration(Level, factory.Config).InitialLayout;
+        var invalid = new[] {
+            saved with { State = CookingLevelState.Ready },
+            saved with { State = CookingLevelState.Created },
+            saved with { Outcome = CookingLevelOutcome.Success },
+            saved with { InstalledLayout = new(layout, Array.Empty<CookingPlayerPose>()) },
+            saved with { ServiceStartLogicalTick = 1 },
+            saved with { FrontOfHouse = saved.FrontOfHouse! with { State = saved.FrontOfHouse.State with { ServiceTicks = 1 } } }
+        };
+        foreach (var checkpoint in invalid)
+        {
+            var fresh = new PreparingFactory();
+            Assert.False(CookingLevelEtHost.Restore(checkpoint, fresh.Config, fresh).Accepted);
+            Assert.Equal(0, fresh.CreateCount);
+        }
+        foreach (var state in Enum.GetValues<CookingLevelState>().Where(s => s is not CookingLevelState.Running and not CookingLevelState.Preparing))
+        {
+            var fresh = new PreparingFactory();
+            Assert.False(CookingLevelEtHost.Restore(saved with { State = state }, fresh.Config, fresh).Accepted);
+            Assert.Equal(0, fresh.CreateCount);
+        }
+    }
+
+    [Fact]
+    public void Zero_tick_preparing_checkpoint_is_bound_and_restores_without_starting_service()
+    {
+        var factory = new PreparingFactory(); CookingLevelCheckpoint saved;
+        using (var host = factory.Host())
+        {
+            Assert.True(host.BeginPreparation(Preparation()).Accepted);
+            saved = host.ExportCheckpoint().Checkpoint!;
+            Assert.Equal(0, saved.Recipe.LogicalTick); Assert.Equal(Level, saved.Recipe.LevelScope);
+        }
+        var fresh = new PreparingFactory(); var recovery = CookingLevelEtHost.Restore(saved, fresh.Config, fresh);
+        Assert.True(recovery.Accepted, recovery.ToString()); using var active = recovery.Host!;
+        Assert.Equal(saved.CanonicalText(), active.ExportCheckpoint().Checkpoint!.CanonicalText());
+        Assert.Equal(CookingLevelState.Preparing, active.Lifecycle.State);
+        Assert.Equal(0, active.FrontOfHouseSnapshot!.ServiceTicks); Assert.Equal(1, fresh.CreateCount);
+    }
+
+    [Fact]
+    public void Preparing_restore_rejects_zero_clock_customer_and_occupied_table_before_creating_kitchen()
+    {
+        var factory = new PreparingFactory(); CookingLevelCheckpoint saved;
+        using (var host = factory.Host())
+        {
+            Assert.True(host.BeginPreparation(Preparation()).Accepted); host.Tick();
+            saved = host.ExportCheckpoint().Checkpoint!;
+        }
+        var front = saved.FrontOfHouse!;
+        var forged = saved with { FrontOfHouse = front with { State = front.State with {
+            NextCustomerSequence = 1,
+            Customers = new[] { new CookingCustomerSnapshot(new("customer-1"), "table-1", 1,
+                CookingTablePhase.WaitingForInquiry, 0, null) },
+            Tables = new[] { new CookingFrontTableSnapshot("table-1", CookingFrontTableState.Occupied, 0) }
+        } } };
+        var fresh = new PreparingFactory();
+        var rejected = CookingLevelEtHost.Restore(forged, fresh.Config, fresh);
+        rejected.Host?.Dispose();
+        Assert.False(rejected.Accepted, rejected.ToString()); Assert.Equal(0, fresh.CreateCount);
+        var variants = new[] {
+            front with { State = front.State with { TicksUntilNextGuest = front.State.TicksUntilNextGuest + 1 } },
+            front with { State = front.State with { Companion = front.State.Companion with { CompletedTaskCount = 1 } } },
+            front with { State = front.State with { Tables = new[] { new CookingFrontTableSnapshot("table-1", CookingFrontTableState.Free, 1) } } },
+            front with { State = front.State with { Closing = true } }
+        };
+        foreach (var variant in variants)
+        {
+            var candidate = new PreparingFactory();
+            Assert.False(CookingLevelEtHost.Restore(saved with { FrontOfHouse = variant }, candidate.Config, candidate).Accepted);
+            Assert.Equal(0, candidate.CreateCount);
+        }
+        var legacy = new PreparingFactory();
+        Assert.False(CookingLevelEtHost.Restore(saved with { FrontOfHouseConfigurationIdentity = null }, legacy.Config,
+            new PreparingWithoutFrontFactory(legacy)).Accepted);
+        Assert.Equal(0, legacy.CreateCount);
     }
 }
