@@ -28,6 +28,8 @@ public sealed class CookingNetworkAuthorityAdapter : ICookingNetworkAuthorityPor
         var capture = CaptureFullState();
         if (!capture.Accepted) return FrameFailure(Enum.Parse<CookingNetworkFrameReason>(capture.Reason.ToString()), capture);
         var state = capture.State!;
+        if (state.Observation.Lifecycle.State == CookingLevelState.Created)
+            return ConsumeCreatedFrame(commands, disconnectedParticipants, capture);
         var players = state.Observation.Players.Select(p => p.Id).ToHashSet();
         if (disconnectedParticipants.Any(p => !players.Contains(p)))
             return FrameFailure(CookingNetworkFrameReason.InvalidLifecycle, capture);
@@ -90,6 +92,37 @@ public sealed class CookingNetworkAuthorityAdapter : ICookingNetworkAuthorityPor
             return new(false, CookingNetworkFrameReason.AuthorityFaulted, Array.AsReadOnly(admissions.ToArray()),
                 Unique(dispositions), Array.Empty<CookingNetworkCallerCancellation>(), CaptureFullState());
         }
+    }
+
+    private CookingNetworkOwnerFrameResult ConsumeCreatedFrame(IReadOnlyList<CookingNetworkMappedCommand> commands,
+        IReadOnlyList<PlayerId> disconnectedParticipants, CookingNetworkCaptureResult capture)
+    {
+        var state = capture.State!;
+        // No kitchen means no domain workers or claims exist; the caller is the trusted Session owner.
+        // Initialized Created kitchens still validate the real roster and never silently release live work.
+        var players = state.Observation.Players.Select(p => p.Id).ToHashSet();
+        if (state.FullRecipe is not null && disconnectedParticipants.Any(p => !players.Contains(p)))
+            return FrameFailure(CookingNetworkFrameReason.InvalidLifecycle, capture);
+        var candidates = _pendingCleanup.Concat(disconnectedParticipants).Distinct().ToHashSet();
+        if ((state.FullRecipe?.Processes.Any(p => p.ActiveWorker is { } worker && candidates.Contains(worker)) ?? false) ||
+            (state.FullFront?.State.Work.Any(w => w.Status == CookingFrontWorkStatus.Working && w.Player is { } player && candidates.Contains(player)) ?? false))
+        {
+            foreach (var participant in disconnectedParticipants) _pendingCleanup.Add(participant);
+            return FrameFailure(CookingNetworkFrameReason.CleanupRejected, capture);
+        }
+        foreach (var participant in candidates) _pendingCleanup.Remove(participant);
+        var admissions = new List<CookingNetworkAdmission>();
+        foreach (var command in commands)
+        {
+            // Preserve the Host's existing Created admission rejection, without calling Tick.
+            var admission = _host.TryEnqueueNetwork(command);
+            var e = command.Envelope;
+            admissions.Add(new(e.LevelScope, e.Command.Player, e.Command.Command, e.SourceConnectionId, e.CorrelationId,
+                admission.Accepted, Enum.Parse<CookingNetworkAdmissionReason>(admission.Reason.ToString())));
+        }
+        return new(commands.Count == 0, commands.Count == 0 ? CookingNetworkFrameReason.None : CookingNetworkFrameReason.InvalidLifecycle,
+            Array.AsReadOnly(admissions.ToArray()), Array.Empty<CookingNetworkDisposition>(),
+            Array.Empty<CookingNetworkCallerCancellation>(), capture);
     }
 
     private CookingNetworkMappedCommand[] CreateCleanup(CookingNetworkAuthorityCapture state, long batch,

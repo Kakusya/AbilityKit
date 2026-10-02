@@ -27,7 +27,7 @@ public sealed class CookingNetworkSessionV3Tests
             if (allocator is null) kitchen.AddWorldIngredient(Food, Raw, "spawn"); else kitchen.AddItem(Food, Raw, ItemLocation.Station(Stove)); if (progress is not null) kitchen.UseMajorProgress(progress); return kitchen;
         }
     }
-    private static CookingLevelEtHost Host(CookingMajorProgress? progress = null, ICookingProductIdAllocator? allocator = null)
+    private static CookingLevelEtHost Host(CookingMajorProgress? progress = null, ICookingProductIdAllocator? allocator = null, bool initialCreated = false)
     {
         var items = new Dictionary<DefinitionId, CookingItemDefinition> { [Raw] = new(Raw, new HashSet<string> { "cook" }), [Cooked] = new(Cooked, new HashSet<string> { "cook" }) };
         var stations = new Dictionary<StationSlotId, CookingApplianceDefinition> { [Stove] = new(Stove, new HashSet<string> { "heat" }) };
@@ -37,6 +37,7 @@ public sealed class CookingNetworkSessionV3Tests
         var players = new[] { A, Z }.ToDictionary(p => p, p => new CookingPlayerConfig(p, new HashSet<string> { "cook" }, new HashSet<string> { "spawn", "stove" }));
         var fixture = new CookingRecipeFixture(Scope.MatchScope, players, items, stations, recipes);
         var host = new CookingLevelEtHost(new CookingLevelLifecycle(Scope, registry.Current!, new Factory(fixture, progress, allocator)));
+        if (initialCreated) return host;
         Assert.True(host.Prepare(new(Scope.Level, new("map"), new(new("layout"), new[] { Stove }, Array.Empty<DefinitionId>()), registry.Current!.Identity)).Accepted);
         Assert.True(host.Start().Accepted); return host;
     }
@@ -489,6 +490,41 @@ public sealed class CookingNetworkSessionV3Tests
         Assert.Equal(A.Value, latest.State.Observation.Items.Single(i => i.Id == Food).Location.OwnerId);
         Send(CookingNetworkMessageKind.BaselineAck, "duplicate-ack", pending.Identity); session.ProcessOwnerFrame();
         Assert.Equal(3, Baselines().Length); // Duplicate old ACK cannot release the new issued snapshot.
+    }
+
+    [Theory]
+    [InlineData(false)]
+    [InlineData(true)]
+    public async Task Created_readonly_join_disconnect_rebind_finishes_without_clock_advance_or_carried_hand_loss(bool successor)
+    {
+        using var host = Host(initialCreated: !successor);
+        if (successor) {
+            Assert.True(host.TryEnqueue(new(Scope, Pickup(A) with { Command = new("carry-pickup"), SimulationBatch = 1 }, "trusted-local", "carry-pickup")).Accepted);
+            Assert.Equal(CookingRecipeOutcome.Accepted, Assert.Single(host.Tick().Dispositions).Result!.Outcome);
+            Assert.True(host.BeginEnd(CookingLevelOutcome.Success).Accepted); Assert.True(host.CompleteEnd().Accepted);
+            var next = new LevelId("successor");
+            Assert.True(host.CreateSuccessor(next, 2).Accepted);
+        }
+        Assert.Equal(CookingLevelState.Created, host.Observe().Lifecycle.State);
+        var before = host.Observe().CanonicalText(); var frame = host.HostFrameSequence;
+        using var session = Session(host); session.Start(); using var a = Local(session, A);
+        var capture = session.LatestCapture!; var recipe = capture.FullRecipe?.CanonicalText();
+        Assert.Equal(!successor, capture.FullRecipe is null);
+        Pump(session, a.ConnectAsync("inprocess", 1)); Assert.True(a.IsSynchronized);
+        var denied = a.SendCommandAsync("created-no-business", Pickup(A) with { Scope = host.Binding.LevelScope.MatchScope });
+        Pump(session, denied); var rejected = await denied;
+        Assert.Equal("LevelNotRunning", rejected.Reason); Assert.Null(rejected.Result);
+        Assert.Equal(before, host.Observe().CanonicalText());
+        a.Disconnect(); session.ProcessOwnerFrame();
+        var rebound = a.ReconnectAsync("inprocess", 1);
+        for (var i = 0; i < 100 && !rebound.IsCompleted; i++) { session.ProcessOwnerFrame(); Thread.Sleep(2); }
+        Assert.True(rebound.IsCompleted, "Created rebind remained blocked by cleanup although no live work exists."); await rebound;
+        Assert.True(a.IsSynchronized); Assert.Equal(2, session.LatestSessionProjection.Participants.Single(p => p.Participant == A).ConnectionGeneration);
+        Assert.False(session.LatestSessionProjection.Participants.Single(p => p.Participant == A).CleanupPending);
+        Assert.Equal(frame, host.HostFrameSequence); Assert.Equal(before, host.Observe().CanonicalText());
+        Assert.Equal(recipe, session.LatestCapture!.FullRecipe?.CanonicalText());
+        if (successor) Assert.Equal(A.Value, a.LatestBaseline!.State.FullRecipe!.Items.Single(i => i.Id == Food).Location.OwnerId);
+        else Assert.Null(a.LatestBaseline!.State.FullRecipe);
     }
 
 }
