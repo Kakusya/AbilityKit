@@ -6,3 +6,8 @@
 {"file": ".trellis/tasks/10-02-cooking-gameplay-menu-plan/research/core-review.md", "reason": "Reviewed implementation boundary and required behavior evidence"}
 {"file": ".trellis/tasks/10-02-cooking-gameplay-menu-plan/research/menu-review.md", "reason": "Reviewed implementation boundary and required behavior evidence"}
 {"file": ".trellis/tasks/10-02-cooking-gameplay-menu-plan/research/operation-review.md", "reason": "Reviewed implementation boundary and required behavior evidence"}
+{"file": ".trellis/spec/cooking/cooking-recipe-loop.md", "reason": "recipe runtime contract"}
+{"file": ".trellis/spec/cooking/cooking-config-validation.md", "reason": "configuration identity contract"}
+{"file": "Docs/design/CookingGame/reference/menu-v0.1/README.md", "reason": "immutable source hashes"}
+{"file": ".trellis/tasks/10-02-cooking-singleplayer-menu-schema/design.md", "reason": "API errors migration and integration contract"}
+{"file": ".trellis/tasks/10-02-cooking-singleplayer-menu-schema/research/verification.md", "reason": "actual source increment checks, runtime blockers explicitly pending"}

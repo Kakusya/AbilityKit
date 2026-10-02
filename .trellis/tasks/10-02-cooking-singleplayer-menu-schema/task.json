@@ -3,16 +3,16 @@
   "name": "cooking-singleplayer-menu-schema",
   "title": "单机菜单拓扑与配置映射",
   "description": "87 款/72 供应/60 准备状态/19 工位的候选映射",
-  "status": "planning",
+  "status": "in_progress",
   "dev_type": null,
   "scope": null,
   "package": null,
   "priority": "P2",
   "creator": "Li He",
-  "assignee": "Li He",
+  "assignee": "Kakusya",
   "createdAt": "2026-10-02",
   "completedAt": null,
-  "branch": null,
+  "branch": "cooking-menu-s04",
   "base_branch": "master",
   "worktree_path": null,
   "commit": null,
@@ -21,7 +21,7 @@
   "children": [],
   "parent": "10-02-cooking-gameplay-menu-plan",
   "relatedFiles": [],
-  "notes": "2026-10-02 owner 只授权记录规划与列 Task，不执行。全局路线与历史契约保持。",
+  "notes": "Authorized Orca S04 implementation; production core integration pending.",
   "meta": {
     "plan_id": "S04",
     "stage": "singleplayer",
@@ -31,9 +31,9 @@
       "S02",
       "S03"
     ],
-    "execution_gate": "reviewed-contract-and-dependencies",
-    "planning_maturity": "reviewed-contract",
+    "execution_gate": "authorized",
+    "planning_maturity": "implementation-ready",
     "owner_delegated_details": true,
-    "execution_authorization": "Latest owner: audit every topic then execute through completion. Task planning review and dependency checks precede execution; Unity and optional reference pool remain deferred."
+    "execution_authorization": "2026-10-02 owner 后续明确实施单机与联网、worktree并行、验证后合并master；Unity后置。"
   }
 }

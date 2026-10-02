@@ -1,23 +1,45 @@
-> Current owner instruction (2026-10-02): continue auditing all topics, resolve their plans, then implement and verify to completion without stopping for routine confirmations. Preserve architecture and stage order: singleplayer -> network -> singleplayer Unity -> network Unity. Current stage: singleplayer. Older planning-only notices below are historical. Unity remains deferred under its separate gate.
+# S04 design and contract
 
-# S04 初始设计
+Reviewed against D:/MyWork/AbilityKit S04 design and parent research/menu-review.md/final-review.md on2026-10-02. This document records implementation design, not completed runtime acceptance.
 
-状态：draft；未实施。
+## Data and identity
 
-## 本次审议：内容与运行契约
+Read original Markdown and XLSX with Python zip/XML only. tools/cooking-menu-source-ids.json maps source IDs to expected names and stable slugs; unknown/missing/duplicate source IDs, name changes and ambiguous names reject. Row order never selects runtime identity. Source hashes preserve original attachment identity.
 
-以原附件 SHA 和源编号建立稳定映射，禁止按 Excel 行序 zip 分配 ID。72 供应、60 准备状态、19 功能工位、87 成品各自身份独立；中文名冲突拒绝，别名显式声明。保留原367节点，对生成的共享/展开 recipe、交付操作、非独立步骤逐节点记录去向，不能只验生成210步的数量。
+CookingMenuDocument contains supply/preparation/stage/finished materials (DefinitionId), stations (StationSlotId/capabilities), carriers/serving vessels, steps (RecipeId/ProcessId), menus (OrderTemplateId) and all367 CookingMenuSourceNode records. Each node retains10 original cells and row/locator, classification and exact recipe projection or delivery operation. Source IDs differ from runtime IDs; ketchup versus fresh tomato sauce, instant versus fresh tea, and tea-free D28 remain distinct.
 
-Recipe 输入为正整数份数 multiset；展开重复项时校验器、matcher、输入锁、消耗、容量和恢复均保留次数。DefaultInputs 不能免费补成第二份。每个非供应状态有明确 producer，图无环；每关许可闭包包含供应、工位、加工及出餐容器，解锁与允许范围取交集。
+Inputs use positive integer counts; ExpandInputs produces repeated definitions for the core multiset interface. Each non-supply output has one producer; graph traversal proves acyclicity and selected-menu dependency closure. Expanded stages consume previous stage objects; no global serial order between unrelated preparation branches. Source audit independently flattens expanded stages and verifies original direct input multiset, including D13 milk x2 and S11 biscuit x2.
 
-阶段以可搬运中间物件和限定后继 recipe 实现，不能仅写 MustLast 或文字 Operation。苏打最后、奶泡/奶油/奶盖最后等规则实际投料时验证；错误早加拒绝并允许恢复。模具倒入→烤制→脱模、烤盘/蒸篮/炸篮装卸须保留真实容器关系，不能只用通用 carrier 字符串替代。
+Thermal stages retain actual vessel identity: S04-S06 load/mix -> bake -> unmold all reference cake-mold; bake/steam/fry/grill branches load their thermal tray/basket. Unmolding is an explicit manual recipe consuming baked stage inside the same mold, producing cake that is then taken out to the serving plate. Vessel ID must be passed to core RequiredProcessingContainerDefinition and checked by StartProcess/preview; metadata alone is not enforcement.
 
-19工位是功能能力，不是每关19固定实例；蒸汽机加热/打泡共享同一设备占用，搅拌/搅打/榨汁及不同热加工能力分开。31饮品原Excel未列贴单台的差异明确保留：制作依赖和交付依赖分列，贴单进入交付闭包，不伪造配方加工步骤。
+## API and production integration
 
-配置提供显式 fixture 耗时/产量/供应量/评分，用于验证全部路线；不覆盖旧汤/吐司，不宣称正式数值平衡。实际运行 adapter 接入 core Execution/YieldPortions、S05 RequireBinding；不能在适配时拒绝核心必需能力后仍声称目录可制作。
+Load(json/document) validates, owns a defensive copy, normalizes unordered tables, publishes Canonical/Sha256. SourceCells preserve semantic cell order; input counts do not normalize away. Requirements(sourceIds) returns supplies, recipes, containers and capabilities, with separate ProductionCapabilities/DeliveryCapabilities/RefillContainers. ValidateLevel checks full availability, without claiming physical reachability or replenishment proven.
 
-细化证据、全部批次与正反例见总任务 research/menu-review.md。验收包括源行重排身份稳定、未知/冲突诊断、重复份数消耗、公开命令完整生产、必须最后收尾反例、旧菜回归与ET恢复。
+ToContentDocument(baseline, selected, recipeFactory) projects only dependency closure and appends to existing content. LoadContent invokes CookingContentCatalog.Load, so existing configuration validation remains authoritative. Adapter must preserve identity, full input multiset, process, capability, completion, ticks and station requirement. Current legacy adapter remains explicitly blocked for Manual/batch/multiset pending core publication; it is not accepted production completion. Once core is available replace it with direct typed mapping and verify Execution/YieldPortions/required vessel plus order RequiresBinding and disposable policy.
 
-逐菜来源拓扑无环、重复份数及阶段顺序正确；本关菜单闭合；旧汤/吐司回归不变；明确版本迁移。
+Catalog canonical/hash must be consumed by formal compatibility identity, not only held in this class; requested core hook is documented in research/core-integration-request.md. Existing soup/toast IDs remain baseline additions, never overwritten. Delivery capability is not a fake recipe step. Disposable cups are world supply, never cleanPool; washable serving plates/bowls enter existing pool. Core must destroy disposable vessels on Submit.
 
-沿用 [规划架构记录](../../../Docs/design/CookingGame/gameplay-plan-architecture.md) 的 owner 与数据边界，不创建平行模拟，不修改通用框架的产品职责。具体 API/数据形状、错误矩阵、版本迁移、恢复/跨关状态与测试断言在执行前补齐；本初稿不声称已达到实施就绪。
+## Errors and examples
+
+| Diagnostic | Positive case | Rejection |
+|---|---|---|
+| UnknownSchema/InvalidValueStatus | catalog v1 fixture defaults | unknown version/balance claim |
+| DuplicateId/InvalidMaterial/InvalidSource | stable distinct IDs, attachment hashes | duplicate producer/ID, malformed hash |
+| MissingReference/MissingProducer/Cycle | all upstream source closure | unknown material, producer removed, self cycle |
+| InvalidPortions/InvalidMode | integer counts >=1, typed mode | zero/negative counts/yield/ticks, unknown mode |
+| MissingCapability/MissingContainer/ContainerCapacity | complete permitted closure | missing workstation/vessel or too-small carrier |
+| MustLastViolation/InvalidFinal | D31 tea -> ice -> cap | cap in earlier stage, no explicit prior stage |
+| InvalidProvenance/MissingProvenance | source node maps to actual recipes/delivery | nonexistent recipe or omitted FINAL/SERVE |
+| MissingSupply | full source/cup refill availability | required ingredient absent |
+| InvalidRuntimeAdapter/UnsupportedRuntimeContract | exact core mapping | drops repeated input/Manual/yield/vessel |
+
+87 candidates are not a level assignment. F21 pasta and sauce branches can be prepared in either order; D28 has milk/brown-sugar pearls and no tea. Physical supply, reachability and capacity remain joint S07/S08/S14 acceptance.
+
+## Version and recovery
+
+Catalog v1 has no migration from unknown catalog versions. Core owner alone chooses cooking-definition/checkpoint upgrade and old-format rejection. No menu-specific checkpoint schema: recipes/objects/processes/orders use the same runtime authority. Catalog provenance and fixture status participate in normalized catalog hash; actual production compatibility must carry it through core integration. Recovery tests compare uninterrupted and rebuilt ET host canonical terminal states per87 menu after real production, including unfinished stages and remaining batch portions.
+
+## Decisions and limitations
+
+Actual source audit found31 computedStationClosure differences, exactly D01-D31 missing binding station from source directory. Preserve originals and source cells; distinguish production and delivery closure. Treat mold load/bake/unmold as operations with container enforcement; treat compound rows as linked stage recipes. New numeric values: ticks1, selected shared-prep yield2, raw initial8, serving vessels2, score100; all fixtures. Tests cannot convert these to balance or supply-operation claims.

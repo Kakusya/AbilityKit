@@ -17,5 +17,6 @@
   </ItemGroup>
   <ItemGroup>
     <Content Include="Content\cooking-content-v2.json" Link="cooking-content-v2.json" CopyToOutputDirectory="PreserveNewest" />
+    <Content Include="Content\menu-catalog-v1.json" Link="menu-catalog-v1.json" CopyToOutputDirectory="PreserveNewest" />
   </ItemGroup>
 </Project>
