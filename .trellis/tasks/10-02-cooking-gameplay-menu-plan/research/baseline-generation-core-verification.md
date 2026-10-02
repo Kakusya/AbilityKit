@@ -1,0 +1,11 @@
+# Typed major baseline and private generation staging core
+
+Root-owned increment extends existing MajorCheckpointStore (partial) with format2 WriteBaseline/ReadBaseline. Legacy format1 APIs remain; typed read explicitly rejects legacy1. Typed success-handoff Recipe, target/source scope, preparation, trusted config/policy identities, installed layout/normalized seeds and locked choices are integrity-covered. Store read alone is not trusted Host load. IO temporary-write refusal preserves prior file. No anytime save or power-loss durability claim.
+
+CreateGenerationTransactionCopy stages detached Recipe state and current geometry with throw-on-new-allocation allocator and no external washing port. Fixture and major-progress configuration are shared read inputs, so this does not claim complete arbitrary object clone isolation. Private front state adoption prevalidates compatible schedule/companion/flow/manual, retains existing front object and callbacks, and performs existing CopyFrom at commit. Host must keep the staged object stable before invoking the action; no published second authority or autonomous Tick.
+
+Actual focused first baseline4/4, combined7/7 passed. Kitchen gate20261002-225844 passed480 focused/608 Cooking/238 ET,zero failures/skips,32.6s before null poison strengthening. A real items[0].location=null record produced uncaught NullReferenceException (red1/1 failure in local/Logs/cooking-major-baseline-null-location-red.log). Added explicit nonnull Location guard; green7/7 in cooking-baseline-generation-core-null-location-green.log. No broad exception swallowing.
+
+Actual FINAL root gate20261002-230207-cooking-kitchen-loop builds and480 focused/608 Cooking/238 ET passed,zero failures/skips,32.3s. Raw log cooking-baseline-generation-core-kitchen-final-gate.log and gate TRX retained under local/Logs. Copied summary alongside. [Independent review](baseline-generation-core-independent-review.md) records initial blocker and resolution; existing dependency warnings are not claimed absent.
+
+This is core/store-only proof. Host successor/retry transaction, typed trusted restart, menu Ready wiring and complete S14 natural operating/replay remain pending. Definition3/Recipe5/Level7 unchanged; new typed major baseline format2 is a separate format, not Level8.

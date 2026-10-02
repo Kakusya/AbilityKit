@@ -162,3 +162,8 @@ Reviewed source merged to d0eeb4b42. Actual post-merge kitchen gate 468/596/236 
 ## 2026-10-02 22:44 readonly observation master verification
 
 Source16fdc55a2 reviewed and imported ase3a84d765. Post-merge kitchen473/601/238 and ET601/238 passed zero failures/skips; [proof](research/observation-composite-verification.md). S14 stays in_progress. Next authorized exact increment: [Ready design](../10-02-cooking-singleplayer-level-observation/design.md), [availability data mapping](research/s14-manufacturing-availability-mapping.md).
+
+
+## 2026-10-02 23:06 baseline/staging core
+
+Reviewed source11a49537a withactual final kitchen480/608/238 zero failures/skips after Location-null red/green. [Proof](research/baseline-generation-core-verification.md); S14 in_progress. Host producer owns successor/retry transaction and root will later connect menu policy and typed restart.
