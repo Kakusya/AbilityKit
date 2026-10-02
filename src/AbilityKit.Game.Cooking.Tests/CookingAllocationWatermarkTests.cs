@@ -121,18 +121,31 @@ public sealed class CookingAllocationWatermarkTests
         Assert.Equal(before.CanonicalText(), sim.ExportCheckpoint().CanonicalText());
     }
 
+    [Theory]
+    [InlineData(false)]
+    [InlineData(true)]
+    public void Product_and_global_watermark_cannot_both_be_zeroed(bool portion)
+    {
+        var sim = Sim(portion); Complete(sim, portion);
+        if (portion) Accept(sim.Submit(Command(sim, CookingRecipeOperation.ServePortion, "portion", Pot, Bowl)));
+        var before = sim.ExportCheckpoint();
+        var forged = before with { NextProductId = 0, Items = before.Items.Select(i => i.IsProduct
+            ? i with { AllocationSequence = 0 } : i).ToArray() };
+        Assert.False(sim.RestoreCheckpoint(forged).Accepted);
+        Assert.Equal(before.CanonicalText(), sim.ExportCheckpoint().CanonicalText());
+    }
     [Fact]
-    public void Seed_products_can_keep_zero_and_watermark_may_legitimately_exceed_maximum_sequence()
+    public void AddItem_seed_objects_keep_zero_and_watermark_may_legitimately_exceed_maximum_sequence()
     {
         var sim = Sim(); sim.AddItem(new("seed-product"), Product, ItemLocation.World("legacy-seed"));
         var checkpoint = sim.ExportCheckpoint();
-        checkpoint = checkpoint with { NextProductId = 100, Items = checkpoint.Items.Select(i => i.Id == new ItemId("seed-product")
-            ? i with { IsProduct = true, Recipe = Recipe } : i).ToArray() };
+        checkpoint = checkpoint with { NextProductId = 100 };
         Assert.True(sim.RestoreCheckpoint(checkpoint).Accepted);
         Assert.Equal(checkpoint.CanonicalText(), sim.ExportCheckpoint().CanonicalText());
         Complete(sim, false);
         Assert.Equal(101, sim.ExportCheckpoint().Items.Single(i => i.AllocationSequence > 0).AllocationSequence);
         Assert.Equal(0, sim.ExportCheckpoint().Items.Single(i => i.Id == new ItemId("seed-product")).AllocationSequence);
+        Assert.False(sim.ExportCheckpoint().Items.Single(i => i.Id == new ItemId("seed-product")).IsProduct);
     }
 
     [Fact]

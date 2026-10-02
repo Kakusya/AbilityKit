@@ -439,7 +439,7 @@ public sealed partial class CookingRecipeSimulation
             return CookingCheckpointRestoreReason.CounterInvalid;
         var allocationSequences = new HashSet<long>();
         foreach (var item in checkpoint.Items)
-            if (item.AllocationSequence < 0 || item.AllocationSequence > checkpoint.NextProductId
+            if (item.AllocationSequence < 0 || (item.IsProduct && item.AllocationSequence == 0) || item.AllocationSequence > checkpoint.NextProductId
                 || (item.AllocationSequence > 0 && !allocationSequences.Add(item.AllocationSequence)))
                 return CookingCheckpointRestoreReason.CounterInvalid;
         var supplyValidation = ValidateSupplyCheckpoint(checkpoint);
