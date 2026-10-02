@@ -21,7 +21,7 @@
   "children": [],
   "parent": "10-02-cooking-gameplay-menu-plan",
   "relatedFiles": [],
-  "notes": "Geometry projection helper merged to master 484547d73; internal effective installation primitive passed integration composite438/563/218 and ET563/218 at4e32fbe61. Trusted preparation configuration/helper producer focused24/24 passed; first preparation kitchen initialization and Start reuse Lifecycle focused22/22 passed before later gate/DTO edits. First Preparing host/tick, installed layout and recovery are active WIP, not a completed S08 exit.",
+  "notes": "Preparing runtime585e15982 and recoveryd9b0e5603 independently reviewed. Final recovery gates214615 kitchen462/590/227 and214713 ET590/227 passed, zero failures/skips, after actual red-test reproduced and fixed non-pristine front-state acceptance. Same-Level actual layout/front installation is the next source increment; cross-Level geometry/permission transaction remains separate. Master production7a043b6cb Recipe4/Level6; no full S08 exit.",
   "meta": {
     "plan_id": "S08",
     "stage": "singleplayer",
@@ -36,6 +36,6 @@
     "planning_maturity": "reviewed-contract",
     "owner_delegated_details": true,
     "execution_authorization": "Latest owner: audit every topic then execute through completion. Task planning review and dependency checks precede execution; Unity and optional reference pool remain deferred.",
-    "coordinator_verification": ".trellis/tasks/10-02-cooking-gameplay-menu-plan/research/supply-composite-verification.md"
+    "coordinator_verification": ".trellis/tasks/10-02-cooking-gameplay-menu-plan/research/preparing-checkpoint-composite-verification.md"
   }
 }
