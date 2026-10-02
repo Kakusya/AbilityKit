@@ -6,7 +6,7 @@
 
 - [x] 审阅并合并 S01–S03 核心；master 两门禁实际验证。
 - [x] 审阅并合并 87 菜制作/盛装/ET 恢复与 S05 核心，修复嵌套容器归属；master kitchen 340/462/166。
-- [ ] 独立审阅 31 饮品实际绑定交付，完成五批内容出口。
+- [x] Reviewed all 31 drink binding deliveries and five content batches; master gates 372/494/197 and 494/197. Evidence: research/master-complete-menu-verification.md.
 - [ ] 完成 S06 同一 ET 入口、受信恢复、厨房/前厅人工排他与营业收尾。
 - [ ] 完成 S07 实物包装/原料、准备与营业采购、供应守恒及成功/失败恢复。
 - [ ] 完成 S08 准备态原子空间安装、布局/路径/带料迁移、装修与解锁失败原子性。
