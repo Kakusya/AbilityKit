@@ -254,6 +254,69 @@ public sealed class CookingMenuCatalogTests
             ProjectionShape(step) with { Inputs = CookingMenuCatalog.ExpandInputs(step).Distinct().ToArray() }));
     }
 
+    [Fact]
+    public void Compatible_automatic_route_uses_real_public_commands_from_raw_supply_to_settlement()
+    {
+        // Limited legacy compatibility proof while the required new core hooks are pending.
+        // This does not claim Manual/batch/binding or full spatial/all-87 acceptance.
+        var catalog = Catalog();
+        var menu = catalog.Document.Menus.Single(x => x.SourceId == "F31");
+        var step = catalog.Document.Steps.Single(x => x.Id == menu.FinalRecipe);
+        var projected = catalog.ToContentDocument(Baseline(), new[] { menu.SourceId });
+        var content = CookingContentCatalog.Load(projected with
+        {
+            // No ordinary-slot stacks or runtime-injected products: one raw source unit/vessel.
+            StandardInitialSupply = projected.StandardInitialSupply.Where(x => x.Definition.StartsWith("menu-"))
+                .Select(x => x with { Count = 1 }).ToArray(),
+        });
+        var scope = new CookingScope(new SessionId("menu-route"), new WorldId("menu-world"), new MatchId("menu-match"));
+        var player = new PlayerId("chef");
+        var players = new Dictionary<PlayerId, CookingPlayerConfig>
+        {
+            [player] = new(player, new HashSet<string> { "cook" }, content.Appliances.Keys.Select(x => x.Value).ToHashSet()),
+        };
+        var simulation = new CookingRecipeSimulation(CookingContentCatalog.BuildFixture(content, scope, players));
+        CookingContentCatalog.ApplyStandardInitialSupply(simulation, content);
+        var vessel = simulation.Snapshot().Items.Single(x => x.Definition == step.Carrier).Id;
+        var plate = simulation.Snapshot().Items.Single(x => x.Definition == menu.ServingContainer).Id;
+        var raw = simulation.Snapshot().Items.Single(x => x.Definition == step.Inputs.Single().Definition).Id;
+        var station = content.Appliances.Values.Single(x => x.Capabilities.Contains(step.Capability)).Station;
+        var order = new OrderId("real-menu-order");
+        Assert.True(simulation.OpenOrder(order, menu.OrderTemplate).Accepted);
+        var sequence = 0;
+        void Command(CookingRecipeOperation operation, ItemId item, StationSlotId? targetStation = null,
+            ItemId? container = null, RecipeId? recipe = null, OrderId? targetOrder = null)
+        {
+            var state = simulation.Snapshot().Items.Single(x => x.Id == item);
+            var result = simulation.Submit(new(scope, ++sequence, player, new RecipeCommandId($"menu-command-{sequence}"),
+                operation, Recipe: recipe, Item: item, Station: targetStation, Container: container,
+                Order: targetOrder, ExpectedItemVersion: state.Version));
+            Assert.True(result.Outcome == CookingRecipeOutcome.Accepted, $"{operation}: {result.Reason}");
+        }
+        Command(CookingRecipeOperation.Pickup, vessel);
+        Command(CookingRecipeOperation.Drop, vessel, station);
+        Command(CookingRecipeOperation.Pickup, plate);
+        Command(CookingRecipeOperation.Drop, plate, new StationSlotId("counter-a"));
+        Command(CookingRecipeOperation.Pickup, raw);
+        Command(CookingRecipeOperation.PutIn, raw, container: vessel);
+        Command(CookingRecipeOperation.StartProcess, vessel, station, recipe: step.Id);
+        var level = new CookingLevelScope(scope, new RestaurantRuntimeId(1), new LevelId("menu-level"), 1);
+        var tick = simulation.AdvanceFixedTick(level, 1);
+        Assert.Equal(1, tick.AfterLogicalTick);
+        var product = simulation.Snapshot().Items.Single(x => x.Definition == menu.Product);
+        Assert.Equal(step.Id, product.Recipe);
+        Command(CookingRecipeOperation.TakeOut, product.Id, container: vessel);
+        Command(CookingRecipeOperation.PutIn, product.Id, container: plate);
+        Command(CookingRecipeOperation.SubmitOrder, product.Id, targetOrder: order);
+        var settlement = Assert.Single(simulation.SettlementHistory);
+        Assert.Equal(menu.OrderTemplate, settlement.Template);
+        Assert.Equal(menu.FinalRecipe, settlement.Recipe);
+        Assert.Equal(plate, settlement.Container);
+        Assert.Equal(100, simulation.Snapshot().TotalScore);
+        Assert.DoesNotContain(simulation.Snapshot().Items, x => x.Id == raw || x.Id == product.Id);
+        Assert.Empty(simulation.ItemsInContainer(vessel));
+    }
+
     private static CookingContentRecipe ProjectionShape(CookingMenuStep step) => new(step.Id.Value,
         CookingMenuCatalog.ExpandInputs(step), step.Output.Value, step.Process.Value, step.Capability,
         step.RequiredTicks, Completion: CookingMenuCatalog.Completion(step));
