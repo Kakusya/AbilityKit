@@ -28,3 +28,13 @@
 S06 implement 已记录这些待接入项，保持未完成状态正确。旧 checklist 历史文案不应覆盖最新授权，但不影响本次受限代码结论。
 
 Lint 未执行；TypeCheck 未复跑（本次仅原日志/静态代码审阅）；Tests 为上述实际 worker 既有36例结果，恢复双非终态反例目前缺失。
+
+## 修复复审：洗碗轮次恢复阻断已解除
+
+只读核对后续修复：`ValidateExtendedState` 每 Bowl 分组现在同时要求编号连续唯一、非终态最多一项、非终态 Cycle 等于该组最新 Cycle。它保留所有历史已完成/取消轮，不依赖枚举顺序，直接排除原报告的两类非法恢复状态。
+
+新增 `Restore_rejects_two_unfinished_wash_cycles_or_an_unfinished_old_cycle_without_mutation` 从真实完成第一轮/认领第二轮生成合法 checkpoint，先验证合法恢复，再分别毒化为“双非终态”和“最新轮已取消但旧轮仍 Paused”。static Restore 与实例 RestoreCheckpoint 均断言拒绝，实例 canonical 保持不变，最后再次验证原 checkpoint 可恢复。测试未直接断言厨房 canonical，但恢复实现验证阶段只读厨房，不写厨房，原阻断路径已封闭。
+
+实际 `local/Logs/cooking-execution/front-house-wash-cycle-restore.log` 报告 37 passed / 0 failed / 0 skipped，182ms。本审阅未运行 .NET，主 owner 的独立聚焦复跑与组合门禁仍应保留独立证据。
+
+**更新结论：原阻断已修复，可以接收受限前厅域增量。** 统一 ET ingress、Pause、真实厨房互斥/几何策略、Level checkpoint/配置/wire 及完整营业跨关出口仍未由该域组件证明，保持前述未完成边界。Lint/TypeCheck 本次未复跑。

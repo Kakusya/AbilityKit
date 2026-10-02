@@ -2,14 +2,14 @@
 
 # Cooking 玩法计划的架构记录
 
-2026-10-02；planning-only。本轮 owner 明确“不改变当前架构”，只授权规划及落盘。应用技术路线唯一正文仍为 [technical-roadmap.md](technical-roadmap.md)，本文件只记录新玩法能力如何沿现有边界接入，不建立第二套路线。
+2026-10-02；保留既有架构，最新 owner 已授权审议后实施。应用技术路线唯一正文仍为 [technical-roadmap.md](technical-roadmap.md)，本文件记录玩法能力如何沿现有边界接入，不建立第二套路线。当前已验证增量见 [master 核心证据](../../../.trellis/tasks/10-02-cooking-gameplay-menu-plan/research/master-core-integration-verification.md)，未完成的设计输入仍不表述为运行能力。
 
 ## 保留的结构
 
 - 纯 C# `AbilityKit.Game.Cooking` 拥有物品/容器/加工/订单/前厅规则；`CookingLevelEtHost` 负责 Level 固定 Tick 与命令入口。先扩展既有 owner，不建立平行厨房运行时。
-- `CookingRecipeCommand` 当前动作：Pickup、Drop、PutIn、TakeOut、Pour、StartProcess、SubmitOrder（AdvanceTicks 为 legacy 测试路径）。新增动作必须经完整验证、原子提交、幂等和 scope/version 校验。
+- `CookingRecipeCommand` 已有 Pickup、Drop、PutIn、TakeOut、Pour、StartProcess、SubmitOrder，以及本轮已合并的 Move、ContinueProcess、StopProcess、ServePortion、ClearContents、DiscardItem；AdvanceTicks 为 legacy 自动加工测试路径，不能推进 Manual。动作仍经过同一 owner 的验证、原子提交、幂等及 scope/version 校验；订单绑定动作尚在 S05 分支。
 - 运行态、快照与恢复 checkpoint 分开；新增状态必须评估 snapshot/canonical/SHA-256/checkpoint、同 Level 恢复、成功交接与失败重开的取舍，不能只加 UI 字段。
-- 正式内容使用 `CookingContentDocument`、配置候选及加载校验。当前身份是 `cooking-definition-v2`；新的批量/拓扑/阶段能力可能要求 schema 变更，版本及迁移策略在对应 Task 确定，不能静默塞入 v2。
+- 正式内容使用 `CookingContentDocument`、配置候选及加载校验。master 当前身份是 `cooking-definition-v3`，Recipe checkpoint schema3、Level envelope format4；不支持旧格式时显式拒绝。Execution/YieldPortions/RequiredProcessingContainerDefinition 和可选 ContentProvenance 经既有配置校验、冻结与 canonical identity，不另造菜单配置 authority。S05 等后续格式变更必须再按实际提交和验证更新，不把分支候选先写成 master 现状。
 - Match、Connection、Participant、RestaurantRuntime、Kitchen、Level 语义见 [reference/product-lifetimes.md](reference/product-lifetimes.md)；ET 所有权见 [reference/et-entity-tree.md](reference/et-entity-tree.md)。这是设计参考，不宣称完整目标树已经落地。
 - 通用 AbilityKit、Network 和 Server 不拥有菜品、顾客、票据或营业规则。现有应用层对框架的组合方式保持。
 
@@ -26,7 +26,7 @@
 | 设备布局/区域扩建 | 准备态布局与内容许可 | 先验证占位、交互面和通路，再一次提交；拒绝保持原布局 |
 | 提示数据 | snapshot/event 的只读视图 | 操作原因、容器内容、进度、绑定、供应量；Unity 不回写 authority |
 
-没有在本轮确定新公共 API、wire payload 或存储格式。以上修改实施前必须给出具体签名、错误矩阵、正反例、恢复规则及测试；不能把规划表当成跨层契约已生效。
+已合并核心公共 API 与纯 .NET checkpoint 格式以对应 spec/task 检查记录为准；供应、布局和前厅新增辅助尚未形成完整 ET 营业接线，网络 wire 尚待网络阶段处理。其余设计输入仍须具体签名、错误矩阵、正反例、恢复规则及实际测试，不能把表格存在当成跨层契约已经生效。
 
 ## 来源冲突登记
 
