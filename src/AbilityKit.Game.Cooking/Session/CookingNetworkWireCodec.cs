@@ -27,7 +27,8 @@ public sealed record CookingNetworkWireResult(string StableCommandId, RecipeComm
 public sealed record CookingNetworkSessionOptions(int BusinessCapacity = 256, int ControlCapacity = 32,
     int ConnectionCapacity = 8, int PerConnectionCapacity = 64, int ReceiptCapacity = 16384,
     int DuplicateWaiterCapacity = 8, int MaximumPrefix = 256, int FrameBytes = 8 * 1024 * 1024,
-    int CommandBytes = 16 * 1024, int ControlBytes = 4096);
+    int CommandBytes = 16 * 1024, int ControlBytes = 4096,
+    int BaselineTokenLimit = 1048576, int BaselineCollectionLimit = 16384);
 
 /// <summary>Wire v3 freezes typed input and bounds JSON before constructing its object graph.</summary>
 public static class CookingNetworkWireCodec
@@ -64,29 +65,45 @@ public static class CookingNetworkWireCodec
         public override void Write(Utf8JsonWriter writer, IReadOnlyList<T> value, JsonSerializerOptions options) =>
             JsonSerializer.Serialize(writer, value.ToArray(), options);
     }
-    public static byte[] Encode<T>(CookingNetworkMessageKind kind, string correlation, T payload) =>
-        JsonSerializer.SerializeToUtf8Bytes(new CookingNetworkWireEnvelope(ProtocolVersion, kind, correlation,
+    public static byte[] Encode<T>(CookingNetworkMessageKind kind, string correlation, T payload,
+        CookingNetworkSessionOptions? bounds = null)
+    {
+        var bytes = JsonSerializer.SerializeToUtf8Bytes(new CookingNetworkWireEnvelope(ProtocolVersion, kind, correlation,
             JsonSerializer.SerializeToElement(payload, JsonOptions)), JsonOptions);
+        if (!TryDecode(bytes, bounds ?? new(), out _)) throw new ArgumentException("Encoded frame exceeds wire bounds.");
+        return bytes;
+    }
     public static bool TryDecode(ReadOnlySpan<byte> bytes, CookingNetworkSessionOptions bounds,
         out CookingNetworkWireEnvelope? envelope)
     {
         envelope = null;
         if (bytes.Length == 0 || bytes.Length > bounds.FrameBytes) return false;
         try {
+            // Locate only the root discriminator, without allocating a JSON object graph. A second
+            // complete scan applies the correct kind-specific bounds and rejects duplicate fields.
+            var header = new Utf8JsonReader(bytes, new JsonReaderOptions { MaxDepth = 32 });
+            var baseline = false;
+            while (header.Read()) if (header.TokenType == JsonTokenType.PropertyName && header.CurrentDepth == 1 && header.ValueTextEquals("kind")) {
+                if (!header.Read()) return false;
+                baseline = header.TokenType == JsonTokenType.String && header.ValueTextEquals("Baseline"); break;
+            }
+            var tokenLimit = baseline ? bounds.BaselineTokenLimit : 65536;
+            var collectionLimit = baseline ? bounds.BaselineCollectionLimit : 4096;
+            if (tokenLimit <= 0 || collectionLimit <= 0) return false;
             var scan = new Utf8JsonReader(bytes, new JsonReaderOptions { MaxDepth = 32 });
             var nodes = 0; string? propertyName = null;
             var counts = new Stack<int>();
             var names = new Stack<HashSet<string>>();
             while (scan.Read()) {
-                if (++nodes > 65536) return false;
+                if (++nodes > tokenLimit) return false;
                 if (scan.TokenType is JsonTokenType.StartArray or JsonTokenType.StartObject) {
-                    if (counts.Count > 0) { var n = counts.Pop() + 1; if (n > 4096) return false; counts.Push(n); }
+                    if (counts.Count > 0) { var n = counts.Pop() + 1; if (n > collectionLimit) return false; counts.Push(n); }
                     counts.Push(0); names.Push(new HashSet<string>(StringComparer.Ordinal));
                 } else if (scan.TokenType is JsonTokenType.EndArray or JsonTokenType.EndObject) { counts.Pop(); names.Pop(); }
                 else if (scan.TokenType == JsonTokenType.PropertyName) {
                     propertyName = scan.GetString(); if (propertyName is null || Encoding.UTF8.GetByteCount(propertyName) > 128 || !names.Peek().Add(propertyName)) return false;
                 } else {
-                    if (counts.Count > 0) { var n = counts.Pop() + 1; if (n > 4096) return false; counts.Push(n); }
+                    if (counts.Count > 0) { var n = counts.Pop() + 1; if (n > collectionLimit) return false; counts.Push(n); }
                     if (scan.TokenType == JsonTokenType.String) { var limit = propertyName is "value" or "correlationId" or "stableCommandId" or "serverSessionInstance" or "supplierId" or "deliveryId" or "supplyRequestId" or "worldAnchor" ? 128 : propertyName is "rebindToken" or "joinCredential" ? 256 : 1024; if (Encoding.UTF8.GetByteCount(scan.GetString()!) > limit) return false; }
                 }
             }

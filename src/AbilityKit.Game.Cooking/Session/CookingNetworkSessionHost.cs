@@ -81,7 +81,8 @@ public sealed class CookingNetworkSessionHost : IDisposable
         if (joinCredentials.Count is < 1 or > 4 || joinCredentials.Any(x => !CookingNetworkWireCodec.Identifier(x.Key.Value) ||
             !CookingNetworkWireCodec.Identifier(x.Value)) || _options.BusinessCapacity <= 0 || _options.ControlCapacity <= 0 ||
             _options.ConnectionCapacity <= 0 || _options.ReceiptCapacity <= 0 || _options.MaximumPrefix <= 0 ||
-            _options.DuplicateWaiterCapacity <= 0 || _options.PerConnectionCapacity <= 0) throw new ArgumentException("Invalid Session bounds/participants.");
+            _options.DuplicateWaiterCapacity <= 0 || _options.PerConnectionCapacity <= 0 ||
+            _options.BaselineTokenLimit <= 0 || _options.BaselineCollectionLimit <= 0) throw new ArgumentException("Invalid Session bounds/participants.");
         _participants = joinCredentials.ToDictionary(x => x.Key, x => new Participant(x.Value));
         var capture = _authority.CaptureFullState();
         if (!capture.Accepted || capture.State is null) throw new InvalidOperationException("Authority capture unavailable.");
@@ -126,7 +127,7 @@ public sealed class CookingNetworkSessionHost : IDisposable
     private void Send<T>(Connection connection, CookingNetworkMessageKind kind, string correlation, T value)
     {
         if (!connection.Peer.IsConnected) return;
-        var bytes = CookingNetworkWireCodec.Encode(kind, correlation, value);
+        var bytes = CookingNetworkWireCodec.Encode(kind, correlation, value, _options);
         if (bytes.Length > _options.FrameBytes) throw new InvalidOperationException("Full state exceeds configured wire bound.");
         _sentBytes += bytes.Length;
         connection.Peer.SendPush(CookingNetworkWireCodec.OpCode, new ArraySegment<byte>(bytes));
@@ -141,11 +142,15 @@ public sealed class CookingNetworkSessionHost : IDisposable
         if (_captureUnavailable is not null || LatestCapture is null || connection.Participant is null || (!connection.Ready && connection.Issued is not null)) return;
         RefreshSessionProjection();
         var identity = new CookingNetworkBaselineIdentity(ServerSessionInstance, connection.Participant.Value, connection.Generation,
-            LatestCapture.Observation.Scope, LatestCapture.Observation.Scope.LevelEpoch, checked(++_snapshotSequence),
+            LatestCapture.Observation.Scope, LatestCapture.Observation.Scope.LevelEpoch, checked(_snapshotSequence + 1),
             CookingNetworkWireCodec.BaselineHash(LatestCapture, LatestSessionProjection), Guid.NewGuid().ToString("N"));
-        connection.Issued = identity;
-        Send(connection, CookingNetworkMessageKind.Baseline, "baseline-" + identity.SnapshotSequence,
-            new CookingNetworkBaseline(identity, CookingLevelCheckpointCodec.CurrentFormatVersion, 5, LatestCapture, LatestSessionProjection));
+        var baseline = new CookingNetworkBaseline(identity, CookingLevelCheckpointCodec.CurrentFormatVersion, 5, LatestCapture, LatestSessionProjection);
+        byte[] bytes;
+        try { bytes = CookingNetworkWireCodec.Encode(CookingNetworkMessageKind.Baseline, "baseline-" + identity.SnapshotSequence, baseline, _options); }
+        catch (ArgumentException) { MakeUnavailable("FullStateExceedsWireBounds"); return; }
+        // Issued identity and sequence become visible only after full outbound validation.
+        _snapshotSequence = identity.SnapshotSequence; connection.Issued = identity;
+        if (connection.Peer.IsConnected) { _sentBytes += bytes.Length; connection.Peer.SendPush(CookingNetworkWireCodec.OpCode, new ArraySegment<byte>(bytes)); }
     }
     private void Join(Ingress input)
     {
@@ -308,9 +313,13 @@ public sealed class CookingNetworkSessionHost : IDisposable
     private bool AcceptCapture(CookingNetworkCaptureResult capture)
     {
         // Fault/dispose is terminal for this Session. Busy is temporary and never republishes stale state.
-        if (_captureUnavailable is "AuthorityFaulted" or "Disposed") return false;
+        if (_captureUnavailable is "AuthorityFaulted" or "Disposed" or "FullStateExceedsWireBounds") return false;
         if (capture.Accepted && capture.State is { } state) { _captureUnavailable = null; InstallCapture(state); return true; }
-        _captureUnavailable = capture.Reason.ToString();
+        MakeUnavailable(capture.Reason.ToString()); return false;
+    }
+    private void MakeUnavailable(string reason)
+    {
+        _captureUnavailable = reason;
         foreach (var entry in _waiting.ToArray()) {
             var wire = CookingNetworkWireCodec.Read<CookingNetworkWireCommand>(entry.Value.Envelope)!;
             var id = CookingNetworkWireCodec.DomainId(ServerSessionInstance, wire.Scope, wire.Command.Player, wire.StableCommandId);
@@ -321,7 +330,7 @@ public sealed class CookingNetworkSessionHost : IDisposable
             connection.Ready = false; connection.Issued = null;
             Reject(connection, "authority", _captureUnavailable);
         }
-        return false;
+        RefreshSessionProjection();
     }
     private void MarkTerminal(Connection connection, long sequence)
     {

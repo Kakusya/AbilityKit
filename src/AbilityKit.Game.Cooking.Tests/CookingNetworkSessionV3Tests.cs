@@ -375,4 +375,73 @@ public sealed class CookingNetworkSessionV3Tests
         Assert.Contains("AuthorityFaulted", error.Message); Assert.Null(z.LatestBaseline); Assert.False(z.IsSynchronized);
     }
 
+    private static int TokenCount(byte[] bytes)
+    {
+        var reader = new System.Text.Json.Utf8JsonReader(bytes); var count = 0;
+        while (reader.Read()) count++; return count;
+    }
+    [Fact]
+    public void Actual_receipt_rich_full_baseline_exceeding_old_token_limit_roundtrips_under_explicit_baseline_bounds()
+    {
+        using var host = Host();
+        for (var batch = 1; batch <= 16; batch++) {
+            for (var i = 0; i < 100; i++) Assert.True(host.TryEnqueue(new(Scope,
+                Pickup(A) with { Command = new("rich-" + batch + "-" + i.ToString("D4")), SimulationBatch = batch,
+                    Operation = i % 2 == 0 ? CookingRecipeOperation.Pickup : CookingRecipeOperation.Drop,
+                    Station = i % 2 == 0 ? null : Stove, ExpectedItemVersion = (batch - 1) * 100 + i + 1 }, "trusted-local", "c-" + batch + "-" + i)).Accepted);
+            Assert.All(host.Tick().Dispositions, d => Assert.Equal(CookingRecipeOutcome.Accepted, d.Result!.Outcome));
+        }
+        var state = new CookingNetworkAuthorityAdapter(host).CaptureFullState().State!;
+        var view = new CookingNetworkSessionProjection("instance", Array.AsReadOnly(new[] { new CookingNetworkParticipantProjection(A, true, 1, 0, 0, false, false) }));
+        var baseline = new CookingNetworkBaseline(new("instance", A, 1, Scope, 1, 1, CookingNetworkWireCodec.BaselineHash(state, view), "issued"), 8, 5, state, view);
+        var bytes = CookingNetworkWireCodec.Encode(CookingNetworkMessageKind.Baseline, "baseline", baseline);
+        Assert.True(TokenCount(bytes) > 65536, "Actual tokens: " + TokenCount(bytes) + "; receipts: " + state.FullRecipe!.Deduplication.Count); Assert.True(bytes.Length < 8 * 1024 * 1024);
+        Assert.False(CookingNetworkWireCodec.TryDecode(bytes, new(BaselineTokenLimit: 65536), out _));
+        Assert.True(CookingNetworkWireCodec.TryDecode(bytes, new(), out var envelope));
+        var decoded = CookingNetworkWireCodec.Read<CookingNetworkBaseline>(envelope!)!;
+        Assert.Equal(state.FullRecipe!.CanonicalText(), decoded.State.FullRecipe!.CanonicalText());
+        Assert.Equal(state.ResumableCheckpoint!.CanonicalText(), decoded.State.ResumableCheckpoint!.CanonicalText());
+    }
+    [Fact]
+    public async Task Actual_outbound_full_state_excess_is_explicit_before_issued_ack_or_new_join_permission()
+    {
+        using var host = Host(); using var session = new CookingNetworkSessionHost(new CookingNetworkAuthorityAdapter(host),
+            new InProcessChannelListener(), new Dictionary<PlayerId, string> { [A] = "join-a", [Z] = "join-z" }, new(BaselineTokenLimit: 1));
+        session.Start(); using var a = Local(session, A); var first = a.ConnectAsync("inprocess", 1);
+        for (var i = 0; i < 100 && !first.IsCompleted; i++) { session.ProcessOwnerFrame(); Thread.Sleep(2); }
+        Assert.Contains("FullStateExceedsWireBounds", (await Assert.ThrowsAsync<InvalidOperationException>(() => first)).Message);
+        Assert.Null(a.LatestBaseline); Assert.False(a.IsSynchronized);
+        Assert.All(session.LatestSessionProjection.Participants, p => Assert.False(p.Ready));
+        using var z = Local(session, Z); var next = z.ConnectAsync("inprocess", 1);
+        for (var i = 0; i < 100 && !next.IsCompleted; i++) { session.ProcessOwnerFrame(); Thread.Sleep(2); }
+        Assert.Contains("FullStateExceedsWireBounds", (await Assert.ThrowsAsync<InvalidOperationException>(() => next)).Message);
+        Assert.Null(z.LatestBaseline); Assert.False(z.IsSynchronized); Assert.False(host.IsFaulted);
+    }
+
+    [Fact]
+    public async Task Growth_past_injected_full_state_bound_unsynchronizes_ready_client_without_truncating_receipts()
+    {
+        using var host = Host(); var state = new CookingNetworkAuthorityAdapter(host).CaptureFullState().State!;
+        var view = new CookingNetworkSessionProjection("measurement", Array.AsReadOnly(new[] {
+            new CookingNetworkParticipantProjection(A, true, 1, 0, 0, false, false),
+            new CookingNetworkParticipantProjection(Z, false, 0, 0, 0, false, false) }));
+        var initial = new CookingNetworkBaseline(new("measurement", A, 1, Scope, 1, 1, CookingNetworkWireCodec.BaselineHash(state, view), "i"), 8, 5, state, view);
+        var limit = TokenCount(CookingNetworkWireCodec.Encode(CookingNetworkMessageKind.Baseline, "b", initial)) + 1000;
+        using var session = new CookingNetworkSessionHost(new CookingNetworkAuthorityAdapter(host), new InProcessChannelListener(),
+            new Dictionary<PlayerId, string> { [A] = "join-a", [Z] = "join-z" }, new(BaselineTokenLimit: limit));
+        session.Start(); using var a = Local(session, A); Pump(session, a.ConnectAsync("inprocess", 1)); Assert.True(a.IsSynchronized);
+        for (var i = 0; i < 16 && a.IsSynchronized; i++) {
+            var command = Pickup(A) with { Operation = i % 2 == 0 ? CookingRecipeOperation.Pickup : CookingRecipeOperation.Drop,
+                Station = i % 2 == 0 ? null : Stove, ExpectedItemVersion = i + 1 };
+            var result = a.SendCommandAsync("growth-" + i, command); Pump(session, result);
+            Assert.Equal(CookingRecipeOutcome.Accepted, (await result).Result!.Outcome);
+        }
+        Assert.False(a.IsSynchronized); Assert.NotNull(a.LatestBaseline); Assert.False(host.IsFaulted);
+        Assert.NotEmpty(session.LatestCapture!.FullRecipe!.Deduplication); // Nothing is removed to fit the wire.
+        var before = host.Observe().CanonicalText(); session.ProcessOwnerFrame(); Assert.Equal(before, host.Observe().CanonicalText());
+        using var z = Local(session, Z); var joining = z.ConnectAsync("inprocess", 1);
+        for (var i = 0; i < 100 && !joining.IsCompleted; i++) { session.ProcessOwnerFrame(); Thread.Sleep(2); }
+        Assert.Contains("FullStateExceedsWireBounds", (await Assert.ThrowsAsync<InvalidOperationException>(() => joining)).Message);
+    }
+
 }

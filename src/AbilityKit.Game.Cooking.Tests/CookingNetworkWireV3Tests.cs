@@ -39,9 +39,19 @@ public sealed class CookingNetworkWireV3Tests
     public void Streaming_bounds_reject_oversized_collection_frame_string_and_depth()
     {
         byte[] Envelope(string payload) => Encoding.UTF8.GetBytes("{\"protocolVersion\":3,\"kind\":\"Baseline\",\"correlationId\":\"b\",\"payload\":" + payload + "}");
-        Assert.False(CookingNetworkWireCodec.TryDecode(Envelope("[" + string.Join(',', Enumerable.Repeat("0", 4097)) + "]"), new(), out _));
+        Assert.False(CookingNetworkWireCodec.TryDecode(Envelope("[" + string.Join(',', Enumerable.Repeat("0", 16385)) + "]"), new(), out _));
         Assert.False(CookingNetworkWireCodec.TryDecode(Envelope("\"" + new string('x', 1025) + "\""), new(), out _));
         Assert.False(CookingNetworkWireCodec.TryDecode(Envelope(new string('[', 33) + "0" + new string(']', 33)), new(), out _));
         Assert.False(CookingNetworkWireCodec.TryDecode(Envelope("{}"), new(FrameBytes: 8), out _));
     }
+    [Fact]
+    public void Baseline_collection_expansion_does_not_expand_command_or_control_bounds()
+    {
+        var payload = "[" + string.Join(',', Enumerable.Repeat("0", 4097)) + "]";
+        byte[] Envelope(string kind) => Encoding.UTF8.GetBytes("{\"protocolVersion\":3,\"kind\":\"" + kind + "\",\"correlationId\":\"b\",\"payload\":" + payload + "}");
+        Assert.True(CookingNetworkWireCodec.TryDecode(Envelope("Baseline"), new(), out _));
+        Assert.False(CookingNetworkWireCodec.TryDecode(Envelope("Command"), new(), out _));
+        Assert.False(CookingNetworkWireCodec.TryDecode(Envelope("Join"), new(), out _));
+    }
+
 }

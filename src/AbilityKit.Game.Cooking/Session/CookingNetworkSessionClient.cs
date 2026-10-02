@@ -53,7 +53,7 @@ public sealed class CookingNetworkSessionClient : IDisposable
     }
     private void Send<T>(CookingNetworkMessageKind kind, string correlation, T payload)
     {
-        var bytes = CookingNetworkWireCodec.Encode(kind, correlation, payload);
+        var bytes = CookingNetworkWireCodec.Encode(kind, correlation, payload, _bounds);
         if (bytes.Length > _bounds.FrameBytes) throw new ArgumentException("Wire frame exceeds bound.");
         _connection!.Send(CookingNetworkWireCodec.OpCode, new ArraySegment<byte>(bytes), (ushort)NetworkPacketFlags.ServerPush);
     }
@@ -78,8 +78,9 @@ public sealed class CookingNetworkSessionClient : IDisposable
                 case CookingNetworkMessageKind.CommandResult:
                 case CookingNetworkMessageKind.Rejected:
                     var result = CookingNetworkWireCodec.Read<CookingNetworkWireResult>(envelope);
-                    if (result?.Reason is "AuthorityFaulted" or "Disposed" or "Busy") {
+                    if (result?.Reason is "AuthorityFaulted" or "Disposed" or "Busy" or "FullStateExceedsWireBounds") {
                         _authorityUnavailable = result.Reason; IsSynchronized = false;
+                        _ready.TrySetException(new InvalidOperationException(result.Reason));
                         foreach (var entry in _requests.ToArray()) if (_requests.TryRemove(entry.Key, out var waiting)) waiting.TrySetResult(result);
                     }
                     if (result is not null && _requests.TryRemove(envelope.CorrelationId, out var pending)) pending.TrySetResult(result);
@@ -91,7 +92,7 @@ public sealed class CookingNetworkSessionClient : IDisposable
     }
     internal bool TryInstallBaseline(CookingNetworkBaseline? baseline)
     {
-        if (_authorityUnavailable is "AuthorityFaulted" or "Disposed" || baseline is null || _binding is null || baseline.Identity.ServerSessionInstance != _binding.ServerSessionInstance ||
+        if (_authorityUnavailable is "AuthorityFaulted" or "Disposed" or "FullStateExceedsWireBounds" || baseline is null || _binding is null || baseline.Identity.ServerSessionInstance != _binding.ServerSessionInstance ||
                         baseline.Identity.ConnectionGeneration != _binding.ConnectionGeneration || baseline.Identity.Participant != _participant ||
                         baseline.LevelFormatVersion != CookingLevelCheckpointCodec.CurrentFormatVersion || baseline.RecipeSchemaVersion != 5 ||
                         !ScopesAgree(baseline) ||
