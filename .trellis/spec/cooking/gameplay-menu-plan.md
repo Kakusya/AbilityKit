@@ -1,3 +1,5 @@
+> Current stage: reviewed S01-S14 pure C# singleplayer completed on source4dadd25c8. [Exact evidence and next exits](../../tasks/10-02-cooking-gameplay-menu-plan/research/master-singleplayer-exit-verification.md). N01 formal network reconciliation proceeds next; Unity/S15 remain deferred. Earlier registration and planning-only notices below are historical.
+
 > Current owner instruction (2026-10-02): continue auditing all topics, resolve their plans, then implement and verify to completion without stopping for routine confirmations. Preserve architecture and stage order: singleplayer -> network -> singleplayer Unity -> network Unity. Current stage: singleplayer. Older planning-only notices below are historical. Unity remains deferred under its separate gate.
 
 # Cooking 功能与菜单推进计划

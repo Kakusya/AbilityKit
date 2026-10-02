@@ -1,3 +1,5 @@
+> Current reviewed stage2026-10-03: S01-S14 pure C# singleplayer completed on source4dadd25c8; actual final master gates644/772/299 and772/299 passed, zero failures/skips. Detailed evidence: .trellis/tasks/10-02-cooking-gameplay-menu-plan/research/master-singleplayer-exit-verification.md. N01-N03 next; parent remains active, Unity/S15 deferred and physical two-PC LAN unverified. Earlier remaining-singleplayer notices below are historical.
+
 # 完整出口审计表
 
 本表以当前 owner“全部审议后执行直至完成”为目标；不是缩小到已经有测试的部分。当前允许实施的总范围为 S01–S14、N01–N03，阶段顺序不变。S15 是非基础参考池；U01/U02 仍由独立 Unity 执行门控制，不能从普通继续指令推导为解除长期禁令。

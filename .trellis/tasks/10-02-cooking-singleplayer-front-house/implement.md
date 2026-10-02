@@ -1,3 +1,5 @@
+> Current accepted pure C# scope completed on master4dadd25c8; actual gates644/772/299 and772/299, zero failures/skips. Read parent research/master-singleplayer-exit-verification.md. Older unchecked planning lists below are historical. Network/Unity are separate.
+
 > Current owner instruction (2026-10-02): continue auditing all topics, resolve their plans, then implement and verify to completion without stopping for routine confirmations. Preserve architecture and stage order: singleplayer -> network -> singleplayer Unity -> network Unity. Current stage: singleplayer. Older planning-only notices below are historical. Unity remains deferred under its separate gate.
 
 # S06 待执行清单

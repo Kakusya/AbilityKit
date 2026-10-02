@@ -1,3 +1,5 @@
+> Current reviewed stage2026-10-03: S01-S14 pure C# singleplayer completed on source4dadd25c8; actual final master gates644/772/299 and772/299 passed, zero failures/skips. Detailed evidence: .trellis/tasks/10-02-cooking-gameplay-menu-plan/research/master-singleplayer-exit-verification.md. N01-N03 next; parent remains active, Unity/S15 deferred and physical two-PC LAN unverified. Earlier remaining-singleplayer notices below are historical.
+
 > Current owner instruction (2026-10-02): continue auditing all topics, resolve their plans, then implement and verify to completion without stopping for routine confirmations. Preserve architecture and stage order: singleplayer -> network -> singleplayer Unity -> network Unity. Current stage: singleplayer. Older planning-only notices below are historical. Unity remains deferred under its separate gate.
 
 # Cooking 单机与联网执行记录
@@ -177,3 +179,8 @@ Generation transaction and pure menu helper merged; actual master kitchen605/733
 Host/runtime/checkpoint8 integration independently reviewed and master gates630/758/266 and758/266 passed, zero failures/skips. Actual red enum-count test preserved and corrected with stable tail-value assertions. See research/master-menu-policy-verification.md. Continue actual natural Front service/replay/restore, scope-narrowed carry and durable Host restart before completing S14.
 
 Current reviewed source `07bb27d54`: durable Host typed baseline3 and four-branch natural operating accepted by actual master635/763/289 and763/289 gates. Read [master-durable-natural-verification.md](research/master-durable-natural-verification.md) for precise evidence. Natural successor cold continuation and narrower-scope carry remain in progress; S14/network/Unity completion is not inferred.
+
+
+## 2026-10-03 reviewed recovery acceptance
+
+Source86c3eb41d passed actual master kitchen644/772/298 and ET772/298, zero failures/skips. Natural durable successor, scoped carry, trusted global choices, atomic retry standard stock and technical quarantine/cold recovery are accepted within pure C# singleplayer. See parent task research/master-s14-recovery-verification.md and s14-final-exit-review.md. Explicit ET Preparing floor expansion is the remaining singleplayer proof. Network remains next; network-resume-audit.md records formal/source conflicts and unavailable physical second LAN host. Unity and S15 remain deferred.

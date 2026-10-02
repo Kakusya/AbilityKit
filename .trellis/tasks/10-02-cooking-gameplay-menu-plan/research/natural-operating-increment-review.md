@@ -46,3 +46,49 @@ Final bounded scenario uses the better compact geometry and requests/serves the 
 ## Remaining exits
 
 Full integration/master gates and independent root review of these new test files remain to be performed by the coordinator. Success/Failed successor and durable baseline controls remain separately pending; this increment alone does not close S14, network or Unity.
+
+## Durable natural successor follow-up (pending production correction)
+
+Production source imported from reviewed master `07bb27d54`. Added a separate Fact that completes the original service naturally, writes an actual major v3 baseline via durable CreateSuccessor, disposes the Host, loads through a new store and fresh factory at Created, then compares real next-service F01 manufacture/delivery with the live-successor branch. It retains the original four-branch Fact and unchanged 1,048,576-character store guard. No BeginEnd shortcut or domain injection is used. Factory scope follows the Host scope; helper simulation references bind to the authoritative driver after successor/preparation adoption.
+
+Actual focused attempts (logs remain under local/Logs):
+
+- `natural-operating-durable-two-facts`: compile failed because scope properties are readonly; corrected with the public explicit scope constructor.
+- `natural-operating-durable-scope-fixed`: 1 passed / 1 failed / 0 skipped, 19 seconds. Existing four-branch proof passed; successor continuation rejected Pickup/v4.
+- `natural-durable-hands`: 0 passed / 1 failed / 0 skipped, 6 seconds; diagnostic showed Partner had no live hand items.
+- `natural-durable-authority` and `natural-durable-preparing-authority`: 1 passed / 1 failed / 0 skipped each. Explicit authoritative-reference rebinding did not eliminate the real occupancy defect.
+- `natural-durable-hand-owner`: 0 passed / 1 failed / 0 skipped, 6 seconds; authoritative ItemInHand(Partner) was v14 while live snapshot hand items were empty.
+
+Production defect: delivered disposable D31 cup v14 remains a removed tombstone whose historical location is Partner's hand. Submit clears the runtime hand correctly (CookingRecipeLoop.cs disposal branch), but CookingRecipeCheckpoint.cs InstallCheckpointState rebuilds hands from all checkpoint items, including removed tombstones (lines 728–731); GroupByHandOccupancy also includes removed items (lines 717–721). The successor preparation restore therefore recreates an occupied hand with a removed cup. Reported to root; no production files changed by this owner. Durable baseline writing and unchanged size assertion already succeeded before this later continuation failure, but the measured character count still awaits a successful full-flow run/report. Follow-up is not recorded as passed or complete.
+
+### Actual durable full-flow verification after coordinator correction
+
+Coordinator-owned CookingRecipeCheckpoint.cs and CookingOrderBindingTests.cs were copied verbatim into this independent worktree after its actual 2-red/35-green regression proof; these files are not included in this owner's commit. With that narrow removed-hand occupancy correction, actual `natural-durable-tombstone-fixed` focused run passed **2 / 2, 0 failed, 0 skipped, 23 seconds**, exit 0. The original four-branch Fact and the new durable live/restarted successor Fact both passed. `git diff --check` passed.
+
+Exact command: `dotnet test src/AbilityKit.ET.Runtime.Tests/AbilityKit.ET.Runtime.Tests.csproj --filter FullyQualifiedName~CookingNaturalOperatingEtTests --no-restore --logger "trx;LogFileName=natural-durable-tombstone-fixed.trx" --results-directory local/Logs/natural-operating`. Output is retained in `local/Logs/natural-durable-tombstone-fixed.log` and the named TRX.
+
+TRX test output measures **61,554 characters** for both actual source-service durable major v3 records, below the unchanged **1,048,576-character** limit. Each branch compares **319** actual next-service frames. Source service reaches real natural EndedSuccess before durable publication. Fresh-store restart returns Created, matches its live counterpart, then both execute actual BeginPreparation -> Ready -> Start, catalog F01 preparation/manufacture and actual customer delivery plus five final ticks. The second service ends Running for this continuation proof; a second full natural closure is not claimed. Successor supply balances/deliveries remain equal to the actual saved baseline and product allocator advances.
+
+This follows reviewed production base `07bb27d54` plus the coordinator's explicit checkpoint fix. Coordinator independent review, combined integration/master gates and the separate narrowed-carry/failed-successor exits remain outside this focused result. No network/Unity or full S14 completion is inferred.
+
+## Full-catalog healthy Failed/retry follow-up (actual red, pending contract correction)
+
+Added an opt-in full 87-menu runtime content projection to the same trusted catalog/factory, retaining the original F01+D31 bounded natural scenarios unchanged. New two-case retry theory reaches healthy actual Ready/Running, ticks once, explicitly owner-declares Failed, completes EndedFailed, and attempts actual CreateRetry. One case also records a registered global material unlock outside F01+D31 while excluding that definition from epoch-2 AllowedMaterialDefinitions; locked choice preservation and no forbidden physical stock are asserted after retry.
+
+Actual attempts:
+
+- `natural-full-catalog-retry-first`: compilation blocked (CS0111) after copying the requested new coordinator-owned retry transaction file without its corresponding RecipeLoop prerequisite. No product tests executed.
+- `natural-full-catalog-retry-prerequisites`: **0 passed / 2 failed / 0 skipped**, 891 ms after coordinator source prerequisites were copied. Both healthy Failed source controls passed; actual Host CreateRetry returned GameplayInitializationFailed.
+- `natural-full-catalog-retry-slot-diagnostic`: **0 passed / 2 failed / 0 skipped**. Failure-only isolated fresh-factory diagnostic (not acceptance authority) reproduced `ArgumentException: Ordinary station contains one object` from CookingSpatialInteraction.cs:91, AddItemCore, and CookingContentCatalog.ApplyStandardInitialSupply at line185. Factory's empty working tool seed already occupies world:h0; standard supply tries to add another object into that same slot.
+
+Reported to coordinator for seed-versus-standard-supply ownership decision/correction; no production correction attempted by this owner. The scoped global unlock control is currently obscured by the shared duplicate tool slot rejection, and must not be reported independently verified. Root-owned prerequisite files copied into this tree remain excluded from own commits. .NET window released after the actual diagnostic red.
+
+### Actual retry green after coordinator ownership correction
+
+Coordinator copied the Host correction into this tree: a trusted fresh factory's declared pristine seed at the exact standard definition/location/count is recognized; standard supply fills missing entries rather than overwriting occupied slots. This is a coordinator-owned production change, excluded from this owner's commit.
+
+Actual full natural-class command `dotnet test src/AbilityKit.ET.Runtime.Tests/AbilityKit.ET.Runtime.Tests.csproj --filter FullyQualifiedName~CookingNaturalOperatingEtTests --no-restore --logger "trx;LogFileName=natural-four-cases-retry-seed-fixed.trx" --results-directory local/Logs/natural-operating` passed **4 / 4, 0 failed, 0 skipped, 24 seconds**, exit 0. Both new full-catalog retry theory cases passed, as did the original per-frame replay/recovery and durable successor proof. The durable TRX output remains 61,554 characters per baseline and 319 continuation frames.
+
+The new retry proof loads all 87 catalog menus and their formal content dependency closure; its current service menu remains F01+D31. Healthy Running is ended only by an explicit owner-declared Failed control. Actual retry reaches Created, preserves unique live world/station occupancy, returns through Preparing/Ready/Running, and remains healthy. In the scoped-unlock case, the registered global choice remains in the caller-owned locked progress while its epoch-2 menu-disallowed material is absent from live stock. The unchanged production permission boundary continues to apply. Failure-only isolated diagnostic remains for meaningful future rejected-retry messages; it is not used on either accepted proof path and does not replace Host commands.
+
+Combined/master gates and independent exact frozen-source review remain coordinator responsibilities. No general business-failure rule, network/Unity or full S14 completion is inferred from this focused control.

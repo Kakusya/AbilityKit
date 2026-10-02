@@ -1,3 +1,9 @@
+> Current pure C# singleplayer exit: [master-singleplayer-exit-verification.md](.trellis/tasks/10-02-cooking-gameplay-menu-plan/research/master-singleplayer-exit-verification.md). S01-S14 completed on source4dadd25c8; final gates644/772/299 and772/299 passed. Next stage N01 network contract reconciliation; Unity/S15 remain deferred, physical two-PC LAN unverified. Earlier stage notices below are historical.
+
+> Latest accepted source86c3eb41d: recovery/natural/technical master kitchen644/772/298 and ET772/298 passed with zero failures/skips. Read [master-s14-recovery-verification.md](.trellis/tasks/10-02-cooking-gameplay-menu-plan/research/master-s14-recovery-verification.md); actual ET floor expansion remains the last pure-C# singleplayer exit.
+
+> Current uncommitted S14 recovery corrections: [recovery-fixes-red-green.md](.trellis/tasks/10-02-cooking-gameplay-menu-plan/research/recovery-fixes-red-green.md). Actual root focus48/48 and technical ET producer5/5 are green; catalog retry and assembled broad gates remain pending. Do not infer master acceptance or stage completion.
+
 > Latest durable/natural execution proof: [master-durable-natural-verification.md](.trellis/tasks/10-02-cooking-gameplay-menu-plan/research/master-durable-natural-verification.md). Typed baseline3 preserves HostFrameSequence; narrowed carry and actual natural successor cold continuation still gate S14.
 
 > Current scoped menu execution/recovery proof: [master-menu-policy-verification.md](.trellis/tasks/10-02-cooking-gameplay-menu-plan/research/master-menu-policy-verification.md). Current Level8 supersedes historical Level7 evidence; natural operating, narrowed carry and durable Host loading are still incomplete.

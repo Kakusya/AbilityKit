@@ -1,3 +1,5 @@
+> Current accepted source4dadd25c8 completes reviewed pure C# singleplayer scope with actual final644/772/299 and772/299 gates. Read [singleplayer exit proof](../../tasks/10-02-cooking-gameplay-menu-plan/research/master-singleplayer-exit-verification.md). Definition3/Recipe5/Level8/typed major baseline3 remain current. Network will explicitly use trusted ingress ordinal; existing singleplayer default ordering is preserved. Earlier open-exit notices below are historical.
+
 > Current verified source07bb27d54 uses definition3 /Recipe5 /Level8 and typed major baseline3. Required HostFrameSequence preserves durable restart clock; typed2/legacy1 reject via ReadBaseline. Historical format2 proof below does not establish current Host loading. [Actual master proof](../../../.trellis/tasks/10-02-cooking-gameplay-menu-plan/research/master-durable-natural-verification.md). Natural successor cold continuation and narrowed carry remain open.
 
 > 2026-10-03 scoped menu authorization: read [menu Ready/runtime policy contract](cooking-menu-catalog.md#scoped-menu-ready-and-runtime-authorization-2026-10-03). Current reviewed productionfa2f60e17 is definition3 / Recipe5 / Level8, typed major baseline2 separate. MenuNotAuthorized is appended; recovery and approved in-flight work remain available. Current actual gate results and incomplete natural/durable exits live in task evidence.
@@ -430,3 +432,14 @@ Recipe.Execution ?? Automatic?Manual StartProcess ???? ActiveWorker?? worker ???
 #### Scenario: 联机闭环验收前置缺失
 - **WHEN** 阶段 2 session 或 LAN 集成证据、transport/D4 决策门尚未满足
 - **THEN** 系统 MUST 将该 successor 验收标记为未获批准/未执行，不得以同机或 in-process 结果替代真实 LAN 出口
+
+
+## Verified recovery and retry contracts (2026-10-03)
+
+Master86c3eb41d passed kitchen644/772/298 and ET772/298. Removed item tombstones retain historical locations for canonical history but never reserve a live hand during validation or installation. A process duration is legal only at recipe base ticks or ticks derived from independently trusted current major progress; saved payload does not grant acceleration. Trusted progress must be attached before checkpoint/handoff/private-copy validation. Existing base-duration work may continue after acceleration is confirmed.
+
+Public retry choice application stages all replacements/placements privately, validates intended new progress against staged work, then publishes atomically. Rejection retains full kernel state and original grant. Public unknown definitions remain strict. The Level owner retains complete global choices but materializes only current content/standard supply/menu authorization intersection. Missing or disallowed global definitions are retained without spawning. Constructor-owned clean pools remain distinct from physical standard-stock placement.
+
+A trusted fresh factory may already fulfill a declared standard supply entry: definition, location and quantity must match exactly; matching objects are version1, nonproduct, clean, unbound, without provenance/remaining portions, empty if containers and without an anchored process. Host fills missing entries rather than duplicating that pristine seed. This does not repair arbitrary partial/wrong seeds or relax ordinary single-slot placement.
+
+Technical owner-declared Failed on a healthy Host and fixed-Tick exception quarantine are distinct. A faulted Host remains unusable and is disposed; a new trusted Host loads only the last successful durable baseline. Normal unmet orders still finish naturally with Success. Detailed actual red/green and review: parent cooking-gameplay-menu-plan research/master-s14-recovery-verification.md, recovery-fixes-red-green.md and s14-recovery-fixes-independent-review.md.
