@@ -211,6 +211,47 @@ public sealed class CookingContentCatalogTests
         Assert.True(counter.IsAvailable);
     }
 
+    [Fact]
+    public void S05_submission_flags_propagate_and_change_frozen_identity()
+    {
+        var document = Deserialize(File.ReadAllText(ContentPath()));
+        var baseline = CookingContentCatalog.Load(document);
+        var bound = CookingContentCatalog.Load(document with
+        {
+            OrderTemplates = document.OrderTemplates.Select(template => template with { RequiresBinding = true }).ToArray(),
+        });
+        Assert.All(bound.OrderTemplates.Values, template => Assert.True(template.RequiresBinding));
+        Assert.NotEqual(baseline.Identity, bound.Identity);
+        Assert.All(baseline.OrderTemplates.Values, template => Assert.False(template.RequiresBinding));
+
+        var disposableDocument = document with
+        {
+            Items = document.Items.Select(item => item.Id == "bowl"
+                ? item with { Container = item.Container! with { DisposableOnSubmission = true } } : item).ToArray(),
+            StandardInitialSupply = document.StandardInitialSupply.Where(entry => entry.Definition != "bowl").ToArray(),
+        };
+        var disposable = CookingContentCatalog.Load(disposableDocument);
+        Assert.True(disposable.Items[new DefinitionId("bowl")].Container!.DisposableOnSubmission);
+        Assert.True(disposable.Snapshot.Items[new DefinitionId("bowl")].Container!.DisposableOnSubmission);
+        var reusable = CookingContentCatalog.Load(disposableDocument with { Items = document.Items });
+        Assert.NotEqual(reusable.Identity, disposable.Identity);
+        Assert.False(baseline.Items[new DefinitionId("bowl")].Container!.DisposableOnSubmission);
+    }
+
+    [Fact]
+    public void S05_disposable_vessel_cannot_be_supplied_from_clean_pool()
+    {
+        var document = Deserialize(File.ReadAllText(ContentPath()));
+        var disposable = document with
+        {
+            Items = document.Items.Select(item => item.Id == "bowl"
+                ? item with { Container = item.Container! with { DisposableOnSubmission = true } } : item).ToArray(),
+        };
+        var exception = Assert.Throws<ArgumentException>(() => CookingContentCatalog.Load(disposable));
+        Assert.Contains("StandardInitialSupply", exception.Message);
+        Assert.Contains("InvalidValue", exception.Message);
+    }
+
     private static CookingRecipeSimulation CreateSimulation(CookingContent content)
     {
         var scope = new CookingScope(Session, World, Match);

@@ -4,8 +4,10 @@ public sealed partial class CookingRecipeSimulation
 {
     private CookingCheckpointRestoreReason ValidateExtendedCheckpoint(CookingRecipeCheckpoint checkpoint)
     {
-        if (checkpoint.SchemaVersion != 3 || checkpoint.Poses is null) return CookingCheckpointRestoreReason.UnsupportedSchema;
+        if (checkpoint.SchemaVersion != 4 || checkpoint.Poses is null) return CookingCheckpointRestoreReason.UnsupportedSchema;
         if (checkpoint.Items is null || checkpoint.Processes is null) return CookingCheckpointRestoreReason.CounterInvalid;
+        var bindings = ValidateCheckpointBindings(checkpoint);
+        if (bindings != CookingCheckpointRestoreReason.None) return bindings;
         var items = new Dictionary<ItemId, CookingRecipeCheckpointItem>();
         foreach (var item in checkpoint.Items)
         {

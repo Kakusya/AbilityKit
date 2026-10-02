@@ -1,0 +1,1044 @@
+{
+  "schema": "cooking-menu-production-evidence-v1",
+  "menuSourceId": "F05",
+  "status": "produced-plated-submitted",
+  "scope": {
+    "session": {
+      "value": "menu-production"
+    },
+    "world": {
+      "value": "menu-world"
+    },
+    "match": {
+      "value": "F05"
+    }
+  },
+  "contentIdentity": {
+    "schema": "cooking-definition-v3",
+    "sha256": "D87B47BE77F5B67D6C43886ED1DA7D35F5A673146E325203046065A27DDFE00A"
+  },
+  "catalogSha256": "bcadc77368b284cfafe273b608c56d9d6d3a312fa456abf49b1f831133eb5374",
+  "sources": [
+    {
+      "path": "Docs/design/CookingGame/reference/menu-v0.1/Cooking_\u5B8C\u6574\u83DC\u54C1\u4E0E\u52A0\u5DE5\u8FC7\u7A0B_v0.1.md",
+      "sha256": "8d503eeaaf5c2de3e326762beb9b1bf305342b1095b0ba9fcabcde230f902cc2"
+    },
+    {
+      "path": "Docs/design/CookingGame/reference/menu-v0.1/Cooking_\u5B8C\u6574\u83DC\u54C1\u4E0E\u52A0\u5DE5\u8FC7\u7A0B_v0.1.xlsx",
+      "sha256": "5268130330044901cfaecf3cbd7ab048432030ef03c6f17cf3a793d3d744232d"
+    }
+  ],
+  "fixtureValues": "raw-eight-per-definition-serving-two-not-balanced",
+  "initialSupply": [
+    {
+      "definition": {
+        "value": "menu-supply-cream"
+      },
+      "count": 1,
+      "location": "world:initial-menu-supply-cream-1"
+    },
+    {
+      "definition": {
+        "value": "menu-supply-cream"
+      },
+      "count": 1,
+      "location": "world:initial-menu-supply-cream-2"
+    },
+    {
+      "definition": {
+        "value": "menu-supply-cream"
+      },
+      "count": 1,
+      "location": "world:initial-menu-supply-cream-3"
+    },
+    {
+      "definition": {
+        "value": "menu-supply-cream"
+      },
+      "count": 1,
+      "location": "world:initial-menu-supply-cream-4"
+    },
+    {
+      "definition": {
+        "value": "menu-supply-cream"
+      },
+      "count": 1,
+      "location": "world:initial-menu-supply-cream-5"
+    },
+    {
+      "definition": {
+        "value": "menu-supply-cream"
+      },
+      "count": 1,
+      "location": "world:initial-menu-supply-cream-6"
+    },
+    {
+      "definition": {
+        "value": "menu-supply-cream"
+      },
+      "count": 1,
+      "location": "world:initial-menu-supply-cream-7"
+    },
+    {
+      "definition": {
+        "value": "menu-supply-cream"
+      },
+      "count": 1,
+      "location": "world:initial-menu-supply-cream-8"
+    },
+    {
+      "definition": {
+        "value": "menu-supply-mushroom"
+      },
+      "count": 1,
+      "location": "world:initial-menu-supply-mushroom-1"
+    },
+    {
+      "definition": {
+        "value": "menu-supply-mushroom"
+      },
+      "count": 1,
+      "location": "world:initial-menu-supply-mushroom-2"
+    },
+    {
+      "definition": {
+        "value": "menu-supply-mushroom"
+      },
+      "count": 1,
+      "location": "world:initial-menu-supply-mushroom-3"
+    },
+    {
+      "definition": {
+        "value": "menu-supply-mushroom"
+      },
+      "count": 1,
+      "location": "world:initial-menu-supply-mushroom-4"
+    },
+    {
+      "definition": {
+        "value": "menu-supply-mushroom"
+      },
+      "count": 1,
+      "location": "world:initial-menu-supply-mushroom-5"
+    },
+    {
+      "definition": {
+        "value": "menu-supply-mushroom"
+      },
+      "count": 1,
+      "location": "world:initial-menu-supply-mushroom-6"
+    },
+    {
+      "definition": {
+        "value": "menu-supply-mushroom"
+      },
+      "count": 1,
+      "location": "world:initial-menu-supply-mushroom-7"
+    },
+    {
+      "definition": {
+        "value": "menu-supply-mushroom"
+      },
+      "count": 1,
+      "location": "world:initial-menu-supply-mushroom-8"
+    },
+    {
+      "definition": {
+        "value": "menu-supply-onion"
+      },
+      "count": 1,
+      "location": "world:initial-menu-supply-onion-1"
+    },
+    {
+      "definition": {
+        "value": "menu-supply-onion"
+      },
+      "count": 1,
+      "location": "world:initial-menu-supply-onion-2"
+    },
+    {
+      "definition": {
+        "value": "menu-supply-onion"
+      },
+      "count": 1,
+      "location": "world:initial-menu-supply-onion-3"
+    },
+    {
+      "definition": {
+        "value": "menu-supply-onion"
+      },
+      "count": 1,
+      "location": "world:initial-menu-supply-onion-4"
+    },
+    {
+      "definition": {
+        "value": "menu-supply-onion"
+      },
+      "count": 1,
+      "location": "world:initial-menu-supply-onion-5"
+    },
+    {
+      "definition": {
+        "value": "menu-supply-onion"
+      },
+      "count": 1,
+      "location": "world:initial-menu-supply-onion-6"
+    },
+    {
+      "definition": {
+        "value": "menu-supply-onion"
+      },
+      "count": 1,
+      "location": "world:initial-menu-supply-onion-7"
+    },
+    {
+      "definition": {
+        "value": "menu-supply-onion"
+      },
+      "count": 1,
+      "location": "world:initial-menu-supply-onion-8"
+    },
+    {
+      "definition": {
+        "value": "menu-supply-stock"
+      },
+      "count": 1,
+      "location": "world:initial-menu-supply-stock-1"
+    },
+    {
+      "definition": {
+        "value": "menu-supply-stock"
+      },
+      "count": 1,
+      "location": "world:initial-menu-supply-stock-2"
+    },
+    {
+      "definition": {
+        "value": "menu-supply-stock"
+      },
+      "count": 1,
+      "location": "world:initial-menu-supply-stock-3"
+    },
+    {
+      "definition": {
+        "value": "menu-supply-stock"
+      },
+      "count": 1,
+      "location": "world:initial-menu-supply-stock-4"
+    },
+    {
+      "definition": {
+        "value": "menu-supply-stock"
+      },
+      "count": 1,
+      "location": "world:initial-menu-supply-stock-5"
+    },
+    {
+      "definition": {
+        "value": "menu-supply-stock"
+      },
+      "count": 1,
+      "location": "world:initial-menu-supply-stock-6"
+    },
+    {
+      "definition": {
+        "value": "menu-supply-stock"
+      },
+      "count": 1,
+      "location": "world:initial-menu-supply-stock-7"
+    },
+    {
+      "definition": {
+        "value": "menu-supply-stock"
+      },
+      "count": 1,
+      "location": "world:initial-menu-supply-stock-8"
+    },
+    {
+      "definition": {
+        "value": "menu-container-mix-bowl"
+      },
+      "count": 1,
+      "location": "world:initial-F05-menu-container-mix-bowl"
+    },
+    {
+      "definition": {
+        "value": "menu-container-cook-pot"
+      },
+      "count": 1,
+      "location": "world:initial-F05-menu-container-cook-pot"
+    },
+    {
+      "definition": {
+        "value": "menu-container-prep-box"
+      },
+      "count": 1,
+      "location": "world:initial-P05-menu-container-prep-box"
+    },
+    {
+      "definition": {
+        "value": "menu-container-prep-box"
+      },
+      "count": 1,
+      "location": "world:initial-storage-menu-recipe-preparation-cut-mushroom"
+    },
+    {
+      "definition": {
+        "value": "menu-container-prep-box"
+      },
+      "count": 1,
+      "location": "world:initial-P04-menu-container-prep-box"
+    },
+    {
+      "definition": {
+        "value": "menu-container-prep-box"
+      },
+      "count": 1,
+      "location": "world:initial-storage-menu-recipe-preparation-cut-onion"
+    },
+    {
+      "definition": {
+        "value": "menu-container-soup-bowl"
+      },
+      "count": 2,
+      "location": "cleanPool"
+    }
+  ],
+  "executedRecipes": [
+    "menu-recipe-preparation-cut-mushroom",
+    "menu-recipe-preparation-cut-onion",
+    "menu-recipe-finished-cream-mushroom-soup-stage-1",
+    "menu-recipe-finished-cream-mushroom-soup"
+  ],
+  "productId": "product-4",
+  "servingVesselId": "pool-menu-container-soup-bowl-1",
+  "logicalTick": 287,
+  "settlements": [
+    {
+      "sequence": 1,
+      "order": {
+        "value": "order-F05"
+      },
+      "template": {
+        "value": "menu-order-cream-mushroom-soup"
+      },
+      "recipe": {
+        "value": "menu-recipe-finished-cream-mushroom-soup"
+      },
+      "product": {
+        "value": "product-4"
+      },
+      "player": {
+        "value": "menu-chef"
+      },
+      "container": {
+        "value": "pool-menu-container-soup-bowl-1"
+      },
+      "logicalTick": 286
+    }
+  ],
+  "remainingItems": [
+    {
+      "id": {
+        "value": "fixture-F05-menu-container-cook-pot"
+      },
+      "definition": {
+        "value": "menu-container-cook-pot"
+      },
+      "version": 3,
+      "location": {
+        "kind": 0,
+        "ownerId": null,
+        "slotId": "initial-F05-menu-container-cook-pot"
+      },
+      "recipe": null,
+      "isProduct": false,
+      "originStation": null,
+      "containerCompleted": false,
+      "isDirty": false,
+      "remainingPortions": 0
+    },
+    {
+      "id": {
+        "value": "fixture-F05-menu-container-mix-bowl"
+      },
+      "definition": {
+        "value": "menu-container-mix-bowl"
+      },
+      "version": 3,
+      "location": {
+        "kind": 0,
+        "ownerId": null,
+        "slotId": "initial-F05-menu-container-mix-bowl"
+      },
+      "recipe": null,
+      "isProduct": false,
+      "originStation": null,
+      "containerCompleted": false,
+      "isDirty": false,
+      "remainingPortions": 0
+    },
+    {
+      "id": {
+        "value": "fixture-P04-menu-container-prep-box"
+      },
+      "definition": {
+        "value": "menu-container-prep-box"
+      },
+      "version": 3,
+      "location": {
+        "kind": 0,
+        "ownerId": null,
+        "slotId": "initial-P04-menu-container-prep-box"
+      },
+      "recipe": null,
+      "isProduct": false,
+      "originStation": null,
+      "containerCompleted": false,
+      "isDirty": false,
+      "remainingPortions": 0
+    },
+    {
+      "id": {
+        "value": "fixture-P05-menu-container-prep-box"
+      },
+      "definition": {
+        "value": "menu-container-prep-box"
+      },
+      "version": 3,
+      "location": {
+        "kind": 0,
+        "ownerId": null,
+        "slotId": "initial-P05-menu-container-prep-box"
+      },
+      "recipe": null,
+      "isProduct": false,
+      "originStation": null,
+      "containerCompleted": false,
+      "isDirty": false,
+      "remainingPortions": 0
+    },
+    {
+      "id": {
+        "value": "fixture-menu-supply-cream-2"
+      },
+      "definition": {
+        "value": "menu-supply-cream"
+      },
+      "version": 1,
+      "location": {
+        "kind": 0,
+        "ownerId": null,
+        "slotId": "initial-menu-supply-cream-2"
+      },
+      "recipe": null,
+      "isProduct": false,
+      "originStation": null,
+      "containerCompleted": false,
+      "isDirty": false,
+      "remainingPortions": 0
+    },
+    {
+      "id": {
+        "value": "fixture-menu-supply-cream-3"
+      },
+      "definition": {
+        "value": "menu-supply-cream"
+      },
+      "version": 1,
+      "location": {
+        "kind": 0,
+        "ownerId": null,
+        "slotId": "initial-menu-supply-cream-3"
+      },
+      "recipe": null,
+      "isProduct": false,
+      "originStation": null,
+      "containerCompleted": false,
+      "isDirty": false,
+      "remainingPortions": 0
+    },
+    {
+      "id": {
+        "value": "fixture-menu-supply-cream-4"
+      },
+      "definition": {
+        "value": "menu-supply-cream"
+      },
+      "version": 1,
+      "location": {
+        "kind": 0,
+        "ownerId": null,
+        "slotId": "initial-menu-supply-cream-4"
+      },
+      "recipe": null,
+      "isProduct": false,
+      "originStation": null,
+      "containerCompleted": false,
+      "isDirty": false,
+      "remainingPortions": 0
+    },
+    {
+      "id": {
+        "value": "fixture-menu-supply-cream-5"
+      },
+      "definition": {
+        "value": "menu-supply-cream"
+      },
+      "version": 1,
+      "location": {
+        "kind": 0,
+        "ownerId": null,
+        "slotId": "initial-menu-supply-cream-5"
+      },
+      "recipe": null,
+      "isProduct": false,
+      "originStation": null,
+      "containerCompleted": false,
+      "isDirty": false,
+      "remainingPortions": 0
+    },
+    {
+      "id": {
+        "value": "fixture-menu-supply-cream-6"
+      },
+      "definition": {
+        "value": "menu-supply-cream"
+      },
+      "version": 1,
+      "location": {
+        "kind": 0,
+        "ownerId": null,
+        "slotId": "initial-menu-supply-cream-6"
+      },
+      "recipe": null,
+      "isProduct": false,
+      "originStation": null,
+      "containerCompleted": false,
+      "isDirty": false,
+      "remainingPortions": 0
+    },
+    {
+      "id": {
+        "value": "fixture-menu-supply-cream-7"
+      },
+      "definition": {
+        "value": "menu-supply-cream"
+      },
+      "version": 1,
+      "location": {
+        "kind": 0,
+        "ownerId": null,
+        "slotId": "initial-menu-supply-cream-7"
+      },
+      "recipe": null,
+      "isProduct": false,
+      "originStation": null,
+      "containerCompleted": false,
+      "isDirty": false,
+      "remainingPortions": 0
+    },
+    {
+      "id": {
+        "value": "fixture-menu-supply-cream-8"
+      },
+      "definition": {
+        "value": "menu-supply-cream"
+      },
+      "version": 1,
+      "location": {
+        "kind": 0,
+        "ownerId": null,
+        "slotId": "initial-menu-supply-cream-8"
+      },
+      "recipe": null,
+      "isProduct": false,
+      "originStation": null,
+      "containerCompleted": false,
+      "isDirty": false,
+      "remainingPortions": 0
+    },
+    {
+      "id": {
+        "value": "fixture-menu-supply-mushroom-2"
+      },
+      "definition": {
+        "value": "menu-supply-mushroom"
+      },
+      "version": 1,
+      "location": {
+        "kind": 0,
+        "ownerId": null,
+        "slotId": "initial-menu-supply-mushroom-2"
+      },
+      "recipe": null,
+      "isProduct": false,
+      "originStation": null,
+      "containerCompleted": false,
+      "isDirty": false,
+      "remainingPortions": 0
+    },
+    {
+      "id": {
+        "value": "fixture-menu-supply-mushroom-3"
+      },
+      "definition": {
+        "value": "menu-supply-mushroom"
+      },
+      "version": 1,
+      "location": {
+        "kind": 0,
+        "ownerId": null,
+        "slotId": "initial-menu-supply-mushroom-3"
+      },
+      "recipe": null,
+      "isProduct": false,
+      "originStation": null,
+      "containerCompleted": false,
+      "isDirty": false,
+      "remainingPortions": 0
+    },
+    {
+      "id": {
+        "value": "fixture-menu-supply-mushroom-4"
+      },
+      "definition": {
+        "value": "menu-supply-mushroom"
+      },
+      "version": 1,
+      "location": {
+        "kind": 0,
+        "ownerId": null,
+        "slotId": "initial-menu-supply-mushroom-4"
+      },
+      "recipe": null,
+      "isProduct": false,
+      "originStation": null,
+      "containerCompleted": false,
+      "isDirty": false,
+      "remainingPortions": 0
+    },
+    {
+      "id": {
+        "value": "fixture-menu-supply-mushroom-5"
+      },
+      "definition": {
+        "value": "menu-supply-mushroom"
+      },
+      "version": 1,
+      "location": {
+        "kind": 0,
+        "ownerId": null,
+        "slotId": "initial-menu-supply-mushroom-5"
+      },
+      "recipe": null,
+      "isProduct": false,
+      "originStation": null,
+      "containerCompleted": false,
+      "isDirty": false,
+      "remainingPortions": 0
+    },
+    {
+      "id": {
+        "value": "fixture-menu-supply-mushroom-6"
+      },
+      "definition": {
+        "value": "menu-supply-mushroom"
+      },
+      "version": 1,
+      "location": {
+        "kind": 0,
+        "ownerId": null,
+        "slotId": "initial-menu-supply-mushroom-6"
+      },
+      "recipe": null,
+      "isProduct": false,
+      "originStation": null,
+      "containerCompleted": false,
+      "isDirty": false,
+      "remainingPortions": 0
+    },
+    {
+      "id": {
+        "value": "fixture-menu-supply-mushroom-7"
+      },
+      "definition": {
+        "value": "menu-supply-mushroom"
+      },
+      "version": 1,
+      "location": {
+        "kind": 0,
+        "ownerId": null,
+        "slotId": "initial-menu-supply-mushroom-7"
+      },
+      "recipe": null,
+      "isProduct": false,
+      "originStation": null,
+      "containerCompleted": false,
+      "isDirty": false,
+      "remainingPortions": 0
+    },
+    {
+      "id": {
+        "value": "fixture-menu-supply-mushroom-8"
+      },
+      "definition": {
+        "value": "menu-supply-mushroom"
+      },
+      "version": 1,
+      "location": {
+        "kind": 0,
+        "ownerId": null,
+        "slotId": "initial-menu-supply-mushroom-8"
+      },
+      "recipe": null,
+      "isProduct": false,
+      "originStation": null,
+      "containerCompleted": false,
+      "isDirty": false,
+      "remainingPortions": 0
+    },
+    {
+      "id": {
+        "value": "fixture-menu-supply-onion-2"
+      },
+      "definition": {
+        "value": "menu-supply-onion"
+      },
+      "version": 1,
+      "location": {
+        "kind": 0,
+        "ownerId": null,
+        "slotId": "initial-menu-supply-onion-2"
+      },
+      "recipe": null,
+      "isProduct": false,
+      "originStation": null,
+      "containerCompleted": false,
+      "isDirty": false,
+      "remainingPortions": 0
+    },
+    {
+      "id": {
+        "value": "fixture-menu-supply-onion-3"
+      },
+      "definition": {
+        "value": "menu-supply-onion"
+      },
+      "version": 1,
+      "location": {
+        "kind": 0,
+        "ownerId": null,
+        "slotId": "initial-menu-supply-onion-3"
+      },
+      "recipe": null,
+      "isProduct": false,
+      "originStation": null,
+      "containerCompleted": false,
+      "isDirty": false,
+      "remainingPortions": 0
+    },
+    {
+      "id": {
+        "value": "fixture-menu-supply-onion-4"
+      },
+      "definition": {
+        "value": "menu-supply-onion"
+      },
+      "version": 1,
+      "location": {
+        "kind": 0,
+        "ownerId": null,
+        "slotId": "initial-menu-supply-onion-4"
+      },
+      "recipe": null,
+      "isProduct": false,
+      "originStation": null,
+      "containerCompleted": false,
+      "isDirty": false,
+      "remainingPortions": 0
+    },
+    {
+      "id": {
+        "value": "fixture-menu-supply-onion-5"
+      },
+      "definition": {
+        "value": "menu-supply-onion"
+      },
+      "version": 1,
+      "location": {
+        "kind": 0,
+        "ownerId": null,
+        "slotId": "initial-menu-supply-onion-5"
+      },
+      "recipe": null,
+      "isProduct": false,
+      "originStation": null,
+      "containerCompleted": false,
+      "isDirty": false,
+      "remainingPortions": 0
+    },
+    {
+      "id": {
+        "value": "fixture-menu-supply-onion-6"
+      },
+      "definition": {
+        "value": "menu-supply-onion"
+      },
+      "version": 1,
+      "location": {
+        "kind": 0,
+        "ownerId": null,
+        "slotId": "initial-menu-supply-onion-6"
+      },
+      "recipe": null,
+      "isProduct": false,
+      "originStation": null,
+      "containerCompleted": false,
+      "isDirty": false,
+      "remainingPortions": 0
+    },
+    {
+      "id": {
+        "value": "fixture-menu-supply-onion-7"
+      },
+      "definition": {
+        "value": "menu-supply-onion"
+      },
+      "version": 1,
+      "location": {
+        "kind": 0,
+        "ownerId": null,
+        "slotId": "initial-menu-supply-onion-7"
+      },
+      "recipe": null,
+      "isProduct": false,
+      "originStation": null,
+      "containerCompleted": false,
+      "isDirty": false,
+      "remainingPortions": 0
+    },
+    {
+      "id": {
+        "value": "fixture-menu-supply-onion-8"
+      },
+      "definition": {
+        "value": "menu-supply-onion"
+      },
+      "version": 1,
+      "location": {
+        "kind": 0,
+        "ownerId": null,
+        "slotId": "initial-menu-supply-onion-8"
+      },
+      "recipe": null,
+      "isProduct": false,
+      "originStation": null,
+      "containerCompleted": false,
+      "isDirty": false,
+      "remainingPortions": 0
+    },
+    {
+      "id": {
+        "value": "fixture-menu-supply-stock-2"
+      },
+      "definition": {
+        "value": "menu-supply-stock"
+      },
+      "version": 1,
+      "location": {
+        "kind": 0,
+        "ownerId": null,
+        "slotId": "initial-menu-supply-stock-2"
+      },
+      "recipe": null,
+      "isProduct": false,
+      "originStation": null,
+      "containerCompleted": false,
+      "isDirty": false,
+      "remainingPortions": 0
+    },
+    {
+      "id": {
+        "value": "fixture-menu-supply-stock-3"
+      },
+      "definition": {
+        "value": "menu-supply-stock"
+      },
+      "version": 1,
+      "location": {
+        "kind": 0,
+        "ownerId": null,
+        "slotId": "initial-menu-supply-stock-3"
+      },
+      "recipe": null,
+      "isProduct": false,
+      "originStation": null,
+      "containerCompleted": false,
+      "isDirty": false,
+      "remainingPortions": 0
+    },
+    {
+      "id": {
+        "value": "fixture-menu-supply-stock-4"
+      },
+      "definition": {
+        "value": "menu-supply-stock"
+      },
+      "version": 1,
+      "location": {
+        "kind": 0,
+        "ownerId": null,
+        "slotId": "initial-menu-supply-stock-4"
+      },
+      "recipe": null,
+      "isProduct": false,
+      "originStation": null,
+      "containerCompleted": false,
+      "isDirty": false,
+      "remainingPortions": 0
+    },
+    {
+      "id": {
+        "value": "fixture-menu-supply-stock-5"
+      },
+      "definition": {
+        "value": "menu-supply-stock"
+      },
+      "version": 1,
+      "location": {
+        "kind": 0,
+        "ownerId": null,
+        "slotId": "initial-menu-supply-stock-5"
+      },
+      "recipe": null,
+      "isProduct": false,
+      "originStation": null,
+      "containerCompleted": false,
+      "isDirty": false,
+      "remainingPortions": 0
+    },
+    {
+      "id": {
+        "value": "fixture-menu-supply-stock-6"
+      },
+      "definition": {
+        "value": "menu-supply-stock"
+      },
+      "version": 1,
+      "location": {
+        "kind": 0,
+        "ownerId": null,
+        "slotId": "initial-menu-supply-stock-6"
+      },
+      "recipe": null,
+      "isProduct": false,
+      "originStation": null,
+      "containerCompleted": false,
+      "isDirty": false,
+      "remainingPortions": 0
+    },
+    {
+      "id": {
+        "value": "fixture-menu-supply-stock-7"
+      },
+      "definition": {
+        "value": "menu-supply-stock"
+      },
+      "version": 1,
+      "location": {
+        "kind": 0,
+        "ownerId": null,
+        "slotId": "initial-menu-supply-stock-7"
+      },
+      "recipe": null,
+      "isProduct": false,
+      "originStation": null,
+      "containerCompleted": false,
+      "isDirty": false,
+      "remainingPortions": 0
+    },
+    {
+      "id": {
+        "value": "fixture-menu-supply-stock-8"
+      },
+      "definition": {
+        "value": "menu-supply-stock"
+      },
+      "version": 1,
+      "location": {
+        "kind": 0,
+        "ownerId": null,
+        "slotId": "initial-menu-supply-stock-8"
+      },
+      "recipe": null,
+      "isProduct": false,
+      "originStation": null,
+      "containerCompleted": false,
+      "isDirty": false,
+      "remainingPortions": 0
+    },
+    {
+      "id": {
+        "value": "fixture-storage-menu-recipe-preparation-cut-mushroom"
+      },
+      "definition": {
+        "value": "menu-container-prep-box"
+      },
+      "version": 1,
+      "location": {
+        "kind": 0,
+        "ownerId": null,
+        "slotId": "initial-storage-menu-recipe-preparation-cut-mushroom"
+      },
+      "recipe": null,
+      "isProduct": false,
+      "originStation": null,
+      "containerCompleted": false,
+      "isDirty": false,
+      "remainingPortions": 0
+    },
+    {
+      "id": {
+        "value": "fixture-storage-menu-recipe-preparation-cut-onion"
+      },
+      "definition": {
+        "value": "menu-container-prep-box"
+      },
+      "version": 1,
+      "location": {
+        "kind": 0,
+        "ownerId": null,
+        "slotId": "initial-storage-menu-recipe-preparation-cut-onion"
+      },
+      "recipe": null,
+      "isProduct": false,
+      "originStation": null,
+      "containerCompleted": false,
+      "isDirty": false,
+      "remainingPortions": 0
+    },
+    {
+      "id": {
+        "value": "pool-menu-container-soup-bowl-2"
+      },
+      "definition": {
+        "value": "menu-container-soup-bowl"
+      },
+      "version": 1,
+      "location": {
+        "kind": 0,
+        "ownerId": null,
+        "slotId": "clean-pool"
+      },
+      "recipe": null,
+      "isProduct": false,
+      "originStation": null,
+      "containerCompleted": false,
+      "isDirty": false,
+      "remainingPortions": 0
+    }
+  ],
+  "snapshotSha256": "08ECEDF9A9650ED62917BCF8CBCB93FD6298065DD5707007FD1DB6C2B0C27CE8",
+  "pending": "S05-drink-binding-disposal-and-all-87-ET-recovery-S07-procurement-S14-exit"
+}

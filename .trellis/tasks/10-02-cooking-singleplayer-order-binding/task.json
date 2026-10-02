@@ -3,7 +3,7 @@
   "name": "cooking-singleplayer-order-binding",
   "title": "单机饮品贴单与交付分离",
   "description": "E01–E12/F07–F08",
-  "status": "planning",
+  "status": "in_progress",
   "dev_type": null,
   "scope": null,
   "package": null,
@@ -12,16 +12,16 @@
   "assignee": "Li He",
   "createdAt": "2026-10-02",
   "completedAt": null,
-  "branch": null,
+  "branch": "cooking-order-s05",
   "base_branch": "master",
   "worktree_path": null,
-  "commit": null,
+  "commit": "c6bc46c5b",
   "pr_url": null,
   "subtasks": [],
   "children": [],
   "parent": "10-02-cooking-gameplay-menu-plan",
   "relatedFiles": [],
-  "notes": "2026-10-02 owner 只授权记录规划与列 Task，不执行。全局路线与历史契约保持。",
+  "notes": "Implemented and actual final gates passed; independent coordinator review/integration pending. See research/verification.md.",
   "meta": {
     "plan_id": "S05",
     "stage": "singleplayer",
@@ -34,6 +34,7 @@
     "execution_gate": "reviewed-contract-and-dependencies",
     "planning_maturity": "reviewed-contract",
     "owner_delegated_details": true,
-    "execution_authorization": "Latest owner: audit every topic then execute through completion. Task planning review and dependency checks precede execution; Unity and optional reference pool remain deferred."
+    "execution_authorization": "Latest owner: audit every topic then execute through completion. Task planning review and dependency checks precede execution; Unity and optional reference pool remain deferred.",
+    "verification": "final-kitchen221-domain343-et76; final-et-domain343-et76; 0failed/skip"
   }
 }

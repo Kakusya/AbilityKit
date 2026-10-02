@@ -119,6 +119,7 @@ public sealed partial class CookingRecipeSimulation
     {
         if (source.Recipe is not { } recipeId || !_fixture.Recipes.TryGetValue(recipeId, out var recipe) ||
             count <= 0 || count > source.RemainingPortions) return Reject(CookingRecipeRejectionReason.ProductNotFound);
+        if (ItemsInContainer(target).Any(id => _items[id].BoundOrder is not null)) return Reject(CookingRecipeRejectionReason.BindingConflict);
         if (_items[target].ContainerCompleted) return Reject(CookingRecipeRejectionReason.BatchCompleted);
         if (IsLockedInput(sourceId) || IsLockedInput(target)) return Reject(CookingRecipeRejectionReason.ItemStale);
         if (WouldCreateContainmentCycle(target, sourceId)) return Reject(CookingRecipeRejectionReason.ContainerRejectsItem);
@@ -148,7 +149,7 @@ public sealed partial class CookingRecipeSimulation
             foreach (var content in ItemsInContainer(sourceId))
             {
                 var state = stagedItems[content];
-                stagedItems[content] = state with { Removed = true, Version = checked(state.Version + 1) };
+                stagedItems[content] = state with { Removed = true, BoundOrder = null, Version = checked(state.Version + 1) };
             }
             stagedContents[sourceId].Clear();
         }
@@ -169,7 +170,7 @@ public sealed partial class CookingRecipeSimulation
         if (contents.Any(i => TryGetContainerCapability(i, out _))) return Reject(CookingRecipeRejectionReason.ContainerRejectsItem);
         var staged = new Dictionary<ItemId, ItemState>(_items);
         _ = checked(_stateVersion + 1); _ = checked(_eventSequence + 1);
-        foreach (var item in contents) staged[item] = staged[item] with { Removed = true, Version = checked(staged[item].Version + 1) };
+        foreach (var item in contents) staged[item] = staged[item] with { Removed = true, BoundOrder = null, Version = checked(staged[item].Version + 1) };
         staged[id] = source with { Version = checked(source.Version + 1), Recipe = null, ContainerCompleted = false, RemainingPortions = 0 };
         _items = staged; EnsureContainerList(id).Clear();
         return Commit(command, null, null, id, "contents-cleared");
@@ -183,7 +184,7 @@ public sealed partial class CookingRecipeSimulation
         if (IsLockedInput(id)) return Reject(CookingRecipeRejectionReason.ItemStale);
         if (!ItemIsReachable(id, command.Player)) return Reject(CookingRecipeRejectionReason.TargetOutOfRange);
         var version = checked(item.Version + 1); _ = checked(_stateVersion + 1); _ = checked(_eventSequence + 1);
-        _items[id] = item with { Removed = true, Version = version };
+        _items[id] = item with { Removed = true, BoundOrder = null, Version = version };
         foreach (var p in _hands.Keys.ToArray()) if (_hands[p] == id) _hands[p] = null;
         foreach (var list in _containerItems.Values) list.Remove(id);
         return Commit(command, null, null, id, "item-discarded");

@@ -350,6 +350,7 @@ public sealed class CookingMenuCatalog
                 pair.Second.Process != pair.First.Process.Value || pair.Second.RequiredApplianceCapability != pair.First.Capability ||
                 pair.Second.RequiredTicks != pair.First.RequiredTicks || pair.Second.DefaultInputs?.Count > 0 ||
                 pair.Second.Execution != pair.First.ExecutionKind.ToString() || pair.Second.YieldPortions != pair.First.YieldPortions ||
+                pair.Second.RequiredProcessingContainerDefinition != pair.First.Carrier.Value ||
                 !pair.Second.RequiresStation || pair.Second.Completion != Completion(pair.First) ||
                 !pair.Second.Inputs.Order(StringComparer.Ordinal).SequenceEqual(ExpandInputs(pair.First).Order(StringComparer.Ordinal)))
                 throw new ArgumentException($"InvalidRuntimeAdapter/{pair.First.Id.Value}", nameof(recipeFactory));
@@ -365,13 +366,18 @@ public sealed class CookingMenuCatalog
             .Select(x => new CookingContentAppliance(x.Id.Value, x.Capabilities));
         return baseline with
         {
-            SupportedApplianceCapabilities = baseline.SupportedApplianceCapabilities.Concat(required.Capabilities).Distinct(StringComparer.Ordinal).ToArray(),
+            // A physical multi-mode station retains its declared modes even when the selected
+            // menu only needs one; every declared mode must remain in the supported vocabulary.
+            SupportedApplianceCapabilities = baseline.SupportedApplianceCapabilities.Concat(required.Capabilities)
+                .Concat(appliances.SelectMany(x => x.Capabilities)).Distinct(StringComparer.Ordinal).ToArray(),
             Items = baseline.Items.Concat(additions).ToArray(),
             Appliances = baseline.Appliances.Concat(appliances).ToArray(),
             Recipes = baseline.Recipes.Concat(projectedRecipes).ToArray(),
             OrderTemplates = baseline.OrderTemplates.Concat(selectedMenus.Select(x => new CookingContentOrderTemplate(
                 x.OrderTemplate.Value, x.FinalRecipe.Value, x.ServingContainer.Value, x.BaseScore))).ToArray(),
             StandardInitialSupply = baseline.StandardInitialSupply.Concat(supply).ToArray(),
+            ContentProvenance = new(CurrentSchema, Sha256,
+                document.Sources.Select(x => new CookingContentSourceIdentity(x.Path, x.Sha256)).ToArray(), selected),
         };
     }
 
@@ -389,13 +395,14 @@ public sealed class CookingMenuCatalog
     private static CookingContentRecipe MapRuntimeRecipe(CookingMenuStep step) =>
         new(step.Id.Value, ExpandInputs(step), step.Output.Value, step.Process.Value,
             step.Capability, step.RequiredTicks, Completion: Completion(step),
-            Execution: step.ExecutionKind.ToString(), YieldPortions: step.YieldPortions);
+            Execution: step.ExecutionKind.ToString(), YieldPortions: step.YieldPortions,
+            RequiredProcessingContainerDefinition: step.Carrier.Value);
 
     private static CookingMenuStep CloneStep(CookingMenuStep step) => step with { Inputs = step.Inputs.ToArray() };
     private static T[] Sort<T>(IEnumerable<T> values, Func<T, string> key) => values.OrderBy(key, StringComparer.Ordinal).ToArray();
     private static CookingMenuDocument Normalize(CookingMenuDocument candidate) => candidate with
     {
-        Sources = Sort(candidate.Sources, x => x.Path),
+        Sources = Sort(candidate.Sources.Select(x => x with { Sha256 = x.Sha256.ToLowerInvariant() }), x => x.Path),
         Decisions = candidate.Decisions.Order(StringComparer.Ordinal).ToArray(),
         Materials = Sort(candidate.Materials, x => x.Id.Value),
         Stations = Sort(candidate.Stations.Select(x => x with { Capabilities = x.Capabilities.Order(StringComparer.Ordinal).ToArray() }), x => x.Id.Value),

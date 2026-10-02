@@ -1,0 +1,1017 @@
+{
+  "schema": "cooking-menu-production-evidence-v1",
+  "menuSourceId": "F16",
+  "status": "produced-plated-submitted",
+  "scope": {
+    "session": {
+      "value": "menu-production"
+    },
+    "world": {
+      "value": "menu-world"
+    },
+    "match": {
+      "value": "F16"
+    }
+  },
+  "contentIdentity": {
+    "schema": "cooking-definition-v3",
+    "sha256": "EE5977EFD740B04A766726B7855CBD549696223476DCEED23033A0EC0284922F"
+  },
+  "catalogSha256": "bcadc77368b284cfafe273b608c56d9d6d3a312fa456abf49b1f831133eb5374",
+  "sources": [
+    {
+      "path": "Docs/design/CookingGame/reference/menu-v0.1/Cooking_\u5B8C\u6574\u83DC\u54C1\u4E0E\u52A0\u5DE5\u8FC7\u7A0B_v0.1.md",
+      "sha256": "8d503eeaaf5c2de3e326762beb9b1bf305342b1095b0ba9fcabcde230f902cc2"
+    },
+    {
+      "path": "Docs/design/CookingGame/reference/menu-v0.1/Cooking_\u5B8C\u6574\u83DC\u54C1\u4E0E\u52A0\u5DE5\u8FC7\u7A0B_v0.1.xlsx",
+      "sha256": "5268130330044901cfaecf3cbd7ab048432030ef03c6f17cf3a793d3d744232d"
+    }
+  ],
+  "fixtureValues": "raw-eight-per-definition-serving-two-not-balanced",
+  "initialSupply": [
+    {
+      "definition": {
+        "value": "menu-supply-hotdog-bun"
+      },
+      "count": 1,
+      "location": "world:initial-menu-supply-hotdog-bun-1"
+    },
+    {
+      "definition": {
+        "value": "menu-supply-hotdog-bun"
+      },
+      "count": 1,
+      "location": "world:initial-menu-supply-hotdog-bun-2"
+    },
+    {
+      "definition": {
+        "value": "menu-supply-hotdog-bun"
+      },
+      "count": 1,
+      "location": "world:initial-menu-supply-hotdog-bun-3"
+    },
+    {
+      "definition": {
+        "value": "menu-supply-hotdog-bun"
+      },
+      "count": 1,
+      "location": "world:initial-menu-supply-hotdog-bun-4"
+    },
+    {
+      "definition": {
+        "value": "menu-supply-hotdog-bun"
+      },
+      "count": 1,
+      "location": "world:initial-menu-supply-hotdog-bun-5"
+    },
+    {
+      "definition": {
+        "value": "menu-supply-hotdog-bun"
+      },
+      "count": 1,
+      "location": "world:initial-menu-supply-hotdog-bun-6"
+    },
+    {
+      "definition": {
+        "value": "menu-supply-hotdog-bun"
+      },
+      "count": 1,
+      "location": "world:initial-menu-supply-hotdog-bun-7"
+    },
+    {
+      "definition": {
+        "value": "menu-supply-hotdog-bun"
+      },
+      "count": 1,
+      "location": "world:initial-menu-supply-hotdog-bun-8"
+    },
+    {
+      "definition": {
+        "value": "menu-supply-mustard"
+      },
+      "count": 1,
+      "location": "world:initial-menu-supply-mustard-1"
+    },
+    {
+      "definition": {
+        "value": "menu-supply-mustard"
+      },
+      "count": 1,
+      "location": "world:initial-menu-supply-mustard-2"
+    },
+    {
+      "definition": {
+        "value": "menu-supply-mustard"
+      },
+      "count": 1,
+      "location": "world:initial-menu-supply-mustard-3"
+    },
+    {
+      "definition": {
+        "value": "menu-supply-mustard"
+      },
+      "count": 1,
+      "location": "world:initial-menu-supply-mustard-4"
+    },
+    {
+      "definition": {
+        "value": "menu-supply-mustard"
+      },
+      "count": 1,
+      "location": "world:initial-menu-supply-mustard-5"
+    },
+    {
+      "definition": {
+        "value": "menu-supply-mustard"
+      },
+      "count": 1,
+      "location": "world:initial-menu-supply-mustard-6"
+    },
+    {
+      "definition": {
+        "value": "menu-supply-mustard"
+      },
+      "count": 1,
+      "location": "world:initial-menu-supply-mustard-7"
+    },
+    {
+      "definition": {
+        "value": "menu-supply-mustard"
+      },
+      "count": 1,
+      "location": "world:initial-menu-supply-mustard-8"
+    },
+    {
+      "definition": {
+        "value": "menu-supply-onion"
+      },
+      "count": 1,
+      "location": "world:initial-menu-supply-onion-1"
+    },
+    {
+      "definition": {
+        "value": "menu-supply-onion"
+      },
+      "count": 1,
+      "location": "world:initial-menu-supply-onion-2"
+    },
+    {
+      "definition": {
+        "value": "menu-supply-onion"
+      },
+      "count": 1,
+      "location": "world:initial-menu-supply-onion-3"
+    },
+    {
+      "definition": {
+        "value": "menu-supply-onion"
+      },
+      "count": 1,
+      "location": "world:initial-menu-supply-onion-4"
+    },
+    {
+      "definition": {
+        "value": "menu-supply-onion"
+      },
+      "count": 1,
+      "location": "world:initial-menu-supply-onion-5"
+    },
+    {
+      "definition": {
+        "value": "menu-supply-onion"
+      },
+      "count": 1,
+      "location": "world:initial-menu-supply-onion-6"
+    },
+    {
+      "definition": {
+        "value": "menu-supply-onion"
+      },
+      "count": 1,
+      "location": "world:initial-menu-supply-onion-7"
+    },
+    {
+      "definition": {
+        "value": "menu-supply-onion"
+      },
+      "count": 1,
+      "location": "world:initial-menu-supply-onion-8"
+    },
+    {
+      "definition": {
+        "value": "menu-supply-raw-sausage"
+      },
+      "count": 1,
+      "location": "world:initial-menu-supply-raw-sausage-1"
+    },
+    {
+      "definition": {
+        "value": "menu-supply-raw-sausage"
+      },
+      "count": 1,
+      "location": "world:initial-menu-supply-raw-sausage-2"
+    },
+    {
+      "definition": {
+        "value": "menu-supply-raw-sausage"
+      },
+      "count": 1,
+      "location": "world:initial-menu-supply-raw-sausage-3"
+    },
+    {
+      "definition": {
+        "value": "menu-supply-raw-sausage"
+      },
+      "count": 1,
+      "location": "world:initial-menu-supply-raw-sausage-4"
+    },
+    {
+      "definition": {
+        "value": "menu-supply-raw-sausage"
+      },
+      "count": 1,
+      "location": "world:initial-menu-supply-raw-sausage-5"
+    },
+    {
+      "definition": {
+        "value": "menu-supply-raw-sausage"
+      },
+      "count": 1,
+      "location": "world:initial-menu-supply-raw-sausage-6"
+    },
+    {
+      "definition": {
+        "value": "menu-supply-raw-sausage"
+      },
+      "count": 1,
+      "location": "world:initial-menu-supply-raw-sausage-7"
+    },
+    {
+      "definition": {
+        "value": "menu-supply-raw-sausage"
+      },
+      "count": 1,
+      "location": "world:initial-menu-supply-raw-sausage-8"
+    },
+    {
+      "definition": {
+        "value": "menu-container-mix-bowl"
+      },
+      "count": 1,
+      "location": "world:initial-F16-menu-container-mix-bowl"
+    },
+    {
+      "definition": {
+        "value": "menu-container-pan"
+      },
+      "count": 1,
+      "location": "world:initial-P27-menu-container-pan"
+    },
+    {
+      "definition": {
+        "value": "menu-container-prep-plate"
+      },
+      "count": 1,
+      "location": "world:initial-storage-menu-recipe-preparation-cooked-sausage"
+    },
+    {
+      "definition": {
+        "value": "menu-container-prep-box"
+      },
+      "count": 1,
+      "location": "world:initial-P04-menu-container-prep-box"
+    },
+    {
+      "definition": {
+        "value": "menu-container-prep-box"
+      },
+      "count": 1,
+      "location": "world:initial-storage-menu-recipe-preparation-cut-onion"
+    },
+    {
+      "definition": {
+        "value": "menu-container-plate"
+      },
+      "count": 2,
+      "location": "cleanPool"
+    }
+  ],
+  "executedRecipes": [
+    "menu-recipe-preparation-cooked-sausage",
+    "menu-recipe-finished-mustard-hotdog-stage-1",
+    "menu-recipe-preparation-cut-onion",
+    "menu-recipe-finished-mustard-hotdog"
+  ],
+  "productId": "product-4",
+  "servingVesselId": "pool-menu-container-plate-1",
+  "logicalTick": 247,
+  "settlements": [
+    {
+      "sequence": 1,
+      "order": {
+        "value": "order-F16"
+      },
+      "template": {
+        "value": "menu-order-mustard-hotdog"
+      },
+      "recipe": {
+        "value": "menu-recipe-finished-mustard-hotdog"
+      },
+      "product": {
+        "value": "product-4"
+      },
+      "player": {
+        "value": "menu-chef"
+      },
+      "container": {
+        "value": "pool-menu-container-plate-1"
+      },
+      "logicalTick": 246
+    }
+  ],
+  "remainingItems": [
+    {
+      "id": {
+        "value": "fixture-F16-menu-container-mix-bowl"
+      },
+      "definition": {
+        "value": "menu-container-mix-bowl"
+      },
+      "version": 5,
+      "location": {
+        "kind": 0,
+        "ownerId": null,
+        "slotId": "initial-F16-menu-container-mix-bowl"
+      },
+      "recipe": null,
+      "isProduct": false,
+      "originStation": null,
+      "containerCompleted": false,
+      "isDirty": false,
+      "remainingPortions": 0
+    },
+    {
+      "id": {
+        "value": "fixture-P04-menu-container-prep-box"
+      },
+      "definition": {
+        "value": "menu-container-prep-box"
+      },
+      "version": 3,
+      "location": {
+        "kind": 0,
+        "ownerId": null,
+        "slotId": "initial-P04-menu-container-prep-box"
+      },
+      "recipe": null,
+      "isProduct": false,
+      "originStation": null,
+      "containerCompleted": false,
+      "isDirty": false,
+      "remainingPortions": 0
+    },
+    {
+      "id": {
+        "value": "fixture-P27-menu-container-pan"
+      },
+      "definition": {
+        "value": "menu-container-pan"
+      },
+      "version": 3,
+      "location": {
+        "kind": 0,
+        "ownerId": null,
+        "slotId": "initial-P27-menu-container-pan"
+      },
+      "recipe": null,
+      "isProduct": false,
+      "originStation": null,
+      "containerCompleted": false,
+      "isDirty": false,
+      "remainingPortions": 0
+    },
+    {
+      "id": {
+        "value": "fixture-menu-supply-hotdog-bun-2"
+      },
+      "definition": {
+        "value": "menu-supply-hotdog-bun"
+      },
+      "version": 1,
+      "location": {
+        "kind": 0,
+        "ownerId": null,
+        "slotId": "initial-menu-supply-hotdog-bun-2"
+      },
+      "recipe": null,
+      "isProduct": false,
+      "originStation": null,
+      "containerCompleted": false,
+      "isDirty": false,
+      "remainingPortions": 0
+    },
+    {
+      "id": {
+        "value": "fixture-menu-supply-hotdog-bun-3"
+      },
+      "definition": {
+        "value": "menu-supply-hotdog-bun"
+      },
+      "version": 1,
+      "location": {
+        "kind": 0,
+        "ownerId": null,
+        "slotId": "initial-menu-supply-hotdog-bun-3"
+      },
+      "recipe": null,
+      "isProduct": false,
+      "originStation": null,
+      "containerCompleted": false,
+      "isDirty": false,
+      "remainingPortions": 0
+    },
+    {
+      "id": {
+        "value": "fixture-menu-supply-hotdog-bun-4"
+      },
+      "definition": {
+        "value": "menu-supply-hotdog-bun"
+      },
+      "version": 1,
+      "location": {
+        "kind": 0,
+        "ownerId": null,
+        "slotId": "initial-menu-supply-hotdog-bun-4"
+      },
+      "recipe": null,
+      "isProduct": false,
+      "originStation": null,
+      "containerCompleted": false,
+      "isDirty": false,
+      "remainingPortions": 0
+    },
+    {
+      "id": {
+        "value": "fixture-menu-supply-hotdog-bun-5"
+      },
+      "definition": {
+        "value": "menu-supply-hotdog-bun"
+      },
+      "version": 1,
+      "location": {
+        "kind": 0,
+        "ownerId": null,
+        "slotId": "initial-menu-supply-hotdog-bun-5"
+      },
+      "recipe": null,
+      "isProduct": false,
+      "originStation": null,
+      "containerCompleted": false,
+      "isDirty": false,
+      "remainingPortions": 0
+    },
+    {
+      "id": {
+        "value": "fixture-menu-supply-hotdog-bun-6"
+      },
+      "definition": {
+        "value": "menu-supply-hotdog-bun"
+      },
+      "version": 1,
+      "location": {
+        "kind": 0,
+        "ownerId": null,
+        "slotId": "initial-menu-supply-hotdog-bun-6"
+      },
+      "recipe": null,
+      "isProduct": false,
+      "originStation": null,
+      "containerCompleted": false,
+      "isDirty": false,
+      "remainingPortions": 0
+    },
+    {
+      "id": {
+        "value": "fixture-menu-supply-hotdog-bun-7"
+      },
+      "definition": {
+        "value": "menu-supply-hotdog-bun"
+      },
+      "version": 1,
+      "location": {
+        "kind": 0,
+        "ownerId": null,
+        "slotId": "initial-menu-supply-hotdog-bun-7"
+      },
+      "recipe": null,
+      "isProduct": false,
+      "originStation": null,
+      "containerCompleted": false,
+      "isDirty": false,
+      "remainingPortions": 0
+    },
+    {
+      "id": {
+        "value": "fixture-menu-supply-hotdog-bun-8"
+      },
+      "definition": {
+        "value": "menu-supply-hotdog-bun"
+      },
+      "version": 1,
+      "location": {
+        "kind": 0,
+        "ownerId": null,
+        "slotId": "initial-menu-supply-hotdog-bun-8"
+      },
+      "recipe": null,
+      "isProduct": false,
+      "originStation": null,
+      "containerCompleted": false,
+      "isDirty": false,
+      "remainingPortions": 0
+    },
+    {
+      "id": {
+        "value": "fixture-menu-supply-mustard-2"
+      },
+      "definition": {
+        "value": "menu-supply-mustard"
+      },
+      "version": 1,
+      "location": {
+        "kind": 0,
+        "ownerId": null,
+        "slotId": "initial-menu-supply-mustard-2"
+      },
+      "recipe": null,
+      "isProduct": false,
+      "originStation": null,
+      "containerCompleted": false,
+      "isDirty": false,
+      "remainingPortions": 0
+    },
+    {
+      "id": {
+        "value": "fixture-menu-supply-mustard-3"
+      },
+      "definition": {
+        "value": "menu-supply-mustard"
+      },
+      "version": 1,
+      "location": {
+        "kind": 0,
+        "ownerId": null,
+        "slotId": "initial-menu-supply-mustard-3"
+      },
+      "recipe": null,
+      "isProduct": false,
+      "originStation": null,
+      "containerCompleted": false,
+      "isDirty": false,
+      "remainingPortions": 0
+    },
+    {
+      "id": {
+        "value": "fixture-menu-supply-mustard-4"
+      },
+      "definition": {
+        "value": "menu-supply-mustard"
+      },
+      "version": 1,
+      "location": {
+        "kind": 0,
+        "ownerId": null,
+        "slotId": "initial-menu-supply-mustard-4"
+      },
+      "recipe": null,
+      "isProduct": false,
+      "originStation": null,
+      "containerCompleted": false,
+      "isDirty": false,
+      "remainingPortions": 0
+    },
+    {
+      "id": {
+        "value": "fixture-menu-supply-mustard-5"
+      },
+      "definition": {
+        "value": "menu-supply-mustard"
+      },
+      "version": 1,
+      "location": {
+        "kind": 0,
+        "ownerId": null,
+        "slotId": "initial-menu-supply-mustard-5"
+      },
+      "recipe": null,
+      "isProduct": false,
+      "originStation": null,
+      "containerCompleted": false,
+      "isDirty": false,
+      "remainingPortions": 0
+    },
+    {
+      "id": {
+        "value": "fixture-menu-supply-mustard-6"
+      },
+      "definition": {
+        "value": "menu-supply-mustard"
+      },
+      "version": 1,
+      "location": {
+        "kind": 0,
+        "ownerId": null,
+        "slotId": "initial-menu-supply-mustard-6"
+      },
+      "recipe": null,
+      "isProduct": false,
+      "originStation": null,
+      "containerCompleted": false,
+      "isDirty": false,
+      "remainingPortions": 0
+    },
+    {
+      "id": {
+        "value": "fixture-menu-supply-mustard-7"
+      },
+      "definition": {
+        "value": "menu-supply-mustard"
+      },
+      "version": 1,
+      "location": {
+        "kind": 0,
+        "ownerId": null,
+        "slotId": "initial-menu-supply-mustard-7"
+      },
+      "recipe": null,
+      "isProduct": false,
+      "originStation": null,
+      "containerCompleted": false,
+      "isDirty": false,
+      "remainingPortions": 0
+    },
+    {
+      "id": {
+        "value": "fixture-menu-supply-mustard-8"
+      },
+      "definition": {
+        "value": "menu-supply-mustard"
+      },
+      "version": 1,
+      "location": {
+        "kind": 0,
+        "ownerId": null,
+        "slotId": "initial-menu-supply-mustard-8"
+      },
+      "recipe": null,
+      "isProduct": false,
+      "originStation": null,
+      "containerCompleted": false,
+      "isDirty": false,
+      "remainingPortions": 0
+    },
+    {
+      "id": {
+        "value": "fixture-menu-supply-onion-2"
+      },
+      "definition": {
+        "value": "menu-supply-onion"
+      },
+      "version": 1,
+      "location": {
+        "kind": 0,
+        "ownerId": null,
+        "slotId": "initial-menu-supply-onion-2"
+      },
+      "recipe": null,
+      "isProduct": false,
+      "originStation": null,
+      "containerCompleted": false,
+      "isDirty": false,
+      "remainingPortions": 0
+    },
+    {
+      "id": {
+        "value": "fixture-menu-supply-onion-3"
+      },
+      "definition": {
+        "value": "menu-supply-onion"
+      },
+      "version": 1,
+      "location": {
+        "kind": 0,
+        "ownerId": null,
+        "slotId": "initial-menu-supply-onion-3"
+      },
+      "recipe": null,
+      "isProduct": false,
+      "originStation": null,
+      "containerCompleted": false,
+      "isDirty": false,
+      "remainingPortions": 0
+    },
+    {
+      "id": {
+        "value": "fixture-menu-supply-onion-4"
+      },
+      "definition": {
+        "value": "menu-supply-onion"
+      },
+      "version": 1,
+      "location": {
+        "kind": 0,
+        "ownerId": null,
+        "slotId": "initial-menu-supply-onion-4"
+      },
+      "recipe": null,
+      "isProduct": false,
+      "originStation": null,
+      "containerCompleted": false,
+      "isDirty": false,
+      "remainingPortions": 0
+    },
+    {
+      "id": {
+        "value": "fixture-menu-supply-onion-5"
+      },
+      "definition": {
+        "value": "menu-supply-onion"
+      },
+      "version": 1,
+      "location": {
+        "kind": 0,
+        "ownerId": null,
+        "slotId": "initial-menu-supply-onion-5"
+      },
+      "recipe": null,
+      "isProduct": false,
+      "originStation": null,
+      "containerCompleted": false,
+      "isDirty": false,
+      "remainingPortions": 0
+    },
+    {
+      "id": {
+        "value": "fixture-menu-supply-onion-6"
+      },
+      "definition": {
+        "value": "menu-supply-onion"
+      },
+      "version": 1,
+      "location": {
+        "kind": 0,
+        "ownerId": null,
+        "slotId": "initial-menu-supply-onion-6"
+      },
+      "recipe": null,
+      "isProduct": false,
+      "originStation": null,
+      "containerCompleted": false,
+      "isDirty": false,
+      "remainingPortions": 0
+    },
+    {
+      "id": {
+        "value": "fixture-menu-supply-onion-7"
+      },
+      "definition": {
+        "value": "menu-supply-onion"
+      },
+      "version": 1,
+      "location": {
+        "kind": 0,
+        "ownerId": null,
+        "slotId": "initial-menu-supply-onion-7"
+      },
+      "recipe": null,
+      "isProduct": false,
+      "originStation": null,
+      "containerCompleted": false,
+      "isDirty": false,
+      "remainingPortions": 0
+    },
+    {
+      "id": {
+        "value": "fixture-menu-supply-onion-8"
+      },
+      "definition": {
+        "value": "menu-supply-onion"
+      },
+      "version": 1,
+      "location": {
+        "kind": 0,
+        "ownerId": null,
+        "slotId": "initial-menu-supply-onion-8"
+      },
+      "recipe": null,
+      "isProduct": false,
+      "originStation": null,
+      "containerCompleted": false,
+      "isDirty": false,
+      "remainingPortions": 0
+    },
+    {
+      "id": {
+        "value": "fixture-menu-supply-raw-sausage-2"
+      },
+      "definition": {
+        "value": "menu-supply-raw-sausage"
+      },
+      "version": 1,
+      "location": {
+        "kind": 0,
+        "ownerId": null,
+        "slotId": "initial-menu-supply-raw-sausage-2"
+      },
+      "recipe": null,
+      "isProduct": false,
+      "originStation": null,
+      "containerCompleted": false,
+      "isDirty": false,
+      "remainingPortions": 0
+    },
+    {
+      "id": {
+        "value": "fixture-menu-supply-raw-sausage-3"
+      },
+      "definition": {
+        "value": "menu-supply-raw-sausage"
+      },
+      "version": 1,
+      "location": {
+        "kind": 0,
+        "ownerId": null,
+        "slotId": "initial-menu-supply-raw-sausage-3"
+      },
+      "recipe": null,
+      "isProduct": false,
+      "originStation": null,
+      "containerCompleted": false,
+      "isDirty": false,
+      "remainingPortions": 0
+    },
+    {
+      "id": {
+        "value": "fixture-menu-supply-raw-sausage-4"
+      },
+      "definition": {
+        "value": "menu-supply-raw-sausage"
+      },
+      "version": 1,
+      "location": {
+        "kind": 0,
+        "ownerId": null,
+        "slotId": "initial-menu-supply-raw-sausage-4"
+      },
+      "recipe": null,
+      "isProduct": false,
+      "originStation": null,
+      "containerCompleted": false,
+      "isDirty": false,
+      "remainingPortions": 0
+    },
+    {
+      "id": {
+        "value": "fixture-menu-supply-raw-sausage-5"
+      },
+      "definition": {
+        "value": "menu-supply-raw-sausage"
+      },
+      "version": 1,
+      "location": {
+        "kind": 0,
+        "ownerId": null,
+        "slotId": "initial-menu-supply-raw-sausage-5"
+      },
+      "recipe": null,
+      "isProduct": false,
+      "originStation": null,
+      "containerCompleted": false,
+      "isDirty": false,
+      "remainingPortions": 0
+    },
+    {
+      "id": {
+        "value": "fixture-menu-supply-raw-sausage-6"
+      },
+      "definition": {
+        "value": "menu-supply-raw-sausage"
+      },
+      "version": 1,
+      "location": {
+        "kind": 0,
+        "ownerId": null,
+        "slotId": "initial-menu-supply-raw-sausage-6"
+      },
+      "recipe": null,
+      "isProduct": false,
+      "originStation": null,
+      "containerCompleted": false,
+      "isDirty": false,
+      "remainingPortions": 0
+    },
+    {
+      "id": {
+        "value": "fixture-menu-supply-raw-sausage-7"
+      },
+      "definition": {
+        "value": "menu-supply-raw-sausage"
+      },
+      "version": 1,
+      "location": {
+        "kind": 0,
+        "ownerId": null,
+        "slotId": "initial-menu-supply-raw-sausage-7"
+      },
+      "recipe": null,
+      "isProduct": false,
+      "originStation": null,
+      "containerCompleted": false,
+      "isDirty": false,
+      "remainingPortions": 0
+    },
+    {
+      "id": {
+        "value": "fixture-menu-supply-raw-sausage-8"
+      },
+      "definition": {
+        "value": "menu-supply-raw-sausage"
+      },
+      "version": 1,
+      "location": {
+        "kind": 0,
+        "ownerId": null,
+        "slotId": "initial-menu-supply-raw-sausage-8"
+      },
+      "recipe": null,
+      "isProduct": false,
+      "originStation": null,
+      "containerCompleted": false,
+      "isDirty": false,
+      "remainingPortions": 0
+    },
+    {
+      "id": {
+        "value": "fixture-storage-menu-recipe-preparation-cooked-sausage"
+      },
+      "definition": {
+        "value": "menu-container-prep-plate"
+      },
+      "version": 1,
+      "location": {
+        "kind": 0,
+        "ownerId": null,
+        "slotId": "initial-storage-menu-recipe-preparation-cooked-sausage"
+      },
+      "recipe": null,
+      "isProduct": false,
+      "originStation": null,
+      "containerCompleted": false,
+      "isDirty": false,
+      "remainingPortions": 0
+    },
+    {
+      "id": {
+        "value": "fixture-storage-menu-recipe-preparation-cut-onion"
+      },
+      "definition": {
+        "value": "menu-container-prep-box"
+      },
+      "version": 1,
+      "location": {
+        "kind": 0,
+        "ownerId": null,
+        "slotId": "initial-storage-menu-recipe-preparation-cut-onion"
+      },
+      "recipe": null,
+      "isProduct": false,
+      "originStation": null,
+      "containerCompleted": false,
+      "isDirty": false,
+      "remainingPortions": 0
+    },
+    {
+      "id": {
+        "value": "pool-menu-container-plate-2"
+      },
+      "definition": {
+        "value": "menu-container-plate"
+      },
+      "version": 1,
+      "location": {
+        "kind": 0,
+        "ownerId": null,
+        "slotId": "clean-pool"
+      },
+      "recipe": null,
+      "isProduct": false,
+      "originStation": null,
+      "containerCompleted": false,
+      "isDirty": false,
+      "remainingPortions": 0
+    }
+  ],
+  "snapshotSha256": "C0BAF0DDDBB6D1D9244E6E0C49184D362195570B3B94AF2E79C818505E82AC2A",
+  "pending": "S05-drink-binding-disposal-and-all-87-ET-recovery-S07-procurement-S14-exit"
+}

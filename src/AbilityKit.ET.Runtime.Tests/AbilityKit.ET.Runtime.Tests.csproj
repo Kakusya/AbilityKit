@@ -6,6 +6,7 @@
     <IsPackable>false</IsPackable>
   </PropertyGroup>
   <ItemGroup>
+    <Compile Include="../AbilityKit.Game.Cooking.Tests/Fixtures/CookingMenuProductionFixture.cs" Link="Fixtures/CookingMenuProductionFixture.cs" />
     <ProjectReference Include="../AbilityKit.ET.Runtime/AbilityKit.ET.Runtime.csproj" />
     <ProjectReference Include="../AbilityKit.Game.Cooking.EtRuntime/AbilityKit.Game.Cooking.EtRuntime.csproj" />
     <ProjectReference Include="../AbilityKit.ET.RelationAnalyzer/AbilityKit.ET.RelationAnalyzer.csproj" />

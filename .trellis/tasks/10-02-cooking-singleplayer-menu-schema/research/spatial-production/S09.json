@@ -1,0 +1,875 @@
+{
+  "schema": "cooking-menu-production-evidence-v1",
+  "menuSourceId": "S09",
+  "status": "produced-plated-submitted",
+  "scope": {
+    "session": {
+      "value": "menu-production"
+    },
+    "world": {
+      "value": "menu-world"
+    },
+    "match": {
+      "value": "S09"
+    }
+  },
+  "contentIdentity": {
+    "schema": "cooking-definition-v3",
+    "sha256": "BC22D539FC19545547A2243A690C74E416635A52D77565E528C5C61B914ED489"
+  },
+  "catalogSha256": "bcadc77368b284cfafe273b608c56d9d6d3a312fa456abf49b1f831133eb5374",
+  "sources": [
+    {
+      "path": "Docs/design/CookingGame/reference/menu-v0.1/Cooking_\u5B8C\u6574\u83DC\u54C1\u4E0E\u52A0\u5DE5\u8FC7\u7A0B_v0.1.md",
+      "sha256": "8d503eeaaf5c2de3e326762beb9b1bf305342b1095b0ba9fcabcde230f902cc2"
+    },
+    {
+      "path": "Docs/design/CookingGame/reference/menu-v0.1/Cooking_\u5B8C\u6574\u83DC\u54C1\u4E0E\u52A0\u5DE5\u8FC7\u7A0B_v0.1.xlsx",
+      "sha256": "5268130330044901cfaecf3cbd7ab048432030ef03c6f17cf3a793d3d744232d"
+    }
+  ],
+  "fixtureValues": "raw-eight-per-definition-serving-two-not-balanced",
+  "initialSupply": [
+    {
+      "definition": {
+        "value": "menu-supply-apple"
+      },
+      "count": 1,
+      "location": "world:initial-menu-supply-apple-1"
+    },
+    {
+      "definition": {
+        "value": "menu-supply-apple"
+      },
+      "count": 1,
+      "location": "world:initial-menu-supply-apple-2"
+    },
+    {
+      "definition": {
+        "value": "menu-supply-apple"
+      },
+      "count": 1,
+      "location": "world:initial-menu-supply-apple-3"
+    },
+    {
+      "definition": {
+        "value": "menu-supply-apple"
+      },
+      "count": 1,
+      "location": "world:initial-menu-supply-apple-4"
+    },
+    {
+      "definition": {
+        "value": "menu-supply-apple"
+      },
+      "count": 1,
+      "location": "world:initial-menu-supply-apple-5"
+    },
+    {
+      "definition": {
+        "value": "menu-supply-apple"
+      },
+      "count": 1,
+      "location": "world:initial-menu-supply-apple-6"
+    },
+    {
+      "definition": {
+        "value": "menu-supply-apple"
+      },
+      "count": 1,
+      "location": "world:initial-menu-supply-apple-7"
+    },
+    {
+      "definition": {
+        "value": "menu-supply-apple"
+      },
+      "count": 1,
+      "location": "world:initial-menu-supply-apple-8"
+    },
+    {
+      "definition": {
+        "value": "menu-supply-banana"
+      },
+      "count": 1,
+      "location": "world:initial-menu-supply-banana-1"
+    },
+    {
+      "definition": {
+        "value": "menu-supply-banana"
+      },
+      "count": 1,
+      "location": "world:initial-menu-supply-banana-2"
+    },
+    {
+      "definition": {
+        "value": "menu-supply-banana"
+      },
+      "count": 1,
+      "location": "world:initial-menu-supply-banana-3"
+    },
+    {
+      "definition": {
+        "value": "menu-supply-banana"
+      },
+      "count": 1,
+      "location": "world:initial-menu-supply-banana-4"
+    },
+    {
+      "definition": {
+        "value": "menu-supply-banana"
+      },
+      "count": 1,
+      "location": "world:initial-menu-supply-banana-5"
+    },
+    {
+      "definition": {
+        "value": "menu-supply-banana"
+      },
+      "count": 1,
+      "location": "world:initial-menu-supply-banana-6"
+    },
+    {
+      "definition": {
+        "value": "menu-supply-banana"
+      },
+      "count": 1,
+      "location": "world:initial-menu-supply-banana-7"
+    },
+    {
+      "definition": {
+        "value": "menu-supply-banana"
+      },
+      "count": 1,
+      "location": "world:initial-menu-supply-banana-8"
+    },
+    {
+      "definition": {
+        "value": "menu-supply-strawberry"
+      },
+      "count": 1,
+      "location": "world:initial-menu-supply-strawberry-1"
+    },
+    {
+      "definition": {
+        "value": "menu-supply-strawberry"
+      },
+      "count": 1,
+      "location": "world:initial-menu-supply-strawberry-2"
+    },
+    {
+      "definition": {
+        "value": "menu-supply-strawberry"
+      },
+      "count": 1,
+      "location": "world:initial-menu-supply-strawberry-3"
+    },
+    {
+      "definition": {
+        "value": "menu-supply-strawberry"
+      },
+      "count": 1,
+      "location": "world:initial-menu-supply-strawberry-4"
+    },
+    {
+      "definition": {
+        "value": "menu-supply-strawberry"
+      },
+      "count": 1,
+      "location": "world:initial-menu-supply-strawberry-5"
+    },
+    {
+      "definition": {
+        "value": "menu-supply-strawberry"
+      },
+      "count": 1,
+      "location": "world:initial-menu-supply-strawberry-6"
+    },
+    {
+      "definition": {
+        "value": "menu-supply-strawberry"
+      },
+      "count": 1,
+      "location": "world:initial-menu-supply-strawberry-7"
+    },
+    {
+      "definition": {
+        "value": "menu-supply-strawberry"
+      },
+      "count": 1,
+      "location": "world:initial-menu-supply-strawberry-8"
+    },
+    {
+      "definition": {
+        "value": "menu-container-mix-bowl"
+      },
+      "count": 1,
+      "location": "world:initial-S09-menu-container-mix-bowl"
+    },
+    {
+      "definition": {
+        "value": "menu-container-prep-box"
+      },
+      "count": 1,
+      "location": "world:initial-P11-menu-container-prep-box"
+    },
+    {
+      "definition": {
+        "value": "menu-container-prep-box"
+      },
+      "count": 1,
+      "location": "world:initial-storage-menu-recipe-preparation-cut-apple"
+    },
+    {
+      "definition": {
+        "value": "menu-container-prep-box"
+      },
+      "count": 1,
+      "location": "world:initial-P12-menu-container-prep-box"
+    },
+    {
+      "definition": {
+        "value": "menu-container-prep-box"
+      },
+      "count": 1,
+      "location": "world:initial-storage-menu-recipe-preparation-cut-banana"
+    },
+    {
+      "definition": {
+        "value": "menu-container-prep-box"
+      },
+      "count": 1,
+      "location": "world:initial-P13-menu-container-prep-box"
+    },
+    {
+      "definition": {
+        "value": "menu-container-prep-box"
+      },
+      "count": 1,
+      "location": "world:initial-storage-menu-recipe-preparation-cut-strawberry"
+    },
+    {
+      "definition": {
+        "value": "menu-container-dessert-plate"
+      },
+      "count": 2,
+      "location": "cleanPool"
+    }
+  ],
+  "executedRecipes": [
+    "menu-recipe-preparation-cut-apple",
+    "menu-recipe-preparation-cut-banana",
+    "menu-recipe-preparation-cut-strawberry",
+    "menu-recipe-finished-fruit-platter"
+  ],
+  "productId": "product-4",
+  "servingVesselId": "pool-menu-container-dessert-plate-1",
+  "logicalTick": 241,
+  "settlements": [
+    {
+      "sequence": 1,
+      "order": {
+        "value": "order-S09"
+      },
+      "template": {
+        "value": "menu-order-fruit-platter"
+      },
+      "recipe": {
+        "value": "menu-recipe-finished-fruit-platter"
+      },
+      "product": {
+        "value": "product-4"
+      },
+      "player": {
+        "value": "menu-chef"
+      },
+      "container": {
+        "value": "pool-menu-container-dessert-plate-1"
+      },
+      "logicalTick": 240
+    }
+  ],
+  "remainingItems": [
+    {
+      "id": {
+        "value": "fixture-P11-menu-container-prep-box"
+      },
+      "definition": {
+        "value": "menu-container-prep-box"
+      },
+      "version": 3,
+      "location": {
+        "kind": 0,
+        "ownerId": null,
+        "slotId": "initial-P11-menu-container-prep-box"
+      },
+      "recipe": null,
+      "isProduct": false,
+      "originStation": null,
+      "containerCompleted": false,
+      "isDirty": false,
+      "remainingPortions": 0
+    },
+    {
+      "id": {
+        "value": "fixture-P12-menu-container-prep-box"
+      },
+      "definition": {
+        "value": "menu-container-prep-box"
+      },
+      "version": 3,
+      "location": {
+        "kind": 0,
+        "ownerId": null,
+        "slotId": "initial-P12-menu-container-prep-box"
+      },
+      "recipe": null,
+      "isProduct": false,
+      "originStation": null,
+      "containerCompleted": false,
+      "isDirty": false,
+      "remainingPortions": 0
+    },
+    {
+      "id": {
+        "value": "fixture-P13-menu-container-prep-box"
+      },
+      "definition": {
+        "value": "menu-container-prep-box"
+      },
+      "version": 3,
+      "location": {
+        "kind": 0,
+        "ownerId": null,
+        "slotId": "initial-P13-menu-container-prep-box"
+      },
+      "recipe": null,
+      "isProduct": false,
+      "originStation": null,
+      "containerCompleted": false,
+      "isDirty": false,
+      "remainingPortions": 0
+    },
+    {
+      "id": {
+        "value": "fixture-S09-menu-container-mix-bowl"
+      },
+      "definition": {
+        "value": "menu-container-mix-bowl"
+      },
+      "version": 3,
+      "location": {
+        "kind": 0,
+        "ownerId": null,
+        "slotId": "initial-S09-menu-container-mix-bowl"
+      },
+      "recipe": null,
+      "isProduct": false,
+      "originStation": null,
+      "containerCompleted": false,
+      "isDirty": false,
+      "remainingPortions": 0
+    },
+    {
+      "id": {
+        "value": "fixture-menu-supply-apple-2"
+      },
+      "definition": {
+        "value": "menu-supply-apple"
+      },
+      "version": 1,
+      "location": {
+        "kind": 0,
+        "ownerId": null,
+        "slotId": "initial-menu-supply-apple-2"
+      },
+      "recipe": null,
+      "isProduct": false,
+      "originStation": null,
+      "containerCompleted": false,
+      "isDirty": false,
+      "remainingPortions": 0
+    },
+    {
+      "id": {
+        "value": "fixture-menu-supply-apple-3"
+      },
+      "definition": {
+        "value": "menu-supply-apple"
+      },
+      "version": 1,
+      "location": {
+        "kind": 0,
+        "ownerId": null,
+        "slotId": "initial-menu-supply-apple-3"
+      },
+      "recipe": null,
+      "isProduct": false,
+      "originStation": null,
+      "containerCompleted": false,
+      "isDirty": false,
+      "remainingPortions": 0
+    },
+    {
+      "id": {
+        "value": "fixture-menu-supply-apple-4"
+      },
+      "definition": {
+        "value": "menu-supply-apple"
+      },
+      "version": 1,
+      "location": {
+        "kind": 0,
+        "ownerId": null,
+        "slotId": "initial-menu-supply-apple-4"
+      },
+      "recipe": null,
+      "isProduct": false,
+      "originStation": null,
+      "containerCompleted": false,
+      "isDirty": false,
+      "remainingPortions": 0
+    },
+    {
+      "id": {
+        "value": "fixture-menu-supply-apple-5"
+      },
+      "definition": {
+        "value": "menu-supply-apple"
+      },
+      "version": 1,
+      "location": {
+        "kind": 0,
+        "ownerId": null,
+        "slotId": "initial-menu-supply-apple-5"
+      },
+      "recipe": null,
+      "isProduct": false,
+      "originStation": null,
+      "containerCompleted": false,
+      "isDirty": false,
+      "remainingPortions": 0
+    },
+    {
+      "id": {
+        "value": "fixture-menu-supply-apple-6"
+      },
+      "definition": {
+        "value": "menu-supply-apple"
+      },
+      "version": 1,
+      "location": {
+        "kind": 0,
+        "ownerId": null,
+        "slotId": "initial-menu-supply-apple-6"
+      },
+      "recipe": null,
+      "isProduct": false,
+      "originStation": null,
+      "containerCompleted": false,
+      "isDirty": false,
+      "remainingPortions": 0
+    },
+    {
+      "id": {
+        "value": "fixture-menu-supply-apple-7"
+      },
+      "definition": {
+        "value": "menu-supply-apple"
+      },
+      "version": 1,
+      "location": {
+        "kind": 0,
+        "ownerId": null,
+        "slotId": "initial-menu-supply-apple-7"
+      },
+      "recipe": null,
+      "isProduct": false,
+      "originStation": null,
+      "containerCompleted": false,
+      "isDirty": false,
+      "remainingPortions": 0
+    },
+    {
+      "id": {
+        "value": "fixture-menu-supply-apple-8"
+      },
+      "definition": {
+        "value": "menu-supply-apple"
+      },
+      "version": 1,
+      "location": {
+        "kind": 0,
+        "ownerId": null,
+        "slotId": "initial-menu-supply-apple-8"
+      },
+      "recipe": null,
+      "isProduct": false,
+      "originStation": null,
+      "containerCompleted": false,
+      "isDirty": false,
+      "remainingPortions": 0
+    },
+    {
+      "id": {
+        "value": "fixture-menu-supply-banana-2"
+      },
+      "definition": {
+        "value": "menu-supply-banana"
+      },
+      "version": 1,
+      "location": {
+        "kind": 0,
+        "ownerId": null,
+        "slotId": "initial-menu-supply-banana-2"
+      },
+      "recipe": null,
+      "isProduct": false,
+      "originStation": null,
+      "containerCompleted": false,
+      "isDirty": false,
+      "remainingPortions": 0
+    },
+    {
+      "id": {
+        "value": "fixture-menu-supply-banana-3"
+      },
+      "definition": {
+        "value": "menu-supply-banana"
+      },
+      "version": 1,
+      "location": {
+        "kind": 0,
+        "ownerId": null,
+        "slotId": "initial-menu-supply-banana-3"
+      },
+      "recipe": null,
+      "isProduct": false,
+      "originStation": null,
+      "containerCompleted": false,
+      "isDirty": false,
+      "remainingPortions": 0
+    },
+    {
+      "id": {
+        "value": "fixture-menu-supply-banana-4"
+      },
+      "definition": {
+        "value": "menu-supply-banana"
+      },
+      "version": 1,
+      "location": {
+        "kind": 0,
+        "ownerId": null,
+        "slotId": "initial-menu-supply-banana-4"
+      },
+      "recipe": null,
+      "isProduct": false,
+      "originStation": null,
+      "containerCompleted": false,
+      "isDirty": false,
+      "remainingPortions": 0
+    },
+    {
+      "id": {
+        "value": "fixture-menu-supply-banana-5"
+      },
+      "definition": {
+        "value": "menu-supply-banana"
+      },
+      "version": 1,
+      "location": {
+        "kind": 0,
+        "ownerId": null,
+        "slotId": "initial-menu-supply-banana-5"
+      },
+      "recipe": null,
+      "isProduct": false,
+      "originStation": null,
+      "containerCompleted": false,
+      "isDirty": false,
+      "remainingPortions": 0
+    },
+    {
+      "id": {
+        "value": "fixture-menu-supply-banana-6"
+      },
+      "definition": {
+        "value": "menu-supply-banana"
+      },
+      "version": 1,
+      "location": {
+        "kind": 0,
+        "ownerId": null,
+        "slotId": "initial-menu-supply-banana-6"
+      },
+      "recipe": null,
+      "isProduct": false,
+      "originStation": null,
+      "containerCompleted": false,
+      "isDirty": false,
+      "remainingPortions": 0
+    },
+    {
+      "id": {
+        "value": "fixture-menu-supply-banana-7"
+      },
+      "definition": {
+        "value": "menu-supply-banana"
+      },
+      "version": 1,
+      "location": {
+        "kind": 0,
+        "ownerId": null,
+        "slotId": "initial-menu-supply-banana-7"
+      },
+      "recipe": null,
+      "isProduct": false,
+      "originStation": null,
+      "containerCompleted": false,
+      "isDirty": false,
+      "remainingPortions": 0
+    },
+    {
+      "id": {
+        "value": "fixture-menu-supply-banana-8"
+      },
+      "definition": {
+        "value": "menu-supply-banana"
+      },
+      "version": 1,
+      "location": {
+        "kind": 0,
+        "ownerId": null,
+        "slotId": "initial-menu-supply-banana-8"
+      },
+      "recipe": null,
+      "isProduct": false,
+      "originStation": null,
+      "containerCompleted": false,
+      "isDirty": false,
+      "remainingPortions": 0
+    },
+    {
+      "id": {
+        "value": "fixture-menu-supply-strawberry-2"
+      },
+      "definition": {
+        "value": "menu-supply-strawberry"
+      },
+      "version": 1,
+      "location": {
+        "kind": 0,
+        "ownerId": null,
+        "slotId": "initial-menu-supply-strawberry-2"
+      },
+      "recipe": null,
+      "isProduct": false,
+      "originStation": null,
+      "containerCompleted": false,
+      "isDirty": false,
+      "remainingPortions": 0
+    },
+    {
+      "id": {
+        "value": "fixture-menu-supply-strawberry-3"
+      },
+      "definition": {
+        "value": "menu-supply-strawberry"
+      },
+      "version": 1,
+      "location": {
+        "kind": 0,
+        "ownerId": null,
+        "slotId": "initial-menu-supply-strawberry-3"
+      },
+      "recipe": null,
+      "isProduct": false,
+      "originStation": null,
+      "containerCompleted": false,
+      "isDirty": false,
+      "remainingPortions": 0
+    },
+    {
+      "id": {
+        "value": "fixture-menu-supply-strawberry-4"
+      },
+      "definition": {
+        "value": "menu-supply-strawberry"
+      },
+      "version": 1,
+      "location": {
+        "kind": 0,
+        "ownerId": null,
+        "slotId": "initial-menu-supply-strawberry-4"
+      },
+      "recipe": null,
+      "isProduct": false,
+      "originStation": null,
+      "containerCompleted": false,
+      "isDirty": false,
+      "remainingPortions": 0
+    },
+    {
+      "id": {
+        "value": "fixture-menu-supply-strawberry-5"
+      },
+      "definition": {
+        "value": "menu-supply-strawberry"
+      },
+      "version": 1,
+      "location": {
+        "kind": 0,
+        "ownerId": null,
+        "slotId": "initial-menu-supply-strawberry-5"
+      },
+      "recipe": null,
+      "isProduct": false,
+      "originStation": null,
+      "containerCompleted": false,
+      "isDirty": false,
+      "remainingPortions": 0
+    },
+    {
+      "id": {
+        "value": "fixture-menu-supply-strawberry-6"
+      },
+      "definition": {
+        "value": "menu-supply-strawberry"
+      },
+      "version": 1,
+      "location": {
+        "kind": 0,
+        "ownerId": null,
+        "slotId": "initial-menu-supply-strawberry-6"
+      },
+      "recipe": null,
+      "isProduct": false,
+      "originStation": null,
+      "containerCompleted": false,
+      "isDirty": false,
+      "remainingPortions": 0
+    },
+    {
+      "id": {
+        "value": "fixture-menu-supply-strawberry-7"
+      },
+      "definition": {
+        "value": "menu-supply-strawberry"
+      },
+      "version": 1,
+      "location": {
+        "kind": 0,
+        "ownerId": null,
+        "slotId": "initial-menu-supply-strawberry-7"
+      },
+      "recipe": null,
+      "isProduct": false,
+      "originStation": null,
+      "containerCompleted": false,
+      "isDirty": false,
+      "remainingPortions": 0
+    },
+    {
+      "id": {
+        "value": "fixture-menu-supply-strawberry-8"
+      },
+      "definition": {
+        "value": "menu-supply-strawberry"
+      },
+      "version": 1,
+      "location": {
+        "kind": 0,
+        "ownerId": null,
+        "slotId": "initial-menu-supply-strawberry-8"
+      },
+      "recipe": null,
+      "isProduct": false,
+      "originStation": null,
+      "containerCompleted": false,
+      "isDirty": false,
+      "remainingPortions": 0
+    },
+    {
+      "id": {
+        "value": "fixture-storage-menu-recipe-preparation-cut-apple"
+      },
+      "definition": {
+        "value": "menu-container-prep-box"
+      },
+      "version": 1,
+      "location": {
+        "kind": 0,
+        "ownerId": null,
+        "slotId": "initial-storage-menu-recipe-preparation-cut-apple"
+      },
+      "recipe": null,
+      "isProduct": false,
+      "originStation": null,
+      "containerCompleted": false,
+      "isDirty": false,
+      "remainingPortions": 0
+    },
+    {
+      "id": {
+        "value": "fixture-storage-menu-recipe-preparation-cut-banana"
+      },
+      "definition": {
+        "value": "menu-container-prep-box"
+      },
+      "version": 1,
+      "location": {
+        "kind": 0,
+        "ownerId": null,
+        "slotId": "initial-storage-menu-recipe-preparation-cut-banana"
+      },
+      "recipe": null,
+      "isProduct": false,
+      "originStation": null,
+      "containerCompleted": false,
+      "isDirty": false,
+      "remainingPortions": 0
+    },
+    {
+      "id": {
+        "value": "fixture-storage-menu-recipe-preparation-cut-strawberry"
+      },
+      "definition": {
+        "value": "menu-container-prep-box"
+      },
+      "version": 1,
+      "location": {
+        "kind": 0,
+        "ownerId": null,
+        "slotId": "initial-storage-menu-recipe-preparation-cut-strawberry"
+      },
+      "recipe": null,
+      "isProduct": false,
+      "originStation": null,
+      "containerCompleted": false,
+      "isDirty": false,
+      "remainingPortions": 0
+    },
+    {
+      "id": {
+        "value": "pool-menu-container-dessert-plate-2"
+      },
+      "definition": {
+        "value": "menu-container-dessert-plate"
+      },
+      "version": 1,
+      "location": {
+        "kind": 0,
+        "ownerId": null,
+        "slotId": "clean-pool"
+      },
+      "recipe": null,
+      "isProduct": false,
+      "originStation": null,
+      "containerCompleted": false,
+      "isDirty": false,
+      "remainingPortions": 0
+    }
+  ],
+  "snapshotSha256": "7F0AD325A81C3EF45629AAD81CE21AD9080012A54E2CFD50207CD1FDE1911C95",
+  "pending": "S05-drink-binding-disposal-and-all-87-ET-recovery-S07-procurement-S14-exit"
+}

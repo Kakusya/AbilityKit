@@ -36,7 +36,8 @@ public sealed record CookingOrderTemplateDefinition(
     OrderTemplateId Id,
     RecipeId RequiredRecipe,
     DefinitionId RequiredContainerDefinition,
-    int BaseScore = 100);
+    int BaseScore = 100,
+    bool RequiresBinding = false);
 
 public sealed record CookingScoreThresholds(int OneStar, int TwoStar, int ThreeStar)
 {
@@ -124,7 +125,7 @@ public sealed class CookingConfigurationSnapshot
                     ? null
                     : new CanonicalItemContainer(item.Container.Capacity,
                         item.Container.AcceptedDefinitions.Select(definition => definition.Value)
-                            .OrderBy(definition => definition, StringComparer.Ordinal).ToArray())))
+                            .OrderBy(definition => definition, StringComparer.Ordinal).ToArray(), item.Container.DisposableOnSubmission)))
             .ToArray(),
         Appliances.Values.OrderBy(appliance => appliance.Station.Value, StringComparer.Ordinal)
             .Select(appliance => new CanonicalAppliance(appliance.Station.Value,
@@ -138,7 +139,7 @@ public sealed class CookingConfigurationSnapshot
                 recipe.Completion.ToString(), recipe.RequiredTicks, recipe.RequiresStation, recipe.Execution.ToString(), recipe.YieldPortions, recipe.RequiredProcessingContainerDefinition?.Value)).ToArray(),
         OrderTemplates.Values.OrderBy(template => template.Id.Value, StringComparer.Ordinal)
             .Select(template => new CanonicalOrderTemplate(template.Id.Value, template.RequiredRecipe.Value,
-                template.RequiredContainerDefinition.Value, template.BaseScore)).ToArray(),
+                template.RequiredContainerDefinition.Value, template.BaseScore, template.RequiresBinding)).ToArray(),
         StandardInitialSupply.OrderBy(entry => entry.Definition.Value, StringComparer.Ordinal)
             .ThenBy(entry => entry.Location, StringComparer.Ordinal)
             .Select(entry => new CanonicalSupplyEntry(entry.Definition.Value, entry.Count, entry.Location)).ToArray(),
@@ -166,13 +167,13 @@ public sealed class CookingConfigurationSnapshot
 
     private sealed record CanonicalItem(string Id, IReadOnlyList<string> AllowedPlayerCapabilities,
         CanonicalItemContainer? Container);
-    private sealed record CanonicalItemContainer(int Capacity, IReadOnlyList<string> AcceptedDefinitions);
+    private sealed record CanonicalItemContainer(int Capacity, IReadOnlyList<string> AcceptedDefinitions, bool DisposableOnSubmission);
     private sealed record CanonicalAppliance(string Station, IReadOnlyList<string> Capabilities, bool IsAvailable);
     private sealed record CanonicalRecipe(string Id, IReadOnlyList<string> Inputs, IReadOnlyList<string> DefaultInputs,
         string ProductDefinition, string Process, string RequiredApplianceCapability, string Completion, int RequiredTicks,
         bool RequiresStation, string Execution, int YieldPortions, string? RequiredProcessingContainerDefinition);
     private sealed record CanonicalOrderTemplate(string Id, string RequiredRecipe, string RequiredContainerDefinition,
-        int BaseScore);
+        int BaseScore, bool RequiresBinding);
     private sealed record CanonicalSupplyEntry(string Definition, int Count, string Location);
 }
 
@@ -272,7 +273,7 @@ public sealed class CookingConfigurationRegistry
                 item.Container is null
                     ? null
                     : new CookingItemContainerCapability(item.Container.Capacity,
-                        item.Container.AcceptedDefinitions.ToFrozenSet())));
+                        item.Container.AcceptedDefinitions.ToFrozenSet(), item.Container.DisposableOnSubmission)));
         var appliances = candidate.Appliances.ToFrozenDictionary(appliance => appliance.Station,
             appliance => new CookingApplianceDefinition(appliance.Station,
                 appliance.Capabilities.ToFrozenSet(StringComparer.Ordinal), appliance.IsAvailable));
@@ -501,6 +502,9 @@ public sealed class CookingConfigurationRegistry
     {
         if (templates is null)
             return;
+        var processingCarriers = recipes.Values
+            .Where(recipe => recipe.RequiredProcessingContainerDefinition is not null)
+            .Select(recipe => recipe.RequiredProcessingContainerDefinition!.Value).ToHashSet();
         var unique = new HashSet<OrderTemplateId>();
         foreach (var template in templates)
         {
@@ -531,6 +535,10 @@ public sealed class CookingConfigurationRegistry
                     "Order template requires a container item definition that is absent from this candidate batch."));
                 continue;
             }
+            if (processingCarriers.Contains(template.RequiredContainerDefinition))
+                diagnostics.Add(Diagnostic(CookingConfigurationDiagnosticCodes.InvalidValue, "OrderTemplate", template.Id.Value,
+                    "RequiredContainerDefinition", template.RequiredContainerDefinition.Value,
+                    "A declared processing carrier cannot be used as a serving vessel."));
             var product = recipes[template.RequiredRecipe].ProductDefinition;
             if (!container.Container.AcceptedDefinitions.Contains(product))
                 diagnostics.Add(Diagnostic(CookingConfigurationDiagnosticCodes.MissingReference, "OrderTemplate", template.Id.Value,
@@ -565,6 +573,9 @@ public sealed class CookingConfigurationRegistry
             }
             if (string.Equals(entry.Location, "cleanPool", StringComparison.Ordinal))
             {
+                if (items[entry.Definition].Container is { DisposableOnSubmission: true })
+                    diagnostics.Add(Diagnostic(CookingConfigurationDiagnosticCodes.InvalidValue, "StandardInitialSupply", recordId,
+                        "Location", entry.Location, "Disposable serving vessels require physical supply and cannot be dispensed from the clean pool."));
                 if (items[entry.Definition].Container is null)
                     diagnostics.Add(Diagnostic(CookingConfigurationDiagnosticCodes.InvalidValue, "StandardInitialSupply", recordId,
                         "Location", entry.Location,

@@ -43,3 +43,21 @@ ET命令与伙伴同帧冲突只有一个owner、未满足0分且0星完成、�
 ## Wrong vs Correct
 
 Wrong：多个问单入口直接开同一顾客的订单；伙伴与玩家各有脏碗池。Correct：现有前厅 owner 唯一顾客和任务状态，复用现有厨房容器实例池，命令在同一固定 Tick 的明确顺序裁决。
+
+## 2026-10-02：受限前厅增量接口（正在实施，尚非 S06 出口）
+
+- `ConfigureFlow(CookingFrontOfHouseFlow)` 仅营业前；不可变路径输入携带同一 `CookingSpatialConfiguration` 和 `SpatialIdentity`，每格中心、每段连线按角色半径检查核心障碍，不接受无空间配置的路径输入。Flow 的入口→排队、排队→桌位、桌位/队列→出口明确且相邻；有界 FIFO 队列。完整 ET 初始空间/布局适配仍由主 owner 接入。
+- 桌位 Free/Reserved/Occupied/Dirty 进入 snapshot；客人 Arriving/Queued/WalkingToTable/WaitingForInquiry/InquiryInProgress/Ordered/Dining/Leaving。只有完成真实清桌作业才释放 Dirty；洗碗仍引用唯一厨房容器实例，不新增脏碗池。
+- `ConfigureManualWork(policyIdentity, Func<PlayerId,string,bool>)` 安装只读预检：玩家存在、厨房工作互斥、目标距离/朝向；不得在回调中改写模拟。`ClaimFrontWork(kitchen,player,workId)`、`ContinueFrontWork`、`StopFrontWork` 不推进时间；既有 Step 唯一推进进度。
+- 工作 snapshot 包含稳定 ID/Kind/Target/Customer/Bowl/ElapsedTicks/RequiredTicks/Status/Player/Companion。人工和伙伴唯一互斥；停手或离开释放人工认领、保留进度；人工完成不增加伙伴成长，伙伴接手实际完成后增加一次。ET scope/去重/指纹与跨厨房工作校验由主 owner 统一接入。
+- `FinishInProgress` 只在无 Flow、无人工策略的历史兼容路径保留原行为；新路径/人工不能通过该钩子跳过过程或幽灵开单。恢复包含路径配置、进度索引、桌位、工作与策略身份；手工恢复后必须重绑同身份只读谓词才能 Tick。非法候选不替换旧前厅。
+- 当前聚焦检查：`dotnet test src/AbilityKit.Game.Cooking.Tests/AbilityKit.Game.Cooking.Tests.csproj --filter FullyQualifiedName~CookingFrontOfHouse --nologo --verbosity quiet` 实际 exit 0，28 passed / 0 failed / 0 skipped；日志 `local/Logs/cooking-execution/front-house-component.log`。覆盖旧 21 项、新 7 项域增量；尚未覆盖完整 ET 适配和统一 Level checkpoint，不能标整个 S06 完成。后续修正后需要复跑。
+
+### 最后域层自查与实际证据
+
+- 新到桌的询问/新 Dirty 的清桌至少保留到下一 Tick 的人工认领窗口，伙伴不能在创建工作的同 Tick 抢走；旧无空间规则保持原节奏。
+- 人工洗完立即删除真实洗碗队列项，恢复不会保留不存在的脏碗请求。洗碗工作按 `Cycle` 记录轮次；首轮 `wash:<bowl>`、以后 `wash:<bowl>:<cycle>`，旧 WorkId 不能作用于同碗的新脏轮。
+- 已推进的洗碗任务保持原 required ticks；途中伙伴解锁加速只作用于新工作，换人不重置也不凭空加速。清桌不计旧询问/洗碗成长。新的成功 Reset 必须 `CanSucceed`，不能绕过队列、路径、Dirty 或人工任务。
+- malformed flow、null work/table/space、缺桌字段、重号/多人占工、路径进度不一致、伪造工作编号均被恢复预检拒绝；旧对象 canonical 保持不变。恢复的人工回调按同策略身份重新绑定。
+- 最后聚焦命令实际 exit 0，**36 passed / 0 failed / 0 skipped**（旧21 + 新15）；同一日志覆盖最终源码：`local/Logs/cooking-execution/front-house-component.log`。`git diff --check` 实际 exit 0，仅文档 CRLF 正常化提示。未 suppress 新警告；当前前厅源没有新的 nullable warning。
+- 本受限增量尚未接入统一 ET ingress/指纹/跨厨房唯一 worker、Level 版本与网络 codec；路径配置与初始/新布局的自动适配由主 owner 完成。不同 logical 玩家争抢域测试不宣称真实联机。未提交、未合并、未改 S06 task metadata，不能据此标完整 S06 已通过。

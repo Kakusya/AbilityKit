@@ -1,0 +1,1373 @@
+{
+  "schema": "cooking-menu-production-evidence-v1",
+  "menuSourceId": "D30",
+  "status": "produced-plated-binding-pending",
+  "scope": {
+    "session": {
+      "value": "menu-production"
+    },
+    "world": {
+      "value": "menu-world"
+    },
+    "match": {
+      "value": "D30"
+    }
+  },
+  "contentIdentity": {
+    "schema": "cooking-definition-v3",
+    "sha256": "FCC28C6A7CF82779224D8557A557D582E798F7DE1140D94ECE8F0E5F7D8906EB"
+  },
+  "catalogSha256": "bcadc77368b284cfafe273b608c56d9d6d3a312fa456abf49b1f831133eb5374",
+  "sources": [
+    {
+      "path": "Docs/design/CookingGame/reference/menu-v0.1/Cooking_\u5B8C\u6574\u83DC\u54C1\u4E0E\u52A0\u5DE5\u8FC7\u7A0B_v0.1.md",
+      "sha256": "8d503eeaaf5c2de3e326762beb9b1bf305342b1095b0ba9fcabcde230f902cc2"
+    },
+    {
+      "path": "Docs/design/CookingGame/reference/menu-v0.1/Cooking_\u5B8C\u6574\u83DC\u54C1\u4E0E\u52A0\u5DE5\u8FC7\u7A0B_v0.1.xlsx",
+      "sha256": "5268130330044901cfaecf3cbd7ab048432030ef03c6f17cf3a793d3d744232d"
+    }
+  ],
+  "fixtureValues": "raw-eight-per-definition-serving-two-not-balanced",
+  "initialSupply": [
+    {
+      "definition": {
+        "value": "menu-supply-drinking-water"
+      },
+      "count": 1,
+      "location": "world:initial-menu-supply-drinking-water-1"
+    },
+    {
+      "definition": {
+        "value": "menu-supply-drinking-water"
+      },
+      "count": 1,
+      "location": "world:initial-menu-supply-drinking-water-2"
+    },
+    {
+      "definition": {
+        "value": "menu-supply-drinking-water"
+      },
+      "count": 1,
+      "location": "world:initial-menu-supply-drinking-water-3"
+    },
+    {
+      "definition": {
+        "value": "menu-supply-drinking-water"
+      },
+      "count": 1,
+      "location": "world:initial-menu-supply-drinking-water-4"
+    },
+    {
+      "definition": {
+        "value": "menu-supply-drinking-water"
+      },
+      "count": 1,
+      "location": "world:initial-menu-supply-drinking-water-5"
+    },
+    {
+      "definition": {
+        "value": "menu-supply-drinking-water"
+      },
+      "count": 1,
+      "location": "world:initial-menu-supply-drinking-water-6"
+    },
+    {
+      "definition": {
+        "value": "menu-supply-drinking-water"
+      },
+      "count": 1,
+      "location": "world:initial-menu-supply-drinking-water-7"
+    },
+    {
+      "definition": {
+        "value": "menu-supply-drinking-water"
+      },
+      "count": 1,
+      "location": "world:initial-menu-supply-drinking-water-8"
+    },
+    {
+      "definition": {
+        "value": "menu-supply-green-tea-leaf"
+      },
+      "count": 1,
+      "location": "world:initial-menu-supply-green-tea-leaf-1"
+    },
+    {
+      "definition": {
+        "value": "menu-supply-green-tea-leaf"
+      },
+      "count": 1,
+      "location": "world:initial-menu-supply-green-tea-leaf-2"
+    },
+    {
+      "definition": {
+        "value": "menu-supply-green-tea-leaf"
+      },
+      "count": 1,
+      "location": "world:initial-menu-supply-green-tea-leaf-3"
+    },
+    {
+      "definition": {
+        "value": "menu-supply-green-tea-leaf"
+      },
+      "count": 1,
+      "location": "world:initial-menu-supply-green-tea-leaf-4"
+    },
+    {
+      "definition": {
+        "value": "menu-supply-green-tea-leaf"
+      },
+      "count": 1,
+      "location": "world:initial-menu-supply-green-tea-leaf-5"
+    },
+    {
+      "definition": {
+        "value": "menu-supply-green-tea-leaf"
+      },
+      "count": 1,
+      "location": "world:initial-menu-supply-green-tea-leaf-6"
+    },
+    {
+      "definition": {
+        "value": "menu-supply-green-tea-leaf"
+      },
+      "count": 1,
+      "location": "world:initial-menu-supply-green-tea-leaf-7"
+    },
+    {
+      "definition": {
+        "value": "menu-supply-green-tea-leaf"
+      },
+      "count": 1,
+      "location": "world:initial-menu-supply-green-tea-leaf-8"
+    },
+    {
+      "definition": {
+        "value": "menu-supply-ice"
+      },
+      "count": 1,
+      "location": "world:initial-menu-supply-ice-1"
+    },
+    {
+      "definition": {
+        "value": "menu-supply-ice"
+      },
+      "count": 1,
+      "location": "world:initial-menu-supply-ice-2"
+    },
+    {
+      "definition": {
+        "value": "menu-supply-ice"
+      },
+      "count": 1,
+      "location": "world:initial-menu-supply-ice-3"
+    },
+    {
+      "definition": {
+        "value": "menu-supply-ice"
+      },
+      "count": 1,
+      "location": "world:initial-menu-supply-ice-4"
+    },
+    {
+      "definition": {
+        "value": "menu-supply-ice"
+      },
+      "count": 1,
+      "location": "world:initial-menu-supply-ice-5"
+    },
+    {
+      "definition": {
+        "value": "menu-supply-ice"
+      },
+      "count": 1,
+      "location": "world:initial-menu-supply-ice-6"
+    },
+    {
+      "definition": {
+        "value": "menu-supply-ice"
+      },
+      "count": 1,
+      "location": "world:initial-menu-supply-ice-7"
+    },
+    {
+      "definition": {
+        "value": "menu-supply-ice"
+      },
+      "count": 1,
+      "location": "world:initial-menu-supply-ice-8"
+    },
+    {
+      "definition": {
+        "value": "menu-supply-mango"
+      },
+      "count": 1,
+      "location": "world:initial-menu-supply-mango-1"
+    },
+    {
+      "definition": {
+        "value": "menu-supply-mango"
+      },
+      "count": 1,
+      "location": "world:initial-menu-supply-mango-2"
+    },
+    {
+      "definition": {
+        "value": "menu-supply-mango"
+      },
+      "count": 1,
+      "location": "world:initial-menu-supply-mango-3"
+    },
+    {
+      "definition": {
+        "value": "menu-supply-mango"
+      },
+      "count": 1,
+      "location": "world:initial-menu-supply-mango-4"
+    },
+    {
+      "definition": {
+        "value": "menu-supply-mango"
+      },
+      "count": 1,
+      "location": "world:initial-menu-supply-mango-5"
+    },
+    {
+      "definition": {
+        "value": "menu-supply-mango"
+      },
+      "count": 1,
+      "location": "world:initial-menu-supply-mango-6"
+    },
+    {
+      "definition": {
+        "value": "menu-supply-mango"
+      },
+      "count": 1,
+      "location": "world:initial-menu-supply-mango-7"
+    },
+    {
+      "definition": {
+        "value": "menu-supply-mango"
+      },
+      "count": 1,
+      "location": "world:initial-menu-supply-mango-8"
+    },
+    {
+      "definition": {
+        "value": "menu-supply-syrup"
+      },
+      "count": 1,
+      "location": "world:initial-menu-supply-syrup-1"
+    },
+    {
+      "definition": {
+        "value": "menu-supply-syrup"
+      },
+      "count": 1,
+      "location": "world:initial-menu-supply-syrup-2"
+    },
+    {
+      "definition": {
+        "value": "menu-supply-syrup"
+      },
+      "count": 1,
+      "location": "world:initial-menu-supply-syrup-3"
+    },
+    {
+      "definition": {
+        "value": "menu-supply-syrup"
+      },
+      "count": 1,
+      "location": "world:initial-menu-supply-syrup-4"
+    },
+    {
+      "definition": {
+        "value": "menu-supply-syrup"
+      },
+      "count": 1,
+      "location": "world:initial-menu-supply-syrup-5"
+    },
+    {
+      "definition": {
+        "value": "menu-supply-syrup"
+      },
+      "count": 1,
+      "location": "world:initial-menu-supply-syrup-6"
+    },
+    {
+      "definition": {
+        "value": "menu-supply-syrup"
+      },
+      "count": 1,
+      "location": "world:initial-menu-supply-syrup-7"
+    },
+    {
+      "definition": {
+        "value": "menu-supply-syrup"
+      },
+      "count": 1,
+      "location": "world:initial-menu-supply-syrup-8"
+    },
+    {
+      "definition": {
+        "value": "menu-container-drink-jug"
+      },
+      "count": 1,
+      "location": "world:initial-D30-menu-container-drink-jug"
+    },
+    {
+      "definition": {
+        "value": "menu-container-prep-box"
+      },
+      "count": 1,
+      "location": "world:initial-P14-menu-container-prep-box"
+    },
+    {
+      "definition": {
+        "value": "menu-container-prep-box"
+      },
+      "count": 1,
+      "location": "world:initial-storage-menu-recipe-preparation-cut-mango"
+    },
+    {
+      "definition": {
+        "value": "menu-container-tea-tub"
+      },
+      "count": 1,
+      "location": "world:initial-P47-menu-container-tea-tub"
+    },
+    {
+      "definition": {
+        "value": "menu-container-tea-tub"
+      },
+      "count": 1,
+      "location": "world:initial-storage-menu-recipe-preparation-green-tea"
+    },
+    {
+      "definition": {
+        "value": "menu-container-water-jug"
+      },
+      "count": 1,
+      "location": "world:initial-P41-menu-container-water-jug"
+    },
+    {
+      "definition": {
+        "value": "menu-container-water-jug"
+      },
+      "count": 1,
+      "location": "world:initial-storage-menu-recipe-preparation-hot-water"
+    },
+    {
+      "definition": {
+        "value": "menu-container-drink-jug"
+      },
+      "count": 1,
+      "location": "world:initial-P57-menu-container-drink-jug"
+    },
+    {
+      "definition": {
+        "value": "menu-container-topping-jar"
+      },
+      "count": 1,
+      "location": "world:initial-storage-menu-recipe-preparation-mango-puree"
+    },
+    {
+      "definition": {
+        "value": "menu-container-cold-cup"
+      },
+      "count": 1,
+      "location": "world:initial-cup-1"
+    },
+    {
+      "definition": {
+        "value": "menu-container-cold-cup"
+      },
+      "count": 1,
+      "location": "world:initial-cup-2"
+    }
+  ],
+  "executedRecipes": [
+    "menu-recipe-preparation-hot-water",
+    "menu-recipe-preparation-green-tea",
+    "menu-recipe-preparation-cut-mango",
+    "menu-recipe-preparation-mango-puree",
+    "menu-recipe-finished-mango-tea-stage-1",
+    "menu-recipe-finished-mango-tea"
+  ],
+  "productId": "product-8",
+  "servingVesselId": "fixture-cup-1",
+  "logicalTick": 446,
+  "settlements": [],
+  "remainingItems": [
+    {
+      "id": {
+        "value": "fixture-D30-menu-container-drink-jug"
+      },
+      "definition": {
+        "value": "menu-container-drink-jug"
+      },
+      "version": 5,
+      "location": {
+        "kind": 0,
+        "ownerId": null,
+        "slotId": "initial-D30-menu-container-drink-jug"
+      },
+      "recipe": null,
+      "isProduct": false,
+      "originStation": null,
+      "containerCompleted": false,
+      "isDirty": false,
+      "remainingPortions": 0
+    },
+    {
+      "id": {
+        "value": "fixture-P14-menu-container-prep-box"
+      },
+      "definition": {
+        "value": "menu-container-prep-box"
+      },
+      "version": 3,
+      "location": {
+        "kind": 0,
+        "ownerId": null,
+        "slotId": "initial-P14-menu-container-prep-box"
+      },
+      "recipe": null,
+      "isProduct": false,
+      "originStation": null,
+      "containerCompleted": false,
+      "isDirty": false,
+      "remainingPortions": 0
+    },
+    {
+      "id": {
+        "value": "fixture-P41-menu-container-water-jug"
+      },
+      "definition": {
+        "value": "menu-container-water-jug"
+      },
+      "version": 3,
+      "location": {
+        "kind": 0,
+        "ownerId": null,
+        "slotId": "initial-P41-menu-container-water-jug"
+      },
+      "recipe": null,
+      "isProduct": false,
+      "originStation": null,
+      "containerCompleted": false,
+      "isDirty": false,
+      "remainingPortions": 0
+    },
+    {
+      "id": {
+        "value": "fixture-P47-menu-container-tea-tub"
+      },
+      "definition": {
+        "value": "menu-container-tea-tub"
+      },
+      "version": 5,
+      "location": {
+        "kind": 0,
+        "ownerId": null,
+        "slotId": "initial-P47-menu-container-tea-tub"
+      },
+      "recipe": null,
+      "isProduct": false,
+      "originStation": null,
+      "containerCompleted": false,
+      "isDirty": false,
+      "remainingPortions": 0
+    },
+    {
+      "id": {
+        "value": "fixture-P57-menu-container-drink-jug"
+      },
+      "definition": {
+        "value": "menu-container-drink-jug"
+      },
+      "version": 5,
+      "location": {
+        "kind": 0,
+        "ownerId": null,
+        "slotId": "initial-P57-menu-container-drink-jug"
+      },
+      "recipe": null,
+      "isProduct": false,
+      "originStation": null,
+      "containerCompleted": false,
+      "isDirty": false,
+      "remainingPortions": 0
+    },
+    {
+      "id": {
+        "value": "fixture-cup-1"
+      },
+      "definition": {
+        "value": "menu-container-cold-cup"
+      },
+      "version": 3,
+      "location": {
+        "kind": 0,
+        "ownerId": null,
+        "slotId": "serving-D30"
+      },
+      "recipe": null,
+      "isProduct": false,
+      "originStation": null,
+      "containerCompleted": false,
+      "isDirty": false,
+      "remainingPortions": 0
+    },
+    {
+      "id": {
+        "value": "fixture-cup-2"
+      },
+      "definition": {
+        "value": "menu-container-cold-cup"
+      },
+      "version": 1,
+      "location": {
+        "kind": 0,
+        "ownerId": null,
+        "slotId": "initial-cup-2"
+      },
+      "recipe": null,
+      "isProduct": false,
+      "originStation": null,
+      "containerCompleted": false,
+      "isDirty": false,
+      "remainingPortions": 0
+    },
+    {
+      "id": {
+        "value": "fixture-menu-supply-drinking-water-2"
+      },
+      "definition": {
+        "value": "menu-supply-drinking-water"
+      },
+      "version": 1,
+      "location": {
+        "kind": 0,
+        "ownerId": null,
+        "slotId": "initial-menu-supply-drinking-water-2"
+      },
+      "recipe": null,
+      "isProduct": false,
+      "originStation": null,
+      "containerCompleted": false,
+      "isDirty": false,
+      "remainingPortions": 0
+    },
+    {
+      "id": {
+        "value": "fixture-menu-supply-drinking-water-3"
+      },
+      "definition": {
+        "value": "menu-supply-drinking-water"
+      },
+      "version": 1,
+      "location": {
+        "kind": 0,
+        "ownerId": null,
+        "slotId": "initial-menu-supply-drinking-water-3"
+      },
+      "recipe": null,
+      "isProduct": false,
+      "originStation": null,
+      "containerCompleted": false,
+      "isDirty": false,
+      "remainingPortions": 0
+    },
+    {
+      "id": {
+        "value": "fixture-menu-supply-drinking-water-4"
+      },
+      "definition": {
+        "value": "menu-supply-drinking-water"
+      },
+      "version": 1,
+      "location": {
+        "kind": 0,
+        "ownerId": null,
+        "slotId": "initial-menu-supply-drinking-water-4"
+      },
+      "recipe": null,
+      "isProduct": false,
+      "originStation": null,
+      "containerCompleted": false,
+      "isDirty": false,
+      "remainingPortions": 0
+    },
+    {
+      "id": {
+        "value": "fixture-menu-supply-drinking-water-5"
+      },
+      "definition": {
+        "value": "menu-supply-drinking-water"
+      },
+      "version": 1,
+      "location": {
+        "kind": 0,
+        "ownerId": null,
+        "slotId": "initial-menu-supply-drinking-water-5"
+      },
+      "recipe": null,
+      "isProduct": false,
+      "originStation": null,
+      "containerCompleted": false,
+      "isDirty": false,
+      "remainingPortions": 0
+    },
+    {
+      "id": {
+        "value": "fixture-menu-supply-drinking-water-6"
+      },
+      "definition": {
+        "value": "menu-supply-drinking-water"
+      },
+      "version": 1,
+      "location": {
+        "kind": 0,
+        "ownerId": null,
+        "slotId": "initial-menu-supply-drinking-water-6"
+      },
+      "recipe": null,
+      "isProduct": false,
+      "originStation": null,
+      "containerCompleted": false,
+      "isDirty": false,
+      "remainingPortions": 0
+    },
+    {
+      "id": {
+        "value": "fixture-menu-supply-drinking-water-7"
+      },
+      "definition": {
+        "value": "menu-supply-drinking-water"
+      },
+      "version": 1,
+      "location": {
+        "kind": 0,
+        "ownerId": null,
+        "slotId": "initial-menu-supply-drinking-water-7"
+      },
+      "recipe": null,
+      "isProduct": false,
+      "originStation": null,
+      "containerCompleted": false,
+      "isDirty": false,
+      "remainingPortions": 0
+    },
+    {
+      "id": {
+        "value": "fixture-menu-supply-drinking-water-8"
+      },
+      "definition": {
+        "value": "menu-supply-drinking-water"
+      },
+      "version": 1,
+      "location": {
+        "kind": 0,
+        "ownerId": null,
+        "slotId": "initial-menu-supply-drinking-water-8"
+      },
+      "recipe": null,
+      "isProduct": false,
+      "originStation": null,
+      "containerCompleted": false,
+      "isDirty": false,
+      "remainingPortions": 0
+    },
+    {
+      "id": {
+        "value": "fixture-menu-supply-green-tea-leaf-2"
+      },
+      "definition": {
+        "value": "menu-supply-green-tea-leaf"
+      },
+      "version": 1,
+      "location": {
+        "kind": 0,
+        "ownerId": null,
+        "slotId": "initial-menu-supply-green-tea-leaf-2"
+      },
+      "recipe": null,
+      "isProduct": false,
+      "originStation": null,
+      "containerCompleted": false,
+      "isDirty": false,
+      "remainingPortions": 0
+    },
+    {
+      "id": {
+        "value": "fixture-menu-supply-green-tea-leaf-3"
+      },
+      "definition": {
+        "value": "menu-supply-green-tea-leaf"
+      },
+      "version": 1,
+      "location": {
+        "kind": 0,
+        "ownerId": null,
+        "slotId": "initial-menu-supply-green-tea-leaf-3"
+      },
+      "recipe": null,
+      "isProduct": false,
+      "originStation": null,
+      "containerCompleted": false,
+      "isDirty": false,
+      "remainingPortions": 0
+    },
+    {
+      "id": {
+        "value": "fixture-menu-supply-green-tea-leaf-4"
+      },
+      "definition": {
+        "value": "menu-supply-green-tea-leaf"
+      },
+      "version": 1,
+      "location": {
+        "kind": 0,
+        "ownerId": null,
+        "slotId": "initial-menu-supply-green-tea-leaf-4"
+      },
+      "recipe": null,
+      "isProduct": false,
+      "originStation": null,
+      "containerCompleted": false,
+      "isDirty": false,
+      "remainingPortions": 0
+    },
+    {
+      "id": {
+        "value": "fixture-menu-supply-green-tea-leaf-5"
+      },
+      "definition": {
+        "value": "menu-supply-green-tea-leaf"
+      },
+      "version": 1,
+      "location": {
+        "kind": 0,
+        "ownerId": null,
+        "slotId": "initial-menu-supply-green-tea-leaf-5"
+      },
+      "recipe": null,
+      "isProduct": false,
+      "originStation": null,
+      "containerCompleted": false,
+      "isDirty": false,
+      "remainingPortions": 0
+    },
+    {
+      "id": {
+        "value": "fixture-menu-supply-green-tea-leaf-6"
+      },
+      "definition": {
+        "value": "menu-supply-green-tea-leaf"
+      },
+      "version": 1,
+      "location": {
+        "kind": 0,
+        "ownerId": null,
+        "slotId": "initial-menu-supply-green-tea-leaf-6"
+      },
+      "recipe": null,
+      "isProduct": false,
+      "originStation": null,
+      "containerCompleted": false,
+      "isDirty": false,
+      "remainingPortions": 0
+    },
+    {
+      "id": {
+        "value": "fixture-menu-supply-green-tea-leaf-7"
+      },
+      "definition": {
+        "value": "menu-supply-green-tea-leaf"
+      },
+      "version": 1,
+      "location": {
+        "kind": 0,
+        "ownerId": null,
+        "slotId": "initial-menu-supply-green-tea-leaf-7"
+      },
+      "recipe": null,
+      "isProduct": false,
+      "originStation": null,
+      "containerCompleted": false,
+      "isDirty": false,
+      "remainingPortions": 0
+    },
+    {
+      "id": {
+        "value": "fixture-menu-supply-green-tea-leaf-8"
+      },
+      "definition": {
+        "value": "menu-supply-green-tea-leaf"
+      },
+      "version": 1,
+      "location": {
+        "kind": 0,
+        "ownerId": null,
+        "slotId": "initial-menu-supply-green-tea-leaf-8"
+      },
+      "recipe": null,
+      "isProduct": false,
+      "originStation": null,
+      "containerCompleted": false,
+      "isDirty": false,
+      "remainingPortions": 0
+    },
+    {
+      "id": {
+        "value": "fixture-menu-supply-ice-2"
+      },
+      "definition": {
+        "value": "menu-supply-ice"
+      },
+      "version": 1,
+      "location": {
+        "kind": 0,
+        "ownerId": null,
+        "slotId": "initial-menu-supply-ice-2"
+      },
+      "recipe": null,
+      "isProduct": false,
+      "originStation": null,
+      "containerCompleted": false,
+      "isDirty": false,
+      "remainingPortions": 0
+    },
+    {
+      "id": {
+        "value": "fixture-menu-supply-ice-3"
+      },
+      "definition": {
+        "value": "menu-supply-ice"
+      },
+      "version": 1,
+      "location": {
+        "kind": 0,
+        "ownerId": null,
+        "slotId": "initial-menu-supply-ice-3"
+      },
+      "recipe": null,
+      "isProduct": false,
+      "originStation": null,
+      "containerCompleted": false,
+      "isDirty": false,
+      "remainingPortions": 0
+    },
+    {
+      "id": {
+        "value": "fixture-menu-supply-ice-4"
+      },
+      "definition": {
+        "value": "menu-supply-ice"
+      },
+      "version": 1,
+      "location": {
+        "kind": 0,
+        "ownerId": null,
+        "slotId": "initial-menu-supply-ice-4"
+      },
+      "recipe": null,
+      "isProduct": false,
+      "originStation": null,
+      "containerCompleted": false,
+      "isDirty": false,
+      "remainingPortions": 0
+    },
+    {
+      "id": {
+        "value": "fixture-menu-supply-ice-5"
+      },
+      "definition": {
+        "value": "menu-supply-ice"
+      },
+      "version": 1,
+      "location": {
+        "kind": 0,
+        "ownerId": null,
+        "slotId": "initial-menu-supply-ice-5"
+      },
+      "recipe": null,
+      "isProduct": false,
+      "originStation": null,
+      "containerCompleted": false,
+      "isDirty": false,
+      "remainingPortions": 0
+    },
+    {
+      "id": {
+        "value": "fixture-menu-supply-ice-6"
+      },
+      "definition": {
+        "value": "menu-supply-ice"
+      },
+      "version": 1,
+      "location": {
+        "kind": 0,
+        "ownerId": null,
+        "slotId": "initial-menu-supply-ice-6"
+      },
+      "recipe": null,
+      "isProduct": false,
+      "originStation": null,
+      "containerCompleted": false,
+      "isDirty": false,
+      "remainingPortions": 0
+    },
+    {
+      "id": {
+        "value": "fixture-menu-supply-ice-7"
+      },
+      "definition": {
+        "value": "menu-supply-ice"
+      },
+      "version": 1,
+      "location": {
+        "kind": 0,
+        "ownerId": null,
+        "slotId": "initial-menu-supply-ice-7"
+      },
+      "recipe": null,
+      "isProduct": false,
+      "originStation": null,
+      "containerCompleted": false,
+      "isDirty": false,
+      "remainingPortions": 0
+    },
+    {
+      "id": {
+        "value": "fixture-menu-supply-ice-8"
+      },
+      "definition": {
+        "value": "menu-supply-ice"
+      },
+      "version": 1,
+      "location": {
+        "kind": 0,
+        "ownerId": null,
+        "slotId": "initial-menu-supply-ice-8"
+      },
+      "recipe": null,
+      "isProduct": false,
+      "originStation": null,
+      "containerCompleted": false,
+      "isDirty": false,
+      "remainingPortions": 0
+    },
+    {
+      "id": {
+        "value": "fixture-menu-supply-mango-2"
+      },
+      "definition": {
+        "value": "menu-supply-mango"
+      },
+      "version": 1,
+      "location": {
+        "kind": 0,
+        "ownerId": null,
+        "slotId": "initial-menu-supply-mango-2"
+      },
+      "recipe": null,
+      "isProduct": false,
+      "originStation": null,
+      "containerCompleted": false,
+      "isDirty": false,
+      "remainingPortions": 0
+    },
+    {
+      "id": {
+        "value": "fixture-menu-supply-mango-3"
+      },
+      "definition": {
+        "value": "menu-supply-mango"
+      },
+      "version": 1,
+      "location": {
+        "kind": 0,
+        "ownerId": null,
+        "slotId": "initial-menu-supply-mango-3"
+      },
+      "recipe": null,
+      "isProduct": false,
+      "originStation": null,
+      "containerCompleted": false,
+      "isDirty": false,
+      "remainingPortions": 0
+    },
+    {
+      "id": {
+        "value": "fixture-menu-supply-mango-4"
+      },
+      "definition": {
+        "value": "menu-supply-mango"
+      },
+      "version": 1,
+      "location": {
+        "kind": 0,
+        "ownerId": null,
+        "slotId": "initial-menu-supply-mango-4"
+      },
+      "recipe": null,
+      "isProduct": false,
+      "originStation": null,
+      "containerCompleted": false,
+      "isDirty": false,
+      "remainingPortions": 0
+    },
+    {
+      "id": {
+        "value": "fixture-menu-supply-mango-5"
+      },
+      "definition": {
+        "value": "menu-supply-mango"
+      },
+      "version": 1,
+      "location": {
+        "kind": 0,
+        "ownerId": null,
+        "slotId": "initial-menu-supply-mango-5"
+      },
+      "recipe": null,
+      "isProduct": false,
+      "originStation": null,
+      "containerCompleted": false,
+      "isDirty": false,
+      "remainingPortions": 0
+    },
+    {
+      "id": {
+        "value": "fixture-menu-supply-mango-6"
+      },
+      "definition": {
+        "value": "menu-supply-mango"
+      },
+      "version": 1,
+      "location": {
+        "kind": 0,
+        "ownerId": null,
+        "slotId": "initial-menu-supply-mango-6"
+      },
+      "recipe": null,
+      "isProduct": false,
+      "originStation": null,
+      "containerCompleted": false,
+      "isDirty": false,
+      "remainingPortions": 0
+    },
+    {
+      "id": {
+        "value": "fixture-menu-supply-mango-7"
+      },
+      "definition": {
+        "value": "menu-supply-mango"
+      },
+      "version": 1,
+      "location": {
+        "kind": 0,
+        "ownerId": null,
+        "slotId": "initial-menu-supply-mango-7"
+      },
+      "recipe": null,
+      "isProduct": false,
+      "originStation": null,
+      "containerCompleted": false,
+      "isDirty": false,
+      "remainingPortions": 0
+    },
+    {
+      "id": {
+        "value": "fixture-menu-supply-mango-8"
+      },
+      "definition": {
+        "value": "menu-supply-mango"
+      },
+      "version": 1,
+      "location": {
+        "kind": 0,
+        "ownerId": null,
+        "slotId": "initial-menu-supply-mango-8"
+      },
+      "recipe": null,
+      "isProduct": false,
+      "originStation": null,
+      "containerCompleted": false,
+      "isDirty": false,
+      "remainingPortions": 0
+    },
+    {
+      "id": {
+        "value": "fixture-menu-supply-syrup-2"
+      },
+      "definition": {
+        "value": "menu-supply-syrup"
+      },
+      "version": 1,
+      "location": {
+        "kind": 0,
+        "ownerId": null,
+        "slotId": "initial-menu-supply-syrup-2"
+      },
+      "recipe": null,
+      "isProduct": false,
+      "originStation": null,
+      "containerCompleted": false,
+      "isDirty": false,
+      "remainingPortions": 0
+    },
+    {
+      "id": {
+        "value": "fixture-menu-supply-syrup-3"
+      },
+      "definition": {
+        "value": "menu-supply-syrup"
+      },
+      "version": 1,
+      "location": {
+        "kind": 0,
+        "ownerId": null,
+        "slotId": "initial-menu-supply-syrup-3"
+      },
+      "recipe": null,
+      "isProduct": false,
+      "originStation": null,
+      "containerCompleted": false,
+      "isDirty": false,
+      "remainingPortions": 0
+    },
+    {
+      "id": {
+        "value": "fixture-menu-supply-syrup-4"
+      },
+      "definition": {
+        "value": "menu-supply-syrup"
+      },
+      "version": 1,
+      "location": {
+        "kind": 0,
+        "ownerId": null,
+        "slotId": "initial-menu-supply-syrup-4"
+      },
+      "recipe": null,
+      "isProduct": false,
+      "originStation": null,
+      "containerCompleted": false,
+      "isDirty": false,
+      "remainingPortions": 0
+    },
+    {
+      "id": {
+        "value": "fixture-menu-supply-syrup-5"
+      },
+      "definition": {
+        "value": "menu-supply-syrup"
+      },
+      "version": 1,
+      "location": {
+        "kind": 0,
+        "ownerId": null,
+        "slotId": "initial-menu-supply-syrup-5"
+      },
+      "recipe": null,
+      "isProduct": false,
+      "originStation": null,
+      "containerCompleted": false,
+      "isDirty": false,
+      "remainingPortions": 0
+    },
+    {
+      "id": {
+        "value": "fixture-menu-supply-syrup-6"
+      },
+      "definition": {
+        "value": "menu-supply-syrup"
+      },
+      "version": 1,
+      "location": {
+        "kind": 0,
+        "ownerId": null,
+        "slotId": "initial-menu-supply-syrup-6"
+      },
+      "recipe": null,
+      "isProduct": false,
+      "originStation": null,
+      "containerCompleted": false,
+      "isDirty": false,
+      "remainingPortions": 0
+    },
+    {
+      "id": {
+        "value": "fixture-menu-supply-syrup-7"
+      },
+      "definition": {
+        "value": "menu-supply-syrup"
+      },
+      "version": 1,
+      "location": {
+        "kind": 0,
+        "ownerId": null,
+        "slotId": "initial-menu-supply-syrup-7"
+      },
+      "recipe": null,
+      "isProduct": false,
+      "originStation": null,
+      "containerCompleted": false,
+      "isDirty": false,
+      "remainingPortions": 0
+    },
+    {
+      "id": {
+        "value": "fixture-menu-supply-syrup-8"
+      },
+      "definition": {
+        "value": "menu-supply-syrup"
+      },
+      "version": 1,
+      "location": {
+        "kind": 0,
+        "ownerId": null,
+        "slotId": "initial-menu-supply-syrup-8"
+      },
+      "recipe": null,
+      "isProduct": false,
+      "originStation": null,
+      "containerCompleted": false,
+      "isDirty": false,
+      "remainingPortions": 0
+    },
+    {
+      "id": {
+        "value": "fixture-storage-menu-recipe-preparation-cut-mango"
+      },
+      "definition": {
+        "value": "menu-container-prep-box"
+      },
+      "version": 1,
+      "location": {
+        "kind": 0,
+        "ownerId": null,
+        "slotId": "initial-storage-menu-recipe-preparation-cut-mango"
+      },
+      "recipe": null,
+      "isProduct": false,
+      "originStation": null,
+      "containerCompleted": false,
+      "isDirty": false,
+      "remainingPortions": 0
+    },
+    {
+      "id": {
+        "value": "fixture-storage-menu-recipe-preparation-green-tea"
+      },
+      "definition": {
+        "value": "menu-container-tea-tub"
+      },
+      "version": 3,
+      "location": {
+        "kind": 0,
+        "ownerId": null,
+        "slotId": "initial-storage-menu-recipe-preparation-green-tea"
+      },
+      "recipe": null,
+      "isProduct": false,
+      "originStation": null,
+      "containerCompleted": false,
+      "isDirty": false,
+      "remainingPortions": 0
+    },
+    {
+      "id": {
+        "value": "fixture-storage-menu-recipe-preparation-hot-water"
+      },
+      "definition": {
+        "value": "menu-container-water-jug"
+      },
+      "version": 1,
+      "location": {
+        "kind": 0,
+        "ownerId": null,
+        "slotId": "initial-storage-menu-recipe-preparation-hot-water"
+      },
+      "recipe": null,
+      "isProduct": false,
+      "originStation": null,
+      "containerCompleted": false,
+      "isDirty": false,
+      "remainingPortions": 0
+    },
+    {
+      "id": {
+        "value": "fixture-storage-menu-recipe-preparation-mango-puree"
+      },
+      "definition": {
+        "value": "menu-container-topping-jar"
+      },
+      "version": 3,
+      "location": {
+        "kind": 0,
+        "ownerId": null,
+        "slotId": "initial-storage-menu-recipe-preparation-mango-puree"
+      },
+      "recipe": null,
+      "isProduct": false,
+      "originStation": null,
+      "containerCompleted": false,
+      "isDirty": false,
+      "remainingPortions": 0
+    },
+    {
+      "id": {
+        "value": "product-6"
+      },
+      "definition": {
+        "value": "menu-preparation-mango-puree"
+      },
+      "version": 1,
+      "location": {
+        "kind": 3,
+        "ownerId": "fixture-storage-menu-recipe-preparation-mango-puree",
+        "slotId": "slot-1"
+      },
+      "recipe": {
+        "value": "menu-recipe-preparation-mango-puree"
+      },
+      "isProduct": true,
+      "originStation": null,
+      "containerCompleted": false,
+      "isDirty": false,
+      "remainingPortions": 0
+    },
+    {
+      "id": {
+        "value": "product-8"
+      },
+      "definition": {
+        "value": "menu-finished-mango-tea"
+      },
+      "version": 3,
+      "location": {
+        "kind": 3,
+        "ownerId": "fixture-cup-1",
+        "slotId": "slot-0"
+      },
+      "recipe": {
+        "value": "menu-recipe-finished-mango-tea"
+      },
+      "isProduct": true,
+      "originStation": {
+        "value": "menu-station-drink-mix"
+      },
+      "containerCompleted": false,
+      "isDirty": false,
+      "remainingPortions": 0
+    }
+  ],
+  "snapshotSha256": "443AB793C8EE3A11A1FA3E0E8D9C88BABEA58DFD1E7061619C8B13532263F832",
+  "pending": "S05-drink-binding-disposal-and-all-87-ET-recovery-S07-procurement-S14-exit"
+}
