@@ -711,7 +711,7 @@ public sealed class CookingLevelEtHostTests
 
     [Fact]
     [Trait("Gate", "CookingLevelRuntime")]
-    public void Successor_install_failure_rolls_back_partial_tree_keeps_old_binding_and_faults_host()
+    public void Successor_install_failure_restores_source_generation_and_allows_retry()
     {
         var injector = new OneShotFailureInjector(CookingLevelEtHostFailurePoint.DriverCreated, triggerOnCall: 2);
         var fixture = CreateFixture(failureInjector: injector);
@@ -721,16 +721,35 @@ public sealed class CookingLevelEtHostTests
         var oldBinding = host.Binding;
         var oldLifecycle = host.Lifecycle;
         var sourceBefore = oldLifecycle.Snapshot();
+        var sourceLevel = host.Level;
+        var sourceDriver = host.Driver;
+        var sourceLevelDisposed = sourceLevel.IsDisposed;
+        var sourceDriverDisposed = sourceDriver.IsDisposed;
 
-        Assert.Throws<InvalidOperationException>(() => host.CreateSuccessor(new LevelId("level-2"), 2));
-        Assert.True(host.IsFaulted);
+        var observationBefore = host.Observe().CanonicalText();
+        var rejected = host.CreateSuccessor(new LevelId("level-2"), 2);
+        Assert.False(rejected.Accepted);
+        Assert.Equal(CookingLevelLifecycleReason.GameplayInitializationFailed.ToString(), rejected.Reason);
+        Assert.False(host.IsFaulted);
+        Assert.Equal(observationBefore, host.Observe().CanonicalText());
         Assert.Equal(oldBinding, host.Binding);
         Assert.Same(oldLifecycle, host.Lifecycle);
         Assert.Equal(sourceBefore, oldLifecycle.Snapshot());
         Assert.False(oldLifecycle.HasCreatedNextGeneration);
-        Assert.True(host.Level.IsDisposed);
-        Assert.Null(host.RestaurantRuntime.GetComponent<CookingLevelComponent>());
-        Assert.Throws<InvalidOperationException>(() => host.CreateSuccessor(new LevelId("level-3"), 3));
+        Assert.Equal(sourceLevelDisposed, host.Level.IsDisposed);
+        Assert.Equal(sourceDriverDisposed, host.Driver.IsDisposed);
+        if (sourceLevelDisposed)
+        {
+            Assert.Same(sourceLevel, host.Level);
+            Assert.Same(sourceDriver, host.Driver);
+            Assert.Null(host.RestaurantRuntime.GetComponent<CookingLevelComponent>());
+        }
+        else
+        {
+            Assert.Same(host.Level, host.RestaurantRuntime.GetComponent<CookingLevelComponent>());
+            Assert.Equal(oldBinding.LevelScope, host.Level.Scope);
+        }
+        Assert.True(host.CreateSuccessor(new LevelId("level-3"), 3).Accepted);
     }
 
     [Fact]

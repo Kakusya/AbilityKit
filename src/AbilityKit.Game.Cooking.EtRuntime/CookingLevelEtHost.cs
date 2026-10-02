@@ -332,6 +332,7 @@ public sealed class CookingLevelEtHost : IDisposable
     private bool _executingPreparationMutation;
     private bool _initializingPreparation;
     private CookingPreparationConfiguration? _preparationConfiguration;
+    private CookingLevelPreparation? _stagedPreparation;
     private long _serviceStartLogicalTick;
     private readonly CookingFrontOfHouseConfiguration? _frontConfiguration;
     private CookingFrontOfHouseConfiguration? _effectiveFrontConfiguration;
@@ -415,12 +416,6 @@ public sealed class CookingLevelEtHost : IDisposable
     public bool TryPeekBoundKitchen(out CookingRecipeSimulation? kitchen) =>
         _lifecycle.TryPeekBoundKitchen(out kitchen);
 
-    private static CookingRecipeSimulation CreateRetryKitchen(CookingLevelLifecycle lifecycle, CookingContent content)
-    {
-        var kitchen = lifecycle.GameplayFactory.Create(lifecycle.Scope, lifecycle.Configuration);
-        CookingContentCatalog.ApplyStandardInitialSupply(kitchen, content);
-        return kitchen;
-    }
     private CookingFrontOfHouse? _frontOfHouse;
     private CookingFrontOfHouseMenu _frontOfHouseMenu = CookingFrontOfHouseMenu.Single(new("unused"));
 
@@ -568,7 +563,8 @@ public sealed class CookingLevelEtHost : IDisposable
             _initializingPreparation = true;
             try
             {
-                var configuration = factory.CreatePreparationConfiguration(Binding.LevelScope, _lifecycle.Configuration).Freeze();
+                var configuration = _stagedPreparation is not null && _preparationConfiguration is not null
+                    ? _preparationConfiguration : factory.CreatePreparationConfiguration(Binding.LevelScope, _lifecycle.Configuration).Freeze();
                 var initialized = RunLifecycleOperation(() => _lifecycle.InitializePreparationKitchen(_gameplayPublicationGuard));
                 if (!initialized.Accepted) return Operation(initialized);
                 if (!_lifecycle.TryPeekBoundKitchen(out var simulation) || simulation is null)
@@ -930,103 +926,149 @@ public sealed class CookingLevelEtHost : IDisposable
         return Operation(result);
     }
 
-    public CookingLevelHostGenerationResult CreateRetry(
-        long newEpoch,
-        CookingContent content,
-        CookingMajorProgress? progress = null)
+    public CookingLevelHostGenerationResult CreateRetry(long newEpoch, CookingContent content, CookingMajorProgress? progress = null)
     {
-        Check();
-        ArgumentNullException.ThrowIfNull(content);
-        var candidateResult = RunLifecycleOperation(() =>
-        {
+        Check(); ArgumentNullException.ThrowIfNull(content);
+        var result = RunLifecycleOperation(() => {
             var reason = _lifecycle.TryCreateRetryCandidate(newEpoch, out var candidate);
             return new CandidateResult(reason, candidate);
         });
-        if (candidateResult.Reason != CookingLevelLifecycleReason.None)
-            return RejectGeneration(candidateResult.Reason);
-
-        var candidate = candidateResult.Candidate!;
-        CookingRecipeSimulation kitchen;
-        try
-        {
-            kitchen = CreateRetryKitchen(candidate, content);
-            if (progress is not null)
-            {
-                var applied = kitchen.ApplyRetryChoices(content, progress);
-                if (!applied.Accepted)
-                    return RejectGeneration(CookingLevelLifecycleReason.InvalidState);
-            }
-        }
-        catch (Exception exception)
-        {
-            throw Fault(new InvalidOperationException(
-                "The failed level could not be rebuilt from its standard initial supply.", exception));
-        }
-
-        var installed = InstallGeneration(candidate, isRetry: true);
-        if (!installed.Accepted)
-        {
-            kitchen.CloseLifecycle();
-            return installed;
-        }
-        if (_ownedSimulation is not null)
-            ReleaseSimulationOwnership();
-
-        var adopted = candidate.AdoptSuccessorKitchen(kitchen);
-        if (adopted != CookingLevelLifecycleReason.None)
-        {
-            kitchen.CloseLifecycle();
-            throw Fault(new InvalidOperationException(
-                $"The rebuilt kitchen could not be adopted: {adopted}."));
-        }
-
-        if (_frontOfHouse is not null) RunFrontOperation(() => { _frontOfHouse.DropFailedScene(); return true; });
-        return installed;
+        if (result.Reason != CookingLevelLifecycleReason.None) return RejectGeneration(result.Reason);
+        return BuildAndCommitGeneration(result.Candidate!, true, _lifecycle.Preparation, content, progress);
     }
 
-    public CookingLevelHostGenerationResult CreateSuccessor(LevelId newLevelId, long newEpoch)
+    public CookingLevelHostGenerationResult CreateSuccessor(LevelId newLevelId, long newEpoch) =>
+        CreateSuccessorCore(newLevelId, newEpoch, null);
+
+    public CookingLevelHostGenerationResult CreateSuccessor(LevelId newLevelId, long newEpoch, CookingLevelPreparation nextPreparation)
+    {
+        ArgumentNullException.ThrowIfNull(nextPreparation);
+        return CreateSuccessorCore(newLevelId, newEpoch, nextPreparation);
+    }
+
+    private CookingLevelHostGenerationResult CreateSuccessorCore(LevelId newLevelId, long newEpoch, CookingLevelPreparation? nextPreparation)
     {
         Check();
-        var candidateResult = RunLifecycleOperation(() =>
-        {
+        var result = RunLifecycleOperation(() => {
             var reason = _lifecycle.TryCreateSuccessorCandidate(newLevelId, newEpoch, out var candidate);
             return new CandidateResult(reason, candidate);
         });
-        if (candidateResult.Reason != CookingLevelLifecycleReason.None)
-            return RejectGeneration(candidateResult.Reason);
-        if (_ownedSimulation is null)
-            return RejectGeneration(CookingLevelLifecycleReason.GameplayUnavailable);
+        if (result.Reason != CookingLevelLifecycleReason.None) return RejectGeneration(result.Reason);
+        if (_ownedSimulation is null) return RejectGeneration(CookingLevelLifecycleReason.GameplayUnavailable);
+        if (_lifecycle.GameplayFactory is ICookingPreparationGameplayFactory && nextPreparation is null)
+            return RejectGeneration(CookingLevelLifecycleReason.InvalidState);
+        return BuildAndCommitGeneration(result.Candidate!, false, nextPreparation, null, null);
+    }
 
-        var candidate = candidateResult.Candidate!;
-        var sourceCheckpoint = _ownedSimulation.ExportCheckpoint();
-        var installed = InstallGeneration(candidate, isRetry: false);
-        if (!installed.Accepted)
-            return installed;
-
-        if (_frontOfHouse is not null) RunFrontOperation(() => { _frontOfHouse.FinishInProgress(_ownedSimulation, _frontOfHouseMenu); return true; });
-        var clearedOrders = _ownedSimulation.Orders.Count;
-        var handoff = _ownedSimulation.ExportSuccessHandoff();
-        var adopted = candidate.AdoptSuccessorKitchen(_ownedSimulation);
-        var accepted = adopted == CookingLevelLifecycleReason.None
-            ? _ownedSimulation.AcceptSuccessHandoff(handoff)
-            : CookingRecipeCheckpointRestoreResult.Reject(CookingCheckpointRestoreReason.NotSuccessHandoff);
-        if (adopted != CookingLevelLifecycleReason.None || !accepted.Accepted)
+    private CookingLevelHostGenerationResult BuildAndCommitGeneration(CookingLevelLifecycle candidate, bool retry,
+        CookingLevelPreparation? preparation, CookingContent? content, CookingMajorProgress? progress)
+    {
+        CookingRecipeSimulation? kitchen = null;
+        var acquired = false;
+        _initializingPreparation = true;
+        try
         {
-            var restored = _ownedSimulation.RestoreExportedCheckpoint(sourceCheckpoint);
-            if (restored != CookingCheckpointRestoreReason.None)
-                throw Fault(new InvalidOperationException(
-                    $"The source kitchen could not be restored after a rejected handoff: {restored}."));
-            throw Fault(new InvalidOperationException(
-                $"The successor kitchen could not be adopted: {adopted}; handoff {accepted.Reason}."));
+            var frozenPreparation = preparation is null ? null : CookingLevelLifecycle.CopyPreparation(preparation);
+            if (frozenPreparation is not null && candidate.ValidatePreparationCandidate(frozenPreparation) != CookingLevelLifecycleReason.None)
+                return RejectGeneration(CookingLevelLifecycleReason.InvalidState);
+            var policy = (candidate.GameplayFactory as ICookingPreparationGameplayFactory)?
+                .CreatePreparationConfiguration(candidate.Scope, candidate.Configuration).Freeze();
+            CookingRecipeCheckpoint? handoff = null;
+            CookingFrontOfHouse? stagedSourceFront = null;
+            var clearedOrders = 0; var clearedSettlements = 0;
+            if (!retry)
+            {
+                var source = _ownedSimulation!.CreateGenerationTransactionCopy();
+                clearedSettlements = source.SettlementHistory.Count;
+                if (_frontOfHouse is { } oldFront)
+                {
+                    var restored = CookingFrontOfHouse.Restore(new(_frontOfHouseMenu.Templates[0], oldFront.Snapshot()), source);
+                    if (!restored.Accepted || restored.FrontOfHouse is null) return RejectGeneration(CookingLevelLifecycleReason.InvalidState);
+                    stagedSourceFront = restored.FrontOfHouse;
+                    stagedSourceFront.FinishInProgress(source, _frontOfHouseMenu);
+                }
+                clearedOrders = source.Orders.Count;
+                if (stagedSourceFront is not null) stagedSourceFront.ResetForNextLevel(source, _frontOfHouseMenu);
+                handoff = source.ExportSuccessHandoff();
+            }
+            kitchen = candidate.GameplayFactory.Create(candidate.Scope, candidate.Configuration);
+            if (kitchen is null || ReferenceEquals(kitchen, _ownedSimulation))
+                return RejectGeneration(CookingLevelLifecycleReason.GameplayInitializationFailed);
+            if (!_gameplayPublicationGuard.TryAcquire(kitchen)) return RejectGeneration(CookingLevelLifecycleReason.GameplayInitializationFailed);
+            acquired = true;
+            if (!Equals(kitchen.Snapshot().Scope, candidate.Scope.MatchScope))
+                return RejectGeneration(CookingLevelLifecycleReason.GameplayInitializationFailed);
+            if (retry)
+            {
+                CookingContentCatalog.ApplyStandardInitialSupply(kitchen, content!);
+                if (progress is not null && !kitchen.ApplyRetryChoices(content!, progress).Accepted)
+                    return RejectGeneration(CookingLevelLifecycleReason.InvalidState);
+            }
+            CookingInstalledLayoutCheckpoint? installed = null;
+            var effective = _frontConfiguration;
+            if (policy is not null)
+            {
+                var seeds = kitchen.SpatialConfiguration?.InitialPoses ?? Array.Empty<CookingPlayerPose>();
+                var projection = policy.Project(policy.InitialLayout, seeds, kitchen.ConfiguredAppliances);
+                var references = handoff is null ? null : handoff with { Poses = projection.Geometry?.InitialPoses };
+                if (!projection.Accepted || !kitchen.CanInstallPreparedGeometry(projection, references))
+                    return RejectGeneration(CookingLevelLifecycleReason.InvalidState);
+                if (_frontConfiguration is { } trusted) effective = policy.DerivedFrontConfiguration(projection, trusted);
+                if (!kitchen.InstallPreparedGeometry(projection, references)) return RejectGeneration(CookingLevelLifecycleReason.InvalidState);
+                installed = new(projection.FrozenLayout!, Array.AsReadOnly(projection.Geometry!.InitialPoses.ToArray()));
+            }
+            if (handoff is not null && !kitchen.AcceptSuccessHandoff(handoff).Accepted)
+                return RejectGeneration(CookingLevelLifecycleReason.InvalidState);
+            CookingFrontOfHouse? front = effective is not null ? CreateInitialFront(effective) : stagedSourceFront;
+            if (retry && effective is null && _frontOfHouse is { } legacy)
+                front = new CookingFrontOfHouse(legacy.Snapshot().Schedule, legacy.Snapshot().Companion.Id);
+            var menu = effective is null ? _frontOfHouseMenu : new CookingFrontOfHouseMenu(effective.Menu);
+            Action? adoptLegacyFront = null;
+            if (front is not null)
+            {
+                if (effective?.ManualPolicyIdentity is { } manual)
+                {
+                    var stagedKitchen = kitchen;
+                    front.ConfigureManualWork(manual, (player, target) => CanFrontWork(stagedKitchen, player, target));
+                }
+                ValidateFrontConfiguration(front, menu, kitchen, effective, kitchen.SpatialConfiguration);
+                if (_frontConfiguration is null && _frontOfHouse is { } original)
+                    adoptLegacyFront = RunFrontOperation(() => original.PrepareGenerationStateAdoption(front));
+            }
+            if (candidate.AdoptSuccessorKitchen(kitchen) != CookingLevelLifecycleReason.None)
+                return RejectGeneration(CookingLevelLifecycleReason.InvalidState);
+            kitchen.BindAuthorityGate(_authorityGate);
+            _failureInjector?.ThrowIfRequested(CookingLevelEtHostFailurePoint.SimulationOwnershipAcquired);
+            _failureInjector?.ThrowIfRequested(CookingLevelEtHostFailurePoint.BeforeSimulationPublish);
+            var result = InstallGeneration(candidate, retry);
+            if (!result.Accepted) return result;
+            var previous = _ownedSimulation;
+            _ownedSimulation = kitchen; Driver.Simulation = kitchen;
+            _preparationConfiguration = policy; _installedLayout = installed;
+            _effectiveFrontConfiguration = effective; _serviceStartLogicalTick = 0;
+            _stagedPreparation = frozenPreparation;
+            if (adoptLegacyFront is not null) adoptLegacyFront(); else _frontOfHouse = front;
+            _frontOfHouseMenu = menu;
+            BindFrontOfHouse(kitchen, prepared: true);
+            if (previous is not null) { CookingSimulationHostOwnership.Release(previous, this); previous.CloseLifecycle(); }
+            acquired = false;
+            kitchen = null;
+            return result with { RetainedProcessCount = handoff?.Processes.Count ?? 0,
+                ClearedOrderCount = clearedOrders, ClearedSettlementCount = clearedSettlements };
         }
-
-        if (_frontOfHouse is not null) RunFrontOperation(() => { _frontOfHouse.ResetForNextLevel(_ownedSimulation, _frontOfHouseMenu); return true; });
-        return installed with
+        catch (Exception)
         {
-            RetainedProcessCount = handoff.Processes.Count,
-            ClearedOrderCount = clearedOrders,
-            ClearedSettlementCount = sourceCheckpoint.Settlements.Count,
-        };
+            return RejectGeneration(CookingLevelLifecycleReason.GameplayInitializationFailed);
+        }
+        finally
+        {
+            if (acquired && kitchen is not null)
+            {
+                _gameplayPublicationGuard.Release(kitchen);
+                if (!ReferenceEquals(kitchen, _ownedSimulation)) kitchen.CloseLifecycle();
+            }
+            _initializingPreparation = false;
+        }
     }
 
     /// <summary>
@@ -1530,6 +1572,18 @@ public sealed class CookingLevelEtHost : IDisposable
         candidate.BindOperationGate(_lifecycleOperationGate);
         var oldLevel = Level;
         var oldDriver = Driver;
+        var oldLevelAlive = oldLevel is not null && !oldLevel.IsDisposed;
+        var oldSimulation = oldDriver?.Simulation;
+        void RestoreSourceTree()
+        {
+            _lifecycle = sourceLifecycle; Binding = sourceBinding;
+            _runtime.Run(SceneId, _ => {
+                if (RestaurantRuntime.GetComponent<CookingLevelComponent>() is { IsDisposed: false })
+                    RestaurantRuntime.RemoveComponent<CookingLevelComponent>();
+                if (oldLevelAlive) { InstallLevel(sourceLifecycle, injectFailures: false); Driver.Simulation = oldSimulation; }
+                else { Level = oldLevel!; Driver = oldDriver!; }
+            });
+        }
 
         try
         {
@@ -1540,11 +1594,10 @@ public sealed class CookingLevelEtHost : IDisposable
                 InstallLevel(candidate);
             });
         }
-        catch (Exception exception)
+        catch (Exception)
         {
-            _lifecycle = sourceLifecycle;
-            Binding = sourceBinding;
-            throw Fault(new InvalidOperationException("The replacement level generation could not be installed.", exception));
+            RestoreSourceTree();
+            return RejectGeneration(CookingLevelLifecycleReason.GameplayInitializationFailed);
         }
 
         var committed = RunLifecycleOperation(() => isRetry
@@ -1552,9 +1605,8 @@ public sealed class CookingLevelEtHost : IDisposable
             : sourceLifecycle.CommitSuccessorCandidate(candidate));
         if (!committed.Accepted)
         {
-            RemoveLevel();
-            throw Fault(new InvalidOperationException(
-                $"The installed replacement level generation could not be committed: {committed.Reason}."));
+            RestoreSourceTree();
+            return RejectGeneration(committed.Reason);
         }
 
         var cancelled = CancelPending("level-generation-replaced");
