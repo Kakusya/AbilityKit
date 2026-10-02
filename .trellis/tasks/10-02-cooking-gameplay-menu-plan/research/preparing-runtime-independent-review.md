@@ -1,0 +1,22 @@
+# Preparing 运行增量独立只读审阅
+
+2026-10-02，integration `4e32fbe61` 加 WIP。不改生产、不运行.NET。结论：准备态运行的有限增量静态通过，未发现新增阻断；producer报告5项新增、34项组合通过，尚待root实际完整门禁。此结论不标S06/S07/S08/S14完整完成。
+
+## Ownership / atomic / legacy
+
+- 仅ICookingPreparationGameplayFactory启用提前创建：host在Created先ValidatePreparationCandidate、获取并Freeze可信准备policy，再InitializePreparationKitchen。初始化通过既有publication ownership guard，拒绝已有owner/重入，并在失败时不发布第二厨房。host在_initializingPreparation窗口禁止公共入口重入，finally收窗。
+- Lifecycle记录_preparationKitchenInitialized，Start复用同一厨房，不再次调用factory。Preparing admission受private enable标记、真实gameplay和状态约束；同ET ingress与固定Tick，白名单允许移动/拿放/加工/供应，拒绝Submit/binding/frontwork/legacy AdvanceTicks。不存在第二准备模拟或异步时钟。
+- Tick Preparing推进厨房/供应，但front Step、closing与营业投影仅Running执行；Ready不推进。Start记_serviceStartLogicalTick，恢复前厅营业clock用LogicalTick减offset，准备加工耗时不会偷扣营业时间。
+- optional legacy factory仍仅Start创建；Prepare便捷入口保留Begin+Complete行为。配置helper冻结footprint、权限、绑定和initiallayout，并按稳定顺序生成身份；Project核对全部配置Appliances与layout设备，不接受缩小footprint或用解锁绕过本关范围。
+
+## 恢复与证据
+
+Level7新增ServiceStartLogicalTick、PreparationConfigurationIdentity、InstalledLayout字段都有JsonRequired，即使允许null也必须存在。恢复用同factory的可信policy身份比较，拒绝伪造identity/negative或超logicalTick offset，并校验前厅clock。新增测试真实Created→Preparing请求/到货/收货/部分加工→Ready→Running，确认factory只创建一次、同Simulation引用、准备前厅clock为零、Start后加工继续和Pause冻结。其它测试覆盖白名单、legacy时机、输入错误、Create重入、owner复用和恢复offset继续。
+
+**实际控制范围：** Preparing恢复例比较导出checkpoint与新host立即恢复checkpoint一致，再Tick验证前厅clock=2；没有不中断控制臂逐帧/最终完整checkpoint等价比较，也没有恢复一个尚处Preparing的checkpoint。不得将其表述为完整准备态中断恢复control proof。producer报告5/34结果未由本审阅新跑.NET或独立解析其聚焦日志，rootfullgate仍待执行。
+
+## 仍未完成的几何闭环
+
+InstalledLayout目前明确null，配置helper只生成可信projection和derived-front候选，没有自动安装。CanInstallPreparedGeometry现有“IsGameplayMutationOpen拒绝”与Preparing代理开放的关系已知，需下一步串行实装调整；本审阅不把这一占位字段当已完成S08。有效geometry、front路径、初始policy身份和恢复安装顺序必须在同一次host提交中接上，相关公开Prepare成功当前仅证明运行窗口，不证明initiallayout已取代fixture空间。
+
+Lint/TypeCheck/Tests本审阅未执行；保持root独立组合验证和全出口审计要求。

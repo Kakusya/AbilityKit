@@ -4,6 +4,8 @@
 
 # AbilityKit 项目待办事项
 
+> 2026-10-02 21:36: integration `585e15982` preparation runtime passed coordinator kitchen462/589/223 and ET589/223, zero failures/skips. Preparing recovery and trusted layout/front installation remain pending; master production remains7a043b6cb. See [preparing verification](../.trellis/tasks/10-02-cooking-gameplay-menu-plan/research/preparing-composite-verification.md).
+
 ## 2026-10-02 Cooking 玩法与菜单推进
 
 当前证据入口：[progress](design/CookingGame/progress.md) 与 [完整出口表](../.trellis/tasks/10-02-cooking-gameplay-menu-plan/research/completion-contract.md)。S01–S03 已完成受限纯 C# 核心，最新本地 master 7dd149b75 完整菜单门禁 372/494/197；S06 ET、S07 实物供应、S08 布局安装与 S14 完整营业仍待验证。以下其他日期及正文中的 KCP/旧运行状态保留为历史来源；网络最新取舍与冲突收敛以架构记录及 N01 任务为准。
