@@ -32,3 +32,17 @@
 审阅未新跑 .NET 编译/测试门禁，避免与 live worker 争用其输出；TypeCheck/构建结果以上述实际日志为既有证据，不冒充本审阅复跑。源码变更没有独立 lint 配置执行，本次 lint 不作通过声明。
 
 审阅期间 worker 开始新增 `Compatible_automatic_route_uses_real_public_commands_from_raw_supply_to_settlement` 用例和 runner 设计记录，尚未属于受审提交。不要把这些未提交变更或后续运行结果回填为 `3b2797789…` 已有证据；待新提交再核对。
+
+## 追加审阅：准备件输出存放容器
+
+对象：`bb167ddf84f40db725a15dc2cc4810dcdfd83f42` 相对 `a14d4a178` 的增量。结论：**可接收为来源目录与依赖闭包补全**；未发现阻止该增量接入 integration 的问题，不据此批准批量运行或 S04 完整退出。
+
+- 新 `CookingMenuStep.OutputStorageContainer` 是可空、默认 null 的目录字段。生成器对全部 60 个准备件的最后一步，取来源半成品表“加工/存放容器”列最后一个斜杠分项作为存放选择；保留原文于源审计，不改变加工 Carrier，也不替换加工 authority。
+- 只读内存重算生成目录与已提交 JSON 一致；逐个核对全部 60 个准备件：字段名称匹配该来源末分项、容器存在、接受实际 output、容量不少于 fixture YieldPortions。独立 `python -B tools/test_cooking_menu_generator.py` 再次 5/5 通过，包含来源行重排与原节点追溯。
+- Requirements 递归访问步骤时将可选输出存放容器加入闭包；ToContentDocument 原有 required-container 投影因此可注册其容器定义及初始 fixture 空容器。Validate 对不存在的存放容器报告 MissingContainer，对不接收 output 或容量不足报告 InvalidOutputStorage。这是可供集合和形状校验，不是空间可达、装满后的恢复或按份取用行为。
+- 新四例 Theory 分别检查 P19 饭桶/F08、P20 备料盆/F21、P35 酱料盆/F21、P53 小料罐/D25 的正例与删除实际 output 兼容性的负例。不存在存放容器与容量不足两条拒绝分支由代码检查确认，当前新增用例没有分别执行这两条分支；不得声称覆盖所有拒绝路径。
+- 独立读取实际 `local/Logs/test-gates/20261002-184302-cooking-kitchen-loop/cooking-kitchen-loop/gate-summary.json` 与原路径日志/TRX：两构建 Passed/exit0；聚焦 133/133、Cooking 254/254、ET 67/67，失败/跳过均零。四个新增 storage 正反例在 Cooking TRX 均 Passed。`storage-tests.log`记录 catalog 28/28，这是 worker 已构建后 --no-build 运行，不冒充新的编译。本审阅未新跑 .NET。
+
+尚缺的运行证据保持原结论：ServePortion 是否扣减批量余额、将份转入不同容器、存放容器满时零变更、搬运保存份数和物品唯一位置、继续加工/公开交付/恢复等均未由 storage 元数据证明。来源列的斜杠是加工与暂存候选表达；选定末分项供闭包登记，不意味着运行时必须经过这个容器或已有强制迁移规则。实际运行接入仍需 core/S07 等 owner 的规则与测试。批次 fixture 容量和产量不是正式平衡值。
+
+本次工作树检查为 clean，审阅没有修改 live worker 文件。Lint 未新执行；TypeCheck 仅核对上述实际构建证据；代码与任务 metadata 未改。

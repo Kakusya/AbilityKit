@@ -28,6 +28,16 @@ Owner 明确要求“继续审计，直到各个议题都审议清楚，然后�
 
 ## 当前目标
 
+### 18:58 核心审阅后的修复工作
+
+核心 worker 提交 `8111472f2`，已接入整合分支为 `be82b22ae`；完成消息已处理，dispatch `ctx_4e56ba63e0df` 的监督终端实际 release，输出归档保留。其自报 domain 28 / ET 新增 6 及两门禁均通过，独立审阅记录见 [core-increment-review.md](research/core-increment-review.md)，不得把 worker 自报当组合版本已通过。
+
+独立审阅发现锁定输入恢复只校验 membership，缺完整多重集及跨工序唯一归属；普通成品身份也缺配方/产物定义对应校验。整合分支正在补完整恢复和 fixed Tick 不变量，以及篡改 checkpoint 反例。这些问题阻止当前核心回并 master。
+
+菜单容器补充 `bb167ddf8` 已接入为 `21b11eff4`，Execution/Yield 真实映射 `68a7f6934` 已接入为 `d8744d043`。来源存放容器仅为目录元数据，非运行分装证据。核心未实现此前请求的 RequiredProcessingContainerDefinition/ContentProvenance，协调者正在现有配置/匹配/启动加工中补齐，未增加平行配置 authority。
+
+一次组合门禁在前厅生产编辑中间态编译失败（缺尚未写完的新类型），日志在整合分支 `local/Logs/test-gates/20261002-184859-cooking-kitchen-loop/`，不能标通过。随后冻结编辑窗口实际聚焦运行菜单接口与 checkpoint 新例：14 例中 13 通过、1 失败；失败为新增丢弃墓碑 fixture 未先真实取出物品，已交审阅者修正并待复跑。原始输出保存为 [hooks-checkpoint-first-run.log](research/hooks-checkpoint-first-run.log)。后续新增用例尚未运行，不计入该次结果。现有前厅 21 例通过属实现者自报，新增排队/路径/人工接手仍待验证。
+
 2026-10-02 owner 在最终规划汇总后明确要求：列 Task，按实际情况用 worktree 并行实施，检测验证，通过后回并 master；先单机和联网，Unity 后做，活用 Orca。该回复是对上一轮 plan 的实施授权；此前助手获授权补足未提细节。当前不再受初版 planning-only 限制。
 
 完整范围为 S01–S14 的基础单机玩法、87 款候选内容分批导入与闭环、N01–N03 的共享网络链路/恢复测量；S15 只是后置扩展参考审议。U01/U02 未授权。不能只做容易通过的小片段便标整个目标完成。
