@@ -1981,6 +1981,11 @@ public sealed partial class CookingRecipeSimulation
             ++_nextSettlementSequence, orderId, order.Template, recipe, productId, command.Player, container, LogicalTick));
 
         // 提交成功后容器变脏并交给 NPC 清洗：脏碗离开厨房，在册干净数下降。
+        if ((_fixture.Items[containerState.Definition].Container?.DisposableOnSubmission == true ||
+             _fixture.WashableContainerDefinitions.Contains(containerState.Definition)) &&
+            containerState.Location is { Kind: LocationKind.ContainerSlot, OwnerId: { } parentOwner } &&
+            _containerItems.TryGetValue(new ItemId(parentOwner), out var parentContents))
+            parentContents.Remove(container);
         if (_fixture.Items[containerState.Definition].Container?.DisposableOnSubmission == true)
         {
             _items[container] = containerState with { Removed = true, Version = checked(containerState.Version + 1) };
