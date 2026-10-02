@@ -1004,6 +1004,9 @@ public sealed class CookingLevelLifecycle
             (_owner._ownerGameplayGate?.IsGameplayMutationOpen ?? true);
 
         public CookingLevelScope LevelScope => _owner.Scope;
+
+        public bool IsLayoutInstallationOpen => !_owner._gameplayClosed &&
+            _owner.State is CookingLevelState.Created or CookingLevelState.Preparing;
     }
 
     private CookingLevelLifecycleResult Reject(CookingLevelLifecycleReason reason) =>

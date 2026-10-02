@@ -334,6 +334,8 @@ public sealed class CookingLevelEtHost : IDisposable
     private CookingPreparationConfiguration? _preparationConfiguration;
     private long _serviceStartLogicalTick;
     private readonly CookingFrontOfHouseConfiguration? _frontConfiguration;
+    private CookingFrontOfHouseConfiguration? _effectiveFrontConfiguration;
+    private CookingInstalledLayoutCheckpoint? _installedLayout;
     private readonly string? _frontConfigurationIdentity;
 
     public CookingLevelEtHost(
@@ -344,6 +346,7 @@ public sealed class CookingLevelEtHost : IDisposable
         _lifecycle = lifecycle ?? throw new ArgumentNullException(nameof(lifecycle));
         _frontConfiguration = (lifecycle.GameplayFactory as ICookingFrontOfHouseGameplayFactory)?.FrontOfHouseConfiguration.Freeze();
         _frontConfigurationIdentity = _frontConfiguration?.Identity();
+        _effectiveFrontConfiguration = _frontConfiguration;
         if (queueCapacity <= 0)
             throw new ArgumentOutOfRangeException(nameof(queueCapacity));
         _queueCapacity = queueCapacity;
@@ -434,24 +437,26 @@ public sealed class CookingLevelEtHost : IDisposable
         try { return operation(); } finally { _executingFrontOperation = false; }
     }
 
-    private void ValidateFrontConfiguration(CookingFrontOfHouse house, CookingFrontOfHouseMenu menu, CookingRecipeSimulation? kitchen)
+    private void ValidateFrontConfiguration(CookingFrontOfHouse house, CookingFrontOfHouseMenu menu, CookingRecipeSimulation? kitchen,
+        CookingFrontOfHouseConfiguration? candidateConfiguration = null, CookingSpatialConfiguration? candidateSpatial = null)
     {
         var snapshot = house.Snapshot();
-        if (_frontConfiguration is null)
+        var front = candidateConfiguration ?? _effectiveFrontConfiguration;
+        if (front is null)
         {
             if (snapshot.Flow is not null || snapshot.ManualPolicyIdentity is not null)
                 throw new ArgumentException("New front gameplay requires trusted factory configuration.");
             return;
         }
-        if (snapshot.Schedule != _frontConfiguration.Schedule || !menu.Templates.SequenceEqual(_frontConfiguration.Menu)
-            || System.Text.Json.JsonSerializer.Serialize(snapshot.Flow) != System.Text.Json.JsonSerializer.Serialize(_frontConfiguration.Flow)
-            || (snapshot.ManualPolicyIdentity is not null && snapshot.ManualPolicyIdentity != _frontConfiguration.ManualPolicyIdentity))
+        if (snapshot.Schedule != front.Schedule || !menu.Templates.SequenceEqual(front.Menu)
+            || System.Text.Json.JsonSerializer.Serialize(snapshot.Flow) != System.Text.Json.JsonSerializer.Serialize(front.Flow)
+            || (snapshot.ManualPolicyIdentity is not null && snapshot.ManualPolicyIdentity != front.ManualPolicyIdentity))
             throw new ArgumentException("Front gameplay differs from the trusted factory configuration.");
         if (kitchen is null) return;
         if (menu.Templates.Any(x => !kitchen.HasOrderTemplate(x))) throw new ArgumentException("Front menu references unavailable orders.");
-        if (_frontConfiguration.Flow is { } flow)
+        if (front.Flow is { } flow)
         {
-            if (kitchen.SpatialConfiguration is not { } spatial || CookingFrontOfHouseFlow.SpatialIdentity(spatial) != flow.GeometryIdentity)
+            if ((candidateSpatial ?? kitchen.SpatialConfiguration) is not { } spatial || CookingFrontOfHouseFlow.SpatialIdentity(spatial) != flow.GeometryIdentity)
                 throw new ArgumentException("Front paths must use the active kitchen geometry.");
             void Endpoint(string id, CookingFrontPoint point)
             {
@@ -460,36 +465,36 @@ public sealed class CookingLevelEtHost : IDisposable
                 if (!spatial.Anchors.Any(a => a.Id == id && a.X == x && a.Y == y))
                     throw new ArgumentException("Front path endpoint has no matching authoritative anchor.");
             }
-            Endpoint(_frontConfiguration.EntranceAnchor, flow.EntranceToQueue[0]);
-            Endpoint(_frontConfiguration.QueueAnchor, flow.EntranceToQueue[^1]);
-            Endpoint(_frontConfiguration.ExitAnchor, flow.QueueToExit[^1]);
+            Endpoint(front.EntranceAnchor, flow.EntranceToQueue[0]);
+            Endpoint(front.QueueAnchor, flow.EntranceToQueue[^1]);
+            Endpoint(front.ExitAnchor, flow.QueueToExit[^1]);
             foreach (var table in flow.Tables) Endpoint(table.TableId, table.QueueToTable[^1]);
         }
-        if (_frontConfiguration.DeliveryPolicy is { } delivery)
+        if (front.DeliveryPolicy is { } delivery)
         {
-            var spatial = kitchen.SpatialConfiguration ?? throw new ArgumentException("Service delivery requires kitchen geometry.");
+            var spatial = candidateSpatial ?? kitchen.SpatialConfiguration ?? throw new ArgumentException("Service delivery requires kitchen geometry.");
             var required = delivery.Mode == CookingFrontDeliveryMode.ServingAnchor
                 ? new[] { delivery.ServingAnchor! }
                 : Enumerable.Range(1, snapshot.Schedule.TableCount).Select(x => $"table-{x}");
             if (required.Any(id => spatial.Anchors.Count(a => a.Id == id) != 1))
                 throw new ArgumentException("A unique authoritative service anchor is required.");
         }
-        if (_frontConfiguration.ManualPolicyIdentity is not null)
+        if (front.ManualPolicyIdentity is not null)
         {
-            var spatial = kitchen.SpatialConfiguration ?? throw new ArgumentException("Manual front work requires kitchen geometry.");
-            var required = Enumerable.Range(1, snapshot.Schedule.TableCount).Select(x => $"table-{x}").Append(_frontConfiguration.WashingAnchor);
+            var spatial = candidateSpatial ?? kitchen.SpatialConfiguration ?? throw new ArgumentException("Manual front work requires kitchen geometry.");
+            var required = Enumerable.Range(1, snapshot.Schedule.TableCount).Select(x => $"table-{x}").Append(front.WashingAnchor);
             if (required.Any(id => !spatial.Anchors.Any(a => a.Id == id))) throw new ArgumentException("A front work anchor is missing.");
         }
     }
 
-    private void BindFrontOfHouse(CookingRecipeSimulation kitchen)
+    private void BindFrontOfHouse(CookingRecipeSimulation kitchen, bool prepared = false)
     {
         if (_frontOfHouse is not { } house) return;
         var snapshot = house.Snapshot();
-        ValidateFrontConfiguration(house, _frontOfHouseMenu, kitchen);
-        if (_frontConfiguration?.ManualPolicyIdentity is { } policy)
+        if (!prepared) ValidateFrontConfiguration(house, _frontOfHouseMenu, kitchen);
+        if (!prepared && _effectiveFrontConfiguration?.ManualPolicyIdentity is { } policy)
             RunFrontOperation(() => { house.ConfigureManualWork(policy, (player, target) => CanFrontWork(kitchen, player, target)); return true; });
-        kitchen.BindFrontDeliveryAuthority(_frontConfiguration?.DeliveryPolicy is { } delivery
+        kitchen.BindFrontDeliveryAuthority(_effectiveFrontConfiguration?.DeliveryPolicy is { } delivery
             ? (player, order) => ValidateFrontDelivery(kitchen, house, delivery, player, order)
             : null);
         house.BindAuthorityGate(new FrontAuthorityGate(this));
@@ -516,7 +521,7 @@ public sealed class CookingLevelEtHost : IDisposable
     private bool CanFrontWork(CookingRecipeSimulation kitchen, PlayerId player, string target)
     {
         if (!kitchen.IsPlayerAvailable(player) || kitchen.HasManualWork(player)) return false;
-        var anchorId = target == "washing" ? _frontConfiguration?.WashingAnchor ?? target : target;
+        var anchorId = target == "washing" ? _effectiveFrontConfiguration?.WashingAnchor ?? target : target;
         var anchor = kitchen.SpatialConfiguration?.Anchors.Where(x => x.Id == anchorId).OrderBy(x => x.Kind).FirstOrDefault();
         return anchor is not null && kitchen.ValidateSpatialReach(player, anchor.Kind, anchor.Id);
     }
@@ -536,6 +541,10 @@ public sealed class CookingLevelEtHost : IDisposable
     }
 
     public CookingLevelHostOperationResult BeginPreparation(CookingLevelPreparation preparation)
+        => BeginPreparationCore(preparation, null, null);
+
+    private CookingLevelHostOperationResult BeginPreparationCore(CookingLevelPreparation preparation,
+        CookingInstalledLayoutCheckpoint? restoredLayout, CookingRecipeCheckpoint? restoreReferences)
     {
         Check(); ArgumentNullException.ThrowIfNull(preparation);
         if (_lifecycle.State != CookingLevelState.Created)
@@ -553,8 +562,16 @@ public sealed class CookingLevelEtHost : IDisposable
                 if (!initialized.Accepted) return Operation(initialized);
                 if (!_lifecycle.TryPeekBoundKitchen(out var simulation) || simulation is null)
                     throw Fault(new InvalidOperationException("Preparation kitchen was not published."));
-                PublishKitchen(simulation);
                 _preparationConfiguration = configuration;
+                simulation.BindAuthorityGate(_authorityGate);
+                if (!InstallPreparedLayout(simulation, restoredLayout?.Layout ?? configuration.InitialLayout,
+                    restoredLayout?.GeometrySeedPoses, restoreReferences))
+                {
+                    CookingSimulationHostOwnership.Release(simulation, this);
+                    BestEffortAbortLifecycle(); RemoveLevel();
+                    throw Fault(new InvalidOperationException("Preparation layout cannot be installed in this kitchen."));
+                }
+                PublishKitchen(simulation);
                 _lifecycle.EnablePreparationGameplay();
             }
             finally { _initializingPreparation = false; }
@@ -598,7 +615,7 @@ public sealed class CookingLevelEtHost : IDisposable
             _failureInjector?.ThrowIfRequested(CookingLevelEtHostFailurePoint.BeforeSimulationPublish);
             _ownedSimulation = simulation;
             Driver.Simulation = simulation;
-            if (_frontConfiguration is { } configured && _frontOfHouse is null)
+            if (_effectiveFrontConfiguration is { } configured && _frontOfHouse is null)
             {
                 _frontOfHouse = new(configured.Schedule);
                 if (configured.Flow is not null) _frontOfHouse.ConfigureFlow(configured.Flow);
@@ -616,6 +633,67 @@ public sealed class CookingLevelEtHost : IDisposable
             throw Fault(new InvalidOperationException("The level gameplay simulation could not be bound to its ET driver.", exception));
         }
 
+    }
+
+    /// <summary>Atomically changes the initialized kitchen layout in Created or Preparing.</summary>
+    public bool TryInstallPreparedLayout(CookingRestaurantLayout layout)
+    {
+        Check(); ArgumentNullException.ThrowIfNull(layout);
+        if (_ownedSimulation is null || _preparationConfiguration is null || _pending.Count != 0 || _inFlight is not null ||
+            _lifecycle.State is not CookingLevelState.Created and not CookingLevelState.Preparing)
+            return false;
+        return InstallPreparedLayout(_ownedSimulation, layout, null, null);
+    }
+
+    private static CookingFrontOfHouse CreateInitialFront(CookingFrontOfHouseConfiguration configuration)
+    {
+        var house = new CookingFrontOfHouse(configuration.Schedule);
+        if (configuration.Flow is not null) house.ConfigureFlow(configuration.Flow);
+        if (configuration.ManualPolicyIdentity is { } policy) house.ConfigureManualWork(policy, (_, _) => false);
+        house.ExportCheckpoint(new CookingFrontOfHouseMenu(configuration.Menu));
+        return house;
+    }
+
+    private bool InstallPreparedLayout(CookingRecipeSimulation kitchen, CookingRestaurantLayout layout,
+        IReadOnlyList<CookingPlayerPose>? seeds, CookingRecipeCheckpoint? restoreReferences)
+    {
+        if (_preparationConfiguration is not { } policy) return false;
+        try
+        {
+            if (seeds is not null && seeds.Any(p => p is null || p.LastMovementTick != -1)) return false;
+            var projection = policy.Project(layout, seeds ?? kitchen.Snapshot().Poses ?? Array.Empty<CookingPlayerPose>(), kitchen.ConfiguredAppliances);
+            if (!projection.Accepted || !kitchen.CanInstallPreparedGeometry(projection, restoreReferences)) return false;
+            if (restoreReferences is null && _installedLayout?.Layout.CanonicalText() == projection.FrozenLayout!.CanonicalText())
+                return true;
+            if (seeds is not null && !seeds.OrderBy(p => p.Player.Value, StringComparer.Ordinal)
+                .SequenceEqual(projection.Geometry!.InitialPoses.OrderBy(p => p.Player.Value, StringComparer.Ordinal))) return false;
+            CookingFrontOfHouse? house = null;
+            CookingFrontOfHouseConfiguration? effective = null;
+            var menu = _frontOfHouseMenu;
+            if (_frontConfiguration is { } trusted)
+            {
+                effective = policy.DerivedFrontConfiguration(projection, trusted);
+                house = CreateInitialFront(effective); menu = new(effective.Menu);
+                if (effective.ManualPolicyIdentity is { } manual)
+                    house.ConfigureManualWork(manual, (player, target) => CanFrontWork(kitchen, player, target));
+                ValidateFrontConfiguration(house, menu, kitchen, effective, projection.Geometry);
+                if (restoreReferences is null && _frontOfHouse is { } oldHouse && _effectiveFrontConfiguration is { } oldConfiguration &&
+                    oldHouse.Snapshot().CanonicalText() != CreateInitialFront(oldConfiguration).ExportCheckpoint(new CookingFrontOfHouseMenu(oldConfiguration.Menu)).State.CanonicalText())
+                    return false;
+            }
+            else if (_frontOfHouse is not null) return false;
+            var installed = new CookingInstalledLayoutCheckpoint(projection.FrozenLayout!,
+                Array.AsReadOnly(projection.Geometry!.InitialPoses.ToArray()));
+            if (!RunPreparationMutation(() => kitchen.InstallPreparedGeometry(projection, restoreReferences))) return false;
+            _installedLayout = installed;
+            _effectiveFrontConfiguration = effective;
+            _frontOfHouse = house;
+            _frontOfHouseMenu = menu;
+            BindFrontOfHouse(kitchen, prepared: true);
+            return true;
+        }
+        catch (ArgumentException) { return false; }
+        catch (OverflowException) { return false; }
     }
 
     public CookingLevelAdmissionResult TryEnqueue(CookingLevelCommandEnvelope envelope)
@@ -975,7 +1053,7 @@ public sealed class CookingLevelEtHost : IDisposable
                 LastCommittedSimulationBatch,
                 recipeCheckpoint,
                 _frontOfHouse is null ? null : RunFrontOperation(() => _frontOfHouse.ExportCheckpoint(_frontOfHouseMenu)),
-                _frontConfigurationIdentity, _serviceStartLogicalTick, _preparationConfiguration?.Identity(), null));
+                _frontConfigurationIdentity, _serviceStartLogicalTick, _preparationConfiguration?.Identity(), _installedLayout));
     }
 
     /// <summary>
@@ -993,7 +1071,7 @@ public sealed class CookingLevelEtHost : IDisposable
         ArgumentNullException.ThrowIfNull(configuration);
         ArgumentNullException.ThrowIfNull(factory);
         if ((checkpoint.State != CookingLevelState.Running && checkpoint.State != CookingLevelState.Preparing)
-            || checkpoint.Outcome is not null || checkpoint.InstalledLayout is not null)
+            || checkpoint.Outcome is not null)
             return new(false, CookingLevelCheckpointRestoreReason.CheckpointScopeInvalid);
         if (!Equals(configuration.Identity, checkpoint.ConfigIdentity))
             return new CookingLevelCheckpointRestoreResult(false,
@@ -1016,6 +1094,24 @@ public sealed class CookingLevelEtHost : IDisposable
             return new(false, CookingLevelCheckpointRestoreReason.GameplayRestoreRejected,
                 RecipeRestoreReason: CookingCheckpointRestoreReason.CounterInvalid);
         var trustedFront = (factory as ICookingFrontOfHouseGameplayFactory)?.FrontOfHouseConfiguration;
+        var effectiveFront = trustedFront;
+        if ((trustedPreparation is null) != (checkpoint.InstalledLayout is null))
+            return new(false, CookingLevelCheckpointRestoreReason.ConfigurationIdentityMismatch);
+        if (checkpoint.InstalledLayout is { } installed)
+        {
+            try
+            {
+                if (installed.GeometrySeedPoses is null || installed.GeometrySeedPoses.Any(p => p is null || p.LastMovementTick != -1))
+                    return new(false, CookingLevelCheckpointRestoreReason.ConfigurationIdentityMismatch);
+                var projection = trustedPreparation!.Project(installed.Layout, installed.GeometrySeedPoses, configuration.Appliances);
+                if (!projection.Accepted || !installed.GeometrySeedPoses.OrderBy(p => p.Player.Value, StringComparer.Ordinal)
+                    .SequenceEqual(projection.Geometry!.InitialPoses.OrderBy(p => p.Player.Value, StringComparer.Ordinal)))
+                    return new(false, CookingLevelCheckpointRestoreReason.ConfigurationIdentityMismatch);
+                if (trustedFront is not null) effectiveFront = trustedPreparation.DerivedFrontConfiguration(projection, trustedFront);
+            }
+            catch (ArgumentException) { return new(false, CookingLevelCheckpointRestoreReason.ConfigurationIdentityMismatch); }
+            catch (OverflowException) { return new(false, CookingLevelCheckpointRestoreReason.ConfigurationIdentityMismatch); }
+        }
         if (trustedFront is not null && checkpoint.FrontOfHouse is { } clock &&
             clock.State.ServiceTicks != (preparing ? 0 : Math.Min(checkpoint.Recipe.LogicalTick - checkpoint.ServiceStartLogicalTick, trustedFront.Schedule.ServiceTicks)))
             return new(false, CookingLevelCheckpointRestoreReason.FrontOfHouseRestoreRejected,
@@ -1030,13 +1126,10 @@ public sealed class CookingLevelEtHost : IDisposable
             // Preparing has never advanced service. Compare every business field against
             // the same trusted initial configuration used by PublishKitchen/BindFrontOfHouse.
             CookingFrontOfHouseCheckpoint? pristine = null;
-            if (trustedFront is not null)
+            if (effectiveFront is not null)
             {
-                var initial = new CookingFrontOfHouse(trustedFront.Schedule);
-                if (trustedFront.Flow is not null) initial.ConfigureFlow(trustedFront.Flow);
-                if (trustedFront.ManualPolicyIdentity is { } policy)
-                    initial.ConfigureManualWork(policy, (_, _) => false);
-                pristine = initial.ExportCheckpoint(new CookingFrontOfHouseMenu(trustedFront.Menu));
+                var initial = CreateInitialFront(effectiveFront);
+                pristine = initial.ExportCheckpoint(new CookingFrontOfHouseMenu(effectiveFront.Menu));
             }
             if (checkpoint.FrontOfHouse?.CanonicalText() != pristine?.CanonicalText())
                 return new(false, CookingLevelCheckpointRestoreReason.FrontOfHouseRestoreRejected,
@@ -1069,7 +1162,8 @@ public sealed class CookingLevelEtHost : IDisposable
         try
         {
             host = new CookingLevelEtHost(lifecycle);
-            var prepared = preparing ? host.BeginPreparation(checkpoint.Preparation) : host.Prepare(checkpoint.Preparation);
+            var prepared = host.BeginPreparationCore(checkpoint.Preparation, checkpoint.InstalledLayout, checkpoint.Recipe);
+            if (prepared.Accepted && !preparing) prepared = host.CompletePreparation();
             if (!prepared.Accepted)
             {
                 host.Dispose();
@@ -1606,7 +1700,7 @@ public sealed class CookingLevelEtHost : IDisposable
 
     private T RunPreparationMutation<T>(Func<T> operation)
     {
-        if (_executingPreparationMutation || _lifecycle.State != CookingLevelState.Created)
+        if (_executingPreparationMutation || _lifecycle.State is not CookingLevelState.Created and not CookingLevelState.Preparing)
             throw new InvalidOperationException("Preparation mutation is unavailable or reentered.");
         _executingPreparationMutation = true;
         try { return operation(); } finally { _executingPreparationMutation = false; }
@@ -1745,7 +1839,7 @@ public sealed class CookingLevelEtHost : IDisposable
         public bool IsAuthorityMutationOpen =>
             !_host._disposed && _host._tickFailure is null &&
             ((_host._ticking && _host._executingAuthorityMutation) ||
-             (_host._executingPreparationMutation && _host._lifecycle.State == CookingLevelState.Created));
+             (_host._executingPreparationMutation && _host._lifecycle.State is CookingLevelState.Created or CookingLevelState.Preparing));
     }
 
     private sealed class HostGameplayGate : ICookingRecipeLifecycleGate

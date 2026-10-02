@@ -2,12 +2,15 @@ namespace AbilityKit.Game.Cooking;
 
 public sealed partial class CookingRecipeSimulation
 {
+    internal IReadOnlyDictionary<StationSlotId, CookingApplianceDefinition> ConfiguredAppliances => _fixture.Appliances;
     // The Level owner builds this projection from trusted content and validates front routes
     // before calling the installer. No gameplay command accepts a caller-supplied projection.
-    internal bool CanInstallPreparedGeometry(CookingLayoutGeometryResult projection)
+    internal bool CanInstallPreparedGeometry(CookingLayoutGeometryResult projection,
+        CookingRecipeCheckpoint? restoreReferences = null)
     {
         if (!projection.Accepted || projection.Geometry is not { } geometry ||
-            _lifecycleClosed || _mutationInProgress || _lifecycleGate?.IsGameplayMutationOpen == true)
+            _lifecycleClosed || _mutationInProgress ||
+            (_lifecycleGate is not null && !_lifecycleGate.IsLayoutInstallationOpen))
             return false;
         if (projection.ProjectedPoses.Count != _fixture.Players.Count ||
             projection.ProjectedPoses.Any(p => !_fixture.Players.ContainsKey(p.Player) || !geometry.ValidPose(p)) ||
@@ -17,7 +20,8 @@ public sealed partial class CookingRecipeSimulation
         var poses = projection.ProjectedPoses;
         for (var i = 0; i < poses.Count; i++)
         {
-            if (!_poses.TryGetValue(poses[i].Player, out var old) || poses[i].LastMovementTick != old.LastMovementTick)
+            if (restoreReferences is null &&
+                (!_poses.TryGetValue(poses[i].Player, out var old) || poses[i].LastMovementTick != old.LastMovementTick))
                 return false;
             for (var j = i + 1; j < poses.Count; j++)
                 if (geometry.Overlap(poses[i], poses[j])) return false;
@@ -27,11 +31,33 @@ public sealed partial class CookingRecipeSimulation
         if (_fixture.Appliances.Keys.Any(s => !HasAnchor(LocationKind.StationSlot, s.Value)) ||
             geometry.Anchors.Any(a => a.Kind == LocationKind.StationSlot &&
                 !_fixture.Appliances.ContainsKey(new StationSlotId(a.Id)))) return false;
-        foreach (var item in _items.Values.Where(i => !i.Removed))
-            if (item.Location.Kind is LocationKind.WorldPosition or LocationKind.StationSlot &&
-                !HasAnchor(item.Location.Kind, item.Location.SlotId)) return false;
-        foreach (var process in AllProcesses())
-            if (process.Station is { } station && !HasAnchor(LocationKind.StationSlot, station.Value)) return false;
+        if (restoreReferences is null)
+        {
+            foreach (var item in _items.Values.Where(i => !i.Removed))
+                if (item.Location.Kind is LocationKind.WorldPosition or LocationKind.StationSlot &&
+                    !HasAnchor(item.Location.Kind, item.Location.SlotId)) return false;
+            foreach (var process in AllProcesses())
+                if (process.Station is { } station && !HasAnchor(LocationKind.StationSlot, station.Value)) return false;
+        }
+        else
+        {
+            if (!Equals(restoreReferences.Scope, _fixture.Scope) || restoreReferences.Items is null ||
+                restoreReferences.Processes is null || restoreReferences.Poses is not { } restoredPoses ||
+                restoredPoses.Count != _fixture.Players.Count ||
+                restoredPoses.Any(p => p is null || !_fixture.Players.ContainsKey(p.Player) || !geometry.ValidPose(p)) ||
+                restoredPoses.Select(p => p.Player).Distinct().Count() != restoredPoses.Count)
+                return false;
+            for (var i = 0; i < restoredPoses.Count; i++)
+                for (var j = i + 1; j < restoredPoses.Count; j++)
+                    if (geometry.Overlap(restoredPoses[i], restoredPoses[j])) return false;
+            foreach (var item in restoreReferences.Items)
+                if (item is null || (!item.Removed &&
+                    item.Location.Kind is LocationKind.WorldPosition or LocationKind.StationSlot &&
+                    !HasAnchor(item.Location.Kind, item.Location.SlotId))) return false;
+            foreach (var process in restoreReferences.Processes)
+                if (process is null || (process.Station is { } station &&
+                    !HasAnchor(LocationKind.StationSlot, station.Value))) return false;
+        }
         if (_fixture.Supply is { } supply)
             foreach (var supplier in supply.Suppliers)
                 if (!geometry.Anchors.Any(a => a.Id == supplier.SourceAnchor) ||
@@ -39,9 +65,10 @@ public sealed partial class CookingRecipeSimulation
         return true;
     }
 
-    internal bool InstallPreparedGeometry(CookingLayoutGeometryResult projection)
+    internal bool InstallPreparedGeometry(CookingLayoutGeometryResult projection,
+        CookingRecipeCheckpoint? restoreReferences = null)
     {
-        if (!IsAuthorityMutationOpen || !CanInstallPreparedGeometry(projection)) return false;
+        if (!IsAuthorityMutationOpen || !CanInstallPreparedGeometry(projection, restoreReferences)) return false;
         var geometry = projection.Geometry!.Freeze();
         var poses = projection.ProjectedPoses.ToDictionary(p => p.Player);
         var stationProcesses = _processesByStation.ToDictionary(p => p.Key, p => p.Value with { ActiveWorker = null });

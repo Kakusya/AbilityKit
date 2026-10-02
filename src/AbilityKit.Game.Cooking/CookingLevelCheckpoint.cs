@@ -9,12 +9,20 @@ public sealed record CookingInstalledLayoutCheckpoint(
     [property: System.Text.Json.Serialization.JsonRequired] CookingRestaurantLayout Layout,
     [property: System.Text.Json.Serialization.JsonRequired] IReadOnlyList<CookingPlayerPose> GeometrySeedPoses)
 {
-    public string CanonicalText() => JsonSerializer.Serialize(new
+    public string CanonicalText()
     {
-        Layout = Layout.CanonicalText(),
-        GeometrySeedPoses = GeometrySeedPoses.OrderBy(p => p.Player.Value, StringComparer.Ordinal)
-            .Select(p => new { Player = p.Player.Value, p.X, p.Y, p.FacingX, p.FacingY, p.LastMovementTick }).ToArray()
-    });
+        if (Layout is null || GeometrySeedPoses is null || GeometrySeedPoses.Any(p => p is null) ||
+            Layout.Floors is null || Layout.Floors.Any(f => f is null) ||
+            Layout.Equipment is null || Layout.Equipment.Any(e => e is null) ||
+            Layout.Walls is null || Layout.Targets is null || Layout.Targets.Any(t => t is null))
+            throw new ArgumentException("Installed layout checkpoint is incomplete.");
+        return JsonSerializer.Serialize(new
+        {
+            Layout = Layout.CanonicalText(),
+            GeometrySeedPoses = GeometrySeedPoses.OrderBy(p => p.Player.Value, StringComparer.Ordinal)
+                .Select(p => new { Player = p.Player.Value, p.X, p.Y, p.FacingX, p.FacingY, p.LastMovementTick }).ToArray()
+        });
+    }
 }
 
 /// <summary>

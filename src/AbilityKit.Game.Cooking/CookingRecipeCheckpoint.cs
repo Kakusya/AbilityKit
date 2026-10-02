@@ -380,7 +380,7 @@ public sealed partial class CookingRecipeSimulation
             _lifecycleClosed = false;
             _lifecycleGate = null;
         }
-        var restored = RestoreCheckpoint(handoff with { Poses = _fixture.Spatial?.InitialPoses.ToArray() ?? Array.Empty<CookingPlayerPose>() });
+        var restored = RestoreCheckpoint(handoff with { Poses = EffectiveSpatial?.InitialPoses.ToArray() ?? Array.Empty<CookingPlayerPose>() });
         if (!restored.Accepted && closedForHandoff)
         {
             _lifecycleClosed = true;

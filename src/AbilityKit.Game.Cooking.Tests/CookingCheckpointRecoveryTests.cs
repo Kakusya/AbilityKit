@@ -11,6 +11,27 @@ namespace AbilityKit.Game.Cooking.Tests;
 [Trait("Gate", "CookingKitchenLoop")]
 public sealed class CookingCheckpointRecoveryTests
 {
+    [Theory]
+    [InlineData("geometrySeedPoses")]
+    [InlineData("floors")]
+    [InlineData("equipment")]
+    [InlineData("targets")]
+    public void Malformed_installed_layout_entry_is_rejected_without_throwing_from_integrity_validation(string field)
+    {
+        var checkpoint = Wrap(CreateFixture().Simulation.ExportCheckpoint()) with
+        {
+            InstalledLayout = new(new(new("layout"), new[] { new CookingFloorRegion("floor", 0, 0, 2, 2) },
+                Array.Empty<CookingEquipmentPlacement>(), Array.Empty<CookingLayoutCell>(), Array.Empty<CookingLayoutTarget>()),
+                new[] { new CookingPlayerPose(new("chef-a"), 500, 500, 1, 0) })
+        };
+        var serialized = CookingLevelCheckpointCodec.Serialize(CookingLevelCheckpointCodec.CreateEnvelope(checkpoint));
+        var json = System.Text.Json.Nodes.JsonNode.Parse(serialized)!;
+        var installed = json["checkpoint"]!["installedLayout"]!;
+        var target = field == "geometrySeedPoses" ? installed : installed["layout"]!;
+        target[field] = new System.Text.Json.Nodes.JsonArray((System.Text.Json.Nodes.JsonNode?)null);
+        Assert.Equal(CookingCheckpointReadReason.RecordTruncated, CookingLevelCheckpointCodec.Deserialize(json.ToJsonString()).Reason);
+    }
+
     private static readonly SessionId Session = new("checkpoint-session");
     private static readonly WorldId World = new("checkpoint-world");
     private static readonly MatchId Match = new("checkpoint-match");

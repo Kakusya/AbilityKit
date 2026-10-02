@@ -420,6 +420,8 @@ internal interface ICookingRecipeLifecycleGate
 {
     bool IsGameplayMutationOpen { get; }
 
+    bool IsLayoutInstallationOpen => false;
+
     CookingLevelScope? LevelScope => null;
 }
 

@@ -59,7 +59,10 @@ public sealed class CookingPreparingEtTests
             var layout = new CookingRestaurantLayout(new("initial"), new[] { new CookingFloorRegion("floor", 0, 0, 6, 6) },
                 new[] { new CookingEquipmentPlacement(Stove, Machine, new(3, 2), 1, 1, 0, 0, -1) }, Array.Empty<CookingLayoutCell>(),
                 new[] { new CookingLayoutTarget("player", CookingLayoutTargetKind.PlayerEntrance, new(0, 1)),
-                    new("customer-entrance", CookingLayoutTargetKind.CustomerEntrance, new(0, 3)), new("exit", CookingLayoutTargetKind.Exit, new(5, 3)) });
+                    new("customer-entrance", CookingLayoutTargetKind.CustomerEntrance, new(0, 3)), new("exit", CookingLayoutTargetKind.Exit, new(5, 3)),
+                    new("queue", CookingLayoutTargetKind.Queue, new(0, 4)), new("table-1", CookingLayoutTargetKind.Table, new(2, 4)),
+                    new("source", CookingLayoutTargetKind.Storage, new(1, 1)), new("receiving", CookingLayoutTargetKind.Storage, new(2, 1)),
+                    new("storage", CookingLayoutTargetKind.Storage, new(3, 1)), new("plate", CookingLayoutTargetKind.Storage, new(0, 1)) });
             return new(layout, new Dictionary<DefinitionId, CookingEquipmentFootprint> { [Machine] = new(Machine, 1, 1, 0, -1) },
                 new(250, 5000, 1000), new HashSet<DefinitionId> { Machine }, new HashSet<DefinitionId> { Machine },
                 new Dictionary<StationSlotId, DefinitionId> { [Stove] = Machine }, 2, 3);

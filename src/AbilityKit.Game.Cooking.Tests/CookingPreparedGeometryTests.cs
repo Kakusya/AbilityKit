@@ -8,13 +8,13 @@ public sealed class CookingPreparedGeometryTests
 {
     private static readonly PlayerId Player = new("a");
     private static readonly DefinitionId Raw = new("raw");
-    private static CookingLayoutGeometryResult Project(int sourceX, bool includeSource = true) =>
+    private static CookingLayoutGeometryResult Project(int sourceX, bool includeSource = true, string sourceId = "source") =>
         CookingLayoutGeometry.Project(new(new("layout"), new[] { new CookingFloorRegion("floor", 0, 0, 6, 6) },
             Array.Empty<CookingEquipmentPlacement>(), Array.Empty<CookingLayoutCell>(),
             new[] { new CookingLayoutTarget("entrance", CookingLayoutTargetKind.PlayerEntrance, new(0, 0)),
                 new("customer", CookingLayoutTargetKind.CustomerEntrance, new(0, 1)),
                 new("exit", CookingLayoutTargetKind.Exit, new(0, 2)) }
-                .Concat(includeSource ? new[] { new CookingLayoutTarget("source", CookingLayoutTargetKind.Storage, new(sourceX, 0)) } : Array.Empty<CookingLayoutTarget>()).ToArray()),
+                .Concat(includeSource ? new[] { new CookingLayoutTarget(sourceId, CookingLayoutTargetKind.Storage, new(sourceX, 0)) } : Array.Empty<CookingLayoutTarget>()).ToArray()),
             new HashSet<DefinitionId>(), new HashSet<DefinitionId>(), new Dictionary<DefinitionId, CookingEquipmentFootprint>(),
             new(250, 1400, 700), new[] { new CookingPlayerPose(Player, 500, 500, 1, 0) });
 
@@ -68,5 +68,38 @@ public sealed class CookingPreparedGeometryTests
         var before = kitchen.ExportCheckpoint().CanonicalText();
         Assert.False(kitchen.InstallPreparedGeometry(Project(1)));
         Assert.Equal(before, kitchen.ExportCheckpoint().CanonicalText());
+    }
+
+    [Fact]
+    public void Restore_projection_validates_saved_references_instead_of_discarded_factory_items()
+    {
+        var kitchen = Kitchen();
+        var saved = kitchen.ExportCheckpoint();
+        saved = saved with { Items = saved.Items.Select(i => i with { Location = ItemLocation.World("new-source") }).ToArray() };
+        var geometry = Project(1, sourceId: "new-source");
+        Assert.False(kitchen.CanInstallPreparedGeometry(geometry));
+        Assert.True(kitchen.InstallPreparedGeometry(geometry, saved));
+        Assert.True(kitchen.RestoreCheckpoint(saved).Accepted);
+        Assert.Equal("new-source", Assert.Single(kitchen.Snapshot().Items).Location.SlotId);
+        Assert.Equal(saved.CanonicalText(), kitchen.ExportCheckpoint().CanonicalText());
+    }
+
+    [Fact]
+    public void Explicit_layout_gate_allows_preparing_gameplay_but_rejects_a_closed_layout_phase()
+    {
+        var kitchen = Kitchen();
+        var gate = new LayoutGate();
+        kitchen.BindLifecycleGate(gate);
+        Assert.True(kitchen.InstallPreparedGeometry(Project(1)));
+        gate.IsLayoutInstallationOpen = false;
+        var before = kitchen.ExportCheckpoint().CanonicalText();
+        Assert.False(kitchen.InstallPreparedGeometry(Project(2)));
+        Assert.Equal(before, kitchen.ExportCheckpoint().CanonicalText());
+    }
+
+    private sealed class LayoutGate : ICookingRecipeLifecycleGate
+    {
+        public bool IsGameplayMutationOpen => true;
+        public bool IsLayoutInstallationOpen { get; set; } = true;
     }
 }
