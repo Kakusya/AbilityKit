@@ -1,3 +1,5 @@
+> Current verified source07bb27d54 uses definition3 /Recipe5 /Level8 and typed major baseline3. Required HostFrameSequence preserves durable restart clock; typed2/legacy1 reject via ReadBaseline. Historical format2 proof below does not establish current Host loading. [Actual master proof](../../../.trellis/tasks/10-02-cooking-gameplay-menu-plan/research/master-durable-natural-verification.md). Natural successor cold continuation and narrowed carry remain open.
+
 > 2026-10-03 scoped menu authorization: read [menu Ready/runtime policy contract](cooking-menu-catalog.md#scoped-menu-ready-and-runtime-authorization-2026-10-03). Current reviewed productionfa2f60e17 is definition3 / Recipe5 / Level8, typed major baseline2 separate. MenuNotAuthorized is appended; recovery and approved in-flight work remain available. Current actual gate results and incomplete natural/durable exits live in task evidence.
 
 ## 2026-10-02 S05 binding and serving vessel contract

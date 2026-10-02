@@ -175,3 +175,5 @@ Generation transaction and pure menu helper merged; actual master kitchen605/733
 ## Scoped menu productionfa2f60e17
 
 Host/runtime/checkpoint8 integration independently reviewed and master gates630/758/266 and758/266 passed, zero failures/skips. Actual red enum-count test preserved and corrected with stable tail-value assertions. See research/master-menu-policy-verification.md. Continue actual natural Front service/replay/restore, scope-narrowed carry and durable Host restart before completing S14.
+
+Current reviewed source `07bb27d54`: durable Host typed baseline3 and four-branch natural operating accepted by actual master635/763/289 and763/289 gates. Read [master-durable-natural-verification.md](research/master-durable-natural-verification.md) for precise evidence. Natural successor cold continuation and narrower-scope carry remain in progress; S14/network/Unity completion is not inferred.

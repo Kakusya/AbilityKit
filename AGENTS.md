@@ -1,3 +1,5 @@
+> Latest durable/natural execution proof: [master-durable-natural-verification.md](.trellis/tasks/10-02-cooking-gameplay-menu-plan/research/master-durable-natural-verification.md). Typed baseline3 preserves HostFrameSequence; narrowed carry and actual natural successor cold continuation still gate S14.
+
 > Current scoped menu execution/recovery proof: [master-menu-policy-verification.md](.trellis/tasks/10-02-cooking-gameplay-menu-plan/research/master-menu-policy-verification.md). Current Level8 supersedes historical Level7 evidence; natural operating, narrowed carry and durable Host loading are still incomplete.
 
 > Generation transaction/current pure-menu validation proof: [master-generation-menu-verification.md](.trellis/tasks/10-02-cooking-gameplay-menu-plan/research/master-generation-menu-verification.md). Read its remaining exits before continuing; helper/store verification is not Host Ready/restart or full S14 completion.

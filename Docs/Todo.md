@@ -410,3 +410,5 @@ MOBA、Client Flow、Presentation 与通用工程治理属于后续正式化主�
 ## 9. 结论
 
 当前项目待办不再只围绕同步展柜：Cooking ET 应用运行时和 Shooter 同步正式化是两条并列 P0 主线。前者重点是正式 Match 宿主、单一加工时钟、可恢复 checkpoint、跨小关规则与最终 ECS 清退（UDP ingress 已于 2026-09-21 放弃，传输改用 KCP 属后续未启动工作）；后者重点是纯状态客户端消费、AOI/预算、delta/keyframe/resync、远程 lag compensation 与网络条件预算联动。MOBA 和 Client Flow 作为后续正式化主线，重点是收紧失败语义、建立不可变计划/契约、校准包边界，而不是先做大规模功能扩张。
+
+Current reviewed source `07bb27d54`: durable Host typed baseline3 and four-branch natural operating accepted by actual master635/763/289 and763/289 gates. Read [master-durable-natural-verification.md](../.trellis/tasks/10-02-cooking-gameplay-menu-plan/research/master-durable-natural-verification.md) for precise evidence. Natural successor cold continuation and narrower-scope carry remain in progress; S14/network/Unity completion is not inferred.

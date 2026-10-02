@@ -19,3 +19,4 @@
 {"file": ".trellis/tasks/10-02-cooking-gameplay-menu-plan/research/baseline-generation-core-verification.md", "reason": "Actual baseline/staging core gate480/608/238 and Location-null red/green; Host generation/restart not yet verified"}
 {"file": ".trellis/tasks/10-02-cooking-gameplay-menu-plan/research/master-generation-menu-verification.md", "reason": "Reviewed master125ffe906 actual kitchen605/733/254 and ET733/254; Ready/runtime/restart/natural exits remain open"}
 {"file": ".trellis/tasks/10-02-cooking-gameplay-menu-plan/research/master-menu-policy-verification.md", "reason": "Actual reviewed masterfa2f60e17 menu-policy gates630/758/266 and758/266; natural/durable/narrowed carry remain in progress"}
+{"file": ".trellis/tasks/10-02-cooking-gameplay-menu-plan/research/master-durable-natural-verification.md", "reason": "Actual reviewed master07bb27d54 gates635/763/289 and763/289; natural successor cold flow and narrowed carry remain in progress"}
