@@ -72,7 +72,8 @@ public sealed class SampleNetworkArchitectureTests
         var directory = new DirectoryInfo(startDirectory);
         while (directory != null)
         {
-            if (Directory.Exists(Path.Combine(directory.FullName, ".git")) &&
+            if ((Directory.Exists(Path.Combine(directory.FullName, ".git")) ||
+                 File.Exists(Path.Combine(directory.FullName, ".git"))) &&
                 Directory.Exists(Path.Combine(directory.FullName, "Unity")) &&
                 Directory.Exists(Path.Combine(directory.FullName, "src")))
             {
