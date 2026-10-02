@@ -3,7 +3,7 @@
   "name": "cooking-network-contract-review",
   "title": "网络范围与历史冲突收敛",
   "description": "KCP/LiteNet、先到先得/稳定仲裁冲突",
-  "status": "planning",
+  "status": "completed",
   "dev_type": null,
   "scope": null,
   "package": null,
@@ -11,7 +11,7 @@
   "creator": "Li He",
   "assignee": "Li He",
   "createdAt": "2026-10-02",
-  "completedAt": null,
+  "completedAt": "2026-10-03",
   "branch": null,
   "base_branch": "master",
   "worktree_path": null,
@@ -21,7 +21,7 @@
   "children": [],
   "parent": "10-02-cooking-gameplay-menu-plan",
   "relatedFiles": [],
-  "notes": "2026-10-02 owner 只授权记录规划与列 Task，不执行。全局路线与历史契约保持。",
+  "notes": "Completed contract reconciliation only; root-contract-acceptance.md and final-contract-review.md accept bounded N02 start. No network implementation/test completion claim.",
   "meta": {
     "plan_id": "N01",
     "stage": "network",
@@ -31,7 +31,7 @@
       "S14"
     ],
     "execution_gate": "reviewed-contract-and-dependencies",
-    "planning_maturity": "reviewed-contract",
+    "planning_maturity": "accepted-contract",
     "owner_delegated_details": true,
     "execution_authorization": "Latest owner: audit every topic then execute through completion. Task planning review and dependency checks precede execution; Unity and optional reference pool remain deferred."
   }

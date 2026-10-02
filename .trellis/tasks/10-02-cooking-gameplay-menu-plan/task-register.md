@@ -1,3 +1,5 @@
+> 2026-10-03: S01-S14 accepted; N01 completed contract review, N02 in_progress. [Current network acceptance](../10-02-cooking-network-contract-review/research/root-contract-acceptance.md). Older planning-only states below are historical; no network or physical LAN pass inferred.
+
 > Current accepted status: S01-S14 pure C# singleplayer completed on master4dadd25c8, actual final gates644/772/299 and772/299. Read [exit proof](research/master-singleplayer-exit-verification.md). Parent stays active; N01-N03 next, Unity/S15 deferred. Earlier status tables are historical snapshots.
 
 > Current incremental baseline: master125ffe906 reviewed generation staging, actual supply/preparation/layout, immutable Observe and pure Ready validator. Master kitchen605/733/254 and ET733/254 passed. S06/S07/S08/S14 remain in progress for scope permissions, trusted Host Ready/restart and natural service exit. Read [latest evidence](research/master-generation-menu-verification.md) and [complete remaining exits](research/completion-contract.md); older introductory statuses below are historical.

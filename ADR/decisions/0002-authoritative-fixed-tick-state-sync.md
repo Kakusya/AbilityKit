@@ -1,3 +1,5 @@
+> 2026-10-03 applicability reconciliation: owner decisions of2026-09-24 supersede the2026-09-21 temporary KCP deferral for the authorized N01-N03 route. Real transport is generic LiteNet reliable-UDP; InProcess is local/test only, TCP/KCP are not this route. Host local Client and remote Client share framing/validation/queue; callbacks only enqueue, connection effects and gameplay commit at owner fixed Tick. Network arbitration uses atomically assigned accepted-ingress ordinal, while existing singleplayer deterministic ordering remains its default. One CookingLevelEtHost owns simulation and lifecycle; full typed state broadcasts and passive Clients are the initial route. This is an accepted decision, not network implementation/test evidence. Source: [owner sections28-29](../../.trellis/tasks/09-19-cooking-productization-network-slice-planning/research/discussion-notes.md); current [N01 design](../../.trellis/tasks/10-02-cooking-network-contract-review/design.md). Historical text below retains its original applicability.
+
 # ADR-0002：权威固定 Tick 与首阶段状态同步
 
 - 状态：Accepted（用户已明确技术路线；不代表功能已实现或已测试）

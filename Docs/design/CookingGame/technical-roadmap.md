@@ -1,3 +1,5 @@
+> Current applicability2026-10-03: pure C# S01-S14 completed on source4dadd25c8; N01-N03 next under existing owner authorization. Generic LiteNet reliable-UDP is the sole real transport; InProcess is local/test only. Owner2026-09-24 sections28-29 supersede temporary KCP/transport-comparison notes below; see [ADR-0002](../../../ADR/decisions/0002-authoritative-fixed-tick-state-sync.md) and [N01 contract](../../../.trellis/tasks/10-02-cooking-network-contract-review/design.md). Singleplayer default stable ordering remains unchanged; network explicitly uses accepted-ingress ordinal and one ET authority. No production network or two-PC proof is inferred. Unity stays prohibited.
+
 > Current owner instruction (2026-10-02): continue auditing all topics, resolve their plans, then implement and verify to completion without stopping for routine confirmations. Preserve architecture and stage order: singleplayer -> network -> singleplayer Unity -> network Unity. Current stage: singleplayer. Older planning-only notices below are historical. Unity remains deferred under its separate gate.
 
 # 做菜经营游戏技术路线

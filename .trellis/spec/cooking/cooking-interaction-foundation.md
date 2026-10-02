@@ -1,3 +1,5 @@
+> Ordering applicability2026-10-03: singleplayer default deterministic arbitration below remains unchanged. Current N01 network design requires atomically assigned accepted-ingress ordinal on the same ET authority, explicitly configured rather than silently replacing the default. See [N01 design](../../tasks/10-02-cooking-network-contract-review/design.md); this is a contract, not implemented network capability.
+
 # P0 交互基础：cooking-interaction-foundation
 
 ## 2026-10-02 S01?S03 ??????

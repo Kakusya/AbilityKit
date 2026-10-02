@@ -1,3 +1,5 @@
+> 2026-10-03: N01 contract review completed; N02 bounded network implementation in_progress. [Acceptance and ownership](../.trellis/tasks/10-02-cooking-network-contract-review/research/root-contract-acceptance.md). Network verification/physical LAN still pending; Unity deferred.
+
 > Current reviewed stage2026-10-03: S01-S14 pure C# singleplayer completed on source4dadd25c8; actual final master gates644/772/299 and772/299 passed, zero failures/skips. Detailed evidence: .trellis/tasks/10-02-cooking-gameplay-menu-plan/research/master-singleplayer-exit-verification.md. N01-N03 next; parent remains active, Unity/S15 deferred and physical two-PC LAN unverified. Earlier remaining-singleplayer notices below are historical.
 
 > Current scoped menu execution/recovery proof: [master-menu-policy-verification.md](../.trellis/tasks/10-02-cooking-gameplay-menu-plan/research/master-menu-policy-verification.md). Current Level8 supersedes historical Level7 evidence; natural operating, narrowed carry and durable Host loading are still incomplete.

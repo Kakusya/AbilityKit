@@ -1,3 +1,5 @@
+> Current stage reconciliation2026-10-03: authorized S01-S14 pure C# singleplayer scope completed on source4dadd25c8; N01-N03 are authorized next. Owner2026-09-24 decisions select generic LiteNet reliable-UDP as the sole real transport, InProcess only local/test, superseding temporary KCP notes below. Formal decision: [ADR-0002](decisions/0002-authoritative-fixed-tick-state-sync.md). [Actual singleplayer proof](../.trellis/tasks/10-02-cooking-gameplay-menu-plan/research/master-singleplayer-exit-verification.md). Network implementation and physical two-PC LAN remain unverified; Unity/S15 stay deferred. Earlier planning-only/singleplayer-current notices are historical.
+
 > Current owner instruction (2026-10-02): continue auditing all topics, resolve their plans, then implement and verify to completion without stopping for routine confirmations. Preserve architecture and stage order: singleplayer -> network -> singleplayer Unity -> network Unity. Current stage: singleplayer. Older planning-only notices below are historical. Unity remains deferred under its separate gate.
 
 # 做菜经营游戏：长期目标

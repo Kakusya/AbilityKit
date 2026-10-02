@@ -1,3 +1,5 @@
+> N01 current route2026-10-03: read [N01 reviewed design](../../tasks/10-02-cooking-network-contract-review/design.md) and [resume audit](../../tasks/10-02-cooking-gameplay-menu-plan/research/network-resume-audit.md). Owner2026-09-24 selected generic LiteNet reliable-UDP only and accepted-ingress first-received arbitration; historical TCP/UDP selection/D1 requirements below no longer govern N01-N03. Preserve their limited proof boundary. One existing ET Host, unified local InProcess/remote framing, callback enqueue only and passive full typed baseline are required. Current source4dadd25c8 proves pure C# singleplayer, not current network. Physical two-PC LAN remains NOT_VERIFIED; Unity prohibited.
+
 # P1 LAN listen host/client：cooking-lan-session
 ## 2026-09-16 收口状态
 

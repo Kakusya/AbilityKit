@@ -21,7 +21,7 @@
   "children": [],
   "parent": "10-02-cooking-gameplay-menu-plan",
   "relatedFiles": [],
-  "notes": "2026-10-02 owner 只授权记录规划与列 Task，不执行。全局路线与历史契约保持。",
+  "notes": "Latest owner authorizes audit then implementation. Network contract and N02 dependency review precede N03 execution; physical two-PC LAN remains unverified; Unity deferred.",
   "meta": {
     "plan_id": "N03",
     "stage": "network",

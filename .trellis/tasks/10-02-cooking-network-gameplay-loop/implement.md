@@ -1,4 +1,4 @@
-> Current owner instruction (2026-10-02): continue auditing all topics, resolve their plans, then implement and verify to completion without stopping for routine confirmations. Preserve architecture and stage order: singleplayer -> network -> singleplayer Unity -> network Unity. Current stage: singleplayer. Older planning-only notices below are historical. Unity remains deferred under its separate gate.
+> Current owner instruction (2026-10-02): continue auditing all topics, resolve their plans, then implement and verify to completion without stopping for routine confirmations. Preserve architecture and stage order: singleplayer -> network -> singleplayer Unity -> network Unity. Current stage: network contract review; S01-S14 accepted at 4dadd25c8 with evidence routed by master-singleplayer-exit-verification.md. Older planning-only notices below are historical. Unity remains deferred under its separate gate.
 
 # N02 待执行清单
 
@@ -14,3 +14,7 @@
 ## Current execution sequence after review
 
 Owner authorizes audit then implementation. Follow the reviewed design and parent research/final-review.md; historical planning-only text is superseded. Check actual dependency evidence before starting, preserve stopped worktree edits, fix review findings before accepting prior implementation, update payload/fingerprints/config identity/canonical/checkpoint together, run focused behavioral and applicable integration gates, record actual pass/fail/blocked/skip and commit evidence. Never declare this Task complete from metadata or directory counts.
+
+## Accepted implementation contract - 2026-10-03
+
+Use N01 design.md final source-boundary and identity sections and research/root-contract-acceptance.md as the exact interface and ownership contract. N01 independent readiness review passed; parent master-singleplayer-exit-verification.md proves dependency acceptance. Earlier draft/start prohibition below the historical header is superseded. N02 is in_progress; implementation, gates and physical LAN are not yet accepted. Three bounded increments: generic transport; authority port/ET narrow extension; framed passive Session composition. Source changes require focused controls and applicable network-sdk/Cooking/ET gates; no Unity gameplay work. Root serializes .NET windows. Preserve old dirty network worktree.

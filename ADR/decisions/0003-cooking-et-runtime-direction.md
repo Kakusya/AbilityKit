@@ -1,3 +1,5 @@
+> Ordering applicability2026-10-03: existing singleplayer deterministic ordering is preserved. Authorized network composition uses atomically assigned ingress ordinal on the same ET Host; it does not create a second simulation. [Current decision](0002-authoritative-fixed-tick-state-sync.md) and [N01 design](../../.trellis/tasks/10-02-cooking-network-contract-review/design.md). This note does not promote this historical Proposed ADR or authorize ECS deletion.
+
 # ADR-0003：Cooking ET 主干目标与验证门槛
 
 - 状态：Proposed

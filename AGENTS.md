@@ -1,3 +1,5 @@
+> Current network increment: N01 contract reconciliation accepted; N02 in_progress under continuing owner authorization. Read [root-contract-acceptance.md](.trellis/tasks/10-02-cooking-network-contract-review/research/root-contract-acceptance.md) and N01 final design before edits. No current network production/gate or physical LAN acceptance yet; singleplayer source4dadd25c8 remains verified.
+
 > Current pure C# singleplayer exit: [master-singleplayer-exit-verification.md](.trellis/tasks/10-02-cooking-gameplay-menu-plan/research/master-singleplayer-exit-verification.md). S01-S14 completed on source4dadd25c8; final gates644/772/299 and772/299 passed. Next stage N01 network contract reconciliation; Unity/S15 remain deferred, physical two-PC LAN unverified. Earlier stage notices below are historical.
 
 > Latest accepted source86c3eb41d: recovery/natural/technical master kitchen644/772/298 and ET772/298 passed with zero failures/skips. Read [master-s14-recovery-verification.md](.trellis/tasks/10-02-cooking-gameplay-menu-plan/research/master-s14-recovery-verification.md); actual ET floor expansion remains the last pure-C# singleplayer exit.
@@ -10,7 +12,7 @@
 
 > Generation transaction/current pure-menu validation proof: [master-generation-menu-verification.md](.trellis/tasks/10-02-cooking-gameplay-menu-plan/research/master-generation-menu-verification.md). Read its remaining exits before continuing; helper/store verification is not Host Ready/restart or full S14 completion.
 
-> Current owner instruction (2026-10-02): continue auditing all topics, resolve their plans, then implement and verify to completion without stopping for routine confirmations. Preserve architecture and stage order: singleplayer -> network -> singleplayer Unity -> network Unity. Current stage: singleplayer. Older planning-only notices below are historical. Unity remains deferred under its separate gate.
+> Current owner instruction (2026-10-02): continue auditing all topics, resolve their plans, then implement and verify to completion without stopping for routine confirmations. Preserve architecture and stage order: singleplayer -> network -> singleplayer Unity -> network Unity. Current stage: network contract review after accepted S01-S14. Older planning-only notices below are historical. Unity remains deferred under its separate gate.
 
 # AbilityKit 工作区指引
 

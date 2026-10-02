@@ -1,4 +1,4 @@
-> Current owner instruction (2026-10-02): continue auditing all topics, resolve their plans, then implement and verify to completion without stopping for routine confirmations. Preserve architecture and stage order: singleplayer -> network -> singleplayer Unity -> network Unity. Current stage: singleplayer. Older planning-only notices below are historical. Unity remains deferred under its separate gate.
+> Current owner instruction (2026-10-02): continue auditing all topics, resolve their plans, then implement and verify to completion without stopping for routine confirmations. Preserve architecture and stage order: singleplayer -> network -> singleplayer Unity -> network Unity. Current stage: network contract review; S01-S14 accepted at 4dadd25c8 with evidence routed by master-singleplayer-exit-verification.md. Older planning-only notices below are historical. Unity remains deferred under its separate gate.
 
 # N02 初始设计
 
@@ -17,3 +17,7 @@ Host 本地玩家通过 InProcess Client Connection 完整经过相同 framing/s
 两台物理 PC 争抢/并行/绑定/提交/跨关状态一致；host 本地与远端共享验证；拒绝不丢料。
 
 沿用 [规划架构记录](../../../Docs/design/CookingGame/gameplay-plan-architecture.md) 的 owner 与数据边界，不创建平行模拟，不修改通用框架的产品职责。具体 API/数据形状、错误矩阵、版本迁移、恢复/跨关状态与测试断言在执行前补齐；本初稿不声称已达到实施就绪。
+
+## Accepted implementation contract - 2026-10-03
+
+Use N01 design.md final source-boundary and identity sections and research/root-contract-acceptance.md as the exact interface and ownership contract. N01 independent readiness review passed; parent master-singleplayer-exit-verification.md proves dependency acceptance. Earlier draft/start prohibition below the historical header is superseded. N02 is in_progress; implementation, gates and physical LAN are not yet accepted. Three bounded increments: generic transport; authority port/ET narrow extension; framed passive Session composition. Source changes require focused controls and applicable network-sdk/Cooking/ET gates; no Unity gameplay work. Root serializes .NET windows. Preserve old dirty network worktree.
