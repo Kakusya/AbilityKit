@@ -178,7 +178,8 @@ public sealed record CookingLevelHostOperationResult(
     string Reason,
     string State,
     long Version,
-    IReadOnlyList<CookingLevelPendingDisposition> Dispositions);
+    IReadOnlyList<CookingLevelPendingDisposition> Dispositions,
+    IReadOnlyList<CookingMenuReadyDiagnostic>? MenuDiagnostics = null);
 
     public sealed record CookingLevelHostGenerationResult(
     bool Accepted,
@@ -334,18 +335,28 @@ public sealed class CookingLevelEtHost : IDisposable
     private CookingPreparationConfiguration? _preparationConfiguration;
     private CookingLevelPreparation? _stagedPreparation;
     private long _serviceStartLogicalTick;
-    private readonly CookingFrontOfHouseConfiguration? _frontConfiguration;
+    private CookingFrontOfHouseConfiguration? _frontConfiguration;
+    private CookingMenuCatalog? _menuCatalog;
+    private CookingLevelMenuConfiguration? _menuConfiguration;
     private CookingFrontOfHouseConfiguration? _effectiveFrontConfiguration;
     private CookingInstalledLayoutCheckpoint? _installedLayout;
-    private readonly string? _frontConfigurationIdentity;
+    private string? _frontConfigurationIdentity;
 
     public CookingLevelEtHost(
         CookingLevelLifecycle lifecycle,
         int queueCapacity = 256,
         ICookingLevelEtHostFailureInjector? failureInjector = null)
+        : this(lifecycle, queueCapacity, failureInjector,
+            ScopedFront(lifecycle?.GameplayFactory ?? throw new ArgumentNullException(nameof(lifecycle)), lifecycle.Scope, lifecycle.Configuration),
+            ScopedMenu(lifecycle.GameplayFactory, lifecycle.Scope, lifecycle.Configuration)) { }
+
+    private CookingLevelEtHost(CookingLevelLifecycle lifecycle, int queueCapacity,
+        ICookingLevelEtHostFailureInjector? failureInjector, CookingFrontOfHouseConfiguration? frozenFront,
+        (CookingMenuCatalog? Catalog, CookingLevelMenuConfiguration? Policy) frozenMenu)
     {
-        _lifecycle = lifecycle ?? throw new ArgumentNullException(nameof(lifecycle));
-        _frontConfiguration = (lifecycle.GameplayFactory as ICookingFrontOfHouseGameplayFactory)?.FrontOfHouseConfiguration.Freeze();
+        _lifecycle = lifecycle;
+        _frontConfiguration = frozenFront;
+        (_menuCatalog, _menuConfiguration) = frozenMenu;
         _frontConfigurationIdentity = _frontConfiguration?.Identity();
         _effectiveFrontConfiguration = _frontConfiguration;
         if (queueCapacity <= 0)
@@ -550,7 +561,8 @@ public sealed class CookingLevelEtHost : IDisposable
         => BeginPreparationCore(preparation, null, null);
 
     private CookingLevelHostOperationResult BeginPreparationCore(CookingLevelPreparation preparation,
-        CookingInstalledLayoutCheckpoint? restoredLayout, CookingRecipeCheckpoint? restoreReferences)
+        CookingInstalledLayoutCheckpoint? restoredLayout, CookingRecipeCheckpoint? restoreReferences,
+        CookingPreparationConfiguration? frozenPreparationConfiguration = null)
     {
         Check(); ArgumentNullException.ThrowIfNull(preparation);
         if (_lifecycle.State != CookingLevelState.Created)
@@ -558,19 +570,27 @@ public sealed class CookingLevelEtHost : IDisposable
         var validation = _lifecycle.ValidatePreparationCandidate(preparation);
         if (validation != CookingLevelLifecycleReason.None)
             return Operation(new(false, validation, _lifecycle.State, _lifecycle.Outcome, _lifecycle.Version, Array.Empty<CookingLevelLifecycleEvent>()));
+        if (_menuCatalog is { } initialCatalog && _menuConfiguration is { } initialMenu)
+        {
+            var invalidPolicy = MenuPolicyDiagnostics(initialCatalog, initialMenu, _lifecycle.Configuration, null).ToArray();
+            if (invalidPolicy.Length != 0) return new(false, "MenuNotReady", _lifecycle.State.ToString(), _lifecycle.Version,
+                Array.Empty<CookingLevelPendingDisposition>(), Array.AsReadOnly(invalidPolicy));
+        }
         if (_lifecycle.GameplayFactory is ICookingPreparationGameplayFactory factory)
         {
             _initializingPreparation = true;
             try
             {
-                var configuration = _stagedPreparation is not null && _preparationConfiguration is not null
-                    ? _preparationConfiguration : factory.CreatePreparationConfiguration(Binding.LevelScope, _lifecycle.Configuration).Freeze();
+                var configuration = frozenPreparationConfiguration ?? (_stagedPreparation is not null && _preparationConfiguration is not null
+                    ? _preparationConfiguration : factory.CreatePreparationConfiguration(Binding.LevelScope, _lifecycle.Configuration).Freeze());
                 var initialized = RunLifecycleOperation(() => _lifecycle.InitializePreparationKitchen(_gameplayPublicationGuard));
                 if (!initialized.Accepted) return Operation(initialized);
                 if (!_lifecycle.TryPeekBoundKitchen(out var simulation) || simulation is null)
                     throw Fault(new InvalidOperationException("Preparation kitchen was not published."));
                 _preparationConfiguration = configuration;
                 simulation.BindAuthorityGate(_authorityGate);
+                if (_menuCatalog is { } catalog && _menuConfiguration is { } menu)
+                    RunPreparationMutation(() => { simulation.ConfigureMenuPolicy(catalog, menu); return true; });
                 if (!InstallPreparedLayout(simulation, restoredLayout?.Layout ?? configuration.InitialLayout,
                     restoredLayout?.GeometrySeedPoses, restoreReferences))
                 {
@@ -588,7 +608,18 @@ public sealed class CookingLevelEtHost : IDisposable
 
     public CookingLevelHostOperationResult CompletePreparation()
     {
-        Check(); return Operation(RunLifecycleOperation(_lifecycle.CompletePreparation));
+        Check();
+        if (_lifecycle.State == CookingLevelState.Preparing && _menuCatalog is { } catalog && _menuConfiguration is { } policy)
+        {
+            var diagnostics = MenuPolicyDiagnostics(catalog, policy, _lifecycle.Configuration, _frontConfiguration).ToList();
+            if (_ownedSimulation is not { } kitchen) diagnostics.Add(new("Policy", "Kitchen", "GameplayUnavailable", "Preparing kitchen"));
+            else diagnostics.AddRange(CookingMenuReadyValidation.Validate(catalog, policy, kitchen.DescribeManufacturingAvailability()).Diagnostics);
+            if (diagnostics.Any(d => d.Blocking))
+                return new(false, "MenuNotReady", _lifecycle.State.ToString(), _lifecycle.Version,
+                    Array.Empty<CookingLevelPendingDisposition>(), Array.AsReadOnly(diagnostics.ToArray()));
+            return Operation(RunLifecycleOperation(_lifecycle.CompletePreparation)) with { MenuDiagnostics = Array.AsReadOnly(diagnostics.ToArray()) };
+        }
+        return Operation(RunLifecycleOperation(_lifecycle.CompletePreparation));
     }
 
     private static bool AllowedDuringPreparation(CookingRecipeOperation operation) => operation is
@@ -650,6 +681,40 @@ public sealed class CookingLevelEtHost : IDisposable
             _lifecycle.State is not CookingLevelState.Created and not CookingLevelState.Preparing)
             return false;
         return InstallPreparedLayout(_ownedSimulation, layout, null, null);
+    }
+
+    private static CookingFrontOfHouseConfiguration? ScopedFront(ICookingLevelGameplayFactory factory,
+        CookingLevelScope scope, CookingConfigurationSnapshot configuration)
+    {
+        if (factory is ICookingScopedFrontOfHouseGameplayFactory scoped)
+            return (scoped.CreateFrontOfHouseConfiguration(scope, configuration)
+                ?? throw new ArgumentException("Scoped Front factory returned no configuration.")).Freeze();
+        return (factory as ICookingFrontOfHouseGameplayFactory)?.FrontOfHouseConfiguration.Freeze();
+    }
+
+    private static (CookingMenuCatalog? Catalog, CookingLevelMenuConfiguration? Policy) ScopedMenu(ICookingLevelGameplayFactory factory,
+        CookingLevelScope scope, CookingConfigurationSnapshot configuration)
+    {
+        if (factory is not ICookingMenuGameplayFactory menu) return (null, null);
+        var catalog = menu.CreateMenuCatalog(scope, configuration) ?? throw new ArgumentException("Menu factory returned no catalog.");
+        var policy = menu.CreateMenuConfiguration(scope, configuration) ?? throw new ArgumentException("Menu factory returned no policy.");
+        return (catalog, policy.Freeze());
+    }
+
+    private static IEnumerable<CookingMenuReadyDiagnostic> MenuPolicyDiagnostics(CookingMenuCatalog catalog,
+        CookingLevelMenuConfiguration policy, CookingConfigurationSnapshot configuration, CookingFrontOfHouseConfiguration? front)
+    {
+        if (configuration.ContentProvenance is not { } provenance || provenance.CatalogSha256 != catalog.Sha256 || policy.CatalogIdentity != catalog.Sha256)
+            yield return new("Policy", "Catalog", "ContentCatalogMismatch", policy.CatalogIdentity);
+        if (configuration.ContentProvenance is not { } loaded || policy.SelectedMenuIds.Any(id => !loaded.SelectedMenus.Contains(id, StringComparer.Ordinal)))
+            yield return new("Policy", "Menu", "MenuNotLoaded", string.Join(",", policy.SelectedMenuIds));
+        foreach (var id in policy.SelectedMenuIds.Where(id => !catalog.Document.Menus.Any(m => m.SourceId == id)))
+            yield return new(id, "Menu", "UnknownMenu", id);
+        if (front is not null)
+        {
+            var selected = catalog.Document.Menus.Where(m => policy.SelectedMenuIds.Contains(m.SourceId, StringComparer.Ordinal)).Select(m => m.OrderTemplate).ToHashSet();
+            if (!selected.SetEquals(front.Menu)) yield return new("Policy", "Front", "FrontMenuMismatch", string.Join(",", front.Menu.Select(t => t.Value)));
+        }
     }
 
     private static CookingFrontOfHouse CreateInitialFront(CookingFrontOfHouseConfiguration configuration)
@@ -1005,7 +1070,12 @@ public sealed class CookingLevelEtHost : IDisposable
                     return RejectGeneration(CookingLevelLifecycleReason.InvalidState);
             }
             CookingInstalledLayoutCheckpoint? installed = null;
-            var effective = _frontConfiguration;
+            var nextFront = ScopedFront(candidate.GameplayFactory, candidate.Scope, candidate.Configuration);
+            var (nextCatalog, nextMenu) = ScopedMenu(candidate.GameplayFactory, candidate.Scope, candidate.Configuration);
+            if (nextCatalog is not null && nextMenu is not null && MenuPolicyDiagnostics(nextCatalog, nextMenu, candidate.Configuration, nextFront).Any(d => d.Blocking))
+                return RejectGeneration(CookingLevelLifecycleReason.InvalidState);
+            if (nextCatalog is not null && nextMenu is not null) kitchen.ConfigureMenuPolicy(nextCatalog, nextMenu);
+            var effective = nextFront;
             if (policy is not null)
             {
                 var seeds = kitchen.SpatialConfiguration?.InitialPoses ?? Array.Empty<CookingPlayerPose>();
@@ -1013,7 +1083,7 @@ public sealed class CookingLevelEtHost : IDisposable
                 var references = handoff is null ? null : handoff with { Poses = projection.Geometry?.InitialPoses };
                 if (!projection.Accepted || !kitchen.CanInstallPreparedGeometry(projection, references))
                     return RejectGeneration(CookingLevelLifecycleReason.InvalidState);
-                if (_frontConfiguration is { } trusted) effective = policy.DerivedFrontConfiguration(projection, trusted);
+                if (nextFront is { } trusted) effective = policy.DerivedFrontConfiguration(projection, trusted);
                 if (!kitchen.InstallPreparedGeometry(projection, references)) return RejectGeneration(CookingLevelLifecycleReason.InvalidState);
                 installed = new(projection.FrozenLayout!, Array.AsReadOnly(projection.Geometry!.InitialPoses.ToArray()));
             }
@@ -1045,6 +1115,8 @@ public sealed class CookingLevelEtHost : IDisposable
             var previous = _ownedSimulation;
             _ownedSimulation = kitchen; Driver.Simulation = kitchen;
             _preparationConfiguration = policy; _installedLayout = installed;
+            _frontConfiguration = nextFront; _frontConfigurationIdentity = nextFront?.Identity();
+            _menuCatalog = nextCatalog; _menuConfiguration = nextMenu;
             _effectiveFrontConfiguration = effective; _serviceStartLogicalTick = 0;
             _stagedPreparation = frozenPreparation;
             if (adoptLegacyFront is not null) adoptLegacyFront(); else _frontOfHouse = front;
@@ -1106,7 +1178,7 @@ public sealed class CookingLevelEtHost : IDisposable
                 LastCommittedSimulationBatch,
                 recipeCheckpoint,
                 _frontOfHouse is null ? null : RunFrontOperation(() => _frontOfHouse.ExportCheckpoint(_frontOfHouseMenu)),
-                _frontConfigurationIdentity, _serviceStartLogicalTick, _preparationConfiguration?.Identity(), _installedLayout));
+                _frontConfigurationIdentity, _serviceStartLogicalTick, _preparationConfiguration?.Identity(), _installedLayout, _menuConfiguration?.Identity()));
     }
 
     /// <summary>
@@ -1137,6 +1209,18 @@ public sealed class CookingLevelEtHost : IDisposable
         catch (ArgumentException) { return new(false, CookingLevelCheckpointRestoreReason.ConfigurationIdentityMismatch); }
         if (checkpoint.PreparationConfigurationIdentity != trustedPreparation?.Identity())
             return new(false, CookingLevelCheckpointRestoreReason.ConfigurationIdentityMismatch);
+        (CookingMenuCatalog? Catalog, CookingLevelMenuConfiguration? Policy) trustedMenu;
+        CookingFrontOfHouseConfiguration? trustedFront;
+        try
+        {
+            trustedMenu = ScopedMenu(factory, checkpoint.Scope, configuration);
+            trustedFront = ScopedFront(factory, checkpoint.Scope, configuration);
+            if (checkpoint.MenuConfigurationIdentity != trustedMenu.Policy?.Identity() ||
+                trustedMenu.Catalog is not null && trustedMenu.Policy is not null &&
+                MenuPolicyDiagnostics(trustedMenu.Catalog, trustedMenu.Policy, configuration, trustedFront).Any(d => d.Blocking))
+                return new(false, CookingLevelCheckpointRestoreReason.ConfigurationIdentityMismatch);
+        }
+        catch (ArgumentException) { return new(false, CookingLevelCheckpointRestoreReason.ConfigurationIdentityMismatch); }
         var preparing = checkpoint.State == CookingLevelState.Preparing;
         if (preparing && trustedPreparation is null)
             return new(false, CookingLevelCheckpointRestoreReason.ConfigurationIdentityMismatch);
@@ -1146,7 +1230,6 @@ public sealed class CookingLevelEtHost : IDisposable
             (trustedPreparation is null && checkpoint.ServiceStartLogicalTick != 0))
             return new(false, CookingLevelCheckpointRestoreReason.GameplayRestoreRejected,
                 RecipeRestoreReason: CookingCheckpointRestoreReason.CounterInvalid);
-        var trustedFront = (factory as ICookingFrontOfHouseGameplayFactory)?.FrontOfHouseConfiguration;
         var effectiveFront = trustedFront;
         if ((trustedPreparation is null) != (checkpoint.InstalledLayout is null))
             return new(false, CookingLevelCheckpointRestoreReason.ConfigurationIdentityMismatch);
@@ -1214,9 +1297,9 @@ public sealed class CookingLevelEtHost : IDisposable
 
         try
         {
-            host = new CookingLevelEtHost(lifecycle);
-            var prepared = host.BeginPreparationCore(checkpoint.Preparation, checkpoint.InstalledLayout, checkpoint.Recipe);
-            if (prepared.Accepted && !preparing) prepared = host.CompletePreparation();
+            host = new CookingLevelEtHost(lifecycle, 256, null, trustedFront, trustedMenu);
+            var prepared = host.BeginPreparationCore(checkpoint.Preparation, checkpoint.InstalledLayout, checkpoint.Recipe, trustedPreparation);
+            if (prepared.Accepted && !preparing && factory is not ICookingMenuGameplayFactory) prepared = host.CompletePreparation();
             if (!prepared.Accepted)
             {
                 host.Dispose();
@@ -1225,7 +1308,7 @@ public sealed class CookingLevelEtHost : IDisposable
                     CookingCheckpointRestoreReason.None, prepared.Reason);
             }
 
-            if (!preparing)
+            if (!preparing && factory is not ICookingMenuGameplayFactory)
             {
                 var started = host.Start();
                 if (!started.Accepted)
@@ -1250,6 +1333,14 @@ public sealed class CookingLevelEtHost : IDisposable
                 host.Dispose();
                 return new CookingLevelCheckpointRestoreResult(false,
                     CookingLevelCheckpointRestoreReason.GameplayRestoreRejected, null, restored.Reason);
+            }
+
+            if (!preparing && factory is ICookingMenuGameplayFactory)
+            {
+                var ready = host.CompletePreparation();
+                if (!ready.Accepted) { host.Dispose(); return new(false, CookingLevelCheckpointRestoreReason.PreparationRejected, Detail: ready.Reason); }
+                var started = host.Start();
+                if (!started.Accepted) { host.Dispose(); return new(false, CookingLevelCheckpointRestoreReason.LifecycleStartRejected); }
             }
 
             if (checkpoint.FrontOfHouse is { } frontOfHouseCheckpoint)

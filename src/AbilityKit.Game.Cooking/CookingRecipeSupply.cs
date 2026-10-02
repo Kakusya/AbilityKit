@@ -94,6 +94,9 @@ public sealed partial class CookingRecipeSimulation
             !_fixture.Items[supplier.UnitDefinition].AllowedPlayerCapabilities.Overlaps(player.Capabilities))
             return Reject(CookingRecipeRejectionReason.PlayerIneligible);
         if (_stateVersion == long.MaxValue || _eventSequence == long.MaxValue) return Reject(CookingRecipeRejectionReason.SupplyAllocationFailed);
+        if (command.Operation != CookingRecipeOperation.ReceiveSupply &&
+            (!MenuAllowsDefinition(supplier.UnitDefinition) || !supplier.Infinite && !MenuAllowsDefinition(supplier.PackageDefinition)))
+            return Reject(CookingRecipeRejectionReason.MenuNotAuthorized);
         if (command.Operation == CookingRecipeOperation.RequestSupply)
         {
             var result = candidate.Request(request, supplier.SupplierId);

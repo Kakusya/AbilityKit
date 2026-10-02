@@ -216,7 +216,10 @@ public sealed class CookingRecipeCommandShapeTests
         Assert.Equal(CookingRecipeRejectionReason.BindingNotFound, (CookingRecipeRejectionReason)(queueFull + 12));
         Assert.Equal(CookingRecipeRejectionReason.FrontOfHouseUnavailable, (CookingRecipeRejectionReason)(queueFull + 13));
         Assert.Equal(CookingRecipeRejectionReason.FrontWorkNotFound, (CookingRecipeRejectionReason)(queueFull + 14));
-        Assert.Equal(queueFull + 17, Enum.GetValues<CookingRecipeRejectionReason>().Length);
+        Assert.Equal(CookingRecipeRejectionReason.SupplyRejected, (CookingRecipeRejectionReason)(queueFull + 15));
+        Assert.Equal(CookingRecipeRejectionReason.SupplyAllocationFailed, (CookingRecipeRejectionReason)(queueFull + 16));
+        Assert.Equal(CookingRecipeRejectionReason.MenuNotAuthorized, (CookingRecipeRejectionReason)(queueFull + 17));
+        Assert.Equal(queueFull + 18, Enum.GetValues<CookingRecipeRejectionReason>().Length);
     }
 
     [Fact]

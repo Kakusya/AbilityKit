@@ -131,7 +131,7 @@ public sealed class CookingSupplyEtTests
             Accept(host, Command(host, CookingRecipeOperation.RequestSupply, "reserve", "finite", "r"));
             saved = host.ExportCheckpoint().Checkpoint!;
         }
-        Assert.Equal(7, CookingLevelCheckpointCodec.CurrentFormatVersion); Assert.Equal(5, saved.Recipe.SchemaVersion);
+        Assert.Equal(8, CookingLevelCheckpointCodec.CurrentFormatVersion); Assert.Equal(5, saved.Recipe.SchemaVersion);
         var json = CookingLevelCheckpointCodec.Serialize(CookingLevelCheckpointCodec.CreateEnvelope(saved));
         var old = JsonNode.Parse(json)!; old["formatVersion"] = 6;
         Assert.Equal(CookingCheckpointReadReason.UnknownFormatVersion, CookingLevelCheckpointCodec.Deserialize(old.ToJsonString()).Reason);

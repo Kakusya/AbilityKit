@@ -169,8 +169,8 @@ public sealed class CookingFrontOfHouseEtTests
             Ready(host); Execute(host, Command(f, host, CookingRecipeOperation.ClaimFrontWork, "claim"));
             saved = host.ExportCheckpoint().Checkpoint!;
             var text = CookingLevelCheckpointCodec.Serialize(CookingLevelCheckpointCodec.CreateEnvelope(saved));
-            Assert.Equal(7, CookingLevelCheckpointCodec.CurrentFormatVersion);
-            Assert.False(CookingLevelCheckpointCodec.Deserialize(text.Replace("\"formatVersion\":7", "\"formatVersion\":5")).Accepted);
+            Assert.Equal(8, CookingLevelCheckpointCodec.CurrentFormatVersion);
+            Assert.False(CookingLevelCheckpointCodec.Deserialize(text.Replace("\"formatVersion\":8", "\"formatVersion\":5")).Accepted);
             var missing = JsonNode.Parse(text)!; missing["checkpoint"]!.AsObject().Remove("frontOfHouseConfigurationIdentity");
             Assert.False(CookingLevelCheckpointCodec.Deserialize(missing.ToJsonString()).Accepted);
             missing = JsonNode.Parse(text)!; missing["checkpoint"]!["frontOfHouse"]!["state"]!.AsObject().Remove("manualPolicyIdentity");

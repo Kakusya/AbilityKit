@@ -62,6 +62,8 @@ public sealed partial class CookingRecipeSimulation
             if (!CookingRecipeCommandValidation.IsWellFormed(command)) continue;
             // Sandbox uses the same authority implementation, a private allocator, and no washing callback.
             var sandbox = new CookingRecipeSimulation(_fixture);
+            sandbox._menuPolicy = _menuPolicy; sandbox._menuPolicyRecipeIds = _menuPolicyRecipeIds;
+            sandbox._menuPolicyMaterialDefinitions = _menuPolicyMaterialDefinitions;
             if (!sandbox.RestoreCheckpoint(checkpoint).Accepted) continue;
             try { if (sandbox.ExecuteValidatedCommand(command).Outcome != CookingRecipeOutcome.Accepted) continue; }
             catch (Exception error) when (error is OverflowException or InvalidOperationException) { continue; }
@@ -125,6 +127,7 @@ public sealed partial class CookingRecipeSimulation
         if (WouldCreateContainmentCycle(target, sourceId)) return Reject(CookingRecipeRejectionReason.ContainerRejectsItem);
         if (capability.Capacity - ItemsInContainer(target).Count < count) return Reject(CookingRecipeRejectionReason.ContainerFull);
         if (!capability.AcceptedDefinitions.Contains(recipe.ProductDefinition)) return Reject(CookingRecipeRejectionReason.ContainerRejectsItem);
+        if (!MenuAllowsRecipe(recipe) || !MenuAllowsObjects(sourceId, target)) return Reject(CookingRecipeRejectionReason.MenuNotAuthorized);
         var stagedItems = new Dictionary<ItemId, ItemState>(_items);
         var stagedContents = _containerItems.ToDictionary(p => p.Key, p => new List<ItemId>(p.Value));
         var sequence = _nextProductId;

@@ -213,6 +213,7 @@ public enum CookingRecipeRejectionReason
     FrontWorkNotFound,
     SupplyRejected,
     SupplyAllocationFailed,
+    MenuNotAuthorized,
 }
 
 public sealed record CookingRecipeCommand(
@@ -1057,7 +1058,7 @@ public sealed partial class CookingRecipeSimulation
             CookingRecipeOperation.TakeOut => TakeOut(command),
             CookingRecipeOperation.Pour => Pour(command),
             CookingRecipeOperation.SubmitOrder => SubmitOrder(command),
-            CookingRecipeOperation.BindOrder or CookingRecipeOperation.UnbindOrder or CookingRecipeOperation.RebindOrder => MutateBinding(command),
+            CookingRecipeOperation.BindOrder or CookingRecipeOperation.UnbindOrder or CookingRecipeOperation.RebindOrder => MutateBindingWithMenuPolicy(command),
             CookingRecipeOperation.Move => Move(command),
             CookingRecipeOperation.ContinueProcess => ChangeWorker(command, true),
             CookingRecipeOperation.StopProcess => ChangeWorker(command, false),
@@ -1549,6 +1550,7 @@ public sealed partial class CookingRecipeSimulation
         if (EffectiveSpatial is not null && containerId is null && anchorItem.Location.Kind == LocationKind.PlayerHand &&
             stationId is { } target && _items.Values.Any(i => !i.Removed && i.Location == ItemLocation.Station(target)))
             return Reject(CookingRecipeRejectionReason.ContainerFull);
+        if (!MenuAllowsRecipe(recipe) || !MenuAllowsObjects(lockedInputs.ToArray())) return Reject(CookingRecipeRejectionReason.MenuNotAuthorized);
         _ = checked(_nextProcessId + 1); _ = checked(anchorItem.Version + 1); _ = checked(_stateVersion + 1); _ = checked(_eventSequence + 1);
         if (containerId is null && anchorItem.Location.Kind == LocationKind.PlayerHand && stationId is { } moveStation)
         {
@@ -1809,6 +1811,7 @@ public sealed partial class CookingRecipeSimulation
         if (ItemsInContainer(containerId).Count >= container.Capacity)
             return Reject(CookingRecipeRejectionReason.ContainerFull);
 
+        if (!MenuAllowsObjects(itemId, containerId)) return Reject(CookingRecipeRejectionReason.MenuNotAuthorized);
         var slot = NextVacantContainerSlot(containerId);
         _hands[command.Player] = null;
         EnsureContainerList(containerId).Add(itemId);
@@ -1881,6 +1884,7 @@ public sealed partial class CookingRecipeSimulation
                 return Reject(CookingRecipeRejectionReason.ContainerRejectsItem);
         }
 
+        if (!MenuAllowsObjects(sourceId, targetId)) return Reject(CookingRecipeRejectionReason.MenuNotAuthorized);
         var targetContents = EnsureContainerList(targetId);
         foreach (var contentId in contents)
         {

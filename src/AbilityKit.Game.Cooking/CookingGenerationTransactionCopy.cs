@@ -7,6 +7,9 @@ public sealed partial class CookingRecipeSimulation
     {
         var copy = new CookingRecipeSimulation(_fixture, TransitionCopyAllocator.Instance);
         copy._installedSpatial = EffectiveSpatial?.Freeze();
+        copy._menuPolicy = _menuPolicy;
+        copy._menuPolicyRecipeIds = _menuPolicyRecipeIds;
+        copy._menuPolicyMaterialDefinitions = _menuPolicyMaterialDefinitions;
         var restored = copy.RestoreExportedCheckpoint(ExportCheckpoint());
         if (restored != CookingCheckpointRestoreReason.None)
             throw new InvalidOperationException($"The transition source cannot be staged: {restored}.");

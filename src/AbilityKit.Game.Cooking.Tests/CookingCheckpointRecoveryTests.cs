@@ -11,6 +11,28 @@ namespace AbilityKit.Game.Cooking.Tests;
 [Trait("Gate", "CookingKitchenLoop")]
 public sealed class CookingCheckpointRecoveryTests
 {
+    [Fact]
+    public void Menu_policy_identity_is_required_nullable_integrity_data_and_format7_is_rejected()
+    {
+        var checkpoint = Wrap(CreateFixture().Simulation.ExportCheckpoint());
+        var encoded = CookingLevelCheckpointCodec.Serialize(CookingLevelCheckpointCodec.CreateEnvelope(checkpoint));
+        var legacy = CookingLevelCheckpointCodec.Deserialize(encoded);
+        Assert.True(legacy.Accepted);
+        Assert.Null(legacy.Checkpoint!.MenuConfigurationIdentity);
+        var json = System.Text.Json.Nodes.JsonNode.Parse(encoded)!;
+        Assert.True(json["checkpoint"]!.AsObject().Remove("menuConfigurationIdentity"));
+        Assert.Equal(CookingCheckpointReadReason.RecordTruncated,
+            CookingLevelCheckpointCodec.Deserialize(json.ToJsonString()).Reason);
+        Assert.Equal(CookingCheckpointReadReason.UnknownFormatVersion,
+            CookingLevelCheckpointCodec.Deserialize(encoded.Replace("\"formatVersion\":8", "\"formatVersion\":7")).Reason);
+        var configured = checkpoint with { MenuConfigurationIdentity = "trusted-menu-policy" };
+        Assert.NotEqual(checkpoint.Sha256(), configured.Sha256());
+        var configuredText = CookingLevelCheckpointCodec.Serialize(CookingLevelCheckpointCodec.CreateEnvelope(configured));
+        Assert.Equal("trusted-menu-policy", CookingLevelCheckpointCodec.Deserialize(configuredText).Checkpoint!.MenuConfigurationIdentity);
+        Assert.Equal(CookingCheckpointReadReason.IntegrityFailure,
+            CookingLevelCheckpointCodec.Deserialize(configuredText.Replace("trusted-menu-policy", "other-policy")).Reason);
+    }
+
     [Theory]
     [InlineData("geometrySeedPoses")]
     [InlineData("floors")]
@@ -218,10 +240,10 @@ public sealed class CookingCheckpointRecoveryTests
         Assert.Equal(CookingCheckpointReadReason.RecordTruncated,
             CookingLevelCheckpointCodec.Deserialize(serialized[..(serialized.Length / 2)]).Reason);
         Assert.Equal(CookingCheckpointReadReason.UnknownFormatVersion,
-            CookingLevelCheckpointCodec.Deserialize(serialized.Replace("\"formatVersion\":7", "\"formatVersion\":99",
+            CookingLevelCheckpointCodec.Deserialize(serialized.Replace("\"formatVersion\":8", "\"formatVersion\":99",
                 StringComparison.Ordinal)).Reason);
         Assert.Equal(CookingCheckpointReadReason.UnknownFormatVersion,
-            CookingLevelCheckpointCodec.Deserialize(serialized.Replace("\"formatVersion\":7", "\"formatVersion\":5",
+            CookingLevelCheckpointCodec.Deserialize(serialized.Replace("\"formatVersion\":8", "\"formatVersion\":5",
                 StringComparison.Ordinal)).Reason);
         Assert.Equal(CookingCheckpointReadReason.IntegrityFailure,
             CookingLevelCheckpointCodec.Deserialize(serialized.Replace("\"stateVersion\":21", "\"stateVersion\":22",
