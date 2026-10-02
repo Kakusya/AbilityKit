@@ -51,3 +51,32 @@ Cumulative queue peak4 in each repeat. Default structural/byte budgets were unch
 During review/root approval, the original metricDefinitions sentence was found too broad: it said client/callback allocations were excluded. InProcess delivery can inline client callbacks on the owner thread within ProcessOwnerFrame; these allocations ARE counted. Accurate definition: all managed allocations on the owner thread during the synchronous owner call, INCLUDING inlined InProcess client callbacks, excluding other-thread/native/await allocations. Root explicitly approved this metadata-only correction after the binary completed. Program explanation and this report are corrected; original raw JSON is preserved, with this erratum rather than rewriting measured artifacts. Numeric measurements and executed logic did not change; no210-second rerun is required for this explanation correction.
 
 All actual processes have exited. No unrelated files staged; ownership remains the five new files. Serial .NET window released after final verification/report freeze; higher loads, UDP, physical LAN and performance thresholds remain separate approvals/exits.
+
+## Original SameMachineUdp run and strengthened exit gate
+
+Additional topology explicitly approved by root. ControlOnly actual exit0 using frozen9e6 rebuilt explanation, artifact20261002-215115-6240986. Three-repeat SameMachineUdp wrapper actual exit0, artifact20261002-215130-8508562; no production/budget change, two clients and real Host remain in ONE process. Counts per600 sample offers:75/73/74 issued/admitted/accepted/completed,525/527/526 backpressure skipped, scheduler/rejected/cancelled/pending0. RTTp95=1445.449/1433.010/1461.956ms. Finalbaseline bytes/tokens3324018/437367,3244720/426358,3355630/442443. Owner-thread allocation6.179/6.125/6.187GB includes whatever inline callbacks run there; processCPU21843.75/22593.75/22156.25ms and sampledworking464146432/411906048/375005184bytes include all same-process endpoints. Actual session sendpayload236037497/233337342/237117665bytes within sample; queuepeak4. These measurements do NOT support sustained5 accepted/s perparticipant or physicalLAN/performance acceptance.
+
+Root/reviewer identified a tool correctness exit gap: the original numeric/terminal assertions did not explicitly rule out loss of synchronization in the final idle interval. The old raw artifact stays unchanged and cannot be cited as passing the subsequently added final-readiness assertions. No unavailable/error output was observed in its raw report, but missing assertions cannot be retroactively assumed executed.
+
+Root approved minimal shared exit Readiness used both ControlOnly and measurements: exactly2 expectedconfiguredparticipants, serverConnectedOwnerBinding/Ready/noCleanup/positivegeneration, clientsIsSynchronized and instance/participant/scope/generation matched to server, and adapter fullcaptureHash==Session.LatestCaptureHash at the same owner frame. Asynchronous clientworldhash need not equal serverlatest; no pause, clock trick or business mutation is used to force equality.
+
+New shared exit gate ControlOnly actually built/passed under20261002-215806-4936833 (earlier compile-only control20261002-215729-8921788 also preserved). Full newsource revalidation order is InProcess3fresh then SameMachineUdp3fresh under the explicitly extended serial window; results pending, not pre-accepted.
+
+## Final-readiness strengthened actual revalidation
+
+Source tool correction only (Program shared Readiness + this report), no production change, no clock pause/stabilization or extra business action. After the shared ControlOnly green, exact commands sequentially: powershell -ExecutionPolicy Bypass -File tools/run-cooking-network-measurement.ps1 -NoBuild, then the same with -Topology SameMachineUdp -NoBuild. Both actual exit0; each reran capacity control and3fresh10+60s repeats. Original raw artifacts remain unchanged. Code indentation normalized after execution only; no semantic/numeric change.
+
+Final InProcess artifact20261002-215837-9205945, final UDPartifact20261002-220224-3428631. Each six repeat JSON records has finalReadiness.asserted=true and both clients synchronized to the servercurrentinstance/scope/generation; exactlytwo configured boundReady/noCleanup participants and same-frame authoritative/sessioncapturehash assertions really executed. This closes the tool exit-gap for these runs, without requiring asynchronousclientworldhash==serverlatest.
+
+| Topology/repeat | Offered | Issued/admitted/accepted/completed | Backpressure skipped | Baseline bytes/tokens | RTT p50/p95/p99 ms | Owner managed bytes | Process CPU ms | Sampled working bytes |
+|---|---:|---:|---:|---|---|---:|---:|---:|
+| InProcess1 | 600 | 580 | 20 | 2489290 / 161528 | 108.756 / 157.878 / 170.337 | 47885941608 | 46937.5 | 335953920 |
+| InProcess2 | 600 | 578 | 22 | 2514998 / 165804 | 110.338 / 159.096 / 178.689 | 49206858224 | 48281.25 | 324677632 |
+| InProcess3 | 600 | 571 | 29 | 2494024 / 164823 | 108.229 / 158.578 / 166.494 | 49118869136 | 47875 | 322248704 |
+| SameMachineUdp1 | 600 | 73 | 527 | 3287512 / 432452 | 633.592 / 1463.529 / 1547.203 | 6085564024 | 22734.375 | 463540224 |
+| SameMachineUdp2 | 600 | 73 | 527 | 3248210 / 426567 | 635.385 / 1404.667 / 1645.954 | 6142424344 | 21812.5 | 402325504 |
+| SameMachineUdp3 | 600 | 73 | 527 | 3308604 / 435743 | 595.753 / 1488.811 / 1644.399 | 6082372976 | 21781.25 | 389038080 |
+
+All six repeats: schedulerMiss0, rejected/cancelled/pending0, warmup100offered, actual capacity17th rejection separate. UDP cumulativequeuepeak4/4/3. UDPaggregateaccepted throughput73/60=1.217commands/s; sample offered600/60=10/s. Over87% of opportunities are explicitly backpressured, and neither table represents a formal latency/efficiency PASS. Default wire bounds unchanged; all final bytes/tokens remain within them. CPU/working-set include sameprocess realHost+two clients; ownermanagedallocations include inlined InProcess callbacks (corrected explanation in this actual rebuilt binary).
+
+No packetloss/jitter/fault injection, physicaltwoPC, high-load4participant, or formal performance threshold was tested. Root must independently review/integrate frozen tool source; these local measured exits do not complete allN03/N02 gates. Serial.NETwindow released after both processes exited; only ownedProgram/report update committed.

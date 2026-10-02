@@ -93,6 +93,25 @@ async Task<object> Execute(int repeat, bool control)
         var state = clients[player].LatestBaseline!.State.Observation.Recipe!;
         Require(state.Items.Count == 2 && state.Containers.Count == 2 && state.Containers.All(i => i.ItemIds.Count == 0), "Two empty physical tools preserved.");
     }
+    object Readiness(CookingNetworkAuthorityCapture final)
+    {
+        var participantView = session.LatestSessionProjection.Participants;
+        Require(participantView.Count == 2 && participantView.Select(p => p.Participant).ToHashSet().SetEquals(MeasurementFixture.Players),
+            "Exactly two configured participants at exit.");
+        Require(participantView.All(p => p.ConnectedOwnerBinding && p.Ready && !p.CleanupPending && p.ConnectionGeneration > 0),
+            "Server participants remain connected Ready without cleanup.");
+        for (var player = 0; player < clients.Length; player++) {
+            var client = clients[player]; var identity = client.LatestBaseline!.Identity;
+            var server = participantView.Single(p => p.Participant == MeasurementFixture.Players[player]);
+            Require(client.IsSynchronized && client.ServerSessionInstance == session.ServerSessionInstance &&
+                identity.ServerSessionInstance == session.ServerSessionInstance && identity.Participant == server.Participant &&
+                identity.ConnectionGeneration == server.ConnectionGeneration && identity.Scope == final.Observation.Scope,
+                "Client exit binding is synchronized to current server instance/scope/generation.");
+        }
+        Require(session.LatestCapture is not null && CookingNetworkWireCodec.Hash(final) == CookingNetworkWireCodec.Hash(session.LatestCapture),
+            "Session capture matches current same-frame real authority.");
+            return new { asserted = true, session.LatestSessionProjection, clients = clients.Select(c => new { c.IsSynchronized, c.ServerSessionInstance, c.LatestBaseline!.Identity }).ToArray(), sameFrameAuthorityHash = CookingNetworkWireCodec.Hash(final) };
+    }
     if (control) {
         CookingRecipeCommand? original = null;
         for (var i = 0; i < 16; i++) {
@@ -110,7 +129,7 @@ async Task<object> Execute(int repeat, bool control)
         var after = adapter.CaptureFullState().State!.FullRecipe!;
         AssertOnlyIdleTicks(before, after);
         return new { repeat, kind = "ReceiptCapacity16", accepted = 16, rejected = 1, cachedDuplicate = true,
-            idleLogicalTickDelta = after.LogicalTick - before.LogicalTick, fixture.Configuration.Identity };
+            idleLogicalTickDelta = after.LogicalTick - before.LogicalTick, fixture.Configuration.Identity, finalReadiness = Readiness(adapter.CaptureFullState().State!) };
     }
 
     Console.WriteLine($"MEASURE repeat={repeat} topology={topology} warmup=10 sample=60 offeredPerParticipant=5");
@@ -175,6 +194,7 @@ async Task<object> Execute(int repeat, bool control)
     var timings = session.Diagnostics.Timings.Where(t => t.ReceivedTimestamp >= sampleStartTimestamp && t.ReceivedTimestamp < sampleEndTimestamp).ToArray();
     var final = adapter.CaptureFullState().State!;
     Require(final.Observation.Lifecycle.State == CookingLevelState.Preparing && fixture.CreateCount == 1, "No service/second authority.");
+    var readiness = Readiness(final);
     foreach (var client in clients) Require(client.LatestBaseline!.Identity.StateHash ==
         CookingNetworkWireCodec.BaselineHash(client.LatestBaseline.State, client.LatestBaseline.Session), "Issued full baseline hash valid.");
     Require(measuredSamples.Length + skipped.Sum() + schedulerSkipped.Sum() == offered.Sum(), "Every sample opportunity accounted.");
@@ -197,6 +217,7 @@ async Task<object> Execute(int repeat, bool control)
         timingSamples = timings.Length, baselineBytes = baselineBytes.Length, baselineTokens = tokenCount,
         fullStateHash = CookingNetworkWireCodec.Hash(final), configurationIdentity = fixture.Configuration.Identity,
         clientBaselineHashes = clients.Select(c => c.LatestBaseline!.Identity.StateHash).ToArray(),
+        finalReadiness = readiness,
         serverInstance = session.ServerSessionInstance,
         metricDefinitions = "Closed loop: one inflight per participant; scheduled busy opportunities skipped, never catch-up burst. RTT send-to-terminal includes transport. Host timing same-process monotonic receive/map/result-send, not client receipt. GC sums all managed allocations on the owner thread during synchronous owner calls, including inlined InProcess client callbacks; excludes allocations on other threads, native allocation and awaits. CPU and memory include both clients and real authority in this process; memory is sampled, not OS lifetime peak. Bytes are Session payload, queue peak whole run including warmup. Timings selected by Host receipt within sample interval; results selected by offered sample index; counts therefore have distinct cohorts. No performance threshold." };
 }
