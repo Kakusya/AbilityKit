@@ -2,7 +2,8 @@
     "name": "AbilityKit.Network.Transport.LiteNet",
     "rootNamespace": "AbilityKit",
     "references": [
-        "AbilityKit.Network.Runtime"
+        "AbilityKit.Network.Runtime",
+        "AbilityKit.Network.Host"
     ],
     "includePlatforms": [],
     "excludePlatforms": [],

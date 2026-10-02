@@ -6,6 +6,7 @@
   "description": "Optional reliable-UDP ITransport over LiteNetLib for AbilityKit (fast-paced, low-latency, lossy links). Drop-in alternative to TcpTransport. Requires LiteNetLib.dll in Unity (via NuGet-for-Unity or manual).",
   "author": { "name": "AbilityKit" },
   "dependencies": {
-    "com.abilitykit.network.runtime": "0.1.0"
+    "com.abilitykit.network.runtime": "0.1.0",
+    "com.abilitykit.network.host": "0.1.0"
   }
 }
