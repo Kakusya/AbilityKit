@@ -18,11 +18,14 @@ public sealed class CookingNetworkAuthorityEtTests
     {
         public CookingConfigurationSnapshot Config { get; }
         public CookingRecipeSimulation Simulation { get; private set; } = null!;
+        public Action? OnCreate { get; set; }
         private readonly CookingRecipeFixture _fixture;
         private readonly ICookingProductIdAllocator? _allocator;
-        public Factory(ICookingProductIdAllocator? allocator = null)
+        private readonly CookingMajorProgress? _progress;
+        public Factory(ICookingProductIdAllocator? allocator = null, CookingMajorProgress? progress = null)
         {
             _allocator = allocator;
+            _progress = progress;
             var caps = new HashSet<string> { "cook" };
             var items = new[] { new CookingItemDefinition(Raw, caps), new CookingItemDefinition(Cooked, caps),
                 new CookingItemDefinition(new("plate"), caps, new(1, new HashSet<DefinitionId> { Cooked })) };
@@ -39,8 +42,11 @@ public sealed class CookingNetworkAuthorityEtTests
         }
         public CookingRecipeSimulation Create(CookingLevelScope scope, CookingConfigurationSnapshot configuration)
         {
+            OnCreate?.Invoke();
             Simulation = new(_fixture, _allocator); Simulation.AddItem(Shared, Raw, ItemLocation.World("shared"));
-            Simulation.AddItem(Work, Raw, ItemLocation.Station(Board)); return Simulation;
+            Simulation.AddItem(Work, Raw, ItemLocation.Station(Board));
+            if (_progress is not null) Simulation.UseMajorProgress(_progress);
+            return Simulation;
         }
         public CookingLevelEtHost Host(bool start = true, bool front = false)
         {
@@ -251,5 +257,42 @@ public sealed class CookingNetworkAuthorityEtTests
         Assert.All(drained, d => Assert.Equal(CookingLevelDispositionKind.Conflicted, d.Kind));
         Assert.DoesNotContain(drained, d => d.Envelope.SourceConnectionId == "newcomer");
         Assert.True(host.TryEnqueueNetwork(Mapped(host, A, "fresh", 300, source: "fresh")).Accepted);
+    }
+
+    [Fact]
+    public void Trusted_major_progress_is_frozen_display_and_roundtrips_global_future_unlock_without_grant()
+    {
+        var progress = new CookingMajorProgress(); Assert.True(progress.EnableCookFaster().Accepted);
+        Assert.True(progress.Unlock(new("future-not-in-current-config")).Accepted);
+        Assert.True(progress.ChooseDecoration(new[] { new CookingStationReplacement(Board, new("future-board")) }).Accepted);
+        var f = new Factory(progress: progress); using var host = f.Host(); var port = new CookingNetworkAuthorityAdapter(host);
+        var before = f.Simulation.ExportCheckpoint().CanonicalText();
+        var capture = port.CaptureFullState().State!; var display = capture.MajorProgress!;
+        Assert.True(display.CookFaster); Assert.False(display.Locked);
+        Assert.Equal("future-not-in-current-config", Assert.Single(display.Unlocks).Value);
+        Assert.Equal(Board, Assert.Single(display.Decoration).From);
+        Assert.DoesNotContain(capture.Observation.Items, i => i.DefinitionKey == "future-not-in-current-config");
+        Assert.Equal(before, f.Simulation.ExportCheckpoint().CanonicalText());
+        Assert.True(progress.Unlock(new("another-future-choice")).Accepted); progress.Lock();
+        Assert.False(display.Locked); Assert.Single(display.Unlocks); Assert.True(port.CaptureFullState().State!.MajorProgress!.Locked);
+        var options = new System.Text.Json.JsonSerializerOptions(System.Text.Json.JsonSerializerDefaults.Web);
+        var json = System.Text.Json.JsonSerializer.Serialize(capture, options);
+        var restored = System.Text.Json.JsonSerializer.Deserialize<CookingNetworkAuthorityCapture>(json, options)!;
+        Assert.Equal(display.CookFaster, restored.MajorProgress!.CookFaster);
+        Assert.Equal(display.Unlocks, restored.MajorProgress.Unlocks); Assert.Equal(display.Decoration, restored.MajorProgress.Decoration);
+        var node = System.Text.Json.Nodes.JsonNode.Parse(json)!; node.AsObject().Remove("majorProgress");
+        Assert.Throws<System.Text.Json.JsonException>(() => System.Text.Json.JsonSerializer.Deserialize<CookingNetworkAuthorityCapture>(node.ToJsonString(), options));
+    }
+
+    [Fact]
+    public void Reentrant_capture_in_real_lifecycle_factory_callback_is_busy_without_reading_intermediate_world()
+    {
+        var f = new Factory(); using var host = f.Host(start: false); var port = new CookingNetworkAuthorityAdapter(host);
+        Assert.True(host.Prepare(new(Level.Level, new("map"), new(new("layout"), new[] { Board }, Array.Empty<DefinitionId>()), f.Config.Identity)).Accepted);
+        CookingNetworkCaptureResult? captured = null;
+        f.OnCreate = () => captured = port.CaptureFullState();
+        Assert.True(host.Start().Accepted); Assert.NotNull(captured);
+        Assert.False(captured.Accepted); Assert.Equal(CookingNetworkCaptureReason.Busy, captured.Reason); Assert.Null(captured.State);
+        Assert.True(port.CaptureFullState().Accepted);
     }
 }

@@ -387,7 +387,8 @@ public sealed class CookingLevelEtHost : IDisposable
             throw new InvalidOperationException("Cooking level host operations require the owner thread.");
         if (_disposed) return CookingNetworkCaptureReason.Disposed;
         if (_tickFailure is not null) return CookingNetworkCaptureReason.AuthorityFaulted;
-        if (_ticking || _inFlight is not null || _executingPreparationMutation || _initializingPreparation)
+        if (_ticking || _inFlight is not null || _executingPreparationMutation || _initializingPreparation
+            || _executingLifecycleOperation || _executingFrontOperation || _executingAuthorityMutation)
             return CookingNetworkCaptureReason.Busy;
         return CookingNetworkCaptureReason.None;
     }
@@ -402,10 +403,14 @@ public sealed class CookingLevelEtHost : IDisposable
         var checkpoint = ExportCheckpoint();
         var reason = _ownedSimulation is null ? CookingNetworkCheckpointUnavailableReason.NotInitialized
             : Enum.Parse<CookingNetworkCheckpointUnavailableReason>(checkpoint.Reason.ToString());
+        var progress = _ownedSimulation?.MajorProgressForGeneration;
+        var display = progress is null ? null : new CookingNetworkMajorProgressProjection(progress.Locked, progress.CookFaster,
+            Array.AsReadOnly(progress.Decoration.Select(d => d with { }).ToArray()),
+            Array.AsReadOnly(progress.Unlocks.OrderBy(d => d.Value, StringComparer.Ordinal).ToArray()));
         return new(true, CookingNetworkCaptureReason.None, new(observation, recipe, front, _installedLayout,
             _lifecycle.Configuration.Identity, _lifecycle.Preparation is { } preparation ? CookingLevelLifecycle.CopyPreparation(preparation) : null,
             _serviceStartLogicalTick, LastCommittedSimulationBatch, _frontConfigurationIdentity,
-            _preparationConfiguration?.Identity(), _menuConfiguration?.Identity(), checkpoint.Checkpoint, reason));
+            _preparationConfiguration?.Identity(), _menuConfiguration?.Identity(), checkpoint.Checkpoint, reason, display));
     }
 
     private const int SceneId = 1;

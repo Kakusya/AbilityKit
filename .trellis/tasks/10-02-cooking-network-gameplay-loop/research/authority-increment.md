@@ -1,5 +1,9 @@
 # N02 authority increment - 2026-10-03
 
+## Latest verification
+
+Final additional focused verification: **15 passed / 0 failed / 0 skipped**, exit 0, authority-display-busy-final-v2.trx. This includes the prior 13 controls plus trusted major DISPLAY projection and real lifecycle callback Busy capture. Earlier 13/13 record below is retained as the first increment evidence, not the final combined count. No .NET window remains held.
+
 ## Boundary and source
 
 Base bdd5cbede. Shared pure-domain interface commit 8297ff788 contains CookingNetworkAuthority.cs; the following implementation commit adds its CleanupRejected enum member, existing ET Host narrow extension, new CookingNetworkAuthorityAdapter and new ET controls. No Session, transport, domain simulation, lifecycle/checkpoint schema, or Unity gameplay source changed. Recipe 5 / Level 8 remain unchanged. SDK projects compile these Cooking sources directly; there is no existing Cooking UPM asmdef to update. ET shared runtime asmdef remains unchanged.
@@ -48,3 +52,17 @@ Root's static production findings were addressed before final verification: clea
 ## Remaining composition/exits
 
 Session must enforce frozen wire v3 field presence/bounds, instance-qualified stable command mapping, fully generation-qualified source IDs, authorized lifecycle ingress, CancelledNoExecution and outstanding issued-baseline ack. Capture DTO is not an authority grant or a new recovery format. Domain required-null validation remains in existing schemas; the v3 codec must enforce its required capture fields as well. Adapter is not a socket callback API. No SDK-wide/Cooking-wide/ET-wide gate, framed Session round-trip, actual UDP process test, physical two-PC LAN or Unity pass is claimed here. Root independently reviews and integrates before broad gates.
+
+## Major display and independent-review correction
+
+Shared interface follow-up 1446063b9 adds JsonRequired nullable MajorProgress and CookingNetworkMajorProgressProjection (Locked/CookFaster/Decoration/Unlocks). Actual capture derives it from the owned simulation's trusted MajorProgressForGeneration, copying each decoration and sorting/copying unlocks into read-only lists. It does not install policy, apply choices, place objects, alter Recipe/Level schemas, or let a client grant buffs. The real factory control carries a future unlock absent from current configuration: it appears only in DISPLAY, never in observed items. Subsequent external progress mutation/locking cannot alter a prior capture. Typed JSON round-trip succeeds; missing required MajorProgress rejects while normal null remains supported by the contract.
+
+Independent reviewer found NetworkUnavailable lacked lifecycle/front/authority mutation flags. Actual Factory.Create invokes capture during Host.Start's lifecycle operation; the uncorrected capture accepted the intermediate world. Preserved real regression red at local/Logs/network-authority/authority-busy-explicit-red.{log,trx}: 1 failed / 0 passed; the sampled capture was Accepted=true while the test expected false. Busy now covers _executingLifecycleOperation/_executingFrontOperation/_executingAuthorityMutation alongside existing tick/preparation/in-flight flags. The final control records capture in the callback and asserts after a successful Start, avoiding a test exception masquerading as factory failure.
+
+Final command is the same focused dotnet test with logger authority-display-busy-final-v2.trx. Actual counters verified from TRX: 15 executed, 15 passed, 0 failed, 0 skipped. Logs: authority-display-busy-final-v2.log (byte-preserving PowerShell copy) and matching TRX under local/Logs/network-authority/. The earlier busy-red log had an assertion inside the callback caught by lifecycle setup; explicit-red is the clearer direct observation evidence. Both are preserved.
+
+### Honest cleanup failure boundary
+
+`CookingSpatialInteraction.ChangeWorker` StopProcess rejects only a missing process, non-manual execution, or ActiveWorker not equal to the command player; StopProcess explicitly bypasses reach. `CookingFrontOfHouse.StopFrontWork` checks work existence and player ownership, then pauses it. Healthy frozen owner capture selects exactly existing active-owned manual processes and working-owned front jobs, and cleanup executes before user commands/advance. With immutable trusted configuration and no intervening owner mutation, those generated stops satisfy their guards. Therefore actual DOMAIN rejection of a correctly generated stop is not demonstrated/reachable under this window's healthy preconditions. No private-state corruption, fake callback, mutable fixture or forged client cleanup identity was added to manufacture it. CleanupRejected domain-result handling is a defensive branch; the actual focused failure evidence is genuine Host BatchStale admission, followed by participant-unavailable enforcement and a valid next-frame recovery. Actual allocator authority fault has its own control. This is not a claim that every rejection reason was executed.
+
+The existing TerminalizeRemainingIdentity direct history path was inspected: accepted pending groups cannot mix network batches because fingerprint includes SimulationBatch and differing pending fingerprints immediately remove/terminalize the entire group. Network per-source cancellation preserves remaining envelopes of the same first batch. Thus a cross-batch surviving network duplicate cannot reach that old helper under current admission; no default singleplayer helper refactor was made speculatively.
