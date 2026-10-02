@@ -283,7 +283,10 @@ public sealed class NetworkTransportContractTests
         var options = new NetworkTransportOptions { FrameCodec = LengthPrefixedFrameCodec.Instance };
         configure(options);
         options.ConnectionFactory = () => conn;
-        return new NetworkTransport(options);
+        var transport = new NetworkTransport(options);
+        transport.Connect();
+        Assert.True(transport.IsAuthenticated, "The data-plane fixture must complete the real connection/authentication lifecycle.");
+        return transport;
     }
 
     private static SubmitInputRequest NewInput(int frame)
@@ -344,6 +347,7 @@ public sealed class NetworkTransportContractTests
 
         public void Open(string host, int port)
         {
+            Connected?.Invoke();
         }
 
         public void Close()
