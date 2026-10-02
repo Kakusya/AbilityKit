@@ -152,3 +152,8 @@ Integration585e15982 first Preparing runtime is committed and independently coor
 Preparing recovery committed integrationd9b0e5603 after independent forged-zero-clock-front blocker reproduction and correction. Final214615 kitchen462/590/227 and214713ET590/227 passed/zero skips; earlier214151/214247 are preserved pre-fix evidence. See research/preparing-checkpoint-composite-verification.md. Next same-Level trusted initial/dynamic geometry installation: root core gate/reference-state staging and EffectiveSpatial seed, host producer ONLY host/new PreparedLayout ET tests. Root core geometry focused5/5 passed; that later WIP has no full gate yet. Cross-Level new-geometry permission/carry remains a subsequent explicit transaction, not covered by the seed-only correction.
 
 S14 remaining exit audit captured in research/s14-operating-exit-audit.md. Existing authorized supply producer owns ONLY new CookingLevelObservation.cs and matching new tests, pure frozen projection; host owner retains host/layout. Observation source may proceed independently, but host owns integration .NET window until explicit release. Root integrates Observe later; no parallel business ledger or S14 completion claim. Core layout independent static review passed bounded preflight, without host WIP review or separate .NET.
+
+
+## 2026-10-02 22:20 master preparation/layout verification
+
+Reviewed source merged to d0eeb4b42. Actual post-merge kitchen gate 468/596/236 and ET gate596/236 passed, zero failures/skips. Definition3/Recipe5/Level7. See [master proof](research/master-prepared-layout-verification.md). Same-Level layout/preparation recovery is verified; cross-Level transaction, menu Ready availability and full S14 operating exit remain open.

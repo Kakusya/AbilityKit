@@ -8,3 +8,4 @@
 {"file": ".trellis/tasks/10-02-cooking-gameplay-menu-plan/research/operation-review.md", "reason": "Reviewed implementation boundary and required behavior evidence"}
 {"file": ".trellis/tasks/10-02-cooking-singleplayer-supply/runtime-increment.md", "reason": "Reviewed supervised domain increment contract and ownership boundary"}
 {"file": ".trellis/tasks/10-02-cooking-singleplayer-supply/domain-increment-report.md", "reason": "Actual domain verification and explicit remaining host integration hooks"}
+{"file": ".trellis/tasks/10-02-cooking-gameplay-menu-plan/research/master-prepared-layout-verification.md", "reason": "Actual master d0eeb4b42 preparation/layout gates 468/596/236 and 596/236; S06/S07/S08/S14 remain in progress"}

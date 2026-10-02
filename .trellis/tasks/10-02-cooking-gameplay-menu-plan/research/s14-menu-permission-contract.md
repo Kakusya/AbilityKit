@@ -1,0 +1,52 @@
+# Research: S14 Ready 菜单许可精确合同
+
+- Query: factory可信菜单、实际厨房制造结构与权限交集如何接入Ready，不改变S05贴单合同？
+- Scope: internal；只读源码/设计，不.NET。
+- Date: 2026-10-02
+
+## Findings
+
+### 现有来源与重要区分
+
+- `CookingMenuCatalog.cs:288` Requirements递归原料/recipe/carrier和production/delivery capability；`:322` ValidateLevel把缺项Record写Level且UnknownMenu经Requirements抛ArgumentException，尚非逐菜Ready诊断。
+- `CookingMenuCatalog.cs:337` ToContentDocument/LoadContent只投影被选菜闭包；声明SupportedApplianceCapabilities是词汇集合，不证明存在工位或玩家能操作。供应8份/容器1或2是明确fixture，不应再次作为产品初始库存规则。
+- `CookingPreparationConfiguration.Project` BaseAuthorized+unlocked∩LevelAllowed目前用于设备footprints/StationBindings。材料、容器、半成品DefinitionId不是设备DefinitionId；不能把footprints键集合当全内容许可，否则菜单材料全部被误禁。
+- `CookingRecipeFixture`已有Players/Items/Recipes/Appliances/OrderTemplates；simulation仅少量公开readonly访问。S05 design绑定使用Item/Order/ExpectedItemVersion及reachable vessel，未要求物理贴单工位或贴单距离。
+- Catalog.BindingCapability是delivery vocabulary，ToContentDocument把声明匹配的stations也投影，但S05 BindOrder执行并不检查该station。Ready新增“贴单设备必须站旁才能绑定”会改变已确认S05shape/行为，不能顺手实施。
+
+### 最小可信factory接口
+
+建议可选 `ICookingLevelMenuGameplayFactory : ICookingLevelGameplayFactory` 提供冻结 `CookingLevelMenuConfiguration`：CatalogIdentity、SelectedMenuIds、BaseAuthorizedMaterialDefinitions、AllowedMaterialDefinitions、AllowedRecipeIds（仅确有独立recipe许可时）、BindingCommandsEnabled。在host构造冻结并检查与configuration/contentprovenance同一来源，按当前Level scope选择，不从命令或checkpoint selfgrant。
+
+设备权限继续沿preparation配置；内容有效许可 = AllowedMaterialDefinitions ∩ (BaseAuthorizedMaterialDefinitions ∪ current confirmed unlocks)。名称明确material包含原料、容器、加工阶段/成品，不混同equipment。基础完整菜单配置应显式给其所有阶段授权，unlock仅增授权而不能绕本关Allowed。legacy factory无新接口保持原准备fixture，不根据payload猜选菜。
+
+可信 SelectedMenuIds 可从factory或已验证content.ContentProvenance.SelectedMenus导出；后者必须来自可信factory内容，不允许直接使用checkpoint集合。若两来源同时存在应相等，否则ConfigMismatch；menu/permissionidentity纳入配置/准备checkpoint并由外部可信factory重新核对。
+
+### 最小readonly核心访问器
+
+提供冻结 `CookingManufacturingAvailability` 或查询方法，至少：当前配置Recipes/Item definitions/OrderTemplates/Appliances、Players可用性与实际capabilities、实际有效Spatial、supplier配置、现存未removed物件快照。别公开mutable `_fixture`，别让caller构造可用能力后直接通过Ready。
+
+可以由simulation内部 `DescribeManufacturingAvailability()` 防御复制静态字典集合并附实际空间身份；host复用已有snapshot以及供给readonlyview。设备Capability必须来自当前已安装appliance且当前至少一个available玩家有操作能力与通路，不能仅从SupportedApplianceCapabilities声明导出。
+
+### validator精确逻辑
+
+`ValidateMenuReady(catalog,trustedMenuPolicy,kitchenAvailability)` 返回Frozen diagnostics `{MenuId,NodeId,Code,Relation}`，不抛UnknownMenu。逐selected menu获取Requirements；遍历step.Inputs.Portions/Output/Carrier、存储容器、最终ServingContainer、OrderTemplate和RequiresBinding，与真实recipe multiset/产出/完成方式匹配。
+
+1. 所有materials/containers/stages/products有definition且许可交集允许；设备另按可信footprint权限。定义registered但无供应或生产路线不算available。
+2. 原料取得路径为现有实际未removed同definition物件（包装内部同样是真实实例）或可信supplier.UnitDefinition及合法源/收货通路。有限目前余额0/当前量少于input不得作为正常业务失败或Ready自动失败：如果有实际供应配置允许恢复则结构存在，缺料提示交给经营。若有限永久耗尽且无其他来源，可给SupplyExhausted诊断/提示，但不得擅改正常成功或订单失败规则。
+3. 容器来自现存物件/标准基线明确配置/合法供应补充，且容量与accepteddefinitions兼容所有该step投料，不能仅Item定义存在判可用。不要要求每道菜拥有独占容器，各菜单可共用工位/器具；不把全菜单原料量相加作首关门。
+4. 原料→stage的recipe实际存在且输入数量一致；capability在真实已安装可达Appliance上存在，同时可用player具备处理该材料和该设备/工序资格；并行支路无需强制顺序，同一台兼多模式可先后使用。
+5. BindingCommandsEnabled为可信显式delivery能力合同，饮品RequiresBinding且其OrderTemplate确实RequiresBinding才能通过。当前不由物理贴单站推导，也不加Bind距离限制。若产品后续要求physical贴票机另行修约S05；现在Catalog delivery capability验证将其映射为可信command支持，而production capabilities仍必须物理设备。
+6. 每菜缺项记录具体step/menu/definition；最后Ready候选失败不写厨房/布局/许可/allocator，未知menu结构化拒绝。与Observe提示同源但不能让提示projection替代authoritative验证。
+
+### 必需测试与非重复范围
+
+未知menu诊断不抛异常；声明capability但无station、不可达station、无eligibleplayer分别失败；设备允许但原料/容器/阶段禁止各失败；default无需unlock、unlock不绕allowed；materials许可不要求存在footprint。少库存但有限supplier补料结构存在仍可Ready；只是registered定义没有真实容器来源拒绝。饮品command-enabled且无physical贴票机不新增距离限制、command-disabled拒绝饮品而餐食无需binding。
+
+沿已有87菜制作fixture获取selected closure，用全部可信配置正例证明Ready，不再研发制作图；专属negative矩阵验证真实Ready接线失败零变更。factorypolicy与checkpoint伪造selectedmenus/授权/BindingEnabled拒绝；successorLevel选择受信新范围而非沿旧payloadgrant。
+
+## Caveats / Not Found
+
+BindingCapability“命令能力”是与当前S05源码一致的最小解释，需要root明确记录该映射，避免catalog.station投影被误认为已实现物理贴票站约束。
+
+库存永久耗尽对Ready的具体诊断严重度不应由研究自行选择；建议区分结构missing（阻Ready）与可补料数量状态（提示），保留自然完成。没有改代码、没有运行.NET；host Observe/Ready接线由单一owner后续完成。

@@ -27,7 +27,7 @@
     "relatedFiles":  [
 
                      ],
-    "notes":  "Reviewed integration checkpoint 4e32fbe61: physical supply/provenance/unified allocator sequence, ET fingerprint/closing/Level7 candidate passed actual kitchen438/563/218 and ET563/218. Not merged to master. Preparing procurement and first-kitchen reuse, full layout and natural operating S14 exit remain incomplete; S07 not complete.",
+    "notes":  "Reviewed physical finite/infinite supply, global allocation watermarks, ET fingerprint/Closing and Preparing supply merged masterd0eeb4b42. Actual kitchen468/596/236 and ET596/236 passed zero failures/skips. Cross-Level supply carry/retry and full S14 exit remain pending; S07 not complete.",
     "meta":  {
                  "plan_id":  "S07",
                  "stage":  "singleplayer",
@@ -41,7 +41,7 @@
                  "planning_maturity":  "reviewed-contract",
                  "owner_delegated_details":  true,
                  "execution_authorization":  "Latest owner: audit every topic then execute through completion. Task planning review and dependency checks precede execution; Unity and optional reference pool remain deferred.",
-                 "coordinator_verification":  ".trellis/tasks/10-02-cooking-gameplay-menu-plan/research/supply-composite-verification.md",
-                 "domain_increment_status":  "verified"
+                 "domain_increment_status":  "verified",
+                 "coordinator_verification":  ".trellis/tasks/10-02-cooking-gameplay-menu-plan/research/master-prepared-layout-verification.md"
              }
 }

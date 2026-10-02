@@ -2,6 +2,8 @@
 
 # Cooking Game 当前工程进度
 
+> 2026-10-02 22:20 latest master production `d0eeb4b42`: reviewed supply, shared Preparing kitchen, actual trusted layout installation and same-Level geometry recovery merged and verified. Master kitchen468/596/236 and ET596/236 passed, zero failures/skips. Current definition3/Recipe5/Level7; [master evidence and remaining exits](../../../.trellis/tasks/10-02-cooking-gameplay-menu-plan/research/master-prepared-layout-verification.md). Cross-Level layout/permission transactions and full S14 operating exit remain incomplete; network/Unity stay later stages.
+
 > 2026-10-02 21:48 integration `d9b0e5603`: Preparing export/recovery now verified with a real uninterrupted-versus-restored final canonical control and strict initial front-state checks. Final kitchen462/590/227 and ET590/227 passed, zero failures/skips; [evidence and preserved blocker](../../../.trellis/tasks/10-02-cooking-gameplay-menu-plan/research/preparing-checkpoint-composite-verification.md). Trusted layout installation and full S14 exit remain outstanding. Master production remains7a043b6cb Recipe4/Level6.
 
 > 2026-10-02 21:36 integration checkpoint `585e15982`: first Preparing runtime independently reviewed and coordinator gates passed (kitchen 462/589/223; ET Level 589/223; zero failures/skips). Preparation uses the same kitchen and ET tick; service starts at a recorded clock offset. Preparing recovery and actual layout installation remain incomplete; S06/S07/S08/S14 stay in progress. See [preparation verification](../../../.trellis/tasks/10-02-cooking-gameplay-menu-plan/research/preparing-composite-verification.md). Master production remains `7a043b6cb`, Recipe4/Level6; integration Recipe5/Level7 is not yet merged.

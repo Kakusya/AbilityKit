@@ -9,7 +9,7 @@
 - 纯 C# `AbilityKit.Game.Cooking` 拥有物品/容器/加工/订单/前厅规则；`CookingLevelEtHost` 负责 Level 固定 Tick 与命令入口。先扩展既有 owner，不建立平行厨房运行时。
 - `CookingRecipeCommand` 已有 Pickup、Drop、PutIn、TakeOut、Pour、StartProcess、SubmitOrder，以及本轮已合并的 Move、ContinueProcess、StopProcess、ServePortion、ClearContents、DiscardItem；AdvanceTicks 为 legacy 自动加工测试路径，不能推进 Manual。动作仍经过同一 owner 的验证、原子提交、幂等及 scope/version 校验；BindOrder、UnbindOrder、RebindOrder 已在本地 master 合并验证；它们复用 Item/Order/ExpectedItemVersion，fingerprint 覆盖既有字段。
 - 运行态、快照与恢复 checkpoint 分开；新增状态必须评估 snapshot/canonical/SHA-256/checkpoint、同 Level 恢复、成功交接与失败重开的取舍，不能只加 UI 字段。
-- 正式内容使用 `CookingContentDocument`、配置候选及加载校验。master 当前身份是 `cooking-definition-v3`，Recipe checkpoint schema4、Level envelope format5；不支持旧格式时显式拒绝。Execution/YieldPortions/RequiredProcessingContainerDefinition 和可选 ContentProvenance 经既有配置校验、冻结与 canonical identity，不另造菜单配置 authority。S05 新增必需 BoundOrder checkpoint 字段与可选 RequiresBinding/DisposableOnSubmission 内容字段已同步 canonical 和恢复校验；S06 分支 format6 尚未交付。
+- 正式内容继续使用 `CookingContentDocument`、配置候选及加载校验。master d0eeb4b42 的身份为 `cooking-definition-v3`，Recipe checkpoint schema5、Level envelope format7；旧格式显式拒绝。Execution/YieldPortions/RequiredProcessingContainerDefinition、ContentProvenance、S05 绑定与 S07 供应字段沿既有 owner 校验、冻结和 canonical identity，不另造菜单或库存 authority。
 - Match、Connection、Participant、RestaurantRuntime、Kitchen、Level 语义见 [reference/product-lifetimes.md](reference/product-lifetimes.md)；ET 所有权见 [reference/et-entity-tree.md](reference/et-entity-tree.md)。这是设计参考，不宣称完整目标树已经落地。
 - 通用 AbilityKit、Network 和 Server 不拥有菜品、顾客、票据或营业规则。现有应用层对框架的组合方式保持。
 
@@ -26,7 +26,7 @@
 | 设备布局/区域扩建 | 准备态布局与内容许可 | 先验证占位、交互面和通路，再一次提交；拒绝保持原布局 |
 | 提示数据 | snapshot/event 的只读视图 | 操作原因、容器内容、进度、绑定、供应量；Unity 不回写 authority |
 
-已合并核心公共 API 与纯 .NET checkpoint 格式以对应 spec/task 检查记录为准；供应、布局和前厅新增辅助尚未形成完整 ET 营业接线，网络 wire 尚待网络阶段处理。其余设计输入仍须具体签名、错误矩阵、正反例、恢复规则及实际测试，不能把表格存在当成跨层契约已经生效。
+已合并核心 API 与纯 .NET checkpoint 格式以对应 spec/task 检查记录为准。供应、Preparing 和同关布局现已接入既有 ET Host：准备与营业共用一个厨房和固定 Tick，Start 记录营业偏移；准备态布局先验证再更新有效空间与派生前厅路径，可信定义与初始策略仍不可变。恢复先重建可信几何，再恢复物件和运行位姿；不新增模拟 owner。完整关卡许可、跨关几何事务和 S14 经营出口仍待，网络 wire 留在网络阶段，不能把这些受限增量称为全部经营功能完成。
 
 ## 来源冲突登记
 
