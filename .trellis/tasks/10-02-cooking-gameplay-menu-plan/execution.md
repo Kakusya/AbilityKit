@@ -171,3 +171,7 @@ Reviewed source11a49537a withactual final kitchen480/608/238 zero failures/skips
 ## Master125ffe906 verified continuation
 
 Generation transaction and pure menu helper merged; actual master kitchen605/733/254 and ET733/254, zero failures/skips. See research/master-generation-menu-verification.md. Continue Host Ready and runtime permissions, then durable Host load and natural operating acceptance. Preserve one Recipe/Front/Level authority; no Unity execution.
+
+## Scoped menu productionfa2f60e17
+
+Host/runtime/checkpoint8 integration independently reviewed and master gates630/758/266 and758/266 passed, zero failures/skips. Actual red enum-count test preserved and corrected with stable tail-value assertions. See research/master-menu-policy-verification.md. Continue actual natural Front service/replay/restore, scope-narrowed carry and durable Host restart before completing S14.

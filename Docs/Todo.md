@@ -1,3 +1,5 @@
+> Current scoped menu execution/recovery proof: [master-menu-policy-verification.md](../.trellis/tasks/10-02-cooking-gameplay-menu-plan/research/master-menu-policy-verification.md). Current Level8 supersedes historical Level7 evidence; natural operating, narrowed carry and durable Host loading are still incomplete.
+
 > Generation transaction/current pure-menu validation proof: [master-generation-menu-verification.md](../.trellis/tasks/10-02-cooking-gameplay-menu-plan/research/master-generation-menu-verification.md). Read its remaining exits before continuing; helper/store verification is not Host Ready/restart or full S14 completion.
 
 > 2026-10-02 23:06: source master11a49537a adds reviewed typed major baseline2 and private generation staging core. Final root kitchen480/608/238 passed zero failures/skips after real null-location red/green fix. Host transaction/restart and Ready menu wiring remain work in progress. Definition3/Recipe5/Level7 remain unchanged. [Evidence](../.trellis/tasks/10-02-cooking-gameplay-menu-plan/research/baseline-generation-core-verification.md).

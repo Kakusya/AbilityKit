@@ -1,52 +1,46 @@
 {
-    "id":  "cooking-singleplayer-level-observation",
-    "name":  "cooking-singleplayer-level-observation",
-    "title":  "单机关卡许可与可观察闭环",
-    "description":  "J01–J08 的数据面/K01–K02/K06/完整验收",
-    "status":  "in_progress",
-    "dev_type":  null,
-    "scope":  null,
-    "package":  null,
-    "priority":  "P2",
-    "creator":  "Li He",
-    "assignee":  "Li He",
-    "createdAt":  "2026-10-02",
-    "completedAt":  null,
-    "branch":  null,
-    "base_branch":  "master",
-    "worktree_path":  null,
-    "commit":  null,
-    "pr_url":  null,
-    "subtasks":  [
-
-                 ],
-    "children":  [
-
-                 ],
-    "parent":  "10-02-cooking-gameplay-menu-plan",
-    "relatedFiles":  [
-
-                     ],
-    "notes":  "S14 remaining exit audited in research/s14-operating-exit-audit.md. Pure frozen observation helper passed5/5 in isolated supply worktree; integration Host Observe later focused52/52 producer result awaits root independent composite verification and inventory-field naming correction. Ready menu availability, full natural operating/replay and cross-Level/durable baseline remain pending.",
-    "meta":  {
-                 "plan_id":  "S14",
-                 "stage":  "singleplayer",
-                 "planning_only":  false,
-                 "implementation_authorized":  true,
-                 "dependencies":  [
-                                      "S05",
-                                      "S06",
-                                      "S07",
-                                      "S08",
-                                      "S09",
-                                      "S10",
-                                      "S11",
-                                      "S12",
-                                      "S13"
-                                  ],
-                 "execution_gate":  "reviewed-contract-and-dependencies",
-                 "planning_maturity":  "reviewed-contract",
-                 "owner_delegated_details":  true,
-                 "execution_authorization":  "Latest owner: audit every topic then execute through completion. Task planning review and dependency checks precede execution; Unity and optional reference pool remain deferred."
-             }
+  "id": "cooking-singleplayer-level-observation",
+  "name": "cooking-singleplayer-level-observation",
+  "title": "单机关卡许可与可观察闭环",
+  "description": "J01–J08 的数据面/K01–K02/K06/完整验收",
+  "status": "in_progress",
+  "dev_type": null,
+  "scope": null,
+  "package": null,
+  "priority": "P2",
+  "creator": "Li He",
+  "assignee": "Li He",
+  "createdAt": "2026-10-02",
+  "completedAt": null,
+  "branch": null,
+  "base_branch": "master",
+  "worktree_path": null,
+  "commit": null,
+  "pr_url": null,
+  "subtasks": [],
+  "children": [],
+  "parent": "10-02-cooking-gameplay-menu-plan",
+  "relatedFiles": [],
+  "notes": "Reviewed masterfa2f60e17 actual kitchen630/758/266 and ET758/266, zero failures/skips. Scoped Host menu Ready/runtime permission/recovery and earlier supply/layout/generation accepted. Natural service, narrowed successor carry and durable Host baseline loading remain open; status stays in_progress. See parent research/master-menu-policy-verification.md.",
+  "meta": {
+    "plan_id": "S14",
+    "stage": "singleplayer",
+    "planning_only": false,
+    "implementation_authorized": true,
+    "dependencies": [
+      "S05",
+      "S06",
+      "S07",
+      "S08",
+      "S09",
+      "S10",
+      "S11",
+      "S12",
+      "S13"
+    ],
+    "execution_gate": "reviewed-contract-and-dependencies",
+    "planning_maturity": "reviewed-contract",
+    "owner_delegated_details": true,
+    "execution_authorization": "Latest owner: audit every topic then execute through completion. Task planning review and dependency checks precede execution; Unity and optional reference pool remain deferred."
+  }
 }

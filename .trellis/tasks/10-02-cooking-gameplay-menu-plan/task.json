@@ -2,7 +2,7 @@
   "id": "cooking-gameplay-menu-plan",
   "name": "cooking-gameplay-menu-plan",
   "title": "Cooking 功能基线与菜单分阶段规划",
-  "description": "比对 A-K 玩法与 87 款候选菜单，记录架构边界并建立只规划不执行的 Task 清单",
+  "description": "Cooking feature/menu records and authorized staged execution; singleplayer first, network later, Unity separately deferred.",
   "status": "in_progress",
   "dev_type": null,
   "scope": null,
@@ -42,7 +42,7 @@
   ],
   "parent": null,
   "relatedFiles": [],
-  "notes": "2026-10-02 owner 授权规划记录与未执行 Task，不改变架构，不启动产品实施。",
+  "notes": "Reviewed masterfa2f60e17 actual kitchen630/758/266 and ET758/266, zero failures/skips. Scoped Host menu Ready/runtime permission/recovery and earlier supply/layout/generation accepted. Natural service, narrowed successor carry and durable Host baseline loading remain open; status stays in_progress. See parent research/master-menu-policy-verification.md.",
   "meta": {
     "planning_only": false,
     "implementation_authorized": true,

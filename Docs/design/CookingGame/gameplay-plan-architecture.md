@@ -47,6 +47,8 @@
 单机先以命令序列、固定 Tick、状态守恒、canonical/hash、checkpoint 恢复验证。多逻辑玩家争抢仍在无网络测试中验证。网络再增加实际拓扑、延迟/乱序/重连及旧局拒绝；Unity 最后验证读得懂、拿得准、移动/合作体感。同机两实例不能代替两台物理 PC。
 
 
-### 2026-10-02 typed????????????
+### Typed baseline and unpublished generation staging
 
-??MajorCheckpointStore??typed baseline format2?source11a49537a???format1 canonical????????typed???????????????????successhandoff?????????????????trusted Host???????generation copy?front adoption???????/????????ET????Tick???????authority?????????Host??? [????](../../../.trellis/tasks/10-02-cooking-gameplay-menu-plan/research/baseline-generation-core-verification.md)?
+Reviewed source11a49537a adds typed major baseline format2 without removing legacy format1 APIs. Kitchen canonical text cannot be parsed back into the typed restart payload; trusted Host reconstruction is still required. The private generation copy and Front adoption prepare isolated candidate state without ticking or creating another runtime authority. Reviewed master125ffe906 then connects recoverable generation staging and trusted next geometry seeds; see [actual master verification](../../../.trellis/tasks/10-02-cooking-gameplay-menu-plan/research/master-generation-menu-verification.md). Store tests and generation tests do not alone prove durable Host loading or full natural operation.
+
+The menu-policy candidate keeps authorization in the existing Recipe owner and installs trusted immutable policy only in the existing Created/Preparing configuration window. Host Ready validates actual owned manufacturing availability and current scoped Front templates. Saved menu identity is comparison evidence, not a permission grant. Freeze one trusted factory resolution per restore so the policy checked is the policy actually installed. Required nullable Level8 identity is accepted in masterfa2f60e17 after independent review and actual master gates630/758/266 and758/266. Historical master125ffe906 Level7 evidence retains its earlier scope.

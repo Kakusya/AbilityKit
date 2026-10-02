@@ -1,3 +1,5 @@
+> Current scoped menu execution/recovery proof: [master-menu-policy-verification.md](.trellis/tasks/10-02-cooking-gameplay-menu-plan/research/master-menu-policy-verification.md). Current Level8 supersedes historical Level7 evidence; natural operating, narrowed carry and durable Host loading are still incomplete.
+
 > Generation transaction/current pure-menu validation proof: [master-generation-menu-verification.md](.trellis/tasks/10-02-cooking-gameplay-menu-plan/research/master-generation-menu-verification.md). Read its remaining exits before continuing; helper/store verification is not Host Ready/restart or full S14 completion.
 
 > Current owner instruction (2026-10-02): continue auditing all topics, resolve their plans, then implement and verify to completion without stopping for routine confirmations. Preserve architecture and stage order: singleplayer -> network -> singleplayer Unity -> network Unity. Current stage: singleplayer. Older planning-only notices below are historical. Unity remains deferred under its separate gate.

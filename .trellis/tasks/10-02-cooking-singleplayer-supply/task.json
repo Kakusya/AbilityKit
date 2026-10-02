@@ -1,47 +1,41 @@
 {
-    "id":  "cooking-singleplayer-supply",
-    "name":  "cooking-singleplayer-supply",
-    "title":  "单机有限供应与备料",
-    "description":  "G02–G10",
-    "status":  "in_progress",
-    "dev_type":  null,
-    "scope":  null,
-    "package":  null,
-    "priority":  "P2",
-    "creator":  "Li He",
-    "assignee":  "Li He",
-    "createdAt":  "2026-10-02",
-    "completedAt":  null,
-    "branch":  null,
-    "base_branch":  "master",
-    "worktree_path":  null,
-    "commit":  null,
-    "pr_url":  null,
-    "subtasks":  [
-
-                 ],
-    "children":  [
-
-                 ],
-    "parent":  "10-02-cooking-gameplay-menu-plan",
-    "relatedFiles":  [
-
-                     ],
-    "notes":  "Reviewed physical finite/infinite supply, global allocation watermarks, ET fingerprint/Closing and Preparing supply merged masterd0eeb4b42. Actual kitchen468/596/236 and ET596/236 passed zero failures/skips. Cross-Level supply carry/retry and full S14 exit remain pending; S07 not complete.",
-    "meta":  {
-                 "plan_id":  "S07",
-                 "stage":  "singleplayer",
-                 "planning_only":  false,
-                 "implementation_authorized":  true,
-                 "dependencies":  [
-                                      "S03",
-                                      "S04"
-                                  ],
-                 "execution_gate":  "reviewed-contract-and-dependencies",
-                 "planning_maturity":  "reviewed-contract",
-                 "owner_delegated_details":  true,
-                 "execution_authorization":  "Latest owner: audit every topic then execute through completion. Task planning review and dependency checks precede execution; Unity and optional reference pool remain deferred.",
-                 "domain_increment_status":  "verified",
-                 "coordinator_verification":  ".trellis/tasks/10-02-cooking-gameplay-menu-plan/research/master-prepared-layout-verification.md"
-             }
+  "id": "cooking-singleplayer-supply",
+  "name": "cooking-singleplayer-supply",
+  "title": "单机有限供应与备料",
+  "description": "G02–G10",
+  "status": "in_progress",
+  "dev_type": null,
+  "scope": null,
+  "package": null,
+  "priority": "P2",
+  "creator": "Li He",
+  "assignee": "Li He",
+  "createdAt": "2026-10-02",
+  "completedAt": null,
+  "branch": null,
+  "base_branch": "master",
+  "worktree_path": null,
+  "commit": null,
+  "pr_url": null,
+  "subtasks": [],
+  "children": [],
+  "parent": "10-02-cooking-gameplay-menu-plan",
+  "relatedFiles": [],
+  "notes": "Reviewed masterfa2f60e17 actual kitchen630/758/266 and ET758/266, zero failures/skips. Scoped Host menu Ready/runtime permission/recovery and earlier supply/layout/generation accepted. Natural service, narrowed successor carry and durable Host baseline loading remain open; status stays in_progress. See parent research/master-menu-policy-verification.md.",
+  "meta": {
+    "plan_id": "S07",
+    "stage": "singleplayer",
+    "planning_only": false,
+    "implementation_authorized": true,
+    "dependencies": [
+      "S03",
+      "S04"
+    ],
+    "execution_gate": "reviewed-contract-and-dependencies",
+    "planning_maturity": "reviewed-contract",
+    "owner_delegated_details": true,
+    "execution_authorization": "Latest owner: audit every topic then execute through completion. Task planning review and dependency checks precede execution; Unity and optional reference pool remain deferred.",
+    "domain_increment_status": "verified",
+    "coordinator_verification": ".trellis/tasks/10-02-cooking-gameplay-menu-plan/research/master-prepared-layout-verification.md"
+  }
 }

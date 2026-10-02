@@ -1,3 +1,5 @@
+> Scoped menu/current generation continuation: sourcefa2f60e17, [menu authorization contract](cooking-menu-catalog.md#scoped-menu-ready-and-runtime-authorization-2026-10-03). Read current progress and parent task evidence before interpreting historical planning or format notices. Complete natural S14 and durable Host restart remain open.
+
 > Current owner instruction (2026-10-02): continue auditing all topics, resolve their plans, then implement and verify to completion without stopping for routine confirmations. Preserve architecture and stage order: singleplayer -> network -> singleplayer Unity -> network Unity. Current stage: singleplayer. Older planning-only notices below are historical. Unity remains deferred under its separate gate.
 
 # 做菜经营游戏规划索引

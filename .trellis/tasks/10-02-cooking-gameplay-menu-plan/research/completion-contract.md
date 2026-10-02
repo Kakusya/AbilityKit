@@ -15,7 +15,7 @@
 | S07 供应 | 有限/无限显式区分、申请/到货/接收、物理包装/份数/仓储、补货和恢复守恒 | Master125ffe906 includes actual finite/infinite supply, material packages, global allocator and Preparing/Running recovery; success transaction preserves pending delivery RemainingTicks. Full natural service and runtime scope permissions remain open. |
 | S08 布局 | 准备态安装真实空间配置、旋转占位、交互面、玩家与顾客通路、扩建、拒绝零变更及恢复 | Master125ffe906 includes actual trusted layout installation, same-Level geometry recovery and next-generation trusted seed projection with rollback. Per-Level equipment/material narrowing and full natural Front route acceptance remain open. |
 | S09–S13 内容 | 44 正餐/12 甜品/31 饮品逐条供应→加工→容器→交付实跑，独立分支和最后收尾正确 | 87 菜实际生产与盛装、56 正餐甜品提交及 87 ET 恢复已验证；31 饮品绑定后提交与恢复已在 master 验证 |
-| S14 单机完整出口 | ET 固定 Tick 营业闭环、许可交集、可观察数据、重放与 checkpoint、失败/成功跨关 | Master125ffe906 includes frozen Observe, pure Ready validator, typed baseline2 store and reviewed generation transaction. Host Ready/runtime policy/checkpoint8 integration, durable Host restart and natural operating replay/restore exit remain open. |
+| S14 单机完整出口 | ET 固定 Tick 营业闭环、许可交集、可观察数据、重放与 checkpoint、失败/成功跨关 | Master125ffe906 includes frozen Observe, pure Ready validator, typed baseline2 store and reviewed generation transaction. Host Ready/runtime policy/checkpoint8 accepted in masterfa2f60e17 with actual630/758/266 and758/266 gates. Durable Host restart, narrowed carry and natural operating replay/restore exit remain open. |
 | N01 网络契约 | 较晚 owner 决定同步 ADR/spec；同一 Host 本地/远端入口、固定 Tick 队列、传输边界 | 研究结论已定位；正式修约及实现待单机后 |
 | N02 网络闭环 | 全部新状态 wire round-trip，同机双进程真实 UDP，物理两机 LAN 争抢/并行/交付/跨关 | 第二物理主机当前不可用，不可标通过 |
 | N03 恢复测量 | 身份重绑定、断线队列丢弃、暂停不消费、旧局拒绝、完整 baseline、真实拓扑指标 | 未重新验证新增功能 |
