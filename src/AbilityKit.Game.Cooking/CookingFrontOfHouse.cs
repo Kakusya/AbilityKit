@@ -779,6 +779,17 @@ public sealed class CookingFrontOfHouse
             Walkable = Array.AsReadOnly(cells.OrderBy(x => x.X).ThenBy(x => x.Y).ToArray()), Spatial = flow.Spatial?.Freeze() };
     }
 
+    /// <summary>Prevalidates an unpublished front state for a later owner-only generation commit.</summary>
+    internal Action PrepareGenerationStateAdoption(CookingFrontOfHouse source)
+    {
+        EnsureFrontMutation();
+        ArgumentNullException.ThrowIfNull(source);
+        if (ReferenceEquals(this, source) || _schedule != source._schedule || _companion != source._companion ||
+            FlowCanonical(_flow) != FlowCanonical(source._flow) || _manualPolicy != source._manualPolicy)
+            throw new ArgumentException("The staged front state has a different configuration.");
+        return () => CopyFrom(source);
+    }
+
     private void CopyFrom(CookingFrontOfHouse source)
     {
         _tables.Clear();

@@ -113,7 +113,7 @@ public sealed record CookingStationReplacement(StationSlotId From, StationSlotId
 /// 小关成功之后的大关检查点：锁定的选择加上交接后的厨房现场。
 /// 不含订单、结算条或命令水位。一个大关一份文件。
 /// </summary>
-public sealed class CookingMajorCheckpointStore
+public sealed partial class CookingMajorCheckpointStore
 {
     public const int CurrentFormatVersion = 1;
     public const int MaximumRecordCharacters = 512 * 1024;
