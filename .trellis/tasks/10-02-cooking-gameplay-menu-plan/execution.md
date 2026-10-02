@@ -15,6 +15,22 @@
 | 网络 | N01，再 N02→N03 | 独立 worktree；先对齐已确认 LiteNet/通用 Transport 边界，再接入新增玩法及恢复测量 | 待启动 Orca worker |
 | 单机经营整合 | S06/S07/S08/S14 | 协调会话 worktree；依赖核心和菜单，逐批整合，不建立平行 authority | 待前置 |
 
+## Orca 实际启动回执
+
+Run：`run_ca505f084a8c`。2026-10-02 已启动以下三个 supervised Codex worker，均有 input_accepted + turn_started/observed；不是仅登记。
+
+| 线 | Dispatch | Orca 分支/worktree | Task |
+|---|---|---|---|
+| 厨房 | ctx_ab9d7e55d402 | cooking-core-s01-s03；C:/Users/Administrator/orca/workspaces/AbilityKit/cooking-core-s01-s03 | task_3539e6eaa06f |
+| 菜单 | ctx_cb37026cb88a | cooking-menu-s04；C:/Users/Administrator/orca/workspaces/AbilityKit/cooking-menu-s04 | task_0b550b23177b |
+| 网络 | ctx_50c9cd456cac | cooking-network-n01-n03；C:/Users/Administrator/orca/workspaces/AbilityKit/cooking-network-n01-n03 | task_f91244e49d20 |
+
+协调经营 worktree：`cooking-integration-s06-s14`，同一 Orca workspace 根目录下；主会话持有，不增加第四个 worker。
+
+规划及执行基线已提交 master：`b4f1a2f53`、`ce3110b53`。产品 feature 尚未回并；三个 worker 的具体生产改动正在独立分支中。启动前领域基线 `dotnet test src/AbilityKit.Game.Cooking.Tests/AbilityKit.Game.Cooking.Tests.csproj --nologo --verbosity minimal` 226/226 pass、0 skip；大量既有共享包 CS1591 警告未当作零警告构建。
+
+网络调查发现通用 LiteNet 缺服务端 Listener/ServerChannel，Cooking Session 仍直接持 NetManager。协调者已按现有已批准通用 Transport 架构授权网络 worker独占最小 adapter、包/asmdef/SDK引用与专属测试；移出回调中模拟写入，不新建平行网络抽象。菜单 ×2 与现有 DuplicateRecipeInputs 校验冲突已交核心 owner 修正为多重集合，尚未声称通过。
+
 S04/N01 的只读研究及相互独立设计工作可以前置，生产整合仍遵守依赖。后续 Task 的 ready 不以文档存在判断，必须确认前置实际验证。
 
 ## 核心设计收敛
