@@ -1,3 +1,5 @@
+> Current owner instruction (2026-10-02): continue auditing all topics, resolve their plans, then implement and verify to completion without stopping for routine confirmations. Preserve architecture and stage order: singleplayer -> network -> singleplayer Unity -> network Unity. Current stage: singleplayer. Older planning-only notices below are historical. Unity remains deferred under its separate gate.
+
 # 规划维护清单与将来验证入口
 
 本任务只记录，未执行产品实施。已完成记录工作不代表子 Task 已实施。
@@ -22,3 +24,7 @@
 - Unity 仍禁止；解除禁令并确认 Editor/managed DLL 环境后，再确定 compile/EditMode/scene smoke 命令。
 
 上述是计划命令，不是已通过。本轮不提交、不归档、不 start。
+
+## Current execution sequence after review
+
+Owner authorizes audit then implementation. Follow the reviewed design and parent research/final-review.md; historical planning-only text is superseded. Check actual dependency evidence before starting, preserve stopped worktree edits, fix review findings before accepting prior implementation, update payload/fingerprints/config identity/canonical/checkpoint together, run focused behavioral and applicable integration gates, record actual pass/fail/blocked/skip and commit evidence. Never declare this Task complete from metadata or directory counts.

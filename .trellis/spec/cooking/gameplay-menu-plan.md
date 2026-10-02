@@ -1,6 +1,10 @@
+> Current owner instruction (2026-10-02): continue auditing all topics, resolve their plans, then implement and verify to completion without stopping for routine confirmations. Preserve architecture and stage order: singleplayer -> network -> singleplayer Unity -> network Unity. Current stage: singleplayer. Older planning-only notices below are historical. Unity remains deferred under its separate gate.
+
 # Cooking 功能与菜单推进计划
 
-日期：2026-10-02。最新状态：owner 在规划汇总后明确授权实施单机与联网部分，使用 worktree 并行作业、验证通过后合并 master；Unity 单机/联网仍后置。下列初版“只记录”表述是历史规划边界，由本条执行授权更新。执行进度与证据见 [执行记录](../../tasks/10-02-cooking-gameplay-menu-plan/execution.md)。
+日期：2026-10-02。当前仅规划、记录 Task，不实施、不改变架构、不合并；先单机，再网络，再单机 Unity、网络 Unity。先前执行记录仅保留历史，停止情况见 [执行记录](../../tasks/10-02-cooking-gameplay-menu-plan/execution.md)。
+
+当前审议：Task S01 已核对主分支空间缺口，细化逻辑移动、朝向、碰撞、统一目标解析与恢复验收；仍为 planning，未批准实施。下一项为 Task S02 手工作业与接续加工；详见 [S01 设计](../../tasks/10-02-cooking-singleplayer-spatial-interaction/design.md)。
 
 ## 目标与范围
 

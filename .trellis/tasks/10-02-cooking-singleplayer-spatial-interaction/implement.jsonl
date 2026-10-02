@@ -1,3 +1,12 @@
 {"file": ".trellis/spec/cooking/gameplay-menu-plan.md", "reason": "本轮范围、推进顺序和规划规则"}
 {"file": "Docs/design/CookingGame/gameplay-plan-architecture.md", "reason": "保留架构、记录能力归属和历史冲突"}
 {"file": "Docs/design/CookingGame/reference/menu-integration.md", "reason": "候选内容映射和批量/阶段/订单约束"}
+{"file": "src/AbilityKit.Game.Cooking/CookingDomain.cs", "reason": "S01 existing authority, reachability and fixed-Tick baseline; source evidence, not new delivery"}
+{"file": "src/AbilityKit.Game.Cooking/CookingRecipeLoop.cs", "reason": "S01 existing authority, reachability and fixed-Tick baseline; source evidence, not new delivery"}
+{"file": "src/AbilityKit.Game.Cooking.EtRuntime/CookingLevelEtHost.cs", "reason": "S01 existing authority, reachability and fixed-Tick baseline; source evidence, not new delivery"}
+{"file": "Docs/design/CookingGame/progress.md", "reason": "S01 existing authority, reachability and fixed-Tick baseline; source evidence, not new delivery"}
+{"file": ".trellis/tasks/10-02-cooking-gameplay-menu-plan/research/final-review.md", "reason": "Reviewed implementation boundary and required behavior evidence"}
+{"file": ".trellis/tasks/10-02-cooking-gameplay-menu-plan/research/completion-contract.md", "reason": "Reviewed implementation boundary and required behavior evidence"}
+{"file": ".trellis/tasks/10-02-cooking-gameplay-menu-plan/research/core-review.md", "reason": "Reviewed implementation boundary and required behavior evidence"}
+{"file": ".trellis/tasks/10-02-cooking-gameplay-menu-plan/research/menu-review.md", "reason": "Reviewed implementation boundary and required behavior evidence"}
+{"file": ".trellis/tasks/10-02-cooking-gameplay-menu-plan/research/operation-review.md", "reason": "Reviewed implementation boundary and required behavior evidence"}

@@ -3,7 +3,7 @@
   "name": "cooking-gameplay-menu-plan",
   "title": "Cooking 功能基线与菜单分阶段规划",
   "description": "比对 A-K 玩法与 87 款候选菜单，记录架构边界并建立只规划不执行的 Task 清单",
-  "status": "in_progress",
+  "status": "planning",
   "dev_type": null,
   "scope": null,
   "package": null,
@@ -46,7 +46,7 @@
   "meta": {
     "planning_only": false,
     "implementation_authorized": true,
-    "planning_maturity": "recorded-draft",
+    "planning_maturity": "reviewed-contract",
     "owner_delegated_details": true,
     "stage_order": [
       "singleplayer",
@@ -54,6 +54,7 @@
       "unity-singleplayer",
       "unity-network"
     ],
-    "execution_authorization": "2026-10-02 owner 后续明确实施单机与联网、worktree并行、验证后合并master；Unity后置。"
+    "execution_authorization": "Latest owner: audit every topic then execute through completion. Task planning review and dependency checks precede execution; Unity and optional reference pool remain deferred.",
+    "execution_gate": "reviewed-contract-and-dependencies"
   }
 }

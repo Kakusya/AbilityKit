@@ -1,3 +1,5 @@
+> Current owner instruction (2026-10-02): continue auditing all topics, resolve their plans, then implement and verify to completion without stopping for routine confirmations. Preserve architecture and stage order: singleplayer -> network -> singleplayer Unity -> network Unity. Current stage: singleplayer. Older planning-only notices below are historical. Unity remains deferred under its separate gate.
+
 # U01 待执行清单
 
 - [ ] 核对依赖、历史 check 与实际代码；解决本 Task 的契约差异。

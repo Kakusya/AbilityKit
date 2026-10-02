@@ -1,4 +1,12 @@
+> Current owner instruction (2026-10-02): continue auditing all topics, resolve their plans, then implement and verify to completion without stopping for routine confirmations. Preserve architecture and stage order: singleplayer -> network -> singleplayer Unity -> network Unity. Current stage: singleplayer. Older planning-only notices below are historical. Unity remains deferred under its separate gate.
+
 # Cooking 单机与联网执行记录
+
+## 最新恢复指令
+
+Owner 明确要求“继续审计，直到各个议题都审议清楚，然后执行直至完成，中间不要停下来”。本次不再只登记 Task；先完成各 Task 的具体设计、实施清单及 manifests 审阅，再按既有依赖执行和验证。单机优先，网络随后；Unity 继续作为后置独立阶段，不提前启动。架构不变，未提细节由助手按已确认产品边界补足。
+
+旧三个 Orca dispatch 已被主动停止，不能视为存活或重用其凭证。保留 worktree 的改动需要审阅、恢复研究和实际复跑；历史 worker 自报测试不算协调者验证。当前三个只读审计分工分别负责核心、菜单、经营整合，研究成果写入本 task 的 research，不写产品代码。
 
 ## 当前目标
 
@@ -14,6 +22,22 @@
 | 菜单内容 | S04，再 S09–S13 | 独立 worktree；先完整源映射与依赖审计，核心契约合入后导入内容与校验 | 待启动 Orca worker |
 | 网络 | N01，再 N02→N03 | 独立 worktree；先对齐已确认 LiteNet/通用 Transport 边界，再接入新增玩法及恢复测量 | 待启动 Orca worker |
 | 单机经营整合 | S06/S07/S08/S14 | 协调会话 worktree；依赖核心和菜单，逐批整合，不建立平行 authority | 待前置 |
+
+## Orca 实际启动回执
+
+Run：`run_ca505f084a8c`。2026-10-02 已启动以下三个 supervised Codex worker，均有 input_accepted + turn_started/observed；不是仅登记。
+
+| 线 | Dispatch | Orca 分支/worktree | Task |
+|---|---|---|---|
+| 厨房 | ctx_ab9d7e55d402 | cooking-core-s01-s03；C:/Users/Administrator/orca/workspaces/AbilityKit/cooking-core-s01-s03 | task_3539e6eaa06f |
+| 菜单 | ctx_cb37026cb88a | cooking-menu-s04；C:/Users/Administrator/orca/workspaces/AbilityKit/cooking-menu-s04 | task_0b550b23177b |
+| 网络 | ctx_50c9cd456cac | cooking-network-n01-n03；C:/Users/Administrator/orca/workspaces/AbilityKit/cooking-network-n01-n03 | task_f91244e49d20 |
+
+协调经营 worktree：`cooking-integration-s06-s14`，同一 Orca workspace 根目录下；主会话持有，不增加第四个 worker。
+
+规划及执行基线已提交 master：`b4f1a2f53`、`ce3110b53`。产品 feature 尚未回并；三个 worker 的具体生产改动正在独立分支中。启动前领域基线 `dotnet test src/AbilityKit.Game.Cooking.Tests/AbilityKit.Game.Cooking.Tests.csproj --nologo --verbosity minimal` 226/226 pass、0 skip；大量既有共享包 CS1591 警告未当作零警告构建。
+
+网络调查发现通用 LiteNet 缺服务端 Listener/ServerChannel，Cooking Session 仍直接持 NetManager。协调者已按现有已批准通用 Transport 架构授权网络 worker独占最小 adapter、包/asmdef/SDK引用与专属测试；移出回调中模拟写入，不新建平行网络抽象。菜单 ×2 与现有 DuplicateRecipeInputs 校验冲突已交核心 owner 修正为多重集合，尚未声称通过。
 
 S04/N01 的只读研究及相互独立设计工作可以前置，生产整合仍遵守依赖。后续 Task 的 ready 不以文档存在判断，必须确认前置实际验证。
 
@@ -37,3 +61,13 @@ S04/N01 的只读研究及相互独立设计工作可以前置，生产整合仍
 各 worker 独立提交 feature 分支；主会话审核 diff 与范围，执行相应 cooking-kitchen-loop/cooking-et-level-runtime，网络/通用包变化附加 runtime-contracts 和必要协议检查。只合并测试已通过的增量；合并后再跑覆盖新增整合行为的验证。master 不直接接收未审查或混入用户改动的代码。不推远端。
 
 Orca worker/dispatch、worktree 路径、提交 SHA、实际测试结果及合并 SHA 后续按真实回执追加。超时不等于 worker 退出；同一活跃 dispatch 持续观察，不重复启动。
+
+## Implementation stopped for planning-only scope
+
+### 2026-10-02 编排消息核对
+
+已读取 `delivery_607bd3144158` 的全部 4 条消息：3 条历史 heartbeat，以及核心 worker 的状态消息 `msg_3ba951486b77`。核心 worker 报告 S01–S03 新增 19 例通过，并报告几何、手工接续、份数、多重集合、schema-v3/checkpoint-v4 等分支改动；此为 worker 自报，协调会话尚未独立审阅或复跑，不作为已实现、已验证或已合并证据。该消息不是 `worker_done`，不表示任务完成。
+
+本次 `worker-list` 确认三个 dispatch 均为 `failed`、terminal 为 `retained`，与主动停止一致；未重启。历史 heartbeat 不推翻当前停止状态。保留既有 worktree，当前继续仅规划。
+
+All three dispatches in run_ca505f084a8c returned stopped with ptyKilled=true. Existing worktrees and unmerged changes are preserved. No feature branches were merged into master. The prior implementation goal is paused.

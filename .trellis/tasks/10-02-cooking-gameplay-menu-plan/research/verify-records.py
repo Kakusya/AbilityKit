@@ -13,7 +13,7 @@ for directory in records:
     assert data['status'] in {'planning','in_progress','completed'}, directory
     # This only validates bookkeeping, never proves product implementation.
     plan_id = data['meta'].get('plan_id')
-    if plan_id in {'U01','U02','S15'}:
+    if plan_id in {'U01', 'U02', 'S15'}:
         assert data['meta']['planning_only'] is True, directory
         assert data['meta']['implementation_authorized'] is False, directory
     else:

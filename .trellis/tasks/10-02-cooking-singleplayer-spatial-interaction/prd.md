@@ -1,8 +1,12 @@
+> Current owner instruction (2026-10-02): continue auditing all topics, resolve their plans, then implement and verify to completion without stopping for routine confirmations. Preserve architecture and stage order: singleplayer -> network -> singleplayer Unity -> network Unity. Current stage: singleplayer. Older planning-only notices below are historical. Unity remains deferred under its separate gate.
+
 # S01 单机逻辑移动与交互目标
 
 > 最新执行授权：2026-10-02 owner 后续明确实施单机与联网、worktree并行、验证后合并master；Unity后置。 下面初稿未执行表述为登记时历史；具体执行设计及证据按总任务 execution.md 与本 Task 后续修订。
 
-状态：planning / draft / 未执行。
+状态：planning / 规则已细化、待最终审阅 / 主分支未实施。停止分支中的工作不作为本 Task 的交付。
+
+本次审议结论：现有主分支可用的原子拿放和容器操作保留；补充位置、朝向、障碍、统一目标解析与本地逻辑玩家碰撞。产品细节沿 owner 的授权由助手提出并记录，具体规则和验收矩阵见 design.md；当前没有执行许可。S02/S03 依赖这里的统一可达性，S08 再扩展可变布局，U01 负责可见高亮及手感验证。
 
 ## 目标与范围
 

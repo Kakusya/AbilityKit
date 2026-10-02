@@ -1,8 +1,13 @@
-{"file":".trellis/spec/cooking/gameplay-menu-plan.md","reason":"检查状态、范围与规划授权"}
-{"file":"Docs/design/CookingGame/gameplay-plan-architecture.md","reason":"检查架构未改变和冲突登记"}
-{"file":"Docs/design/CookingGame/reference/menu-integration.md","reason":"检查菜单身份及未执行边界"}
-{"file":".trellis/tasks/10-02-cooking-gameplay-menu-plan/research/source-audit.json","reason":"原始资料 SHA-256、编号与工作表检查结果"}
+{"file": ".trellis/spec/cooking/gameplay-menu-plan.md", "reason": "检查状态、范围与规划授权"}
+{"file": "Docs/design/CookingGame/gameplay-plan-architecture.md", "reason": "检查架构未改变和冲突登记"}
+{"file": "Docs/design/CookingGame/reference/menu-integration.md", "reason": "检查菜单身份及未执行边界"}
+{"file": ".trellis/tasks/10-02-cooking-gameplay-menu-plan/research/source-audit.json", "reason": "原始资料 SHA-256、编号与工作表检查结果"}
 {"event": "check", "date": "2026-10-02", "command": "python .trellis/tasks/10-02-cooking-gameplay-menu-plan/research/verify-records.py", "status": "pass", "result": "21 planning tasks, 20 children, 124 feature IDs, 87 menu IDs, 112 local links, acyclic dependencies, byte-identical source copies; no product tests"}
 {"event": "check", "date": "2026-10-02", "command": "python .trellis/scripts/task.py validate <each 10-02-cooking-* task>", "status": "pass", "result": "21/21 context manifests validated"}
 {"event": "check", "date": "2026-10-02", "command": "git diff --check", "status": "pass", "result": "No whitespace errors; Todo CRLF normalization warning only"}
 {"event": "check", "date": "2026-10-02", "command": "product dotnet/ET/network/Unity checks", "status": "not-run", "result": "Planning-only authorization; no product code changes; network deferred and Unity prohibited"}
+{"file": ".trellis/tasks/10-02-cooking-gameplay-menu-plan/research/final-review.md", "reason": "Reviewed implementation boundary and required behavior evidence"}
+{"file": ".trellis/tasks/10-02-cooking-gameplay-menu-plan/research/completion-contract.md", "reason": "Reviewed implementation boundary and required behavior evidence"}
+{"file": ".trellis/tasks/10-02-cooking-gameplay-menu-plan/research/core-review.md", "reason": "Reviewed implementation boundary and required behavior evidence"}
+{"file": ".trellis/tasks/10-02-cooking-gameplay-menu-plan/research/menu-review.md", "reason": "Reviewed implementation boundary and required behavior evidence"}
+{"file": ".trellis/tasks/10-02-cooking-gameplay-menu-plan/research/operation-review.md", "reason": "Reviewed implementation boundary and required behavior evidence"}
