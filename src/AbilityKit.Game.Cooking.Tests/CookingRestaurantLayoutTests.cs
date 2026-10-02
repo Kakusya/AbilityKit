@@ -146,6 +146,38 @@ public sealed class CookingRestaurantLayoutTests
         Assert.NotEmpty(CookingRestaurantLayoutValidator.FindPath(shifted, new(-6, -6), new(-1, -1)));
     }
 
+    [Theory]
+    [InlineData(2147483)]
+    [InlineData(-2147484)]
+    public void Layout_coordinates_must_fit_the_existing_spatial_integer_range(int origin)
+    {
+        var layout = Layout() with { Floors = new[] { new CookingFloorRegion("floor", origin, 0, 6, 6) } };
+        Assert.Equal(CookingLayoutRejectionReason.InvalidLayout,
+            CookingRestaurantLayoutValidator.Validate(layout, Allowed, Allowed).Reason);
+    }
+
+    [Fact]
+    public void Actors_may_touch_the_outer_boundary_but_cannot_overlap_equipment()
+    {
+        var open = Layout() with { Equipment = Array.Empty<CookingEquipmentPlacement>(), ActorRadius = 500 };
+        Assert.True(CookingRestaurantLayoutValidator.Validate(open, Allowed, Allowed).Accepted);
+        Assert.NotEmpty(CookingRestaurantLayoutValidator.FindPath(open, new(0, 0), new(5, 5)));
+        var blocked = open with { Equipment = Layout().Equipment };
+        Assert.Equal(CookingLayoutRejectionReason.UnreachableTarget,
+            CookingRestaurantLayoutValidator.Validate(blocked, Allowed, Allowed).Reason);
+    }
+
+    [Fact]
+    public void Installation_cannot_omit_the_trusted_definition_catalog()
+    {
+        Assert.Throws<ArgumentNullException>(() =>
+            CookingRestaurantLayoutValidator.ValidateForInstallation(Layout(), Allowed, Allowed, null!));
+        var result = CookingRestaurantLayoutValidator.ValidateForInstallation(Layout(), Allowed, Allowed,
+            new Dictionary<DefinitionId, CookingEquipmentFootprint>());
+        Assert.False(result.Accepted);
+        Assert.Equal(CookingLayoutRejectionReason.InvalidLayout, result.Reason);
+    }
+
     private static CookingRestaurantLayout Layout() => new(new("restaurant"),
         new[] { new CookingFloorRegion("floor", 0, 0, 6, 6) },
         new[] { new CookingEquipmentPlacement(new("counter"), Counter, new(2, 2), 1, 1, 0, 0, -1) },

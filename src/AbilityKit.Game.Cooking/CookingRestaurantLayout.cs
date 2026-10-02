@@ -83,6 +83,16 @@ public static class CookingRestaurantLayoutValidator
 {
     public const int MaximumCells = 65536;
 
+    /// <summary>Installation requires content-owned dimensions; the legacy helper overload is for fixtures.</summary>
+    public static CookingLayoutValidationResult ValidateForInstallation(
+        CookingRestaurantLayout? candidate, IReadOnlySet<DefinitionId> unlocked,
+        IReadOnlySet<DefinitionId> levelAllowed,
+        IReadOnlyDictionary<DefinitionId, CookingEquipmentFootprint> definitions)
+    {
+        ArgumentNullException.ThrowIfNull(definitions);
+        return Validate(candidate, unlocked, levelAllowed, definitions);
+    }
+
     public static CookingLayoutValidationResult Validate(
         CookingRestaurantLayout? candidate,
         IReadOnlySet<DefinitionId> unlocked,
@@ -103,7 +113,11 @@ public static class CookingRestaurantLayoutValidator
         {
             if (floor is null || string.IsNullOrWhiteSpace(floor.Id) || floor.Width <= 0 || floor.Height <= 0 ||
                 (long)floor.Width * floor.Height > MaximumCells ||
-                (long)floor.X + floor.Width - 1 > int.MaxValue || (long)floor.Y + floor.Height - 1 > int.MaxValue)
+                (long)floor.X + floor.Width - 1 > int.MaxValue || (long)floor.Y + floor.Height - 1 > int.MaxValue ||
+                (long)floor.X * candidate.CellSize < int.MinValue ||
+                (long)floor.Y * candidate.CellSize < int.MinValue ||
+                ((long)floor.X + floor.Width) * candidate.CellSize > int.MaxValue ||
+                ((long)floor.Y + floor.Height) * candidate.CellSize > int.MaxValue)
                 return Reject(CookingLayoutRejectionReason.InvalidLayout);
             if (!identities.Add(floor.Id))
                 return Reject(CookingLayoutRejectionReason.DuplicateIdentity, floor.Id);
@@ -178,7 +192,8 @@ public static class CookingRestaurantLayoutValidator
 
         var walkable = new HashSet<CookingLayoutCell>(floors);
         walkable.ExceptWith(occupied);
-        walkable.RemoveWhere(cell => !HasClearance(cell, floors, occupied, candidate.CellSize, candidate.ActorRadius));
+        var bounds = BoundsOf(floors);
+        walkable.RemoveWhere(cell => !HasClearance(cell, floors, occupied, bounds, candidate.CellSize, candidate.ActorRadius));
         foreach (var target in candidate.Targets)
             if (!walkable.Contains(target.Cell))
                 return Reject(CookingLayoutRejectionReason.UnreachableTarget, target.Id);
@@ -236,7 +251,8 @@ public static class CookingRestaurantLayoutValidator
             for (var x = 0; x < equipment.Width; x++)
                 for (var y = 0; y < equipment.Height; y++)
                     if (TryRotate(equipment, x, y, out var cell)) { cells.Remove(cell); occupied.Add(cell); }
-        cells.RemoveWhere(cell => !HasClearance(cell, floorCells, occupied, layout.CellSize, layout.ActorRadius));
+        var bounds = BoundsOf(floorCells);
+        cells.RemoveWhere(cell => !HasClearance(cell, floorCells, occupied, bounds, layout.CellSize, layout.ActorRadius));
         if (!cells.Contains(from) || !cells.Contains(to)) return Array.Empty<CookingLayoutCell>();
         var previous = new Dictionary<CookingLayoutCell, CookingLayoutCell?> { [from] = null };
         var queue = new Queue<CookingLayoutCell>();
@@ -270,11 +286,15 @@ public static class CookingRestaurantLayoutValidator
     }
 
     private static bool HasClearance(CookingLayoutCell cell, HashSet<CookingLayoutCell> floors,
-        HashSet<CookingLayoutCell> occupied, int scale, int radius)
+        HashSet<CookingLayoutCell> occupied, LayoutBounds bounds, int scale, int radius)
     {
         var centerX = (long)cell.X * scale + scale / 2;
         var centerY = (long)cell.Y * scale + scale / 2;
-        // Obstacles and outer floor boundaries are closed, matching swept spatial collision.
+        // The bounding edge may be touched; obstacles and holes are closed, matching S01 collision.
+        if (centerX - radius < (long)bounds.MinX * scale ||
+            centerY - radius < (long)bounds.MinY * scale ||
+            centerX + radius > ((long)bounds.MaxX + 1) * scale ||
+            centerY + radius > ((long)bounds.MaxY + 1) * scale) return false;
         var minX = FloorDivide(centerX - radius - 1, scale);
         var maxX = FloorDivide(centerX + radius, scale);
         var minY = FloorDivide(centerY - radius - 1, scale);
@@ -282,12 +302,19 @@ public static class CookingRestaurantLayoutValidator
         for (var x = minX; x <= maxX; x++)
             for (var y = minY; y <= maxY; y++)
             {
+                if (x < bounds.MinX || x > bounds.MaxX || y < bounds.MinY || y > bounds.MaxY) continue;
                 if (x < int.MinValue || x > int.MaxValue || y < int.MinValue || y > int.MaxValue) return false;
                 var part = new CookingLayoutCell((int)x, (int)y);
                 if (!floors.Contains(part) || occupied.Contains(part)) return false;
             }
         return true;
     }
+
+    private readonly record struct LayoutBounds(int MinX, int MinY, int MaxX, int MaxY);
+
+    private static LayoutBounds BoundsOf(HashSet<CookingLayoutCell> floors) =>
+        new(floors.Min(cell => cell.X), floors.Min(cell => cell.Y),
+            floors.Max(cell => cell.X), floors.Max(cell => cell.Y));
 
     private static long FloorDivide(long value, int divisor) =>
         value >= 0 ? value / divisor : (value - divisor + 1) / divisor;
