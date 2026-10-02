@@ -11,3 +11,7 @@
 {"file": ".trellis/tasks/10-02-cooking-gameplay-menu-plan/research/core-review.md", "reason": "Reviewed implementation boundary and required behavior evidence"}
 {"file": ".trellis/tasks/10-02-cooking-gameplay-menu-plan/research/menu-review.md", "reason": "Reviewed implementation boundary and required behavior evidence"}
 {"file": ".trellis/tasks/10-02-cooking-gameplay-menu-plan/research/operation-review.md", "reason": "Reviewed implementation boundary and required behavior evidence"}
+{"file": ".trellis/tasks/10-02-cooking-gameplay-menu-plan/research/master-complete-menu-verification.md", "reason": "Actual master full-menu gate evidence, scoped content closure"}
+{"file": ".trellis/tasks/10-02-cooking-gameplay-menu-plan/research/front-delivery-composite-verification.md", "reason": "Actual integration front delivery composite gates; S07 not yet included"}
+{"file": ".trellis/tasks/10-02-cooking-gameplay-menu-plan/research/front-house-delivery-independent-review.md", "reason": "Independent static delivery destination review"}
+{"file": ".trellis/tasks/10-02-cooking-gameplay-menu-plan/research/supply-allocation-independent-review.md", "reason": "Unresolved zero-sequence recovery blocker; not a passing S07 exit"}

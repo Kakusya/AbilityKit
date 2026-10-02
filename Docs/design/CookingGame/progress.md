@@ -2,6 +2,8 @@
 
 # Cooking Game 当前工程进度
 
+> 2026-10-02 20:38 latest master: reviewed front ET/manual/recovery and trusted delivery destinations merged as `7a043b6cb`, with bounded layout projection helper `484547d73`. Actual master kitchen gate 386/511/213 and ET Level 511/213 passed with zero failures/skips. See [master front verification](../../../.trellis/tasks/10-02-cooking-gameplay-menu-plan/research/master-front-delivery-verification.md). Recipe4/Level6 are current; supply Recipe5/Level7 remains an integration candidate. Preparing supply, actual layout installation and full S14 operating exit remain incomplete. Older checkpoints below are historical.
+
 > 2026-10-02 20:04 最新本地 master：完整 87 菜实际生产交付与恢复已审阅合并 `7dd149b75`，kitchen 实际 372/494/197、ET Level 实际 494/197，全通过且0跳过。S04/S05/S09–S13 按纯 C# 内容与交付范围完成，见 [准确范围与门禁](../../../.trellis/tasks/10-02-cooking-gameplay-menu-plan/research/master-complete-menu-verification.md)。S06 ET 接线和 S08 几何投影在集成分支待审阅；S07 供应、S08 原子安装与 S14 完整营业出口仍未完成。下面检查点为历史序列。
 
 > 2026-10-02 19:41 最新本地 master：`cfd107c75` 已合并审阅后的 87 菜制作/盛装/恢复、S05 绑定核心与嵌套容器交付修复、受限前厅域层；合并后 kitchen gate 实际 340/462/166，全通过且无跳过。证据见 [master-menu-binding-gate-summary.json](../../../.trellis/tasks/10-02-cooking-gameplay-menu-plan/research/master-menu-binding-gate-summary.json)。31 饮品绑定后交付、S06 ET 接线、S07/S08 实际供应布局和 S14 完整营业出口仍待完成；网络/Unity 后置。

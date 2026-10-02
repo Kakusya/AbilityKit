@@ -1,10 +1,12 @@
 # P4 关卡/地图/Match 生命周期：cooking-match-lifecycle
 
-## 2026-10-02 S01?S03 ??????
+## 2026-10-02 reviewed singleplayer runtime increments
 
-???owner ? plan ??????? Orca dispatch?? task execution.md / research/core-review.md / final-review.md ? S01/S02/S03 reviewed design???? .NET ???????? Unity/Session?????????????????????????????????? task ? research/verification.md?
+Current master 7a043b6cb contains reviewed S01-S03 core, all 87 content deliveries, S05 binding, S06 ET front work and trusted service destination checks, and the bounded layout geometry projection helper. This is not the complete operating exit: supply/preparing, actual layout installation, capability enforcement and the S14 full fixture remain outstanding. Unity and network are not validated by these gates.
 
-Recipe checkpoint schema3 / Level envelope format4 ??????????????????? pose/worker/balance ?????????????????????? worker??????????????????????? Level ???? pose/worker/??/?????????????????? worker????? fixture ??????????????????????????????? fixture?
+Current master formats are definition v3, Recipe checkpoint schema4 and Level envelope format6. Level6 requires trusted FrontOfHouseConfigurationIdentity and validates flow, work claims, table/path and service-clock state; restore binds the new kitchen and front house to the same ET authority. Old envelope formats are explicitly rejected. Trusted delivery policy selects an actual serving anchor or the current order customer's table, checks actual pose/facing/reach before submission mutation, and participates in configuration identity. Legacy null policy keeps earlier submission semantics. Front commands are explicit values17-19 and reject unrelated payload fields.
+
+Geometry projection validates trusted footprints/permission sets, floor holes, rotated equipment and entrance-connected pose relocation, preserving runtime movement watermarks. Projection is a candidate helper, not an installed preparing kitchen. Supply Recipe5 and future Level7 are candidates in integration only until reviewed and merged; do not infer current master capabilities from those formats.
 
 ## 2026-09-16 收口状态
 

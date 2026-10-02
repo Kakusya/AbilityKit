@@ -1,3 +1,5 @@
+> 2026-10-02 20:38: master front delivery checkpoint 7a043b6cb passed actual kitchen 386/511/213 and ET 511/213. S07 allocation-zero recovery fix and ET wiring are in progress; preparing supply, actual layout installation and full S14 exit remain outstanding. Evidence: [.trellis master front record](../.trellis/tasks/10-02-cooking-gameplay-menu-plan/research/master-front-delivery-verification.md).
+
 > Current owner instruction (2026-10-02): continue auditing all topics, resolve their plans, then implement and verify to completion without stopping for routine confirmations. Preserve architecture and stage order: singleplayer -> network -> singleplayer Unity -> network Unity. Current stage: singleplayer. Older planning-only notices below are historical. Unity remains deferred under its separate gate.
 
 # AbilityKit 项目待办事项
