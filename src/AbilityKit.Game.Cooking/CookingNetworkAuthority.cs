@@ -36,6 +36,10 @@ public sealed record CookingNetworkAdmission(CookingLevelScope Scope, PlayerId P
     bool Accepted, CookingNetworkAdmissionReason Reason, CookingNetworkDisposition? Disposition = null);
 
 /// <summary>Full committed state, distinct from a resumable Level checkpoint.</summary>
+public sealed record CookingNetworkMajorProgressProjection(bool Locked, bool CookFaster,
+    IReadOnlyList<CookingStationReplacement> Decoration, IReadOnlyList<DefinitionId> Unlocks);
+
+/// <summary>Display fields are not grants and cannot be installed as trusted configuration.</summary>
 public sealed record CookingNetworkAuthorityCapture(CookingLevelObservation Observation,
     CookingRecipeCheckpoint? FullRecipe, CookingFrontOfHouseCheckpoint? FullFront,
     CookingInstalledLayoutCheckpoint? InstalledLayout,
@@ -44,7 +48,8 @@ public sealed record CookingNetworkAuthorityCapture(CookingLevelObservation Obse
     long LastCommittedSimulationBatch, string? FrontConfigurationIdentity,
     string? PreparationConfigurationIdentity, string? MenuConfigurationIdentity,
     CookingLevelCheckpoint? ResumableCheckpoint,
-    CookingNetworkCheckpointUnavailableReason CheckpointUnavailableReason);
+    CookingNetworkCheckpointUnavailableReason CheckpointUnavailableReason,
+    [property: System.Text.Json.Serialization.JsonRequired] CookingNetworkMajorProgressProjection? MajorProgress = null);
 public sealed record CookingNetworkCaptureResult(bool Accepted, CookingNetworkCaptureReason Reason,
     CookingNetworkAuthorityCapture? State);
 public sealed record CookingNetworkCancelResult(bool Accepted, CookingNetworkCancelReason Reason,
