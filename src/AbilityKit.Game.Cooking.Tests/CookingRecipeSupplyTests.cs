@@ -56,6 +56,77 @@ public sealed class CookingRecipeSupplyTests
         return Accept(sim, Cmd(CookingRecipeOperation.ReceiveSupply, "receive-" + request, delivery: delivery)).Supply!;
     }
 
+    [Theory]
+    [InlineData("zero")]
+    [InlineData("negative")]
+    [InlineData("above-watermark")]
+    [InlineData("duplicate")]
+    [InlineData("reordered")]
+    public void Corrupt_supply_allocation_sequences_reject_without_mutation(string corruption)
+    {
+        var sim = new CookingRecipeSimulation(Fixture()); Receive(sim);
+        var before = sim.ExportCheckpoint();
+        var origin = before.SupplyOrigins!.Single();
+        var first = before.Items.Single(i => i.Id == origin.Units[0]);
+        var second = before.Items.Single(i => i.Id == origin.Units[1]);
+        var sequence = corruption switch {
+            "zero" => 0, "negative" => -1, "above-watermark" => before.NextProductId + 1,
+            _ => second.SupplyProvenance!.AllocationSequence };
+        var poisoned = before with { Items = before.Items.Select(i => i.Id == first.Id
+            ? i with { SupplyProvenance = i.SupplyProvenance! with { AllocationSequence = sequence } }
+            : corruption == "reordered" && i.Id == second.Id
+                ? i with { SupplyProvenance = i.SupplyProvenance! with { AllocationSequence = first.SupplyProvenance!.AllocationSequence } } : i).ToArray() };
+        Assert.False(sim.RestoreCheckpoint(poisoned).Accepted);
+        Assert.Equal(before.CanonicalText(), sim.ExportCheckpoint().CanonicalText());
+    }
+
+    [Fact]
+    public void Legal_allocation_sequences_survive_consumed_tombstones_and_restore_continues_above_watermark()
+    {
+        var sim = new CookingRecipeSimulation(Fixture());
+        var received = Receive(sim);
+        var raw = received.Units[0];
+        Accept(sim, Cmd(CookingRecipeOperation.DiscardItem, "discard-unit", item: raw, version: 1));
+        var package = received.Package!.Value;
+        Accept(sim, Cmd(CookingRecipeOperation.Pickup, "pickup-box", item: package, version: 1));
+        var before = sim.ExportCheckpoint();
+        Assert.True(before.Items.Single(i => i.Id == raw).Removed);
+        Assert.Equal(Enumerable.Range(1, 4).Select(n => (long)n), before.Items.Where(i => i.SupplyProvenance is not null)
+            .Select(i => i.SupplyProvenance!.AllocationSequence).Order());
+        var restored = new CookingRecipeSimulation(Fixture());
+        Assert.True(restored.RestoreCheckpoint(before).Accepted);
+        Assert.Equal(before.CanonicalText(), restored.ExportCheckpoint().CanonicalText());
+        var next = Receive(restored, "second");
+        Assert.All(restored.ExportCheckpoint().Items.Where(i => i.Id == next.Package || next.Units.Contains(i.Id)),
+            i => Assert.True(i.SupplyProvenance!.AllocationSequence > before.NextProductId));
+    }
+
+    [Theory]
+    [InlineData(false)]
+    [InlineData(true)]
+    public void Receive_version_or_event_watermark_overflow_keeps_supply_and_physical_state(bool eventOverflow)
+    {
+        var sim = new CookingRecipeSimulation(Fixture());
+        var delivery = Accept(sim, Cmd(CookingRecipeOperation.RequestSupply, "request", request: "r")).Supply!.DeliveryId;
+        sim.AdvanceFixedTick(Level, 1); sim.AdvanceFixedTick(Level, 2);
+        var checkpoint = sim.ExportCheckpoint();
+        Assert.True(sim.RestoreCheckpoint(eventOverflow ? checkpoint with { EventSequence = long.MaxValue }
+            : checkpoint with { StateVersion = long.MaxValue }).Accepted);
+        var before = sim.ExportCheckpoint();
+        Assert.Equal(CookingRecipeRejectionReason.SupplyAllocationFailed,
+            sim.Submit(Cmd(CookingRecipeOperation.ReceiveSupply, "receive", delivery: delivery)).Reason);
+        var after = sim.ExportCheckpoint();
+        Assert.Equal(before.CanonicalText(), (after with { Deduplication = before.Deduplication }).CanonicalText());
+    }
+    [Fact]
+    public void Restored_supply_allocator_watermark_cannot_precede_materialized_identities()
+    {
+        var sim = new CookingRecipeSimulation(Fixture()); Receive(sim);
+        var before = sim.ExportCheckpoint();
+        var result = sim.RestoreCheckpoint(before with { NextProductId = 0 });
+        Assert.False(result.Accepted);
+        Assert.Equal(before.CanonicalText(), sim.ExportCheckpoint().CanonicalText());
+    }
     [Fact]
     public void Physical_delivery_moves_finite_objects_then_cooks_and_submits_with_tombstone_provenance()
     {
@@ -125,11 +196,13 @@ public sealed class CookingRecipeSupplyTests
     {
         public ItemId GetProductId(long sequence) => fault switch {
             0 => sequence == 3 ? throw new InvalidOperationException("allocator fault") : new("allocated-" + sequence),
-            1 => new("duplicate"), 2 => new("tombstone"), 3 => new(""), _ => new("id-" + sequence) };
+            1 => new("duplicate"), 2 => new("tombstone"), 3 => new(""),
+            5 => sequence == 4 ? throw new InvalidOperationException("last allocator fault") : new("allocated-" + sequence),
+            _ => new("id-" + sequence) };
     }
 
     [Theory]
-    [InlineData(0)] [InlineData(1)] [InlineData(2)] [InlineData(3)] [InlineData(4)]
+    [InlineData(0)] [InlineData(1)] [InlineData(2)] [InlineData(3)] [InlineData(4)] [InlineData(5)]
     public void Allocator_faults_duplicates_tombstones_blank_and_watermark_overflow_do_not_commit(int fault)
     {
         var sim = new CookingRecipeSimulation(Fixture(), new FaultAllocator(fault));
@@ -296,7 +369,7 @@ public sealed class CookingRecipeSupplyTests
         var retry = Accept(next, Cmd(CookingRecipeOperation.ReceiveSupply, "receive-r", delivery: "delivery:1"));
         Assert.NotEqual(new ItemId("tampered"), retry.Supply!.Units[0]);
         Assert.Equal(before, next.ExportCheckpoint().CanonicalText());
-        foreach (var field in new[] { "UnitIndex", "DeliveryId", "Closing", "Package" })
+        foreach (var field in new[] { "UnitIndex", "DeliveryId", "Closing", "Package", "AllocationSequence" })
             Assert.Throws<JsonException>(() => JsonSerializer.Deserialize<CookingRecipeCheckpoint>(json.Replace("\"" + field + "\":", "\"missing-" + field + "\":")));
     }
 

@@ -34,3 +34,11 @@ Recipe schema is explicitly 5. Required Supply/SupplyOrigins/item provenance/ded
 8. Menu/S08/S14 owners decide supplier contents and supply closure (including disposable vessel replenishment); this increment does not author menu supply data or expand raw-unit semantics into container-unit spawning.
 
 Parent S07 remains **in_progress / domain increment verified / full ET and preparation exit pending**. No task archive or full S07 completion claim is appropriate.
+
+## Independent review watermark correction
+
+A coordinator reviewer reproduced accepted illegal supply allocator watermark rollback: 1/1 failed before fix, `supply-watermark-first-failure.log`. Root authorized the narrow correction. Required supply item provenance `AllocationSequence` now records the actual allocator call sequence and appears in snapshot/canonical/Recipe5. Missing nested sequence rejects; Recipe5 remains unpublished and is not raised again. Restore checks positive/global supply uniqueness, maximum sequence <= NextProductId, and each physical package's contiguous units, including consumed/removed originals. It does not infer custom IDs, invoke allocator validation callbacks or count legacy preplaced/retained products. Ordinary nonsupply product watermark validation remains a separate broader historical gap.
+
+Actual focused post-fix suite: 31/31 pass, 0 skips, `supply-watermark-focused.log`. Added lowered watermark exact no-mutation, five sequence poison controls, legitimate tombstone restore plus continued allocation, last allocation throw and state/event version overflow rejection. Final kitchen gate evidence follows below.
+
+Final actual kitchen gate PASSED (exit0), 26.9 seconds: local/Logs/test-gates/20261002-201529-cooking-kitchen-loop/cooking-kitchen-loop/gate-summary.json; kitchen-focused371/371, fullCooking493/493, ET166/166, no skips. Builds passed. git diff --check passed. Full S07 ET/preparation remains pending as above.

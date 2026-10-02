@@ -3,7 +3,8 @@ using System.Text.Json.Serialization;
 namespace AbilityKit.Game.Cooking;
 
 public sealed record CookingSupplyItemProvenance([property: JsonRequired] string RequestId,
-    [property: JsonRequired] string SupplierId, [property: JsonRequired] string? DeliveryId, [property: JsonRequired] int UnitIndex);
+    [property: JsonRequired] string SupplierId, [property: JsonRequired] string? DeliveryId, [property: JsonRequired] int UnitIndex,
+    [property: JsonRequired] long AllocationSequence = 0);
 public sealed record CookingSupplyOrigin([property: JsonRequired] string RequestId, [property: JsonRequired] string SupplierId,
     [property: JsonRequired] string? DeliveryId, [property: JsonRequired] ItemId? Package, [property: JsonRequired] IReadOnlyList<ItemId> Units);
 public sealed record CookingSupplyPhysicalResult([property: JsonRequired] string? DeliveryId,
@@ -124,7 +125,7 @@ public sealed partial class CookingRecipeSimulation
             var id = _productIdAllocator.GetProductId(sequence);
             if (string.IsNullOrWhiteSpace(id.Value) || items.ContainsKey(id)) throw new InvalidOperationException("Supply allocator identity collision.");
             items.Add(id, new(def, 1, location, false, null, false, null,
-                SupplyProvenance: new(request, supplier.SupplierId, receive?.DeliveryId, unitIndex)));
+                SupplyProvenance: new(request, supplier.SupplierId, receive?.DeliveryId, unitIndex, sequence)));
             return id;
         }
         ItemId? package = null;
@@ -167,6 +168,7 @@ public sealed partial class CookingRecipeSimulation
             return CookingCheckpointRestoreReason.SupplyStateInvalid;
         var ledger = supply!.ExportCheckpoint();
         var identities = new HashSet<ItemId>();
+        var allocationSequences = new HashSet<long>();
         var requests = new HashSet<string>(StringComparer.Ordinal);
         foreach (var origin in checkpoint.SupplyOrigins)
         {
@@ -180,9 +182,27 @@ public sealed partial class CookingRecipeSimulation
                 origin.Package is null || origin.Units.Count != supplier.UnitsPerPackage ||
                 !ledger.Deliveries.Any(d => d.DeliveryId == origin.DeliveryId && d.Phase == CookingDeliveryPhase.Received))
                 return CookingCheckpointRestoreReason.SupplyStateInvalid;
-            bool Valid(ItemId id, DefinitionId def, int index) => identities.Add(id) && checkpoint.Items.Count(i => i.Id == id && i.Definition == def && !i.IsProduct &&
-                i.SupplyProvenance == new CookingSupplyItemProvenance(origin.RequestId, origin.SupplierId, origin.DeliveryId, index)) == 1;
+            bool Valid(ItemId id, DefinitionId def, int index)
+            {
+                if (!identities.Add(id)) return false;
+                var matching = checkpoint.Items.Where(i => i.Id == id).ToArray();
+                if (matching.Length != 1) return false;
+                var item = matching[0];
+                var provenance = item.SupplyProvenance;
+                return item.Definition == def && !item.IsProduct && provenance is not null
+                    && provenance.RequestId == origin.RequestId && provenance.SupplierId == origin.SupplierId
+                    && provenance.DeliveryId == origin.DeliveryId && provenance.UnitIndex == index
+                    && provenance.AllocationSequence > 0 && provenance.AllocationSequence <= checkpoint.NextProductId
+                    && allocationSequences.Add(provenance.AllocationSequence);
+            }
             if (origin.Package is { } package && !Valid(package, supplier.PackageDefinition, -1) || origin.Units.Where((id, index) => !Valid(id, supplier.UnitDefinition, index)).Any())
+                return CookingCheckpointRestoreReason.SupplyStateInvalid;
+        }
+        foreach (var origin in checkpoint.SupplyOrigins.Where(o => o.Package is not null))
+        {
+            var packageSequence = checkpoint.Items.Single(i => i.Id == origin.Package!.Value).SupplyProvenance!.AllocationSequence;
+            if (origin.Units.Where((id, index) => checkpoint.Items.Single(i => i.Id == id).SupplyProvenance!.AllocationSequence
+                - packageSequence != (long)index + 1).Any())
                 return CookingCheckpointRestoreReason.SupplyStateInvalid;
         }
         if (ledger.Requests.Any(r => (r.InfiniteSequence > 0 || ledger.Deliveries.Any(d => d.DeliveryId == r.DeliveryId && d.Phase == CookingDeliveryPhase.Received)) != requests.Contains(r.RequestId)))
