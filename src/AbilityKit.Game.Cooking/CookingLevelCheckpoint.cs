@@ -82,7 +82,7 @@ public sealed record CookingCheckpointReadResult(
 /// </summary>
 public static class CookingLevelCheckpointCodec
 {
-    public const int CurrentFormatVersion = 4;
+    public const int CurrentFormatVersion = 5;
     public const int MaximumRecordCharacters = 1024 * 1024;
 
     private static readonly JsonSerializerOptions Options = new()

@@ -196,6 +196,30 @@ public sealed class CookingConfigurationValidationTests
         Assert.Equal(first.Current!.CanonicalText(), second.Current!.CanonicalText());
     }
 
+    [Fact]
+    public void S05_declared_processing_carrier_cannot_be_an_order_serving_vessel()
+    {
+        var carrier = new DefinitionId("carrier");
+        var servingContainer = new CookingItemDefinition(carrier, new HashSet<string> { "cook" },
+            new CookingItemContainerCapability(2, new HashSet<DefinitionId> { new("raw-a"), new("product-a") }));
+        var recipe = Recipe("recipe-a", new[] { new DefinitionId("raw-a") }, "product-a", "heat", 3);
+        var candidate = Candidate(items: new[] { Item("raw-a"), Item("product-a"), servingContainer },
+            recipes: new[] { recipe }) with
+        {
+            OrderTemplates = new[] { new CookingOrderTemplateDefinition(new("order"), recipe.Id, carrier) },
+        };
+        Assert.True(new CookingConfigurationRegistry().Submit(candidate).Accepted);
+        var rejected = new CookingConfigurationRegistry().Submit(candidate with
+        {
+            Recipes = new[] { recipe with { RequiredProcessingContainerDefinition = carrier } },
+        });
+        Assert.False(rejected.Accepted);
+        Assert.Contains(rejected.Validation.Diagnostics, diagnostic =>
+            diagnostic.Code == CookingConfigurationDiagnosticCodes.InvalidValue &&
+            diagnostic.Table == "OrderTemplate" && diagnostic.Field == "RequiredContainerDefinition" &&
+            diagnostic.Relation == carrier.Value);
+    }
+
     private static CookingConfigurationCandidate Candidate(
         IReadOnlyList<string>? capabilities = null,
         IReadOnlyList<CookingItemDefinition>? items = null,

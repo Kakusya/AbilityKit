@@ -8,7 +8,7 @@ public sealed record CookingContentItem(
     IReadOnlyList<string> AllowedPlayerCapabilities,
     CookingContentContainer? Container = null);
 
-public sealed record CookingContentContainer(int Capacity, IReadOnlyList<string> AcceptedDefinitions);
+public sealed record CookingContentContainer(int Capacity, IReadOnlyList<string> AcceptedDefinitions, bool DisposableOnSubmission = false);
 
 public sealed record CookingContentAppliance(string Station, IReadOnlyList<string> Capabilities, bool IsAvailable = true);
 
@@ -26,7 +26,7 @@ public sealed record CookingContentRecipe(
     int YieldPortions = 1,
     string? RequiredProcessingContainerDefinition = null);
 
-public sealed record CookingContentOrderTemplate(string Id, string RequiredRecipe, string RequiredContainerDefinition, int? BaseScore = null);
+public sealed record CookingContentOrderTemplate(string Id, string RequiredRecipe, string RequiredContainerDefinition, int? BaseScore = null, bool RequiresBinding = false);
 
 public sealed record CookingContentSupplyEntry(string Definition, int Count, string Location);
 
@@ -105,7 +105,7 @@ public static class CookingContentCatalog
                     ? null
                     : new CookingItemContainerCapability(item.Container.Capacity,
                         item.Container.AcceptedDefinitions.Select(definition => new DefinitionId(definition))
-                            .ToHashSet()))).ToArray(),
+                            .ToHashSet(), item.Container.DisposableOnSubmission))).ToArray(),
             document.Appliances.Select(appliance => new CookingApplianceDefinition(
                 new StationSlotId(appliance.Station),
                 appliance.Capabilities.ToHashSet(StringComparer.Ordinal),
@@ -124,7 +124,7 @@ public static class CookingContentCatalog
                 new OrderTemplateId(template.Id),
                 new RecipeId(template.RequiredRecipe),
                 new DefinitionId(template.RequiredContainerDefinition),
-                template.BaseScore ?? 100)).ToArray(),
+                template.BaseScore ?? 100, template.RequiresBinding)).ToArray(),
             document.StandardInitialSupply.Select(entry => new CookingSupplyEntryDefinition(
                 new DefinitionId(entry.Definition), entry.Count, entry.Location)).ToArray(), document.Spatial) { ContentProvenance = document.ContentProvenance };
 

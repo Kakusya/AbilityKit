@@ -194,7 +194,10 @@ public sealed class CookingRecipeCommandShapeTests
         Assert.Equal(CookingRecipeRejectionReason.OrderNotFound, (CookingRecipeRejectionReason)(queueFull + 4));
         Assert.Equal(CookingRecipeRejectionReason.OrderAlreadyCompleted, (CookingRecipeRejectionReason)(queueFull + 5));
         Assert.Equal(CookingRecipeRejectionReason.OrderRequirementMismatch, (CookingRecipeRejectionReason)(queueFull + 6));
-        Assert.Equal(queueFull + 10, Enum.GetValues<CookingRecipeRejectionReason>().Length);
+        Assert.Equal(CookingRecipeRejectionReason.BindingRequired, (CookingRecipeRejectionReason)(queueFull + 10));
+        Assert.Equal(CookingRecipeRejectionReason.BindingConflict, (CookingRecipeRejectionReason)(queueFull + 11));
+        Assert.Equal(CookingRecipeRejectionReason.BindingNotFound, (CookingRecipeRejectionReason)(queueFull + 12));
+        Assert.Equal(queueFull + 13, Enum.GetValues<CookingRecipeRejectionReason>().Length);
     }
 
     [Fact]
@@ -267,6 +270,7 @@ public sealed class CookingRecipeCommandShapeTests
                 CookingRecipeOperation.TakeOut, CookingRecipeOperation.Pour, CookingRecipeOperation.Move,
                 CookingRecipeOperation.ContinueProcess, CookingRecipeOperation.StopProcess, CookingRecipeOperation.ServePortion,
                 CookingRecipeOperation.ClearContents, CookingRecipeOperation.DiscardItem,
+                CookingRecipeOperation.BindOrder, CookingRecipeOperation.UnbindOrder, CookingRecipeOperation.RebindOrder,
             },
             Enum.GetValues<CookingRecipeOperation>());
 

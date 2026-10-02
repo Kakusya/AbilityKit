@@ -100,6 +100,9 @@ public sealed record CookingRecipeFixture
                 throw new ArgumentException($"Recipe '{recipe.Id}' has a blank appliance capability.", nameof(recipes));
         }
 
+        foreach (var disposable in items.Values.Where(i => i.Container?.DisposableOnSubmission == true))
+            if ((washableContainerDefinitions?.Contains(disposable.Id) ?? false) || (cleanContainerSupply?.ContainsKey(disposable.Id) ?? false))
+                throw new ArgumentException("Disposable vessels cannot be supplied by the clean pool or washed.", nameof(items));
         Spatial = spatial?.Freeze();
         Spatial?.Validate(players, appliances);
         Scope = scope;
@@ -147,6 +150,9 @@ public enum CookingRecipeOperation
     ServePortion,
     ClearContents,
     DiscardItem,
+    BindOrder,
+    UnbindOrder,
+    RebindOrder,
 }
 
 public enum CookingRecipeOutcome
@@ -192,6 +198,9 @@ public enum CookingRecipeRejectionReason
     MovementBlocked,
     WorkerUnavailable,
     BatchCompleted,
+    BindingRequired,
+    BindingConflict,
+    BindingNotFound,
 }
 
 public sealed record CookingRecipeCommand(
@@ -312,7 +321,7 @@ public static class CookingRecipeCommandValidation
                 IsExpectedVersion(command.ExpectedItemVersion) && command.TickCount == 0,
             CookingRecipeOperation.Pour => HasIdentifier(command.Item) && HasIdentifier(command.Container) &&
                 IsExpectedVersion(command.ExpectedItemVersion) && command.TickCount == 0,
-            CookingRecipeOperation.SubmitOrder => HasIdentifier(command.Item) && HasIdentifier(command.Order) &&
+            CookingRecipeOperation.SubmitOrder or CookingRecipeOperation.BindOrder or CookingRecipeOperation.RebindOrder => HasIdentifier(command.Item) && HasIdentifier(command.Order) &&
                 IsExpectedVersion(command.ExpectedItemVersion) && command.TickCount == 0,
             CookingRecipeOperation.Move => command.Item is null && command.Process is null && command.Recipe is null &&
                 command.Container is null && command.Station is null && command.Order is null && command.ExpectedItemVersion == 0 &&
@@ -322,7 +331,7 @@ public static class CookingRecipeCommandValidation
                 command.ExpectedItemVersion == 0 && command.TickCount == 0,
             CookingRecipeOperation.ServePortion => HasIdentifier(command.Item) && HasIdentifier(command.Container) &&
                 IsExpectedVersion(command.ExpectedItemVersion) && command.TickCount == 0,
-            CookingRecipeOperation.ClearContents or CookingRecipeOperation.DiscardItem => HasIdentifier(command.Item) &&
+            CookingRecipeOperation.ClearContents or CookingRecipeOperation.DiscardItem or CookingRecipeOperation.UnbindOrder => HasIdentifier(command.Item) &&
                 IsExpectedVersion(command.ExpectedItemVersion) && command.TickCount == 0,
             _ => false,
         };
@@ -536,6 +545,7 @@ public sealed partial class CookingRecipeSimulation
         if (state.Status != CookingOrderStatus.Open)
             return new CookingOrderResult(false, "OrderNotOpen");
 
+        ClearOrderBinding(order);
         _orders[order] = state with { Status = CookingOrderStatus.Unsatisfied };
         _stateVersion++;
         return new CookingOrderResult(true, "OrderUnsatisfied");
@@ -546,6 +556,7 @@ public sealed partial class CookingRecipeSimulation
     {
         if (!_orders.TryGetValue(order, out var state) || state.Status != CookingOrderStatus.Open)
             throw new ArgumentException($"Order '{order}' is not open.", nameof(order));
+        ClearOrderBinding(order);
         _orders[order] = state with { Status = CookingOrderStatus.Completed, CompletedAtLogicalTick = LogicalTick };
         _stateVersion++;
     }
@@ -598,7 +609,7 @@ public sealed partial class CookingRecipeSimulation
         _items.Where(pair => !pair.Value.Removed)
             .OrderBy(pair => pair.Key.Value, StringComparer.Ordinal)
             .Select(pair => new CookingRecipeSnapshotItem(pair.Key, pair.Value.Definition, pair.Value.Version, pair.Value.Location,
-                pair.Value.Recipe, pair.Value.IsProduct, pair.Value.OriginStation, pair.Value.ContainerCompleted, pair.Value.IsDirty, pair.Value.RemainingPortions))
+                pair.Value.Recipe, pair.Value.IsProduct, pair.Value.OriginStation, pair.Value.ContainerCompleted, pair.Value.IsDirty, pair.Value.RemainingPortions, pair.Value.BoundOrder))
             .ToArray(),
         AllProcesses()
             .OrderBy(process => process.Id.Value, StringComparer.Ordinal)
@@ -989,6 +1000,7 @@ public sealed partial class CookingRecipeSimulation
             CookingRecipeOperation.TakeOut => TakeOut(command),
             CookingRecipeOperation.Pour => Pour(command),
             CookingRecipeOperation.SubmitOrder => SubmitOrder(command),
+            CookingRecipeOperation.BindOrder or CookingRecipeOperation.UnbindOrder or CookingRecipeOperation.RebindOrder => MutateBinding(command),
             CookingRecipeOperation.Move => Move(command),
             CookingRecipeOperation.ContinueProcess => ChangeWorker(command, true),
             CookingRecipeOperation.StopProcess => ChangeWorker(command, false),
@@ -1468,6 +1480,7 @@ public sealed partial class CookingRecipeSimulation
         lockedInputs.AddRange(ItemsInContainer(anchorId));
         foreach (var input in lockedInputs)
         {
+            if (_items[input].BoundOrder is not null) return Reject(CookingRecipeRejectionReason.BindingConflict);
             if (!_fixture.Items[_items[input].Definition].AllowedPlayerCapabilities.Overlaps(player.Capabilities))
                 return Reject(CookingRecipeRejectionReason.PlayerIneligible);
         }
@@ -1681,6 +1694,7 @@ public sealed partial class CookingRecipeSimulation
             return Reject(CookingRecipeRejectionReason.ItemNotFound);
         if (item.Version != command.ExpectedItemVersion)
             return Reject(CookingRecipeRejectionReason.ItemStale);
+        if (item.BoundOrder is not null) return Reject(CookingRecipeRejectionReason.BindingConflict);
         if (IsLockedInput(itemId))
             return Reject(CookingRecipeRejectionReason.ItemStale);
         if (item.Location != ItemLocation.Hand(command.Player))
@@ -1715,12 +1729,14 @@ public sealed partial class CookingRecipeSimulation
             return Reject(CookingRecipeRejectionReason.ItemNotFound);
         if (item.Version != command.ExpectedItemVersion)
             return Reject(CookingRecipeRejectionReason.ItemStale);
+        if (item.BoundOrder is not null) return Reject(CookingRecipeRejectionReason.BindingConflict);
         if (IsLockedInput(itemId))
             return Reject(CookingRecipeRejectionReason.ItemStale);
         if (item.Location != ItemLocation.Hand(command.Player))
             return Reject(CookingRecipeRejectionReason.CurrentLocationMismatch);
         if (command.Container is not { } containerId || !TryGetContainerCapability(containerId, out var container))
             return Reject(CookingRecipeRejectionReason.ContainerNotFound);
+        if (ItemsInContainer(containerId).Any(id => _items[id].BoundOrder is not null)) return Reject(CookingRecipeRejectionReason.BindingConflict);
         if (_items[containerId].ContainerCompleted) return Reject(CookingRecipeRejectionReason.BatchCompleted);
         if (IsLockedInput(containerId)) return Reject(CookingRecipeRejectionReason.ItemStale);
         if (WouldCreateContainmentCycle(containerId, itemId))
@@ -1752,6 +1768,7 @@ public sealed partial class CookingRecipeSimulation
         if (_items[containerId].ContainerCompleted) return Reject(CookingRecipeRejectionReason.BatchCompleted);
         if (item.Location is not { Kind: LocationKind.ContainerSlot, OwnerId: { } owner } || owner != containerId.Value)
             return Reject(CookingRecipeRejectionReason.CurrentLocationMismatch);
+        if (item.BoundOrder is not null) return Reject(CookingRecipeRejectionReason.BindingConflict);
         if (IsLockedInput(itemId))
             return Reject(CookingRecipeRejectionReason.ItemStale);
         if (!ContainerIsReachable(containerId, player))
@@ -1785,12 +1802,14 @@ public sealed partial class CookingRecipeSimulation
         var contents = ItemsInContainer(sourceId);
         if (contents.Count == 0)
             return Reject(CookingRecipeRejectionReason.ProductNotFound);
+        if (contents.Any(id => _items[id].BoundOrder is not null)) return Reject(CookingRecipeRejectionReason.BindingConflict);
         if (contents.Any(item => IsLockedInput(item)))
             return Reject(CookingRecipeRejectionReason.ItemStale);
 
         if (source.ContainerCompleted)
             return PourCompletedContainer(command, sourceId, source, targetId, targetCapability, contents);
 
+        if (ItemsInContainer(targetId).Any(id => _items[id].BoundOrder is not null)) return Reject(CookingRecipeRejectionReason.BindingConflict);
         var vacant = targetCapability.Capacity - ItemsInContainer(targetId).Count;
         if (contents.Count > vacant)
             return Reject(CookingRecipeRejectionReason.ContainerFull);
@@ -1929,12 +1948,29 @@ public sealed partial class CookingRecipeSimulation
 
         var container = new ItemId(product.Location.OwnerId!);
         var containerState = _items[container];
-        if (containerState.Definition != order.RequiredContainerDefinition)
+        if (IsLockedInput(productId) || IsLockedInput(container) || IsActiveProcessAnchor(productId) || IsActiveProcessAnchor(container))
+            return Reject(CookingRecipeRejectionReason.ItemStale);
+        if (containerState.Removed || containerState.IsDirty || containerState.ContainerCompleted ||
+            !TryGetContainerCapability(container, out var servingCapability) || !servingCapability.AcceptedDefinitions.Contains(product.Definition) ||
+            containerState.Definition != order.RequiredContainerDefinition || IsWorkingCarrier(containerState.Definition))
             return Reject(CookingRecipeRejectionReason.OrderRequirementMismatch);
 
+        if (!_fixture.Items[product.Definition].AllowedPlayerCapabilities.Overlaps(player.Capabilities) ||
+            !_fixture.Items[containerState.Definition].AllowedPlayerCapabilities.Overlaps(player.Capabilities))
+            return Reject(CookingRecipeRejectionReason.PlayerIneligible);
+        if (_fixture.Items[containerState.Definition].Container?.DisposableOnSubmission == true && ItemsInContainer(container).Count != 1)
+            return Reject(CookingRecipeRejectionReason.OrderRequirementMismatch);
+        if (product.BoundOrder is { } bound && bound != orderId)
+            return Reject(CookingRecipeRejectionReason.BindingConflict);
+        if (_fixture.OrderTemplates[order.Template].RequiresBinding && product.BoundOrder != orderId)
+            return Reject(CookingRecipeRejectionReason.BindingRequired);
+        if (_items.Any(p => p.Value.BoundOrder == orderId && p.Key != productId))
+            return Reject(CookingRecipeRejectionReason.BindingConflict);
+        _ = checked(product.Version + 1); _ = checked(containerState.Version + 1);
+        _ = checked(_stateVersion + 1); _ = checked(_eventSequence + 1); _ = checked(_nextSettlementSequence + 1);
         if (_containerItems.TryGetValue(container, out var contents))
             contents.Remove(productId);
-        _items[productId] = product with { Removed = true, Version = product.Version + 1 };
+        _items[productId] = product with { Removed = true, BoundOrder = null, Version = product.Version + 1 };
         _consumedProducts.Add(productId);
         _orders[orderId] = order with
         {
@@ -1945,7 +1981,13 @@ public sealed partial class CookingRecipeSimulation
             ++_nextSettlementSequence, orderId, order.Template, recipe, productId, command.Player, container, LogicalTick));
 
         // 提交成功后容器变脏并交给 NPC 清洗：脏碗离开厨房，在册干净数下降。
-        if (_fixture.WashableContainerDefinitions.Contains(containerState.Definition))
+        if (_fixture.Items[containerState.Definition].Container?.DisposableOnSubmission == true)
+        {
+            _items[container] = containerState with { Removed = true, Version = checked(containerState.Version + 1) };
+            foreach (var playerId in _hands.Keys.ToArray())
+                if (_hands[playerId] == container) _hands[playerId] = null;
+        }
+        else if (_fixture.WashableContainerDefinitions.Contains(containerState.Definition))
         {
             _items[container] = containerState with { IsDirty = true, Removed = true, Version = containerState.Version + 1 };
             foreach (var (playerId, held) in _hands.Where(pair => pair.Value == container).ToArray())
@@ -2092,7 +2134,7 @@ public sealed partial class CookingRecipeSimulation
         StationSlotId? OriginStation,
         bool ContainerCompleted = false,
         bool IsDirty = false,
-        int RemainingPortions = 0);
+        int RemainingPortions = 0, OrderId? BoundOrder = null);
 
     private sealed record ProcessState(
         ProcessId Id,
@@ -2174,7 +2216,7 @@ public sealed record CookingRecipeSnapshot(
         Items.OrderBy(item => item.Id.Value, StringComparer.Ordinal)
             .Select(item => new CanonicalItem(item.Id.Value, item.Definition.Value, item.Version, item.Location.Kind.ToString(),
                 item.Location.OwnerId, item.Location.SlotId, item.Recipe?.Value, item.IsProduct, item.OriginStation?.Value,
-                item.ContainerCompleted, item.IsDirty, item.RemainingPortions)).ToArray(),
+                item.ContainerCompleted, item.IsDirty, item.RemainingPortions, item.BoundOrder?.Value)).ToArray(),
         Processes.OrderBy(process => process.Id.Value, StringComparer.Ordinal)
             .Select(process => new CanonicalProcess(process.Id.Value, process.Recipe.Value, process.Player.Value,
                 process.Anchor.Value, process.Station?.Value, process.ElapsedTicks, process.RequiredTicks, process.ActiveWorker?.Value)).ToArray(),
@@ -2199,7 +2241,7 @@ public sealed record CookingRecipeSnapshot(
         IReadOnlyList<CanonicalItem> Items, IReadOnlyList<CanonicalProcess> Processes, IReadOnlyList<CanonicalContainer> Containers,
         IReadOnlyList<string> AcceptedOrders, IReadOnlyList<CanonicalOrder> Orders, IReadOnlyList<CanonicalSettlement> Settlements, IReadOnlyList<CookingPlayerPose> Poses);
     private sealed record CanonicalItem(string ItemId, string DefinitionId, int Version, string LocationKind, string? OwnerId,
-        string? SlotId, string? RecipeId, bool IsProduct, string? OriginStation, bool ContainerCompleted, bool IsDirty, int RemainingPortions);
+        string? SlotId, string? RecipeId, bool IsProduct, string? OriginStation, bool ContainerCompleted, bool IsDirty, int RemainingPortions, string? BoundOrder);
     private sealed record CanonicalProcess(string ProcessId, string RecipeId, string PlayerId, string AnchorItemId,
         string? StationId, int ElapsedTicks, int RequiredTicks, string? ActiveWorker);
     private sealed record CanonicalContainer(string ContainerId, int Capacity, IReadOnlyList<string> ItemIds);
@@ -2220,7 +2262,7 @@ public sealed record CookingOrderSnapshotOrder(
 
 public sealed record CookingRecipeSnapshotItem(ItemId Id, DefinitionId Definition, int Version, ItemLocation Location,
     RecipeId? Recipe, bool IsProduct, StationSlotId? OriginStation, bool ContainerCompleted = false, bool IsDirty = false,
-        int RemainingPortions = 0);
+        int RemainingPortions = 0, OrderId? BoundOrder = null);
 
 public sealed record CookingRecipeSnapshotProcess(ProcessId Id, RecipeId Recipe, PlayerId Player, ItemId Anchor,
     StationSlotId? Station, int ElapsedTicks, int RequiredTicks, PlayerId? ActiveWorker = null);
