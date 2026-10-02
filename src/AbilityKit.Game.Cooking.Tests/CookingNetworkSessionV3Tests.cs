@@ -174,6 +174,9 @@ public sealed class CookingNetworkSessionV3Tests
         Assert.NotNull(z.LatestBaseline.State.FullRecipe); Assert.Null(z.LatestBaseline.State.ResumableCheckpoint);
         Assert.True(session.ApplyControl(new(CookingNetworkControlKind.Resume, "resume")).Accepted);
         var queued = a.SendCommandAsync("queued-before-close", Pickup(A)); a.Disconnect();
+        // Cancellation completes off-thread. Wait without yielding the ET owner thread;
+        // the assertion below then awaits an already-terminal task and does not advance a frame.
+        Assert.True(SpinWait.SpinUntil(() => queued.IsCompleted, TimeSpan.FromSeconds(10)), "Disconnected caller cancellation timed out.");
         await Assert.ThrowsAsync<IOException>(() => queued);
         session.ProcessOwnerFrame(); Assert.Equal(LocationKind.WorldPosition, host.Observe().Items.Single(i => i.Id == Food).Location.Kind);
         var next = z.SendCommandAsync("other-chef", Pickup(Z)); Pump(session, next); Assert.Equal(CookingRecipeOutcome.Accepted, (await next).Result!.Outcome);
