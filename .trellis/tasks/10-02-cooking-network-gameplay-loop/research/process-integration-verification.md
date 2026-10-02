@@ -30,3 +30,13 @@ The exact earlier self-decode diagnostic directory was `local/Logs/cooking-netwo
 - A separate actual Created disconnect/rebind regression is being prepared and run by the Session producer; its outcome and any correction require their own evidence before integration.
 
 Rich process completion, final broad gates, reviewed master merge/post-merge gates and physical two-PC LAN remain pending. Unity remains deferred. No performance PASS is claimed.
+
+## Complete endpoint flow; wrapper exit-code correction pending (2026-10-03)
+
+Frozen runner/source98396db9f, run `local/Logs/cooking-network-process/20261002-211320-4275028` in root managed tree: **both endpoint JSON reports passed**, Host PID43756 / Client PID21788, same wire3, Host/Session MVID and server instance, exact full gameplay hash `a1f0e19d68ea83836d42031afc6314d12cf65c09896735c31bb864c405322d1e`. Host433991ms, client413843ms, remote386 command responses (mean585.31ms), Host701 timing samples, queue high-water3. Diagnostic only, thresholdsUNSET.
+
+Actual Host checks cover finite shared preparation, different-player D31 binding/delivery, exactly two accepted orders, one natural unmet departure, zero-star completed Success, closed/free tables/empty wash/released work and actual durable successor. Actual Client checks include original manual takeover, complete typed finite supply, unbound finished drink, two accepted order projection, successor epoch2 baseline ACK, generation2/token rotation rebind and full received baseline hash. Created cleanup9b2d6e75e was included. Each endpoint's Session view is retained; remote exits before Host final capture, so ConnectedOwnerBinding may legitimately differ while gameplay hash agrees.
+
+**Whole wrapper command still failed**: its Windows PowerShell Start-Process objects did not retain a native handle before repeated Refresh/HasExited, leaving ExitCode unavailable. No paired command PASS is claimed for this run. Root now retains each launched handle and WaitForExit before checking a non-null exit code, with local actual subprocess proofs expected0→actual0 and expected1→actual1 (`local/Logs/process-exit-handle-proof.log`), plus parser check. A new complete paired run is required. Processes were terminated/disposed only through the wrapper's owned Process objects; no global kill.
+
+The return-route coordination includes an ordinary zero-translation diagonal-facing Move sent only after the client's parking projection is observed; Host requires both such legal markers before successor. Independent source review accepted this fixture coordination. No production lifecycle or movement restriction changed.

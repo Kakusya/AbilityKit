@@ -269,3 +269,6 @@ Baseline StateHash covers the typed AuthorityCapture plus SessionProjection. Sna
 - receipt每Level最多16384 identity是数量上限，与完整状态字节/token/collection预算取交集；不保证任意16384条复杂历史都能装进8MiB，不承诺无限营业。不得截断完整状态、删除有效domain receipt、静默驱逐mapping来使校验通过。
 - 出站baseline必须经同一codec预算自校验，验证完成后才提交Issued/snapshot sequence。超限进入明确Session unavailable：结构化FullStateExceedsWireBounds，等待调用终结、现有客户端unsynchronized，新Join明确拒绝。故障属于Session发布容量，不伪造ET权威域故障或业务回滚。
 - 此修订是明确设计决定；实际实现、负例、富流程绿与独立复审仍须分别记录，本文不是通过证据。
+# First-join identity clarification (2026-10-03)
+
+For a participant with no issued live generation, an initial Join requires both ServerSessionInstance and RebindToken to be null. A valid JoinCredential alone does not make a supplied stale/fabricated rebind pair valid. Any supplied instance or token on that initial path is rejected as Unauthorized, without changing generation/binding/readiness or gameplay. A participant with an issued live generation continues to require the exact current instance/token pair; ordinary initial clients already send null/null. This source-audit clarification requires an actual old-source failing regression and corrected-source verification before acceptance; no cold recovery PASS is inferred.

@@ -1,6 +1,6 @@
 ﻿# N03 实施顺序与验证清单
 
-当前 planning；本轮仅完善设计。不得由此文推导 start 或通过。N02仍in_progress，物理 gate 未满足；root 可明确批准有界本地工程增量，但整体完成仍按依赖与物理出口判断。
+当前in_progress，仅root2026-10-03批准的本地确定性恢复/边界工程增量。N02整体仍in_progress，物理gate未满足；这个局部依赖例外不表示N02完成。当前root独占.NET双进程复跑，worker先准备测试，显式授窗后才执行。
 
 1. 复读N01最终design（含baseline budget补充）、N02独立review/process实测报告与冻结publication源码（本次路由8d3261af1及后继）；核对实际commit/dirty状态、停止和活跃worker。对齐existing API/Reason，审阅N03 PRD/design，root决定本地提前范围与测量档。
 2. 只在批准范围创建受管独立tree，保留其他worker编辑；先确定测试/runner所有权和.NET串行窗口。不要改metadata/manifests代表已执行，未经授权不启动Unity。

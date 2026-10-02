@@ -1,6 +1,6 @@
 ﻿# N03 网络恢复与测量 PRD
 
-状态：planning / 待 root 审议；2026-10-03 本次仅细化文件，不实施。Owner 已授权 N01–N03 总范围；这不将仍 in_progress 的 N02 或物理两 PC gate 视为完成。Unity 不在本任务执行范围。
+状态：in_progress / bounded local engineering，root2026-10-03审议批准。仅启动既有授权内的本地确定性恢复/边界增量，基线为reviewed assembled b6e102ac9。N02两个endpoint完整流程已通过但wrapper复跑和物理gate仍待完成，不将N02推导为completed。Unity不在执行范围；.NET窗口由root串行授予。
 
 ## 目标
 

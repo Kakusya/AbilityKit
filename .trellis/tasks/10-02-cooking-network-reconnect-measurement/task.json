@@ -1,38 +1,45 @@
 {
-  "id": "cooking-network-reconnect-measurement",
-  "name": "cooking-network-reconnect-measurement",
-  "title": "网络恢复与测量",
-  "description": "断线、旧局输入、负载与延迟",
-  "status": "planning",
-  "dev_type": null,
-  "scope": null,
-  "package": null,
-  "priority": "P2",
-  "creator": "Li He",
-  "assignee": "Li He",
-  "createdAt": "2026-10-02",
-  "completedAt": null,
-  "branch": null,
-  "base_branch": "master",
-  "worktree_path": null,
-  "commit": null,
-  "pr_url": null,
-  "subtasks": [],
-  "children": [],
-  "parent": "10-02-cooking-gameplay-menu-plan",
-  "relatedFiles": [],
-  "notes": "Latest owner authorizes audit then implementation. Network contract and N02 dependency review precede N03 execution; physical two-PC LAN remains unverified; Unity deferred.",
-  "meta": {
-    "plan_id": "N03",
-    "stage": "network",
-    "planning_only": false,
-    "implementation_authorized": true,
-    "dependencies": [
-      "N02"
-    ],
-    "execution_gate": "reviewed-contract-and-dependencies",
-    "planning_maturity": "reviewed-contract",
-    "owner_delegated_details": true,
-    "execution_authorization": "Latest owner: audit every topic then execute through completion. Task planning review and dependency checks precede execution; Unity and optional reference pool remain deferred."
-  }
+    "id":  "cooking-network-reconnect-measurement",
+    "name":  "cooking-network-reconnect-measurement",
+    "title":  "网络恢复与测量",
+    "description":  "断线、旧局输入、负载与延迟",
+    "status":  "in_progress",
+    "dev_type":  null,
+    "scope":  null,
+    "package":  null,
+    "priority":  "P2",
+    "creator":  "Li He",
+    "assignee":  "Li He",
+    "createdAt":  "2026-10-02",
+    "completedAt":  null,
+    "branch":  "cooking-network-recovery-current",
+    "base_branch":  "master",
+    "worktree_path":  "C:/Users/Administrator/orca/workspaces/AbilityKit/cooking-network-recovery-current",
+    "commit":  null,
+    "pr_url":  null,
+    "subtasks":  [
+
+                 ],
+    "children":  [
+
+                 ],
+    "parent":  "10-02-cooking-gameplay-menu-plan",
+    "relatedFiles":  [
+
+                     ],
+    "notes":  "Root2026-10-03 authorizes bounded local deterministic recovery engineering on reviewed assembled b6e102ac9. N02 endpoint flows passed but paired wrapper/final gates/physical LAN pending. This is a scoped dependency exception, not N02 completion; .NET serialized; Unity deferred.",
+    "meta":  {
+                 "plan_id":  "N03",
+                 "stage":  "network",
+                 "planning_only":  false,
+                 "implementation_authorized":  true,
+                 "dependencies":  [
+                                      "N02"
+                                  ],
+                 "execution_gate":  "reviewed-contract-and-dependencies",
+                 "planning_maturity":  "reviewed-contract",
+                 "owner_delegated_details":  true,
+                 "execution_authorization":  "Latest owner: audit every topic then execute through completion. Task planning review and dependency checks precede execution; Unity and optional reference pool remain deferred.",
+                 "local_dependency_exception":  "N02 source corrections reviewed and frozen; only local recovery/boundary engineering may precede whole N02/physical exit"
+             }
 }
