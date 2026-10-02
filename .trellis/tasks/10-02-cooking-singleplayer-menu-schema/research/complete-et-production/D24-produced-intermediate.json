@@ -1,0 +1,106 @@
+{
+  "schema": "cooking-menu-et-production-evidence-v1",
+  "menu": "D24",
+  "checkpointPoint": "produced-intermediate",
+  "identity": {
+    "schema": "cooking-definition-v3",
+    "sha256": "717CB1AE03F3FA4B58702A073FB0BAB23558CB0D20D6BB0DAFD7C433A377A8EA"
+  },
+  "provenance": {
+    "catalogSchema": "cooking-menu-catalog-v1",
+    "catalogSha256": "bcadc77368b284cfafe273b608c56d9d6d3a312fa456abf49b1f831133eb5374",
+    "sources": [
+      {
+        "path": "Docs/design/CookingGame/reference/menu-v0.1/Cooking_\u5B8C\u6574\u83DC\u54C1\u4E0E\u52A0\u5DE5\u8FC7\u7A0B_v0.1.md",
+        "sha256": "8d503eeaaf5c2de3e326762beb9b1bf305342b1095b0ba9fcabcde230f902cc2"
+      },
+      {
+        "path": "Docs/design/CookingGame/reference/menu-v0.1/Cooking_\u5B8C\u6574\u83DC\u54C1\u4E0E\u52A0\u5DE5\u8FC7\u7A0B_v0.1.xlsx",
+        "sha256": "5268130330044901cfaecf3cbd7ab048432030ef03c6f17cf3a793d3d744232d"
+      }
+    ],
+    "selectedMenus": [
+      "D24"
+    ]
+  },
+  "level": {
+    "matchScope": {
+      "session": {
+        "value": "menu-production"
+      },
+      "world": {
+        "value": "menu-world"
+      },
+      "match": {
+        "value": "D24"
+      }
+    },
+    "restaurantRuntime": {
+      "value": 1
+    },
+    "level": {
+      "value": "menu-fixture"
+    },
+    "levelEpoch": 1
+  },
+  "recovery": "actual-host-export-codec-dispose-empty-factory-restore",
+  "intermediateCheckpointSha256": "b6a7ed689cb770ff330f90bb2d9f4e07c05836c441d5ce47bfe8da3157d22a03",
+  "finalCheckpointSha256": "5fe9a44c225dbaa9a3a9e74dffc598a57b401f392cd1da8cf2d55e0b8788a7a6",
+  "finalSnapshotSha256": "1F5C01276B820EF9EEC6FFBF26DF93CE75F8C83F0CDF09DD657B1DC432FC30C7",
+  "commandIngressCount": 278,
+  "recipes": [
+    "menu-recipe-preparation-hot-water",
+    "menu-recipe-preparation-black-tea",
+    "menu-recipe-preparation-fresh-milk-tea",
+    "menu-recipe-finished-fresh-milk-tea-stage-1",
+    "menu-recipe-finished-fresh-milk-tea"
+  ],
+  "settlements": [
+    {
+      "sequence": 1,
+      "order": {
+        "value": "order-D24"
+      },
+      "template": {
+        "value": "menu-order-fresh-milk-tea"
+      },
+      "recipe": {
+        "value": "menu-recipe-finished-fresh-milk-tea"
+      },
+      "product": {
+        "value": "product-7"
+      },
+      "player": {
+        "value": "menu-chef"
+      },
+      "container": {
+        "value": "fixture-cup-1"
+      },
+      "logicalTick": 277
+    }
+  ],
+  "servingVessel": {
+    "id": {
+      "value": "fixture-cup-1"
+    },
+    "definition": {
+      "value": "menu-container-cold-cup"
+    },
+    "version": 5,
+    "location": {
+      "kind": 1,
+      "ownerId": "menu-chef",
+      "slotId": null
+    },
+    "removed": true,
+    "recipe": null,
+    "isProduct": false,
+    "originStation": null,
+    "containerCompleted": false,
+    "isDirty": false,
+    "remainingPortions": 0,
+    "boundOrder": null
+  },
+  "fixtureBoundary": "finite validated raw/empty-vessel setup and direct OpenOrder fixture; not S07 procurement or S14 full front lifecycle",
+  "finalCanonicalEqualsUninterrupted": true
+}

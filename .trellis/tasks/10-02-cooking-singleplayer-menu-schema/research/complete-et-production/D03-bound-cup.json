@@ -1,0 +1,107 @@
+{
+  "schema": "cooking-menu-et-production-evidence-v1",
+  "menu": "D03",
+  "checkpointPoint": "bound-cup",
+  "identity": {
+    "schema": "cooking-definition-v3",
+    "sha256": "463A1D4926C2D42FBCAF9A0A111EEC71073E7D4C9F249823D5C04BE407AB80FC"
+  },
+  "provenance": {
+    "catalogSchema": "cooking-menu-catalog-v1",
+    "catalogSha256": "bcadc77368b284cfafe273b608c56d9d6d3a312fa456abf49b1f831133eb5374",
+    "sources": [
+      {
+        "path": "Docs/design/CookingGame/reference/menu-v0.1/Cooking_\u5B8C\u6574\u83DC\u54C1\u4E0E\u52A0\u5DE5\u8FC7\u7A0B_v0.1.md",
+        "sha256": "8d503eeaaf5c2de3e326762beb9b1bf305342b1095b0ba9fcabcde230f902cc2"
+      },
+      {
+        "path": "Docs/design/CookingGame/reference/menu-v0.1/Cooking_\u5B8C\u6574\u83DC\u54C1\u4E0E\u52A0\u5DE5\u8FC7\u7A0B_v0.1.xlsx",
+        "sha256": "5268130330044901cfaecf3cbd7ab048432030ef03c6f17cf3a793d3d744232d"
+      }
+    ],
+    "selectedMenus": [
+      "D03"
+    ]
+  },
+  "level": {
+    "matchScope": {
+      "session": {
+        "value": "menu-production"
+      },
+      "world": {
+        "value": "menu-world"
+      },
+      "match": {
+        "value": "D03"
+      }
+    },
+    "restaurantRuntime": {
+      "value": 1
+    },
+    "level": {
+      "value": "menu-fixture"
+    },
+    "levelEpoch": 1
+  },
+  "recovery": "actual-host-export-codec-dispose-empty-factory-restore",
+  "intermediateCheckpointSha256": "52122a450c9ddaadbf5317dc2aaf4191142cb9c388b6ae301eee690def835ca1",
+  "finalCheckpointSha256": "0af7946d70cc2b3827694f362c3bf07ac29fbe91951058610e9f9eafcf4ac461",
+  "finalSnapshotSha256": "0BE9A8F2F990BDDE644869CD48B4CB84C7AACB880FCD57E8357E26BD0841F61B",
+  "commandIngressCount": 281,
+  "recipes": [
+    "menu-recipe-preparation-cut-orange",
+    "menu-recipe-preparation-orange-juice",
+    "menu-recipe-finished-orange-soda-stage-1",
+    "menu-recipe-finished-orange-soda-stage-2",
+    "menu-recipe-preparation-dispensed-soda",
+    "menu-recipe-finished-orange-soda"
+  ],
+  "settlements": [
+    {
+      "sequence": 1,
+      "order": {
+        "value": "order-D03"
+      },
+      "template": {
+        "value": "menu-order-orange-soda"
+      },
+      "recipe": {
+        "value": "menu-recipe-finished-orange-soda"
+      },
+      "product": {
+        "value": "product-7"
+      },
+      "player": {
+        "value": "menu-chef"
+      },
+      "container": {
+        "value": "fixture-cup-1"
+      },
+      "logicalTick": 280
+    }
+  ],
+  "servingVessel": {
+    "id": {
+      "value": "fixture-cup-1"
+    },
+    "definition": {
+      "value": "menu-container-cold-cup"
+    },
+    "version": 5,
+    "location": {
+      "kind": 1,
+      "ownerId": "menu-chef",
+      "slotId": null
+    },
+    "removed": true,
+    "recipe": null,
+    "isProduct": false,
+    "originStation": null,
+    "containerCompleted": false,
+    "isDirty": false,
+    "remainingPortions": 0,
+    "boundOrder": null
+  },
+  "fixtureBoundary": "finite validated raw/empty-vessel setup and direct OpenOrder fixture; not S07 procurement or S14 full front lifecycle",
+  "finalCanonicalEqualsUninterrupted": true
+}

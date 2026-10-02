@@ -1,0 +1,15 @@
+{
+  "domainSubmitted": 87,
+  "etRestoredCompared": 121,
+  "checkpointPoints": {
+    "partial-batch": 1,
+    "bound-cup": 31,
+    "produced-intermediate": 87,
+    "paused-manual": 2
+  },
+  "domainMealDessert": 56,
+  "domainDrink": 31,
+  "sourceIdentityAndStockAnchors": "checked",
+  "fixtureOnly": true,
+  "pending": "S07 procurement, S14 front supply/layout lifecycle, final balance and Unity"
+}

@@ -1,0 +1,105 @@
+{
+  "schema": "cooking-menu-et-production-evidence-v1",
+  "menu": "D19",
+  "checkpointPoint": "produced-intermediate",
+  "identity": {
+    "schema": "cooking-definition-v3",
+    "sha256": "5E67B82B637941D197C54B0127B5651786599A96F5F1F8E4D25A329007C67114"
+  },
+  "provenance": {
+    "catalogSchema": "cooking-menu-catalog-v1",
+    "catalogSha256": "bcadc77368b284cfafe273b608c56d9d6d3a312fa456abf49b1f831133eb5374",
+    "sources": [
+      {
+        "path": "Docs/design/CookingGame/reference/menu-v0.1/Cooking_\u5B8C\u6574\u83DC\u54C1\u4E0E\u52A0\u5DE5\u8FC7\u7A0B_v0.1.md",
+        "sha256": "8d503eeaaf5c2de3e326762beb9b1bf305342b1095b0ba9fcabcde230f902cc2"
+      },
+      {
+        "path": "Docs/design/CookingGame/reference/menu-v0.1/Cooking_\u5B8C\u6574\u83DC\u54C1\u4E0E\u52A0\u5DE5\u8FC7\u7A0B_v0.1.xlsx",
+        "sha256": "5268130330044901cfaecf3cbd7ab048432030ef03c6f17cf3a793d3d744232d"
+      }
+    ],
+    "selectedMenus": [
+      "D19"
+    ]
+  },
+  "level": {
+    "matchScope": {
+      "session": {
+        "value": "menu-production"
+      },
+      "world": {
+        "value": "menu-world"
+      },
+      "match": {
+        "value": "D19"
+      }
+    },
+    "restaurantRuntime": {
+      "value": 1
+    },
+    "level": {
+      "value": "menu-fixture"
+    },
+    "levelEpoch": 1
+  },
+  "recovery": "actual-host-export-codec-dispose-empty-factory-restore",
+  "intermediateCheckpointSha256": "270401034a11306ca8b99b6f82fa39da71c15dcddeccdbf1ef34b7bb5aea7748",
+  "finalCheckpointSha256": "31edbbec416b0298794df5128b38003c42e0d3228c0611ad7c023815040004c8",
+  "finalSnapshotSha256": "E8EA083DAD6BFE8DBEF12D584559E39E267551FF7FFB2FF12F13B6D962E4D7F2",
+  "commandIngressCount": 201,
+  "recipes": [
+    "menu-recipe-finished-coconut-latte-stage-1",
+    "menu-recipe-preparation-coffee-powder",
+    "menu-recipe-preparation-espresso",
+    "menu-recipe-finished-coconut-latte"
+  ],
+  "settlements": [
+    {
+      "sequence": 1,
+      "order": {
+        "value": "order-D19"
+      },
+      "template": {
+        "value": "menu-order-coconut-latte"
+      },
+      "recipe": {
+        "value": "menu-recipe-finished-coconut-latte"
+      },
+      "product": {
+        "value": "product-4"
+      },
+      "player": {
+        "value": "menu-chef"
+      },
+      "container": {
+        "value": "fixture-cup-1"
+      },
+      "logicalTick": 200
+    }
+  ],
+  "servingVessel": {
+    "id": {
+      "value": "fixture-cup-1"
+    },
+    "definition": {
+      "value": "menu-container-cold-cup"
+    },
+    "version": 5,
+    "location": {
+      "kind": 1,
+      "ownerId": "menu-chef",
+      "slotId": null
+    },
+    "removed": true,
+    "recipe": null,
+    "isProduct": false,
+    "originStation": null,
+    "containerCompleted": false,
+    "isDirty": false,
+    "remainingPortions": 0,
+    "boundOrder": null
+  },
+  "fixtureBoundary": "finite validated raw/empty-vessel setup and direct OpenOrder fixture; not S07 procurement or S14 full front lifecycle",
+  "finalCanonicalEqualsUninterrupted": true
+}

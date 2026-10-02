@@ -1,0 +1,103 @@
+{
+  "schema": "cooking-menu-et-production-evidence-v1",
+  "menu": "D08",
+  "checkpointPoint": "produced-intermediate",
+  "identity": {
+    "schema": "cooking-definition-v3",
+    "sha256": "72EBC6E6CB0E844249E32D21CC32B5354D3CD67B56A4195608879B9E6849D375"
+  },
+  "provenance": {
+    "catalogSchema": "cooking-menu-catalog-v1",
+    "catalogSha256": "bcadc77368b284cfafe273b608c56d9d6d3a312fa456abf49b1f831133eb5374",
+    "sources": [
+      {
+        "path": "Docs/design/CookingGame/reference/menu-v0.1/Cooking_\u5B8C\u6574\u83DC\u54C1\u4E0E\u52A0\u5DE5\u8FC7\u7A0B_v0.1.md",
+        "sha256": "8d503eeaaf5c2de3e326762beb9b1bf305342b1095b0ba9fcabcde230f902cc2"
+      },
+      {
+        "path": "Docs/design/CookingGame/reference/menu-v0.1/Cooking_\u5B8C\u6574\u83DC\u54C1\u4E0E\u52A0\u5DE5\u8FC7\u7A0B_v0.1.xlsx",
+        "sha256": "5268130330044901cfaecf3cbd7ab048432030ef03c6f17cf3a793d3d744232d"
+      }
+    ],
+    "selectedMenus": [
+      "D08"
+    ]
+  },
+  "level": {
+    "matchScope": {
+      "session": {
+        "value": "menu-production"
+      },
+      "world": {
+        "value": "menu-world"
+      },
+      "match": {
+        "value": "D08"
+      }
+    },
+    "restaurantRuntime": {
+      "value": 1
+    },
+    "level": {
+      "value": "menu-fixture"
+    },
+    "levelEpoch": 1
+  },
+  "recovery": "actual-host-export-codec-dispose-empty-factory-restore",
+  "intermediateCheckpointSha256": "71f22c38219a83c210451df21fffa5ac857b9ae456c7e47b11d504f8c013b175",
+  "finalCheckpointSha256": "09b69d669d6c511aaa4b14fa5bbaa91870f1fcbc14a027c2e06a8ab34b472420",
+  "finalSnapshotSha256": "EAB93690CD570F5187DFDB1718CC338349968E535827D285D0ECBAAEAFDBF56E",
+  "commandIngressCount": 213,
+  "recipes": [
+    "menu-recipe-preparation-cut-banana",
+    "menu-recipe-finished-banana-shake"
+  ],
+  "settlements": [
+    {
+      "sequence": 1,
+      "order": {
+        "value": "order-D08"
+      },
+      "template": {
+        "value": "menu-order-banana-shake"
+      },
+      "recipe": {
+        "value": "menu-recipe-finished-banana-shake"
+      },
+      "product": {
+        "value": "product-2"
+      },
+      "player": {
+        "value": "menu-chef"
+      },
+      "container": {
+        "value": "fixture-cup-1"
+      },
+      "logicalTick": 212
+    }
+  ],
+  "servingVessel": {
+    "id": {
+      "value": "fixture-cup-1"
+    },
+    "definition": {
+      "value": "menu-container-cold-cup"
+    },
+    "version": 5,
+    "location": {
+      "kind": 1,
+      "ownerId": "menu-chef",
+      "slotId": null
+    },
+    "removed": true,
+    "recipe": null,
+    "isProduct": false,
+    "originStation": null,
+    "containerCompleted": false,
+    "isDirty": false,
+    "remainingPortions": 0,
+    "boundOrder": null
+  },
+  "fixtureBoundary": "finite validated raw/empty-vessel setup and direct OpenOrder fixture; not S07 procurement or S14 full front lifecycle",
+  "finalCanonicalEqualsUninterrupted": true
+}

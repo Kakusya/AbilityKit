@@ -1,0 +1,107 @@
+{
+  "schema": "cooking-menu-et-production-evidence-v1",
+  "menu": "D27",
+  "checkpointPoint": "bound-cup",
+  "identity": {
+    "schema": "cooking-definition-v3",
+    "sha256": "EFD232B2A90BB5AFB6E926A07BE176394A463048B950DE73F6DF0759099EC17A"
+  },
+  "provenance": {
+    "catalogSchema": "cooking-menu-catalog-v1",
+    "catalogSha256": "bcadc77368b284cfafe273b608c56d9d6d3a312fa456abf49b1f831133eb5374",
+    "sources": [
+      {
+        "path": "Docs/design/CookingGame/reference/menu-v0.1/Cooking_\u5B8C\u6574\u83DC\u54C1\u4E0E\u52A0\u5DE5\u8FC7\u7A0B_v0.1.md",
+        "sha256": "8d503eeaaf5c2de3e326762beb9b1bf305342b1095b0ba9fcabcde230f902cc2"
+      },
+      {
+        "path": "Docs/design/CookingGame/reference/menu-v0.1/Cooking_\u5B8C\u6574\u83DC\u54C1\u4E0E\u52A0\u5DE5\u8FC7\u7A0B_v0.1.xlsx",
+        "sha256": "5268130330044901cfaecf3cbd7ab048432030ef03c6f17cf3a793d3d744232d"
+      }
+    ],
+    "selectedMenus": [
+      "D27"
+    ]
+  },
+  "level": {
+    "matchScope": {
+      "session": {
+        "value": "menu-production"
+      },
+      "world": {
+        "value": "menu-world"
+      },
+      "match": {
+        "value": "D27"
+      }
+    },
+    "restaurantRuntime": {
+      "value": 1
+    },
+    "level": {
+      "value": "menu-fixture"
+    },
+    "levelEpoch": 1
+  },
+  "recovery": "actual-host-export-codec-dispose-empty-factory-restore",
+  "intermediateCheckpointSha256": "a98933cf0b389597d180deb883d62fa3db186113b18578fcb9a2cb98fd457985",
+  "finalCheckpointSha256": "da62280225211f994ac5382418c66cdeee1d341a7a41e2db76c8911b0557ba6b",
+  "finalSnapshotSha256": "B1BEE17258390F5CC778AB9AACA5C28CF462F59DC821FA97FB8F64214D9D05D5",
+  "commandIngressCount": 349,
+  "recipes": [
+    "menu-recipe-finished-jelly-milk-tea-stage-1",
+    "menu-recipe-preparation-hot-water",
+    "menu-recipe-preparation-black-tea",
+    "menu-recipe-preparation-fresh-milk-tea",
+    "menu-recipe-finished-jelly-milk-tea-stage-2",
+    "menu-recipe-finished-jelly-milk-tea"
+  ],
+  "settlements": [
+    {
+      "sequence": 1,
+      "order": {
+        "value": "order-D27"
+      },
+      "template": {
+        "value": "menu-order-jelly-milk-tea"
+      },
+      "recipe": {
+        "value": "menu-recipe-finished-jelly-milk-tea"
+      },
+      "product": {
+        "value": "product-8"
+      },
+      "player": {
+        "value": "menu-chef"
+      },
+      "container": {
+        "value": "fixture-cup-1"
+      },
+      "logicalTick": 348
+    }
+  ],
+  "servingVessel": {
+    "id": {
+      "value": "fixture-cup-1"
+    },
+    "definition": {
+      "value": "menu-container-cold-cup"
+    },
+    "version": 5,
+    "location": {
+      "kind": 1,
+      "ownerId": "menu-chef",
+      "slotId": null
+    },
+    "removed": true,
+    "recipe": null,
+    "isProduct": false,
+    "originStation": null,
+    "containerCompleted": false,
+    "isDirty": false,
+    "remainingPortions": 0,
+    "boundOrder": null
+  },
+  "fixtureBoundary": "finite validated raw/empty-vessel setup and direct OpenOrder fixture; not S07 procurement or S14 full front lifecycle",
+  "finalCanonicalEqualsUninterrupted": true
+}

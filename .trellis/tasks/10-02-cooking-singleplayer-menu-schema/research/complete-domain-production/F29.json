@@ -1,0 +1,531 @@
+{
+  "schema": "cooking-menu-production-evidence-v1",
+  "menuSourceId": "F29",
+  "status": "produced-plated-submitted",
+  "scope": {
+    "session": {
+      "value": "menu-production"
+    },
+    "world": {
+      "value": "menu-world"
+    },
+    "match": {
+      "value": "F29"
+    }
+  },
+  "contentIdentity": {
+    "schema": "cooking-definition-v3",
+    "sha256": "9F8F445D7F0591F5DB0768C17DFEF0242F2B44073DDEB7C118C746504C7E2CC9"
+  },
+  "catalogSha256": "bcadc77368b284cfafe273b608c56d9d6d3a312fa456abf49b1f831133eb5374",
+  "sources": [
+    {
+      "path": "Docs/design/CookingGame/reference/menu-v0.1/Cooking_\u5B8C\u6574\u83DC\u54C1\u4E0E\u52A0\u5DE5\u8FC7\u7A0B_v0.1.md",
+      "sha256": "8d503eeaaf5c2de3e326762beb9b1bf305342b1095b0ba9fcabcde230f902cc2"
+    },
+    {
+      "path": "Docs/design/CookingGame/reference/menu-v0.1/Cooking_\u5B8C\u6574\u83DC\u54C1\u4E0E\u52A0\u5DE5\u8FC7\u7A0B_v0.1.xlsx",
+      "sha256": "5268130330044901cfaecf3cbd7ab048432030ef03c6f17cf3a793d3d744232d"
+    }
+  ],
+  "fixtureValues": "raw-eight-per-definition-serving-two-not-balanced",
+  "initialSupply": [
+    {
+      "definition": {
+        "value": "menu-supply-dumpling-wrapper"
+      },
+      "count": 1,
+      "location": "world:initial-menu-supply-dumpling-wrapper-1"
+    },
+    {
+      "definition": {
+        "value": "menu-supply-dumpling-wrapper"
+      },
+      "count": 1,
+      "location": "world:initial-menu-supply-dumpling-wrapper-2"
+    },
+    {
+      "definition": {
+        "value": "menu-supply-dumpling-wrapper"
+      },
+      "count": 1,
+      "location": "world:initial-menu-supply-dumpling-wrapper-3"
+    },
+    {
+      "definition": {
+        "value": "menu-supply-dumpling-wrapper"
+      },
+      "count": 1,
+      "location": "world:initial-menu-supply-dumpling-wrapper-4"
+    },
+    {
+      "definition": {
+        "value": "menu-supply-dumpling-wrapper"
+      },
+      "count": 1,
+      "location": "world:initial-menu-supply-dumpling-wrapper-5"
+    },
+    {
+      "definition": {
+        "value": "menu-supply-dumpling-wrapper"
+      },
+      "count": 1,
+      "location": "world:initial-menu-supply-dumpling-wrapper-6"
+    },
+    {
+      "definition": {
+        "value": "menu-supply-dumpling-wrapper"
+      },
+      "count": 1,
+      "location": "world:initial-menu-supply-dumpling-wrapper-7"
+    },
+    {
+      "definition": {
+        "value": "menu-supply-dumpling-wrapper"
+      },
+      "count": 1,
+      "location": "world:initial-menu-supply-dumpling-wrapper-8"
+    },
+    {
+      "definition": {
+        "value": "menu-supply-shrimp"
+      },
+      "count": 1,
+      "location": "world:initial-menu-supply-shrimp-1"
+    },
+    {
+      "definition": {
+        "value": "menu-supply-shrimp"
+      },
+      "count": 1,
+      "location": "world:initial-menu-supply-shrimp-2"
+    },
+    {
+      "definition": {
+        "value": "menu-supply-shrimp"
+      },
+      "count": 1,
+      "location": "world:initial-menu-supply-shrimp-3"
+    },
+    {
+      "definition": {
+        "value": "menu-supply-shrimp"
+      },
+      "count": 1,
+      "location": "world:initial-menu-supply-shrimp-4"
+    },
+    {
+      "definition": {
+        "value": "menu-supply-shrimp"
+      },
+      "count": 1,
+      "location": "world:initial-menu-supply-shrimp-5"
+    },
+    {
+      "definition": {
+        "value": "menu-supply-shrimp"
+      },
+      "count": 1,
+      "location": "world:initial-menu-supply-shrimp-6"
+    },
+    {
+      "definition": {
+        "value": "menu-supply-shrimp"
+      },
+      "count": 1,
+      "location": "world:initial-menu-supply-shrimp-7"
+    },
+    {
+      "definition": {
+        "value": "menu-supply-shrimp"
+      },
+      "count": 1,
+      "location": "world:initial-menu-supply-shrimp-8"
+    },
+    {
+      "definition": {
+        "value": "menu-container-steam-basket"
+      },
+      "count": 1,
+      "location": "world:initial-F29-menu-container-steam-basket"
+    },
+    {
+      "definition": {
+        "value": "menu-container-steam-plate"
+      },
+      "count": 2,
+      "location": "cleanPool"
+    }
+  ],
+  "executedRecipes": [
+    "menu-recipe-finished-shrimp-dumpling-stage-1",
+    "menu-recipe-finished-shrimp-dumpling"
+  ],
+  "productId": "product-2",
+  "servingVesselId": "pool-menu-container-steam-plate-1",
+  "logicalTick": 101,
+  "settlements": [
+    {
+      "sequence": 1,
+      "order": {
+        "value": "order-F29"
+      },
+      "template": {
+        "value": "menu-order-shrimp-dumpling"
+      },
+      "recipe": {
+        "value": "menu-recipe-finished-shrimp-dumpling"
+      },
+      "product": {
+        "value": "product-2"
+      },
+      "player": {
+        "value": "menu-chef"
+      },
+      "container": {
+        "value": "pool-menu-container-steam-plate-1"
+      },
+      "logicalTick": 100
+    }
+  ],
+  "remainingItems": [
+    {
+      "id": {
+        "value": "fixture-F29-menu-container-steam-basket"
+      },
+      "definition": {
+        "value": "menu-container-steam-basket"
+      },
+      "version": 5,
+      "location": {
+        "kind": 0,
+        "ownerId": null,
+        "slotId": "initial-F29-menu-container-steam-basket"
+      },
+      "recipe": null,
+      "isProduct": false,
+      "originStation": null,
+      "containerCompleted": false,
+      "isDirty": false,
+      "remainingPortions": 0,
+      "boundOrder": null
+    },
+    {
+      "id": {
+        "value": "fixture-menu-supply-dumpling-wrapper-2"
+      },
+      "definition": {
+        "value": "menu-supply-dumpling-wrapper"
+      },
+      "version": 1,
+      "location": {
+        "kind": 0,
+        "ownerId": null,
+        "slotId": "initial-menu-supply-dumpling-wrapper-2"
+      },
+      "recipe": null,
+      "isProduct": false,
+      "originStation": null,
+      "containerCompleted": false,
+      "isDirty": false,
+      "remainingPortions": 0,
+      "boundOrder": null
+    },
+    {
+      "id": {
+        "value": "fixture-menu-supply-dumpling-wrapper-3"
+      },
+      "definition": {
+        "value": "menu-supply-dumpling-wrapper"
+      },
+      "version": 1,
+      "location": {
+        "kind": 0,
+        "ownerId": null,
+        "slotId": "initial-menu-supply-dumpling-wrapper-3"
+      },
+      "recipe": null,
+      "isProduct": false,
+      "originStation": null,
+      "containerCompleted": false,
+      "isDirty": false,
+      "remainingPortions": 0,
+      "boundOrder": null
+    },
+    {
+      "id": {
+        "value": "fixture-menu-supply-dumpling-wrapper-4"
+      },
+      "definition": {
+        "value": "menu-supply-dumpling-wrapper"
+      },
+      "version": 1,
+      "location": {
+        "kind": 0,
+        "ownerId": null,
+        "slotId": "initial-menu-supply-dumpling-wrapper-4"
+      },
+      "recipe": null,
+      "isProduct": false,
+      "originStation": null,
+      "containerCompleted": false,
+      "isDirty": false,
+      "remainingPortions": 0,
+      "boundOrder": null
+    },
+    {
+      "id": {
+        "value": "fixture-menu-supply-dumpling-wrapper-5"
+      },
+      "definition": {
+        "value": "menu-supply-dumpling-wrapper"
+      },
+      "version": 1,
+      "location": {
+        "kind": 0,
+        "ownerId": null,
+        "slotId": "initial-menu-supply-dumpling-wrapper-5"
+      },
+      "recipe": null,
+      "isProduct": false,
+      "originStation": null,
+      "containerCompleted": false,
+      "isDirty": false,
+      "remainingPortions": 0,
+      "boundOrder": null
+    },
+    {
+      "id": {
+        "value": "fixture-menu-supply-dumpling-wrapper-6"
+      },
+      "definition": {
+        "value": "menu-supply-dumpling-wrapper"
+      },
+      "version": 1,
+      "location": {
+        "kind": 0,
+        "ownerId": null,
+        "slotId": "initial-menu-supply-dumpling-wrapper-6"
+      },
+      "recipe": null,
+      "isProduct": false,
+      "originStation": null,
+      "containerCompleted": false,
+      "isDirty": false,
+      "remainingPortions": 0,
+      "boundOrder": null
+    },
+    {
+      "id": {
+        "value": "fixture-menu-supply-dumpling-wrapper-7"
+      },
+      "definition": {
+        "value": "menu-supply-dumpling-wrapper"
+      },
+      "version": 1,
+      "location": {
+        "kind": 0,
+        "ownerId": null,
+        "slotId": "initial-menu-supply-dumpling-wrapper-7"
+      },
+      "recipe": null,
+      "isProduct": false,
+      "originStation": null,
+      "containerCompleted": false,
+      "isDirty": false,
+      "remainingPortions": 0,
+      "boundOrder": null
+    },
+    {
+      "id": {
+        "value": "fixture-menu-supply-dumpling-wrapper-8"
+      },
+      "definition": {
+        "value": "menu-supply-dumpling-wrapper"
+      },
+      "version": 1,
+      "location": {
+        "kind": 0,
+        "ownerId": null,
+        "slotId": "initial-menu-supply-dumpling-wrapper-8"
+      },
+      "recipe": null,
+      "isProduct": false,
+      "originStation": null,
+      "containerCompleted": false,
+      "isDirty": false,
+      "remainingPortions": 0,
+      "boundOrder": null
+    },
+    {
+      "id": {
+        "value": "fixture-menu-supply-shrimp-2"
+      },
+      "definition": {
+        "value": "menu-supply-shrimp"
+      },
+      "version": 1,
+      "location": {
+        "kind": 0,
+        "ownerId": null,
+        "slotId": "initial-menu-supply-shrimp-2"
+      },
+      "recipe": null,
+      "isProduct": false,
+      "originStation": null,
+      "containerCompleted": false,
+      "isDirty": false,
+      "remainingPortions": 0,
+      "boundOrder": null
+    },
+    {
+      "id": {
+        "value": "fixture-menu-supply-shrimp-3"
+      },
+      "definition": {
+        "value": "menu-supply-shrimp"
+      },
+      "version": 1,
+      "location": {
+        "kind": 0,
+        "ownerId": null,
+        "slotId": "initial-menu-supply-shrimp-3"
+      },
+      "recipe": null,
+      "isProduct": false,
+      "originStation": null,
+      "containerCompleted": false,
+      "isDirty": false,
+      "remainingPortions": 0,
+      "boundOrder": null
+    },
+    {
+      "id": {
+        "value": "fixture-menu-supply-shrimp-4"
+      },
+      "definition": {
+        "value": "menu-supply-shrimp"
+      },
+      "version": 1,
+      "location": {
+        "kind": 0,
+        "ownerId": null,
+        "slotId": "initial-menu-supply-shrimp-4"
+      },
+      "recipe": null,
+      "isProduct": false,
+      "originStation": null,
+      "containerCompleted": false,
+      "isDirty": false,
+      "remainingPortions": 0,
+      "boundOrder": null
+    },
+    {
+      "id": {
+        "value": "fixture-menu-supply-shrimp-5"
+      },
+      "definition": {
+        "value": "menu-supply-shrimp"
+      },
+      "version": 1,
+      "location": {
+        "kind": 0,
+        "ownerId": null,
+        "slotId": "initial-menu-supply-shrimp-5"
+      },
+      "recipe": null,
+      "isProduct": false,
+      "originStation": null,
+      "containerCompleted": false,
+      "isDirty": false,
+      "remainingPortions": 0,
+      "boundOrder": null
+    },
+    {
+      "id": {
+        "value": "fixture-menu-supply-shrimp-6"
+      },
+      "definition": {
+        "value": "menu-supply-shrimp"
+      },
+      "version": 1,
+      "location": {
+        "kind": 0,
+        "ownerId": null,
+        "slotId": "initial-menu-supply-shrimp-6"
+      },
+      "recipe": null,
+      "isProduct": false,
+      "originStation": null,
+      "containerCompleted": false,
+      "isDirty": false,
+      "remainingPortions": 0,
+      "boundOrder": null
+    },
+    {
+      "id": {
+        "value": "fixture-menu-supply-shrimp-7"
+      },
+      "definition": {
+        "value": "menu-supply-shrimp"
+      },
+      "version": 1,
+      "location": {
+        "kind": 0,
+        "ownerId": null,
+        "slotId": "initial-menu-supply-shrimp-7"
+      },
+      "recipe": null,
+      "isProduct": false,
+      "originStation": null,
+      "containerCompleted": false,
+      "isDirty": false,
+      "remainingPortions": 0,
+      "boundOrder": null
+    },
+    {
+      "id": {
+        "value": "fixture-menu-supply-shrimp-8"
+      },
+      "definition": {
+        "value": "menu-supply-shrimp"
+      },
+      "version": 1,
+      "location": {
+        "kind": 0,
+        "ownerId": null,
+        "slotId": "initial-menu-supply-shrimp-8"
+      },
+      "recipe": null,
+      "isProduct": false,
+      "originStation": null,
+      "containerCompleted": false,
+      "isDirty": false,
+      "remainingPortions": 0,
+      "boundOrder": null
+    },
+    {
+      "id": {
+        "value": "pool-menu-container-steam-plate-2"
+      },
+      "definition": {
+        "value": "menu-container-steam-plate"
+      },
+      "version": 1,
+      "location": {
+        "kind": 0,
+        "ownerId": null,
+        "slotId": "clean-pool"
+      },
+      "recipe": null,
+      "isProduct": false,
+      "originStation": null,
+      "containerCompleted": false,
+      "isDirty": false,
+      "remainingPortions": 0,
+      "boundOrder": null
+    }
+  ],
+  "snapshotSha256": "06B586EFC6B64ECABDAA2D1832634FE9A9D9B40B20E6231905F2497E31F3ABBF",
+  "pending": "S07-procurement-S14-full-level-exit-and-production-balance"
+}

@@ -1,0 +1,104 @@
+{
+  "schema": "cooking-menu-et-production-evidence-v1",
+  "menu": "D13",
+  "checkpointPoint": "bound-cup",
+  "identity": {
+    "schema": "cooking-definition-v3",
+    "sha256": "DA80B40AE38DEDC539B5D3FB262525404639C17BEBB6A76065A82B02B265B807"
+  },
+  "provenance": {
+    "catalogSchema": "cooking-menu-catalog-v1",
+    "catalogSha256": "bcadc77368b284cfafe273b608c56d9d6d3a312fa456abf49b1f831133eb5374",
+    "sources": [
+      {
+        "path": "Docs/design/CookingGame/reference/menu-v0.1/Cooking_\u5B8C\u6574\u83DC\u54C1\u4E0E\u52A0\u5DE5\u8FC7\u7A0B_v0.1.md",
+        "sha256": "8d503eeaaf5c2de3e326762beb9b1bf305342b1095b0ba9fcabcde230f902cc2"
+      },
+      {
+        "path": "Docs/design/CookingGame/reference/menu-v0.1/Cooking_\u5B8C\u6574\u83DC\u54C1\u4E0E\u52A0\u5DE5\u8FC7\u7A0B_v0.1.xlsx",
+        "sha256": "5268130330044901cfaecf3cbd7ab048432030ef03c6f17cf3a793d3d744232d"
+      }
+    ],
+    "selectedMenus": [
+      "D13"
+    ]
+  },
+  "level": {
+    "matchScope": {
+      "session": {
+        "value": "menu-production"
+      },
+      "world": {
+        "value": "menu-world"
+      },
+      "match": {
+        "value": "D13"
+      }
+    },
+    "restaurantRuntime": {
+      "value": 1
+    },
+    "level": {
+      "value": "menu-fixture"
+    },
+    "levelEpoch": 1
+  },
+  "recovery": "actual-host-export-codec-dispose-empty-factory-restore",
+  "intermediateCheckpointSha256": "450a6748cbcd95c919e7d6f0bdd11e8e24f8be642fbacc3d403fa58eaca6b871",
+  "finalCheckpointSha256": "05167893ea3e72d72ea3c1aa70019b86a6c9e328382a5ae7f7c27e5a42bd253e",
+  "finalSnapshotSha256": "6CDC69C12E3531624C8E486B458858CA7BE36BFD2132412076BC3D05F0E0A098",
+  "commandIngressCount": 306,
+  "recipes": [
+    "menu-recipe-preparation-hot-milk",
+    "menu-recipe-preparation-hot-milk",
+    "menu-recipe-finished-hot-cocoa"
+  ],
+  "settlements": [
+    {
+      "sequence": 1,
+      "order": {
+        "value": "order-D13"
+      },
+      "template": {
+        "value": "menu-order-hot-cocoa"
+      },
+      "recipe": {
+        "value": "menu-recipe-finished-hot-cocoa"
+      },
+      "product": {
+        "value": "product-3"
+      },
+      "player": {
+        "value": "menu-chef"
+      },
+      "container": {
+        "value": "fixture-cup-1"
+      },
+      "logicalTick": 305
+    }
+  ],
+  "servingVessel": {
+    "id": {
+      "value": "fixture-cup-1"
+    },
+    "definition": {
+      "value": "menu-container-hot-cup"
+    },
+    "version": 5,
+    "location": {
+      "kind": 1,
+      "ownerId": "menu-chef",
+      "slotId": null
+    },
+    "removed": true,
+    "recipe": null,
+    "isProduct": false,
+    "originStation": null,
+    "containerCompleted": false,
+    "isDirty": false,
+    "remainingPortions": 0,
+    "boundOrder": null
+  },
+  "fixtureBoundary": "finite validated raw/empty-vessel setup and direct OpenOrder fixture; not S07 procurement or S14 full front lifecycle",
+  "finalCanonicalEqualsUninterrupted": true
+}

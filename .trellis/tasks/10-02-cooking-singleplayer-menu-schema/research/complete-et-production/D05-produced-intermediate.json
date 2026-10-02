@@ -1,0 +1,105 @@
+{
+  "schema": "cooking-menu-et-production-evidence-v1",
+  "menu": "D05",
+  "checkpointPoint": "produced-intermediate",
+  "identity": {
+    "schema": "cooking-definition-v3",
+    "sha256": "B2100AE8541F61F3B4ADCDF6F25163A1EDF5E2CF9602FC7876A76B595CD2FF0E"
+  },
+  "provenance": {
+    "catalogSchema": "cooking-menu-catalog-v1",
+    "catalogSha256": "bcadc77368b284cfafe273b608c56d9d6d3a312fa456abf49b1f831133eb5374",
+    "sources": [
+      {
+        "path": "Docs/design/CookingGame/reference/menu-v0.1/Cooking_\u5B8C\u6574\u83DC\u54C1\u4E0E\u52A0\u5DE5\u8FC7\u7A0B_v0.1.md",
+        "sha256": "8d503eeaaf5c2de3e326762beb9b1bf305342b1095b0ba9fcabcde230f902cc2"
+      },
+      {
+        "path": "Docs/design/CookingGame/reference/menu-v0.1/Cooking_\u5B8C\u6574\u83DC\u54C1\u4E0E\u52A0\u5DE5\u8FC7\u7A0B_v0.1.xlsx",
+        "sha256": "5268130330044901cfaecf3cbd7ab048432030ef03c6f17cf3a793d3d744232d"
+      }
+    ],
+    "selectedMenus": [
+      "D05"
+    ]
+  },
+  "level": {
+    "matchScope": {
+      "session": {
+        "value": "menu-production"
+      },
+      "world": {
+        "value": "menu-world"
+      },
+      "match": {
+        "value": "D05"
+      }
+    },
+    "restaurantRuntime": {
+      "value": 1
+    },
+    "level": {
+      "value": "menu-fixture"
+    },
+    "levelEpoch": 1
+  },
+  "recovery": "actual-host-export-codec-dispose-empty-factory-restore",
+  "intermediateCheckpointSha256": "55fd35b20bc80bcf69bc5cffc75ac04c9b157c3f066b1b86dad3947f58fce91c",
+  "finalCheckpointSha256": "b78e4e11d3f81fdbea204b6bb3e8daf5dfeff7da19425ccfcbb4e3e617137de5",
+  "finalSnapshotSha256": "5C1AD31CED3FD96C9977016E5BDF17EF0F836F100741086A506E5605DA396927",
+  "commandIngressCount": 343,
+  "recipes": [
+    "menu-recipe-preparation-cut-lemon",
+    "menu-recipe-preparation-lemon-juice",
+    "menu-recipe-finished-honey-lemon-water-stage-1",
+    "menu-recipe-finished-honey-lemon-water"
+  ],
+  "settlements": [
+    {
+      "sequence": 1,
+      "order": {
+        "value": "order-D05"
+      },
+      "template": {
+        "value": "menu-order-honey-lemon-water"
+      },
+      "recipe": {
+        "value": "menu-recipe-finished-honey-lemon-water"
+      },
+      "product": {
+        "value": "product-5"
+      },
+      "player": {
+        "value": "menu-chef"
+      },
+      "container": {
+        "value": "fixture-cup-1"
+      },
+      "logicalTick": 342
+    }
+  ],
+  "servingVessel": {
+    "id": {
+      "value": "fixture-cup-1"
+    },
+    "definition": {
+      "value": "menu-container-cold-cup"
+    },
+    "version": 5,
+    "location": {
+      "kind": 1,
+      "ownerId": "menu-chef",
+      "slotId": null
+    },
+    "removed": true,
+    "recipe": null,
+    "isProduct": false,
+    "originStation": null,
+    "containerCompleted": false,
+    "isDirty": false,
+    "remainingPortions": 0,
+    "boundOrder": null
+  },
+  "fixtureBoundary": "finite validated raw/empty-vessel setup and direct OpenOrder fixture; not S07 procurement or S14 full front lifecycle",
+  "finalCanonicalEqualsUninterrupted": true
+}

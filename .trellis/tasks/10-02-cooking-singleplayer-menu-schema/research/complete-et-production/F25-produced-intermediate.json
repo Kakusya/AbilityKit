@@ -1,0 +1,105 @@
+{
+  "schema": "cooking-menu-et-production-evidence-v1",
+  "menu": "F25",
+  "checkpointPoint": "produced-intermediate",
+  "identity": {
+    "schema": "cooking-definition-v3",
+    "sha256": "ADF772E25684BD63DC5C0FDDD65756C41EBFB9E2918001CF08046A913B10FF17"
+  },
+  "provenance": {
+    "catalogSchema": "cooking-menu-catalog-v1",
+    "catalogSha256": "bcadc77368b284cfafe273b608c56d9d6d3a312fa456abf49b1f831133eb5374",
+    "sources": [
+      {
+        "path": "Docs/design/CookingGame/reference/menu-v0.1/Cooking_\u5B8C\u6574\u83DC\u54C1\u4E0E\u52A0\u5DE5\u8FC7\u7A0B_v0.1.md",
+        "sha256": "8d503eeaaf5c2de3e326762beb9b1bf305342b1095b0ba9fcabcde230f902cc2"
+      },
+      {
+        "path": "Docs/design/CookingGame/reference/menu-v0.1/Cooking_\u5B8C\u6574\u83DC\u54C1\u4E0E\u52A0\u5DE5\u8FC7\u7A0B_v0.1.xlsx",
+        "sha256": "5268130330044901cfaecf3cbd7ab048432030ef03c6f17cf3a793d3d744232d"
+      }
+    ],
+    "selectedMenus": [
+      "F25"
+    ]
+  },
+  "level": {
+    "matchScope": {
+      "session": {
+        "value": "menu-production"
+      },
+      "world": {
+        "value": "menu-world"
+      },
+      "match": {
+        "value": "F25"
+      }
+    },
+    "restaurantRuntime": {
+      "value": 1
+    },
+    "level": {
+      "value": "menu-fixture"
+    },
+    "levelEpoch": 1
+  },
+  "recovery": "actual-host-export-codec-dispose-empty-factory-restore",
+  "intermediateCheckpointSha256": "413efbb967ef66d447dac6c5da8eb7035e1082e6101c60333399e24456eded41",
+  "finalCheckpointSha256": "12f14cfc3897e2c83b4023f0e022b4906f1998899fbc4d86d99833981c692e4d",
+  "finalSnapshotSha256": "3F05C76F58893D6C8F360DA6D94628C90C98E588E3800D4818630F12D6D7E488",
+  "commandIngressCount": 273,
+  "recipes": [
+    "menu-recipe-preparation-cut-beef",
+    "menu-recipe-preparation-cooked-beef",
+    "menu-recipe-preparation-cooked-rice",
+    "menu-recipe-finished-beef-burrito"
+  ],
+  "settlements": [
+    {
+      "sequence": 1,
+      "order": {
+        "value": "order-F25"
+      },
+      "template": {
+        "value": "menu-order-beef-burrito"
+      },
+      "recipe": {
+        "value": "menu-recipe-finished-beef-burrito"
+      },
+      "product": {
+        "value": "product-5"
+      },
+      "player": {
+        "value": "menu-chef"
+      },
+      "container": {
+        "value": "pool-menu-container-plate-1"
+      },
+      "logicalTick": 272
+    }
+  ],
+  "servingVessel": {
+    "id": {
+      "value": "pool-menu-container-plate-1"
+    },
+    "definition": {
+      "value": "menu-container-plate"
+    },
+    "version": 4,
+    "location": {
+      "kind": 0,
+      "ownerId": null,
+      "slotId": "serving-F25"
+    },
+    "removed": true,
+    "recipe": null,
+    "isProduct": false,
+    "originStation": null,
+    "containerCompleted": false,
+    "isDirty": true,
+    "remainingPortions": 0,
+    "boundOrder": null
+  },
+  "fixtureBoundary": "finite validated raw/empty-vessel setup and direct OpenOrder fixture; not S07 procurement or S14 full front lifecycle",
+  "finalCanonicalEqualsUninterrupted": true
+}

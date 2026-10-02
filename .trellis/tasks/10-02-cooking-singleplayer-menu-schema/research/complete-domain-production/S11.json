@@ -1,0 +1,713 @@
+{
+  "schema": "cooking-menu-production-evidence-v1",
+  "menuSourceId": "S11",
+  "status": "produced-plated-submitted",
+  "scope": {
+    "session": {
+      "value": "menu-production"
+    },
+    "world": {
+      "value": "menu-world"
+    },
+    "match": {
+      "value": "S11"
+    }
+  },
+  "contentIdentity": {
+    "schema": "cooking-definition-v3",
+    "sha256": "339AC7789C7F3A5D23235ACC53916D47451BCABD0A2EC6776BBBAA2899C5EB20"
+  },
+  "catalogSha256": "bcadc77368b284cfafe273b608c56d9d6d3a312fa456abf49b1f831133eb5374",
+  "sources": [
+    {
+      "path": "Docs/design/CookingGame/reference/menu-v0.1/Cooking_\u5B8C\u6574\u83DC\u54C1\u4E0E\u52A0\u5DE5\u8FC7\u7A0B_v0.1.md",
+      "sha256": "8d503eeaaf5c2de3e326762beb9b1bf305342b1095b0ba9fcabcde230f902cc2"
+    },
+    {
+      "path": "Docs/design/CookingGame/reference/menu-v0.1/Cooking_\u5B8C\u6574\u83DC\u54C1\u4E0E\u52A0\u5DE5\u8FC7\u7A0B_v0.1.xlsx",
+      "sha256": "5268130330044901cfaecf3cbd7ab048432030ef03c6f17cf3a793d3d744232d"
+    }
+  ],
+  "fixtureValues": "raw-eight-per-definition-serving-two-not-balanced",
+  "initialSupply": [
+    {
+      "definition": {
+        "value": "menu-supply-biscuit"
+      },
+      "count": 1,
+      "location": "world:initial-menu-supply-biscuit-1"
+    },
+    {
+      "definition": {
+        "value": "menu-supply-biscuit"
+      },
+      "count": 1,
+      "location": "world:initial-menu-supply-biscuit-2"
+    },
+    {
+      "definition": {
+        "value": "menu-supply-biscuit"
+      },
+      "count": 1,
+      "location": "world:initial-menu-supply-biscuit-3"
+    },
+    {
+      "definition": {
+        "value": "menu-supply-biscuit"
+      },
+      "count": 1,
+      "location": "world:initial-menu-supply-biscuit-4"
+    },
+    {
+      "definition": {
+        "value": "menu-supply-biscuit"
+      },
+      "count": 1,
+      "location": "world:initial-menu-supply-biscuit-5"
+    },
+    {
+      "definition": {
+        "value": "menu-supply-biscuit"
+      },
+      "count": 1,
+      "location": "world:initial-menu-supply-biscuit-6"
+    },
+    {
+      "definition": {
+        "value": "menu-supply-biscuit"
+      },
+      "count": 1,
+      "location": "world:initial-menu-supply-biscuit-7"
+    },
+    {
+      "definition": {
+        "value": "menu-supply-biscuit"
+      },
+      "count": 1,
+      "location": "world:initial-menu-supply-biscuit-8"
+    },
+    {
+      "definition": {
+        "value": "menu-supply-chocolate"
+      },
+      "count": 1,
+      "location": "world:initial-menu-supply-chocolate-1"
+    },
+    {
+      "definition": {
+        "value": "menu-supply-chocolate"
+      },
+      "count": 1,
+      "location": "world:initial-menu-supply-chocolate-2"
+    },
+    {
+      "definition": {
+        "value": "menu-supply-chocolate"
+      },
+      "count": 1,
+      "location": "world:initial-menu-supply-chocolate-3"
+    },
+    {
+      "definition": {
+        "value": "menu-supply-chocolate"
+      },
+      "count": 1,
+      "location": "world:initial-menu-supply-chocolate-4"
+    },
+    {
+      "definition": {
+        "value": "menu-supply-chocolate"
+      },
+      "count": 1,
+      "location": "world:initial-menu-supply-chocolate-5"
+    },
+    {
+      "definition": {
+        "value": "menu-supply-chocolate"
+      },
+      "count": 1,
+      "location": "world:initial-menu-supply-chocolate-6"
+    },
+    {
+      "definition": {
+        "value": "menu-supply-chocolate"
+      },
+      "count": 1,
+      "location": "world:initial-menu-supply-chocolate-7"
+    },
+    {
+      "definition": {
+        "value": "menu-supply-chocolate"
+      },
+      "count": 1,
+      "location": "world:initial-menu-supply-chocolate-8"
+    },
+    {
+      "definition": {
+        "value": "menu-supply-marshmallow"
+      },
+      "count": 1,
+      "location": "world:initial-menu-supply-marshmallow-1"
+    },
+    {
+      "definition": {
+        "value": "menu-supply-marshmallow"
+      },
+      "count": 1,
+      "location": "world:initial-menu-supply-marshmallow-2"
+    },
+    {
+      "definition": {
+        "value": "menu-supply-marshmallow"
+      },
+      "count": 1,
+      "location": "world:initial-menu-supply-marshmallow-3"
+    },
+    {
+      "definition": {
+        "value": "menu-supply-marshmallow"
+      },
+      "count": 1,
+      "location": "world:initial-menu-supply-marshmallow-4"
+    },
+    {
+      "definition": {
+        "value": "menu-supply-marshmallow"
+      },
+      "count": 1,
+      "location": "world:initial-menu-supply-marshmallow-5"
+    },
+    {
+      "definition": {
+        "value": "menu-supply-marshmallow"
+      },
+      "count": 1,
+      "location": "world:initial-menu-supply-marshmallow-6"
+    },
+    {
+      "definition": {
+        "value": "menu-supply-marshmallow"
+      },
+      "count": 1,
+      "location": "world:initial-menu-supply-marshmallow-7"
+    },
+    {
+      "definition": {
+        "value": "menu-supply-marshmallow"
+      },
+      "count": 1,
+      "location": "world:initial-menu-supply-marshmallow-8"
+    },
+    {
+      "definition": {
+        "value": "menu-container-skewer-tray"
+      },
+      "count": 1,
+      "location": "world:initial-S11-menu-container-skewer-tray"
+    },
+    {
+      "definition": {
+        "value": "menu-container-dessert-plate"
+      },
+      "count": 2,
+      "location": "cleanPool"
+    }
+  ],
+  "executedRecipes": [
+    "menu-recipe-finished-smore-stage-1",
+    "menu-recipe-finished-smore"
+  ],
+  "productId": "product-2",
+  "servingVesselId": "pool-menu-container-dessert-plate-1",
+  "logicalTick": 155,
+  "settlements": [
+    {
+      "sequence": 1,
+      "order": {
+        "value": "order-S11"
+      },
+      "template": {
+        "value": "menu-order-smore"
+      },
+      "recipe": {
+        "value": "menu-recipe-finished-smore"
+      },
+      "product": {
+        "value": "product-2"
+      },
+      "player": {
+        "value": "menu-chef"
+      },
+      "container": {
+        "value": "pool-menu-container-dessert-plate-1"
+      },
+      "logicalTick": 154
+    }
+  ],
+  "remainingItems": [
+    {
+      "id": {
+        "value": "fixture-S11-menu-container-skewer-tray"
+      },
+      "definition": {
+        "value": "menu-container-skewer-tray"
+      },
+      "version": 5,
+      "location": {
+        "kind": 0,
+        "ownerId": null,
+        "slotId": "initial-S11-menu-container-skewer-tray"
+      },
+      "recipe": null,
+      "isProduct": false,
+      "originStation": null,
+      "containerCompleted": false,
+      "isDirty": false,
+      "remainingPortions": 0,
+      "boundOrder": null
+    },
+    {
+      "id": {
+        "value": "fixture-menu-supply-biscuit-3"
+      },
+      "definition": {
+        "value": "menu-supply-biscuit"
+      },
+      "version": 1,
+      "location": {
+        "kind": 0,
+        "ownerId": null,
+        "slotId": "initial-menu-supply-biscuit-3"
+      },
+      "recipe": null,
+      "isProduct": false,
+      "originStation": null,
+      "containerCompleted": false,
+      "isDirty": false,
+      "remainingPortions": 0,
+      "boundOrder": null
+    },
+    {
+      "id": {
+        "value": "fixture-menu-supply-biscuit-4"
+      },
+      "definition": {
+        "value": "menu-supply-biscuit"
+      },
+      "version": 1,
+      "location": {
+        "kind": 0,
+        "ownerId": null,
+        "slotId": "initial-menu-supply-biscuit-4"
+      },
+      "recipe": null,
+      "isProduct": false,
+      "originStation": null,
+      "containerCompleted": false,
+      "isDirty": false,
+      "remainingPortions": 0,
+      "boundOrder": null
+    },
+    {
+      "id": {
+        "value": "fixture-menu-supply-biscuit-5"
+      },
+      "definition": {
+        "value": "menu-supply-biscuit"
+      },
+      "version": 1,
+      "location": {
+        "kind": 0,
+        "ownerId": null,
+        "slotId": "initial-menu-supply-biscuit-5"
+      },
+      "recipe": null,
+      "isProduct": false,
+      "originStation": null,
+      "containerCompleted": false,
+      "isDirty": false,
+      "remainingPortions": 0,
+      "boundOrder": null
+    },
+    {
+      "id": {
+        "value": "fixture-menu-supply-biscuit-6"
+      },
+      "definition": {
+        "value": "menu-supply-biscuit"
+      },
+      "version": 1,
+      "location": {
+        "kind": 0,
+        "ownerId": null,
+        "slotId": "initial-menu-supply-biscuit-6"
+      },
+      "recipe": null,
+      "isProduct": false,
+      "originStation": null,
+      "containerCompleted": false,
+      "isDirty": false,
+      "remainingPortions": 0,
+      "boundOrder": null
+    },
+    {
+      "id": {
+        "value": "fixture-menu-supply-biscuit-7"
+      },
+      "definition": {
+        "value": "menu-supply-biscuit"
+      },
+      "version": 1,
+      "location": {
+        "kind": 0,
+        "ownerId": null,
+        "slotId": "initial-menu-supply-biscuit-7"
+      },
+      "recipe": null,
+      "isProduct": false,
+      "originStation": null,
+      "containerCompleted": false,
+      "isDirty": false,
+      "remainingPortions": 0,
+      "boundOrder": null
+    },
+    {
+      "id": {
+        "value": "fixture-menu-supply-biscuit-8"
+      },
+      "definition": {
+        "value": "menu-supply-biscuit"
+      },
+      "version": 1,
+      "location": {
+        "kind": 0,
+        "ownerId": null,
+        "slotId": "initial-menu-supply-biscuit-8"
+      },
+      "recipe": null,
+      "isProduct": false,
+      "originStation": null,
+      "containerCompleted": false,
+      "isDirty": false,
+      "remainingPortions": 0,
+      "boundOrder": null
+    },
+    {
+      "id": {
+        "value": "fixture-menu-supply-chocolate-2"
+      },
+      "definition": {
+        "value": "menu-supply-chocolate"
+      },
+      "version": 1,
+      "location": {
+        "kind": 0,
+        "ownerId": null,
+        "slotId": "initial-menu-supply-chocolate-2"
+      },
+      "recipe": null,
+      "isProduct": false,
+      "originStation": null,
+      "containerCompleted": false,
+      "isDirty": false,
+      "remainingPortions": 0,
+      "boundOrder": null
+    },
+    {
+      "id": {
+        "value": "fixture-menu-supply-chocolate-3"
+      },
+      "definition": {
+        "value": "menu-supply-chocolate"
+      },
+      "version": 1,
+      "location": {
+        "kind": 0,
+        "ownerId": null,
+        "slotId": "initial-menu-supply-chocolate-3"
+      },
+      "recipe": null,
+      "isProduct": false,
+      "originStation": null,
+      "containerCompleted": false,
+      "isDirty": false,
+      "remainingPortions": 0,
+      "boundOrder": null
+    },
+    {
+      "id": {
+        "value": "fixture-menu-supply-chocolate-4"
+      },
+      "definition": {
+        "value": "menu-supply-chocolate"
+      },
+      "version": 1,
+      "location": {
+        "kind": 0,
+        "ownerId": null,
+        "slotId": "initial-menu-supply-chocolate-4"
+      },
+      "recipe": null,
+      "isProduct": false,
+      "originStation": null,
+      "containerCompleted": false,
+      "isDirty": false,
+      "remainingPortions": 0,
+      "boundOrder": null
+    },
+    {
+      "id": {
+        "value": "fixture-menu-supply-chocolate-5"
+      },
+      "definition": {
+        "value": "menu-supply-chocolate"
+      },
+      "version": 1,
+      "location": {
+        "kind": 0,
+        "ownerId": null,
+        "slotId": "initial-menu-supply-chocolate-5"
+      },
+      "recipe": null,
+      "isProduct": false,
+      "originStation": null,
+      "containerCompleted": false,
+      "isDirty": false,
+      "remainingPortions": 0,
+      "boundOrder": null
+    },
+    {
+      "id": {
+        "value": "fixture-menu-supply-chocolate-6"
+      },
+      "definition": {
+        "value": "menu-supply-chocolate"
+      },
+      "version": 1,
+      "location": {
+        "kind": 0,
+        "ownerId": null,
+        "slotId": "initial-menu-supply-chocolate-6"
+      },
+      "recipe": null,
+      "isProduct": false,
+      "originStation": null,
+      "containerCompleted": false,
+      "isDirty": false,
+      "remainingPortions": 0,
+      "boundOrder": null
+    },
+    {
+      "id": {
+        "value": "fixture-menu-supply-chocolate-7"
+      },
+      "definition": {
+        "value": "menu-supply-chocolate"
+      },
+      "version": 1,
+      "location": {
+        "kind": 0,
+        "ownerId": null,
+        "slotId": "initial-menu-supply-chocolate-7"
+      },
+      "recipe": null,
+      "isProduct": false,
+      "originStation": null,
+      "containerCompleted": false,
+      "isDirty": false,
+      "remainingPortions": 0,
+      "boundOrder": null
+    },
+    {
+      "id": {
+        "value": "fixture-menu-supply-chocolate-8"
+      },
+      "definition": {
+        "value": "menu-supply-chocolate"
+      },
+      "version": 1,
+      "location": {
+        "kind": 0,
+        "ownerId": null,
+        "slotId": "initial-menu-supply-chocolate-8"
+      },
+      "recipe": null,
+      "isProduct": false,
+      "originStation": null,
+      "containerCompleted": false,
+      "isDirty": false,
+      "remainingPortions": 0,
+      "boundOrder": null
+    },
+    {
+      "id": {
+        "value": "fixture-menu-supply-marshmallow-2"
+      },
+      "definition": {
+        "value": "menu-supply-marshmallow"
+      },
+      "version": 1,
+      "location": {
+        "kind": 0,
+        "ownerId": null,
+        "slotId": "initial-menu-supply-marshmallow-2"
+      },
+      "recipe": null,
+      "isProduct": false,
+      "originStation": null,
+      "containerCompleted": false,
+      "isDirty": false,
+      "remainingPortions": 0,
+      "boundOrder": null
+    },
+    {
+      "id": {
+        "value": "fixture-menu-supply-marshmallow-3"
+      },
+      "definition": {
+        "value": "menu-supply-marshmallow"
+      },
+      "version": 1,
+      "location": {
+        "kind": 0,
+        "ownerId": null,
+        "slotId": "initial-menu-supply-marshmallow-3"
+      },
+      "recipe": null,
+      "isProduct": false,
+      "originStation": null,
+      "containerCompleted": false,
+      "isDirty": false,
+      "remainingPortions": 0,
+      "boundOrder": null
+    },
+    {
+      "id": {
+        "value": "fixture-menu-supply-marshmallow-4"
+      },
+      "definition": {
+        "value": "menu-supply-marshmallow"
+      },
+      "version": 1,
+      "location": {
+        "kind": 0,
+        "ownerId": null,
+        "slotId": "initial-menu-supply-marshmallow-4"
+      },
+      "recipe": null,
+      "isProduct": false,
+      "originStation": null,
+      "containerCompleted": false,
+      "isDirty": false,
+      "remainingPortions": 0,
+      "boundOrder": null
+    },
+    {
+      "id": {
+        "value": "fixture-menu-supply-marshmallow-5"
+      },
+      "definition": {
+        "value": "menu-supply-marshmallow"
+      },
+      "version": 1,
+      "location": {
+        "kind": 0,
+        "ownerId": null,
+        "slotId": "initial-menu-supply-marshmallow-5"
+      },
+      "recipe": null,
+      "isProduct": false,
+      "originStation": null,
+      "containerCompleted": false,
+      "isDirty": false,
+      "remainingPortions": 0,
+      "boundOrder": null
+    },
+    {
+      "id": {
+        "value": "fixture-menu-supply-marshmallow-6"
+      },
+      "definition": {
+        "value": "menu-supply-marshmallow"
+      },
+      "version": 1,
+      "location": {
+        "kind": 0,
+        "ownerId": null,
+        "slotId": "initial-menu-supply-marshmallow-6"
+      },
+      "recipe": null,
+      "isProduct": false,
+      "originStation": null,
+      "containerCompleted": false,
+      "isDirty": false,
+      "remainingPortions": 0,
+      "boundOrder": null
+    },
+    {
+      "id": {
+        "value": "fixture-menu-supply-marshmallow-7"
+      },
+      "definition": {
+        "value": "menu-supply-marshmallow"
+      },
+      "version": 1,
+      "location": {
+        "kind": 0,
+        "ownerId": null,
+        "slotId": "initial-menu-supply-marshmallow-7"
+      },
+      "recipe": null,
+      "isProduct": false,
+      "originStation": null,
+      "containerCompleted": false,
+      "isDirty": false,
+      "remainingPortions": 0,
+      "boundOrder": null
+    },
+    {
+      "id": {
+        "value": "fixture-menu-supply-marshmallow-8"
+      },
+      "definition": {
+        "value": "menu-supply-marshmallow"
+      },
+      "version": 1,
+      "location": {
+        "kind": 0,
+        "ownerId": null,
+        "slotId": "initial-menu-supply-marshmallow-8"
+      },
+      "recipe": null,
+      "isProduct": false,
+      "originStation": null,
+      "containerCompleted": false,
+      "isDirty": false,
+      "remainingPortions": 0,
+      "boundOrder": null
+    },
+    {
+      "id": {
+        "value": "pool-menu-container-dessert-plate-2"
+      },
+      "definition": {
+        "value": "menu-container-dessert-plate"
+      },
+      "version": 1,
+      "location": {
+        "kind": 0,
+        "ownerId": null,
+        "slotId": "clean-pool"
+      },
+      "recipe": null,
+      "isProduct": false,
+      "originStation": null,
+      "containerCompleted": false,
+      "isDirty": false,
+      "remainingPortions": 0,
+      "boundOrder": null
+    }
+  ],
+  "snapshotSha256": "4259A3F6011DD3FA455B04074E57B2F46559AFAC96FE7DF9E49DCE7B303E003D",
+  "pending": "S07-procurement-S14-full-level-exit-and-production-balance"
+}

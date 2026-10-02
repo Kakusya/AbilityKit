@@ -1,0 +1,327 @@
+{
+  "schema": "cooking-menu-production-evidence-v1",
+  "menuSourceId": "F31",
+  "status": "produced-plated-submitted",
+  "scope": {
+    "session": {
+      "value": "menu-production"
+    },
+    "world": {
+      "value": "menu-world"
+    },
+    "match": {
+      "value": "F31"
+    }
+  },
+  "contentIdentity": {
+    "schema": "cooking-definition-v3",
+    "sha256": "0590A5813F3B582D36B596DB9831925B0E7072BBCD0F51CD2A98C07942049A5B"
+  },
+  "catalogSha256": "bcadc77368b284cfafe273b608c56d9d6d3a312fa456abf49b1f831133eb5374",
+  "sources": [
+    {
+      "path": "Docs/design/CookingGame/reference/menu-v0.1/Cooking_\u5B8C\u6574\u83DC\u54C1\u4E0E\u52A0\u5DE5\u8FC7\u7A0B_v0.1.md",
+      "sha256": "8d503eeaaf5c2de3e326762beb9b1bf305342b1095b0ba9fcabcde230f902cc2"
+    },
+    {
+      "path": "Docs/design/CookingGame/reference/menu-v0.1/Cooking_\u5B8C\u6574\u83DC\u54C1\u4E0E\u52A0\u5DE5\u8FC7\u7A0B_v0.1.xlsx",
+      "sha256": "5268130330044901cfaecf3cbd7ab048432030ef03c6f17cf3a793d3d744232d"
+    }
+  ],
+  "fixtureValues": "raw-eight-per-definition-serving-two-not-balanced",
+  "initialSupply": [
+    {
+      "definition": {
+        "value": "menu-supply-white-fish"
+      },
+      "count": 1,
+      "location": "world:initial-menu-supply-white-fish-1"
+    },
+    {
+      "definition": {
+        "value": "menu-supply-white-fish"
+      },
+      "count": 1,
+      "location": "world:initial-menu-supply-white-fish-2"
+    },
+    {
+      "definition": {
+        "value": "menu-supply-white-fish"
+      },
+      "count": 1,
+      "location": "world:initial-menu-supply-white-fish-3"
+    },
+    {
+      "definition": {
+        "value": "menu-supply-white-fish"
+      },
+      "count": 1,
+      "location": "world:initial-menu-supply-white-fish-4"
+    },
+    {
+      "definition": {
+        "value": "menu-supply-white-fish"
+      },
+      "count": 1,
+      "location": "world:initial-menu-supply-white-fish-5"
+    },
+    {
+      "definition": {
+        "value": "menu-supply-white-fish"
+      },
+      "count": 1,
+      "location": "world:initial-menu-supply-white-fish-6"
+    },
+    {
+      "definition": {
+        "value": "menu-supply-white-fish"
+      },
+      "count": 1,
+      "location": "world:initial-menu-supply-white-fish-7"
+    },
+    {
+      "definition": {
+        "value": "menu-supply-white-fish"
+      },
+      "count": 1,
+      "location": "world:initial-menu-supply-white-fish-8"
+    },
+    {
+      "definition": {
+        "value": "menu-container-steam-basket"
+      },
+      "count": 1,
+      "location": "world:initial-F31-menu-container-steam-basket"
+    },
+    {
+      "definition": {
+        "value": "menu-container-steam-plate"
+      },
+      "count": 2,
+      "location": "cleanPool"
+    }
+  ],
+  "executedRecipes": [
+    "menu-recipe-finished-steamed-fish"
+  ],
+  "productId": "product-1",
+  "servingVesselId": "pool-menu-container-steam-plate-1",
+  "logicalTick": 70,
+  "settlements": [
+    {
+      "sequence": 1,
+      "order": {
+        "value": "order-F31"
+      },
+      "template": {
+        "value": "menu-order-steamed-fish"
+      },
+      "recipe": {
+        "value": "menu-recipe-finished-steamed-fish"
+      },
+      "product": {
+        "value": "product-1"
+      },
+      "player": {
+        "value": "menu-chef"
+      },
+      "container": {
+        "value": "pool-menu-container-steam-plate-1"
+      },
+      "logicalTick": 69
+    }
+  ],
+  "remainingItems": [
+    {
+      "id": {
+        "value": "fixture-F31-menu-container-steam-basket"
+      },
+      "definition": {
+        "value": "menu-container-steam-basket"
+      },
+      "version": 3,
+      "location": {
+        "kind": 0,
+        "ownerId": null,
+        "slotId": "initial-F31-menu-container-steam-basket"
+      },
+      "recipe": null,
+      "isProduct": false,
+      "originStation": null,
+      "containerCompleted": false,
+      "isDirty": false,
+      "remainingPortions": 0,
+      "boundOrder": null
+    },
+    {
+      "id": {
+        "value": "fixture-menu-supply-white-fish-2"
+      },
+      "definition": {
+        "value": "menu-supply-white-fish"
+      },
+      "version": 1,
+      "location": {
+        "kind": 0,
+        "ownerId": null,
+        "slotId": "initial-menu-supply-white-fish-2"
+      },
+      "recipe": null,
+      "isProduct": false,
+      "originStation": null,
+      "containerCompleted": false,
+      "isDirty": false,
+      "remainingPortions": 0,
+      "boundOrder": null
+    },
+    {
+      "id": {
+        "value": "fixture-menu-supply-white-fish-3"
+      },
+      "definition": {
+        "value": "menu-supply-white-fish"
+      },
+      "version": 1,
+      "location": {
+        "kind": 0,
+        "ownerId": null,
+        "slotId": "initial-menu-supply-white-fish-3"
+      },
+      "recipe": null,
+      "isProduct": false,
+      "originStation": null,
+      "containerCompleted": false,
+      "isDirty": false,
+      "remainingPortions": 0,
+      "boundOrder": null
+    },
+    {
+      "id": {
+        "value": "fixture-menu-supply-white-fish-4"
+      },
+      "definition": {
+        "value": "menu-supply-white-fish"
+      },
+      "version": 1,
+      "location": {
+        "kind": 0,
+        "ownerId": null,
+        "slotId": "initial-menu-supply-white-fish-4"
+      },
+      "recipe": null,
+      "isProduct": false,
+      "originStation": null,
+      "containerCompleted": false,
+      "isDirty": false,
+      "remainingPortions": 0,
+      "boundOrder": null
+    },
+    {
+      "id": {
+        "value": "fixture-menu-supply-white-fish-5"
+      },
+      "definition": {
+        "value": "menu-supply-white-fish"
+      },
+      "version": 1,
+      "location": {
+        "kind": 0,
+        "ownerId": null,
+        "slotId": "initial-menu-supply-white-fish-5"
+      },
+      "recipe": null,
+      "isProduct": false,
+      "originStation": null,
+      "containerCompleted": false,
+      "isDirty": false,
+      "remainingPortions": 0,
+      "boundOrder": null
+    },
+    {
+      "id": {
+        "value": "fixture-menu-supply-white-fish-6"
+      },
+      "definition": {
+        "value": "menu-supply-white-fish"
+      },
+      "version": 1,
+      "location": {
+        "kind": 0,
+        "ownerId": null,
+        "slotId": "initial-menu-supply-white-fish-6"
+      },
+      "recipe": null,
+      "isProduct": false,
+      "originStation": null,
+      "containerCompleted": false,
+      "isDirty": false,
+      "remainingPortions": 0,
+      "boundOrder": null
+    },
+    {
+      "id": {
+        "value": "fixture-menu-supply-white-fish-7"
+      },
+      "definition": {
+        "value": "menu-supply-white-fish"
+      },
+      "version": 1,
+      "location": {
+        "kind": 0,
+        "ownerId": null,
+        "slotId": "initial-menu-supply-white-fish-7"
+      },
+      "recipe": null,
+      "isProduct": false,
+      "originStation": null,
+      "containerCompleted": false,
+      "isDirty": false,
+      "remainingPortions": 0,
+      "boundOrder": null
+    },
+    {
+      "id": {
+        "value": "fixture-menu-supply-white-fish-8"
+      },
+      "definition": {
+        "value": "menu-supply-white-fish"
+      },
+      "version": 1,
+      "location": {
+        "kind": 0,
+        "ownerId": null,
+        "slotId": "initial-menu-supply-white-fish-8"
+      },
+      "recipe": null,
+      "isProduct": false,
+      "originStation": null,
+      "containerCompleted": false,
+      "isDirty": false,
+      "remainingPortions": 0,
+      "boundOrder": null
+    },
+    {
+      "id": {
+        "value": "pool-menu-container-steam-plate-2"
+      },
+      "definition": {
+        "value": "menu-container-steam-plate"
+      },
+      "version": 1,
+      "location": {
+        "kind": 0,
+        "ownerId": null,
+        "slotId": "clean-pool"
+      },
+      "recipe": null,
+      "isProduct": false,
+      "originStation": null,
+      "containerCompleted": false,
+      "isDirty": false,
+      "remainingPortions": 0,
+      "boundOrder": null
+    }
+  ],
+  "snapshotSha256": "A745785674E662F7B94BC6FFF495A6B76C0243A9132E7546FCA5E64C9B3F35BE",
+  "pending": "S07-procurement-S14-full-level-exit-and-production-balance"
+}

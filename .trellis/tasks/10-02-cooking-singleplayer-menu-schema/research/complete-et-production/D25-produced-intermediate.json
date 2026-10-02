@@ -1,0 +1,108 @@
+{
+  "schema": "cooking-menu-et-production-evidence-v1",
+  "menu": "D25",
+  "checkpointPoint": "produced-intermediate",
+  "identity": {
+    "schema": "cooking-definition-v3",
+    "sha256": "E1F9F1ED59754FCF601D322ACF44A22045A28A934C43C664733662B54B74796E"
+  },
+  "provenance": {
+    "catalogSchema": "cooking-menu-catalog-v1",
+    "catalogSha256": "bcadc77368b284cfafe273b608c56d9d6d3a312fa456abf49b1f831133eb5374",
+    "sources": [
+      {
+        "path": "Docs/design/CookingGame/reference/menu-v0.1/Cooking_\u5B8C\u6574\u83DC\u54C1\u4E0E\u52A0\u5DE5\u8FC7\u7A0B_v0.1.md",
+        "sha256": "8d503eeaaf5c2de3e326762beb9b1bf305342b1095b0ba9fcabcde230f902cc2"
+      },
+      {
+        "path": "Docs/design/CookingGame/reference/menu-v0.1/Cooking_\u5B8C\u6574\u83DC\u54C1\u4E0E\u52A0\u5DE5\u8FC7\u7A0B_v0.1.xlsx",
+        "sha256": "5268130330044901cfaecf3cbd7ab048432030ef03c6f17cf3a793d3d744232d"
+      }
+    ],
+    "selectedMenus": [
+      "D25"
+    ]
+  },
+  "level": {
+    "matchScope": {
+      "session": {
+        "value": "menu-production"
+      },
+      "world": {
+        "value": "menu-world"
+      },
+      "match": {
+        "value": "D25"
+      }
+    },
+    "restaurantRuntime": {
+      "value": 1
+    },
+    "level": {
+      "value": "menu-fixture"
+    },
+    "levelEpoch": 1
+  },
+  "recovery": "actual-host-export-codec-dispose-empty-factory-restore",
+  "intermediateCheckpointSha256": "da01902c1e0f826e42eb1c29a2abc94dc856ddbb96f87dc221d5a085cecc55ad",
+  "finalCheckpointSha256": "b8fa4ac112a2522ee2a6965cf3f8acd5bea58337ef1ccc269f0089927979231d",
+  "finalSnapshotSha256": "AB08906EC36B5A8DA58635E77C33AAE7D1AA36720DAEBA4349D8FD0999342749",
+  "commandIngressCount": 478,
+  "recipes": [
+    "menu-recipe-preparation-cooked-pearl",
+    "menu-recipe-finished-pearl-milk-tea-stage-1",
+    "menu-recipe-preparation-hot-water",
+    "menu-recipe-preparation-black-tea",
+    "menu-recipe-preparation-fresh-milk-tea",
+    "menu-recipe-finished-pearl-milk-tea-stage-2",
+    "menu-recipe-finished-pearl-milk-tea"
+  ],
+  "settlements": [
+    {
+      "sequence": 1,
+      "order": {
+        "value": "order-D25"
+      },
+      "template": {
+        "value": "menu-order-pearl-milk-tea"
+      },
+      "recipe": {
+        "value": "menu-recipe-finished-pearl-milk-tea"
+      },
+      "product": {
+        "value": "product-10"
+      },
+      "player": {
+        "value": "menu-chef"
+      },
+      "container": {
+        "value": "fixture-cup-1"
+      },
+      "logicalTick": 477
+    }
+  ],
+  "servingVessel": {
+    "id": {
+      "value": "fixture-cup-1"
+    },
+    "definition": {
+      "value": "menu-container-cold-cup"
+    },
+    "version": 5,
+    "location": {
+      "kind": 1,
+      "ownerId": "menu-chef",
+      "slotId": null
+    },
+    "removed": true,
+    "recipe": null,
+    "isProduct": false,
+    "originStation": null,
+    "containerCompleted": false,
+    "isDirty": false,
+    "remainingPortions": 0,
+    "boundOrder": null
+  },
+  "fixtureBoundary": "finite validated raw/empty-vessel setup and direct OpenOrder fixture; not S07 procurement or S14 full front lifecycle",
+  "finalCanonicalEqualsUninterrupted": true
+}

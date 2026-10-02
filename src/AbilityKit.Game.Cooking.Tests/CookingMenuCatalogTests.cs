@@ -352,10 +352,33 @@ public sealed class CookingMenuCatalogTests
     }
 
     public static IEnumerable<object[]> MenuSources() => Catalog().Document.Menus.Select(x => new object[] { x.SourceId });
+    public static IEnumerable<object[]> DrinkSources() => Catalog().Document.Menus.Where(x => x.RequiresBinding)
+        .Select(x => new object[] { x.SourceId });
+
+    [Theory]
+    [MemberData(nameof(DrinkSources))]
+    public void Every_actual_drink_rejects_naked_and_wrong_ticket_then_rebinds_unbinds_and_delivers(string sourceId)
+    {
+        var fixture = new CookingMenuProductionFixture(Catalog(), Baseline(), sourceId);
+        fixture.SubmitDelivery(fixture.ProduceAndPlate(), exerciseBindingRejections: true);
+        Assert.Single(fixture.Simulation.SettlementHistory);
+        Assert.Empty(fixture.Simulation.DirtyBowlsAwaitingWash());
+    }
+
+    [Fact]
+    public void Formal_mapping_opts_in_only_drinks_and_disposable_serving_cups()
+    {
+        var catalog = Catalog();
+        var content = catalog.LoadContent(Baseline(), catalog.Document.Menus.Select(x => x.SourceId));
+        Assert.All(catalog.Document.Menus, menu => Assert.Equal(menu.RequiresBinding,
+            content.OrderTemplates[menu.OrderTemplate].RequiresBinding));
+        Assert.All(catalog.Document.Containers, vessel => Assert.Equal(vessel.Disposable,
+            content.Items[vessel.Id].Container!.DisposableOnSubmission));
+    }
 
     [Theory]
     [MemberData(nameof(MenuSources))]
-    public void All_candidates_produce_and_plate_via_spatial_commands_with_drink_delivery_pending_S05(string sourceId)
+    public void All_candidates_produce_plate_and_deliver_via_spatial_commands(string sourceId)
     {
         var catalog = Catalog();
         var fixture = new CookingMenuProductionFixture(catalog, Baseline(), sourceId);
@@ -363,16 +386,8 @@ public sealed class CookingMenuCatalogTests
         Assert.Equal(catalog.Requirements(new[] { sourceId }).Recipes.Select(x => x.Value).Order(),
             fixture.ExecutedRecipes.Select(x => x.Value).Distinct().Order());
         Assert.NotNull(fixture.Content.Snapshot.Spatial);
-        if (fixture.Menu.RequiresBinding)
-        {
-            Assert.Empty(fixture.Simulation.SettlementHistory);
-            Assert.Contains(fixture.Simulation.Snapshot().Items, x => x.Id == product);
-        }
-        else
-        {
-            fixture.SubmitMeal(product);
-            Assert.DoesNotContain(fixture.Simulation.Snapshot().Items, x => x.Id == product);
-        }
+        fixture.SubmitDelivery(product);
+        Assert.DoesNotContain(fixture.Simulation.Snapshot().Items, x => x.Id == product);
         fixture.WriteEvidence(product);
     }
 
@@ -387,7 +402,7 @@ public sealed class CookingMenuCatalogTests
         fixture.RejectPrematureAdditionThenRecover(new DefinitionId(addition));
         var product = fixture.ProduceAndPlate();
         Assert.Equal(fixture.Menu.Product, fixture.Items.Single(x => x.Id == product).Definition);
-        Assert.Empty(fixture.Simulation.SettlementHistory); // Binding/ET integration still pending.
+        fixture.SubmitDelivery(product);
     }
 
     [Fact]
@@ -417,7 +432,7 @@ public sealed class CookingMenuCatalogTests
         fixture.RejectInsufficientCountThenRecover();
         var product = fixture.ProduceAndPlate();
         Assert.Equal(fixture.Menu.Product, fixture.Items.Single(x => x.Id == product).Definition);
-        if (!fixture.Menu.RequiresBinding) fixture.SubmitMeal(product);
+        fixture.SubmitDelivery(product);
     }
 
     [Fact]

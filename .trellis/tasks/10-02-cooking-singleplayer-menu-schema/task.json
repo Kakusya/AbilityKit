@@ -21,7 +21,7 @@
   "children": [],
   "parent": "10-02-cooking-gameplay-menu-plan",
   "relatedFiles": [],
-  "notes": "Authorized Orca S04 implementation; production core integration pending.",
+  "notes": "Authorized implementation and actual worker acceptance passed; coordinator independent review/master integration pending. No Unity or level-menu selection.",
   "meta": {
     "plan_id": "S04",
     "stage": "singleplayer",
@@ -31,9 +31,12 @@
       "S02",
       "S03"
     ],
-    "execution_gate": "authorized",
-    "planning_maturity": "implementation-ready",
+    "execution_gate": "authorized-dependencies-validated",
+    "planning_maturity": "reviewed-contract",
     "owner_delegated_details": true,
-    "execution_authorization": "2026-10-02 owner 后续明确实施单机与联网、worktree并行、验证后合并master；Unity后置。"
+    "execution_authorization": "2026-10-02 owner 后续明确实施单机与联网、worktree并行、验证后合并master；Unity后置。",
+    "worker_acceptance": "passed-87-production-delivery-121-ET-recovery",
+    "integration_review_pending": true,
+    "verification": ".trellis/tasks/10-02-cooking-singleplayer-menu-schema/research/verification.md"
   }
 }

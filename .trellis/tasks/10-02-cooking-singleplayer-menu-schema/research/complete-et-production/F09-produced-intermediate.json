@@ -1,0 +1,104 @@
+{
+  "schema": "cooking-menu-et-production-evidence-v1",
+  "menu": "F09",
+  "checkpointPoint": "produced-intermediate",
+  "identity": {
+    "schema": "cooking-definition-v3",
+    "sha256": "E3A0F6549F36357A00B4B2743A1DBE93EADEE8E7A57EA81E8AAE151A1B27DE06"
+  },
+  "provenance": {
+    "catalogSchema": "cooking-menu-catalog-v1",
+    "catalogSha256": "bcadc77368b284cfafe273b608c56d9d6d3a312fa456abf49b1f831133eb5374",
+    "sources": [
+      {
+        "path": "Docs/design/CookingGame/reference/menu-v0.1/Cooking_\u5B8C\u6574\u83DC\u54C1\u4E0E\u52A0\u5DE5\u8FC7\u7A0B_v0.1.md",
+        "sha256": "8d503eeaaf5c2de3e326762beb9b1bf305342b1095b0ba9fcabcde230f902cc2"
+      },
+      {
+        "path": "Docs/design/CookingGame/reference/menu-v0.1/Cooking_\u5B8C\u6574\u83DC\u54C1\u4E0E\u52A0\u5DE5\u8FC7\u7A0B_v0.1.xlsx",
+        "sha256": "5268130330044901cfaecf3cbd7ab048432030ef03c6f17cf3a793d3d744232d"
+      }
+    ],
+    "selectedMenus": [
+      "F09"
+    ]
+  },
+  "level": {
+    "matchScope": {
+      "session": {
+        "value": "menu-production"
+      },
+      "world": {
+        "value": "menu-world"
+      },
+      "match": {
+        "value": "F09"
+      }
+    },
+    "restaurantRuntime": {
+      "value": 1
+    },
+    "level": {
+      "value": "menu-fixture"
+    },
+    "levelEpoch": 1
+  },
+  "recovery": "actual-host-export-codec-dispose-empty-factory-restore",
+  "intermediateCheckpointSha256": "c57b9456943680d9ddc3611fbaec24f7aacc5241d1f8697e463e8ee22f19f793",
+  "finalCheckpointSha256": "242b4adce8850cd8ce821b546a7f313647346d4ecc7073616d52bb85dc1fd1e8",
+  "finalSnapshotSha256": "540BC532A846AEA27F4A9166A49D3A5E4731A6B81362E82232D255BA56EF7463",
+  "commandIngressCount": 262,
+  "recipes": [
+    "menu-recipe-preparation-cooked-rice",
+    "menu-recipe-preparation-cut-cucumber",
+    "menu-recipe-finished-cucumber-sushi"
+  ],
+  "settlements": [
+    {
+      "sequence": 1,
+      "order": {
+        "value": "order-F09"
+      },
+      "template": {
+        "value": "menu-order-cucumber-sushi"
+      },
+      "recipe": {
+        "value": "menu-recipe-finished-cucumber-sushi"
+      },
+      "product": {
+        "value": "product-4"
+      },
+      "player": {
+        "value": "menu-chef"
+      },
+      "container": {
+        "value": "pool-menu-container-plate-1"
+      },
+      "logicalTick": 261
+    }
+  ],
+  "servingVessel": {
+    "id": {
+      "value": "pool-menu-container-plate-1"
+    },
+    "definition": {
+      "value": "menu-container-plate"
+    },
+    "version": 4,
+    "location": {
+      "kind": 0,
+      "ownerId": null,
+      "slotId": "serving-F09"
+    },
+    "removed": true,
+    "recipe": null,
+    "isProduct": false,
+    "originStation": null,
+    "containerCompleted": false,
+    "isDirty": true,
+    "remainingPortions": 0,
+    "boundOrder": null
+  },
+  "fixtureBoundary": "finite validated raw/empty-vessel setup and direct OpenOrder fixture; not S07 procurement or S14 full front lifecycle",
+  "finalCanonicalEqualsUninterrupted": true
+}

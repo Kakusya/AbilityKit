@@ -1,0 +1,107 @@
+{
+  "schema": "cooking-menu-et-production-evidence-v1",
+  "menu": "D06",
+  "checkpointPoint": "produced-intermediate",
+  "identity": {
+    "schema": "cooking-definition-v3",
+    "sha256": "9173AD44CFF91EB0C07909083E230457FE63DAB26348AAEBD4F6A0AE6E860BCE"
+  },
+  "provenance": {
+    "catalogSchema": "cooking-menu-catalog-v1",
+    "catalogSha256": "bcadc77368b284cfafe273b608c56d9d6d3a312fa456abf49b1f831133eb5374",
+    "sources": [
+      {
+        "path": "Docs/design/CookingGame/reference/menu-v0.1/Cooking_\u5B8C\u6574\u83DC\u54C1\u4E0E\u52A0\u5DE5\u8FC7\u7A0B_v0.1.md",
+        "sha256": "8d503eeaaf5c2de3e326762beb9b1bf305342b1095b0ba9fcabcde230f902cc2"
+      },
+      {
+        "path": "Docs/design/CookingGame/reference/menu-v0.1/Cooking_\u5B8C\u6574\u83DC\u54C1\u4E0E\u52A0\u5DE5\u8FC7\u7A0B_v0.1.xlsx",
+        "sha256": "5268130330044901cfaecf3cbd7ab048432030ef03c6f17cf3a793d3d744232d"
+      }
+    ],
+    "selectedMenus": [
+      "D06"
+    ]
+  },
+  "level": {
+    "matchScope": {
+      "session": {
+        "value": "menu-production"
+      },
+      "world": {
+        "value": "menu-world"
+      },
+      "match": {
+        "value": "D06"
+      }
+    },
+    "restaurantRuntime": {
+      "value": 1
+    },
+    "level": {
+      "value": "menu-fixture"
+    },
+    "levelEpoch": 1
+  },
+  "recovery": "actual-host-export-codec-dispose-empty-factory-restore",
+  "intermediateCheckpointSha256": "e6837781908c7d7964b8a6ecbb62993aab7c4d888224b57a8fe543f3ad3a173b",
+  "finalCheckpointSha256": "89fbc0069c53cf704e85ed2ef91a8cfa44775005572508ec2687d3871f8faff6",
+  "finalSnapshotSha256": "A5311E4536FF4C0CC435301C52B1F9BAFBDC478FE81827F8775098EC5B2B30F1",
+  "commandIngressCount": 331,
+  "recipes": [
+    "menu-recipe-preparation-cut-lemon",
+    "menu-recipe-preparation-lemon-juice",
+    "menu-recipe-preparation-cut-orange",
+    "menu-recipe-preparation-orange-juice",
+    "menu-recipe-finished-mixed-citrus-stage-1",
+    "menu-recipe-finished-mixed-citrus"
+  ],
+  "settlements": [
+    {
+      "sequence": 1,
+      "order": {
+        "value": "order-D06"
+      },
+      "template": {
+        "value": "menu-order-mixed-citrus"
+      },
+      "recipe": {
+        "value": "menu-recipe-finished-mixed-citrus"
+      },
+      "product": {
+        "value": "product-8"
+      },
+      "player": {
+        "value": "menu-chef"
+      },
+      "container": {
+        "value": "fixture-cup-1"
+      },
+      "logicalTick": 330
+    }
+  ],
+  "servingVessel": {
+    "id": {
+      "value": "fixture-cup-1"
+    },
+    "definition": {
+      "value": "menu-container-cold-cup"
+    },
+    "version": 5,
+    "location": {
+      "kind": 1,
+      "ownerId": "menu-chef",
+      "slotId": null
+    },
+    "removed": true,
+    "recipe": null,
+    "isProduct": false,
+    "originStation": null,
+    "containerCompleted": false,
+    "isDirty": false,
+    "remainingPortions": 0,
+    "boundOrder": null
+  },
+  "fixtureBoundary": "finite validated raw/empty-vessel setup and direct OpenOrder fixture; not S07 procurement or S14 full front lifecycle",
+  "finalCanonicalEqualsUninterrupted": true
+}

@@ -1,0 +1,106 @@
+{
+  "schema": "cooking-menu-et-production-evidence-v1",
+  "menu": "F39",
+  "checkpointPoint": "produced-intermediate",
+  "identity": {
+    "schema": "cooking-definition-v3",
+    "sha256": "E5BC1709731BF45156F8C9FC88481A3EEE580F4AC7B90C5A8C28A4C99FC33045"
+  },
+  "provenance": {
+    "catalogSchema": "cooking-menu-catalog-v1",
+    "catalogSha256": "bcadc77368b284cfafe273b608c56d9d6d3a312fa456abf49b1f831133eb5374",
+    "sources": [
+      {
+        "path": "Docs/design/CookingGame/reference/menu-v0.1/Cooking_\u5B8C\u6574\u83DC\u54C1\u4E0E\u52A0\u5DE5\u8FC7\u7A0B_v0.1.md",
+        "sha256": "8d503eeaaf5c2de3e326762beb9b1bf305342b1095b0ba9fcabcde230f902cc2"
+      },
+      {
+        "path": "Docs/design/CookingGame/reference/menu-v0.1/Cooking_\u5B8C\u6574\u83DC\u54C1\u4E0E\u52A0\u5DE5\u8FC7\u7A0B_v0.1.xlsx",
+        "sha256": "5268130330044901cfaecf3cbd7ab048432030ef03c6f17cf3a793d3d744232d"
+      }
+    ],
+    "selectedMenus": [
+      "F39"
+    ]
+  },
+  "level": {
+    "matchScope": {
+      "session": {
+        "value": "menu-production"
+      },
+      "world": {
+        "value": "menu-world"
+      },
+      "match": {
+        "value": "F39"
+      }
+    },
+    "restaurantRuntime": {
+      "value": 1
+    },
+    "level": {
+      "value": "menu-fixture"
+    },
+    "levelEpoch": 1
+  },
+  "recovery": "actual-host-export-codec-dispose-empty-factory-restore",
+  "intermediateCheckpointSha256": "2a8ccb746a296e0f139bbf95132cb093a67b5ae78bcca0c113deec3fa501e0b9",
+  "finalCheckpointSha256": "920eab302e3085d1e2159a6102040c2dc695daa14c30e002d85de96ac53c9007",
+  "finalSnapshotSha256": "58F7D7969585F762D9E63A6AD9EF15BD52548AF87B211B9D2A66198F9A09874E",
+  "commandIngressCount": 254,
+  "recipes": [
+    "menu-recipe-preparation-cut-carrot",
+    "menu-recipe-preparation-cut-chicken",
+    "menu-recipe-preparation-cut-potato",
+    "menu-recipe-finished-roast-chicken-stage-1",
+    "menu-recipe-finished-roast-chicken"
+  ],
+  "settlements": [
+    {
+      "sequence": 1,
+      "order": {
+        "value": "order-F39"
+      },
+      "template": {
+        "value": "menu-order-roast-chicken"
+      },
+      "recipe": {
+        "value": "menu-recipe-finished-roast-chicken"
+      },
+      "product": {
+        "value": "product-5"
+      },
+      "player": {
+        "value": "menu-chef"
+      },
+      "container": {
+        "value": "pool-menu-container-large-plate-1"
+      },
+      "logicalTick": 253
+    }
+  ],
+  "servingVessel": {
+    "id": {
+      "value": "pool-menu-container-large-plate-1"
+    },
+    "definition": {
+      "value": "menu-container-large-plate"
+    },
+    "version": 4,
+    "location": {
+      "kind": 0,
+      "ownerId": null,
+      "slotId": "serving-F39"
+    },
+    "removed": true,
+    "recipe": null,
+    "isProduct": false,
+    "originStation": null,
+    "containerCompleted": false,
+    "isDirty": true,
+    "remainingPortions": 0,
+    "boundOrder": null
+  },
+  "fixtureBoundary": "finite validated raw/empty-vessel setup and direct OpenOrder fixture; not S07 procurement or S14 full front lifecycle",
+  "finalCanonicalEqualsUninterrupted": true
+}

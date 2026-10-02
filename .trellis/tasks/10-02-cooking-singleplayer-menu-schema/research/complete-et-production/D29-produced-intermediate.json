@@ -1,0 +1,107 @@
+{
+  "schema": "cooking-menu-et-production-evidence-v1",
+  "menu": "D29",
+  "checkpointPoint": "produced-intermediate",
+  "identity": {
+    "schema": "cooking-definition-v3",
+    "sha256": "67EA5F8B0A51C33326CA5D9F0A297DB697C2E53275BD3170AFAE8A175C8EED98"
+  },
+  "provenance": {
+    "catalogSchema": "cooking-menu-catalog-v1",
+    "catalogSha256": "bcadc77368b284cfafe273b608c56d9d6d3a312fa456abf49b1f831133eb5374",
+    "sources": [
+      {
+        "path": "Docs/design/CookingGame/reference/menu-v0.1/Cooking_\u5B8C\u6574\u83DC\u54C1\u4E0E\u52A0\u5DE5\u8FC7\u7A0B_v0.1.md",
+        "sha256": "8d503eeaaf5c2de3e326762beb9b1bf305342b1095b0ba9fcabcde230f902cc2"
+      },
+      {
+        "path": "Docs/design/CookingGame/reference/menu-v0.1/Cooking_\u5B8C\u6574\u83DC\u54C1\u4E0E\u52A0\u5DE5\u8FC7\u7A0B_v0.1.xlsx",
+        "sha256": "5268130330044901cfaecf3cbd7ab048432030ef03c6f17cf3a793d3d744232d"
+      }
+    ],
+    "selectedMenus": [
+      "D29"
+    ]
+  },
+  "level": {
+    "matchScope": {
+      "session": {
+        "value": "menu-production"
+      },
+      "world": {
+        "value": "menu-world"
+      },
+      "match": {
+        "value": "D29"
+      }
+    },
+    "restaurantRuntime": {
+      "value": 1
+    },
+    "level": {
+      "value": "menu-fixture"
+    },
+    "levelEpoch": 1
+  },
+  "recovery": "actual-host-export-codec-dispose-empty-factory-restore",
+  "intermediateCheckpointSha256": "77bd638a45384a968f99fc73bf2e410b59961e8d86ed6d3c59800913fcc1be94",
+  "finalCheckpointSha256": "b4d135b95dfe081511a47f6b0a753ba4f0988fbeb1d424d703bcd3ea75f4927f",
+  "finalSnapshotSha256": "3B91E3EE43075E1E3926DF0B7D0B678A6B805106AC63D0C07D792678E520A15C",
+  "commandIngressCount": 475,
+  "recipes": [
+    "menu-recipe-preparation-hot-water",
+    "menu-recipe-preparation-black-tea",
+    "menu-recipe-preparation-cut-strawberry",
+    "menu-recipe-preparation-strawberry-puree",
+    "menu-recipe-finished-strawberry-tea-stage-1",
+    "menu-recipe-finished-strawberry-tea"
+  ],
+  "settlements": [
+    {
+      "sequence": 1,
+      "order": {
+        "value": "order-D29"
+      },
+      "template": {
+        "value": "menu-order-strawberry-tea"
+      },
+      "recipe": {
+        "value": "menu-recipe-finished-strawberry-tea"
+      },
+      "product": {
+        "value": "product-8"
+      },
+      "player": {
+        "value": "menu-chef"
+      },
+      "container": {
+        "value": "fixture-cup-1"
+      },
+      "logicalTick": 474
+    }
+  ],
+  "servingVessel": {
+    "id": {
+      "value": "fixture-cup-1"
+    },
+    "definition": {
+      "value": "menu-container-cold-cup"
+    },
+    "version": 5,
+    "location": {
+      "kind": 1,
+      "ownerId": "menu-chef",
+      "slotId": null
+    },
+    "removed": true,
+    "recipe": null,
+    "isProduct": false,
+    "originStation": null,
+    "containerCompleted": false,
+    "isDirty": false,
+    "remainingPortions": 0,
+    "boundOrder": null
+  },
+  "fixtureBoundary": "finite validated raw/empty-vessel setup and direct OpenOrder fixture; not S07 procurement or S14 full front lifecycle",
+  "finalCanonicalEqualsUninterrupted": true
+}

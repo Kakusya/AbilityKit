@@ -1,0 +1,734 @@
+{
+  "schema": "cooking-menu-production-evidence-v1",
+  "menuSourceId": "F17",
+  "status": "produced-plated-submitted",
+  "scope": {
+    "session": {
+      "value": "menu-production"
+    },
+    "world": {
+      "value": "menu-world"
+    },
+    "match": {
+      "value": "F17"
+    }
+  },
+  "contentIdentity": {
+    "schema": "cooking-definition-v3",
+    "sha256": "60901FB6BB70B62A1DB1F922B5A4058EC53B27839A98AA4D897F28B3393E195D"
+  },
+  "catalogSha256": "bcadc77368b284cfafe273b608c56d9d6d3a312fa456abf49b1f831133eb5374",
+  "sources": [
+    {
+      "path": "Docs/design/CookingGame/reference/menu-v0.1/Cooking_\u5B8C\u6574\u83DC\u54C1\u4E0E\u52A0\u5DE5\u8FC7\u7A0B_v0.1.md",
+      "sha256": "8d503eeaaf5c2de3e326762beb9b1bf305342b1095b0ba9fcabcde230f902cc2"
+    },
+    {
+      "path": "Docs/design/CookingGame/reference/menu-v0.1/Cooking_\u5B8C\u6574\u83DC\u54C1\u4E0E\u52A0\u5DE5\u8FC7\u7A0B_v0.1.xlsx",
+      "sha256": "5268130330044901cfaecf3cbd7ab048432030ef03c6f17cf3a793d3d744232d"
+    }
+  ],
+  "fixtureValues": "raw-eight-per-definition-serving-two-not-balanced",
+  "initialSupply": [
+    {
+      "definition": {
+        "value": "menu-supply-cheese"
+      },
+      "count": 1,
+      "location": "world:initial-menu-supply-cheese-1"
+    },
+    {
+      "definition": {
+        "value": "menu-supply-cheese"
+      },
+      "count": 1,
+      "location": "world:initial-menu-supply-cheese-2"
+    },
+    {
+      "definition": {
+        "value": "menu-supply-cheese"
+      },
+      "count": 1,
+      "location": "world:initial-menu-supply-cheese-3"
+    },
+    {
+      "definition": {
+        "value": "menu-supply-cheese"
+      },
+      "count": 1,
+      "location": "world:initial-menu-supply-cheese-4"
+    },
+    {
+      "definition": {
+        "value": "menu-supply-cheese"
+      },
+      "count": 1,
+      "location": "world:initial-menu-supply-cheese-5"
+    },
+    {
+      "definition": {
+        "value": "menu-supply-cheese"
+      },
+      "count": 1,
+      "location": "world:initial-menu-supply-cheese-6"
+    },
+    {
+      "definition": {
+        "value": "menu-supply-cheese"
+      },
+      "count": 1,
+      "location": "world:initial-menu-supply-cheese-7"
+    },
+    {
+      "definition": {
+        "value": "menu-supply-cheese"
+      },
+      "count": 1,
+      "location": "world:initial-menu-supply-cheese-8"
+    },
+    {
+      "definition": {
+        "value": "menu-supply-ketchup"
+      },
+      "count": 1,
+      "location": "world:initial-menu-supply-ketchup-1"
+    },
+    {
+      "definition": {
+        "value": "menu-supply-ketchup"
+      },
+      "count": 1,
+      "location": "world:initial-menu-supply-ketchup-2"
+    },
+    {
+      "definition": {
+        "value": "menu-supply-ketchup"
+      },
+      "count": 1,
+      "location": "world:initial-menu-supply-ketchup-3"
+    },
+    {
+      "definition": {
+        "value": "menu-supply-ketchup"
+      },
+      "count": 1,
+      "location": "world:initial-menu-supply-ketchup-4"
+    },
+    {
+      "definition": {
+        "value": "menu-supply-ketchup"
+      },
+      "count": 1,
+      "location": "world:initial-menu-supply-ketchup-5"
+    },
+    {
+      "definition": {
+        "value": "menu-supply-ketchup"
+      },
+      "count": 1,
+      "location": "world:initial-menu-supply-ketchup-6"
+    },
+    {
+      "definition": {
+        "value": "menu-supply-ketchup"
+      },
+      "count": 1,
+      "location": "world:initial-menu-supply-ketchup-7"
+    },
+    {
+      "definition": {
+        "value": "menu-supply-ketchup"
+      },
+      "count": 1,
+      "location": "world:initial-menu-supply-ketchup-8"
+    },
+    {
+      "definition": {
+        "value": "menu-supply-pizza-dough"
+      },
+      "count": 1,
+      "location": "world:initial-menu-supply-pizza-dough-1"
+    },
+    {
+      "definition": {
+        "value": "menu-supply-pizza-dough"
+      },
+      "count": 1,
+      "location": "world:initial-menu-supply-pizza-dough-2"
+    },
+    {
+      "definition": {
+        "value": "menu-supply-pizza-dough"
+      },
+      "count": 1,
+      "location": "world:initial-menu-supply-pizza-dough-3"
+    },
+    {
+      "definition": {
+        "value": "menu-supply-pizza-dough"
+      },
+      "count": 1,
+      "location": "world:initial-menu-supply-pizza-dough-4"
+    },
+    {
+      "definition": {
+        "value": "menu-supply-pizza-dough"
+      },
+      "count": 1,
+      "location": "world:initial-menu-supply-pizza-dough-5"
+    },
+    {
+      "definition": {
+        "value": "menu-supply-pizza-dough"
+      },
+      "count": 1,
+      "location": "world:initial-menu-supply-pizza-dough-6"
+    },
+    {
+      "definition": {
+        "value": "menu-supply-pizza-dough"
+      },
+      "count": 1,
+      "location": "world:initial-menu-supply-pizza-dough-7"
+    },
+    {
+      "definition": {
+        "value": "menu-supply-pizza-dough"
+      },
+      "count": 1,
+      "location": "world:initial-menu-supply-pizza-dough-8"
+    },
+    {
+      "definition": {
+        "value": "menu-container-bake-tray"
+      },
+      "count": 1,
+      "location": "world:initial-F17-menu-container-bake-tray"
+    },
+    {
+      "definition": {
+        "value": "menu-container-pizza-plate"
+      },
+      "count": 2,
+      "location": "cleanPool"
+    }
+  ],
+  "executedRecipes": [
+    "menu-recipe-finished-cheese-pizza-stage-1",
+    "menu-recipe-finished-cheese-pizza"
+  ],
+  "productId": "product-2",
+  "servingVesselId": "pool-menu-container-pizza-plate-1",
+  "logicalTick": 137,
+  "settlements": [
+    {
+      "sequence": 1,
+      "order": {
+        "value": "order-F17"
+      },
+      "template": {
+        "value": "menu-order-cheese-pizza"
+      },
+      "recipe": {
+        "value": "menu-recipe-finished-cheese-pizza"
+      },
+      "product": {
+        "value": "product-2"
+      },
+      "player": {
+        "value": "menu-chef"
+      },
+      "container": {
+        "value": "pool-menu-container-pizza-plate-1"
+      },
+      "logicalTick": 136
+    }
+  ],
+  "remainingItems": [
+    {
+      "id": {
+        "value": "fixture-F17-menu-container-bake-tray"
+      },
+      "definition": {
+        "value": "menu-container-bake-tray"
+      },
+      "version": 5,
+      "location": {
+        "kind": 0,
+        "ownerId": null,
+        "slotId": "initial-F17-menu-container-bake-tray"
+      },
+      "recipe": null,
+      "isProduct": false,
+      "originStation": null,
+      "containerCompleted": false,
+      "isDirty": false,
+      "remainingPortions": 0,
+      "boundOrder": null
+    },
+    {
+      "id": {
+        "value": "fixture-menu-supply-cheese-2"
+      },
+      "definition": {
+        "value": "menu-supply-cheese"
+      },
+      "version": 1,
+      "location": {
+        "kind": 0,
+        "ownerId": null,
+        "slotId": "initial-menu-supply-cheese-2"
+      },
+      "recipe": null,
+      "isProduct": false,
+      "originStation": null,
+      "containerCompleted": false,
+      "isDirty": false,
+      "remainingPortions": 0,
+      "boundOrder": null
+    },
+    {
+      "id": {
+        "value": "fixture-menu-supply-cheese-3"
+      },
+      "definition": {
+        "value": "menu-supply-cheese"
+      },
+      "version": 1,
+      "location": {
+        "kind": 0,
+        "ownerId": null,
+        "slotId": "initial-menu-supply-cheese-3"
+      },
+      "recipe": null,
+      "isProduct": false,
+      "originStation": null,
+      "containerCompleted": false,
+      "isDirty": false,
+      "remainingPortions": 0,
+      "boundOrder": null
+    },
+    {
+      "id": {
+        "value": "fixture-menu-supply-cheese-4"
+      },
+      "definition": {
+        "value": "menu-supply-cheese"
+      },
+      "version": 1,
+      "location": {
+        "kind": 0,
+        "ownerId": null,
+        "slotId": "initial-menu-supply-cheese-4"
+      },
+      "recipe": null,
+      "isProduct": false,
+      "originStation": null,
+      "containerCompleted": false,
+      "isDirty": false,
+      "remainingPortions": 0,
+      "boundOrder": null
+    },
+    {
+      "id": {
+        "value": "fixture-menu-supply-cheese-5"
+      },
+      "definition": {
+        "value": "menu-supply-cheese"
+      },
+      "version": 1,
+      "location": {
+        "kind": 0,
+        "ownerId": null,
+        "slotId": "initial-menu-supply-cheese-5"
+      },
+      "recipe": null,
+      "isProduct": false,
+      "originStation": null,
+      "containerCompleted": false,
+      "isDirty": false,
+      "remainingPortions": 0,
+      "boundOrder": null
+    },
+    {
+      "id": {
+        "value": "fixture-menu-supply-cheese-6"
+      },
+      "definition": {
+        "value": "menu-supply-cheese"
+      },
+      "version": 1,
+      "location": {
+        "kind": 0,
+        "ownerId": null,
+        "slotId": "initial-menu-supply-cheese-6"
+      },
+      "recipe": null,
+      "isProduct": false,
+      "originStation": null,
+      "containerCompleted": false,
+      "isDirty": false,
+      "remainingPortions": 0,
+      "boundOrder": null
+    },
+    {
+      "id": {
+        "value": "fixture-menu-supply-cheese-7"
+      },
+      "definition": {
+        "value": "menu-supply-cheese"
+      },
+      "version": 1,
+      "location": {
+        "kind": 0,
+        "ownerId": null,
+        "slotId": "initial-menu-supply-cheese-7"
+      },
+      "recipe": null,
+      "isProduct": false,
+      "originStation": null,
+      "containerCompleted": false,
+      "isDirty": false,
+      "remainingPortions": 0,
+      "boundOrder": null
+    },
+    {
+      "id": {
+        "value": "fixture-menu-supply-cheese-8"
+      },
+      "definition": {
+        "value": "menu-supply-cheese"
+      },
+      "version": 1,
+      "location": {
+        "kind": 0,
+        "ownerId": null,
+        "slotId": "initial-menu-supply-cheese-8"
+      },
+      "recipe": null,
+      "isProduct": false,
+      "originStation": null,
+      "containerCompleted": false,
+      "isDirty": false,
+      "remainingPortions": 0,
+      "boundOrder": null
+    },
+    {
+      "id": {
+        "value": "fixture-menu-supply-ketchup-2"
+      },
+      "definition": {
+        "value": "menu-supply-ketchup"
+      },
+      "version": 1,
+      "location": {
+        "kind": 0,
+        "ownerId": null,
+        "slotId": "initial-menu-supply-ketchup-2"
+      },
+      "recipe": null,
+      "isProduct": false,
+      "originStation": null,
+      "containerCompleted": false,
+      "isDirty": false,
+      "remainingPortions": 0,
+      "boundOrder": null
+    },
+    {
+      "id": {
+        "value": "fixture-menu-supply-ketchup-3"
+      },
+      "definition": {
+        "value": "menu-supply-ketchup"
+      },
+      "version": 1,
+      "location": {
+        "kind": 0,
+        "ownerId": null,
+        "slotId": "initial-menu-supply-ketchup-3"
+      },
+      "recipe": null,
+      "isProduct": false,
+      "originStation": null,
+      "containerCompleted": false,
+      "isDirty": false,
+      "remainingPortions": 0,
+      "boundOrder": null
+    },
+    {
+      "id": {
+        "value": "fixture-menu-supply-ketchup-4"
+      },
+      "definition": {
+        "value": "menu-supply-ketchup"
+      },
+      "version": 1,
+      "location": {
+        "kind": 0,
+        "ownerId": null,
+        "slotId": "initial-menu-supply-ketchup-4"
+      },
+      "recipe": null,
+      "isProduct": false,
+      "originStation": null,
+      "containerCompleted": false,
+      "isDirty": false,
+      "remainingPortions": 0,
+      "boundOrder": null
+    },
+    {
+      "id": {
+        "value": "fixture-menu-supply-ketchup-5"
+      },
+      "definition": {
+        "value": "menu-supply-ketchup"
+      },
+      "version": 1,
+      "location": {
+        "kind": 0,
+        "ownerId": null,
+        "slotId": "initial-menu-supply-ketchup-5"
+      },
+      "recipe": null,
+      "isProduct": false,
+      "originStation": null,
+      "containerCompleted": false,
+      "isDirty": false,
+      "remainingPortions": 0,
+      "boundOrder": null
+    },
+    {
+      "id": {
+        "value": "fixture-menu-supply-ketchup-6"
+      },
+      "definition": {
+        "value": "menu-supply-ketchup"
+      },
+      "version": 1,
+      "location": {
+        "kind": 0,
+        "ownerId": null,
+        "slotId": "initial-menu-supply-ketchup-6"
+      },
+      "recipe": null,
+      "isProduct": false,
+      "originStation": null,
+      "containerCompleted": false,
+      "isDirty": false,
+      "remainingPortions": 0,
+      "boundOrder": null
+    },
+    {
+      "id": {
+        "value": "fixture-menu-supply-ketchup-7"
+      },
+      "definition": {
+        "value": "menu-supply-ketchup"
+      },
+      "version": 1,
+      "location": {
+        "kind": 0,
+        "ownerId": null,
+        "slotId": "initial-menu-supply-ketchup-7"
+      },
+      "recipe": null,
+      "isProduct": false,
+      "originStation": null,
+      "containerCompleted": false,
+      "isDirty": false,
+      "remainingPortions": 0,
+      "boundOrder": null
+    },
+    {
+      "id": {
+        "value": "fixture-menu-supply-ketchup-8"
+      },
+      "definition": {
+        "value": "menu-supply-ketchup"
+      },
+      "version": 1,
+      "location": {
+        "kind": 0,
+        "ownerId": null,
+        "slotId": "initial-menu-supply-ketchup-8"
+      },
+      "recipe": null,
+      "isProduct": false,
+      "originStation": null,
+      "containerCompleted": false,
+      "isDirty": false,
+      "remainingPortions": 0,
+      "boundOrder": null
+    },
+    {
+      "id": {
+        "value": "fixture-menu-supply-pizza-dough-2"
+      },
+      "definition": {
+        "value": "menu-supply-pizza-dough"
+      },
+      "version": 1,
+      "location": {
+        "kind": 0,
+        "ownerId": null,
+        "slotId": "initial-menu-supply-pizza-dough-2"
+      },
+      "recipe": null,
+      "isProduct": false,
+      "originStation": null,
+      "containerCompleted": false,
+      "isDirty": false,
+      "remainingPortions": 0,
+      "boundOrder": null
+    },
+    {
+      "id": {
+        "value": "fixture-menu-supply-pizza-dough-3"
+      },
+      "definition": {
+        "value": "menu-supply-pizza-dough"
+      },
+      "version": 1,
+      "location": {
+        "kind": 0,
+        "ownerId": null,
+        "slotId": "initial-menu-supply-pizza-dough-3"
+      },
+      "recipe": null,
+      "isProduct": false,
+      "originStation": null,
+      "containerCompleted": false,
+      "isDirty": false,
+      "remainingPortions": 0,
+      "boundOrder": null
+    },
+    {
+      "id": {
+        "value": "fixture-menu-supply-pizza-dough-4"
+      },
+      "definition": {
+        "value": "menu-supply-pizza-dough"
+      },
+      "version": 1,
+      "location": {
+        "kind": 0,
+        "ownerId": null,
+        "slotId": "initial-menu-supply-pizza-dough-4"
+      },
+      "recipe": null,
+      "isProduct": false,
+      "originStation": null,
+      "containerCompleted": false,
+      "isDirty": false,
+      "remainingPortions": 0,
+      "boundOrder": null
+    },
+    {
+      "id": {
+        "value": "fixture-menu-supply-pizza-dough-5"
+      },
+      "definition": {
+        "value": "menu-supply-pizza-dough"
+      },
+      "version": 1,
+      "location": {
+        "kind": 0,
+        "ownerId": null,
+        "slotId": "initial-menu-supply-pizza-dough-5"
+      },
+      "recipe": null,
+      "isProduct": false,
+      "originStation": null,
+      "containerCompleted": false,
+      "isDirty": false,
+      "remainingPortions": 0,
+      "boundOrder": null
+    },
+    {
+      "id": {
+        "value": "fixture-menu-supply-pizza-dough-6"
+      },
+      "definition": {
+        "value": "menu-supply-pizza-dough"
+      },
+      "version": 1,
+      "location": {
+        "kind": 0,
+        "ownerId": null,
+        "slotId": "initial-menu-supply-pizza-dough-6"
+      },
+      "recipe": null,
+      "isProduct": false,
+      "originStation": null,
+      "containerCompleted": false,
+      "isDirty": false,
+      "remainingPortions": 0,
+      "boundOrder": null
+    },
+    {
+      "id": {
+        "value": "fixture-menu-supply-pizza-dough-7"
+      },
+      "definition": {
+        "value": "menu-supply-pizza-dough"
+      },
+      "version": 1,
+      "location": {
+        "kind": 0,
+        "ownerId": null,
+        "slotId": "initial-menu-supply-pizza-dough-7"
+      },
+      "recipe": null,
+      "isProduct": false,
+      "originStation": null,
+      "containerCompleted": false,
+      "isDirty": false,
+      "remainingPortions": 0,
+      "boundOrder": null
+    },
+    {
+      "id": {
+        "value": "fixture-menu-supply-pizza-dough-8"
+      },
+      "definition": {
+        "value": "menu-supply-pizza-dough"
+      },
+      "version": 1,
+      "location": {
+        "kind": 0,
+        "ownerId": null,
+        "slotId": "initial-menu-supply-pizza-dough-8"
+      },
+      "recipe": null,
+      "isProduct": false,
+      "originStation": null,
+      "containerCompleted": false,
+      "isDirty": false,
+      "remainingPortions": 0,
+      "boundOrder": null
+    },
+    {
+      "id": {
+        "value": "pool-menu-container-pizza-plate-2"
+      },
+      "definition": {
+        "value": "menu-container-pizza-plate"
+      },
+      "version": 1,
+      "location": {
+        "kind": 0,
+        "ownerId": null,
+        "slotId": "clean-pool"
+      },
+      "recipe": null,
+      "isProduct": false,
+      "originStation": null,
+      "containerCompleted": false,
+      "isDirty": false,
+      "remainingPortions": 0,
+      "boundOrder": null
+    }
+  ],
+  "snapshotSha256": "FDB1D5A841D4B14767A5FD360C1C6CD612E8DDE909B23DE564107B63D6B1E3BB",
+  "pending": "S07-procurement-S14-full-level-exit-and-production-balance"
+}

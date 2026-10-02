@@ -1,0 +1,106 @@
+{
+  "schema": "cooking-menu-et-production-evidence-v1",
+  "menu": "D23",
+  "checkpointPoint": "bound-cup",
+  "identity": {
+    "schema": "cooking-definition-v3",
+    "sha256": "B8F85605AE1AE3296B861DAFA93429EB23E025E7DB03E516C53AA1E2A5D9CB3F"
+  },
+  "provenance": {
+    "catalogSchema": "cooking-menu-catalog-v1",
+    "catalogSha256": "bcadc77368b284cfafe273b608c56d9d6d3a312fa456abf49b1f831133eb5374",
+    "sources": [
+      {
+        "path": "Docs/design/CookingGame/reference/menu-v0.1/Cooking_\u5B8C\u6574\u83DC\u54C1\u4E0E\u52A0\u5DE5\u8FC7\u7A0B_v0.1.md",
+        "sha256": "8d503eeaaf5c2de3e326762beb9b1bf305342b1095b0ba9fcabcde230f902cc2"
+      },
+      {
+        "path": "Docs/design/CookingGame/reference/menu-v0.1/Cooking_\u5B8C\u6574\u83DC\u54C1\u4E0E\u52A0\u5DE5\u8FC7\u7A0B_v0.1.xlsx",
+        "sha256": "5268130330044901cfaecf3cbd7ab048432030ef03c6f17cf3a793d3d744232d"
+      }
+    ],
+    "selectedMenus": [
+      "D23"
+    ]
+  },
+  "level": {
+    "matchScope": {
+      "session": {
+        "value": "menu-production"
+      },
+      "world": {
+        "value": "menu-world"
+      },
+      "match": {
+        "value": "D23"
+      }
+    },
+    "restaurantRuntime": {
+      "value": 1
+    },
+    "level": {
+      "value": "menu-fixture"
+    },
+    "levelEpoch": 1
+  },
+  "recovery": "actual-host-export-codec-dispose-empty-factory-restore",
+  "intermediateCheckpointSha256": "d55dd3fae5c681294cb5b426886327fdaef9dd61fcada88dfd19a9621ddf6bf1",
+  "finalCheckpointSha256": "5e0599360f193860f869876400971451ace55b2eb30ad1a27ec872ac746b4c7d",
+  "finalSnapshotSha256": "53BF6760EA1D3CED443656C4084AD7A41EAF2FC2E36AACF7C9611995862620D8",
+  "commandIngressCount": 294,
+  "recipes": [
+    "menu-recipe-preparation-hot-water",
+    "menu-recipe-preparation-black-tea",
+    "menu-recipe-finished-lemon-black-tea-stage-1",
+    "menu-recipe-preparation-cut-lemon",
+    "menu-recipe-finished-lemon-black-tea"
+  ],
+  "settlements": [
+    {
+      "sequence": 1,
+      "order": {
+        "value": "order-D23"
+      },
+      "template": {
+        "value": "menu-order-lemon-black-tea"
+      },
+      "recipe": {
+        "value": "menu-recipe-finished-lemon-black-tea"
+      },
+      "product": {
+        "value": "product-6"
+      },
+      "player": {
+        "value": "menu-chef"
+      },
+      "container": {
+        "value": "fixture-cup-1"
+      },
+      "logicalTick": 293
+    }
+  ],
+  "servingVessel": {
+    "id": {
+      "value": "fixture-cup-1"
+    },
+    "definition": {
+      "value": "menu-container-cold-cup"
+    },
+    "version": 5,
+    "location": {
+      "kind": 1,
+      "ownerId": "menu-chef",
+      "slotId": null
+    },
+    "removed": true,
+    "recipe": null,
+    "isProduct": false,
+    "originStation": null,
+    "containerCompleted": false,
+    "isDirty": false,
+    "remainingPortions": 0,
+    "boundOrder": null
+  },
+  "fixtureBoundary": "finite validated raw/empty-vessel setup and direct OpenOrder fixture; not S07 procurement or S14 full front lifecycle",
+  "finalCanonicalEqualsUninterrupted": true
+}

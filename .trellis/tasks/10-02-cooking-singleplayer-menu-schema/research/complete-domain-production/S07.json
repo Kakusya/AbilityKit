@@ -1,0 +1,531 @@
+{
+  "schema": "cooking-menu-production-evidence-v1",
+  "menuSourceId": "S07",
+  "status": "produced-plated-submitted",
+  "scope": {
+    "session": {
+      "value": "menu-production"
+    },
+    "world": {
+      "value": "menu-world"
+    },
+    "match": {
+      "value": "S07"
+    }
+  },
+  "contentIdentity": {
+    "schema": "cooking-definition-v3",
+    "sha256": "BAAB4E22249707EB8973F6B33B6AA219D5E479696FEC09B92F74552891DF2847"
+  },
+  "catalogSha256": "bcadc77368b284cfafe273b608c56d9d6d3a312fa456abf49b1f831133eb5374",
+  "sources": [
+    {
+      "path": "Docs/design/CookingGame/reference/menu-v0.1/Cooking_\u5B8C\u6574\u83DC\u54C1\u4E0E\u52A0\u5DE5\u8FC7\u7A0B_v0.1.md",
+      "sha256": "8d503eeaaf5c2de3e326762beb9b1bf305342b1095b0ba9fcabcde230f902cc2"
+    },
+    {
+      "path": "Docs/design/CookingGame/reference/menu-v0.1/Cooking_\u5B8C\u6574\u83DC\u54C1\u4E0E\u52A0\u5DE5\u8FC7\u7A0B_v0.1.xlsx",
+      "sha256": "5268130330044901cfaecf3cbd7ab048432030ef03c6f17cf3a793d3d744232d"
+    }
+  ],
+  "fixtureValues": "raw-eight-per-definition-serving-two-not-balanced",
+  "initialSupply": [
+    {
+      "definition": {
+        "value": "menu-supply-chocolate-sauce"
+      },
+      "count": 1,
+      "location": "world:initial-menu-supply-chocolate-sauce-1"
+    },
+    {
+      "definition": {
+        "value": "menu-supply-chocolate-sauce"
+      },
+      "count": 1,
+      "location": "world:initial-menu-supply-chocolate-sauce-2"
+    },
+    {
+      "definition": {
+        "value": "menu-supply-chocolate-sauce"
+      },
+      "count": 1,
+      "location": "world:initial-menu-supply-chocolate-sauce-3"
+    },
+    {
+      "definition": {
+        "value": "menu-supply-chocolate-sauce"
+      },
+      "count": 1,
+      "location": "world:initial-menu-supply-chocolate-sauce-4"
+    },
+    {
+      "definition": {
+        "value": "menu-supply-chocolate-sauce"
+      },
+      "count": 1,
+      "location": "world:initial-menu-supply-chocolate-sauce-5"
+    },
+    {
+      "definition": {
+        "value": "menu-supply-chocolate-sauce"
+      },
+      "count": 1,
+      "location": "world:initial-menu-supply-chocolate-sauce-6"
+    },
+    {
+      "definition": {
+        "value": "menu-supply-chocolate-sauce"
+      },
+      "count": 1,
+      "location": "world:initial-menu-supply-chocolate-sauce-7"
+    },
+    {
+      "definition": {
+        "value": "menu-supply-chocolate-sauce"
+      },
+      "count": 1,
+      "location": "world:initial-menu-supply-chocolate-sauce-8"
+    },
+    {
+      "definition": {
+        "value": "menu-supply-raw-doughnut"
+      },
+      "count": 1,
+      "location": "world:initial-menu-supply-raw-doughnut-1"
+    },
+    {
+      "definition": {
+        "value": "menu-supply-raw-doughnut"
+      },
+      "count": 1,
+      "location": "world:initial-menu-supply-raw-doughnut-2"
+    },
+    {
+      "definition": {
+        "value": "menu-supply-raw-doughnut"
+      },
+      "count": 1,
+      "location": "world:initial-menu-supply-raw-doughnut-3"
+    },
+    {
+      "definition": {
+        "value": "menu-supply-raw-doughnut"
+      },
+      "count": 1,
+      "location": "world:initial-menu-supply-raw-doughnut-4"
+    },
+    {
+      "definition": {
+        "value": "menu-supply-raw-doughnut"
+      },
+      "count": 1,
+      "location": "world:initial-menu-supply-raw-doughnut-5"
+    },
+    {
+      "definition": {
+        "value": "menu-supply-raw-doughnut"
+      },
+      "count": 1,
+      "location": "world:initial-menu-supply-raw-doughnut-6"
+    },
+    {
+      "definition": {
+        "value": "menu-supply-raw-doughnut"
+      },
+      "count": 1,
+      "location": "world:initial-menu-supply-raw-doughnut-7"
+    },
+    {
+      "definition": {
+        "value": "menu-supply-raw-doughnut"
+      },
+      "count": 1,
+      "location": "world:initial-menu-supply-raw-doughnut-8"
+    },
+    {
+      "definition": {
+        "value": "menu-container-fry-basket"
+      },
+      "count": 1,
+      "location": "world:initial-S07-menu-container-fry-basket"
+    },
+    {
+      "definition": {
+        "value": "menu-container-dessert-plate"
+      },
+      "count": 2,
+      "location": "cleanPool"
+    }
+  ],
+  "executedRecipes": [
+    "menu-recipe-finished-chocolate-doughnut-stage-1",
+    "menu-recipe-finished-chocolate-doughnut"
+  ],
+  "productId": "product-2",
+  "servingVesselId": "pool-menu-container-dessert-plate-1",
+  "logicalTick": 117,
+  "settlements": [
+    {
+      "sequence": 1,
+      "order": {
+        "value": "order-S07"
+      },
+      "template": {
+        "value": "menu-order-chocolate-doughnut"
+      },
+      "recipe": {
+        "value": "menu-recipe-finished-chocolate-doughnut"
+      },
+      "product": {
+        "value": "product-2"
+      },
+      "player": {
+        "value": "menu-chef"
+      },
+      "container": {
+        "value": "pool-menu-container-dessert-plate-1"
+      },
+      "logicalTick": 116
+    }
+  ],
+  "remainingItems": [
+    {
+      "id": {
+        "value": "fixture-S07-menu-container-fry-basket"
+      },
+      "definition": {
+        "value": "menu-container-fry-basket"
+      },
+      "version": 5,
+      "location": {
+        "kind": 0,
+        "ownerId": null,
+        "slotId": "initial-S07-menu-container-fry-basket"
+      },
+      "recipe": null,
+      "isProduct": false,
+      "originStation": null,
+      "containerCompleted": false,
+      "isDirty": false,
+      "remainingPortions": 0,
+      "boundOrder": null
+    },
+    {
+      "id": {
+        "value": "fixture-menu-supply-chocolate-sauce-2"
+      },
+      "definition": {
+        "value": "menu-supply-chocolate-sauce"
+      },
+      "version": 1,
+      "location": {
+        "kind": 0,
+        "ownerId": null,
+        "slotId": "initial-menu-supply-chocolate-sauce-2"
+      },
+      "recipe": null,
+      "isProduct": false,
+      "originStation": null,
+      "containerCompleted": false,
+      "isDirty": false,
+      "remainingPortions": 0,
+      "boundOrder": null
+    },
+    {
+      "id": {
+        "value": "fixture-menu-supply-chocolate-sauce-3"
+      },
+      "definition": {
+        "value": "menu-supply-chocolate-sauce"
+      },
+      "version": 1,
+      "location": {
+        "kind": 0,
+        "ownerId": null,
+        "slotId": "initial-menu-supply-chocolate-sauce-3"
+      },
+      "recipe": null,
+      "isProduct": false,
+      "originStation": null,
+      "containerCompleted": false,
+      "isDirty": false,
+      "remainingPortions": 0,
+      "boundOrder": null
+    },
+    {
+      "id": {
+        "value": "fixture-menu-supply-chocolate-sauce-4"
+      },
+      "definition": {
+        "value": "menu-supply-chocolate-sauce"
+      },
+      "version": 1,
+      "location": {
+        "kind": 0,
+        "ownerId": null,
+        "slotId": "initial-menu-supply-chocolate-sauce-4"
+      },
+      "recipe": null,
+      "isProduct": false,
+      "originStation": null,
+      "containerCompleted": false,
+      "isDirty": false,
+      "remainingPortions": 0,
+      "boundOrder": null
+    },
+    {
+      "id": {
+        "value": "fixture-menu-supply-chocolate-sauce-5"
+      },
+      "definition": {
+        "value": "menu-supply-chocolate-sauce"
+      },
+      "version": 1,
+      "location": {
+        "kind": 0,
+        "ownerId": null,
+        "slotId": "initial-menu-supply-chocolate-sauce-5"
+      },
+      "recipe": null,
+      "isProduct": false,
+      "originStation": null,
+      "containerCompleted": false,
+      "isDirty": false,
+      "remainingPortions": 0,
+      "boundOrder": null
+    },
+    {
+      "id": {
+        "value": "fixture-menu-supply-chocolate-sauce-6"
+      },
+      "definition": {
+        "value": "menu-supply-chocolate-sauce"
+      },
+      "version": 1,
+      "location": {
+        "kind": 0,
+        "ownerId": null,
+        "slotId": "initial-menu-supply-chocolate-sauce-6"
+      },
+      "recipe": null,
+      "isProduct": false,
+      "originStation": null,
+      "containerCompleted": false,
+      "isDirty": false,
+      "remainingPortions": 0,
+      "boundOrder": null
+    },
+    {
+      "id": {
+        "value": "fixture-menu-supply-chocolate-sauce-7"
+      },
+      "definition": {
+        "value": "menu-supply-chocolate-sauce"
+      },
+      "version": 1,
+      "location": {
+        "kind": 0,
+        "ownerId": null,
+        "slotId": "initial-menu-supply-chocolate-sauce-7"
+      },
+      "recipe": null,
+      "isProduct": false,
+      "originStation": null,
+      "containerCompleted": false,
+      "isDirty": false,
+      "remainingPortions": 0,
+      "boundOrder": null
+    },
+    {
+      "id": {
+        "value": "fixture-menu-supply-chocolate-sauce-8"
+      },
+      "definition": {
+        "value": "menu-supply-chocolate-sauce"
+      },
+      "version": 1,
+      "location": {
+        "kind": 0,
+        "ownerId": null,
+        "slotId": "initial-menu-supply-chocolate-sauce-8"
+      },
+      "recipe": null,
+      "isProduct": false,
+      "originStation": null,
+      "containerCompleted": false,
+      "isDirty": false,
+      "remainingPortions": 0,
+      "boundOrder": null
+    },
+    {
+      "id": {
+        "value": "fixture-menu-supply-raw-doughnut-2"
+      },
+      "definition": {
+        "value": "menu-supply-raw-doughnut"
+      },
+      "version": 1,
+      "location": {
+        "kind": 0,
+        "ownerId": null,
+        "slotId": "initial-menu-supply-raw-doughnut-2"
+      },
+      "recipe": null,
+      "isProduct": false,
+      "originStation": null,
+      "containerCompleted": false,
+      "isDirty": false,
+      "remainingPortions": 0,
+      "boundOrder": null
+    },
+    {
+      "id": {
+        "value": "fixture-menu-supply-raw-doughnut-3"
+      },
+      "definition": {
+        "value": "menu-supply-raw-doughnut"
+      },
+      "version": 1,
+      "location": {
+        "kind": 0,
+        "ownerId": null,
+        "slotId": "initial-menu-supply-raw-doughnut-3"
+      },
+      "recipe": null,
+      "isProduct": false,
+      "originStation": null,
+      "containerCompleted": false,
+      "isDirty": false,
+      "remainingPortions": 0,
+      "boundOrder": null
+    },
+    {
+      "id": {
+        "value": "fixture-menu-supply-raw-doughnut-4"
+      },
+      "definition": {
+        "value": "menu-supply-raw-doughnut"
+      },
+      "version": 1,
+      "location": {
+        "kind": 0,
+        "ownerId": null,
+        "slotId": "initial-menu-supply-raw-doughnut-4"
+      },
+      "recipe": null,
+      "isProduct": false,
+      "originStation": null,
+      "containerCompleted": false,
+      "isDirty": false,
+      "remainingPortions": 0,
+      "boundOrder": null
+    },
+    {
+      "id": {
+        "value": "fixture-menu-supply-raw-doughnut-5"
+      },
+      "definition": {
+        "value": "menu-supply-raw-doughnut"
+      },
+      "version": 1,
+      "location": {
+        "kind": 0,
+        "ownerId": null,
+        "slotId": "initial-menu-supply-raw-doughnut-5"
+      },
+      "recipe": null,
+      "isProduct": false,
+      "originStation": null,
+      "containerCompleted": false,
+      "isDirty": false,
+      "remainingPortions": 0,
+      "boundOrder": null
+    },
+    {
+      "id": {
+        "value": "fixture-menu-supply-raw-doughnut-6"
+      },
+      "definition": {
+        "value": "menu-supply-raw-doughnut"
+      },
+      "version": 1,
+      "location": {
+        "kind": 0,
+        "ownerId": null,
+        "slotId": "initial-menu-supply-raw-doughnut-6"
+      },
+      "recipe": null,
+      "isProduct": false,
+      "originStation": null,
+      "containerCompleted": false,
+      "isDirty": false,
+      "remainingPortions": 0,
+      "boundOrder": null
+    },
+    {
+      "id": {
+        "value": "fixture-menu-supply-raw-doughnut-7"
+      },
+      "definition": {
+        "value": "menu-supply-raw-doughnut"
+      },
+      "version": 1,
+      "location": {
+        "kind": 0,
+        "ownerId": null,
+        "slotId": "initial-menu-supply-raw-doughnut-7"
+      },
+      "recipe": null,
+      "isProduct": false,
+      "originStation": null,
+      "containerCompleted": false,
+      "isDirty": false,
+      "remainingPortions": 0,
+      "boundOrder": null
+    },
+    {
+      "id": {
+        "value": "fixture-menu-supply-raw-doughnut-8"
+      },
+      "definition": {
+        "value": "menu-supply-raw-doughnut"
+      },
+      "version": 1,
+      "location": {
+        "kind": 0,
+        "ownerId": null,
+        "slotId": "initial-menu-supply-raw-doughnut-8"
+      },
+      "recipe": null,
+      "isProduct": false,
+      "originStation": null,
+      "containerCompleted": false,
+      "isDirty": false,
+      "remainingPortions": 0,
+      "boundOrder": null
+    },
+    {
+      "id": {
+        "value": "pool-menu-container-dessert-plate-2"
+      },
+      "definition": {
+        "value": "menu-container-dessert-plate"
+      },
+      "version": 1,
+      "location": {
+        "kind": 0,
+        "ownerId": null,
+        "slotId": "clean-pool"
+      },
+      "recipe": null,
+      "isProduct": false,
+      "originStation": null,
+      "containerCompleted": false,
+      "isDirty": false,
+      "remainingPortions": 0,
+      "boundOrder": null
+    }
+  ],
+  "snapshotSha256": "0888B83B31B216ECBCB767CDA72C7B83C8F280D0B343B340BDB3CC0251E97B55",
+  "pending": "S07-procurement-S14-full-level-exit-and-production-balance"
+}

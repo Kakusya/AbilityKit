@@ -1,0 +1,797 @@
+{
+  "schema": "cooking-menu-production-evidence-v1",
+  "menuSourceId": "D09",
+  "status": "produced-plated-submitted",
+  "scope": {
+    "session": {
+      "value": "menu-production"
+    },
+    "world": {
+      "value": "menu-world"
+    },
+    "match": {
+      "value": "D09"
+    }
+  },
+  "contentIdentity": {
+    "schema": "cooking-definition-v3",
+    "sha256": "176950F8DF1862F8884ABDE97070D9C55A37FF2871A36271FF86E09201CF55AB"
+  },
+  "catalogSha256": "bcadc77368b284cfafe273b608c56d9d6d3a312fa456abf49b1f831133eb5374",
+  "sources": [
+    {
+      "path": "Docs/design/CookingGame/reference/menu-v0.1/Cooking_\u5B8C\u6574\u83DC\u54C1\u4E0E\u52A0\u5DE5\u8FC7\u7A0B_v0.1.md",
+      "sha256": "8d503eeaaf5c2de3e326762beb9b1bf305342b1095b0ba9fcabcde230f902cc2"
+    },
+    {
+      "path": "Docs/design/CookingGame/reference/menu-v0.1/Cooking_\u5B8C\u6574\u83DC\u54C1\u4E0E\u52A0\u5DE5\u8FC7\u7A0B_v0.1.xlsx",
+      "sha256": "5268130330044901cfaecf3cbd7ab048432030ef03c6f17cf3a793d3d744232d"
+    }
+  ],
+  "fixtureValues": "raw-eight-per-definition-serving-two-not-balanced",
+  "initialSupply": [
+    {
+      "definition": {
+        "value": "menu-supply-milk"
+      },
+      "count": 1,
+      "location": "world:initial-menu-supply-milk-1"
+    },
+    {
+      "definition": {
+        "value": "menu-supply-milk"
+      },
+      "count": 1,
+      "location": "world:initial-menu-supply-milk-2"
+    },
+    {
+      "definition": {
+        "value": "menu-supply-milk"
+      },
+      "count": 1,
+      "location": "world:initial-menu-supply-milk-3"
+    },
+    {
+      "definition": {
+        "value": "menu-supply-milk"
+      },
+      "count": 1,
+      "location": "world:initial-menu-supply-milk-4"
+    },
+    {
+      "definition": {
+        "value": "menu-supply-milk"
+      },
+      "count": 1,
+      "location": "world:initial-menu-supply-milk-5"
+    },
+    {
+      "definition": {
+        "value": "menu-supply-milk"
+      },
+      "count": 1,
+      "location": "world:initial-menu-supply-milk-6"
+    },
+    {
+      "definition": {
+        "value": "menu-supply-milk"
+      },
+      "count": 1,
+      "location": "world:initial-menu-supply-milk-7"
+    },
+    {
+      "definition": {
+        "value": "menu-supply-milk"
+      },
+      "count": 1,
+      "location": "world:initial-menu-supply-milk-8"
+    },
+    {
+      "definition": {
+        "value": "menu-supply-strawberry"
+      },
+      "count": 1,
+      "location": "world:initial-menu-supply-strawberry-1"
+    },
+    {
+      "definition": {
+        "value": "menu-supply-strawberry"
+      },
+      "count": 1,
+      "location": "world:initial-menu-supply-strawberry-2"
+    },
+    {
+      "definition": {
+        "value": "menu-supply-strawberry"
+      },
+      "count": 1,
+      "location": "world:initial-menu-supply-strawberry-3"
+    },
+    {
+      "definition": {
+        "value": "menu-supply-strawberry"
+      },
+      "count": 1,
+      "location": "world:initial-menu-supply-strawberry-4"
+    },
+    {
+      "definition": {
+        "value": "menu-supply-strawberry"
+      },
+      "count": 1,
+      "location": "world:initial-menu-supply-strawberry-5"
+    },
+    {
+      "definition": {
+        "value": "menu-supply-strawberry"
+      },
+      "count": 1,
+      "location": "world:initial-menu-supply-strawberry-6"
+    },
+    {
+      "definition": {
+        "value": "menu-supply-strawberry"
+      },
+      "count": 1,
+      "location": "world:initial-menu-supply-strawberry-7"
+    },
+    {
+      "definition": {
+        "value": "menu-supply-strawberry"
+      },
+      "count": 1,
+      "location": "world:initial-menu-supply-strawberry-8"
+    },
+    {
+      "definition": {
+        "value": "menu-supply-vanilla-icecream"
+      },
+      "count": 1,
+      "location": "world:initial-menu-supply-vanilla-icecream-1"
+    },
+    {
+      "definition": {
+        "value": "menu-supply-vanilla-icecream"
+      },
+      "count": 1,
+      "location": "world:initial-menu-supply-vanilla-icecream-2"
+    },
+    {
+      "definition": {
+        "value": "menu-supply-vanilla-icecream"
+      },
+      "count": 1,
+      "location": "world:initial-menu-supply-vanilla-icecream-3"
+    },
+    {
+      "definition": {
+        "value": "menu-supply-vanilla-icecream"
+      },
+      "count": 1,
+      "location": "world:initial-menu-supply-vanilla-icecream-4"
+    },
+    {
+      "definition": {
+        "value": "menu-supply-vanilla-icecream"
+      },
+      "count": 1,
+      "location": "world:initial-menu-supply-vanilla-icecream-5"
+    },
+    {
+      "definition": {
+        "value": "menu-supply-vanilla-icecream"
+      },
+      "count": 1,
+      "location": "world:initial-menu-supply-vanilla-icecream-6"
+    },
+    {
+      "definition": {
+        "value": "menu-supply-vanilla-icecream"
+      },
+      "count": 1,
+      "location": "world:initial-menu-supply-vanilla-icecream-7"
+    },
+    {
+      "definition": {
+        "value": "menu-supply-vanilla-icecream"
+      },
+      "count": 1,
+      "location": "world:initial-menu-supply-vanilla-icecream-8"
+    },
+    {
+      "definition": {
+        "value": "menu-container-drink-jug"
+      },
+      "count": 1,
+      "location": "world:initial-D09-menu-container-drink-jug"
+    },
+    {
+      "definition": {
+        "value": "menu-container-prep-box"
+      },
+      "count": 1,
+      "location": "world:initial-P13-menu-container-prep-box"
+    },
+    {
+      "definition": {
+        "value": "menu-container-prep-box"
+      },
+      "count": 1,
+      "location": "world:initial-storage-menu-recipe-preparation-cut-strawberry"
+    },
+    {
+      "definition": {
+        "value": "menu-container-cold-cup"
+      },
+      "count": 1,
+      "location": "world:initial-cup-1"
+    },
+    {
+      "definition": {
+        "value": "menu-container-cold-cup"
+      },
+      "count": 1,
+      "location": "world:initial-cup-2"
+    }
+  ],
+  "executedRecipes": [
+    "menu-recipe-preparation-cut-strawberry",
+    "menu-recipe-finished-strawberry-shake"
+  ],
+  "productId": "product-2",
+  "servingVesselId": "fixture-cup-1",
+  "logicalTick": 209,
+  "settlements": [
+    {
+      "sequence": 1,
+      "order": {
+        "value": "order-D09"
+      },
+      "template": {
+        "value": "menu-order-strawberry-shake"
+      },
+      "recipe": {
+        "value": "menu-recipe-finished-strawberry-shake"
+      },
+      "product": {
+        "value": "product-2"
+      },
+      "player": {
+        "value": "menu-chef"
+      },
+      "container": {
+        "value": "fixture-cup-1"
+      },
+      "logicalTick": 208
+    }
+  ],
+  "remainingItems": [
+    {
+      "id": {
+        "value": "fixture-D09-menu-container-drink-jug"
+      },
+      "definition": {
+        "value": "menu-container-drink-jug"
+      },
+      "version": 3,
+      "location": {
+        "kind": 0,
+        "ownerId": null,
+        "slotId": "initial-D09-menu-container-drink-jug"
+      },
+      "recipe": null,
+      "isProduct": false,
+      "originStation": null,
+      "containerCompleted": false,
+      "isDirty": false,
+      "remainingPortions": 0,
+      "boundOrder": null
+    },
+    {
+      "id": {
+        "value": "fixture-P13-menu-container-prep-box"
+      },
+      "definition": {
+        "value": "menu-container-prep-box"
+      },
+      "version": 3,
+      "location": {
+        "kind": 0,
+        "ownerId": null,
+        "slotId": "initial-P13-menu-container-prep-box"
+      },
+      "recipe": null,
+      "isProduct": false,
+      "originStation": null,
+      "containerCompleted": false,
+      "isDirty": false,
+      "remainingPortions": 0,
+      "boundOrder": null
+    },
+    {
+      "id": {
+        "value": "fixture-cup-2"
+      },
+      "definition": {
+        "value": "menu-container-cold-cup"
+      },
+      "version": 1,
+      "location": {
+        "kind": 0,
+        "ownerId": null,
+        "slotId": "initial-cup-2"
+      },
+      "recipe": null,
+      "isProduct": false,
+      "originStation": null,
+      "containerCompleted": false,
+      "isDirty": false,
+      "remainingPortions": 0,
+      "boundOrder": null
+    },
+    {
+      "id": {
+        "value": "fixture-menu-supply-milk-2"
+      },
+      "definition": {
+        "value": "menu-supply-milk"
+      },
+      "version": 1,
+      "location": {
+        "kind": 0,
+        "ownerId": null,
+        "slotId": "initial-menu-supply-milk-2"
+      },
+      "recipe": null,
+      "isProduct": false,
+      "originStation": null,
+      "containerCompleted": false,
+      "isDirty": false,
+      "remainingPortions": 0,
+      "boundOrder": null
+    },
+    {
+      "id": {
+        "value": "fixture-menu-supply-milk-3"
+      },
+      "definition": {
+        "value": "menu-supply-milk"
+      },
+      "version": 1,
+      "location": {
+        "kind": 0,
+        "ownerId": null,
+        "slotId": "initial-menu-supply-milk-3"
+      },
+      "recipe": null,
+      "isProduct": false,
+      "originStation": null,
+      "containerCompleted": false,
+      "isDirty": false,
+      "remainingPortions": 0,
+      "boundOrder": null
+    },
+    {
+      "id": {
+        "value": "fixture-menu-supply-milk-4"
+      },
+      "definition": {
+        "value": "menu-supply-milk"
+      },
+      "version": 1,
+      "location": {
+        "kind": 0,
+        "ownerId": null,
+        "slotId": "initial-menu-supply-milk-4"
+      },
+      "recipe": null,
+      "isProduct": false,
+      "originStation": null,
+      "containerCompleted": false,
+      "isDirty": false,
+      "remainingPortions": 0,
+      "boundOrder": null
+    },
+    {
+      "id": {
+        "value": "fixture-menu-supply-milk-5"
+      },
+      "definition": {
+        "value": "menu-supply-milk"
+      },
+      "version": 1,
+      "location": {
+        "kind": 0,
+        "ownerId": null,
+        "slotId": "initial-menu-supply-milk-5"
+      },
+      "recipe": null,
+      "isProduct": false,
+      "originStation": null,
+      "containerCompleted": false,
+      "isDirty": false,
+      "remainingPortions": 0,
+      "boundOrder": null
+    },
+    {
+      "id": {
+        "value": "fixture-menu-supply-milk-6"
+      },
+      "definition": {
+        "value": "menu-supply-milk"
+      },
+      "version": 1,
+      "location": {
+        "kind": 0,
+        "ownerId": null,
+        "slotId": "initial-menu-supply-milk-6"
+      },
+      "recipe": null,
+      "isProduct": false,
+      "originStation": null,
+      "containerCompleted": false,
+      "isDirty": false,
+      "remainingPortions": 0,
+      "boundOrder": null
+    },
+    {
+      "id": {
+        "value": "fixture-menu-supply-milk-7"
+      },
+      "definition": {
+        "value": "menu-supply-milk"
+      },
+      "version": 1,
+      "location": {
+        "kind": 0,
+        "ownerId": null,
+        "slotId": "initial-menu-supply-milk-7"
+      },
+      "recipe": null,
+      "isProduct": false,
+      "originStation": null,
+      "containerCompleted": false,
+      "isDirty": false,
+      "remainingPortions": 0,
+      "boundOrder": null
+    },
+    {
+      "id": {
+        "value": "fixture-menu-supply-milk-8"
+      },
+      "definition": {
+        "value": "menu-supply-milk"
+      },
+      "version": 1,
+      "location": {
+        "kind": 0,
+        "ownerId": null,
+        "slotId": "initial-menu-supply-milk-8"
+      },
+      "recipe": null,
+      "isProduct": false,
+      "originStation": null,
+      "containerCompleted": false,
+      "isDirty": false,
+      "remainingPortions": 0,
+      "boundOrder": null
+    },
+    {
+      "id": {
+        "value": "fixture-menu-supply-strawberry-2"
+      },
+      "definition": {
+        "value": "menu-supply-strawberry"
+      },
+      "version": 1,
+      "location": {
+        "kind": 0,
+        "ownerId": null,
+        "slotId": "initial-menu-supply-strawberry-2"
+      },
+      "recipe": null,
+      "isProduct": false,
+      "originStation": null,
+      "containerCompleted": false,
+      "isDirty": false,
+      "remainingPortions": 0,
+      "boundOrder": null
+    },
+    {
+      "id": {
+        "value": "fixture-menu-supply-strawberry-3"
+      },
+      "definition": {
+        "value": "menu-supply-strawberry"
+      },
+      "version": 1,
+      "location": {
+        "kind": 0,
+        "ownerId": null,
+        "slotId": "initial-menu-supply-strawberry-3"
+      },
+      "recipe": null,
+      "isProduct": false,
+      "originStation": null,
+      "containerCompleted": false,
+      "isDirty": false,
+      "remainingPortions": 0,
+      "boundOrder": null
+    },
+    {
+      "id": {
+        "value": "fixture-menu-supply-strawberry-4"
+      },
+      "definition": {
+        "value": "menu-supply-strawberry"
+      },
+      "version": 1,
+      "location": {
+        "kind": 0,
+        "ownerId": null,
+        "slotId": "initial-menu-supply-strawberry-4"
+      },
+      "recipe": null,
+      "isProduct": false,
+      "originStation": null,
+      "containerCompleted": false,
+      "isDirty": false,
+      "remainingPortions": 0,
+      "boundOrder": null
+    },
+    {
+      "id": {
+        "value": "fixture-menu-supply-strawberry-5"
+      },
+      "definition": {
+        "value": "menu-supply-strawberry"
+      },
+      "version": 1,
+      "location": {
+        "kind": 0,
+        "ownerId": null,
+        "slotId": "initial-menu-supply-strawberry-5"
+      },
+      "recipe": null,
+      "isProduct": false,
+      "originStation": null,
+      "containerCompleted": false,
+      "isDirty": false,
+      "remainingPortions": 0,
+      "boundOrder": null
+    },
+    {
+      "id": {
+        "value": "fixture-menu-supply-strawberry-6"
+      },
+      "definition": {
+        "value": "menu-supply-strawberry"
+      },
+      "version": 1,
+      "location": {
+        "kind": 0,
+        "ownerId": null,
+        "slotId": "initial-menu-supply-strawberry-6"
+      },
+      "recipe": null,
+      "isProduct": false,
+      "originStation": null,
+      "containerCompleted": false,
+      "isDirty": false,
+      "remainingPortions": 0,
+      "boundOrder": null
+    },
+    {
+      "id": {
+        "value": "fixture-menu-supply-strawberry-7"
+      },
+      "definition": {
+        "value": "menu-supply-strawberry"
+      },
+      "version": 1,
+      "location": {
+        "kind": 0,
+        "ownerId": null,
+        "slotId": "initial-menu-supply-strawberry-7"
+      },
+      "recipe": null,
+      "isProduct": false,
+      "originStation": null,
+      "containerCompleted": false,
+      "isDirty": false,
+      "remainingPortions": 0,
+      "boundOrder": null
+    },
+    {
+      "id": {
+        "value": "fixture-menu-supply-strawberry-8"
+      },
+      "definition": {
+        "value": "menu-supply-strawberry"
+      },
+      "version": 1,
+      "location": {
+        "kind": 0,
+        "ownerId": null,
+        "slotId": "initial-menu-supply-strawberry-8"
+      },
+      "recipe": null,
+      "isProduct": false,
+      "originStation": null,
+      "containerCompleted": false,
+      "isDirty": false,
+      "remainingPortions": 0,
+      "boundOrder": null
+    },
+    {
+      "id": {
+        "value": "fixture-menu-supply-vanilla-icecream-2"
+      },
+      "definition": {
+        "value": "menu-supply-vanilla-icecream"
+      },
+      "version": 1,
+      "location": {
+        "kind": 0,
+        "ownerId": null,
+        "slotId": "initial-menu-supply-vanilla-icecream-2"
+      },
+      "recipe": null,
+      "isProduct": false,
+      "originStation": null,
+      "containerCompleted": false,
+      "isDirty": false,
+      "remainingPortions": 0,
+      "boundOrder": null
+    },
+    {
+      "id": {
+        "value": "fixture-menu-supply-vanilla-icecream-3"
+      },
+      "definition": {
+        "value": "menu-supply-vanilla-icecream"
+      },
+      "version": 1,
+      "location": {
+        "kind": 0,
+        "ownerId": null,
+        "slotId": "initial-menu-supply-vanilla-icecream-3"
+      },
+      "recipe": null,
+      "isProduct": false,
+      "originStation": null,
+      "containerCompleted": false,
+      "isDirty": false,
+      "remainingPortions": 0,
+      "boundOrder": null
+    },
+    {
+      "id": {
+        "value": "fixture-menu-supply-vanilla-icecream-4"
+      },
+      "definition": {
+        "value": "menu-supply-vanilla-icecream"
+      },
+      "version": 1,
+      "location": {
+        "kind": 0,
+        "ownerId": null,
+        "slotId": "initial-menu-supply-vanilla-icecream-4"
+      },
+      "recipe": null,
+      "isProduct": false,
+      "originStation": null,
+      "containerCompleted": false,
+      "isDirty": false,
+      "remainingPortions": 0,
+      "boundOrder": null
+    },
+    {
+      "id": {
+        "value": "fixture-menu-supply-vanilla-icecream-5"
+      },
+      "definition": {
+        "value": "menu-supply-vanilla-icecream"
+      },
+      "version": 1,
+      "location": {
+        "kind": 0,
+        "ownerId": null,
+        "slotId": "initial-menu-supply-vanilla-icecream-5"
+      },
+      "recipe": null,
+      "isProduct": false,
+      "originStation": null,
+      "containerCompleted": false,
+      "isDirty": false,
+      "remainingPortions": 0,
+      "boundOrder": null
+    },
+    {
+      "id": {
+        "value": "fixture-menu-supply-vanilla-icecream-6"
+      },
+      "definition": {
+        "value": "menu-supply-vanilla-icecream"
+      },
+      "version": 1,
+      "location": {
+        "kind": 0,
+        "ownerId": null,
+        "slotId": "initial-menu-supply-vanilla-icecream-6"
+      },
+      "recipe": null,
+      "isProduct": false,
+      "originStation": null,
+      "containerCompleted": false,
+      "isDirty": false,
+      "remainingPortions": 0,
+      "boundOrder": null
+    },
+    {
+      "id": {
+        "value": "fixture-menu-supply-vanilla-icecream-7"
+      },
+      "definition": {
+        "value": "menu-supply-vanilla-icecream"
+      },
+      "version": 1,
+      "location": {
+        "kind": 0,
+        "ownerId": null,
+        "slotId": "initial-menu-supply-vanilla-icecream-7"
+      },
+      "recipe": null,
+      "isProduct": false,
+      "originStation": null,
+      "containerCompleted": false,
+      "isDirty": false,
+      "remainingPortions": 0,
+      "boundOrder": null
+    },
+    {
+      "id": {
+        "value": "fixture-menu-supply-vanilla-icecream-8"
+      },
+      "definition": {
+        "value": "menu-supply-vanilla-icecream"
+      },
+      "version": 1,
+      "location": {
+        "kind": 0,
+        "ownerId": null,
+        "slotId": "initial-menu-supply-vanilla-icecream-8"
+      },
+      "recipe": null,
+      "isProduct": false,
+      "originStation": null,
+      "containerCompleted": false,
+      "isDirty": false,
+      "remainingPortions": 0,
+      "boundOrder": null
+    },
+    {
+      "id": {
+        "value": "fixture-storage-menu-recipe-preparation-cut-strawberry"
+      },
+      "definition": {
+        "value": "menu-container-prep-box"
+      },
+      "version": 1,
+      "location": {
+        "kind": 0,
+        "ownerId": null,
+        "slotId": "initial-storage-menu-recipe-preparation-cut-strawberry"
+      },
+      "recipe": null,
+      "isProduct": false,
+      "originStation": null,
+      "containerCompleted": false,
+      "isDirty": false,
+      "remainingPortions": 0,
+      "boundOrder": null
+    }
+  ],
+  "snapshotSha256": "8CFA6088084B2E9E7AB2DD8A54EE7BED38C46E08EC789E4CD58D537AEA8A3A71",
+  "pending": "S07-procurement-S14-full-level-exit-and-production-balance"
+}

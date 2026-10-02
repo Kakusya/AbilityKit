@@ -14,3 +14,14 @@
 Commands: python tools/generate-cooking-menu.py --check; python tools/test_cooking_menu_generator.py; dotnet test src/AbilityKit.Game.Cooking.Tests --filter FullyQualifiedName~CookingMenuCatalogTests; powershell -ExecutionPolicy Bypass -File tools/run_test_gate.ps1 -Gate cooking-kitchen-loop. Actual results go into research/verification.md and check.jsonl; planned commands are never recorded as passes. Unity remains out of authorized scope.
 
 Progress: published core typed mapping implemented and real spatial domain runner now produces/plates87;56meal/dessert delivery proven,31drinkbinding and all87ETrecovery pending. Validated501bf383d hooks received, not yet mapped at this commit.
+
+## Actual authorized acceptance checkpoint
+
+- [x] Coordinator-validated core carrier/provenance and S05 binding/disposal/nested-vessel fixes imported; own core/schema mutations prohibited.
+- [x] Concrete API/error/version/source review and dependency closure completed under owner-approved Orca scope.
+- [x] All selected candidate routes execute finite supply -> preparation -> stage -> finished product -> correct vessel -> actual delivery.
+- [x] Domain rejection/rebind/unbind and true ET ingress/codec/dispose/restore canonical equality pass; drinking cups consumed, food vessels enter washing semantics.
+- [x] Actual final gate330 focused/452 Cooking/197 ET and generator5/5 passed; durable current per-menu evidence linked.
+- [ ] Coordinator independent review/local master integration and task closure/archive; worker does not merge or archive unmerged task.
+
+Current evidence supersedes historical pending-hook language above. Candidate counts do not define the initial level; direct order fixture setup/finite initial stock are not S07/S14 full procurement/front closure.

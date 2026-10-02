@@ -1,0 +1,108 @@
+{
+  "schema": "cooking-menu-et-production-evidence-v1",
+  "menu": "D20",
+  "checkpointPoint": "produced-intermediate",
+  "identity": {
+    "schema": "cooking-definition-v3",
+    "sha256": "412055807680E6947682AF0D2E2F2BA0FA8A168F401FA2CCD284FDFF222A2F5F"
+  },
+  "provenance": {
+    "catalogSchema": "cooking-menu-catalog-v1",
+    "catalogSha256": "bcadc77368b284cfafe273b608c56d9d6d3a312fa456abf49b1f831133eb5374",
+    "sources": [
+      {
+        "path": "Docs/design/CookingGame/reference/menu-v0.1/Cooking_\u5B8C\u6574\u83DC\u54C1\u4E0E\u52A0\u5DE5\u8FC7\u7A0B_v0.1.md",
+        "sha256": "8d503eeaaf5c2de3e326762beb9b1bf305342b1095b0ba9fcabcde230f902cc2"
+      },
+      {
+        "path": "Docs/design/CookingGame/reference/menu-v0.1/Cooking_\u5B8C\u6574\u83DC\u54C1\u4E0E\u52A0\u5DE5\u8FC7\u7A0B_v0.1.xlsx",
+        "sha256": "5268130330044901cfaecf3cbd7ab048432030ef03c6f17cf3a793d3d744232d"
+      }
+    ],
+    "selectedMenus": [
+      "D20"
+    ]
+  },
+  "level": {
+    "matchScope": {
+      "session": {
+        "value": "menu-production"
+      },
+      "world": {
+        "value": "menu-world"
+      },
+      "match": {
+        "value": "D20"
+      }
+    },
+    "restaurantRuntime": {
+      "value": 1
+    },
+    "level": {
+      "value": "menu-fixture"
+    },
+    "levelEpoch": 1
+  },
+  "recovery": "actual-host-export-codec-dispose-empty-factory-restore",
+  "intermediateCheckpointSha256": "7e989f9a18e02aeeab23f7d28f93e7280171a62ee85447633e89346196de79de",
+  "finalCheckpointSha256": "f94f984690d70d39666a29d90ea0945bc2d80a1d8a27671f401ad897b5cf30bf",
+  "finalSnapshotSha256": "73733D22CE5E8CEF8DF105847CD9C964084F63D19FDB97096BCC5C8E10F830EB",
+  "commandIngressCount": 492,
+  "recipes": [
+    "menu-recipe-preparation-coffee-powder",
+    "menu-recipe-preparation-espresso",
+    "menu-recipe-preparation-hot-milk",
+    "menu-recipe-preparation-hot-milk",
+    "menu-recipe-finished-mocha-stage-1",
+    "menu-recipe-preparation-whipped-cream",
+    "menu-recipe-finished-mocha"
+  ],
+  "settlements": [
+    {
+      "sequence": 1,
+      "order": {
+        "value": "order-D20"
+      },
+      "template": {
+        "value": "menu-order-mocha"
+      },
+      "recipe": {
+        "value": "menu-recipe-finished-mocha"
+      },
+      "product": {
+        "value": "product-8"
+      },
+      "player": {
+        "value": "menu-chef"
+      },
+      "container": {
+        "value": "fixture-cup-1"
+      },
+      "logicalTick": 491
+    }
+  ],
+  "servingVessel": {
+    "id": {
+      "value": "fixture-cup-1"
+    },
+    "definition": {
+      "value": "menu-container-hot-cup"
+    },
+    "version": 5,
+    "location": {
+      "kind": 1,
+      "ownerId": "menu-chef",
+      "slotId": null
+    },
+    "removed": true,
+    "recipe": null,
+    "isProduct": false,
+    "originStation": null,
+    "containerCompleted": false,
+    "isDirty": false,
+    "remainingPortions": 0,
+    "boundOrder": null
+  },
+  "fixtureBoundary": "finite validated raw/empty-vessel setup and direct OpenOrder fixture; not S07 procurement or S14 full front lifecycle",
+  "finalCanonicalEqualsUninterrupted": true
+}

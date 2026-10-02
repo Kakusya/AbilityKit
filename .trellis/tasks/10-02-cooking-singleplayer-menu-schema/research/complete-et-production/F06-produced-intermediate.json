@@ -1,0 +1,105 @@
+{
+  "schema": "cooking-menu-et-production-evidence-v1",
+  "menu": "F06",
+  "checkpointPoint": "produced-intermediate",
+  "identity": {
+    "schema": "cooking-definition-v3",
+    "sha256": "B2E65DCEFCC8D0CF7663CA1D0105D3553CB10438A896E3695AB5A0CB942257E5"
+  },
+  "provenance": {
+    "catalogSchema": "cooking-menu-catalog-v1",
+    "catalogSha256": "bcadc77368b284cfafe273b608c56d9d6d3a312fa456abf49b1f831133eb5374",
+    "sources": [
+      {
+        "path": "Docs/design/CookingGame/reference/menu-v0.1/Cooking_\u5B8C\u6574\u83DC\u54C1\u4E0E\u52A0\u5DE5\u8FC7\u7A0B_v0.1.md",
+        "sha256": "8d503eeaaf5c2de3e326762beb9b1bf305342b1095b0ba9fcabcde230f902cc2"
+      },
+      {
+        "path": "Docs/design/CookingGame/reference/menu-v0.1/Cooking_\u5B8C\u6574\u83DC\u54C1\u4E0E\u52A0\u5DE5\u8FC7\u7A0B_v0.1.xlsx",
+        "sha256": "5268130330044901cfaecf3cbd7ab048432030ef03c6f17cf3a793d3d744232d"
+      }
+    ],
+    "selectedMenus": [
+      "F06"
+    ]
+  },
+  "level": {
+    "matchScope": {
+      "session": {
+        "value": "menu-production"
+      },
+      "world": {
+        "value": "menu-world"
+      },
+      "match": {
+        "value": "F06"
+      }
+    },
+    "restaurantRuntime": {
+      "value": 1
+    },
+    "level": {
+      "value": "menu-fixture"
+    },
+    "levelEpoch": 1
+  },
+  "recovery": "actual-host-export-codec-dispose-empty-factory-restore",
+  "intermediateCheckpointSha256": "a6ed3a43bac87175884816c0c90d89d9a8c9ff87f165b62c42121575fc54e13e",
+  "finalCheckpointSha256": "2703b4cb3e9c40aa1b14d58775a97fd1630e97f779fb5753868f6ec735f72260",
+  "finalSnapshotSha256": "9A647C3FE710F1A63343667E185C132C9C805619E38F88BCCB4D4EEA11F6C463",
+  "commandIngressCount": 283,
+  "recipes": [
+    "menu-recipe-preparation-cut-carrot",
+    "menu-recipe-preparation-cut-onion",
+    "menu-recipe-preparation-cut-potato",
+    "menu-recipe-finished-potato-soup"
+  ],
+  "settlements": [
+    {
+      "sequence": 1,
+      "order": {
+        "value": "order-F06"
+      },
+      "template": {
+        "value": "menu-order-potato-soup"
+      },
+      "recipe": {
+        "value": "menu-recipe-finished-potato-soup"
+      },
+      "product": {
+        "value": "product-4"
+      },
+      "player": {
+        "value": "menu-chef"
+      },
+      "container": {
+        "value": "pool-menu-container-soup-bowl-1"
+      },
+      "logicalTick": 282
+    }
+  ],
+  "servingVessel": {
+    "id": {
+      "value": "pool-menu-container-soup-bowl-1"
+    },
+    "definition": {
+      "value": "menu-container-soup-bowl"
+    },
+    "version": 4,
+    "location": {
+      "kind": 0,
+      "ownerId": null,
+      "slotId": "serving-F06"
+    },
+    "removed": true,
+    "recipe": null,
+    "isProduct": false,
+    "originStation": null,
+    "containerCompleted": false,
+    "isDirty": true,
+    "remainingPortions": 0,
+    "boundOrder": null
+  },
+  "fixtureBoundary": "finite validated raw/empty-vessel setup and direct OpenOrder fixture; not S07 procurement or S14 full front lifecycle",
+  "finalCanonicalEqualsUninterrupted": true
+}

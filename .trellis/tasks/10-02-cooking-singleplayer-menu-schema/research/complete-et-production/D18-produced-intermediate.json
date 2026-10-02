@@ -1,0 +1,107 @@
+{
+  "schema": "cooking-menu-et-production-evidence-v1",
+  "menu": "D18",
+  "checkpointPoint": "produced-intermediate",
+  "identity": {
+    "schema": "cooking-definition-v3",
+    "sha256": "1A7CFA9CDD114FAAE7D7472D28CE4F26119C17B7397AB0025CA7812C28439643"
+  },
+  "provenance": {
+    "catalogSchema": "cooking-menu-catalog-v1",
+    "catalogSha256": "bcadc77368b284cfafe273b608c56d9d6d3a312fa456abf49b1f831133eb5374",
+    "sources": [
+      {
+        "path": "Docs/design/CookingGame/reference/menu-v0.1/Cooking_\u5B8C\u6574\u83DC\u54C1\u4E0E\u52A0\u5DE5\u8FC7\u7A0B_v0.1.md",
+        "sha256": "8d503eeaaf5c2de3e326762beb9b1bf305342b1095b0ba9fcabcde230f902cc2"
+      },
+      {
+        "path": "Docs/design/CookingGame/reference/menu-v0.1/Cooking_\u5B8C\u6574\u83DC\u54C1\u4E0E\u52A0\u5DE5\u8FC7\u7A0B_v0.1.xlsx",
+        "sha256": "5268130330044901cfaecf3cbd7ab048432030ef03c6f17cf3a793d3d744232d"
+      }
+    ],
+    "selectedMenus": [
+      "D18"
+    ]
+  },
+  "level": {
+    "matchScope": {
+      "session": {
+        "value": "menu-production"
+      },
+      "world": {
+        "value": "menu-world"
+      },
+      "match": {
+        "value": "D18"
+      }
+    },
+    "restaurantRuntime": {
+      "value": 1
+    },
+    "level": {
+      "value": "menu-fixture"
+    },
+    "levelEpoch": 1
+  },
+  "recovery": "actual-host-export-codec-dispose-empty-factory-restore",
+  "intermediateCheckpointSha256": "5070e44590c73ec44cc90673c0ec5f21174f1c48a81c8359a72653d8681a1db7",
+  "finalCheckpointSha256": "4a16467834c0149ced2e516de838b30f6352626359c8273ae87db919d6e4f711",
+  "finalSnapshotSha256": "53676C347FDA6D417502D7485954D17EDB68AF0B0117BD6D259FF9CE19A6837B",
+  "commandIngressCount": 273,
+  "recipes": [
+    "menu-recipe-preparation-coffee-powder",
+    "menu-recipe-preparation-espresso",
+    "menu-recipe-preparation-hot-milk",
+    "menu-recipe-finished-cappuccino-stage-1",
+    "menu-recipe-preparation-milk-foam",
+    "menu-recipe-finished-cappuccino"
+  ],
+  "settlements": [
+    {
+      "sequence": 1,
+      "order": {
+        "value": "order-D18"
+      },
+      "template": {
+        "value": "menu-order-cappuccino"
+      },
+      "recipe": {
+        "value": "menu-recipe-finished-cappuccino"
+      },
+      "product": {
+        "value": "product-6"
+      },
+      "player": {
+        "value": "menu-chef"
+      },
+      "container": {
+        "value": "fixture-cup-1"
+      },
+      "logicalTick": 272
+    }
+  ],
+  "servingVessel": {
+    "id": {
+      "value": "fixture-cup-1"
+    },
+    "definition": {
+      "value": "menu-container-hot-cup"
+    },
+    "version": 5,
+    "location": {
+      "kind": 1,
+      "ownerId": "menu-chef",
+      "slotId": null
+    },
+    "removed": true,
+    "recipe": null,
+    "isProduct": false,
+    "originStation": null,
+    "containerCompleted": false,
+    "isDirty": false,
+    "remainingPortions": 0,
+    "boundOrder": null
+  },
+  "fixtureBoundary": "finite validated raw/empty-vessel setup and direct OpenOrder fixture; not S07 procurement or S14 full front lifecycle",
+  "finalCanonicalEqualsUninterrupted": true
+}

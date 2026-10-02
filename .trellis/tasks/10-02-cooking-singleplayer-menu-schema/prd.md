@@ -20,3 +20,7 @@ This work owns CookingMenuCatalog.cs, deterministic generator/source identity ma
 - S09-S13 all87 recipes execute supply -> preparation -> stage -> product -> correct serving vessel -> binding if required -> submission -> checkpoint recovery. No injected intermediate/final products or second simulation.
 
 All new ticks/yield/supply/score values are fixture defaults, not balance or a level menu. No economy penalties, fine minigames, cooling checks, network or Unity work.
+
+## Current implementation acceptance pointer
+
+Coordinator-validated carrier/provenance/S05 hooks are now integrated into actual menu loading. All87 source-to-preparation-to-final-to-correct-vessel-to-delivery routes and121 actual ET recovery comparisons passed; current evidence and exact remaining S07/S14/Unity/balance boundaries: ../10-02-cooking-singleplayer-menu-schema/research/final-report.md and ../10-02-cooking-singleplayer-menu-schema/research/verification.md. Historical pending-hook/design-only statements above are superseded for worker menu acceptance; coordinator independent review/master integration still pending.

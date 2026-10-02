@@ -1,0 +1,471 @@
+{
+  "schema": "cooking-menu-production-evidence-v1",
+  "menuSourceId": "D04",
+  "status": "produced-plated-submitted",
+  "scope": {
+    "session": {
+      "value": "menu-production"
+    },
+    "world": {
+      "value": "menu-world"
+    },
+    "match": {
+      "value": "D04"
+    }
+  },
+  "contentIdentity": {
+    "schema": "cooking-definition-v3",
+    "sha256": "AFC07F52AC5009BBB9153394314C99DD0E1BBF17F6975FBBE00AD1C611B7A88C"
+  },
+  "catalogSha256": "bcadc77368b284cfafe273b608c56d9d6d3a312fa456abf49b1f831133eb5374",
+  "sources": [
+    {
+      "path": "Docs/design/CookingGame/reference/menu-v0.1/Cooking_\u5B8C\u6574\u83DC\u54C1\u4E0E\u52A0\u5DE5\u8FC7\u7A0B_v0.1.md",
+      "sha256": "8d503eeaaf5c2de3e326762beb9b1bf305342b1095b0ba9fcabcde230f902cc2"
+    },
+    {
+      "path": "Docs/design/CookingGame/reference/menu-v0.1/Cooking_\u5B8C\u6574\u83DC\u54C1\u4E0E\u52A0\u5DE5\u8FC7\u7A0B_v0.1.xlsx",
+      "sha256": "5268130330044901cfaecf3cbd7ab048432030ef03c6f17cf3a793d3d744232d"
+    }
+  ],
+  "fixtureValues": "raw-eight-per-definition-serving-two-not-balanced",
+  "initialSupply": [
+    {
+      "definition": {
+        "value": "menu-supply-orange"
+      },
+      "count": 1,
+      "location": "world:initial-menu-supply-orange-1"
+    },
+    {
+      "definition": {
+        "value": "menu-supply-orange"
+      },
+      "count": 1,
+      "location": "world:initial-menu-supply-orange-2"
+    },
+    {
+      "definition": {
+        "value": "menu-supply-orange"
+      },
+      "count": 1,
+      "location": "world:initial-menu-supply-orange-3"
+    },
+    {
+      "definition": {
+        "value": "menu-supply-orange"
+      },
+      "count": 1,
+      "location": "world:initial-menu-supply-orange-4"
+    },
+    {
+      "definition": {
+        "value": "menu-supply-orange"
+      },
+      "count": 1,
+      "location": "world:initial-menu-supply-orange-5"
+    },
+    {
+      "definition": {
+        "value": "menu-supply-orange"
+      },
+      "count": 1,
+      "location": "world:initial-menu-supply-orange-6"
+    },
+    {
+      "definition": {
+        "value": "menu-supply-orange"
+      },
+      "count": 1,
+      "location": "world:initial-menu-supply-orange-7"
+    },
+    {
+      "definition": {
+        "value": "menu-supply-orange"
+      },
+      "count": 1,
+      "location": "world:initial-menu-supply-orange-8"
+    },
+    {
+      "definition": {
+        "value": "menu-container-drink-jug"
+      },
+      "count": 1,
+      "location": "world:initial-D04-menu-container-drink-jug"
+    },
+    {
+      "definition": {
+        "value": "menu-container-prep-box"
+      },
+      "count": 1,
+      "location": "world:initial-P09-menu-container-prep-box"
+    },
+    {
+      "definition": {
+        "value": "menu-container-prep-box"
+      },
+      "count": 1,
+      "location": "world:initial-storage-menu-recipe-preparation-cut-orange"
+    },
+    {
+      "definition": {
+        "value": "menu-container-juice-jug"
+      },
+      "count": 1,
+      "location": "world:initial-P42-menu-container-juice-jug"
+    },
+    {
+      "definition": {
+        "value": "menu-container-juice-jug"
+      },
+      "count": 1,
+      "location": "world:initial-storage-menu-recipe-preparation-orange-juice"
+    },
+    {
+      "definition": {
+        "value": "menu-container-cold-cup"
+      },
+      "count": 1,
+      "location": "world:initial-cup-1"
+    },
+    {
+      "definition": {
+        "value": "menu-container-cold-cup"
+      },
+      "count": 1,
+      "location": "world:initial-cup-2"
+    }
+  ],
+  "executedRecipes": [
+    "menu-recipe-preparation-cut-orange",
+    "menu-recipe-preparation-orange-juice",
+    "menu-recipe-finished-orange-juice"
+  ],
+  "productId": "product-4",
+  "servingVesselId": "fixture-cup-1",
+  "logicalTick": 216,
+  "settlements": [
+    {
+      "sequence": 1,
+      "order": {
+        "value": "order-D04"
+      },
+      "template": {
+        "value": "menu-order-orange-juice"
+      },
+      "recipe": {
+        "value": "menu-recipe-finished-orange-juice"
+      },
+      "product": {
+        "value": "product-4"
+      },
+      "player": {
+        "value": "menu-chef"
+      },
+      "container": {
+        "value": "fixture-cup-1"
+      },
+      "logicalTick": 215
+    }
+  ],
+  "remainingItems": [
+    {
+      "id": {
+        "value": "fixture-D04-menu-container-drink-jug"
+      },
+      "definition": {
+        "value": "menu-container-drink-jug"
+      },
+      "version": 3,
+      "location": {
+        "kind": 0,
+        "ownerId": null,
+        "slotId": "initial-D04-menu-container-drink-jug"
+      },
+      "recipe": null,
+      "isProduct": false,
+      "originStation": null,
+      "containerCompleted": false,
+      "isDirty": false,
+      "remainingPortions": 0,
+      "boundOrder": null
+    },
+    {
+      "id": {
+        "value": "fixture-P09-menu-container-prep-box"
+      },
+      "definition": {
+        "value": "menu-container-prep-box"
+      },
+      "version": 3,
+      "location": {
+        "kind": 0,
+        "ownerId": null,
+        "slotId": "initial-P09-menu-container-prep-box"
+      },
+      "recipe": null,
+      "isProduct": false,
+      "originStation": null,
+      "containerCompleted": false,
+      "isDirty": false,
+      "remainingPortions": 0,
+      "boundOrder": null
+    },
+    {
+      "id": {
+        "value": "fixture-P42-menu-container-juice-jug"
+      },
+      "definition": {
+        "value": "menu-container-juice-jug"
+      },
+      "version": 5,
+      "location": {
+        "kind": 0,
+        "ownerId": null,
+        "slotId": "initial-P42-menu-container-juice-jug"
+      },
+      "recipe": null,
+      "isProduct": false,
+      "originStation": null,
+      "containerCompleted": false,
+      "isDirty": false,
+      "remainingPortions": 0,
+      "boundOrder": null
+    },
+    {
+      "id": {
+        "value": "fixture-cup-2"
+      },
+      "definition": {
+        "value": "menu-container-cold-cup"
+      },
+      "version": 1,
+      "location": {
+        "kind": 0,
+        "ownerId": null,
+        "slotId": "initial-cup-2"
+      },
+      "recipe": null,
+      "isProduct": false,
+      "originStation": null,
+      "containerCompleted": false,
+      "isDirty": false,
+      "remainingPortions": 0,
+      "boundOrder": null
+    },
+    {
+      "id": {
+        "value": "fixture-menu-supply-orange-2"
+      },
+      "definition": {
+        "value": "menu-supply-orange"
+      },
+      "version": 1,
+      "location": {
+        "kind": 0,
+        "ownerId": null,
+        "slotId": "initial-menu-supply-orange-2"
+      },
+      "recipe": null,
+      "isProduct": false,
+      "originStation": null,
+      "containerCompleted": false,
+      "isDirty": false,
+      "remainingPortions": 0,
+      "boundOrder": null
+    },
+    {
+      "id": {
+        "value": "fixture-menu-supply-orange-3"
+      },
+      "definition": {
+        "value": "menu-supply-orange"
+      },
+      "version": 1,
+      "location": {
+        "kind": 0,
+        "ownerId": null,
+        "slotId": "initial-menu-supply-orange-3"
+      },
+      "recipe": null,
+      "isProduct": false,
+      "originStation": null,
+      "containerCompleted": false,
+      "isDirty": false,
+      "remainingPortions": 0,
+      "boundOrder": null
+    },
+    {
+      "id": {
+        "value": "fixture-menu-supply-orange-4"
+      },
+      "definition": {
+        "value": "menu-supply-orange"
+      },
+      "version": 1,
+      "location": {
+        "kind": 0,
+        "ownerId": null,
+        "slotId": "initial-menu-supply-orange-4"
+      },
+      "recipe": null,
+      "isProduct": false,
+      "originStation": null,
+      "containerCompleted": false,
+      "isDirty": false,
+      "remainingPortions": 0,
+      "boundOrder": null
+    },
+    {
+      "id": {
+        "value": "fixture-menu-supply-orange-5"
+      },
+      "definition": {
+        "value": "menu-supply-orange"
+      },
+      "version": 1,
+      "location": {
+        "kind": 0,
+        "ownerId": null,
+        "slotId": "initial-menu-supply-orange-5"
+      },
+      "recipe": null,
+      "isProduct": false,
+      "originStation": null,
+      "containerCompleted": false,
+      "isDirty": false,
+      "remainingPortions": 0,
+      "boundOrder": null
+    },
+    {
+      "id": {
+        "value": "fixture-menu-supply-orange-6"
+      },
+      "definition": {
+        "value": "menu-supply-orange"
+      },
+      "version": 1,
+      "location": {
+        "kind": 0,
+        "ownerId": null,
+        "slotId": "initial-menu-supply-orange-6"
+      },
+      "recipe": null,
+      "isProduct": false,
+      "originStation": null,
+      "containerCompleted": false,
+      "isDirty": false,
+      "remainingPortions": 0,
+      "boundOrder": null
+    },
+    {
+      "id": {
+        "value": "fixture-menu-supply-orange-7"
+      },
+      "definition": {
+        "value": "menu-supply-orange"
+      },
+      "version": 1,
+      "location": {
+        "kind": 0,
+        "ownerId": null,
+        "slotId": "initial-menu-supply-orange-7"
+      },
+      "recipe": null,
+      "isProduct": false,
+      "originStation": null,
+      "containerCompleted": false,
+      "isDirty": false,
+      "remainingPortions": 0,
+      "boundOrder": null
+    },
+    {
+      "id": {
+        "value": "fixture-menu-supply-orange-8"
+      },
+      "definition": {
+        "value": "menu-supply-orange"
+      },
+      "version": 1,
+      "location": {
+        "kind": 0,
+        "ownerId": null,
+        "slotId": "initial-menu-supply-orange-8"
+      },
+      "recipe": null,
+      "isProduct": false,
+      "originStation": null,
+      "containerCompleted": false,
+      "isDirty": false,
+      "remainingPortions": 0,
+      "boundOrder": null
+    },
+    {
+      "id": {
+        "value": "fixture-storage-menu-recipe-preparation-cut-orange"
+      },
+      "definition": {
+        "value": "menu-container-prep-box"
+      },
+      "version": 1,
+      "location": {
+        "kind": 0,
+        "ownerId": null,
+        "slotId": "initial-storage-menu-recipe-preparation-cut-orange"
+      },
+      "recipe": null,
+      "isProduct": false,
+      "originStation": null,
+      "containerCompleted": false,
+      "isDirty": false,
+      "remainingPortions": 0,
+      "boundOrder": null
+    },
+    {
+      "id": {
+        "value": "fixture-storage-menu-recipe-preparation-orange-juice"
+      },
+      "definition": {
+        "value": "menu-container-juice-jug"
+      },
+      "version": 3,
+      "location": {
+        "kind": 0,
+        "ownerId": null,
+        "slotId": "initial-storage-menu-recipe-preparation-orange-juice"
+      },
+      "recipe": null,
+      "isProduct": false,
+      "originStation": null,
+      "containerCompleted": false,
+      "isDirty": false,
+      "remainingPortions": 0,
+      "boundOrder": null
+    },
+    {
+      "id": {
+        "value": "product-3"
+      },
+      "definition": {
+        "value": "menu-preparation-orange-juice"
+      },
+      "version": 1,
+      "location": {
+        "kind": 3,
+        "ownerId": "fixture-storage-menu-recipe-preparation-orange-juice",
+        "slotId": "slot-1"
+      },
+      "recipe": {
+        "value": "menu-recipe-preparation-orange-juice"
+      },
+      "isProduct": true,
+      "originStation": null,
+      "containerCompleted": false,
+      "isDirty": false,
+      "remainingPortions": 0,
+      "boundOrder": null
+    }
+  ],
+  "snapshotSha256": "3DF8B486E467DF3BEDBD64722D7E06049E88FBA600962B8F21EA29D3A0D6A747",
+  "pending": "S07-procurement-S14-full-level-exit-and-production-balance"
+}

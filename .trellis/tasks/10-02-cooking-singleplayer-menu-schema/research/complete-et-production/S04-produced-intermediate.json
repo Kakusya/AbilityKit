@@ -1,0 +1,105 @@
+{
+  "schema": "cooking-menu-et-production-evidence-v1",
+  "menu": "S04",
+  "checkpointPoint": "produced-intermediate",
+  "identity": {
+    "schema": "cooking-definition-v3",
+    "sha256": "D4A3954F2521A608ECDB64A8582F735439D013E1C623E951F12114BB9A7D62B9"
+  },
+  "provenance": {
+    "catalogSchema": "cooking-menu-catalog-v1",
+    "catalogSha256": "bcadc77368b284cfafe273b608c56d9d6d3a312fa456abf49b1f831133eb5374",
+    "sources": [
+      {
+        "path": "Docs/design/CookingGame/reference/menu-v0.1/Cooking_\u5B8C\u6574\u83DC\u54C1\u4E0E\u52A0\u5DE5\u8FC7\u7A0B_v0.1.md",
+        "sha256": "8d503eeaaf5c2de3e326762beb9b1bf305342b1095b0ba9fcabcde230f902cc2"
+      },
+      {
+        "path": "Docs/design/CookingGame/reference/menu-v0.1/Cooking_\u5B8C\u6574\u83DC\u54C1\u4E0E\u52A0\u5DE5\u8FC7\u7A0B_v0.1.xlsx",
+        "sha256": "5268130330044901cfaecf3cbd7ab048432030ef03c6f17cf3a793d3d744232d"
+      }
+    ],
+    "selectedMenus": [
+      "S04"
+    ]
+  },
+  "level": {
+    "matchScope": {
+      "session": {
+        "value": "menu-production"
+      },
+      "world": {
+        "value": "menu-world"
+      },
+      "match": {
+        "value": "S04"
+      }
+    },
+    "restaurantRuntime": {
+      "value": 1
+    },
+    "level": {
+      "value": "menu-fixture"
+    },
+    "levelEpoch": 1
+  },
+  "recovery": "actual-host-export-codec-dispose-empty-factory-restore",
+  "intermediateCheckpointSha256": "9097c36c4e4174c213500c1544b6d193a91224d8faa68e83c8c63923de4aaf09",
+  "finalCheckpointSha256": "ae75baf884d89fb0b72544dee3e7799f7e31ad71427f726fa8cfd46f5808f49b",
+  "finalSnapshotSha256": "6C0353EE5A4FF65014BB7863610248F37738E13E871DF985B0315104D5C13B9A",
+  "commandIngressCount": 241,
+  "recipes": [
+    "menu-recipe-preparation-sweet-batter",
+    "menu-recipe-finished-plain-cake-stage-1",
+    "menu-recipe-finished-plain-cake-stage-2",
+    "menu-recipe-finished-plain-cake"
+  ],
+  "settlements": [
+    {
+      "sequence": 1,
+      "order": {
+        "value": "order-S04"
+      },
+      "template": {
+        "value": "menu-order-plain-cake"
+      },
+      "recipe": {
+        "value": "menu-recipe-finished-plain-cake"
+      },
+      "product": {
+        "value": "product-5"
+      },
+      "player": {
+        "value": "menu-chef"
+      },
+      "container": {
+        "value": "pool-menu-container-dessert-plate-1"
+      },
+      "logicalTick": 240
+    }
+  ],
+  "servingVessel": {
+    "id": {
+      "value": "pool-menu-container-dessert-plate-1"
+    },
+    "definition": {
+      "value": "menu-container-dessert-plate"
+    },
+    "version": 4,
+    "location": {
+      "kind": 0,
+      "ownerId": null,
+      "slotId": "serving-S04"
+    },
+    "removed": true,
+    "recipe": null,
+    "isProduct": false,
+    "originStation": null,
+    "containerCompleted": false,
+    "isDirty": true,
+    "remainingPortions": 0,
+    "boundOrder": null
+  },
+  "fixtureBoundary": "finite validated raw/empty-vessel setup and direct OpenOrder fixture; not S07 procurement or S14 full front lifecycle",
+  "finalCanonicalEqualsUninterrupted": true
+}

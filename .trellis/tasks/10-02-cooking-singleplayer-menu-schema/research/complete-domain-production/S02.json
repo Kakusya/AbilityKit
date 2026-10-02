@@ -1,0 +1,1045 @@
+{
+  "schema": "cooking-menu-production-evidence-v1",
+  "menuSourceId": "S02",
+  "status": "produced-plated-submitted",
+  "scope": {
+    "session": {
+      "value": "menu-production"
+    },
+    "world": {
+      "value": "menu-world"
+    },
+    "match": {
+      "value": "S02"
+    }
+  },
+  "contentIdentity": {
+    "schema": "cooking-definition-v3",
+    "sha256": "F6D36688EFBD1D72006DFBD2ECD5B3DBB24B7DDAB1EA6513AE81B92E14E854CA"
+  },
+  "catalogSha256": "bcadc77368b284cfafe273b608c56d9d6d3a312fa456abf49b1f831133eb5374",
+  "sources": [
+    {
+      "path": "Docs/design/CookingGame/reference/menu-v0.1/Cooking_\u5B8C\u6574\u83DC\u54C1\u4E0E\u52A0\u5DE5\u8FC7\u7A0B_v0.1.md",
+      "sha256": "8d503eeaaf5c2de3e326762beb9b1bf305342b1095b0ba9fcabcde230f902cc2"
+    },
+    {
+      "path": "Docs/design/CookingGame/reference/menu-v0.1/Cooking_\u5B8C\u6574\u83DC\u54C1\u4E0E\u52A0\u5DE5\u8FC7\u7A0B_v0.1.xlsx",
+      "sha256": "5268130330044901cfaecf3cbd7ab048432030ef03c6f17cf3a793d3d744232d"
+    }
+  ],
+  "fixtureValues": "raw-eight-per-definition-serving-two-not-balanced",
+  "initialSupply": [
+    {
+      "definition": {
+        "value": "menu-supply-chocolate-sauce"
+      },
+      "count": 1,
+      "location": "world:initial-menu-supply-chocolate-sauce-1"
+    },
+    {
+      "definition": {
+        "value": "menu-supply-chocolate-sauce"
+      },
+      "count": 1,
+      "location": "world:initial-menu-supply-chocolate-sauce-2"
+    },
+    {
+      "definition": {
+        "value": "menu-supply-chocolate-sauce"
+      },
+      "count": 1,
+      "location": "world:initial-menu-supply-chocolate-sauce-3"
+    },
+    {
+      "definition": {
+        "value": "menu-supply-chocolate-sauce"
+      },
+      "count": 1,
+      "location": "world:initial-menu-supply-chocolate-sauce-4"
+    },
+    {
+      "definition": {
+        "value": "menu-supply-chocolate-sauce"
+      },
+      "count": 1,
+      "location": "world:initial-menu-supply-chocolate-sauce-5"
+    },
+    {
+      "definition": {
+        "value": "menu-supply-chocolate-sauce"
+      },
+      "count": 1,
+      "location": "world:initial-menu-supply-chocolate-sauce-6"
+    },
+    {
+      "definition": {
+        "value": "menu-supply-chocolate-sauce"
+      },
+      "count": 1,
+      "location": "world:initial-menu-supply-chocolate-sauce-7"
+    },
+    {
+      "definition": {
+        "value": "menu-supply-chocolate-sauce"
+      },
+      "count": 1,
+      "location": "world:initial-menu-supply-chocolate-sauce-8"
+    },
+    {
+      "definition": {
+        "value": "menu-supply-egg"
+      },
+      "count": 1,
+      "location": "world:initial-menu-supply-egg-1"
+    },
+    {
+      "definition": {
+        "value": "menu-supply-egg"
+      },
+      "count": 1,
+      "location": "world:initial-menu-supply-egg-2"
+    },
+    {
+      "definition": {
+        "value": "menu-supply-egg"
+      },
+      "count": 1,
+      "location": "world:initial-menu-supply-egg-3"
+    },
+    {
+      "definition": {
+        "value": "menu-supply-egg"
+      },
+      "count": 1,
+      "location": "world:initial-menu-supply-egg-4"
+    },
+    {
+      "definition": {
+        "value": "menu-supply-egg"
+      },
+      "count": 1,
+      "location": "world:initial-menu-supply-egg-5"
+    },
+    {
+      "definition": {
+        "value": "menu-supply-egg"
+      },
+      "count": 1,
+      "location": "world:initial-menu-supply-egg-6"
+    },
+    {
+      "definition": {
+        "value": "menu-supply-egg"
+      },
+      "count": 1,
+      "location": "world:initial-menu-supply-egg-7"
+    },
+    {
+      "definition": {
+        "value": "menu-supply-egg"
+      },
+      "count": 1,
+      "location": "world:initial-menu-supply-egg-8"
+    },
+    {
+      "definition": {
+        "value": "menu-supply-milk"
+      },
+      "count": 1,
+      "location": "world:initial-menu-supply-milk-1"
+    },
+    {
+      "definition": {
+        "value": "menu-supply-milk"
+      },
+      "count": 1,
+      "location": "world:initial-menu-supply-milk-2"
+    },
+    {
+      "definition": {
+        "value": "menu-supply-milk"
+      },
+      "count": 1,
+      "location": "world:initial-menu-supply-milk-3"
+    },
+    {
+      "definition": {
+        "value": "menu-supply-milk"
+      },
+      "count": 1,
+      "location": "world:initial-menu-supply-milk-4"
+    },
+    {
+      "definition": {
+        "value": "menu-supply-milk"
+      },
+      "count": 1,
+      "location": "world:initial-menu-supply-milk-5"
+    },
+    {
+      "definition": {
+        "value": "menu-supply-milk"
+      },
+      "count": 1,
+      "location": "world:initial-menu-supply-milk-6"
+    },
+    {
+      "definition": {
+        "value": "menu-supply-milk"
+      },
+      "count": 1,
+      "location": "world:initial-menu-supply-milk-7"
+    },
+    {
+      "definition": {
+        "value": "menu-supply-milk"
+      },
+      "count": 1,
+      "location": "world:initial-menu-supply-milk-8"
+    },
+    {
+      "definition": {
+        "value": "menu-supply-sweet-premix"
+      },
+      "count": 1,
+      "location": "world:initial-menu-supply-sweet-premix-1"
+    },
+    {
+      "definition": {
+        "value": "menu-supply-sweet-premix"
+      },
+      "count": 1,
+      "location": "world:initial-menu-supply-sweet-premix-2"
+    },
+    {
+      "definition": {
+        "value": "menu-supply-sweet-premix"
+      },
+      "count": 1,
+      "location": "world:initial-menu-supply-sweet-premix-3"
+    },
+    {
+      "definition": {
+        "value": "menu-supply-sweet-premix"
+      },
+      "count": 1,
+      "location": "world:initial-menu-supply-sweet-premix-4"
+    },
+    {
+      "definition": {
+        "value": "menu-supply-sweet-premix"
+      },
+      "count": 1,
+      "location": "world:initial-menu-supply-sweet-premix-5"
+    },
+    {
+      "definition": {
+        "value": "menu-supply-sweet-premix"
+      },
+      "count": 1,
+      "location": "world:initial-menu-supply-sweet-premix-6"
+    },
+    {
+      "definition": {
+        "value": "menu-supply-sweet-premix"
+      },
+      "count": 1,
+      "location": "world:initial-menu-supply-sweet-premix-7"
+    },
+    {
+      "definition": {
+        "value": "menu-supply-sweet-premix"
+      },
+      "count": 1,
+      "location": "world:initial-menu-supply-sweet-premix-8"
+    },
+    {
+      "definition": {
+        "value": "menu-container-mix-bowl"
+      },
+      "count": 1,
+      "location": "world:initial-S02-menu-container-mix-bowl"
+    },
+    {
+      "definition": {
+        "value": "menu-container-pan"
+      },
+      "count": 1,
+      "location": "world:initial-S02-menu-container-pan"
+    },
+    {
+      "definition": {
+        "value": "menu-container-mix-bowl"
+      },
+      "count": 1,
+      "location": "world:initial-P38-menu-container-mix-bowl"
+    },
+    {
+      "definition": {
+        "value": "menu-container-mix-bowl"
+      },
+      "count": 1,
+      "location": "world:initial-storage-menu-recipe-preparation-sweet-batter"
+    },
+    {
+      "definition": {
+        "value": "menu-container-dessert-plate"
+      },
+      "count": 2,
+      "location": "cleanPool"
+    }
+  ],
+  "executedRecipes": [
+    "menu-recipe-preparation-sweet-batter",
+    "menu-recipe-finished-chocolate-pancake-stage-1",
+    "menu-recipe-finished-chocolate-pancake"
+  ],
+  "productId": "product-4",
+  "servingVesselId": "pool-menu-container-dessert-plate-1",
+  "logicalTick": 286,
+  "settlements": [
+    {
+      "sequence": 1,
+      "order": {
+        "value": "order-S02"
+      },
+      "template": {
+        "value": "menu-order-chocolate-pancake"
+      },
+      "recipe": {
+        "value": "menu-recipe-finished-chocolate-pancake"
+      },
+      "product": {
+        "value": "product-4"
+      },
+      "player": {
+        "value": "menu-chef"
+      },
+      "container": {
+        "value": "pool-menu-container-dessert-plate-1"
+      },
+      "logicalTick": 285
+    }
+  ],
+  "remainingItems": [
+    {
+      "id": {
+        "value": "fixture-P38-menu-container-mix-bowl"
+      },
+      "definition": {
+        "value": "menu-container-mix-bowl"
+      },
+      "version": 5,
+      "location": {
+        "kind": 0,
+        "ownerId": null,
+        "slotId": "initial-P38-menu-container-mix-bowl"
+      },
+      "recipe": null,
+      "isProduct": false,
+      "originStation": null,
+      "containerCompleted": false,
+      "isDirty": false,
+      "remainingPortions": 0,
+      "boundOrder": null
+    },
+    {
+      "id": {
+        "value": "fixture-S02-menu-container-mix-bowl"
+      },
+      "definition": {
+        "value": "menu-container-mix-bowl"
+      },
+      "version": 3,
+      "location": {
+        "kind": 0,
+        "ownerId": null,
+        "slotId": "initial-S02-menu-container-mix-bowl"
+      },
+      "recipe": null,
+      "isProduct": false,
+      "originStation": null,
+      "containerCompleted": false,
+      "isDirty": false,
+      "remainingPortions": 0,
+      "boundOrder": null
+    },
+    {
+      "id": {
+        "value": "fixture-S02-menu-container-pan"
+      },
+      "definition": {
+        "value": "menu-container-pan"
+      },
+      "version": 3,
+      "location": {
+        "kind": 0,
+        "ownerId": null,
+        "slotId": "initial-S02-menu-container-pan"
+      },
+      "recipe": null,
+      "isProduct": false,
+      "originStation": null,
+      "containerCompleted": false,
+      "isDirty": false,
+      "remainingPortions": 0,
+      "boundOrder": null
+    },
+    {
+      "id": {
+        "value": "fixture-menu-supply-chocolate-sauce-2"
+      },
+      "definition": {
+        "value": "menu-supply-chocolate-sauce"
+      },
+      "version": 1,
+      "location": {
+        "kind": 0,
+        "ownerId": null,
+        "slotId": "initial-menu-supply-chocolate-sauce-2"
+      },
+      "recipe": null,
+      "isProduct": false,
+      "originStation": null,
+      "containerCompleted": false,
+      "isDirty": false,
+      "remainingPortions": 0,
+      "boundOrder": null
+    },
+    {
+      "id": {
+        "value": "fixture-menu-supply-chocolate-sauce-3"
+      },
+      "definition": {
+        "value": "menu-supply-chocolate-sauce"
+      },
+      "version": 1,
+      "location": {
+        "kind": 0,
+        "ownerId": null,
+        "slotId": "initial-menu-supply-chocolate-sauce-3"
+      },
+      "recipe": null,
+      "isProduct": false,
+      "originStation": null,
+      "containerCompleted": false,
+      "isDirty": false,
+      "remainingPortions": 0,
+      "boundOrder": null
+    },
+    {
+      "id": {
+        "value": "fixture-menu-supply-chocolate-sauce-4"
+      },
+      "definition": {
+        "value": "menu-supply-chocolate-sauce"
+      },
+      "version": 1,
+      "location": {
+        "kind": 0,
+        "ownerId": null,
+        "slotId": "initial-menu-supply-chocolate-sauce-4"
+      },
+      "recipe": null,
+      "isProduct": false,
+      "originStation": null,
+      "containerCompleted": false,
+      "isDirty": false,
+      "remainingPortions": 0,
+      "boundOrder": null
+    },
+    {
+      "id": {
+        "value": "fixture-menu-supply-chocolate-sauce-5"
+      },
+      "definition": {
+        "value": "menu-supply-chocolate-sauce"
+      },
+      "version": 1,
+      "location": {
+        "kind": 0,
+        "ownerId": null,
+        "slotId": "initial-menu-supply-chocolate-sauce-5"
+      },
+      "recipe": null,
+      "isProduct": false,
+      "originStation": null,
+      "containerCompleted": false,
+      "isDirty": false,
+      "remainingPortions": 0,
+      "boundOrder": null
+    },
+    {
+      "id": {
+        "value": "fixture-menu-supply-chocolate-sauce-6"
+      },
+      "definition": {
+        "value": "menu-supply-chocolate-sauce"
+      },
+      "version": 1,
+      "location": {
+        "kind": 0,
+        "ownerId": null,
+        "slotId": "initial-menu-supply-chocolate-sauce-6"
+      },
+      "recipe": null,
+      "isProduct": false,
+      "originStation": null,
+      "containerCompleted": false,
+      "isDirty": false,
+      "remainingPortions": 0,
+      "boundOrder": null
+    },
+    {
+      "id": {
+        "value": "fixture-menu-supply-chocolate-sauce-7"
+      },
+      "definition": {
+        "value": "menu-supply-chocolate-sauce"
+      },
+      "version": 1,
+      "location": {
+        "kind": 0,
+        "ownerId": null,
+        "slotId": "initial-menu-supply-chocolate-sauce-7"
+      },
+      "recipe": null,
+      "isProduct": false,
+      "originStation": null,
+      "containerCompleted": false,
+      "isDirty": false,
+      "remainingPortions": 0,
+      "boundOrder": null
+    },
+    {
+      "id": {
+        "value": "fixture-menu-supply-chocolate-sauce-8"
+      },
+      "definition": {
+        "value": "menu-supply-chocolate-sauce"
+      },
+      "version": 1,
+      "location": {
+        "kind": 0,
+        "ownerId": null,
+        "slotId": "initial-menu-supply-chocolate-sauce-8"
+      },
+      "recipe": null,
+      "isProduct": false,
+      "originStation": null,
+      "containerCompleted": false,
+      "isDirty": false,
+      "remainingPortions": 0,
+      "boundOrder": null
+    },
+    {
+      "id": {
+        "value": "fixture-menu-supply-egg-2"
+      },
+      "definition": {
+        "value": "menu-supply-egg"
+      },
+      "version": 1,
+      "location": {
+        "kind": 0,
+        "ownerId": null,
+        "slotId": "initial-menu-supply-egg-2"
+      },
+      "recipe": null,
+      "isProduct": false,
+      "originStation": null,
+      "containerCompleted": false,
+      "isDirty": false,
+      "remainingPortions": 0,
+      "boundOrder": null
+    },
+    {
+      "id": {
+        "value": "fixture-menu-supply-egg-3"
+      },
+      "definition": {
+        "value": "menu-supply-egg"
+      },
+      "version": 1,
+      "location": {
+        "kind": 0,
+        "ownerId": null,
+        "slotId": "initial-menu-supply-egg-3"
+      },
+      "recipe": null,
+      "isProduct": false,
+      "originStation": null,
+      "containerCompleted": false,
+      "isDirty": false,
+      "remainingPortions": 0,
+      "boundOrder": null
+    },
+    {
+      "id": {
+        "value": "fixture-menu-supply-egg-4"
+      },
+      "definition": {
+        "value": "menu-supply-egg"
+      },
+      "version": 1,
+      "location": {
+        "kind": 0,
+        "ownerId": null,
+        "slotId": "initial-menu-supply-egg-4"
+      },
+      "recipe": null,
+      "isProduct": false,
+      "originStation": null,
+      "containerCompleted": false,
+      "isDirty": false,
+      "remainingPortions": 0,
+      "boundOrder": null
+    },
+    {
+      "id": {
+        "value": "fixture-menu-supply-egg-5"
+      },
+      "definition": {
+        "value": "menu-supply-egg"
+      },
+      "version": 1,
+      "location": {
+        "kind": 0,
+        "ownerId": null,
+        "slotId": "initial-menu-supply-egg-5"
+      },
+      "recipe": null,
+      "isProduct": false,
+      "originStation": null,
+      "containerCompleted": false,
+      "isDirty": false,
+      "remainingPortions": 0,
+      "boundOrder": null
+    },
+    {
+      "id": {
+        "value": "fixture-menu-supply-egg-6"
+      },
+      "definition": {
+        "value": "menu-supply-egg"
+      },
+      "version": 1,
+      "location": {
+        "kind": 0,
+        "ownerId": null,
+        "slotId": "initial-menu-supply-egg-6"
+      },
+      "recipe": null,
+      "isProduct": false,
+      "originStation": null,
+      "containerCompleted": false,
+      "isDirty": false,
+      "remainingPortions": 0,
+      "boundOrder": null
+    },
+    {
+      "id": {
+        "value": "fixture-menu-supply-egg-7"
+      },
+      "definition": {
+        "value": "menu-supply-egg"
+      },
+      "version": 1,
+      "location": {
+        "kind": 0,
+        "ownerId": null,
+        "slotId": "initial-menu-supply-egg-7"
+      },
+      "recipe": null,
+      "isProduct": false,
+      "originStation": null,
+      "containerCompleted": false,
+      "isDirty": false,
+      "remainingPortions": 0,
+      "boundOrder": null
+    },
+    {
+      "id": {
+        "value": "fixture-menu-supply-egg-8"
+      },
+      "definition": {
+        "value": "menu-supply-egg"
+      },
+      "version": 1,
+      "location": {
+        "kind": 0,
+        "ownerId": null,
+        "slotId": "initial-menu-supply-egg-8"
+      },
+      "recipe": null,
+      "isProduct": false,
+      "originStation": null,
+      "containerCompleted": false,
+      "isDirty": false,
+      "remainingPortions": 0,
+      "boundOrder": null
+    },
+    {
+      "id": {
+        "value": "fixture-menu-supply-milk-2"
+      },
+      "definition": {
+        "value": "menu-supply-milk"
+      },
+      "version": 1,
+      "location": {
+        "kind": 0,
+        "ownerId": null,
+        "slotId": "initial-menu-supply-milk-2"
+      },
+      "recipe": null,
+      "isProduct": false,
+      "originStation": null,
+      "containerCompleted": false,
+      "isDirty": false,
+      "remainingPortions": 0,
+      "boundOrder": null
+    },
+    {
+      "id": {
+        "value": "fixture-menu-supply-milk-3"
+      },
+      "definition": {
+        "value": "menu-supply-milk"
+      },
+      "version": 1,
+      "location": {
+        "kind": 0,
+        "ownerId": null,
+        "slotId": "initial-menu-supply-milk-3"
+      },
+      "recipe": null,
+      "isProduct": false,
+      "originStation": null,
+      "containerCompleted": false,
+      "isDirty": false,
+      "remainingPortions": 0,
+      "boundOrder": null
+    },
+    {
+      "id": {
+        "value": "fixture-menu-supply-milk-4"
+      },
+      "definition": {
+        "value": "menu-supply-milk"
+      },
+      "version": 1,
+      "location": {
+        "kind": 0,
+        "ownerId": null,
+        "slotId": "initial-menu-supply-milk-4"
+      },
+      "recipe": null,
+      "isProduct": false,
+      "originStation": null,
+      "containerCompleted": false,
+      "isDirty": false,
+      "remainingPortions": 0,
+      "boundOrder": null
+    },
+    {
+      "id": {
+        "value": "fixture-menu-supply-milk-5"
+      },
+      "definition": {
+        "value": "menu-supply-milk"
+      },
+      "version": 1,
+      "location": {
+        "kind": 0,
+        "ownerId": null,
+        "slotId": "initial-menu-supply-milk-5"
+      },
+      "recipe": null,
+      "isProduct": false,
+      "originStation": null,
+      "containerCompleted": false,
+      "isDirty": false,
+      "remainingPortions": 0,
+      "boundOrder": null
+    },
+    {
+      "id": {
+        "value": "fixture-menu-supply-milk-6"
+      },
+      "definition": {
+        "value": "menu-supply-milk"
+      },
+      "version": 1,
+      "location": {
+        "kind": 0,
+        "ownerId": null,
+        "slotId": "initial-menu-supply-milk-6"
+      },
+      "recipe": null,
+      "isProduct": false,
+      "originStation": null,
+      "containerCompleted": false,
+      "isDirty": false,
+      "remainingPortions": 0,
+      "boundOrder": null
+    },
+    {
+      "id": {
+        "value": "fixture-menu-supply-milk-7"
+      },
+      "definition": {
+        "value": "menu-supply-milk"
+      },
+      "version": 1,
+      "location": {
+        "kind": 0,
+        "ownerId": null,
+        "slotId": "initial-menu-supply-milk-7"
+      },
+      "recipe": null,
+      "isProduct": false,
+      "originStation": null,
+      "containerCompleted": false,
+      "isDirty": false,
+      "remainingPortions": 0,
+      "boundOrder": null
+    },
+    {
+      "id": {
+        "value": "fixture-menu-supply-milk-8"
+      },
+      "definition": {
+        "value": "menu-supply-milk"
+      },
+      "version": 1,
+      "location": {
+        "kind": 0,
+        "ownerId": null,
+        "slotId": "initial-menu-supply-milk-8"
+      },
+      "recipe": null,
+      "isProduct": false,
+      "originStation": null,
+      "containerCompleted": false,
+      "isDirty": false,
+      "remainingPortions": 0,
+      "boundOrder": null
+    },
+    {
+      "id": {
+        "value": "fixture-menu-supply-sweet-premix-2"
+      },
+      "definition": {
+        "value": "menu-supply-sweet-premix"
+      },
+      "version": 1,
+      "location": {
+        "kind": 0,
+        "ownerId": null,
+        "slotId": "initial-menu-supply-sweet-premix-2"
+      },
+      "recipe": null,
+      "isProduct": false,
+      "originStation": null,
+      "containerCompleted": false,
+      "isDirty": false,
+      "remainingPortions": 0,
+      "boundOrder": null
+    },
+    {
+      "id": {
+        "value": "fixture-menu-supply-sweet-premix-3"
+      },
+      "definition": {
+        "value": "menu-supply-sweet-premix"
+      },
+      "version": 1,
+      "location": {
+        "kind": 0,
+        "ownerId": null,
+        "slotId": "initial-menu-supply-sweet-premix-3"
+      },
+      "recipe": null,
+      "isProduct": false,
+      "originStation": null,
+      "containerCompleted": false,
+      "isDirty": false,
+      "remainingPortions": 0,
+      "boundOrder": null
+    },
+    {
+      "id": {
+        "value": "fixture-menu-supply-sweet-premix-4"
+      },
+      "definition": {
+        "value": "menu-supply-sweet-premix"
+      },
+      "version": 1,
+      "location": {
+        "kind": 0,
+        "ownerId": null,
+        "slotId": "initial-menu-supply-sweet-premix-4"
+      },
+      "recipe": null,
+      "isProduct": false,
+      "originStation": null,
+      "containerCompleted": false,
+      "isDirty": false,
+      "remainingPortions": 0,
+      "boundOrder": null
+    },
+    {
+      "id": {
+        "value": "fixture-menu-supply-sweet-premix-5"
+      },
+      "definition": {
+        "value": "menu-supply-sweet-premix"
+      },
+      "version": 1,
+      "location": {
+        "kind": 0,
+        "ownerId": null,
+        "slotId": "initial-menu-supply-sweet-premix-5"
+      },
+      "recipe": null,
+      "isProduct": false,
+      "originStation": null,
+      "containerCompleted": false,
+      "isDirty": false,
+      "remainingPortions": 0,
+      "boundOrder": null
+    },
+    {
+      "id": {
+        "value": "fixture-menu-supply-sweet-premix-6"
+      },
+      "definition": {
+        "value": "menu-supply-sweet-premix"
+      },
+      "version": 1,
+      "location": {
+        "kind": 0,
+        "ownerId": null,
+        "slotId": "initial-menu-supply-sweet-premix-6"
+      },
+      "recipe": null,
+      "isProduct": false,
+      "originStation": null,
+      "containerCompleted": false,
+      "isDirty": false,
+      "remainingPortions": 0,
+      "boundOrder": null
+    },
+    {
+      "id": {
+        "value": "fixture-menu-supply-sweet-premix-7"
+      },
+      "definition": {
+        "value": "menu-supply-sweet-premix"
+      },
+      "version": 1,
+      "location": {
+        "kind": 0,
+        "ownerId": null,
+        "slotId": "initial-menu-supply-sweet-premix-7"
+      },
+      "recipe": null,
+      "isProduct": false,
+      "originStation": null,
+      "containerCompleted": false,
+      "isDirty": false,
+      "remainingPortions": 0,
+      "boundOrder": null
+    },
+    {
+      "id": {
+        "value": "fixture-menu-supply-sweet-premix-8"
+      },
+      "definition": {
+        "value": "menu-supply-sweet-premix"
+      },
+      "version": 1,
+      "location": {
+        "kind": 0,
+        "ownerId": null,
+        "slotId": "initial-menu-supply-sweet-premix-8"
+      },
+      "recipe": null,
+      "isProduct": false,
+      "originStation": null,
+      "containerCompleted": false,
+      "isDirty": false,
+      "remainingPortions": 0,
+      "boundOrder": null
+    },
+    {
+      "id": {
+        "value": "fixture-storage-menu-recipe-preparation-sweet-batter"
+      },
+      "definition": {
+        "value": "menu-container-mix-bowl"
+      },
+      "version": 3,
+      "location": {
+        "kind": 0,
+        "ownerId": null,
+        "slotId": "initial-storage-menu-recipe-preparation-sweet-batter"
+      },
+      "recipe": null,
+      "isProduct": false,
+      "originStation": null,
+      "containerCompleted": false,
+      "isDirty": false,
+      "remainingPortions": 0,
+      "boundOrder": null
+    },
+    {
+      "id": {
+        "value": "pool-menu-container-dessert-plate-2"
+      },
+      "definition": {
+        "value": "menu-container-dessert-plate"
+      },
+      "version": 1,
+      "location": {
+        "kind": 0,
+        "ownerId": null,
+        "slotId": "clean-pool"
+      },
+      "recipe": null,
+      "isProduct": false,
+      "originStation": null,
+      "containerCompleted": false,
+      "isDirty": false,
+      "remainingPortions": 0,
+      "boundOrder": null
+    },
+    {
+      "id": {
+        "value": "product-2"
+      },
+      "definition": {
+        "value": "menu-preparation-sweet-batter"
+      },
+      "version": 1,
+      "location": {
+        "kind": 3,
+        "ownerId": "fixture-storage-menu-recipe-preparation-sweet-batter",
+        "slotId": "slot-1"
+      },
+      "recipe": {
+        "value": "menu-recipe-preparation-sweet-batter"
+      },
+      "isProduct": true,
+      "originStation": null,
+      "containerCompleted": false,
+      "isDirty": false,
+      "remainingPortions": 0,
+      "boundOrder": null
+    }
+  ],
+  "snapshotSha256": "4868D76FDECB6BD84102F2FD0E8A2C48FD5B2FA0045A7AD7DD4660A113833F47",
+  "pending": "S07-procurement-S14-full-level-exit-and-production-balance"
+}

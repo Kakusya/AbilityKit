@@ -12,3 +12,4 @@
 {"file": ".trellis/tasks/10-02-cooking-singleplayer-menu-schema/design.md", "reason": "API errors migration and integration contract"}
 {"file": ".trellis/tasks/10-02-cooking-singleplayer-menu-schema/research/verification.md", "reason": "actual source increment checks, runtime blockers explicitly pending"}
 {"file": ".trellis/tasks/10-02-cooking-singleplayer-menu-schema/research/integration-hooks-verification.md", "reason": "Coordinator actual hook and checkpoint repair tests; partial integration gate boundary and original failures"}
+{"file": ".trellis/tasks/10-02-cooking-singleplayer-menu-schema/research/complete-evidence-audit.json", "reason": "Actual87 deliveries and121 ET recovered canonical comparisons; finite fixture boundary"}

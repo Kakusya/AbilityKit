@@ -1,0 +1,595 @@
+{
+  "schema": "cooking-menu-production-evidence-v1",
+  "menuSourceId": "D01",
+  "status": "produced-plated-submitted",
+  "scope": {
+    "session": {
+      "value": "menu-production"
+    },
+    "world": {
+      "value": "menu-world"
+    },
+    "match": {
+      "value": "D01"
+    }
+  },
+  "contentIdentity": {
+    "schema": "cooking-definition-v3",
+    "sha256": "8D3962868A80B8C7AB42881F484BD0CEF89AAF49662DD21D2D11BE149046065C"
+  },
+  "catalogSha256": "bcadc77368b284cfafe273b608c56d9d6d3a312fa456abf49b1f831133eb5374",
+  "sources": [
+    {
+      "path": "Docs/design/CookingGame/reference/menu-v0.1/Cooking_\u5B8C\u6574\u83DC\u54C1\u4E0E\u52A0\u5DE5\u8FC7\u7A0B_v0.1.md",
+      "sha256": "8d503eeaaf5c2de3e326762beb9b1bf305342b1095b0ba9fcabcde230f902cc2"
+    },
+    {
+      "path": "Docs/design/CookingGame/reference/menu-v0.1/Cooking_\u5B8C\u6574\u83DC\u54C1\u4E0E\u52A0\u5DE5\u8FC7\u7A0B_v0.1.xlsx",
+      "sha256": "5268130330044901cfaecf3cbd7ab048432030ef03c6f17cf3a793d3d744232d"
+    }
+  ],
+  "fixtureValues": "raw-eight-per-definition-serving-two-not-balanced",
+  "initialSupply": [
+    {
+      "definition": {
+        "value": "menu-supply-cola-liquid"
+      },
+      "count": 1,
+      "location": "world:initial-menu-supply-cola-liquid-1"
+    },
+    {
+      "definition": {
+        "value": "menu-supply-cola-liquid"
+      },
+      "count": 1,
+      "location": "world:initial-menu-supply-cola-liquid-2"
+    },
+    {
+      "definition": {
+        "value": "menu-supply-cola-liquid"
+      },
+      "count": 1,
+      "location": "world:initial-menu-supply-cola-liquid-3"
+    },
+    {
+      "definition": {
+        "value": "menu-supply-cola-liquid"
+      },
+      "count": 1,
+      "location": "world:initial-menu-supply-cola-liquid-4"
+    },
+    {
+      "definition": {
+        "value": "menu-supply-cola-liquid"
+      },
+      "count": 1,
+      "location": "world:initial-menu-supply-cola-liquid-5"
+    },
+    {
+      "definition": {
+        "value": "menu-supply-cola-liquid"
+      },
+      "count": 1,
+      "location": "world:initial-menu-supply-cola-liquid-6"
+    },
+    {
+      "definition": {
+        "value": "menu-supply-cola-liquid"
+      },
+      "count": 1,
+      "location": "world:initial-menu-supply-cola-liquid-7"
+    },
+    {
+      "definition": {
+        "value": "menu-supply-cola-liquid"
+      },
+      "count": 1,
+      "location": "world:initial-menu-supply-cola-liquid-8"
+    },
+    {
+      "definition": {
+        "value": "menu-supply-ice"
+      },
+      "count": 1,
+      "location": "world:initial-menu-supply-ice-1"
+    },
+    {
+      "definition": {
+        "value": "menu-supply-ice"
+      },
+      "count": 1,
+      "location": "world:initial-menu-supply-ice-2"
+    },
+    {
+      "definition": {
+        "value": "menu-supply-ice"
+      },
+      "count": 1,
+      "location": "world:initial-menu-supply-ice-3"
+    },
+    {
+      "definition": {
+        "value": "menu-supply-ice"
+      },
+      "count": 1,
+      "location": "world:initial-menu-supply-ice-4"
+    },
+    {
+      "definition": {
+        "value": "menu-supply-ice"
+      },
+      "count": 1,
+      "location": "world:initial-menu-supply-ice-5"
+    },
+    {
+      "definition": {
+        "value": "menu-supply-ice"
+      },
+      "count": 1,
+      "location": "world:initial-menu-supply-ice-6"
+    },
+    {
+      "definition": {
+        "value": "menu-supply-ice"
+      },
+      "count": 1,
+      "location": "world:initial-menu-supply-ice-7"
+    },
+    {
+      "definition": {
+        "value": "menu-supply-ice"
+      },
+      "count": 1,
+      "location": "world:initial-menu-supply-ice-8"
+    },
+    {
+      "definition": {
+        "value": "menu-container-drink-jug"
+      },
+      "count": 1,
+      "location": "world:initial-D01-menu-container-drink-jug"
+    },
+    {
+      "definition": {
+        "value": "menu-container-dispense-cup"
+      },
+      "count": 1,
+      "location": "world:initial-P58-menu-container-dispense-cup"
+    },
+    {
+      "definition": {
+        "value": "menu-container-dispense-cup"
+      },
+      "count": 1,
+      "location": "world:initial-storage-menu-recipe-preparation-dispensed-cola"
+    },
+    {
+      "definition": {
+        "value": "menu-container-cold-cup"
+      },
+      "count": 1,
+      "location": "world:initial-cup-1"
+    },
+    {
+      "definition": {
+        "value": "menu-container-cold-cup"
+      },
+      "count": 1,
+      "location": "world:initial-cup-2"
+    }
+  ],
+  "executedRecipes": [
+    "menu-recipe-finished-iced-cola-stage-1",
+    "menu-recipe-preparation-dispensed-cola",
+    "menu-recipe-finished-iced-cola"
+  ],
+  "productId": "product-3",
+  "servingVesselId": "fixture-cup-1",
+  "logicalTick": 154,
+  "settlements": [
+    {
+      "sequence": 1,
+      "order": {
+        "value": "order-D01"
+      },
+      "template": {
+        "value": "menu-order-iced-cola"
+      },
+      "recipe": {
+        "value": "menu-recipe-finished-iced-cola"
+      },
+      "product": {
+        "value": "product-3"
+      },
+      "player": {
+        "value": "menu-chef"
+      },
+      "container": {
+        "value": "fixture-cup-1"
+      },
+      "logicalTick": 153
+    }
+  ],
+  "remainingItems": [
+    {
+      "id": {
+        "value": "fixture-D01-menu-container-drink-jug"
+      },
+      "definition": {
+        "value": "menu-container-drink-jug"
+      },
+      "version": 5,
+      "location": {
+        "kind": 0,
+        "ownerId": null,
+        "slotId": "initial-D01-menu-container-drink-jug"
+      },
+      "recipe": null,
+      "isProduct": false,
+      "originStation": null,
+      "containerCompleted": false,
+      "isDirty": false,
+      "remainingPortions": 0,
+      "boundOrder": null
+    },
+    {
+      "id": {
+        "value": "fixture-P58-menu-container-dispense-cup"
+      },
+      "definition": {
+        "value": "menu-container-dispense-cup"
+      },
+      "version": 3,
+      "location": {
+        "kind": 0,
+        "ownerId": null,
+        "slotId": "initial-P58-menu-container-dispense-cup"
+      },
+      "recipe": null,
+      "isProduct": false,
+      "originStation": null,
+      "containerCompleted": false,
+      "isDirty": false,
+      "remainingPortions": 0,
+      "boundOrder": null
+    },
+    {
+      "id": {
+        "value": "fixture-cup-2"
+      },
+      "definition": {
+        "value": "menu-container-cold-cup"
+      },
+      "version": 1,
+      "location": {
+        "kind": 0,
+        "ownerId": null,
+        "slotId": "initial-cup-2"
+      },
+      "recipe": null,
+      "isProduct": false,
+      "originStation": null,
+      "containerCompleted": false,
+      "isDirty": false,
+      "remainingPortions": 0,
+      "boundOrder": null
+    },
+    {
+      "id": {
+        "value": "fixture-menu-supply-cola-liquid-2"
+      },
+      "definition": {
+        "value": "menu-supply-cola-liquid"
+      },
+      "version": 1,
+      "location": {
+        "kind": 0,
+        "ownerId": null,
+        "slotId": "initial-menu-supply-cola-liquid-2"
+      },
+      "recipe": null,
+      "isProduct": false,
+      "originStation": null,
+      "containerCompleted": false,
+      "isDirty": false,
+      "remainingPortions": 0,
+      "boundOrder": null
+    },
+    {
+      "id": {
+        "value": "fixture-menu-supply-cola-liquid-3"
+      },
+      "definition": {
+        "value": "menu-supply-cola-liquid"
+      },
+      "version": 1,
+      "location": {
+        "kind": 0,
+        "ownerId": null,
+        "slotId": "initial-menu-supply-cola-liquid-3"
+      },
+      "recipe": null,
+      "isProduct": false,
+      "originStation": null,
+      "containerCompleted": false,
+      "isDirty": false,
+      "remainingPortions": 0,
+      "boundOrder": null
+    },
+    {
+      "id": {
+        "value": "fixture-menu-supply-cola-liquid-4"
+      },
+      "definition": {
+        "value": "menu-supply-cola-liquid"
+      },
+      "version": 1,
+      "location": {
+        "kind": 0,
+        "ownerId": null,
+        "slotId": "initial-menu-supply-cola-liquid-4"
+      },
+      "recipe": null,
+      "isProduct": false,
+      "originStation": null,
+      "containerCompleted": false,
+      "isDirty": false,
+      "remainingPortions": 0,
+      "boundOrder": null
+    },
+    {
+      "id": {
+        "value": "fixture-menu-supply-cola-liquid-5"
+      },
+      "definition": {
+        "value": "menu-supply-cola-liquid"
+      },
+      "version": 1,
+      "location": {
+        "kind": 0,
+        "ownerId": null,
+        "slotId": "initial-menu-supply-cola-liquid-5"
+      },
+      "recipe": null,
+      "isProduct": false,
+      "originStation": null,
+      "containerCompleted": false,
+      "isDirty": false,
+      "remainingPortions": 0,
+      "boundOrder": null
+    },
+    {
+      "id": {
+        "value": "fixture-menu-supply-cola-liquid-6"
+      },
+      "definition": {
+        "value": "menu-supply-cola-liquid"
+      },
+      "version": 1,
+      "location": {
+        "kind": 0,
+        "ownerId": null,
+        "slotId": "initial-menu-supply-cola-liquid-6"
+      },
+      "recipe": null,
+      "isProduct": false,
+      "originStation": null,
+      "containerCompleted": false,
+      "isDirty": false,
+      "remainingPortions": 0,
+      "boundOrder": null
+    },
+    {
+      "id": {
+        "value": "fixture-menu-supply-cola-liquid-7"
+      },
+      "definition": {
+        "value": "menu-supply-cola-liquid"
+      },
+      "version": 1,
+      "location": {
+        "kind": 0,
+        "ownerId": null,
+        "slotId": "initial-menu-supply-cola-liquid-7"
+      },
+      "recipe": null,
+      "isProduct": false,
+      "originStation": null,
+      "containerCompleted": false,
+      "isDirty": false,
+      "remainingPortions": 0,
+      "boundOrder": null
+    },
+    {
+      "id": {
+        "value": "fixture-menu-supply-cola-liquid-8"
+      },
+      "definition": {
+        "value": "menu-supply-cola-liquid"
+      },
+      "version": 1,
+      "location": {
+        "kind": 0,
+        "ownerId": null,
+        "slotId": "initial-menu-supply-cola-liquid-8"
+      },
+      "recipe": null,
+      "isProduct": false,
+      "originStation": null,
+      "containerCompleted": false,
+      "isDirty": false,
+      "remainingPortions": 0,
+      "boundOrder": null
+    },
+    {
+      "id": {
+        "value": "fixture-menu-supply-ice-2"
+      },
+      "definition": {
+        "value": "menu-supply-ice"
+      },
+      "version": 1,
+      "location": {
+        "kind": 0,
+        "ownerId": null,
+        "slotId": "initial-menu-supply-ice-2"
+      },
+      "recipe": null,
+      "isProduct": false,
+      "originStation": null,
+      "containerCompleted": false,
+      "isDirty": false,
+      "remainingPortions": 0,
+      "boundOrder": null
+    },
+    {
+      "id": {
+        "value": "fixture-menu-supply-ice-3"
+      },
+      "definition": {
+        "value": "menu-supply-ice"
+      },
+      "version": 1,
+      "location": {
+        "kind": 0,
+        "ownerId": null,
+        "slotId": "initial-menu-supply-ice-3"
+      },
+      "recipe": null,
+      "isProduct": false,
+      "originStation": null,
+      "containerCompleted": false,
+      "isDirty": false,
+      "remainingPortions": 0,
+      "boundOrder": null
+    },
+    {
+      "id": {
+        "value": "fixture-menu-supply-ice-4"
+      },
+      "definition": {
+        "value": "menu-supply-ice"
+      },
+      "version": 1,
+      "location": {
+        "kind": 0,
+        "ownerId": null,
+        "slotId": "initial-menu-supply-ice-4"
+      },
+      "recipe": null,
+      "isProduct": false,
+      "originStation": null,
+      "containerCompleted": false,
+      "isDirty": false,
+      "remainingPortions": 0,
+      "boundOrder": null
+    },
+    {
+      "id": {
+        "value": "fixture-menu-supply-ice-5"
+      },
+      "definition": {
+        "value": "menu-supply-ice"
+      },
+      "version": 1,
+      "location": {
+        "kind": 0,
+        "ownerId": null,
+        "slotId": "initial-menu-supply-ice-5"
+      },
+      "recipe": null,
+      "isProduct": false,
+      "originStation": null,
+      "containerCompleted": false,
+      "isDirty": false,
+      "remainingPortions": 0,
+      "boundOrder": null
+    },
+    {
+      "id": {
+        "value": "fixture-menu-supply-ice-6"
+      },
+      "definition": {
+        "value": "menu-supply-ice"
+      },
+      "version": 1,
+      "location": {
+        "kind": 0,
+        "ownerId": null,
+        "slotId": "initial-menu-supply-ice-6"
+      },
+      "recipe": null,
+      "isProduct": false,
+      "originStation": null,
+      "containerCompleted": false,
+      "isDirty": false,
+      "remainingPortions": 0,
+      "boundOrder": null
+    },
+    {
+      "id": {
+        "value": "fixture-menu-supply-ice-7"
+      },
+      "definition": {
+        "value": "menu-supply-ice"
+      },
+      "version": 1,
+      "location": {
+        "kind": 0,
+        "ownerId": null,
+        "slotId": "initial-menu-supply-ice-7"
+      },
+      "recipe": null,
+      "isProduct": false,
+      "originStation": null,
+      "containerCompleted": false,
+      "isDirty": false,
+      "remainingPortions": 0,
+      "boundOrder": null
+    },
+    {
+      "id": {
+        "value": "fixture-menu-supply-ice-8"
+      },
+      "definition": {
+        "value": "menu-supply-ice"
+      },
+      "version": 1,
+      "location": {
+        "kind": 0,
+        "ownerId": null,
+        "slotId": "initial-menu-supply-ice-8"
+      },
+      "recipe": null,
+      "isProduct": false,
+      "originStation": null,
+      "containerCompleted": false,
+      "isDirty": false,
+      "remainingPortions": 0,
+      "boundOrder": null
+    },
+    {
+      "id": {
+        "value": "fixture-storage-menu-recipe-preparation-dispensed-cola"
+      },
+      "definition": {
+        "value": "menu-container-dispense-cup"
+      },
+      "version": 1,
+      "location": {
+        "kind": 0,
+        "ownerId": null,
+        "slotId": "initial-storage-menu-recipe-preparation-dispensed-cola"
+      },
+      "recipe": null,
+      "isProduct": false,
+      "originStation": null,
+      "containerCompleted": false,
+      "isDirty": false,
+      "remainingPortions": 0,
+      "boundOrder": null
+    }
+  ],
+  "snapshotSha256": "E5F631C03DDE0E49160AC78A08D7BC699F45421BAE97279EB991BB51C8F8E6DF",
+  "pending": "S07-procurement-S14-full-level-exit-and-production-balance"
+}

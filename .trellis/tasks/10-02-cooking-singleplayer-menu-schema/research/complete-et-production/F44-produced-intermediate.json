@@ -1,0 +1,106 @@
+{
+  "schema": "cooking-menu-et-production-evidence-v1",
+  "menu": "F44",
+  "checkpointPoint": "produced-intermediate",
+  "identity": {
+    "schema": "cooking-definition-v3",
+    "sha256": "6B1B972B2125BA75669EC5FBD1F0919709DA329F33207D5808B2763493F403F7"
+  },
+  "provenance": {
+    "catalogSchema": "cooking-menu-catalog-v1",
+    "catalogSha256": "bcadc77368b284cfafe273b608c56d9d6d3a312fa456abf49b1f831133eb5374",
+    "sources": [
+      {
+        "path": "Docs/design/CookingGame/reference/menu-v0.1/Cooking_\u5B8C\u6574\u83DC\u54C1\u4E0E\u52A0\u5DE5\u8FC7\u7A0B_v0.1.md",
+        "sha256": "8d503eeaaf5c2de3e326762beb9b1bf305342b1095b0ba9fcabcde230f902cc2"
+      },
+      {
+        "path": "Docs/design/CookingGame/reference/menu-v0.1/Cooking_\u5B8C\u6574\u83DC\u54C1\u4E0E\u52A0\u5DE5\u8FC7\u7A0B_v0.1.xlsx",
+        "sha256": "5268130330044901cfaecf3cbd7ab048432030ef03c6f17cf3a793d3d744232d"
+      }
+    ],
+    "selectedMenus": [
+      "F44"
+    ]
+  },
+  "level": {
+    "matchScope": {
+      "session": {
+        "value": "menu-production"
+      },
+      "world": {
+        "value": "menu-world"
+      },
+      "match": {
+        "value": "F44"
+      }
+    },
+    "restaurantRuntime": {
+      "value": 1
+    },
+    "level": {
+      "value": "menu-fixture"
+    },
+    "levelEpoch": 1
+  },
+  "recovery": "actual-host-export-codec-dispose-empty-factory-restore",
+  "intermediateCheckpointSha256": "28c8ce5474e6b3e4832a5d862c0dc9a567e5c041a311545b06e26bee87ac0968",
+  "finalCheckpointSha256": "2e6cf568358a2dd7b18c792309f5f0911e8f85439ad6222d5cdaa184ee3df84c",
+  "finalSnapshotSha256": "73227A0C1D56D551366BC3726013F0DB07C42A1B3017E660AF32E36CE1B38C05",
+  "commandIngressCount": 334,
+  "recipes": [
+    "menu-recipe-preparation-cooked-bacon",
+    "menu-recipe-preparation-cut-tomato",
+    "menu-recipe-preparation-fried-egg",
+    "menu-recipe-preparation-toasted-slice",
+    "menu-recipe-finished-bacon-breakfast"
+  ],
+  "settlements": [
+    {
+      "sequence": 1,
+      "order": {
+        "value": "order-F44"
+      },
+      "template": {
+        "value": "menu-order-bacon-breakfast"
+      },
+      "recipe": {
+        "value": "menu-recipe-finished-bacon-breakfast"
+      },
+      "product": {
+        "value": "product-5"
+      },
+      "player": {
+        "value": "menu-chef"
+      },
+      "container": {
+        "value": "pool-menu-container-plate-1"
+      },
+      "logicalTick": 333
+    }
+  ],
+  "servingVessel": {
+    "id": {
+      "value": "pool-menu-container-plate-1"
+    },
+    "definition": {
+      "value": "menu-container-plate"
+    },
+    "version": 4,
+    "location": {
+      "kind": 0,
+      "ownerId": null,
+      "slotId": "serving-F44"
+    },
+    "removed": true,
+    "recipe": null,
+    "isProduct": false,
+    "originStation": null,
+    "containerCompleted": false,
+    "isDirty": true,
+    "remainingPortions": 0,
+    "boundOrder": null
+  },
+  "fixtureBoundary": "finite validated raw/empty-vessel setup and direct OpenOrder fixture; not S07 procurement or S14 full front lifecycle",
+  "finalCanonicalEqualsUninterrupted": true
+}

@@ -357,7 +357,8 @@ public sealed class CookingMenuCatalog
         var additions = document.Materials.Where(x => definitions.Contains(x.Id))
             .Select(x => new CookingContentItem(x.Id.Value, new[] { "cook" }))
             .Concat(carrierDefs.Select(x => new CookingContentItem(x.Id.Value, new[] { "cook" },
-                new CookingContentContainer(x.Capacity, x.AcceptedDefinitions.Where(definitions.Contains).Select(d => d.Value).ToArray()))));
+                new CookingContentContainer(x.Capacity, x.AcceptedDefinitions.Where(definitions.Contains).Select(d => d.Value).ToArray(),
+                    DisposableOnSubmission: x.Disposable))));
         var servingIds = selectedMenus.Select(x => x.ServingContainer).ToHashSet();
         var supply = required.Supplies.Select(x => new CookingContentSupplyEntry(x.Value, 8, "world:menu-supply-" + x.Value))
             .Concat(carrierDefs.Select(x => new CookingContentSupplyEntry(x.Id.Value, servingIds.Contains(x.Id) ? 2 : 1,
@@ -374,7 +375,8 @@ public sealed class CookingMenuCatalog
             Appliances = baseline.Appliances.Concat(appliances).ToArray(),
             Recipes = baseline.Recipes.Concat(projectedRecipes).ToArray(),
             OrderTemplates = baseline.OrderTemplates.Concat(selectedMenus.Select(x => new CookingContentOrderTemplate(
-                x.OrderTemplate.Value, x.FinalRecipe.Value, x.ServingContainer.Value, x.BaseScore))).ToArray(),
+                x.OrderTemplate.Value, x.FinalRecipe.Value, x.ServingContainer.Value, x.BaseScore,
+                RequiresBinding: x.RequiresBinding))).ToArray(),
             StandardInitialSupply = baseline.StandardInitialSupply.Concat(supply).ToArray(),
             ContentProvenance = new(CurrentSchema, Sha256,
                 document.Sources.Select(x => new CookingContentSourceIdentity(x.Path, x.Sha256)).ToArray(), selected),

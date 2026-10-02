@@ -7,7 +7,7 @@ namespace AbilityKit.Game.Cooking.Tests;
 /// <summary>
 /// Test action driver over the real simulation. Setup creates only finite raw units and empty
 /// vessels from validated initial supply; every production/transfer is a public command.
-/// This individual-slot fixture does not replace S07 procurement or ET recovery acceptance.
+/// This individual-slot fixture does not replace S07 procurement or S14 full level acceptance.
 /// </summary>
 internal sealed class CookingMenuProductionFixture
 {
@@ -158,9 +158,34 @@ internal sealed class CookingMenuProductionFixture
 
     public void SubmitMeal(ItemId product)
     {
-        Assert.False(Menu.RequiresBinding); // S05 drinks remain an explicit pending delivery boundary.
+        Assert.False(Menu.RequiresBinding);
+        SubmitDelivery(product);
+    }
+
+    public void SubmitDelivery(ItemId product, bool exerciseBindingRejections = false)
+    {
         var order = new OrderId("order-" + Menu.SourceId);
         Assert.True(Simulation.OpenOrder(order, Menu.OrderTemplate).Accepted);
+        if (Menu.RequiresBinding)
+        {
+            if (exerciseBindingRejections) RejectDelivery(product, order, CookingRecipeRejectionReason.BindingRequired);
+            Pick(ServingVessel!.Value);
+            var station = Content.Appliances.Values.Single(x => x.Capabilities.Contains(CookingMenuCatalog.BindingCapability)).Station;
+            Go(LocationKind.StationSlot, station.Value);
+            Act(CookingRecipeOperation.BindOrder, product, order: order);
+            Assert.Equal(order, State(product).BoundOrder);
+            if (exerciseBindingRejections)
+            {
+                var alternate = new OrderId("alternate-" + Menu.SourceId);
+                Assert.True(Simulation.OpenOrder(alternate, Menu.OrderTemplate).Accepted);
+                RejectDelivery(product, alternate, CookingRecipeRejectionReason.BindingConflict);
+                Act(CookingRecipeOperation.RebindOrder, product, order: alternate);
+                RejectDelivery(product, order, CookingRecipeRejectionReason.BindingConflict);
+                Act(CookingRecipeOperation.UnbindOrder, product, order: alternate);
+                RejectDelivery(product, order, CookingRecipeRejectionReason.BindingRequired);
+                Act(CookingRecipeOperation.BindOrder, product, order: order);
+            }
+        }
         GoToItem(product);
         Act(CookingRecipeOperation.SubmitOrder, product, order: order);
         var settlement = Assert.Single(Simulation.SettlementHistory);
@@ -168,6 +193,24 @@ internal sealed class CookingMenuProductionFixture
         Assert.Equal(Menu.OrderTemplate, settlement.Template);
         Assert.Equal(ServingVessel, settlement.Container);
         Assert.Equal(100, Simulation.Snapshot().TotalScore);
+        Assert.DoesNotContain(Items, x => x.Id == product);
+        Assert.DoesNotContain(Items, x => x.Id == ServingVessel);
+        var retiredVessel = Simulation.ExportCheckpoint().Items.Single(x => x.Id == ServingVessel);
+        Assert.True(retiredVessel.Removed);
+        Assert.Equal(!Menu.RequiresBinding, retiredVessel.IsDirty);
+    }
+
+    private void RejectDelivery(ItemId product, OrderId order, CookingRecipeRejectionReason reason)
+    {
+        // Domain-only rejection matrix checks zero authority mutation without advancing time.
+        Assert.Null(CommandDispatcher);
+        var before = Simulation.Snapshot().CanonicalText();
+        var result = Simulation.Submit(new(scope, ++commandSequence, player, new("rejected-delivery-" + commandSequence),
+            CookingRecipeOperation.SubmitOrder, Item: product, Order: order, ExpectedItemVersion: State(product).Version));
+        Assert.Equal(CookingRecipeOutcome.Rejected, result.Outcome);
+        Assert.Equal(reason, result.Reason);
+        Assert.Equal(before, Simulation.Snapshot().CanonicalText());
+        Assert.Empty(Simulation.SettlementHistory);
     }
 
     public void WriteEvidence(ItemId product)
@@ -180,7 +223,7 @@ internal sealed class CookingMenuProductionFixture
         {
             schema = "cooking-menu-production-evidence-v1",
             menuSourceId = Menu.SourceId,
-            status = Menu.RequiresBinding ? "produced-plated-binding-pending" : "produced-plated-submitted",
+            status = Simulation.SettlementHistory.Count == 1 ? "produced-plated-submitted" : "produced-plated-not-submitted",
             scope = scope,
             contentIdentity = Content.Identity,
             catalogSha256 = catalogHash,
@@ -194,7 +237,7 @@ internal sealed class CookingMenuProductionFixture
             settlements = Simulation.SettlementHistory,
             remainingItems = snapshot.Items.OrderBy(x => x.Id.Value, StringComparer.Ordinal).ToArray(),
             snapshotSha256 = snapshot.Sha256(),
-            pending = "S05-drink-binding-disposal-and-all-87-ET-recovery-S07-procurement-S14-exit",
+            pending = "S07-procurement-S14-full-level-exit-and-production-balance",
         };
         File.WriteAllText(Path.Combine(directory, Menu.SourceId + ".json"), JsonSerializer.Serialize(evidence,
             new JsonSerializerOptions { WriteIndented = true, PropertyNamingPolicy = JsonNamingPolicy.CamelCase }) + "\n");

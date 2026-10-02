@@ -1,0 +1,108 @@
+{
+  "schema": "cooking-menu-et-production-evidence-v1",
+  "menu": "F24",
+  "checkpointPoint": "produced-intermediate",
+  "identity": {
+    "schema": "cooking-definition-v3",
+    "sha256": "23C5673FB6BDEBA46D55D8F75C3C6F9AAB6FCC25AE4F13A3543301FA58A0FDA8"
+  },
+  "provenance": {
+    "catalogSchema": "cooking-menu-catalog-v1",
+    "catalogSha256": "bcadc77368b284cfafe273b608c56d9d6d3a312fa456abf49b1f831133eb5374",
+    "sources": [
+      {
+        "path": "Docs/design/CookingGame/reference/menu-v0.1/Cooking_\u5B8C\u6574\u83DC\u54C1\u4E0E\u52A0\u5DE5\u8FC7\u7A0B_v0.1.md",
+        "sha256": "8d503eeaaf5c2de3e326762beb9b1bf305342b1095b0ba9fcabcde230f902cc2"
+      },
+      {
+        "path": "Docs/design/CookingGame/reference/menu-v0.1/Cooking_\u5B8C\u6574\u83DC\u54C1\u4E0E\u52A0\u5DE5\u8FC7\u7A0B_v0.1.xlsx",
+        "sha256": "5268130330044901cfaecf3cbd7ab048432030ef03c6f17cf3a793d3d744232d"
+      }
+    ],
+    "selectedMenus": [
+      "F24"
+    ]
+  },
+  "level": {
+    "matchScope": {
+      "session": {
+        "value": "menu-production"
+      },
+      "world": {
+        "value": "menu-world"
+      },
+      "match": {
+        "value": "F24"
+      }
+    },
+    "restaurantRuntime": {
+      "value": 1
+    },
+    "level": {
+      "value": "menu-fixture"
+    },
+    "levelEpoch": 1
+  },
+  "recovery": "actual-host-export-codec-dispose-empty-factory-restore",
+  "intermediateCheckpointSha256": "7630b5a471876633c72d42603b9e1762968e500a2f98a55743010162ff0d0f1a",
+  "finalCheckpointSha256": "c0d38b6c45bd46de59d373fb096f02508a96ad31ac1846c747055946088f2f17",
+  "finalSnapshotSha256": "788D19BB78E9E8F70A17C642C25AF5BBB8E3F82001FFBB5ACA1552F8C3C9DED5",
+  "commandIngressCount": 420,
+  "recipes": [
+    "menu-recipe-preparation-cooked-pasta",
+    "menu-recipe-preparation-cooked-shrimp",
+    "menu-recipe-preparation-cut-white-fish",
+    "menu-recipe-preparation-cooked-white-fish",
+    "menu-recipe-preparation-cut-tomato",
+    "menu-recipe-preparation-hot-tomato-sauce",
+    "menu-recipe-finished-seafood-pasta"
+  ],
+  "settlements": [
+    {
+      "sequence": 1,
+      "order": {
+        "value": "order-F24"
+      },
+      "template": {
+        "value": "menu-order-seafood-pasta"
+      },
+      "recipe": {
+        "value": "menu-recipe-finished-seafood-pasta"
+      },
+      "product": {
+        "value": "product-9"
+      },
+      "player": {
+        "value": "menu-chef"
+      },
+      "container": {
+        "value": "pool-menu-container-plate-1"
+      },
+      "logicalTick": 419
+    }
+  ],
+  "servingVessel": {
+    "id": {
+      "value": "pool-menu-container-plate-1"
+    },
+    "definition": {
+      "value": "menu-container-plate"
+    },
+    "version": 4,
+    "location": {
+      "kind": 0,
+      "ownerId": null,
+      "slotId": "serving-F24"
+    },
+    "removed": true,
+    "recipe": null,
+    "isProduct": false,
+    "originStation": null,
+    "containerCompleted": false,
+    "isDirty": true,
+    "remainingPortions": 0,
+    "boundOrder": null
+  },
+  "fixtureBoundary": "finite validated raw/empty-vessel setup and direct OpenOrder fixture; not S07 procurement or S14 full front lifecycle",
+  "finalCanonicalEqualsUninterrupted": true
+}
