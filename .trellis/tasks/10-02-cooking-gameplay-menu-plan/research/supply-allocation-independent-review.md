@@ -51,3 +51,7 @@ allocator是外部对象，调用本身可能具有外部副作用；领域可�
 - seq0普通成品缺口是domain increment的blocker，修补及复跑前不能限定通过。
 - 即使修补domain也不能宣布S07完成：Preparing/ET ingress与固定Tick生产供应流程仍须单独实现和验收；本次未审阅其完成。
 - 外部参考未用；相关规范是Cooking checkpoint/authority与S07任务契约，未加载角色隔离禁止的implement/check manifests。
+
+## Follow-up resolution candidate
+
+Producer actually reproduced the double-zero Consume/Serve controls failing, then committed a0bfd5b59bb207b5f26c420debffb350c0fe2349: real IsProduct records require positive AllocationSequence. The former seed-product-zero test was an injected checkpoint fabrication; legitimate AddItem seeds remain IsProduct=false/sequence0. Actual producer focused77/77 and fullCooking511/511 passed, zero skips. Coordinator imported as integration abc1d653f and is running the combined gate; this update does not preclaim combined success or a complete S07 exit.

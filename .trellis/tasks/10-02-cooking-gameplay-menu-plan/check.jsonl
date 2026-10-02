@@ -15,3 +15,8 @@
 {"file": ".trellis/tasks/10-02-cooking-gameplay-menu-plan/research/front-delivery-composite-verification.md", "reason": "Actual integration front delivery composite gates; S07 not yet included"}
 {"file": ".trellis/tasks/10-02-cooking-gameplay-menu-plan/research/front-house-delivery-independent-review.md", "reason": "Independent static delivery destination review"}
 {"file": ".trellis/tasks/10-02-cooking-gameplay-menu-plan/research/supply-allocation-independent-review.md", "reason": "Unresolved zero-sequence recovery blocker; not a passing S07 exit"}
+{"file": ".trellis/tasks/10-02-cooking-gameplay-menu-plan/research/supply-composite-verification.md", "reason": "Actual reviewed increment evidence and remaining preparation installation boundary"}
+{"file": ".trellis/tasks/10-02-cooking-gameplay-menu-plan/research/supply-et-increment-review.md", "reason": "Actual reviewed increment evidence and remaining preparation installation boundary"}
+{"file": ".trellis/tasks/10-02-cooking-gameplay-menu-plan/research/supply-et-independent-review.md", "reason": "Actual reviewed increment evidence and remaining preparation installation boundary"}
+{"file": ".trellis/tasks/10-02-cooking-gameplay-menu-plan/research/prepared-geometry-increment-review.md", "reason": "Actual reviewed increment evidence and remaining preparation installation boundary"}
+{"file": ".trellis/tasks/10-02-cooking-gameplay-menu-plan/research/s08-preparation-installation-research.md", "reason": "Actual reviewed increment evidence and remaining preparation installation boundary"}

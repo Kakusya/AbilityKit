@@ -1,0 +1,68 @@
+﻿{
+    "gate":  "cooking-kitchen-loop",
+    "gatePath":  [
+                     "cooking-kitchen-loop"
+                 ],
+    "level":  "P1",
+    "owner":  "Cooking Game Runtime",
+    "status":  "Failed",
+    "startedAt":  "2026-10-02T20:51:33.6677792+08:00",
+    "endedAt":  "2026-10-02T20:51:48.9417877+08:00",
+    "elapsedSeconds":  15.274,
+    "outputDirectory":  "C:\\Users\\Administrator\\orca\\workspaces\\AbilityKit\\cooking-integration-s06-s14\\local\\Logs\\test-gates\\20261002-205133-cooking-kitchen-loop\\cooking-kitchen-loop",
+    "summaryPath":  "C:\\Users\\Administrator\\orca\\workspaces\\AbilityKit\\cooking-integration-s06-s14\\local\\Logs\\test-gates\\20261002-205133-cooking-kitchen-loop\\cooking-kitchen-loop\\gate-summary.json",
+    "failureMessage":  "Step \u0027Kitchen-loop focused contract tests\u0027 failed: exit code 1",
+    "steps":  [
+                  {
+                      "name":  "Cooking domain build",
+                      "kind":  "dotnet-build",
+                      "project":  "C:\\Users\\Administrator\\orca\\workspaces\\AbilityKit\\cooking-integration-s06-s14\\src\\AbilityKit.Game.Cooking\\AbilityKit.Game.Cooking.csproj",
+                      "filter":  "",
+                      "command":  "dotnet build C:\\Users\\Administrator\\orca\\workspaces\\AbilityKit\\cooking-integration-s06-s14\\src\\AbilityKit.Game.Cooking\\AbilityKit.Game.Cooking.csproj -c Debug",
+                      "status":  "Passed",
+                      "exitCode":  0,
+                      "startedAt":  "2026-10-02T20:51:33.6922796+08:00",
+                      "endedAt":  "2026-10-02T20:51:36.9699650+08:00",
+                      "elapsedSeconds":  3.278,
+                      "logFile":  "C:\\Users\\Administrator\\orca\\workspaces\\AbilityKit\\cooking-integration-s06-s14\\local\\Logs\\test-gates\\20261002-205133-cooking-kitchen-loop\\cooking-kitchen-loop\\01-Cooking_domain_build.log",
+                      "resultsDirectory":  "",
+                      "trxFile":  ""
+                  },
+                  {
+                      "name":  "Cooking ET runtime build with relation analyzer",
+                      "kind":  "dotnet-build",
+                      "project":  "C:\\Users\\Administrator\\orca\\workspaces\\AbilityKit\\cooking-integration-s06-s14\\src\\AbilityKit.Game.Cooking.EtRuntime\\AbilityKit.Game.Cooking.EtRuntime.csproj",
+                      "filter":  "",
+                      "command":  "dotnet build C:\\Users\\Administrator\\orca\\workspaces\\AbilityKit\\cooking-integration-s06-s14\\src\\AbilityKit.Game.Cooking.EtRuntime\\AbilityKit.Game.Cooking.EtRuntime.csproj -c Debug",
+                      "status":  "Passed",
+                      "exitCode":  0,
+                      "startedAt":  "2026-10-02T20:51:36.9829649+08:00",
+                      "endedAt":  "2026-10-02T20:51:39.7646081+08:00",
+                      "elapsedSeconds":  2.782,
+                      "logFile":  "C:\\Users\\Administrator\\orca\\workspaces\\AbilityKit\\cooking-integration-s06-s14\\local\\Logs\\test-gates\\20261002-205133-cooking-kitchen-loop\\cooking-kitchen-loop\\02-Cooking_ET_runtime_build_with_relation_analyzer.log",
+                      "resultsDirectory":  "",
+                      "trxFile":  ""
+                  },
+                  {
+                      "name":  "Kitchen-loop focused contract tests",
+                      "kind":  "dotnet-test",
+                      "project":  "C:\\Users\\Administrator\\orca\\workspaces\\AbilityKit\\cooking-integration-s06-s14\\src\\AbilityKit.Game.Cooking.Tests\\AbilityKit.Game.Cooking.Tests.csproj",
+                      "filter":  "Gate=CookingKitchenLoop",
+                      "command":  "dotnet test C:\\Users\\Administrator\\orca\\workspaces\\AbilityKit\\cooking-integration-s06-s14\\src\\AbilityKit.Game.Cooking.Tests\\AbilityKit.Game.Cooking.Tests.csproj -c Debug -v minimal --logger trx;LogFileName=03-Kitchen-loop_focused_contract_tests.trx --results-directory C:\\Users\\Administrator\\orca\\workspaces\\AbilityKit\\cooking-integration-s06-s14\\local\\Logs\\test-gates\\20261002-205133-cooking-kitchen-loop\\cooking-kitchen-loop\\test-results --filter Gate=CookingKitchenLoop",
+                      "status":  "Failed",
+                      "exitCode":  1,
+                      "startedAt":  "2026-10-02T20:51:39.7671082+08:00",
+                      "endedAt":  "2026-10-02T20:51:48.8992891+08:00",
+                      "elapsedSeconds":  9.132,
+                      "logFile":  "C:\\Users\\Administrator\\orca\\workspaces\\AbilityKit\\cooking-integration-s06-s14\\local\\Logs\\test-gates\\20261002-205133-cooking-kitchen-loop\\cooking-kitchen-loop\\03-Kitchen-loop_focused_contract_tests.log",
+                      "resultsDirectory":  "C:\\Users\\Administrator\\orca\\workspaces\\AbilityKit\\cooking-integration-s06-s14\\local\\Logs\\test-gates\\20261002-205133-cooking-kitchen-loop\\cooking-kitchen-loop\\test-results",
+                      "trxFile":  "C:\\Users\\Administrator\\orca\\workspaces\\AbilityKit\\cooking-integration-s06-s14\\local\\Logs\\test-gates\\20261002-205133-cooking-kitchen-loop\\cooking-kitchen-loop\\test-results\\03-Kitchen-loop_focused_contract_tests.trx",
+                      "trxFileExists":  true,
+                      "testTotal":  438,
+                      "testPassed":  437,
+                      "testFailed":  1,
+                      "testResultCount":  438,
+                      "failureReason":  null
+                  }
+              ]
+}
