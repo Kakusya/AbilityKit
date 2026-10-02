@@ -1,5 +1,7 @@
 # 做菜经营游戏技术路线
 
+> 2026-10-02 owner 补充：不改变本路线架构；推进顺序为“单机 → 网络 → 单机 Unity → 网络 Unity”，当前仍专注单机，允许列出未执行 Task。功能与候选菜单规划入口见 [总 plan](../../../.trellis/spec/cooking/gameplay-menu-plan.md)，边界说明见 [规划架构记录](gameplay-plan-architecture.md)。后续 Unity 仅作条件性记录，长期实施禁令保持；本轮不授权网络或 Unity 实施。
+
 > 文档类型：应用层技术路线图（roadmap），不是 AbilityKit 框架规范、Trellis 行为草案或实施任务清单。
 >
 > 状态：路线保留长期分层与行为方向；截至 2026-09-16，P0–P6 各有一份已验证并完成归档的纯 .NET 受限交付，但完整产品出口仍未完成。Cooking Unity 执行长期禁止；非 Unity 后续未启动、未批准、无时间表。详见 [当前进度](progress.md)、[future scope](future-scope.md) 与 [successor backlog](successor-backlog.md)。截至 2026-09-21，owner 决定当前范围收敛为单机，原同机 UDP 经营闭环方向放弃，传输计划改用 KCP（未启动、未批准、无时间表）；LAN 仍是长期产品方向，不表示 production transport 或真实 LAN 已交付。主机角色决策见 [ADR-0001](../../../ADR/decisions/0001-player-host.md)。

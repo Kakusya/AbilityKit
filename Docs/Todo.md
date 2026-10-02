@@ -1,5 +1,11 @@
 # AbilityKit 项目待办事项
 
+## 2026-10-02 Cooking 玩法与菜单规划
+
+- [ ] 按 [总 plan](../.trellis/spec/cooking/gameplay-menu-plan.md) 和 [20 个 Task 注册表](../.trellis/tasks/10-02-cooking-gameplay-menu-plan/task-register.md) 逐项审阅推进；当前专注单机、全部只规划不执行，不改变架构。网络延期，Unity 条件性 Task 仍禁止实施。
+- [ ] 将 87 款候选目录按共享规则和五批内容映射/校验；不把候选资料当生产配置，未导入。见 [菜单整合](design/CookingGame/reference/menu-integration.md)。
+- [ ] 网络重新立项前协调 KCP/LiteNet 及仲裁来源冲突，见 [架构记录](design/CookingGame/gameplay-plan-architecture.md)。旧任务与历史 check 保留，不自动删除旧代码。
+
 ## 1. 文件定位
 
 本文件记录 AbilityKit 工作区当前已知的项目级待办事项，汇总各模块尚未完成、需要继续审议或等待验证的工作，避免待办散落在阶段性文档中后无人跟进。

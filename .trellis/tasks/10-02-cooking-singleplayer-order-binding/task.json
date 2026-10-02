@@ -1,0 +1,39 @@
+{
+  "id": "cooking-singleplayer-order-binding",
+  "name": "cooking-singleplayer-order-binding",
+  "title": "单机饮品贴单与交付分离",
+  "description": "E01–E12/F07–F08",
+  "status": "planning",
+  "dev_type": null,
+  "scope": null,
+  "package": null,
+  "priority": "P2",
+  "creator": "Li He",
+  "assignee": "Li He",
+  "createdAt": "2026-10-02",
+  "completedAt": null,
+  "branch": null,
+  "base_branch": "master",
+  "worktree_path": null,
+  "commit": null,
+  "pr_url": null,
+  "subtasks": [],
+  "children": [],
+  "parent": "10-02-cooking-gameplay-menu-plan",
+  "relatedFiles": [],
+  "notes": "2026-10-02 owner 只授权记录规划与列 Task，不执行。全局路线与历史契约保持。",
+  "meta": {
+    "plan_id": "S05",
+    "stage": "singleplayer",
+    "planning_only": false,
+    "implementation_authorized": true,
+    "dependencies": [
+      "S03",
+      "S04"
+    ],
+    "execution_gate": "owner-implementation-approval-required",
+    "planning_maturity": "draft",
+    "owner_delegated_details": true,
+    "execution_authorization": "2026-10-02 owner 后续明确实施单机与联网、worktree并行、验证后合并master；Unity后置。"
+  }
+}

@@ -1,5 +1,9 @@
 # 做菜经营游戏规划索引
 
+## 2026-10-02 功能与菜单规划入口
+
+Owner 确认不改架构，按“单机 → 网络 → 单机 Unity → 网络 Unity”推进，当前专注单机，只登记 Task 不执行。见 [功能与菜单总 plan](gameplay-menu-plan.md)：124 项功能对照、87 款候选菜单整合、20 个 planning Task 与架构记录。Unity Task 为条件性禁止执行记录，未解除禁令；新规划不改下列生效历史契约，也不代表内容已导入。现有 planning 与 reference 路由见总 plan。
+
 > 本目录保存 Cooking 的稳定行为契约与七个历史阶段的受限交付边界。2026-09-16 owner 已批准按现有 `check.jsonl` 将七个纯 .NET 增量重划为 `completed-limited-scope` 并归档；这不证明完整 P0–P6 产品出口、Unity、真实 LAN 或 durable storage 已完成。
 >
 > 2026-09-21 修约：按 spec index“必须重新审议当时契约”的程序，owner 批准 Trellis task `09-21-cooking-kitchen-loop-contracts` 后，对 P2、P3 与 P0 交互基础做了显式契约修约（完成形态与幂等延伸到倒出、位置枚举补 `ContainerSlot`、schema 升 v2）。每次修约都在被修订文件头部留带日期与来源的记录，并区分 owner 决定与经批准 design 生效的实现契约。修约不等于运行时规则已实现。

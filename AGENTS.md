@@ -11,8 +11,12 @@
 - [`Docs/design/CookingGame/reference/`](Docs/design/CookingGame/reference/) 目录内的所有 Markdown 文件都是 Cooking 产品语义与 ET 结构的设计参考文件。开始相关规划或实现前应读取其 [`README.md`](Docs/design/CookingGame/reference/README.md) 和关联主题文件；它们用于记录已确认决定与统一术语，但不替代 ADR、`technical-roadmap.md`、`.trellis/spec/cooking/`、活动 task 或 `check.jsonl` 证据。来源冲突时必须显式指出并重新审议，不得把参考文件当作已实现或已验证能力。
 - 项目级待办事项统一记录在 [`Docs/Todo.md`](Docs/Todo.md)。该文件用于汇总尚未完成、待审议或待验证的工作；开始实施时仍须按本节的唯一归属规则读取对应 ADR、设计、spec 与 Trellis task/check 证据。
 - 恢复或审议做菜项目工作前，先读 [`Docs/design/CookingGame/progress.md`](Docs/design/CookingGame/progress.md) 确认当前执行基线、实际验证指针和完整出口 blocker。该文件只做跨阶段汇总；行为契约与验证证据仍分别以 `.trellis/spec/cooking/` 和对应 task 的 `check.jsonl` 为准。
+- Cooking 功能、菜品和后续 Task 规划先读 [`.trellis/spec/cooking/gameplay-menu-plan.md`](.trellis/spec/cooking/gameplay-menu-plan.md)，再按其路由读取功能对照、[Task 注册表](.trellis/tasks/10-02-cooking-gameplay-menu-plan/task-register.md)、[菜单整合](Docs/design/CookingGame/reference/menu-integration.md)和[规划架构记录](Docs/design/CookingGame/gameplay-plan-architecture.md)。2026-10-02 owner 确认顺序为“单机 → 网络 → 单机 Unity → 网络 Unity”，当前专注单机、只列 Task 不执行、不改变架构；未提细节授权助手补足规划并及时落盘。网络仍延期，Unity 条件性 Task 仍 prohibited；不能从登记或排序推导执行批准。
+- 87 款菜单的原始 Markdown/Excel 位于 [`Docs/design/CookingGame/reference/menu-v0.1/`](Docs/design/CookingGame/reference/menu-v0.1/README.md)，是候选总目录，不是首关菜单、runtime 配置或已通过证据。恢复规划时同时读[现有 plan 接续路由](.trellis/tasks/10-02-cooking-gameplay-menu-plan/research/current-plans.md)，保持已确认的固定伙伴、自然完成与成功检查点语义；现有网络来源冲突按架构记录显式审议。
 
 ## 构建与验证（仓库根目录）
+
+- 2026-10-02 后续 owner 已明确授权按 Cooking 总 plan 实施单机与联网部分，使用 **Orca 受管 worktree + supervised orchestration** 并行作业，验证通过后本地合并 `master`。这更新上文“只列 Task 不执行”的本轮历史边界；Unity 单机/联网继续后置且未获实施授权，S15 扩展参考池不自动纳入基础。执行恢复先读 [execution.md](.trellis/tasks/10-02-cooking-gameplay-menu-plan/execution.md)，核对实际 worker/dispatch 与 Git 状态，不能仅凭状态文件重启活跃 worker。
 
 - .NET 项目使用 `net10.0`。README 提及 SDK 10.0.300，但本次检查根目录没有 `global.json`，不要宣称已固定 SDK。
 - Unity 版本为 `2022.3.62f1`；打开 `Unity/`。不要编辑 Unity 自动生成的 `.csproj`、`Library/` 或 `Temp/`。

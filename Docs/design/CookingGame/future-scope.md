@@ -4,6 +4,8 @@
 
 ## Owner 决定
 
+- 2026-10-02 owner 允许只登记“单机 Unity / 网络 Unity”的条件性 planning Task，作为四阶段顺序的记录；这仅允许保存规划，不解除以下实施禁令。已登记 U01/U02 见 [总 plan](../../../.trellis/spec/cooking/gameplay-menu-plan.md)，不可 start、领取实现或运行 Cooking Unity 工作。
+
 - 自 2026-09-16 起，在可预见的长期内禁止实施 Cooking Unity 范围。
 - 禁止创建、推进或领取 Cooking Unity package、asmdef、scene、`MonoBehaviour`、authoring/export、projection、UI、动画、EditMode、scene smoke，以及为 Cooking 增加的 Unity 宿主接入。
 - 本范围不再是七个 `09-15-cooking-*` 受限交付的完成条件，不是 non-Unity successor 的前置或 blocker。

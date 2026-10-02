@@ -1,0 +1,38 @@
+{
+  "id": "cooking-singleplayer-portions-recovery",
+  "name": "cooking-singleplayer-portions-recovery",
+  "title": "单机批量分装与错误恢复",
+  "description": "B08–B14/C13/G08/H07",
+  "status": "planning",
+  "dev_type": null,
+  "scope": null,
+  "package": null,
+  "priority": "P2",
+  "creator": "Li He",
+  "assignee": "Li He",
+  "createdAt": "2026-10-02",
+  "completedAt": null,
+  "branch": null,
+  "base_branch": "master",
+  "worktree_path": null,
+  "commit": null,
+  "pr_url": null,
+  "subtasks": [],
+  "children": [],
+  "parent": "10-02-cooking-gameplay-menu-plan",
+  "relatedFiles": [],
+  "notes": "2026-10-02 owner 只授权记录规划与列 Task，不执行。全局路线与历史契约保持。",
+  "meta": {
+    "plan_id": "S03",
+    "stage": "singleplayer",
+    "planning_only": false,
+    "implementation_authorized": true,
+    "dependencies": [
+      "S01"
+    ],
+    "execution_gate": "owner-implementation-approval-required",
+    "planning_maturity": "draft",
+    "owner_delegated_details": true,
+    "execution_authorization": "2026-10-02 owner 后续明确实施单机与联网、worktree并行、验证后合并master；Unity后置。"
+  }
+}

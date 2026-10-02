@@ -1,5 +1,7 @@
 # Cooking 产品化与多人网络纵切规划
 
+> 2026-10-02 接续入口：owner 确认不改架构，当前专注单机，顺序改为“单机 → 网络 → 单机 Unity → 网络 Unity”，只登记 Task 不执行。新功能/87 菜候选/20 个 Task 见 [总 plan](../../spec/cooking/gameplay-menu-plan.md)；既有决定接续见 [current-plans.md](../10-02-cooking-gameplay-menu-plan/research/current-plans.md)。下列历史内容保留；网络与 Unity 不因旧纪要已收敛而自动执行。
+
 > 状态：`planning`。本任务用于收敛 Cooking 产品规则、模块化边界和首个多人网络纵切；当前仍不授权实现。详细讨论脉络见 [`research/discussion-notes.md`](research/discussion-notes.md)。
 
 ## 目标

@@ -27,6 +27,8 @@
 - [`product-lifetimes.md`](product-lifetimes.md)：Match、Connection、Participant、存档传输、RestaurantRuntime、Kitchen 与 Level 的产品语义和生命周期。
 - [`et-entity-tree.md`](et-entity-tree.md)：ET `[ComponentOf]`/`[ChildOf]` 规则、命名约定、目标所有权树与禁止模式。
 - [`save-storage.md`](save-storage.md)：PC/Android 存档位置、纯 C# repository 边界、授权副本与写入安全参考。
+- [`menu-v0.1/README.md`](menu-v0.1/README.md)：87 款候选菜单的原始 Markdown/Excel、副本 SHA-256 与只读核对范围。
+- [`menu-integration.md`](menu-integration.md)：候选菜单映射、批量/阶段/贴单缺口和分批导入规划；未实施，完整功能与 Task 路由见 [总 plan](../../../../.trellis/spec/cooking/gameplay-menu-plan.md)。
 
 ## 状态标记
 
