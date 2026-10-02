@@ -2,6 +2,12 @@
 
 # S08 待执行清单
 
+## 实际局部实施记录
+
+已在独立整合分支补上静态布局的角色净空和可信设备占地校验：格中心BFS可达但角色过宽时拒绝，路径与校验使用同一净空规则，几何参数进入canonical/hash；可提供定义占地表防止调用方缩小设备。此为S08独立几何部分，完整ET安装仍等待核心契约，不标Task完成。
+
+实际 focused 命令：`dotnet test src/AbilityKit.Game.Cooking.Tests/AbilityKit.Game.Cooking.Tests.csproj --filter FullyQualifiedName~CookingRestaurantLayoutTests --nologo --verbosity quiet`，exit0，13/13通过、0skip；日志 `local/Logs/cooking-execution/layout-clearance.log`。既有共享包CS1591警告已保留日志，未抑制。尚未跑完整新增布局ET出口或宣称Unity通过。
+
 - [ ] 核对依赖、历史 check 与实际代码；解决本 Task 的契约差异。
 - [ ] 补齐具体设计、验收场景与影响的 snapshot/checkpoint/schema。
 - [ ] 最终规划审阅及 owner 批准；当前不可 start。
