@@ -1,4 +1,4 @@
-> 2026-10-03: S01-S14 accepted; N01 completed contract review, N02 in_progress. [Current network acceptance](../10-02-cooking-network-contract-review/research/root-contract-acceptance.md). Older planning-only states below are historical; no network or physical LAN pass inferred.
+> 2026-10-03: S01-S14 accepted; N01 completed contract review; N02 in_progress; N03 starts only bounded local deterministic recovery under an explicit partial dependency exception. [Current actual network evidence](../10-02-cooking-network-gameplay-loop/research/process-integration-verification.md), [N03 approved scope](../10-02-cooking-network-reconnect-measurement/prd.md). Older states below are historical; neither master network completion nor physical LAN PASS is inferred.
 
 > Current accepted status: S01-S14 pure C# singleplayer completed on master4dadd25c8, actual final gates644/772/299 and772/299. Read [exit proof](research/master-singleplayer-exit-verification.md). Parent stays active; N01-N03 next, Unity/S15 deferred. Earlier status tables are historical snapshots.
 
