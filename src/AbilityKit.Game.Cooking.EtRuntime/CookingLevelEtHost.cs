@@ -307,6 +307,115 @@ internal sealed class CookingLevelDriverUpdateSystem : UpdateSystem<CookingLevel
 
 public sealed class CookingLevelEtHost : IDisposable
 {
+    internal void EnableNetworkAuthorityOrdering()
+    {
+        Check();
+        if (_pending.Count != 0 || _inFlight is not null)
+            throw new InvalidOperationException("Ordering must be selected before pending admission.");
+        _networkOrdering = true;
+    }
+
+    internal CookingLevelAdmissionResult TryEnqueueNetwork(CookingNetworkMappedCommand mapped, bool serverCleanup = false)
+    {
+        Check();
+        if (!_networkOrdering || mapped.AuthorityOrdinal <= 0 || string.IsNullOrWhiteSpace(mapped.WireFingerprint))
+            return CookingLevelAdmissionResult.Reject(CookingLevelAdmissionReason.MalformedCommand);
+        var data = mapped.Envelope;
+        var envelope = new CookingLevelCommandEnvelope(data.LevelScope, data.Command, data.SourceConnectionId, data.CorrelationId);
+        var caller = (data.SourceConnectionId, data.CorrelationId);
+        if (string.IsNullOrWhiteSpace(caller.SourceConnectionId) || string.IsNullOrWhiteSpace(caller.CorrelationId)
+            || _networkAcceptedCallers.Contains(caller))
+            return CookingLevelAdmissionResult.Reject(CookingLevelAdmissionReason.MalformedCommand);
+        var key = PendingKey(envelope);
+        if (_pending.TryGetValue(key, out var group) && group.Envelopes.Any(e => e.AuthorityOrdinal != (serverCleanup ? 0 : mapped.AuthorityOrdinal)))
+            return CookingLevelAdmissionResult.Reject(CookingLevelAdmissionReason.MalformedCommand);
+        // Conflicts must still terminate existing callers even at the accepted-caller capacity.
+        var conflict = group is not null && group.Envelopes.Any(e => e.Fingerprint != CookingCommandFingerprint.Create(envelope));
+        if (!conflict && !_terminal.ContainsKey(TerminalKey(envelope)) &&
+            (_networkAcceptedCallers.Count + _networkNotifications.Count >= NetworkCallerCapacity || group?.Envelopes.Count >= 8))
+            return CookingLevelAdmissionResult.Reject(CookingLevelAdmissionReason.QueueFull);
+        _admittingNetworkOrdinal = serverCleanup ? 0 : mapped.AuthorityOrdinal;
+        try
+        {
+            var admission = TryEnqueue(envelope);
+            if (admission.Accepted && admission.TerminalDisposition is null)
+                _networkAcceptedCallers.Add(caller);
+            return admission;
+        }
+        finally { _admittingNetworkOrdinal = 0; }
+    }
+
+    public IReadOnlyList<CookingLevelPendingDisposition> DrainNewTerminalDispositions()
+    {
+        ObjectDisposedException.ThrowIf(_disposed, this);
+        if (Environment.CurrentManagedThreadId != _ownerThread || _ticking)
+            throw new InvalidOperationException("Terminal notifications require the idle owner thread.");
+        var result = Array.AsReadOnly(_networkNotifications.ToArray());
+        _networkNotifications.Clear();
+        return result;
+    }
+
+    public CookingNetworkCancelResult CancelPendingSources(IReadOnlyList<CookingNetworkCancellation> sources)
+    {
+        var unavailable = NetworkUnavailable();
+        if (unavailable != CookingNetworkCaptureReason.None)
+            return new(false, Enum.Parse<CookingNetworkCancelReason>(unavailable.ToString()), Array.Empty<CookingNetworkCallerCancellation>());
+        ArgumentNullException.ThrowIfNull(sources);
+        if (sources.Any(s => s is null || string.IsNullOrWhiteSpace(s.SourceConnectionId) || s.ConnectionGeneration <= 0 || !Enum.IsDefined(s.Reason))
+            || sources.Select(s => s.SourceConnectionId).Distinct(StringComparer.Ordinal).Count() != sources.Count)
+            return new(false, CookingNetworkCancelReason.InvalidSource, Array.Empty<CookingNetworkCallerCancellation>());
+        var bySource = sources.ToDictionary(s => s.SourceConnectionId, StringComparer.Ordinal);
+        var cancelled = new List<CookingNetworkCallerCancellation>();
+        foreach (var group in _pending.Values.ToArray())
+        {
+            foreach (var pending in group.Envelopes.Where(e => bySource.ContainsKey(e.Envelope.SourceConnectionId)).ToArray())
+            {
+                var e = pending.Envelope;
+                cancelled.Add(new(e.SourceConnectionId, e.CorrelationId, e.LevelScope, e.Command.Player,
+                    e.Command.Command, bySource[e.SourceConnectionId].Reason));
+                _networkAcceptedCallers.Remove((e.SourceConnectionId, e.CorrelationId));
+                group.Envelopes.Remove(pending);
+            }
+            if (group.Envelopes.Count == 0) _pending.Remove(group.Key);
+        }
+        return new(true, CookingNetworkCancelReason.None, Array.AsReadOnly(cancelled.ToArray()));
+    }
+
+    internal CookingNetworkCaptureReason NetworkUnavailable()
+    {
+        if (Environment.CurrentManagedThreadId != _ownerThread)
+            throw new InvalidOperationException("Cooking level host operations require the owner thread.");
+        if (_disposed) return CookingNetworkCaptureReason.Disposed;
+        if (_tickFailure is not null) return CookingNetworkCaptureReason.AuthorityFaulted;
+        if (_ticking || _inFlight is not null || _executingPreparationMutation || _initializingPreparation
+            || _executingLifecycleOperation || _executingFrontOperation || _executingAuthorityMutation)
+            return CookingNetworkCaptureReason.Busy;
+        return CookingNetworkCaptureReason.None;
+    }
+
+    public CookingNetworkCaptureResult CaptureReadOnlyFullState()
+    {
+        var unavailable = NetworkUnavailable();
+        if (unavailable != CookingNetworkCaptureReason.None) return new(false, unavailable, null);
+        var observation = Observe();
+        var checkpoint = ExportCheckpoint();
+        // These are the same committed owner read. Reuse its already copied payload;
+        // non-resumable states still export their explicit readonly projections.
+        var recipe = checkpoint.Checkpoint?.Recipe ?? _ownedSimulation?.ExportCheckpoint();
+        var front = checkpoint.Checkpoint?.FrontOfHouse ?? (_frontOfHouse is null ? null
+            : RunFrontOperation(() => _frontOfHouse.ExportCheckpoint(_frontOfHouseMenu)));
+        var reason = _ownedSimulation is null ? CookingNetworkCheckpointUnavailableReason.NotInitialized
+            : Enum.Parse<CookingNetworkCheckpointUnavailableReason>(checkpoint.Reason.ToString());
+        var progress = _ownedSimulation?.MajorProgressForGeneration;
+        var display = progress is null ? null : new CookingNetworkMajorProgressProjection(progress.Locked, progress.CookFaster,
+            Array.AsReadOnly(progress.Decoration.Select(d => d with { }).ToArray()),
+            Array.AsReadOnly(progress.Unlocks.OrderBy(d => d.Value, StringComparer.Ordinal).ToArray()));
+        return new(true, CookingNetworkCaptureReason.None, new(observation, recipe, front, _installedLayout,
+            _lifecycle.Configuration.Identity, _lifecycle.Preparation is { } preparation ? CookingLevelLifecycle.CopyPreparation(preparation) : null,
+            _serviceStartLogicalTick, LastCommittedSimulationBatch, _frontConfigurationIdentity,
+            _preparationConfiguration?.Identity(), _menuConfiguration?.Identity(), checkpoint.Checkpoint, reason, display));
+    }
+
     private const int SceneId = 1;
     private readonly int _ownerThread = Environment.CurrentManagedThreadId;
     private readonly EtRuntimeHost _runtime;
@@ -320,6 +429,11 @@ public sealed class CookingLevelEtHost : IDisposable
     private readonly Dictionary<CookingLevelCommandGroupKey, PendingGroup> _pending = new();
     private readonly Dictionary<CookingLevelCommandGroupKey, TerminalCommand> _terminal = new();
     private readonly List<CookingLevelPendingDisposition> _history = new();
+    private readonly Queue<CookingLevelPendingDisposition> _networkNotifications = new();
+    private const int NetworkCallerCapacity = 2048;
+    private bool _networkOrdering;
+    private readonly HashSet<(string Source, string Correlation)> _networkAcceptedCallers = new();
+    private long _admittingNetworkOrdinal;
     private CookingLevelLifecycle _lifecycle;
     private CookingRecipeSimulation? _ownedSimulation;
     private FrozenBatch? _inFlight;
@@ -839,13 +953,13 @@ public sealed class CookingLevelEtHost : IDisposable
                 return CookingLevelAdmissionResult.Reject(CookingLevelAdmissionReason.CommandIdentityConflict, current);
             }
 
-            existing.Envelopes.Add(new PendingEnvelope(envelope, fingerprint));
+            existing.Envelopes.Add(new PendingEnvelope(envelope, fingerprint, _admittingNetworkOrdinal));
             return CookingLevelAdmissionResult.Accept();
         }
         if (_pending.Count >= _queueCapacity)
             return CookingLevelAdmissionResult.Reject(CookingLevelAdmissionReason.QueueFull);
 
-        _pending.Add(pendingKey, new PendingGroup(pendingKey, new List<PendingEnvelope> { new(envelope, fingerprint) }));
+        _pending.Add(pendingKey, new PendingGroup(pendingKey, new List<PendingEnvelope> { new(envelope, fingerprint, _admittingNetworkOrdinal) }));
         return CookingLevelAdmissionResult.Accept();
     }
 
@@ -1715,10 +1829,13 @@ public sealed class CookingLevelEtHost : IDisposable
             frozenGroups.Add(new PendingGroup(group.Key, frozen));
         }
 
-        return new FrozenBatch(batch, frozenGroups
-            .OrderBy(group => group.Key.Player.Value, StringComparer.Ordinal)
-            .ThenBy(group => group.Key.Command.Value, StringComparer.Ordinal)
-            .ToArray());
+        var orderedGroups = _networkOrdering
+            ? frozenGroups.OrderBy(group => group.Envelopes.Min(e => e.AuthorityOrdinal))
+                .ThenBy(group => group.Key.Player.Value, StringComparer.Ordinal)
+                .ThenBy(group => group.Key.Command.Value, StringComparer.Ordinal)
+            : frozenGroups.OrderBy(group => group.Key.Player.Value, StringComparer.Ordinal)
+                .ThenBy(group => group.Key.Command.Value, StringComparer.Ordinal);
+        return new FrozenBatch(batch, orderedGroups.ToArray());
     }
 
     private void TerminalizeRemainingIdentity(
@@ -1982,6 +2099,10 @@ public sealed class CookingLevelEtHost : IDisposable
             return;
         _history.AddRange(materialized);
         _terminal[key] = new TerminalCommand(materialized);
+        if (_networkOrdering)
+            foreach (var disposition in materialized)
+                if (_networkAcceptedCallers.Remove((disposition.Envelope.SourceConnectionId, disposition.Envelope.CorrelationId)))
+                    _networkNotifications.Enqueue(disposition);
     }
 
     private CookingLevelAdmissionResult TerminalAdmission(
@@ -2230,7 +2351,8 @@ public sealed class CookingLevelEtHost : IDisposable
 
     private sealed record PendingEnvelope(
         CookingLevelCommandEnvelope Envelope,
-        CookingCommandFingerprint Fingerprint);
+        CookingCommandFingerprint Fingerprint,
+        long AuthorityOrdinal = 0);
 
     private sealed record PendingGroup(
         CookingLevelCommandGroupKey Key,

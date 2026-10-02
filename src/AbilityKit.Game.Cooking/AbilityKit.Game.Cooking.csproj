@@ -10,6 +10,7 @@
   </PropertyGroup>
   <ItemGroup>
     <ProjectReference Include="../AbilityKit.Network.Transport.LiteNet/AbilityKit.Network.Transport.LiteNet.csproj" />
+    <ProjectReference Include="../AbilityKit.Network.Host/AbilityKit.Network.Host.csproj" />
   </ItemGroup>
   <ItemGroup>
     <InternalsVisibleTo Include="AbilityKit.Game.Cooking.Tests" />

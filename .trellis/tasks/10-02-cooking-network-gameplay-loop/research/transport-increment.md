@@ -1,0 +1,31 @@
+# Generic LiteNet transport increment — 2026-10-03
+
+Owned worktree: `cooking-network-transport-current`, reviewed N01 base `bdd5cbede`. Files are restricted to the generic LiteNet shared package, its SDK project/tests and this report. Other authority/Session workers are active; their files and the old dirty network tree were not edited. No Cooking DTO, token, identity mapping, simulation, ET lifecycle or Unity scene code was added.
+
+## Implemented behavior and source closure
+
+Small API/source commit `f86cbdee0` introduces `LiteNetChannelListener : IChannelListener` and `LiteNetServerChannel : IServerChannel`. Constructor: IPAddress address (default Any), port (default0), connectionKey (default abilitykit), maximumBufferedReceiveBytes (default8MiB). It preserves the existing interfaces. Final follow-up keeps this API unchanged.
+
+Listener Stop ends admission only. Dispose ends admission and rejects future Start but does not close accepted/transferring channels. Each live channel retains a shared manager lease through the peer map; failed/no-subscriber acceptance closes/releases its peer. Once the listener is disposed and its final channel owner releases, manager.Stop is dispatched onto the thread pool to avoid a socket callback joining itself. Socket shutdown is eventual/asynchronous; users receiving channels directly must dispose them. Existing NetworkHost owns its accepted sessions and closes them before listener disposal.
+
+Receive uses GetRemainingBytes owned arrays with AutoRecycle enabled. A peer's callback delivery is serialized; messages received before acceptance returns or before a handler is installed remain buffered. Limits are configurable bytes and1024 pending messages; overflow reports Error and closes the peer. User receive/accept/error/close callbacks execute outside state locks. Error/Closed subscribers that throw cannot prevent subsequent subscribers or mandatory cleanup. Send/close terminal state and physical peer mapping are protected; callback closure notifies once.
+
+Client now enables AutoRecycle, checks actual Start failure, subscribes NetworkError, clears disconnected peer state, reports failed/rejected connection attempts even without prior Connected, and safely closes despite throwing subscribers. Close permits reconnect; Dispose is terminal. Start/connect cannot race Dispose into a leaked newly started manager. Manager-reference checks discard stale callbacks entering after replacement. An already executing callback cannot be forcibly cancelled by this transport; N01 Session generation and owner ingress remain responsible for quarantining such application work.
+
+SDK ProjectReference, Unity asmdef and UPM package dependency now include Network.Host alongside Network.Runtime. Shared Runtime contains the source; SDK Compile Include reuses it. LiteNetLib remains2.1.4; bundled DLL and plugin metadata are unchanged. New MonoImporter `.meta` was added for the listener source. README records ownership/buffering/lifecycle and evidence limits. Existing echo test now binds an ephemeral port.
+
+## Actual focused verification and preserved red
+
+All commands executed only in the coordinator-assigned single .NET window; it was explicitly released after the final pass. No broad gate was run by this owner.
+
+1. `dotnet test src/AbilityKit.Network.Transport.LiteNet.Tests/AbilityKit.Network.Transport.LiteNet.Tests.csproj --logger "trx;LogFileName=litenet-focused-first.trx" --results-directory local/Logs/network-transport`: actual **17 passed /1 failed /0 skipped,18 total,8seconds**, exit1. Source compiled; the sole failure was a raw test client's delivery acknowledgement timeout at the late-handler control. Log/TRX preserve the red.
+2. Added **UnsyncedDeliveryEvent=true only to that test's raw NetManager**. LiteNetLib2.1.4 delivery events require the explicit option despite ordinary UnsyncedEvents. No production code was changed to satisfy this failed test. `--filter FullyQualifiedName~Frames_received_before_handler_installation --no-restore` with `litenet-delivery-events-explicit.trx`: actual1/1 passed, exit0.
+3. Same complete LiteNet test project with `--no-restore --logger "trx;LogFileName=litenet-focused-delivery-fixed.trx" --results-directory local/Logs/network-transport`: actual **18/18 passed,0 failed,0 skipped,682ms**, exit0. Final log: `local/Logs/network-transport/litenet-focused-delivery-fixed.log`; TRX in that directory. `git diff --check` passed.
+
+The eighteen actual cases include existing UDP echo; two real peers through existing Host framing/pipeline with nonzero payload offsets and correct response opcode/sequence; Stop and Dispose ownership leases; explicit reliable-delivery acknowledgements before installing receive handlers; preserved owned arrays/order; throwing receive/Error/Closed and accept/listener-error callbacks; concurrent Send/Close/Dispose with another healthy peer; bounded receive overflow; exclusive real occupied-port rejection followed by successful listener start; Host async drain and physical disconnect cancellation; client Close/reconnect and terminal Dispose; deferred serial IO decoding after later packet reception; existing4MiB frame-length rejection before a business handler; wrong-key and stopped admission; and client failed-attempt Disconnected notification.
+
+All UDP endpoints are real same-machine ephemeral sockets. Tests do not replace transport with an in-memory mock and do not mutate Cooking state. The frame-size control uses the existing NetworkFrameReader limit rather than inventing a separate protocol. Delayed IO dispatcher testing verifies the existing copy boundary and serialization; arbitrary concurrent dispatcher implementations are not asserted safe.
+
+## Remaining review and gates
+
+Root/Session may import the frozen source to compose the accepted N01 boundary. Independent root source review and the actual network-sdk broad gate remain required before merge. This focused result does not prove N02 gameplay or N03 reconnect/resilience, two independent processes, two physical PCs, WAN/NAT, weak-network performance, long-duration stability or Unity compilation. The bundled netstandard DLL API/hash evidence remains in litenet-adapter-review.md; this increment did not run Unity or a separate netstandard-only compile.

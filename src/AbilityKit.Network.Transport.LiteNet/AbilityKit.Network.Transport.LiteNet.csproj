@@ -17,6 +17,7 @@
 
   <ItemGroup>
     <ProjectReference Include="../AbilityKit.Network.Runtime/AbilityKit.Network.Runtime.csproj" />
+    <ProjectReference Include="../AbilityKit.Network.Host/AbilityKit.Network.Host.csproj" />
     <PackageReference Include="LiteNetLib" Version="2.1.4" />
   </ItemGroup>
 
