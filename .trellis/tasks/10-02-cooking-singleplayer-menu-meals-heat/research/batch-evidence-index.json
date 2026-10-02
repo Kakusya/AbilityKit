@@ -1,0 +1,35 @@
+{
+  "task": "S10",
+  "candidates": [
+    "F17",
+    "F18",
+    "F19",
+    "F20",
+    "F28",
+    "F29",
+    "F30",
+    "F31",
+    "F32",
+    "F33",
+    "F34",
+    "F35",
+    "F36",
+    "F37",
+    "F38",
+    "F39",
+    "F40",
+    "F41",
+    "F42"
+  ],
+  "preflightCommit": "380f903b6dc1a91ea078b1cfee3ee0b646949cd6",
+  "progressCommit": "a8976c6a22468a7490ce24e39cd9cea96182cf00",
+  "domainRecordRoot": ".trellis/tasks/10-02-cooking-singleplayer-menu-schema/research/spatial-production",
+  "domainRecordsBoundary": "Historical pre-carrier/provenance/S05 production records; not current all-menu delivery proof",
+  "etTests": "src/AbilityKit.ET.Runtime.Tests/CookingMenuProductionEtTests.cs",
+  "pending": [
+    "validated S05 opt-in binding/disposal",
+    "actual every candidate delivery including drinks",
+    "post-S05 bound checkpoint recovery",
+    "task dependency closure and final batch review"
+  ]
+}

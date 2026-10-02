@@ -14,3 +14,12 @@
 ## Current execution sequence after review
 
 Owner authorizes audit then implementation. Follow the reviewed design and parent research/final-review.md; historical planning-only text is superseded. Check actual dependency evidence before starting, preserve stopped worktree edits, fix review findings before accepting prior implementation, update payload/fingerprints/config identity/canonical/checkpoint together, run focused behavioral and applicable integration gates, record actual pass/fail/blocked/skip and commit evidence. Never declare this Task complete from metadata or directory counts.
+## Authorized execution checklist refinement
+
+- [x] Read original batch scope, reference routes and concrete S04/core compatibility evidence.
+- [x] Refine actual API/error matrix/positive-negative cases/version ownership before batch activation.
+- [x] Build deterministic finite-stock source-to-runtime preflight and actual per-menu domain/ET production evidence under S04; this alone does not close this batch.
+- [ ] Receive coordinator-validated S05 commit and complete dependency gate; activate tasks in S09-S13 order.
+- [ ] Map actual requires-binding/disposable fields, produce and deliver every selected candidate, and restore relevant bound/plated/partial/manual state via real ET host.
+- [ ] Run actual appropriate gate and write batch-specific evidence index with commands/counts and remaining boundaries.
+- [ ] Review contracts and report commit to coordinator for local master integration; worker never merges/pushes master.

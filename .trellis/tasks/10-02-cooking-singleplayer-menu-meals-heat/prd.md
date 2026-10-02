@@ -25,3 +25,7 @@ M2：F17–F20/F28–F42。以单机→网络→单机 Unity→网络 Unity 顺�
 ## 执行门
 
 这是可审议的初始记录，不是最终实施批准。开始前细化具体 API/错误矩阵/测试与版本策略，重新核查依赖及环境，审阅最终 planning summary 后由 owner 明确批准。
+
+## Authorized implementation refinement, dependency closure pending
+
+Owner subsequent approval and this Orca dispatch authorize implementation of S10; earlier planning-only wording above is historical. Scope is exactly 19 candidates: F17, F18, F19, F20, F28, F29, F30, F31, F32, F33, F34, F35, F36, F37, F38, F39, F40, F41, F42. Uncooked pizza/dumpling stages, real bake/steam/fry/grill vessels, separate serving saucepan. Catalog coverage and per-menu preflight evidence exist under S04; full batch acceptance waits for validated S05 import, actual delivery/bound recovery and preceding task closure. This candidate set does not become a first-level menu. Unity, economics, precise minigames, procurement and full S14 level exit remain outside this task.

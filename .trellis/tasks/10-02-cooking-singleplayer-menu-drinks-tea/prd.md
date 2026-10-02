@@ -25,3 +25,7 @@ M5：D15–D31。以单机→网络→单机 Unity→网络 Unity 顺序推进�
 ## 执行门
 
 这是可审议的初始记录，不是最终实施批准。开始前细化具体 API/错误矩阵/测试与版本策略，重新核查依赖及环境，审阅最终 planning summary 后由 owner 明确批准。
+
+## Authorized implementation refinement, dependency closure pending
+
+Owner subsequent approval and this Orca dispatch authorize implementation of S13; earlier planning-only wording above is historical. Scope is exactly 17 candidates: D15, D16, D17, D18, D19, D20, D21, D22, D23, D24, D25, D26, D27, D28, D29, D30, D31. Ground/extracted coffee, heat/foam modes, tea/pearls batch portions, must-last foam and brown-sugar milk without tea. Catalog coverage and per-menu preflight evidence exist under S04; full batch acceptance waits for validated S05 import, actual delivery/bound recovery and preceding task closure. This candidate set does not become a first-level menu. Unity, economics, precise minigames, procurement and full S14 level exit remain outside this task.
