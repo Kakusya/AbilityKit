@@ -121,3 +121,8 @@ All three dispatches in run_ca505f084a8c returned stopped with ptyKilled=true. E
 ## 2026-10-02 19:36 S05/menu integration verification
 
 Reviewed S05 imports and nested serving ownership fix `901f465b5` passed actual composite kitchen gate 340/462/166. Evidence: [s05-menu-composite-verification.md](research/s05-menu-composite-verification.md). Order worker settled and released; menu dispatch ctx_cf4084e88097 continues actual 31-drink binding delivery. Native S06 owner continues ET/Level integration in retained integration worktree. Master remains the reviewed S01–S03 baseline; no full singleplayer exit or network/Unity completion claimed.
+
+
+## 2026-10-02 19:47 Supply and preparation coordination
+
+S07 supervised worker ready/input_accepted/turn_started: dispatch ctx_aa1cb5f5926a, task task_65e3da632b1e, terminal term_3fe4de66-df2f-4c8e-a4bb-894e11367e55, Orca worktree cooking-supply-s07 based on 901f465b5. Domain supply owns Recipe/config/checkpoint sections; S06 retains Level/host/manual sections. Exact brief: research/s07-worker-brief.md; research: research/supply-runtime-integration-research.md. Enum numbers 17–19 reserved S06, explicit20–22 supply. Level format6 S06 and Recipe schema5 supply remain candidates until reviewed integration; master actual Recipe4/Level5. S08 design now records effective geometry installation, bounded floor complement, trusted policy, one preparing kitchen, item/pose/front reference atomicity and existing decoration/unlock failure defects; implementation follows S06 stable ownership.
