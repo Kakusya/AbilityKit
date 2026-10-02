@@ -1,5 +1,7 @@
 # Current independent-process acceptance fixture - draft implementation
 
+> Superseded implementation status2026-10-03: the exact runner is now compiled, full paired UDP command passed on frozen production-equivalent source, reviewed increment merged and master gates passed. Read [master verification](master-network-verification.md) and [actual process outcomes](process-integration-verification.md). The initial uncompiled/planned statements below are historical; physical two-PC remains NOT_VERIFIED.
+
 Root owns tools/run-cooking-network-process-acceptance.ps1 and the new src/AbilityKit.Game.Cooking.NetworkAcceptance project. Both remain uncompiled/unexecuted at this record. The PowerShell parser passed; that is not process acceptance.
 
 Configuration derives from the accepted S14 finite F01+D31 natural fixture, retaining physical tool seeds, finite procurement, scoped menu, continuous movement and front flow. No new gameplay model is introduced. A passive action planner reads typed captures and sends framed commands through current Session APIs. Host-local InProcess and remote LiteNet UDP share the Session path. One owner SynchronizationContext keeps awaited scenario continuations on the ET constructing thread; transport callbacks never invoke authority.

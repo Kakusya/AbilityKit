@@ -195,7 +195,7 @@ try
             committedResponsesPerSecond = diagnostics.Timings.Count / watch.Elapsed.TotalSeconds,
             receiveToConsumeMs = new { p50 = Percentile(receiveConsume, .5), p95 = Percentile(receiveConsume, .95), p99 = Percentile(receiveConsume, .99) },
             consumeToCommitMs = new { p50 = Percentile(consumeCommit, .5), p95 = Percentile(consumeCommit, .95), p99 = Percentile(consumeCommit, .99) },
-            metricDefinitions = "Same-process monotonic Host timestamps at frozen ingress, owner mapping and committed result delivery. Bytes are Session payload bytes. Allocation sums current-thread GC deltas within each synchronous owner call, excluding await, transport callback, native and client allocations. Throughput uses total scenario wall time including final hold; diagnostic only. No cross-machine clock subtraction or approved performance thresholds."
+            metricDefinitions = "Same-process monotonic Host timestamps at frozen ingress, owner mapping and committed result delivery. Bytes are Session payload bytes. Allocation sums all managed allocations on the owner thread within each synchronous owner call, including inline InProcess delivery callbacks; excludes await time, allocations on other threads and native allocations. Throughput uses total scenario wall time including final hold; diagnostic only. No cross-machine clock subtraction or approved performance thresholds."
         };
     }
     else if (role == "client")
