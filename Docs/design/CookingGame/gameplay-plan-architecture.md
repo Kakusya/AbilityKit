@@ -1,3 +1,5 @@
+> Current owner instruction (2026-10-02): continue auditing all topics, resolve their plans, then implement and verify to completion without stopping for routine confirmations. Preserve architecture and stage order: singleplayer -> network -> singleplayer Unity -> network Unity. Current stage: singleplayer. Older planning-only notices below are historical. Unity remains deferred under its separate gate.
+
 # Cooking 玩法计划的架构记录
 
 2026-10-02；planning-only。本轮 owner 明确“不改变当前架构”，只授权规划及落盘。应用技术路线唯一正文仍为 [technical-roadmap.md](technical-roadmap.md)，本文件只记录新玩法能力如何沿现有边界接入，不建立第二套路线。
@@ -27,6 +29,8 @@
 没有在本轮确定新公共 API、wire payload 或存储格式。以上修改实施前必须给出具体签名、错误矩阵、正反例、恢复规则及测试；不能把规划表当成跨层契约已生效。
 
 ## 来源冲突登记
+
+2026-10-02 本次审议已定位网络较晚 owner 决定：09-19 planning 纪要第 28/29 节确认 LiteNet reliable-UDP、复用现有通用 Listener/ServerChannel、仅固定 Tick 写世界、权威入队先到先得及完整快照；KCP 临时方向被 supersede。详见 N01 design。旧表保留审议起点，不再把已定位的 owner 取舍当作需要重复询问的未知；网络实施前仍需同步正式 ADR/spec 及实际测试。
 
 | 冲突 | 来源 | 本轮处理 |
 |---|---|---|

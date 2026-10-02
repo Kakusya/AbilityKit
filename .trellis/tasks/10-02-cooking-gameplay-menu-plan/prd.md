@@ -1,3 +1,5 @@
+> Current owner instruction (2026-10-02): continue auditing all topics, resolve their plans, then implement and verify to completion without stopping for routine confirmations. Preserve architecture and stage order: singleplayer -> network -> singleplayer Unity -> network Unity. Current stage: singleplayer. Older planning-only notices below are historical. Unity remains deferred under its separate gate.
+
 # Cooking 功能基线与菜单分阶段规划
 
 2026-10-02；最新 owner 授权：实施总 plan 的单机 S01–S14 与网络 N01–N03，使用 Orca/worktree 并行、逐批验证并合并 master。Unity U01/U02 后置不执行；S15 保持扩展审议池。下列段落保留最初规划记录，涉及“未授权实施”的句子由本条更新；新增交付验收见 execution.md，不以规划检查冒充产品通过。

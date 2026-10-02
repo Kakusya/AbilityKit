@@ -1,3 +1,5 @@
+> Current owner instruction (2026-10-02): continue auditing all topics, resolve their plans, then implement and verify to completion without stopping for routine confirmations. Preserve architecture and stage order: singleplayer -> network -> singleplayer Unity -> network Unity. Current stage: singleplayer. Older planning-only notices below are historical. Unity remains deferred under its separate gate.
+
 # 做菜经营游戏技术路线
 
 > 2026-10-02 owner 补充：不改变本路线架构；推进顺序为“单机 → 网络 → 单机 Unity → 网络 Unity”，当前仍专注单机，允许列出未执行 Task。功能与候选菜单规划入口见 [总 plan](../../../.trellis/spec/cooking/gameplay-menu-plan.md)，边界说明见 [规划架构记录](gameplay-plan-architecture.md)。后续 Unity 仅作条件性记录，长期实施禁令保持；本轮不授权网络或 Unity 实施。

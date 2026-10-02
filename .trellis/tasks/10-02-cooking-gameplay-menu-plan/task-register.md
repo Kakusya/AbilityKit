@@ -1,3 +1,5 @@
+> Current owner instruction (2026-10-02): continue auditing all topics, resolve their plans, then implement and verify to completion without stopping for routine confirmations. Preserve architecture and stage order: singleplayer -> network -> singleplayer Unity -> network Unity. Current stage: singleplayer. Older planning-only notices below are historical. Unity remains deferred under its separate gate.
+
 # Cooking Task 注册表
 
 > 最新授权：owner 已要求实施、验证并合并 master；S01–S14/N01–N03 获执行授权，按依赖与文件冲突分波，U01/U02 后置不执行、S15 为参考池。以下初版状态为登记时快照；当前状态和验证/合并证据见 [execution.md](execution.md) 及各 Task metadata/check.jsonl。

@@ -1,4 +1,8 @@
+> Current owner instruction (2026-10-02): continue auditing all topics, resolve their plans, then implement and verify to completion without stopping for routine confirmations. Preserve architecture and stage order: singleplayer -> network -> singleplayer Unity -> network Unity. Current stage: singleplayer. Older planning-only notices below are historical. Unity remains deferred under its separate gate.
+
 # AbilityKit 工作区指引
+
+- Cooking 本次最新指令是持续审计所有议题、审清后执行到完成。恢复时先读 [完整出口审计表](.trellis/tasks/10-02-cooking-gameplay-menu-plan/research/completion-contract.md)、[execution.md](.trellis/tasks/10-02-cooking-gameplay-menu-plan/execution.md)，再读各 Task 设计/manifests。不要把历史“只列不执行”重新当作当前指令，也不要把已停止 worker 当作存活；保留分支必须审阅和复跑。仍不改变架构，单机优先，Unity 由独立执行门控制。
 
 ## 项目与边界
 

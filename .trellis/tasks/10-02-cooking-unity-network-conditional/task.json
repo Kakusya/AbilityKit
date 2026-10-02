@@ -34,6 +34,6 @@
     "execution_gate": "prohibited-unity",
     "planning_maturity": "draft",
     "owner_delegated_details": true,
-    "execution_authorization": "2026-10-02 owner 后续明确实施单机与联网、worktree并行、验证后合并master；Unity后置。"
+    "execution_authorization": "Latest owner: audit every topic then execute through completion. Task planning review and dependency checks precede execution; Unity and optional reference pool remain deferred."
   }
 }

@@ -1,3 +1,5 @@
+> Current owner instruction (2026-10-02): continue auditing all topics, resolve their plans, then implement and verify to completion without stopping for routine confirmations. Preserve architecture and stage order: singleplayer -> network -> singleplayer Unity -> network Unity. Current stage: singleplayer. Older planning-only notices below are historical. Unity remains deferred under its separate gate.
+
 # 做菜经营游戏：长期目标
 
 更新：2026-09-21。来源：用户 /init 目标及后续纠正。状态：P0–P6 各有已验证并已按受限范围归档的纯 .NET 增量；完整游戏产品出口仍未完成。Cooking Unity 实施在可预见的长期内禁止，非 Unity 后续未启动且须另行批准。
