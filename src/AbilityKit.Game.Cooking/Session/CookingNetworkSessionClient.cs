@@ -1,4 +1,4 @@
-﻿using System.Collections.Concurrent;
+using System.Collections.Concurrent;
 using AbilityKit.Network.Abstractions;
 using AbilityKit.Network.Protocol;
 using AbilityKit.Network.Runtime;
@@ -66,15 +66,7 @@ public sealed class CookingNetworkSessionClient : IDisposable
                     _binding = joined; LatestBaseline = null; break;
                 case CookingNetworkMessageKind.Baseline:
                     var baseline = CookingNetworkWireCodec.Read<CookingNetworkBaseline>(envelope);
-                    if (baseline is null || _binding is null || baseline.Identity.ServerSessionInstance != _binding.ServerSessionInstance ||
-                        baseline.Identity.ConnectionGeneration != _binding.ConnectionGeneration || baseline.Identity.Participant != _participant ||
-                        baseline.LevelFormatVersion != CookingLevelCheckpointCodec.CurrentFormatVersion || baseline.RecipeSchemaVersion != 5 ||
-                        baseline.Identity.Scope != baseline.State.Observation.Scope || baseline.Identity.Epoch != baseline.Identity.Scope.LevelEpoch ||
-                        baseline.Identity.StateHash != CookingNetworkWireCodec.Hash(baseline.State) ||
-                        (LatestBaseline is { } previous && (baseline.Identity.SnapshotSequence <= previous.Identity.SnapshotSequence ||
-                            baseline.Identity.Scope.LevelEpoch < previous.Identity.Scope.LevelEpoch))) return;
-                    if (LatestBaseline is { } oldBaseline && oldBaseline.Identity.Scope != baseline.Identity.Scope) IsSynchronized = false;
-                    LatestBaseline = baseline;
+                    if (baseline is null || !TryInstallBaseline(baseline)) return;
                     Send(CookingNetworkMessageKind.BaselineAck, "ack-" + baseline.Identity.SnapshotSequence, baseline.Identity); break;
                 case CookingNetworkMessageKind.Ready:
                     var ack = CookingNetworkWireCodec.Read<CookingNetworkBaselineIdentity>(envelope);
@@ -89,6 +81,25 @@ public sealed class CookingNetworkSessionClient : IDisposable
                     break;
             }
         }
+    }
+    internal bool TryInstallBaseline(CookingNetworkBaseline? baseline)
+    {
+        if (baseline is null || _binding is null || baseline.Identity.ServerSessionInstance != _binding.ServerSessionInstance ||
+                        baseline.Identity.ConnectionGeneration != _binding.ConnectionGeneration || baseline.Identity.Participant != _participant ||
+                        baseline.LevelFormatVersion != CookingLevelCheckpointCodec.CurrentFormatVersion || baseline.RecipeSchemaVersion != 5 ||
+                        baseline.Identity.Scope != baseline.State.Observation.Scope || baseline.Identity.Epoch != baseline.Identity.Scope.LevelEpoch ||
+                        baseline.Identity.StateHash != CookingNetworkWireCodec.BaselineHash(baseline.State, baseline.Session) ||
+                        baseline.Session.ServerSessionInstance != _binding.ServerSessionInstance ||
+                        baseline.Session.Participants.Count is < 1 or > 4 ||
+                        baseline.Session.Participants.Select(p => p.Participant).Distinct().Count() != baseline.Session.Participants.Count ||
+                        !baseline.Session.Participants.Select(p => p.Participant.Value).SequenceEqual(baseline.Session.Participants.Select(p => p.Participant.Value).OrderBy(p => p, StringComparer.Ordinal)) ||
+                        baseline.Session.Participants.Any(p => p.ConnectionGeneration < 0 || p.LastValidatedClientSequence < 0 || p.LastTerminalClientSequence < 0 || (p.Ready && !p.ConnectedOwnerBinding)) ||
+                        !baseline.Session.Participants.Any(p => p.Participant == _participant && p.ConnectionGeneration == _binding.ConnectionGeneration && p.ConnectedOwnerBinding) ||
+                        (LatestBaseline is { } previous && (baseline.Identity.SnapshotSequence <= previous.Identity.SnapshotSequence ||
+                            baseline.Identity.Scope.LevelEpoch < previous.Identity.Scope.LevelEpoch))) { IsSynchronized = false; return false; }
+        if (LatestBaseline is { } oldBaseline && oldBaseline.Identity.Scope != baseline.Identity.Scope) IsSynchronized = false;
+        LatestBaseline = CookingNetworkWireCodec.Freeze(baseline);
+        return true;
     }
     public Task<CookingNetworkWireResult> SendCommandAsync(string stableWireId, CookingRecipeCommand command, CancellationToken cancellationToken = default)
     {
@@ -119,6 +130,3 @@ public sealed class CookingNetworkSessionClient : IDisposable
     public void Disconnect() { OnDisconnected(); _connection?.Dispose(); _connection = null; }
     public void Dispose() => Disconnect();
 }
-
-
-

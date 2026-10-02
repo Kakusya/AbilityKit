@@ -1,4 +1,4 @@
-﻿using System.Buffers.Binary;
+using System.Buffers.Binary;
 using System.Security.Cryptography;
 using System.Text;
 using System.Text.Json;
@@ -14,7 +14,12 @@ public sealed record CookingNetworkJoined(string ServerSessionInstance, PlayerId
 public sealed record CookingNetworkBaselineIdentity(string ServerSessionInstance, PlayerId Participant, long ConnectionGeneration,
     CookingLevelScope Scope, long Epoch, long SnapshotSequence, string StateHash, string IssueId);
 public sealed record CookingNetworkBaseline(CookingNetworkBaselineIdentity Identity, int LevelFormatVersion,
-    int RecipeSchemaVersion, CookingNetworkAuthorityCapture State);
+    int RecipeSchemaVersion, CookingNetworkAuthorityCapture State, CookingNetworkSessionProjection Session);
+public sealed record CookingNetworkParticipantProjection(PlayerId Participant, bool ConnectedOwnerBinding,
+    long ConnectionGeneration, long LastValidatedClientSequence, long LastTerminalClientSequence, bool Ready, bool CleanupPending);
+public sealed record CookingNetworkSessionProjection(string ServerSessionInstance,
+    IReadOnlyList<CookingNetworkParticipantProjection> Participants);
+internal sealed record CookingNetworkStateHashPayload(CookingNetworkAuthorityCapture State, CookingNetworkSessionProjection Session);
 public sealed record CookingNetworkWireCommand(string ServerSessionInstance, long ConnectionGeneration, long ClientSequence,
     string StableCommandId, CookingLevelScope Scope, CookingRecipeCommand Command);
 public sealed record CookingNetworkWireResult(string StableCommandId, RecipeCommandId? DomainCommandId, string Reason,
@@ -122,6 +127,8 @@ public static class CookingNetworkWireCodec
     public static T Freeze<T>(T value) => JsonSerializer.Deserialize<T>(JsonSerializer.SerializeToUtf8Bytes(value, JsonOptions), JsonOptions)!;
     public static bool Identifier(string? value) => !string.IsNullOrWhiteSpace(value) && Encoding.UTF8.GetByteCount(value) <= 128;
     public static string Hash<T>(T value) => Convert.ToHexString(SHA256.HashData(JsonSerializer.SerializeToUtf8Bytes(value, JsonOptions))).ToLowerInvariant();
+    public static string BaselineHash(CookingNetworkAuthorityCapture state, CookingNetworkSessionProjection session) =>
+        Hash(new CookingNetworkStateHashPayload(state, session));
     public static RecipeCommandId DomainId(string instance, CookingLevelScope scope, PlayerId participant, string stableId)
     {
         using var stream = new MemoryStream();
@@ -134,6 +141,3 @@ public static class CookingNetworkWireCodec
         return new RecipeCommandId("net3-" + Convert.ToHexString(SHA256.HashData(stream.ToArray())).ToLowerInvariant());
     }
 }
-
-
-

@@ -1,4 +1,4 @@
-﻿using System.Net;
+using System.Net;
 using AbilityKit.Game.Cooking.EtRuntime;
 using AbilityKit.Game.Cooking.Session;
 using AbilityKit.Network.Host.InProcess;
@@ -17,15 +17,15 @@ public sealed class CookingNetworkSessionV3Tests
     private static readonly StationSlotId Stove = new("stove");
     private static readonly ItemId Food = new("food");
     private static readonly RecipeId Recipe = new("cook");
-    private sealed class Factory(CookingRecipeFixture fixture) : ICookingLevelGameplayFactory
+    private sealed class Factory(CookingRecipeFixture fixture, CookingMajorProgress? progress = null) : ICookingLevelGameplayFactory
     {
         public CookingRecipeSimulation Create(CookingLevelScope scope, CookingConfigurationSnapshot configuration)
         {
             var kitchen = new CookingRecipeSimulation(fixture);
-            kitchen.AddWorldIngredient(Food, Raw, "spawn"); return kitchen;
+            kitchen.AddWorldIngredient(Food, Raw, "spawn"); if (progress is not null) kitchen.UseMajorProgress(progress); return kitchen;
         }
     }
-    private static CookingLevelEtHost Host()
+    private static CookingLevelEtHost Host(CookingMajorProgress? progress = null)
     {
         var items = new Dictionary<DefinitionId, CookingItemDefinition> { [Raw] = new(Raw, new HashSet<string> { "cook" }), [Cooked] = new(Cooked, new HashSet<string> { "cook" }) };
         var stations = new Dictionary<StationSlotId, CookingApplianceDefinition> { [Stove] = new(Stove, new HashSet<string> { "heat" }) };
@@ -34,7 +34,7 @@ public sealed class CookingNetworkSessionV3Tests
         Assert.True(registry.Submit(new(new[] { "heat" }, items.Values.ToArray(), stations.Values.ToArray(), recipes.Values.ToArray())).Accepted);
         var players = new[] { A, Z }.ToDictionary(p => p, p => new CookingPlayerConfig(p, new HashSet<string> { "cook" }, new HashSet<string> { "spawn", "stove" }));
         var fixture = new CookingRecipeFixture(Scope.MatchScope, players, items, stations, recipes);
-        var host = new CookingLevelEtHost(new CookingLevelLifecycle(Scope, registry.Current!, new Factory(fixture)));
+        var host = new CookingLevelEtHost(new CookingLevelLifecycle(Scope, registry.Current!, new Factory(fixture, progress)));
         Assert.True(host.Prepare(new(Scope.Level, new("map"), new(new("layout"), new[] { Stove }, Array.Empty<DefinitionId>()), registry.Current!.Identity)).Accepted);
         Assert.True(host.Start().Accepted); return host;
     }
@@ -43,7 +43,8 @@ public sealed class CookingNetworkSessionV3Tests
     {
         using var host = Host();
         var state = new CookingNetworkAuthorityAdapter(host).CaptureFullState().State!;
-        var baseline = new CookingNetworkBaseline(new("instance", A, 1, Scope, 1, 1, CookingNetworkWireCodec.Hash(state), "issue"), 8, 5, state);
+        var sessionView = new CookingNetworkSessionProjection("instance", Array.AsReadOnly(new[] { new CookingNetworkParticipantProjection(A, false, 0, 0, 0, false, false), new CookingNetworkParticipantProjection(Z, false, 0, 0, 0, false, false) }));
+        var baseline = new CookingNetworkBaseline(new("instance", A, 1, Scope, 1, 1, CookingNetworkWireCodec.BaselineHash(state, sessionView), "issue"), 8, 5, state, sessionView);
         var bytes = CookingNetworkWireCodec.Encode(CookingNetworkMessageKind.Baseline, "roundtrip", baseline);
         Assert.True(CookingNetworkWireCodec.TryDecode(bytes, new(), out var envelope));
         var decoded = System.Text.Json.JsonSerializer.Deserialize<CookingNetworkBaseline>(envelope!.Payload.GetRawText(), CookingNetworkWireCodec.JsonOptions);
@@ -195,11 +196,89 @@ public sealed class CookingNetworkSessionV3Tests
         Assert.Equal(LocationKind.WorldPosition, host.Observe().Items.Single(i => i.Id == Food).Location.Kind);
         Send(CookingNetworkMessageKind.BaselineAck, "valid-ack", baseline.Identity); session.ProcessOwnerFrame();
         Assert.Contains(packets, p => p.Kind == CookingNetworkMessageKind.Ready);
+        Send(CookingNetworkMessageKind.Command, "out-of-order-reject", new CookingNetworkWireCommand(binding.ServerSessionInstance, binding.ConnectionGeneration, 100, "invalid-scope", new CookingLevelScope(Scope.MatchScope, Scope.RestaurantRuntime, Scope.Level, 2), Pickup(A)));
+        session.ProcessOwnerFrame(); var view = session.LatestSessionProjection.Participants.Single(p => p.Participant == A);
+        Assert.Equal(0, view.LastValidatedClientSequence); Assert.Equal(100, view.LastTerminalClientSequence);
+        Send(CookingNetworkMessageKind.Command, "valid-low-sequence", new CookingNetworkWireCommand(binding.ServerSessionInstance, binding.ConnectionGeneration, 1, "valid-low", Scope, Pickup(A)));
+        session.ProcessOwnerFrame(); view = session.LatestSessionProjection.Participants.Single(p => p.Participant == A);
+        Assert.Equal(1, view.LastValidatedClientSequence); Assert.Equal(100, view.LastTerminalClientSequence); // Maximum reply sequence is not a contiguous admission/domain commit watermark.
+    }
+    [Fact]
+    public async Task Session_projection_is_sorted_frozen_and_only_owner_commits_connection_and_sequence_changes()
+    {
+        using var host = Host(); using var session = Session(host); session.Start(); using var a = Local(session, A);
+        var initial = session.LatestSessionProjection;
+        var joining = a.ConnectAsync("inprocess", 1);
+        Assert.Equal(initial, session.LatestSessionProjection); Assert.All(initial.Participants, p => Assert.False(p.ConnectedOwnerBinding));
+        Pump(session, joining);
+        Assert.Equal(new[] { A, Z }, session.LatestSessionProjection.Participants.Select(p => p.Participant));
+        var active = session.LatestSessionProjection.Participants.Single(p => p.Participant == A);
+        Assert.True(active.Ready); Assert.True(active.ConnectedOwnerBinding); Assert.Equal(0, active.LastValidatedClientSequence);
+        var projectionBeforePacket = session.LatestSessionProjection;
+        var pickup = a.SendCommandAsync("seq-first", Pickup(A));
+        Assert.Equal(projectionBeforePacket, session.LatestSessionProjection);
+        Pump(session, pickup); Assert.Equal(CookingRecipeOutcome.Accepted, (await pickup).Result!.Outcome);
+        active = session.LatestSessionProjection.Participants.Single(p => p.Participant == A);
+        Assert.Equal(1, active.LastValidatedClientSequence); Assert.Equal(1, active.LastTerminalClientSequence);
+        var duplicate = a.SendCommandAsync("seq-first", Pickup(A)); Pump(session, duplicate);
+        active = session.LatestSessionProjection.Participants.Single(p => p.Participant == A);
+        Assert.Equal(2, active.LastValidatedClientSequence); Assert.Equal(2, active.LastTerminalClientSequence);
+        Assert.True((await duplicate).Result!.IsDuplicate);
+        Assert.Throws<NotSupportedException>(() => ((IList<CookingNetworkParticipantProjection>)a.LatestBaseline!.Session.Participants)[0] = active);
+        var beforeClose = session.LatestSessionProjection; a.Disconnect();
+        Assert.Equal(beforeClose, session.LatestSessionProjection); Assert.True(session.LatestSessionProjection.Participants.Single(p => p.Participant == A).ConnectedOwnerBinding);
+        session.ProcessOwnerFrame(); Assert.False(session.LatestSessionProjection.Participants.Single(p => p.Participant == A).ConnectedOwnerBinding);
+        Pump(session, a.ReconnectAsync("inprocess", 1)); active = session.LatestSessionProjection.Participants.Single(p => p.Participant == A);
+        Assert.Equal(2, active.ConnectionGeneration); Assert.Equal(0, active.LastValidatedClientSequence); Assert.Equal(0, active.LastTerminalClientSequence);
+        var afterRebind = a.SendCommandAsync("seq-first", Pickup(A)); Pump(session, afterRebind);
+        Assert.Equal((await pickup).DomainCommandId, (await afterRebind).DomainCommandId); Assert.True((await afterRebind).Result!.IsDuplicate);
+        Assert.Equal(1, session.LatestSessionProjection.Participants.Single(p => p.Participant == A).LastTerminalClientSequence);
+    }
+    [Fact]
+    public void Session_projection_is_required_hash_covered_and_confers_no_authority_permissions()
+    {
+        using var host = Host(); using var session = Session(host); session.Start(); using var a = Local(session, A);
+        Pump(session, a.ConnectAsync("inprocess", 1)); var baseline = a.LatestBaseline!;
+        var bytes = CookingNetworkWireCodec.Encode(CookingNetworkMessageKind.Baseline, "b", baseline);
+        var missing = System.Text.Json.Nodes.JsonNode.Parse(bytes)!;
+        Assert.True(missing["payload"]!.AsObject().Remove("session"));
+        Assert.True(CookingNetworkWireCodec.TryDecode(System.Text.Encoding.UTF8.GetBytes(missing.ToJsonString()), new(), out var envelope));
+        Assert.Null(CookingNetworkWireCodec.Read<CookingNetworkBaseline>(envelope!));
+        var participant = baseline.Session.Participants.Single(p => p.Participant == A);
+        var tamperedSession = baseline.Session with { Participants = baseline.Session.Participants.Select(p => p.Participant == A ? p with { LastTerminalClientSequence = 999 } : p).ToArray() };
+        Assert.NotEqual(baseline.Identity.StateHash, CookingNetworkWireCodec.BaselineHash(baseline.State, tamperedSession));
+        var before = host.Observe().CanonicalText();
+        Assert.False(a.TryInstallBaseline(baseline with { Identity = baseline.Identity with { SnapshotSequence = baseline.Identity.SnapshotSequence + 1 }, Session = tamperedSession }));
+        Assert.Equal(baseline, a.LatestBaseline); Assert.False(a.IsSynchronized);
+        Assert.Throws<InvalidOperationException>(() => { _ = a.SendCommandAsync("no-grant", Pickup(A)); });
+        Assert.Equal(before, host.Observe().CanonicalText());
+        var nestedMissing = System.Text.Json.Nodes.JsonNode.Parse(bytes)!;
+        Assert.True(nestedMissing["payload"]!["session"]!["participants"]![0]!.AsObject().Remove("cleanupPending"));
+        Assert.True(CookingNetworkWireCodec.TryDecode(System.Text.Encoding.UTF8.GetBytes(nestedMissing.ToJsonString()), new(), out envelope));
+        Assert.Null(CookingNetworkWireCodec.Read<CookingNetworkBaseline>(envelope!));
+    }
+    [Fact]
+    public void Real_trusted_global_major_progress_is_complete_frozen_display_without_spawning_future_unlock()
+    {
+        var progress = new CookingMajorProgress(); Assert.True(progress.EnableCookFaster().Accepted);
+        Assert.True(progress.Unlock(new("future-global-material")).Accepted);
+        Assert.True(progress.ChooseDecoration(new[] { new CookingStationReplacement(Stove, new("future-stove")) }).Accepted); progress.Lock();
+        using var host = Host(progress); using var session = Session(host); session.Start(); using var a = Local(session, A);
+        Pump(session, a.ConnectAsync("inprocess", 1)); var baseline = a.LatestBaseline!;
+        Assert.True(baseline.State.MajorProgress!.Locked); Assert.True(baseline.State.MajorProgress.CookFaster);
+        Assert.Equal("future-global-material", Assert.Single(baseline.State.MajorProgress.Unlocks).Value);
+        Assert.Equal(Stove, Assert.Single(baseline.State.MajorProgress.Decoration).From);
+        Assert.DoesNotContain(host.Observe().Items, i => i.DefinitionKey == "future-global-material");
+        Assert.DoesNotContain(baseline.State.FullRecipe!.Items, i => i.Definition == new DefinitionId("future-global-material"));
+        var bytes = CookingNetworkWireCodec.Encode(CookingNetworkMessageKind.Baseline, "major", baseline);
+        Assert.True(CookingNetworkWireCodec.TryDecode(bytes, new(), out var envelope));
+        var decoded = CookingNetworkWireCodec.Read<CookingNetworkBaseline>(envelope!)!;
+        Assert.Equal(CookingNetworkWireCodec.BaselineHash(baseline.State, baseline.Session), CookingNetworkWireCodec.BaselineHash(decoded.State, decoded.Session));
+        var decodedMajor = Assert.IsType<CookingNetworkMajorProgressProjection>(decoded.State.MajorProgress);
+        Assert.Equal(baseline.State.MajorProgress.Locked, decodedMajor.Locked); Assert.Equal(baseline.State.MajorProgress.CookFaster, decodedMajor.CookFaster);
+        Assert.Equal(baseline.State.MajorProgress.Decoration.ToArray(), decodedMajor.Decoration.ToArray()); Assert.Equal(baseline.State.MajorProgress.Unlocks.ToArray(), decodedMajor.Unlocks.ToArray());
+        var missing = System.Text.Json.Nodes.JsonNode.Parse(bytes)!; missing["payload"]!["state"]!.AsObject().Remove("majorProgress");
+        Assert.True(CookingNetworkWireCodec.TryDecode(System.Text.Encoding.UTF8.GetBytes(missing.ToJsonString()), new(), out envelope));
+        Assert.Null(CookingNetworkWireCodec.Read<CookingNetworkBaseline>(envelope!));
     }
 }
-
-
-
-
-
-
