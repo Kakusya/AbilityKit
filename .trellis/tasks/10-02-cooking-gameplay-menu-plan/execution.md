@@ -117,3 +117,7 @@ Orca worker/dispatch、worktree 路径、提交 SHA、实际测试结果及合�
 本次 `worker-list` 确认三个 dispatch 均为 `failed`、terminal 为 `retained`，与主动停止一致；未重启。历史 heartbeat 不推翻当前停止状态。保留既有 worktree，当前继续仅规划。
 
 All three dispatches in run_ca505f084a8c returned stopped with ptyKilled=true. Existing worktrees and unmerged changes are preserved. No feature branches were merged into master. The prior implementation goal is paused.
+
+## 2026-10-02 19:36 S05/menu integration verification
+
+Reviewed S05 imports and nested serving ownership fix `901f465b5` passed actual composite kitchen gate 340/462/166. Evidence: [s05-menu-composite-verification.md](research/s05-menu-composite-verification.md). Order worker settled and released; menu dispatch ctx_cf4084e88097 continues actual 31-drink binding delivery. Native S06 owner continues ET/Level integration in retained integration worktree. Master remains the reviewed S01–S03 baseline; no full singleplayer exit or network/Unity completion claimed.
