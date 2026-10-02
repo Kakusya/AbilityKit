@@ -9,3 +9,9 @@
 {"file": ".trellis/tasks/10-02-cooking-network-contract-review/design.md", "reason": "Accepted exact port, identity, cancellation, wire bounds and full capture contract"}
 {"file": ".trellis/tasks/10-02-cooking-network-contract-review/research/root-contract-acceptance.md", "reason": "Root acceptance, dependency evidence and isolated ownership"}
 {"file": ".trellis/tasks/10-02-cooking-network-contract-review/research/final-contract-review.md", "reason": "Independent source-backed readiness review"}
+{"file":".trellis/tasks/10-02-cooking-network-gameplay-loop/research/authority-independent-review.md","reason":"Current bounded network contract review and actual verification evidence; not inferred product completion"}
+{"file":".trellis/tasks/10-02-cooking-network-gameplay-loop/research/transport-independent-review.md","reason":"Current bounded network contract review and actual verification evidence; not inferred product completion"}
+{"file":".trellis/tasks/10-02-cooking-network-gameplay-loop/research/session-independent-review.md","reason":"Current bounded network contract review and actual verification evidence; not inferred product completion"}
+{"file":".trellis/tasks/10-02-cooking-network-gameplay-loop/research/capture-reuse-independent-review.md","reason":"Current bounded network contract review and actual verification evidence; not inferred product completion"}
+{"file":".trellis/tasks/10-02-cooking-network-gameplay-loop/research/process-runner-independent-review.md","reason":"Current bounded network contract review and actual verification evidence; not inferred product completion"}
+{"file":".trellis/tasks/10-02-cooking-network-gameplay-loop/research/process-integration-verification.md","reason":"Current bounded network contract review and actual verification evidence; not inferred product completion"}
