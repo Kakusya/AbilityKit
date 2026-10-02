@@ -5,7 +5,7 @@ public enum CookingNetworkCaptureReason { None, AuthorityFaulted, Disposed, Busy
 public enum CookingNetworkControlKind { Pause, Resume, TryFinishService, ExecuteAuthorizedTransition }
 public enum CookingNetworkControlReason { None, InvalidRequest, Unauthorized, InvalidLifecycle, AuthorityFaulted, Disposed, Busy }
 public enum CookingNetworkCancelReason { None, AuthorityFaulted, Disposed, Busy, InvalidSource }
-public enum CookingNetworkFrameReason { None, AuthorityFaulted, Disposed, Busy, InvalidLifecycle, ArithmeticOverflow }
+public enum CookingNetworkFrameReason { None, AuthorityFaulted, Disposed, Busy, InvalidLifecycle, ArithmeticOverflow, CleanupRejected }
 public enum CookingNetworkAdmissionReason
 {
     None, LevelNotRunning, LevelPaused, ScopeMismatch, MalformedCommand, ReservedClockOperation,
