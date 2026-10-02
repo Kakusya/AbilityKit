@@ -352,7 +352,7 @@ public sealed class CookingLevelLifecycleSnapshotApplier
         snapshot.Map is not null || snapshot.Layout is not null;
 }
 
-public sealed class CookingLevelLifecycle
+public sealed partial class CookingLevelLifecycle
 {
     private readonly CookingConfigurationSnapshot _configuration;
     private readonly ICookingLevelGameplayFactory _gameplayFactory;

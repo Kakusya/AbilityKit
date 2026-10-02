@@ -194,7 +194,8 @@ public sealed record CookingLevelHostOperationResult(
     IReadOnlyList<CookingLevelPendingDisposition> Dispositions,
     int RetainedProcessCount = 0,
     int ClearedOrderCount = 0,
-    int ClearedSettlementCount = 0);
+    int ClearedSettlementCount = 0,
+    CookingMajorBaselineReason? BaselineReason = null);
 
 public enum CookingLevelCheckpointExportReason
 {
@@ -717,6 +718,25 @@ public sealed class CookingLevelEtHost : IDisposable
         }
     }
 
+    private static bool ValidateConfirmedChoices(ICookingLevelGameplayFactory factory, CookingLevelScope scope,
+        CookingConfigurationSnapshot configuration, CookingMajorBaselineChoices choices, out CookingMajorProgress? progress)
+    {
+        progress = null;
+        try
+        {
+            var trusted = factory is ICookingConfirmedMajorChoicesGameplayFactory provider
+                ? provider.CreateConfirmedMajorChoices(scope, configuration)
+                : new CookingMajorBaselineChoices(true, Array.Empty<CookingStationReplacement>(), Array.Empty<DefinitionId>(), false);
+            if (trusted is null) return false;
+            _ = trusted.CreateProgress(); var restored = choices.CreateProgress();
+            if (trusted.Unlocks.Count != trusted.Unlocks.Distinct().Count() || !choices.Locked || !trusted.Locked || choices.CookFaster != trusted.CookFaster ||
+                !choices.Decoration.SequenceEqual(trusted.Decoration) || !choices.Unlocks.ToHashSet().SetEquals(trusted.Unlocks) ||
+                choices.Unlocks.Count != choices.Unlocks.Distinct().Count()) return false;
+            progress = restored; return true;
+        }
+        catch (ArgumentException) { return false; }
+    }
+
     private static CookingFrontOfHouse CreateInitialFront(CookingFrontOfHouseConfiguration configuration)
     {
         var house = new CookingFrontOfHouse(configuration.Schedule);
@@ -1011,7 +1031,15 @@ public sealed class CookingLevelEtHost : IDisposable
         return CreateSuccessorCore(newLevelId, newEpoch, nextPreparation);
     }
 
-    private CookingLevelHostGenerationResult CreateSuccessorCore(LevelId newLevelId, long newEpoch, CookingLevelPreparation? nextPreparation)
+    public CookingLevelHostGenerationResult CreateSuccessor(LevelId newLevelId, long newEpoch, CookingLevelPreparation nextPreparation,
+        CookingMajorProgress lockedConfirmedProgress, CookingMajorCheckpointStore store)
+    {
+        ArgumentNullException.ThrowIfNull(nextPreparation); ArgumentNullException.ThrowIfNull(lockedConfirmedProgress); ArgumentNullException.ThrowIfNull(store);
+        return CreateSuccessorCore(newLevelId, newEpoch, nextPreparation, lockedConfirmedProgress, store);
+    }
+
+    private CookingLevelHostGenerationResult CreateSuccessorCore(LevelId newLevelId, long newEpoch, CookingLevelPreparation? nextPreparation,
+        CookingMajorProgress? confirmedProgress = null, CookingMajorCheckpointStore? store = null)
     {
         Check();
         var result = RunLifecycleOperation(() => {
@@ -1022,18 +1050,26 @@ public sealed class CookingLevelEtHost : IDisposable
         if (_ownedSimulation is null) return RejectGeneration(CookingLevelLifecycleReason.GameplayUnavailable);
         if (_lifecycle.GameplayFactory is ICookingPreparationGameplayFactory && nextPreparation is null)
             return RejectGeneration(CookingLevelLifecycleReason.InvalidState);
-        return BuildAndCommitGeneration(result.Candidate!, false, nextPreparation, null, null);
+        return BuildAndCommitGeneration(result.Candidate!, false, nextPreparation, null, confirmedProgress, store);
     }
 
     private CookingLevelHostGenerationResult BuildAndCommitGeneration(CookingLevelLifecycle candidate, bool retry,
-        CookingLevelPreparation? preparation, CookingContent? content, CookingMajorProgress? progress)
+        CookingLevelPreparation? preparation, CookingContent? content, CookingMajorProgress? progress, CookingMajorCheckpointStore? store = null)
     {
         CookingRecipeSimulation? kitchen = null;
-        var acquired = false;
+        var acquired = false; var baselineCommitted = false;
         _initializingPreparation = true;
         try
         {
             var frozenPreparation = preparation is null ? null : CookingLevelLifecycle.CopyPreparation(preparation);
+            CookingMajorBaselineChoices? confirmedChoices = null;
+            if (store is not null)
+            {
+                if (retry || progress is null || frozenPreparation is null) return RejectGeneration(CookingLevelLifecycleReason.InvalidState);
+                confirmedChoices = CookingMajorBaselineChoices.Capture(progress);
+                if (!ValidateConfirmedChoices(candidate.GameplayFactory, candidate.Scope, candidate.Configuration, confirmedChoices, out _))
+                    return RejectGeneration(CookingLevelLifecycleReason.InvalidState);
+            }
             if (frozenPreparation is not null && candidate.ValidatePreparationCandidate(frozenPreparation) != CookingLevelLifecycleReason.None)
                 return RejectGeneration(CookingLevelLifecycleReason.InvalidState);
             var policy = (candidate.GameplayFactory as ICookingPreparationGameplayFactory)?
@@ -1074,6 +1110,8 @@ public sealed class CookingLevelEtHost : IDisposable
             var (nextCatalog, nextMenu) = ScopedMenu(candidate.GameplayFactory, candidate.Scope, candidate.Configuration);
             if (nextCatalog is not null && nextMenu is not null && MenuPolicyDiagnostics(nextCatalog, nextMenu, candidate.Configuration, nextFront).Any(d => d.Blocking))
                 return RejectGeneration(CookingLevelLifecycleReason.InvalidState);
+            if (confirmedChoices is not null && nextMenu is not null && nextMenu.ConfirmedMaterialUnlocks.Any(d => !confirmedChoices.Unlocks.Contains(d)))
+                return RejectGeneration(CookingLevelLifecycleReason.InvalidState);
             if (nextCatalog is not null && nextMenu is not null) kitchen.ConfigureMenuPolicy(nextCatalog, nextMenu);
             var effective = nextFront;
             if (policy is not null)
@@ -1087,6 +1125,8 @@ public sealed class CookingLevelEtHost : IDisposable
                 if (!kitchen.InstallPreparedGeometry(projection, references)) return RejectGeneration(CookingLevelLifecycleReason.InvalidState);
                 installed = new(projection.FrozenLayout!, Array.AsReadOnly(projection.Geometry!.InitialPoses.ToArray()));
             }
+            if (store is not null && policy is null && handoff is not null)
+                handoff = handoff with { Poses = kitchen.SpatialConfiguration?.InitialPoses ?? Array.Empty<CookingPlayerPose>() };
             if (handoff is not null && !kitchen.AcceptSuccessHandoff(handoff).Accepted)
                 return RejectGeneration(CookingLevelLifecycleReason.InvalidState);
             CookingFrontOfHouse? front = effective is not null ? CreateInitialFront(effective) : stagedSourceFront;
@@ -1110,7 +1150,14 @@ public sealed class CookingLevelEtHost : IDisposable
             kitchen.BindAuthorityGate(_authorityGate);
             _failureInjector?.ThrowIfRequested(CookingLevelEtHostFailurePoint.SimulationOwnershipAcquired);
             _failureInjector?.ThrowIfRequested(CookingLevelEtHostFailurePoint.BeforeSimulationPublish);
-            var result = InstallGeneration(candidate, retry);
+            CookingMajorBaselinePayload? baseline = null;
+            if (store is not null)
+            {
+                var stagedProgress = confirmedChoices!.CreateProgress(); kitchen.UseMajorProgress(stagedProgress);
+                baseline = new(Binding.LevelScope, candidate.Scope, frozenPreparation!, candidate.Configuration.Identity,
+                    policy?.Identity(), nextFront?.Identity(), nextMenu?.Identity(), installed, kitchen.ExportSuccessHandoff(), confirmedChoices, HostFrameSequence: HostFrameSequence);
+            }
+            var result = InstallGeneration(candidate, retry, store, baseline, ref baselineCommitted);
             if (!result.Accepted) return result;
             var previous = _ownedSimulation;
             _ownedSimulation = kitchen; Driver.Simulation = kitchen;
@@ -1128,13 +1175,13 @@ public sealed class CookingLevelEtHost : IDisposable
             return result with { RetainedProcessCount = handoff?.Processes.Count ?? 0,
                 ClearedOrderCount = clearedOrders, ClearedSettlementCount = clearedSettlements };
         }
-        catch (Exception)
+        catch (Exception) when (!baselineCommitted)
         {
             return RejectGeneration(CookingLevelLifecycleReason.GameplayInitializationFailed);
         }
         finally
         {
-            if (acquired && kitchen is not null)
+            if (acquired && !baselineCommitted && kitchen is not null)
             {
                 _gameplayPublicationGuard.Release(kitchen);
                 if (!ReferenceEquals(kitchen, _ownedSimulation)) kitchen.CloseLifecycle();
@@ -1179,6 +1226,89 @@ public sealed class CookingLevelEtHost : IDisposable
                 recipeCheckpoint,
                 _frontOfHouse is null ? null : RunFrontOperation(() => _frontOfHouse.ExportCheckpoint(_frontOfHouseMenu)),
                 _frontConfigurationIdentity, _serviceStartLogicalTick, _preparationConfiguration?.Identity(), _installedLayout, _menuConfiguration?.Identity()));
+    }
+
+    public static CookingMajorBaselineHostLoadResult LoadMajorBaseline(CookingMajorCheckpointStore store,
+        CookingScope expectedMatch, CookingConfigurationSnapshot configuration, ICookingLevelGameplayFactory factory)
+    {
+        ArgumentNullException.ThrowIfNull(store); ArgumentNullException.ThrowIfNull(expectedMatch);
+        ArgumentNullException.ThrowIfNull(configuration); ArgumentNullException.ThrowIfNull(factory);
+        var read = store.ReadBaseline(expectedMatch);
+        if (!read.Accepted) return new(false, CookingMajorBaselineHostLoadReason.ReadRejected, read.Reason);
+        var payload = read.Payload!;
+        if (payload.ConfigIdentity != configuration.Identity) return new(false, CookingMajorBaselineHostLoadReason.ConfigurationMismatch);
+        CookingLevelEtHost? host = null; CookingRecipeSimulation? kitchen = null; var acquired = false; var published = false;
+        try
+        {
+            var preparation = (factory as ICookingPreparationGameplayFactory)?.CreatePreparationConfiguration(payload.TargetScope, configuration).Freeze();
+            var frontConfiguration = ScopedFront(factory, payload.TargetScope, configuration);
+            var menu = ScopedMenu(factory, payload.TargetScope, configuration);
+            if (payload.PreparationConfigurationIdentity != preparation?.Identity() || payload.FrontConfigurationIdentity != frontConfiguration?.Identity() ||
+                payload.MenuPolicyIdentity != menu.Policy?.Identity() || (preparation is null) != (payload.InstalledLayout is null) ||
+                menu.Catalog is not null && menu.Policy is not null && MenuPolicyDiagnostics(menu.Catalog, menu.Policy, configuration, frontConfiguration).Any(d => d.Blocking))
+                return new(false, CookingMajorBaselineHostLoadReason.ConfigurationMismatch);
+            if (!ValidateConfirmedChoices(factory, payload.TargetScope, configuration, payload.Choices, out var progress) ||
+                menu.Policy is not null && menu.Policy.ConfirmedMaterialUnlocks.Any(d => !payload.Choices.Unlocks.Contains(d)))
+                return new(false, CookingMajorBaselineHostLoadReason.ChoicesRejected);
+            var lifecycle = new CookingLevelLifecycle(payload.TargetScope, configuration, factory);
+            if (lifecycle.ValidatePreparationCandidate(payload.Preparation) != CookingLevelLifecycleReason.None)
+                return new(false, CookingMajorBaselineHostLoadReason.PreparationRejected);
+            host = new CookingLevelEtHost(lifecycle, 256, null, frontConfiguration, menu); host._initializingPreparation = true;
+            kitchen = factory.Create(payload.TargetScope, configuration);
+            if (kitchen is null || !host._gameplayPublicationGuard.TryAcquire(kitchen)) return new(false, CookingMajorBaselineHostLoadReason.InitializationFailed);
+            acquired = true;
+            if (kitchen.Snapshot().Scope != payload.TargetScope.MatchScope) return new(false, CookingMajorBaselineHostLoadReason.ConfigurationMismatch);
+            if (menu.Catalog is not null && menu.Policy is not null) kitchen.ConfigureMenuPolicy(menu.Catalog, menu.Policy);
+            CookingInstalledLayoutCheckpoint? installed = null; var effective = frontConfiguration;
+            if (preparation is not null)
+            {
+                var saved = payload.InstalledLayout!;
+                if (saved.GeometrySeedPoses is null || saved.GeometrySeedPoses.Any(p => p is null || p.LastMovementTick != -1))
+                    return new(false, CookingMajorBaselineHostLoadReason.ConfigurationMismatch);
+                var projection = preparation.Project(saved.Layout, kitchen.SpatialConfiguration?.InitialPoses ?? Array.Empty<CookingPlayerPose>(), kitchen.ConfiguredAppliances);
+                if (!projection.Accepted || !payload.Kitchen.Poses!.OrderBy(p => p.Player.Value, StringComparer.Ordinal)
+                    .SequenceEqual(projection.Geometry!.InitialPoses.OrderBy(p => p.Player.Value, StringComparer.Ordinal)) ||
+                    !saved.GeometrySeedPoses.OrderBy(p => p.Player.Value, StringComparer.Ordinal)
+                    .SequenceEqual(projection.Geometry!.InitialPoses.OrderBy(p => p.Player.Value, StringComparer.Ordinal)) ||
+                    !kitchen.CanInstallPreparedGeometry(projection, payload.Kitchen) || !kitchen.InstallPreparedGeometry(projection, payload.Kitchen))
+                    return new(false, CookingMajorBaselineHostLoadReason.GameplayRestoreRejected);
+                installed = new(projection.FrozenLayout!, Array.AsReadOnly(projection.Geometry!.InitialPoses.ToArray()));
+                if (frontConfiguration is not null) effective = preparation.DerivedFrontConfiguration(projection, frontConfiguration);
+            }
+            if (preparation is null && !payload.Kitchen.Poses!.OrderBy(p => p.Player.Value, StringComparer.Ordinal).SequenceEqual(
+                (kitchen.SpatialConfiguration?.InitialPoses ?? Array.Empty<CookingPlayerPose>()).OrderBy(p => p.Player.Value, StringComparer.Ordinal)))
+                return new(false, CookingMajorBaselineHostLoadReason.ConfigurationMismatch);
+            if (!kitchen.AcceptSuccessHandoff(payload.Kitchen).Accepted) return new(false, CookingMajorBaselineHostLoadReason.GameplayRestoreRejected);
+            kitchen.UseMajorProgress(progress!);
+            var front = effective is null ? null : CreateInitialFront(effective);
+            var frontMenu = effective is null ? host._frontOfHouseMenu : new CookingFrontOfHouseMenu(effective.Menu);
+            if (front is not null)
+            {
+                var boundKitchen = kitchen;
+                if (effective?.ManualPolicyIdentity is { } manual) front.ConfigureManualWork(manual, (player, target) => host.CanFrontWork(boundKitchen, player, target));
+                host.ValidateFrontConfiguration(front, frontMenu, kitchen, effective, kitchen.SpatialConfiguration);
+            }
+            if (lifecycle.AdoptSuccessorKitchen(kitchen) != CookingLevelLifecycleReason.None) return new(false, CookingMajorBaselineHostLoadReason.PreparationRejected);
+            kitchen.BindAuthorityGate(host._authorityGate);
+            host._ownedSimulation = kitchen; host.Driver.Simulation = kitchen;
+            host._preparationConfiguration = preparation; host._stagedPreparation = CookingLevelLifecycle.CopyPreparation(payload.Preparation);
+            host._installedLayout = installed; host._effectiveFrontConfiguration = effective; host.HostFrameSequence = payload.HostFrameSequence;
+            host._frontOfHouse = front; host._frontOfHouseMenu = frontMenu; host.BindFrontOfHouse(kitchen, prepared: true);
+            host._initializingPreparation = false; published = true;
+            return new(true, CookingMajorBaselineHostLoadReason.None, Host: host, Progress: progress);
+        }
+        catch (Exception exception)
+        { return new(false, CookingMajorBaselineHostLoadReason.InitializationFailed, Detail: exception.Message); }
+        finally
+        {
+            if (!published)
+            {
+                if (host is not null) host._initializingPreparation = false;
+                if (acquired && kitchen is not null && host is not null && !ReferenceEquals(host._ownedSimulation, kitchen))
+                { host._gameplayPublicationGuard.Release(kitchen); kitchen.CloseLifecycle(); }
+                host?.Dispose();
+            }
+        }
     }
 
     /// <summary>
@@ -1654,11 +1784,21 @@ public sealed class CookingLevelEtHost : IDisposable
 
     private CookingLevelHostGenerationResult InstallGeneration(
         CookingLevelLifecycle candidate,
-        bool isRetry)
+        bool isRetry, CookingMajorCheckpointStore? store, CookingMajorBaselinePayload? baseline, ref bool baselineCommitted)
     {
         var sourceScope = Binding.LevelScope;
         var sourceLifecycle = _lifecycle;
         var sourceBinding = Binding;
+        CookingPreparedLevelGenerationCommit? preparedCommit = null;
+        if (store is not null)
+        {
+            var preparation = RunLifecycleOperation(() => {
+                var accepted = sourceLifecycle.PrepareSuccessorCandidateCommit(candidate, out var commit, out var reason);
+                return (accepted, commit, reason);
+            });
+            if (!preparation.accepted) return RejectGeneration(preparation.reason);
+            preparedCommit = preparation.commit;
+        }
         candidate.BindOwnerGameplayGate(_hostGameplayGate);
         candidate.BindOperationGate(_lifecycleOperationGate);
         var oldLevel = Level;
@@ -1691,7 +1831,19 @@ public sealed class CookingLevelEtHost : IDisposable
             return RejectGeneration(CookingLevelLifecycleReason.GameplayInitializationFailed);
         }
 
-        var committed = RunLifecycleOperation(() => isRetry
+        CookingLevelSuccessorResult committed;
+        if (store is not null)
+        {
+            var written = store.WriteBaseline(baseline!);
+            if (!written.Accepted)
+            {
+                RestoreSourceTree();
+                return RejectGeneration(CookingLevelLifecycleReason.GameplayInitializationFailed) with { Reason = "BaselineWriteFailed", BaselineReason = written.Reason };
+            }
+            baselineCommitted = true;
+            preparedCommit!.Commit(); committed = preparedCommit.Result;
+        }
+        else committed = RunLifecycleOperation(() => isRetry
             ? sourceLifecycle.CommitRetryCandidate(candidate)
             : sourceLifecycle.CommitSuccessorCandidate(candidate));
         if (!committed.Accepted)

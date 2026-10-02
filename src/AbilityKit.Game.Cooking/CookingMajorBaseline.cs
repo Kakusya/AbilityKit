@@ -45,11 +45,12 @@ public sealed record CookingMajorBaselinePayload(
     [property: JsonRequired] string? MenuPolicyIdentity,
     [property: JsonRequired] CookingInstalledLayoutCheckpoint? InstalledLayout,
     [property: JsonRequired] CookingRecipeCheckpoint Kitchen,
-    [property: JsonRequired] CookingMajorBaselineChoices Choices)
+    [property: JsonRequired] CookingMajorBaselineChoices Choices,
+    [property: JsonRequired] long HostFrameSequence = 0)
 {
     public string CanonicalText() => JsonSerializer.Serialize(new
     {
-        SourceScope, TargetScope, ConfigIdentity,
+        SourceScope, TargetScope, ConfigIdentity, HostFrameSequence,
         preparation = new {
             Preparation.Level, Preparation.Map, Preparation.ConfigIdentity,
             Preparation.Layout.Id,
@@ -78,7 +79,7 @@ public sealed record CookingMajorBaselineWrite(bool Accepted, CookingMajorBaseli
 
 public sealed partial class CookingMajorCheckpointStore
 {
-    public const int CurrentBaselineFormatVersion = 2;
+    public const int CurrentBaselineFormatVersion = 3;
     public const int MaximumBaselineRecordCharacters = 1024 * 1024;
     private sealed record BaselineEnvelope(
         [property: JsonRequired] int FormatVersion,
@@ -134,7 +135,7 @@ public sealed partial class CookingMajorCheckpointStore
             using var document = JsonDocument.Parse(serialized);
             if (!document.RootElement.TryGetProperty("formatVersion", out var version) || !version.TryGetInt32(out var format))
                 return new(false, CookingMajorBaselineReason.RecordTruncated);
-            if (format == CurrentFormatVersion) return new(false, CookingMajorBaselineReason.UnsupportedLegacyBaseline);
+            if (format == CurrentFormatVersion || format == 2) return new(false, CookingMajorBaselineReason.UnsupportedLegacyBaseline);
             if (format != CurrentBaselineFormatVersion) return new(false, CookingMajorBaselineReason.UnknownFormatVersion);
             var envelope = JsonSerializer.Deserialize<BaselineEnvelope>(serialized, JsonOptions);
             if (envelope?.Payload is not { } payload || string.IsNullOrWhiteSpace(envelope.IntegritySha256))
@@ -154,7 +155,7 @@ public sealed partial class CookingMajorCheckpointStore
 
     private static bool ValidBaseline(CookingMajorBaselinePayload p)
     {
-        if (p.SourceScope is null || p.TargetScope is null || p.Preparation is null || p.ConfigIdentity is null ||
+        if (p.HostFrameSequence < 0 || p.SourceScope is null || p.TargetScope is null || p.Preparation is null || p.ConfigIdentity is null ||
             p.Kitchen is null || p.Choices is null || !p.Choices.Locked || p.Choices.Decoration is null ||
             p.Choices.Decoration.Any(x => x is null || string.IsNullOrWhiteSpace(x.From.Value) || string.IsNullOrWhiteSpace(x.To.Value)) ||
             p.Choices.Unlocks is null || p.Choices.Unlocks.Any(x => string.IsNullOrWhiteSpace(x.Value)) ||

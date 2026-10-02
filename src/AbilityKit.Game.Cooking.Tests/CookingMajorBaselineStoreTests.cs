@@ -8,6 +8,32 @@ namespace AbilityKit.Game.Cooking.Tests;
 public sealed class CookingMajorBaselineStoreTests
 {
     [Fact]
+    public void Required_host_clock_roundtrips_in_integrity_and_prior_typed_baseline_is_rejected()
+    {
+        using var directory = new BaselineDirectory();
+        var store = new CookingMajorCheckpointStore(directory.Path);
+        var payload = Payload() with { HostFrameSequence = 321 };
+        Assert.Equal(3, CookingMajorCheckpointStore.CurrentBaselineFormatVersion);
+        Assert.True(store.WriteBaseline(payload).Accepted);
+        Assert.Equal(321, store.ReadBaseline(payload.TargetScope.MatchScope).Payload!.HostFrameSequence);
+        var saved = File.ReadAllText(directory.Current);
+        Assert.Equal(CookingMajorBaselineReason.InvalidBaseline,
+            store.WriteBaseline(payload with { HostFrameSequence = -1 }).Reason);
+        Assert.Equal(saved, File.ReadAllText(directory.Current));
+        var tree = JsonNode.Parse(saved)!;
+        tree["payload"]!.AsObject().Remove("hostFrameSequence");
+        File.WriteAllText(directory.Current, tree.ToJsonString());
+        Assert.Equal(CookingMajorBaselineReason.RecordTruncated, store.ReadBaseline(payload.TargetScope.MatchScope).Reason);
+        tree = JsonNode.Parse(saved)!; tree["payload"]!["hostFrameSequence"] = 322;
+        File.WriteAllText(directory.Current, tree.ToJsonString());
+        Assert.Equal(CookingMajorBaselineReason.IntegrityFailure, store.ReadBaseline(payload.TargetScope.MatchScope).Reason);
+        tree = JsonNode.Parse(saved)!; tree["formatVersion"] = 2;
+        tree["payload"]!.AsObject().Remove("hostFrameSequence");
+        File.WriteAllText(directory.Current, tree.ToJsonString());
+        Assert.Equal(CookingMajorBaselineReason.UnsupportedLegacyBaseline, store.ReadBaseline(payload.TargetScope.MatchScope).Reason);
+    }
+
+    [Fact]
     public void Typed_success_baseline_survives_new_store_and_restores_actual_inventory()
     {
         using var directory = new BaselineDirectory();
