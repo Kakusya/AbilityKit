@@ -65,7 +65,7 @@ if ($NoBuild) {
  if($Source -ne $currentHead){throw 'Build Source must equal actual compile HEAD.'}
  $beforeInputs=Inputs
  function Build-Project([string]$target,[string]$label) {
-  $process=Start-Process dotnet -ArgumentList ('build '+(Q $target)+' --verbosity minimal') -WindowStyle Hidden -PassThru -RedirectStandardOutput (Join-Path $rootDirectory ($label+'-build.log')) -RedirectStandardError (Join-Path $rootDirectory ($label+'-build.stderr.log'))
+  $process=Start-Process dotnet -ArgumentList ('build '+(Q $target)+' --no-incremental --verbosity minimal') -WindowStyle Hidden -PassThru -RedirectStandardOutput (Join-Path $rootDirectory ($label+'-build.log')) -RedirectStandardError (Join-Path $rootDirectory ($label+'-build.stderr.log'))
   $null=$process.Handle; $start=$process.StartTime; $until=[DateTime]::UtcNow.AddSeconds(180)
   try{while(!$process.HasExited -and [DateTime]::UtcNow -lt $until){Start-Sleep -Milliseconds 100;$process.Refresh()};if(!$process.HasExited){throw 'Build180s deadline.'};$process.WaitForExit();if($process.ExitCode -ne 0){throw ($label+' build failed.')}}
   finally{$process.Refresh();if(!$process.HasExited){$current=Get-Process -Id $process.Id -ErrorAction SilentlyContinue;if($current -and $current.StartTime -eq $start){Stop-Process -InputObject $current};$process.WaitForExit()};@{pid=$process.Id;startUtc=$start.ToUniversalTime().ToString('O');exitCode=$process.ExitCode;project=$target}|ConvertTo-Json|Set-Content -LiteralPath (Join-Path $rootDirectory ($label+'-build.exit.json')) -Encoding UTF8;$process.Dispose()}
