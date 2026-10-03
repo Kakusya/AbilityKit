@@ -233,3 +233,6 @@ Original Controls31939 actually terminated1 on frozen d7e9cc873. Both initial15 
 ]
 
 Worker observed post-frame passive Poll consuming newly issued baseline2 and queuing genuine ACK2 after prior Ready; source-only phase-boundary drain proposal is under independent review, not implemented/approved runtime yet. No native15/1 latency conclusion from this initial pre-client failure. Exclusive.NET released on actual31939 terminal; do not rerun or grant Profile until source correction review and fresh compiler proof.
+
+
+Independent readonly review of actual original two failed reports accepts a bounded caller-loop producer-drain phase boundary SOURCE ONLY: preserve pre-peer Poll, actual Session.ProcessOwnerFrame, post-observer Poll, 10ms cadence and all-frame30s/5000 budget; temporarily defer only post-peer Poll so actual queued ACK2 is consumed before native transition. Record real pre/post pending/frame/ACK/issued identities, leave newly issued image in passive queue, retain all additional ticks/history; restore normal Poll for native CompletePreparation/Start/Pause and genuine Paused ACK/Ready. No production/steady workload shortcut, no pending relaxation, no queue clear or manufactured Ready. Isolated owner granted source edits and freeze for review before fresh build/rerun.
