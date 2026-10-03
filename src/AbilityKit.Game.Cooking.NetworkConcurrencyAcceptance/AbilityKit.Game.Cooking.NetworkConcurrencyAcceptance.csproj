@@ -1,0 +1,8 @@
+<Project Sdk="Microsoft.NET.Sdk">
+  <PropertyGroup><OutputType>Exe</OutputType><TargetFramework>net10.0</TargetFramework><ImplicitUsings>enable</ImplicitUsings><Nullable>enable</Nullable><LangVersion>latest</LangVersion></PropertyGroup>
+  <ItemGroup>
+    <ProjectReference Include="../AbilityKit.Game.Cooking/AbilityKit.Game.Cooking.csproj" />
+    <ProjectReference Include="../AbilityKit.Game.Cooking.EtRuntime/AbilityKit.Game.Cooking.EtRuntime.csproj" />
+    <ProjectReference Include="../AbilityKit.Network.Transport.LiteNet/AbilityKit.Network.Transport.LiteNet.csproj" />
+  </ItemGroup>
+</Project>
