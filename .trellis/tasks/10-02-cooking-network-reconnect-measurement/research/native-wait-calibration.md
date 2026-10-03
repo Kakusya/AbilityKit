@@ -55,3 +55,18 @@ This proposal does not authorize source edits or executions by itself. Root reta
 ## Independent source review and narrow implementation grant
 
 Root accepts the reversible diagnostic design after independent review. Before any build/run, scoped implementer owns ONLY local/Artifacts/native-process-timer-calibration-20261003/Program.cs corrections: exact argument validation before waits/API, intent vs actual Begin/acquired/released facts, immediate protected finally following successful Begin, bounded partial sample retention and both phase/cleanup error preservation. DefaultOFF; exactOFF/ON/OFF sample counts and whole45s budget for9groups, child50s; minimum supportedOS remainsWindows10build19041. Review freeze again before actualsourcecompile/runtime. This is an N03 local diagnostic increment, not generic/default/production adoption or global settings modification. No UDP/currentbusiness timeout/history changes. Original primitivecalibration source/logs/results remain immutable; summary-reviewed.json fixes derived async threadCPU placeholder to null/unmeasured, originalsummary retained.
+
+
+## Actual process timer calibration: root native exit 0
+
+2026-10-03 root session79616 finished; actual childPID36972/native0, supervisor termination false, 26.285s measured process duration. Source SHA256529B63170395172F6FBB7163F7CF968C9F4764CD609795F67596C0D5AB30D0F2; loaded DLL6AF30512AF2072C86B33082B7A4A40D971FF39875BEC4CEBE623A16133E3F77B, MVID6386303b-15e0-4b38-a0b6-f012d998ce19. Original source, build manifest, native receipts, stdout/stderr and opt-in-result.json remain in local/Artifacts/native-process-timer-calibration-20261003/. Invalid-flag control rejected before measurement; fresh forced Release compilation completed.
+
+All nine groups completed20warmup+200samples (1800 measured samples). Medians in milliseconds:
+
+| Primitive | OFF before | ON acquired | OFF after |
+|---|---:|---:|---:|
+| WaitOne requested1 | 15.5102 | 1.0145 | 15.5099 |
+| WaitOne requested15 | 15.5134 | 15.0239 | 15.5116 |
+| Task.Delay requested10 | 15.5062 | 10.0167 | 15.5180 |
+
+Actual Begin1 and matching End1 each called once, both returned0; currentlyAcquired false, no phase/release/diagnostic failure. Async threadCPU remains null/unattributed; processCPU2500000ticks is cumulative, dedicatedCPU granularity cannot prove zero cost. This demonstrates changed measured wait distributions within this experiment. It does not measure LiteNet native wake cadence, prove exclusive systemwide restoration, establish throughput improvement or authorize production timer/native1 adoption. Independent raw review by ack_fix_review passed: all1800 samples, source/DLL/manifest/native receipts and exact cleanup independently verified. Next matched two-factor diagnostic requires separate source review.
