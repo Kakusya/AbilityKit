@@ -31,7 +31,7 @@ void Wait(Func<bool> done, Action? pump = null, int milliseconds = 10000)
 void Write(bool passed, Exception? error = null)
 {
     Directory.CreateDirectory(Path.GetDirectoryName(reportPath)!);
-    var binaries = Directory.GetFiles(AppContext.BaseDirectory).Where(p => p.EndsWith(".dll") || p.EndsWith(".json") || p.EndsWith(".exe")).Order().ToDictionary(p => Path.GetFileName(p)!, p => Convert.ToHexString(SHA256.HashData(File.ReadAllBytes(p))));
+    var binaries = Directory.GetFiles(AppContext.BaseDirectory, "*", SearchOption.AllDirectories).Order(StringComparer.Ordinal).ToDictionary(p => Path.GetRelativePath(AppContext.BaseDirectory, p).Replace('\\', '/'), p => Convert.ToHexString(SHA256.HashData(File.ReadAllBytes(p))));
     File.WriteAllText(reportPath, JsonSerializer.Serialize(new {
         schema = 1, fixture = "real-et-spatial-concurrency-v1", role, passed, runId, source, dirty, order, topology,
         physicalTwoPc = "NOT_VERIFIED", formalPerformanceTarget = "UNSET", stage, failure = error?.ToString(),
