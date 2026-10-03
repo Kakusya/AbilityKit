@@ -15,8 +15,9 @@ string Option(string name,string fallback){var i=Array.IndexOf(args,name);return
 if(args.Contains("--retry-conservation-controls"))return RetryConservation.Controls(Option("--report","retry-conservation-controls.json"));
 var role=args.FirstOrDefault()??"";var nonce=Option("--nonce","");var profile=Option("--profile","P0");var repeat=int.Parse(Option("--repeat","1"));
 var output=Path.GetFullPath(Option("--report",role+".json"));var mailbox=new ControlMailbox(nonce);var overall=Stopwatch.StartNew();object? evidence=null;
+var loadWaitEvidence=new LoadWaitEvidence(role=="host"?0:1);
 return SingleThreadOwner.Run(async()=>{try{Require(Guid.TryParse(nonce,out _)&&repeat is >=1 and <=3,"Provenance");evidence=role=="host"?await Host():role=="client"?await Client():throw new ArgumentException("Role");Save(true,null);return 0;}catch(Exception e){Save(false,e.ToString());Console.Error.WriteLine(e);return 1;}});
-void Save(bool passed,string? failure){Directory.CreateDirectory(Path.GetDirectoryName(output)!);File.WriteAllText(output,JsonSerializer.Serialize(new{passed,failure,nonce,profile,repeat,role,pid=Environment.ProcessId,machine=Environment.MachineName,stopwatchFrequency=Stopwatch.Frequency,etMvid=typeof(CookingLevelEtHost).Assembly.ManifestModule.ModuleVersionId,sessionMvid=typeof(CookingNetworkSessionHost).Assembly.ManifestModule.ModuleVersionId,evidence,physicalTwoPc="NOT_VERIFIED",performanceTarget="UNSET",topology="SameMachineMixedLocalFramedRemoteUdpRawRelay"},new JsonSerializerOptions{WriteIndented=true}));}
+void Save(bool passed,string? failure){Directory.CreateDirectory(Path.GetDirectoryName(output)!);File.WriteAllText(output,JsonSerializer.Serialize(new{passed,failure,nonce,profile,repeat,role,pid=Environment.ProcessId,machine=Environment.MachineName,stopwatchFrequency=Stopwatch.Frequency,etMvid=typeof(CookingLevelEtHost).Assembly.ManifestModule.ModuleVersionId,sessionMvid=typeof(CookingNetworkSessionHost).Assembly.ManifestModule.ModuleVersionId,evidence,loadWaitEvidence,physicalTwoPc="NOT_VERIFIED",performanceTarget="UNSET",topology="SameMachineMixedLocalFramedRemoteUdpRawRelay"},new JsonSerializerOptions{WriteIndented=true}));}
 async Task<JsonElement> Control(string kind,Func<Task> pump){while(true){Require(overall.Elapsed.TotalSeconds<360,"Driver360s");if(mailbox.Take() is{} c){Require(c.GetProperty("kind").GetString()==kind,"Unexpected phase control");return c;}await pump();}}
 async Task<object> Host(){
  var fixture=new ProcessMeasurementFixture();using var host=fixture.CreateHost();var adapter=new CookingNetworkAuthorityAdapter(host);
@@ -29,7 +30,7 @@ async Task<object> Host(){
  await Wait(()=>Marker("preflight-drop")&&session.LatestSessionProjection.Participants.All(p=>p.Ready&&p.ConnectedOwnerBinding&&!p.CleanupPending),120);
  ControlMailbox.Event(nonce,"WAIT_LOAD",new{instance=session.ServerSessionInstance,configuration=fixture.Configuration.Identity.ToString(),generation=1,scope=ProcessMeasurementFixture.Scope,sessionProjection=session.LatestSessionProjection});await Control("BEGIN_LOAD",Pump);
  async Task<CookingNetworkWireResult> Send(CookingRecipeCommand c,string s)=>await local.SendCommandAsync(s,c).WaitAsync(TimeSpan.FromSeconds(15));
- var loadTask=RunLoad(0,()=>local.LatestBaseline!.State,Send,()=>local.IsSynchronized);await Wait(()=>loadTask.IsCompleted,110);LoadResult? load=null;string? sampleError=null;try{load=await loadTask;}catch(Exception error){sampleError=error.ToString();}
+ var loadTask=RunLoad(0,()=>local.LatestBaseline!.State,Send,()=>local.IsSynchronized,()=>new(local.IsSynchronized,local.LatestBaseline?.Identity,local.LatestBaseline?.State.FullRecipe?.StateVersion,null,"NOT_EXPOSED_BY_LOCAL_CLIENT_API"),loadWaitEvidence);await Wait(()=>loadTask.IsCompleted,110);LoadResult? load=null;string? sampleError=null;try{load=await loadTask;}catch(Exception error){sampleError=error.ToString();}
  if(load is not null)Require(load.IssuedDomainIds.Concat(load.WarmupIssuedDomainIds).All(id=>admitted.Contains(new(id))),"All local load IDs admitted");ControlMailbox.Event(nonce,"SAMPLE_DRAINED",new{healthySample=sampleError is null});
  await Control("EXPECT_RECOVERY",Pump);await Wait(()=>!session.LatestSessionProjection.Participants.Single(p=>p.Participant==ProcessMeasurementFixture.Remote).ConnectedOwnerBinding,30);ControlMailbox.Event(nonce,"REMOTE_CLOSED",new{instance=session.ServerSessionInstance});
  await Wait(()=>Marker("recovery-new-drop")&&session.LatestSessionProjection.Participants.All(p=>p.Ready&&p.ConnectedOwnerBinding&&!p.CleanupPending),90);
@@ -49,7 +50,7 @@ async Task<object> Client(){
  var open=await Control("OPEN",()=>Task.Delay(2));var front=open.GetProperty("frontendPort").GetInt32();routes.Add(front);peer.Open("127.0.0.1",front);await Wait(()=>RunningReady(peer),30);
  await Execute(Toggle(peer.Latest!.State,1),"preflight-pickup");var original=Toggle(peer.Latest!.State,1);var receipt=await Execute(original,"preflight-drop");await Wait(()=>RunningReady(peer));
  var old=peer.Binding!;ControlMailbox.Event(nonce,"WAIT_LOAD",new{instance=old.ServerSessionInstance,configuration=peer.Latest!.State.Observation.Lifecycle.ConfigIdentity,generation=old.ConnectionGeneration,ack=peer.ReadyIdentity,currentBaselineIdentity=peer.Latest.Identity,currentValidatedBaselineHash=CookingNetworkWireCodec.BaselineHash(peer.Latest.State,peer.Latest.Session),scope=ProcessMeasurementFixture.Scope,ready=RunningReady(peer),frontendPort=front,preflightDomainId=receipt.DomainCommandId,preflightAcceptedVersion=receipt.Result!.StateVersion});await Control("BEGIN_LOAD",Pump);
- var task=RunLoad(1,()=>peer.Latest!.State,Send,()=>peer.Ready);while(!task.IsCompleted)await Pump();LoadResult? load=null;string? sampleError=null;try{load=await task;}catch(Exception error){sampleError=error.ToString();}ControlMailbox.Event(nonce,"SAMPLE_DRAINED",new{healthySample=sampleError is null});await Control("CLOSE_OLD",Pump);
+ var task=RunLoad(1,()=>peer.Latest!.State,Send,()=>peer.Ready,()=>new(peer.Ready,peer.Latest?.Identity,peer.Latest?.State.FullRecipe?.StateVersion,peer.ReadyIdentity,"GENUINE_PEER_MATCHED_READY_IDENTITY"),loadWaitEvidence);while(!task.IsCompleted)await Pump();LoadResult? load=null;string? sampleError=null;try{load=await task;}catch(Exception error){sampleError=error.ToString();}ControlMailbox.Event(nonce,"SAMPLE_DRAINED",new{healthySample=sampleError is null});await Control("CLOSE_OLD",Pump);
  var beforeClose=peer.Latest!.State.FullRecipe!;peer.Dispose();ControlMailbox.Event(nonce,"OLD_CLOSED",new{old.ConnectionGeneration});var route=await Control("RECOVERY_ROUTE",()=>Task.Delay(2));front=route.GetProperty("frontendPort").GetInt32();Require(!routes.Contains(front),"Fresh proxy frontend");routes.Add(front);peer=new();peer.Open("127.0.0.1",front,old);await Wait(()=>RunningReady(peer),30);
  Require(peer.Binding!.ServerSessionInstance==old.ServerSessionInstance&&peer.Binding.ConnectionGeneration==old.ConnectionGeneration+1&&peer.Binding.RebindToken!=old.RebindToken,"Actual same-instance token rotation");
  var beforeBaseline=peer.Latest!;var before=beforeBaseline.State.FullRecipe!;CookingNetworkWireResult? replay=null;RetryConservation.Proof? retryProof=null;object? retryCaptureEvidence=null;
@@ -100,23 +101,34 @@ static void ValidateView(CookingNetworkSessionProjection view,string instance,bo
     foreach(var p in view.Participants)Require(!p.CleanupPending&&p.ConnectionGeneration==(p.Participant==ProcessMeasurementFixture.Local?1:2)&&
         (allowRemoteClosed&&p.Participant==ProcessMeasurementFixture.Remote||p.ConnectedOwnerBinding&&p.Ready),"Ready/connection/generation provenance.");
 }
-static async Task<LoadResult> RunLoad(int player,Func<CookingNetworkAuthorityCapture> read,Func<CookingRecipeCommand,string,Task<CookingNetworkWireResult>> send,Func<bool> ready)
+static async Task<LoadResult> RunLoad(int player,Func<CookingNetworkAuthorityCapture> read,Func<CookingRecipeCommand,string,Task<CookingNetworkWireResult>> send,Func<bool> ready,Func<LoadWaitView> observe,LoadWaitEvidence diagnostic)
 {
     var watch=Stopwatch.StartNew();using var process=Process.GetCurrentProcess();var cpu=process.TotalProcessorTime;
     var samples=new List<CookingNetworkWireResult>();var rtt=new List<double>();var issuedIds=new List<string>();var warmupIds=new List<string>();var offered=0;var busy=0;var late=0;var warmup=0;var warmupIssued=0;var warmupAccepted=0;var warmupBusy=0;var warmupLate=0;var completedAfterWindow=0;long sampledPeakWorkingSet=0,sampledPeakPrivateBytes=0;Task? flight=null;
     for(var i=0;i<350;i++){
-        var due=i*200;while(watch.ElapsedMilliseconds<due)await Task.Delay(1);var measured=i>=50;
+        var due=i*200;while(watch.ElapsedMilliseconds<due)await Task.Delay(1);var measured=i>=50;var slot=diagnostic.Add(i,Stopwatch.GetTimestamp());
         process.Refresh();sampledPeakWorkingSet=Math.Max(sampledPeakWorkingSet,process.WorkingSet64);sampledPeakPrivateBytes=Math.Max(sampledPeakPrivateBytes,process.PrivateMemorySize64);
         if(measured)offered++;else warmup++;
-        if(watch.ElapsedMilliseconds>=due+200){if(measured)late++;else warmupLate++;continue;}
-        if(flight is{IsCompleted:false}){if(measured)busy++;else warmupBusy++;continue;}if(flight is not null)await flight;
-        Require(ready(),"Load client not Ready.");var command=Toggle(read(),player);var stable=$"load-p{player}-{i}";
+        if(watch.ElapsedMilliseconds>=due+200){slot.Outcome="scheduler-skipped";if(measured)late++;else warmupLate++;continue;}
+        if(flight is{IsCompleted:false}){slot.Outcome="backpressure-skipped";if(measured)busy++;else warmupBusy++;continue;}CookingRecipeCommand command;
+        try{slot.FailureBoundary="prior-flight-terminal";if(flight is not null)await flight;
+            slot.FailureBoundary="readiness";Require(ready(),"Load client not Ready.");
+            slot.FailureBoundary="toggle-state";command=Toggle(read(),player);slot.FailureBoundary=null;}
+        catch(Exception error){slot.Error=DiagnosticError.From(error);slot.Outcome="offered-slot-failed-outside-complete";slot.FinishedAt=Stopwatch.GetTimestamp();diagnostic.Failure=slot.Error;throw;}
+        var stable=$"load-p{player}-{i}";
         if(!measured)warmupIssued++;
-        flight=Complete();
-        async Task Complete(){var started=Stopwatch.GetTimestamp();var result=await send(command,stable);Require(result.Result?.Outcome==CookingRecipeOutcome.Accepted,"Legal load command rejected: "+JsonSerializer.Serialize(new{command,result}));Require(!result.Result!.IsDuplicate,"Fresh load ID must not be a cached replay.");
+        slot.StableId=stable;slot.BeforeSend=observe();flight=Complete();
+        async Task Complete(){try{var started=Stopwatch.GetTimestamp();slot.SendStartedAt=started;slot.Outcome="awaiting-response";var result=await send(command,stable);slot.ResponseAt=Stopwatch.GetTimestamp();slot.AtResponse=observe();slot.DomainId=result.DomainCommandId?.Value;slot.TargetStateVersion=result.Result?.StateVersion;slot.AcceptedResponse=result.Result?.Outcome==CookingRecipeOutcome.Accepted;slot.Duplicate=result.Result?.IsDuplicate;if(slot.AcceptedResponse)diagnostic.AcceptedResponses++;Require(result.Result?.Outcome==CookingRecipeOutcome.Accepted,"Legal load command rejected: "+JsonSerializer.Serialize(new{command,result}));Require(!result.Result!.IsDuplicate,"Fresh load ID must not be a cached replay.");
             var elapsed=(Stopwatch.GetTimestamp()-started)*1000.0/Stopwatch.Frequency;var wait=Stopwatch.StartNew();
-            while(read().FullRecipe!.StateVersion<result.Result!.StateVersion&&wait.Elapsed.TotalSeconds<30)await Task.Delay(1);Require(wait.Elapsed.TotalSeconds<30,"Full committed projection deadline.");
+            slot.WaitStartedAt=Stopwatch.GetTimestamp();slot.DeadlineAt=slot.WaitStartedAt+30*Stopwatch.Frequency;slot.Outcome="awaiting-projection";
+            bool eligible=false;
+            try{while(read().FullRecipe!.StateVersion<result.Result!.StateVersion&&wait.Elapsed.TotalSeconds<30)await Task.Delay(1);
+                // Freeze the original elapsed-only decision before cached diagnostic observation.
+                var finalVersion=read().FullRecipe!.StateVersion;var finalElapsed=wait.Elapsed;slot.FinalVersionPredicate=finalVersion>=result.Result!.StateVersion;eligible=finalElapsed.TotalSeconds<30;slot.FinishedAt=Stopwatch.GetTimestamp();slot.WaitElapsedMilliseconds=finalElapsed.TotalMilliseconds;slot.DeadlineExpired=!eligible;}
+            finally{slot.AfterWait=observe();}
+            Require(eligible,"Full committed projection deadline.");diagnostic.CompletedProjections++;slot.Outcome="projected-complete";
             if(measured){samples.Add(result);rtt.Add(elapsed);issuedIds.Add(result.DomainCommandId!.Value.Value);if(watch.ElapsedMilliseconds>=70000)completedAfterWindow++;}else {warmupAccepted++;warmupIds.Add(result.DomainCommandId!.Value.Value);}}
+            catch(Exception error){slot.Error=DiagnosticError.From(error);slot.FailureBoundary="complete";slot.Outcome="failed";slot.FinishedAt??=Stopwatch.GetTimestamp();diagnostic.Failure=slot.Error;throw;}}
     }
     while(watch.ElapsedMilliseconds<70000)await Task.Delay(1);
     if(flight is not null)await flight;
