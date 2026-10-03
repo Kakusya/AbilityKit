@@ -40,3 +40,15 @@ Actual matched Debug retained graph102180bytes,20 serialization iterations after
 Isolated candidate2d034b2ec delegates list writing in one IEnumerable<T> serializer invocation. Root independently read local/Logs/o01b-focus/o01b-focus.trx:3/3 passed,0fail/skip. Identical102180byte graph,20 iterations: legacy2552000 vs candidate2522080 allocated bytes (~1.17% lower). Exact bytes/hash/bounds retained, but this is Debug serialization-only evidence; no main production import or end-to-end acceptance.
 
 Root granted sequential isolated kitchen/ET/network-sdk gates. Owner reports live session64901; root independently observed actual dotnet testPID13512 and testhost24780 in the isolated tree, with kitchen stdout being produced. This is a verified active window, not gate PASS. Main relay/rich owners remain source-only until explicit terminal release. Rich tool early source review also identified stale NoBuild provenance, paired artifact admission/path bounds and orphan container consistency issues; these must close before tool runtime acceptance.
+## Independent frozen Release owner-call totals
+
+Root extracted all12 original numeric reports (kind BaselineMeasurement) into local/Artifacts/reference-release-independent-review/owner-cost-observations.json; original measurement JSON unchanged. These are totals across the measured synchronous owner calls, not component timing percentiles or native-memory measurements.
+
+| Reference | Owner calls (three repeats) | Managed owner-thread allocation total | Synchronous owner elapsed total |
+|---|---|---|---|
+| InProcess2x5 |637/643/638|52.52/55.76/55.30 billion bytes|47.39/47.53/47.99 seconds|
+| UDP2x5 |3618/3599/3605|6.20/6.21/6.23 billion bytes|4.52/4.69/4.61 seconds|
+| InProcess4x5 |304/301/304|60.80/61.72/61.93 billion bytes|54.07/54.20/54.29 seconds|
+| UDP4x5 |3386/3386/3385|10.12/10.17/10.21 billion bytes|7.70/7.58/7.65 seconds|
+
+Code-backed metricDefinitions explicitly include inline InProcess client decode/validation/ACK callbacks in owner-thread allocation/timing; allocations on other threads, native allocations and awaits are excluded. Consequently InProcess vs UDP totals cannot be named pure Host serialization or equal per-call work. Large managed churn warrants matched component profiling; these totals do not prove a specific serializer/transport cause or justify applying the1.17% microprobe gain to end-to-end latency. Source Publish already enforces at most one BaselineAwaitingAck per connection; assuming unbounded redundant outstanding images would contradict inspected source.
