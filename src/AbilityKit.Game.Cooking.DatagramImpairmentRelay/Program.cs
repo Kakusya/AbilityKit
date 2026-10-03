@@ -119,9 +119,9 @@ void Receive(Route route,Socket socket,string direction){
         EndPoint source=new IPEndPoint(IPAddress.Any,0);int received;
         try{received=socket.ReceiveFrom(route.Buffer,ref source);}
         catch(SocketException error){
-            var now=Stopwatch.GetTimestamp();
-            var handled=CloseNotificationPolicy.CanHandle(OperatingSystem.IsWindows(),socket==route.Front,error.NativeErrorCode,error.SocketErrorCode,route.CloseDeclaredAt,route.CloseDeadline,now,route.CloseNotifications);
-            var detail=new{operation="ReceiveFrom",route=route.Id,inboundDirection=direction,socket=socket==route.Front?"frontend":"upstream",error=error.SocketErrorCode.ToString(),nativeCode=error.NativeErrorCode,timestamp=now,epoch,handledCloseNotification=handled,declared=route.CloseDeclaredAt,deadline=route.CloseDeadline,notificationPayloadBytes=(int?)null,lastFrontendSendTarget=route.Client?.ToString(),route.LastFrontendSendAt,route.LastFrontendSendBytes};
+            var faultTimestamp=Stopwatch.GetTimestamp();
+            var handled=CloseNotificationPolicy.CanHandle(OperatingSystem.IsWindows(),socket==route.Front,error.NativeErrorCode,error.SocketErrorCode,route.CloseDeclaredAt,route.CloseDeadline,faultTimestamp,route.CloseNotifications);
+            var detail=new{operation="ReceiveFrom",route=route.Id,inboundDirection=direction,socket=socket==route.Front?"frontend":"upstream",error=error.SocketErrorCode.ToString(),nativeCode=error.NativeErrorCode,timestamp=faultTimestamp,epoch,handledCloseNotification=handled,declared=route.CloseDeclaredAt,deadline=route.CloseDeadline,notificationPayloadBytes=(int?)null,lastFrontendSendTarget=route.Client?.ToString(),route.LastFrontendSendAt,route.LastFrontendSendBytes};
             RecordFault(detail,!handled);
             if(!handled)throw;
             route.CloseNotifications++;handledCloseNotifications++;
