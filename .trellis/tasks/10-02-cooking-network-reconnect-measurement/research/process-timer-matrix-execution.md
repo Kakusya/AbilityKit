@@ -22,3 +22,23 @@ Root read-only hardware/power/contention inventory before these controls is main
 Fresh ON ControlsOn31182 actually terminal0: isolated local/Logs/process-timer-paired-on-controls/20261003-135448-6377393, native15 Host45112/client43056, native1 Host28780/client34724. Independent timer_matrix_review checked ALL4OFF/ON pairs/8native0/noKill/completeState+Session equality and independently recomputed4combinedbaseline hashes, exactissuedACKReady/publicbothConnectedReady/noCleanup/currentchannelclose, allloadedLocationSHA/MVIDagainstoriginalmanifest, actualframing+20,60overheads,0producercommands/5frames. OFFzeroAPIs; ONexactBegin0/End0 ordered and released beforepostcleanup. See process-timer-paired-controls-review.md.
 
 Root accepts preconditions and grants ONLY unchanged4ed366217 matchedmid12pair TimerMatrix, all128realacceptedcommands,3freshrepeatseachnative15/1 ? timerOFF/ON. Originalmanifest20261003-134809-7425201; root85977live sole.NET, output local/Logs/process-timer-matched-matrix. No partials/cap/timeout/history adjustments or productionadoption. Resultpending; never equate granted/live withcomplete. Main rich/P6 app source frozen pendingfreshbuild/controls afterthiswindow.
+
+
+## Original matrix terminal and independently verified rows
+
+Root85977 TERMINATED1 after all12pairedrows/24endpoints, due ONLY final PowerShell Hashtable Select-Object ExpandProperty runId aggregation failure. Original matrix.json absent; no wrapperexit0 claim. Original isolated artifact local/Logs/process-timer-matched-matrix/20261003-135958-8824814 retains allrow.json/native receipts/stdout/stderr/reports and exact compiled4ed manifest. Root original preliminary and independent-twelve-row-review.json separately validate all12rows/24native0/noKill, fullpairedState+Session, independently recomputed12combinedbaselinehashes, exactissuedACKReady/currentchannelclose/publicbothReadyConnectednoCleanup, releasebeforepostcleanup,60overheads/framing20/source36loadedoutputs. All128commands133frames263047Benvelopes; rawreports49792930bytes total.
+
+Root accepts original ROW measurement scope after independentreview, not wrapper aggregate pass or ordinary performance. SameHOST finalissued Baseline.postForward to currentchannelACK.preForward milliseconds:
+
+| Native / timer | Three actual rows | Median |
+|---|---|---:|
+|15/OFF|163.783 /148.5684 /170.6418|163.783|
+|1/OFF|168.1262 /170.5814 /170.0113|170.0113|
+|15/ON|102.9777 /92.5509 /102.9668|102.9668|
+|1/ON|29.505 /29.6956 /29.1355|29.505|
+
+These are combined application/scheduling path timings; timerON also affects actualowner waits. Nativewake timestamps remain absent; no native-only attribution, full-running-service or target/reference/physical acceptance. Resource/degradedQoS criteria remainUNSET.
+
+Reviewed isolated0504ed182 changes ONLY finalaggregate helper. Originalexactwrapper4ed bytes preserved; actual AST-extracted sharedhelper passes immutable12rows inHashtable andPSObject forms and rejects5explicit syntheticinvalidshapes. NEW matrix-derived-schema3.json retainsoriginal85977exit1 and separatesderivedvalidation; source0504 currentwrapper/runtime NOT_RUN, compiledendpointsource remains4ed. No numericalrerun or relabeling merelyfor metadatafix. See process-timer-matrix-aggregation-review.md.
+
+Main source currently includes reviewed bounded rich diagnostics and P6 partialdiagnostics/helpercontrols/inventory corrections; root next grants fresh main toolbuilds andfocusedcontrols only. Application scheduling candidate is a separate design underreview; no source/runtimeadoption yet. Fullrich4/P6/ordinary12Release/physical remainopen.
