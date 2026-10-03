@@ -1,3 +1,6 @@
+using AbilityKit.Network.Abstractions;
+using AbilityKit.Network.Host;
+using AbilityKit.Network.Protocol;
 using System.Text.Json;
 using System.Security.Cryptography;
 using AbilityKit.Game.Cooking.RichEvidence;
@@ -51,6 +54,7 @@ internal static class RichDiagnosticControls
             diagnostics.ObserveCommand(wire, "remote-366");
             Check(diagnostics.Active && diagnostics.SelectedDomain == CookingNetworkWireCodec.DomainId("diagnostic-instance", scope, new("natural-partner"), "process-action-366").Value,
                 "selected typed identity maps independently without authority execution");
+            RealPaths(Check, options, wire);
             var callbackRow = new RichDiagnosticCallback(0, 1, "control", "in", null, 1, "remote-366", "CommandResult", 12,
                 10, null, null, null, null, 11, 12, 13, 14, 15, 0, "Complete callback; native UNKNOWN.", null);
             for (var i = 0; i < 300; i++) diagnostics.Callback(callbackRow);
@@ -84,4 +88,88 @@ internal static class RichDiagnosticControls
             return 0;
         } catch (Exception e) { Console.Error.WriteLine(e); return 1; }
     }
+    private static void RealPaths(Action<bool, string> check, RichDiagnosticOptions options, CookingNetworkWireCommand selected)
+    {
+        byte[] Frame(uint opcode, byte[] payload) {
+            var frame = new RichFrameCodec().Encode(new NetworkPacketHeader(NetworkPacketFlags.ServerPush, opcode, 1, (uint)payload.Length), new(payload));
+            return frame.ToArray();
+        }
+        var command = Frame(CookingNetworkWireCodec.OpCode, CookingNetworkWireCodec.Encode(CookingNetworkMessageKind.Command, "remote-366", selected));
+        foreach (var enabled in new[] { false, true }) {
+            var d = RichCommandPathDiagnostics.Create(enabled ? options : new(false, null, null));
+            d?.ObserveCommand(selected, "remote-366");
+            var listener = new ProbeListener(); using var observer = new RichObserver(listener, d);
+            var channel = new ProbeChannel(); IServerChannel? observedChannel = null; var forwarded = new List<byte>(); var calls = 0;
+            observer.ChannelAccepted += accepted => { observedChannel = accepted; accepted.BytesReceived += bytes => { calls++; forwarded.AddRange(bytes); }; };
+            observer.Start(); listener.Accept(channel);
+            channel.Emit(command[..3]); channel.Emit(command[3..]);
+            channel.Emit(command.Concat(command).ToArray());
+            check(calls == 3 && forwarded.SequenceEqual(command.Concat(command).Concat(command)), "actual observer copy/forward once fragmented and multiple frames " + enabled);
+            check(observer.Received.Count == 3, "actual observer original frame observations " + enabled);
+            channel.Emit(Frame(17, [1, 2])); channel.Emit(Frame(CookingNetworkWireCodec.OpCode, [1, 2]));
+            observedChannel!.Send(new(Frame(17, [1, 2]))); observedChannel.Send(new(Frame(CookingNetworkWireCodec.OpCode, [1, 2])));
+            check(channel.SendCalls == 2, "actual outbound forwarding once despite observation rejection " + enabled);
+            check(observer.Failure is null && observer.Received.Count == 3, "raw rejection preserves original skip disposition " + enabled);
+            if (d is not null) {
+                var rows = d.Export().Callbacks.Rows;
+                check(rows.Count(x => x.Source == "observer.raw-envelope-rejected" && x.Failure is not null) == 4, "real inbound/outbound opcode/codec failures retained bounded");
+                check(rows.Any(x => x.FrameMapping.Contains("1..2")), "actual fragmented callback mapping");
+                check(rows.Count(x => x.Source == "observer.typed-read-validation") == 3, "typed reads separately bracketed");
+            } else check(d is null, "OFF actual observer has no collector");
+        }
+        var faultDiagnostics = new RichCommandPathDiagnostics(options); faultDiagnostics.ObserveCommand(selected, "remote-366");
+        var faultListener = new ProbeListener(); using var faultObserver = new RichObserver(faultListener, faultDiagnostics);
+        var faultChannel = new ProbeChannel(); var original = new InvalidOperationException("original-forward-control");
+        faultObserver.ChannelAccepted += accepted => accepted.BytesReceived += _ => throw original;
+        faultObserver.Start(); faultListener.Accept(faultChannel);
+        try { faultChannel.Emit(command); throw new InvalidOperationException("Missing forward error."); }
+        catch (InvalidOperationException error) when (ReferenceEquals(error, original)) { }
+        check(faultDiagnostics.Export().Callbacks.Rows.Single().Failure?.Text.Contains("original-forward-control") == true,
+            "actual forward original exception retained and rethrown");
+
+        foreach (var peerEnabled in new[] { false, true }) {
+        var peerDiagnostics = RichCommandPathDiagnostics.Create(peerEnabled ? options : new(false, null, null)); peerDiagnostics?.ObserveCommand(selected, "remote-366");
+        var transports = new List<ProbeTransport>();
+        using var peer = new RichPeer(new("natural-partner"), "probe", () => { var t = new ProbeTransport(); transports.Add(t); return t; }, peerDiagnostics);
+        peer.Open("probe", 1);
+        var joined = Frame(CookingNetworkWireCodec.OpCode, CookingNetworkWireCodec.Encode(CookingNetworkMessageKind.Joined, "probe-joined",
+            new CookingNetworkJoined("diagnostic-instance", new("natural-partner"), 1, "probe-token")));
+        transports[0].Emit(joined); // Real ConnectionManager assembly and actual callback enqueue.
+        check(peer.DiagnosticState().QueueCount == 1 && peer.DiagnosticState().Generation is null, "actual peer callback queues before owner Poll");
+        peer.Reopen("probe", 1); peer.Poll();
+        check(peer.DiagnosticState().QueueCount == 0 && peer.DiagnosticState().Generation is null, "actual old-incarnation queued envelope ignored");
+        transports[1].Emit(joined); peer.Poll();
+        check(peer.DiagnosticState().Generation == 1 && (peerDiagnostics is null || peerDiagnostics.Export().Callbacks.Rows.Any(x => x.Source == "peer.typed-receive-validation" && x.Installed is not null && x.DecodeStart is not null && x.DecodeEnd >= x.DecodeStart)), "actual current-incarnation typed Joined installed");
+        transports[1].Emit(Frame(CookingNetworkWireCodec.OpCode, [1, 2]));
+        check(peer.Failure is not null, "actual malformed callback records failure");
+        try { peer.Poll(); throw new InvalidOperationException("Missing passive callback failure."); }
+        catch (InvalidOperationException error) when (error.InnerException == peer.Failure) { }
+        check(peerDiagnostics is null || peerDiagnostics.Export().Callbacks.Rows.Any(x => x.Failure is not null), "actual callback error preserves ON/OFF semantics " + peerEnabled);
+        }
+    }
+    private sealed class ProbeListener : IChannelListener
+    {
+        public bool IsListening { get; private set; } public string Endpoint => "probe";
+        public event Action<IServerChannel>? ChannelAccepted; public event Action<Exception>? Error;
+        public void Start() => IsListening = true; public void Stop() => IsListening = false;
+        public void Accept(IServerChannel channel) => ChannelAccepted?.Invoke(channel);
+        public void Dispose() => Stop();
+    }
+    private sealed class ProbeChannel : IServerChannel
+    {
+        public string Id => "probe-channel"; public string RemoteEndpoint => "probe"; public bool IsConnected => true;
+        public event Action<ArraySegment<byte>>? BytesReceived; public event Action<IServerChannel>? Closed; public event Action<Exception>? Error;
+        public int SendCalls { get; private set; }
+        public void Emit(byte[] bytes) => BytesReceived?.Invoke(new(bytes)); public void Send(ArraySegment<byte> bytes) { SendCalls++; }
+        public void Close() => Closed?.Invoke(this); public void Dispose() { }
+    }
+    private sealed class ProbeTransport : ITransport
+    {
+        public bool IsConnected { get; private set; }
+        public event Action? Connected; public event Action? Disconnected; public event Action<Exception>? Error; public event Action<ArraySegment<byte>>? BytesReceived;
+        public void Connect(string host, int port) { IsConnected = true; Connected?.Invoke(); }
+        public void Emit(byte[] bytes) => BytesReceived?.Invoke(new(bytes)); public void Send(ArraySegment<byte> bytes) { }
+        public void Close() { IsConnected = false; Disconnected?.Invoke(); } public void Dispose() => Close();
+    }
+
 }

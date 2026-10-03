@@ -67,14 +67,27 @@ internal sealed class RichObserver(IChannelListener inner, RichCommandPathDiagno
                     while (_reader.TryRead(out var header, out var payload)) {
                         var mapping = _inSegments?.Consume(4 + NetworkPacketHeader.Size + payload.Count);
                         var decodeStart = diagnostic is null ? 0 : RichCommandPathDiagnostics.Now;
-                        if (header.OpCode != CookingNetworkWireCodec.OpCode || !CookingNetworkWireCodec.TryDecode(payload.AsSpan(), new(), out var envelope)) continue;
+                        CookingNetworkWireEnvelope? envelope = null;
+                        var decoded = header.OpCode == CookingNetworkWireCodec.OpCode && CookingNetworkWireCodec.TryDecode(payload.AsSpan(), new(), out envelope);
+                        if (!decoded) {
+                            diagnostic?.Callback(new(0, callback, "observer.raw-envelope-rejected", "in", Id, null, null, null,
+                                bytes.Count, diagnostic is null ? 0 : decodeStart, null, null, null, null, decodeStart,
+                                diagnostic is null ? null : RichCommandPathDiagnostics.Now, null, null, null, null, mapping!,
+                                RichCommandPathDiagnostics.Text(header.OpCode != CookingNetworkWireCodec.OpCode ? "Unexpected opcode; original observation skipped." : "TryDecode rejected; original observation skipped."), payload.Count));
+                            continue; // Preserve original observer disposition; no new production exception.
+                        }
                         var decodeEnd = diagnostic is null ? 0 : RichCommandPathDiagnostics.Now;
                         if (_owner.Received.Count >= 65536) throw new InvalidOperationException("Observer record bound exceeded.");
+                        var typedStart = diagnostic is null ? 0 : RichCommandPathDiagnostics.Now;
+                        Exception? typedFailure = null;
+                        try {
                         var command = envelope!.Kind == CookingNetworkMessageKind.Command ? CookingNetworkWireCodec.Read<CookingNetworkWireCommand>(envelope) : null;
                         _owner.Received.Enqueue(new(Interlocked.Increment(ref _owner._ordinal), Stopwatch.GetTimestamp(), Id, RemoteEndpoint, envelope!.CorrelationId, envelope.Kind,
                             command,
                             envelope.Kind == CookingNetworkMessageKind.BaselineAck ? CookingNetworkWireCodec.Read<CookingNetworkBaselineIdentity>(envelope) : null));
                         if (command is not null) diagnostic?.ObserveCommand(command, envelope.CorrelationId);
+                        } catch (Exception error) { typedFailure = error; throw; }
+                        finally { TypedTrace(diagnostic, callback, "in", envelope!, bytes.Count, payload.Count, typedStart, mapping!, typedFailure); }
                         diagnostic?.Callback(new(0, callback, "observer.after-original-forward", "in", Id, null, envelope.CorrelationId,
                             envelope.Kind.ToString(), bytes.Count, entered, entered, copied, forwarding, forwarded, decodeStart,
                             decodeEnd, null, null, null, null, mapping!, null, payload.Count));
@@ -108,8 +121,19 @@ internal sealed class RichObserver(IChannelListener inner, RichCommandPathDiagno
                 while (_outbound.TryRead(out var header, out var payload)) {
                     var mapping = _outSegments?.Consume(4 + NetworkPacketHeader.Size + payload.Count);
                     var decodeStart = diagnostic is null ? 0 : RichCommandPathDiagnostics.Now;
-                    if (header.OpCode != CookingNetworkWireCodec.OpCode || !CookingNetworkWireCodec.TryDecode(payload.AsSpan(), new(), out var envelope)) continue;
+                    CookingNetworkWireEnvelope? envelope = null;
+                        var decoded = header.OpCode == CookingNetworkWireCodec.OpCode && CookingNetworkWireCodec.TryDecode(payload.AsSpan(), new(), out envelope);
+                        if (!decoded) {
+                            diagnostic?.Callback(new(0, callback, "observer.raw-envelope-rejected", "out", Id, null, null, null,
+                                bytes.Count, diagnostic is null ? 0 : decodeStart, null, null, null, null, decodeStart,
+                                diagnostic is null ? null : RichCommandPathDiagnostics.Now, null, null, null, null, mapping!,
+                                RichCommandPathDiagnostics.Text(header.OpCode != CookingNetworkWireCodec.OpCode ? "Unexpected opcode; original observation skipped." : "TryDecode rejected; original observation skipped."), payload.Count));
+                            continue; // Preserve original observer disposition; no new production exception.
+                        }
                     var decodeEnd = diagnostic is null ? 0 : RichCommandPathDiagnostics.Now;
+                    var typedStart = diagnostic is null ? 0 : RichCommandPathDiagnostics.Now;
+                    Exception? typedFailure = null;
+                    try {
                     if (envelope!.Kind is CookingNetworkMessageKind.CommandResult or CookingNetworkMessageKind.Rejected) {
                         if (_owner.Replies.Count >= 8192) throw new InvalidOperationException("Readonly reply record bound exceeded.");
                         _owner.Replies.Enqueue(new(Id, envelope.CorrelationId, CookingNetworkWireCodec.Read<CookingNetworkWireResult>(envelope)!, RichProof.Sha(payload.ToArray())));
@@ -122,11 +146,21 @@ internal sealed class RichObserver(IChannelListener inner, RichCommandPathDiagno
                         if (_owner.Images.Count >= 65536) throw new InvalidOperationException("Readonly image record bound exceeded.");
                         _owner.Images.Enqueue(new(Id, baseline.Identity, CookingNetworkWireCodec.Hash(baseline.State)));
                     }
+                    } catch (Exception error) { typedFailure = error; throw; }
+                    finally { TypedTrace(diagnostic, callback, "out", envelope!, bytes.Count, payload.Count, typedStart, mapping!, typedFailure); }
                     diagnostic?.Callback(new(0, callback, "observer.after-send-enqueue", "out", Id, null, envelope.CorrelationId,
                         envelope.Kind.ToString(), bytes.Count, before, null, null, before, after, decodeStart, decodeEnd,
                         null, null, null, null, mapping!, null, payload.Count));
                 }
             }
+        }
+        private void TypedTrace(RichCommandPathDiagnostics? diagnostic, long callback, string direction,
+            CookingNetworkWireEnvelope envelope, int callbackBytes, int payloadBytes, long started, string mapping, Exception? error)
+        {
+            diagnostic?.Callback(new(0, callback, "observer.typed-read-validation", direction, Id, null,
+                envelope.CorrelationId, envelope.Kind.ToString(), callbackBytes, started, null, null, null, null,
+                started, RichCommandPathDiagnostics.Now, null, null, null, null, mapping,
+                error is null ? null : RichCommandPathDiagnostics.Text(error.ToString()), payloadBytes));
         }
         public void Close() => _inner.Close();
         public void Dispose() { _inner.BytesReceived -= OnBytes; _inner.Closed -= OnClosed; _inner.Error -= OnError; _inner.Dispose(); }

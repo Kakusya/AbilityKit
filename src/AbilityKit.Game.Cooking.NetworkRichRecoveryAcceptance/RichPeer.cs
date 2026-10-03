@@ -91,10 +91,13 @@ internal sealed class RichPeer(PlayerId player, string credential, Func<ITranspo
             var dequeued = diagnostics is null ? 0 : RichCommandPathDiagnostics.Now;
             Interlocked.Decrement(ref _incomingCount);
             Exception? error = null;
+            var receiveStarted = diagnostics is null ? 0 : RichCommandPathDiagnostics.Now;
             try { if (envelope.Incarnation == _incarnation) Receive(envelope.Envelope, envelope.Hash); }
             catch (Exception e) { error = e; throw; }
             finally {
-                if (envelope.Diagnostic is { } trace) diagnostics!.Callback(trace with { Source = "peer.owner-poll",
+                if (envelope.Diagnostic is { } trace) diagnostics!.Callback(trace with { Source = "peer.typed-receive-validation",
+                    DecodeStart = envelope.Incarnation == _incarnation ? receiveStarted : null,
+                    DecodeEnd = envelope.Incarnation == _incarnation ? RichCommandPathDiagnostics.Now : null,
                     Dequeued = dequeued, Installed = error is null && envelope.Incarnation == _incarnation ? RichCommandPathDiagnostics.Now : null,
                     QueueCount = Volatile.Read(ref _incomingCount), Failure = error is null ? null : RichCommandPathDiagnostics.Text(error.ToString()),
                     FrameMapping = envelope.Incarnation == _incarnation ? "Typed receive/validation completion; native timing UNKNOWN." : "Old incarnation ignored, not installed." });
