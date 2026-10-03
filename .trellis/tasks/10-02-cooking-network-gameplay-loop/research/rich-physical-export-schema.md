@@ -47,3 +47,14 @@ Final: immutable pre-close **CookingNetworkSessionProjection** with bothConnecte
 - Current proven observer/owner Poll/grant model: new NetworkConcurrencyAcceptance files are reference patterns only; toy item/phase assumptions cannot be linked blindly. Reused DTOs are from AbilityKit.Game.Cooking.dll; verifier's direct Cooking reference transitively brings Host/LiteNet, but verifier constructs none of ET/Session/transport/simulation and never starts sockets.
 
 Typed offline verifier must enforce tagged case required fields, supported versions and original hashes; invalid/missing deep export reports coverage insufficient. Implementation can evolve DTO field naming under root review before first source freeze, but may not silently omit any proof group above. Current reports do not yet implement this schema; no physical/deep rich acceptance is inferred.
+
+
+## Approved source implementation increment (2026-10-03)
+
+Root approved implementation after a82 review. This supersedes the initial document-only prohibition for the **owned new applications/scripts only**. Source is awaiting independent freeze review and .NET grant; no compiled or gameplay acceptance follows.
+
+Lost-reply case explicitly uses Partner D31 as FIRST actual Submit/drop/rebind/retry, followed by Chef F01 as SECOND delivery. This preserves the required exactly-one committed settlement at the cut. Other three cases retain the documented cross-delivery split. RolePolicy/hash exports this adaptation; RequiredTicks6/catalog, finite supply, service500, recipe content and production remain unchanged.
+
+Initial genuine READY is printed after local exact grant and before procurement. Remote waits a legal committed procurement Move milestone. Aggregate multi-command preparation/production milestone waits use remaining fixed600s whole-case; individual real command/projection30s, cut/rebind15s, join20s and natural1000owner ticks remain unchanged. ACTIVITY logs every50commands plus actual PHASE command/frame/local timestamps make activity inspectable.
+
+All critical cut commands require actual ACK of the latest issued current-channel image before owner consumption, and actual committed full image publication is recorded before scheduler hold. Manual cleanup pending is recorded in actual Session projection while Paused; cleanup applies only after Resume. Host/Client issued/current Ready checks use retained complete images with current binding/scope and callback connection-incarnation isolation. No held-owner wait for Ready.

@@ -1,0 +1,13 @@
+<Project Sdk="Microsoft.NET.Sdk">
+<PropertyGroup><OutputType>Exe</OutputType><TargetFramework>net10.0</TargetFramework><ImplicitUsings>enable</ImplicitUsings><Nullable>enable</Nullable><LangVersion>latest</LangVersion></PropertyGroup>
+<ItemGroup><ProjectReference Include="../AbilityKit.Game.Cooking/AbilityKit.Game.Cooking.csproj"/><ProjectReference Include="../AbilityKit.Game.Cooking.EtRuntime/AbilityKit.Game.Cooking.EtRuntime.csproj"/><ProjectReference Include="../AbilityKit.Network.Transport.LiteNet/AbilityKit.Network.Transport.LiteNet.csproj"/></ItemGroup>
+<ItemGroup><Compile Include="../AbilityKit.ET.Runtime.Tests/CookingRichRecoveryFixture.cs" Link="Fixtures/CookingRichRecoveryFixture.cs"/><Compile Include="../AbilityKit.ET.Runtime.Tests/CookingRichRecoveryPlanner.cs" Link="Fixtures/CookingRichRecoveryPlanner.cs"/></ItemGroup>
+<ItemGroup><Content Include="../AbilityKit.ET.Runtime.Tests/CookingRichRecoveryFixture.cs" Link="sources/CookingRichRecoveryFixture.cs" CopyToOutputDirectory="PreserveNewest"/><Content Include="../AbilityKit.ET.Runtime.Tests/CookingRichRecoveryPlanner.cs" Link="sources/CookingRichRecoveryPlanner.cs" CopyToOutputDirectory="PreserveNewest"/></ItemGroup>
+<Target Name="RecordLinkedRichSourceHashes" BeforeTargets="CoreGenerateAssemblyInfo">
+<GetFileHash Files="$(MSBuildProjectDirectory)/../AbilityKit.ET.Runtime.Tests/CookingRichRecoveryFixture.cs" Algorithm="SHA256"><Output TaskParameter="Items" ItemName="RichFixtureHash"/></GetFileHash>
+<GetFileHash Files="$(MSBuildProjectDirectory)/../AbilityKit.ET.Runtime.Tests/CookingRichRecoveryPlanner.cs" Algorithm="SHA256"><Output TaskParameter="Items" ItemName="RichPlannerHash"/></GetFileHash>
+<ItemGroup>
+<AssemblyAttribute Include="System.Reflection.AssemblyMetadataAttribute"><_Parameter1>LinkedFixtureSha256</_Parameter1><_Parameter2>%(RichFixtureHash.FileHash)</_Parameter2></AssemblyAttribute>
+<AssemblyAttribute Include="System.Reflection.AssemblyMetadataAttribute"><_Parameter1>LinkedPlannerSha256</_Parameter1><_Parameter2>%(RichPlannerHash.FileHash)</_Parameter2></AssemblyAttribute>
+</ItemGroup></Target>
+</Project>
