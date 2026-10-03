@@ -1,5 +1,7 @@
 # Rich application framing correction (2026-10-03)
 
+Source correction: root caught676eb20fe padded Join fixture before execution. Final kind-specific caps are Join ControlBytes4096, CommandBytes16384 and Baseline FrameBytes8388608. Corrected frame-controls max-wire fixture uses Baseline-kind synthetic parser payload, not a typed business baseline; original Join description below is historical source error, not valid8MiB control admission. No budget changed and no original control pass was claimed.
+
 Status: root-approved runner-only source preparation; compilation, controls and actual rich rerun PENDING. No .NET executed by this owner. Generic production, Cooking wire/token/collection/history/time budgets remain unchanged.
 
 ## Original actual failure and source cause

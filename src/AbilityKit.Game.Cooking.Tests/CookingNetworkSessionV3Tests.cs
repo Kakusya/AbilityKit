@@ -72,9 +72,10 @@ public sealed class CookingNetworkSessionV3Tests
         => new(player, player == A ? "join-a" : "join-z", session.CreateLocalClientTransport);
 
     [Theory]
-    [InlineData(true)]
-    [InlineData(false)]
-    public void Exact_eight_MiB_wire_reaches_actual_ET_Session_and_admits_only_valid_Join(bool validWire)
+    [InlineData(0)]
+    [InlineData(1)]
+    [InlineData(2)]
+    public void Actual_ET_Session_admits_control_bound_Join_and_rejects_oversized_control_or_wrong_direction_baseline(int scenario)
     {
         using var host = Host(); using var session = Session(host, udp: true); session.Start();
         using var transport = new LiteNetTransport("abilitykit-cooking-v3");
@@ -89,21 +90,29 @@ public sealed class CookingNetworkSessionV3Tests
             images.Enqueue(image!);
         } } catch (Exception error) { errors.Enqueue(error); } };
         transport.Connect("127.0.0.1", session.Port); Assert.True(connected.Task.Wait(TimeSpan.FromSeconds(8)));
+        var validJoin = scenario == 0;
         var small = CookingNetworkWireCodec.Encode(CookingNetworkMessageKind.Join, "exact-boundary", new CookingNetworkJoin(A, "join-a", null, null));
-        var wire = new byte[bounds.FrameBytes]; Array.Fill(wire, (byte)' '); small.CopyTo(wire, 0);
-        if (!validWire) wire[0] = (byte)'?';
-        Assert.Equal(validWire, CookingNetworkWireCodec.TryDecode(wire, bounds, out _));
+        if (scenario == 2) {
+            var state = new CookingNetworkAuthorityAdapter(host).CaptureFullState().State!;
+            var projection = session.LatestSessionProjection;
+            var baselinePayload = new CookingNetworkBaseline(new(session.ServerSessionInstance, A, 1, Scope, 1, 1,
+                CookingNetworkWireCodec.BaselineHash(state, projection), "wrong-direction"), 8, 5, state, projection);
+            small = CookingNetworkWireCodec.Encode(CookingNetworkMessageKind.Baseline, "wrong-direction", baselinePayload);
+        }
+        var wire = new byte[scenario == 2 ? bounds.FrameBytes : bounds.ControlBytes + scenario];
+        Array.Fill(wire, (byte)' '); small.CopyTo(wire, 0);
+        Assert.Equal(scenario != 1, CookingNetworkWireCodec.TryDecode(wire, bounds, out _));
         transport.Send(LengthPrefixedFrameCodec.Instance.Encode(new(default, CookingNetworkWireCodec.OpCode, 1, (uint)wire.Length), new(wire)));
         var deadline = System.Diagnostics.Stopwatch.StartNew();
-        bool Complete() => validWire ? images.Any(x => x.Kind == CookingNetworkMessageKind.Joined) && images.Any(x => x.Kind == CookingNetworkMessageKind.Baseline) : images.Any(x => x.Kind == CookingNetworkMessageKind.Rejected);
+        bool Complete() => validJoin ? images.Any(x => x.Kind == CookingNetworkMessageKind.Joined) && images.Any(x => x.Kind == CookingNetworkMessageKind.Baseline) : images.Any(x => x.Kind == CookingNetworkMessageKind.Rejected);
         while (!Complete() && deadline.Elapsed < TimeSpan.FromSeconds(8)) {
             session.ProcessOwnerFrame(); Thread.Sleep(5);
         }
         Assert.Empty(errors);
-        if (!validWire) {
+        if (!validJoin) {
             Assert.True(Complete()); Assert.DoesNotContain(images, x => x.Kind is CookingNetworkMessageKind.Joined or CookingNetworkMessageKind.Baseline);
             var rejected = CookingNetworkWireCodec.Read<CookingNetworkWireResult>(images.First(x => x.Kind == CookingNetworkMessageKind.Rejected))!;
-            Assert.Equal("ProtocolMismatch", rejected.Reason);
+            Assert.Equal(scenario == 1 ? "ProtocolMismatch" : "MalformedCommand", rejected.Reason);
             var unbound = Assert.Single(session.LatestSessionProjection.Participants.Where(x => x.Participant == A));
             Assert.False(unbound.ConnectedOwnerBinding); Assert.Equal(0, unbound.ConnectionGeneration); Assert.False(unbound.Ready); Assert.False(unbound.CleanupPending);
             return;
@@ -114,7 +123,7 @@ public sealed class CookingNetworkSessionV3Tests
         Assert.Equal(joined.ServerSessionInstance, baseline.Identity.ServerSessionInstance); Assert.Equal(A, baseline.Identity.Participant); Assert.Equal(joined.ConnectionGeneration, baseline.Identity.ConnectionGeneration);
         var participant = Assert.Single(session.LatestSessionProjection.Participants.Where(x => x.Participant == A));
         Assert.True(participant.ConnectedOwnerBinding); Assert.Equal(joined.ConnectionGeneration, participant.ConnectionGeneration); Assert.False(participant.CleanupPending);
-        Assert.True(session.Diagnostics.ReceivedBytes >= bounds.FrameBytes);
+        Assert.True(session.Diagnostics.ReceivedBytes >= bounds.ControlBytes);
     }
 
     [Fact]

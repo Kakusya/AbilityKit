@@ -15,7 +15,7 @@ public sealed class CookingLiteNetFramingBoundaryTests
     private static TaskCompletionSource<T> Completion<T>() => new(TaskCreationOptions.RunContinuationsAsynchronously);
     private static byte[] Wire(int size)
     {
-        var small = CookingNetworkWireCodec.Encode(CookingNetworkMessageKind.Join, "boundary", new CookingNetworkJoin(new("boundary"), "credential", null, null));
+        var small = CookingNetworkWireCodec.Encode(CookingNetworkMessageKind.Baseline, "boundary", new { parserFixture = true });
         var bytes = new byte[size]; Array.Fill(bytes, (byte)' '); small.CopyTo(bytes, 0); return bytes;
     }
     [Theory]

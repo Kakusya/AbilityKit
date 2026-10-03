@@ -34,9 +34,9 @@ internal static class RichFrameControls
             RejectPrefix(codec.CreateDecoder(), limit + 1); passed.Add("configured-body-plus-one-rejected");
             RejectPrefix(LengthPrefixedFrameCodec.Instance.CreateDecoder(), 4194973); passed.Add("generic-default-4MiB-unchanged");
             var bounds = new CookingNetworkSessionOptions();
-            var small = CookingNetworkWireCodec.Encode(CookingNetworkMessageKind.Join, "frame-control", new CookingNetworkJoin(new("frame-control"), "credential", null, null));
+            var small = CookingNetworkWireCodec.Encode(CookingNetworkMessageKind.Baseline, "frame-control", new { parserFixture = true });
             var wire = new byte[bounds.FrameBytes]; Array.Fill(wire, (byte)' '); small.CopyTo(wire, 0);
-            Require(CookingNetworkWireCodec.TryDecode(wire, bounds, out _), "Exact wire limit valid whitespace-padded envelope");
+            Require(CookingNetworkWireCodec.TryDecode(wire, bounds, out _), "Exact wire limit Baseline-kind parser fixture (not typed business baseline)");
             var oversized = new byte[bounds.FrameBytes + 1]; Array.Fill(oversized, (byte)' '); small.CopyTo(oversized, 0);
             Require(!CookingNetworkWireCodec.TryDecode(oversized, bounds, out _), "Wire plus one rejected");
             passed.Add("wire-8MiB-exact-and-plus-one");

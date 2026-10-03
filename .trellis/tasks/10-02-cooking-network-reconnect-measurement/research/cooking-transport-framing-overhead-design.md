@@ -1,4 +1,12 @@
-# Cooking LiteNet framing storage compatibility — proposed, not implemented
+# Cooking LiteNet framing storage compatibility — source prepared, execution pending
+
+## Authoritative kind-specific correction (supersedes initial Join fixture paragraphs below)
+
+Root caught a source fixture error in7a9dbf784 and RichFrameControls676eb20fe before any execution: padded8MiB Join is NOT wire-valid. Defaults are ControlBytes4096, CommandBytes16384, FrameBytes8388608; TryDecode's final cap depends on kind. These budgets remain unchanged. Initial fixture paragraphs below are preserved as historical source error, not executable requirements or runtime evidence.
+
+Corrected transport/runner max-wire fixture is a Baseline-kind envelope padded8MiB, with explicitly synthetic parser-only payload; byte echo does not prove typed baseline/business acceptance. SessionV3 now uses real trusted host capture to form a typed Baseline padded8MiB: upstream Session must reject it as MalformedCommand (nonJoin/nonBaselineAck control), with no participant binding/generation/Ready/cleanup. This constructed typed payload is not an actually Host-issued or client-accepted baseline. Genuine Join acceptance instead uses4096 inclusive; Join4097 is rejected ProtocolMismatch before owner admission. Each scenario has a fresh actual trusted ET Session. Actual published typed Host-to-client maximum-baseline acceptance remains a separate execution gate beyond byte echo and wrong-direction rejection.
+
+Eight cases are now source-prepared: three UDP storage boundary, two malformed prefix/body and three actual Session control-inclusive/control+1/unexpected-direction baseline. Planned focus filter is `FullyQualifiedName~CookingLiteNetFramingBoundaryTests|FullyQualifiedName~Actual_ET_Session_admits_control_bound_Join`. No code-budget change, execution, pass or stage acceptance is claimed. Initial7case/8MiBJoin descriptions below are superseded by this correction.
 
 2026-10-03. Root subsequently approved source implementation at six listener compositions excluding RichRunner (owned by rich diagnostics worker). Six source configuration edits and new CookingLiteNetFramingBoundaryTests are ready for review; no .NET execution in this increment. Runner676eb20fe codec files remain frozen. Public framework defaults/APIs and Cooking wire/token/collection/history/time budgets remain unchanged.
 
