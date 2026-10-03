@@ -82,3 +82,15 @@
 #### Scenario: Approved target opens a bounded gate
 - **WHEN** owner 批准明确指标、workload、范围和回退规则，且报告覆盖同机与两 PC 所需证据
 - **THEN** 仅批准范围内的优化可进入对应 gate；其他拓扑、对象或策略继续保持未批准状态
+
+### Requirement: Running cached retries account for exact authority ticks
+
+2026-10-03 source-backed validation rule; application driver correction is approved but has not passed runtime validation. SessionHost.Map returns an existing terminal without adding a command to the authority prefix. RecipeLoop.BuildFixedTickPlan nevertheless advances LogicalTick, StateVersion and EventSequence and appends CookingRecipeTickEvent on every genuine Running owner tick. Supply may also advance; it is never an ignorable clock field.
+
+- Inputs: actual full CookingRecipeCheckpoint before/after, original and retried CookingNetworkWireResult, complete scoped TickEvents and actual publication/receive ordinals. Retain these inputs on failure, not only passed=false with evidence=null.
+- Cached receipt: same DomainCommandId, Outcome, Reason, original StateVersion and Supply; IsDuplicate=true and Events empty. New sequence/correlation belong to the current rebind generation. A wait against the original receipt's StateVersion alone does not prove a post-retry image.
+- Tick allowance: require exact retained tick prefix; appended events must have the same LevelScope, contiguous HostFrameSequence/Sequence/logical/version transitions and empty Processes. The overall version/logical/event-sequence deltas must equal precisely the appended genuine idle ticks. Any discontinuity, invented tick, active process or unexplained delta rejects conservation.
+- Full business comparison: only after separately proving tick accounting may normalize LogicalTick/StateVersion/EventSequence/TickEvents for comparison. Compare the entire remaining checkpoint, including Items/Containers/Processes/Orders/Settlements/ConsumedProducts/CleanContainerCounts/Deduplication/Events, all allocators, Poses, SchemaVersion, scope, Supply and SupplyOrigins. Preserve immutable original images and hashes. Do not normalize supply, cleanup or business mutations.
+- Controls: genuine idle ticks pass; modified item/container/receipt/allocator/supply/pose and forged/discontinuous tick ledger fail. Exact cached receipt checks and current binding/ACK checks remain mandatory. No pause-based command admission bypass is permitted.
+
+Wrong: compare arbitrary Running captures for identical StateVersion; or delete version fields and assume every difference is an idle tick. Correct: prove exact append-only authority tick accounting and unchanged complete business state using a genuine post-response publication barrier. Current retained P0 failure and implementation review route: [master-assembled-relay-verification.md](../../tasks/10-02-cooking-network-reconnect-measurement/research/master-assembled-relay-verification.md). This rule records a source invariant and test requirement, not P0 acceptance.
