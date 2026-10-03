@@ -1,3 +1,4 @@
+using AbilityKit.Network.Protocol;
 using System.Diagnostics;
 using System.Net;
 using System.Text.Json;
@@ -45,7 +46,7 @@ async Task<object> Execute(int repeat, bool control)
     var fixture = new MeasurementFixture(participantCount); using var host = fixture.CreateHost();
     var adapter = new CookingNetworkAuthorityAdapter(host);
     var options = control ? new CookingNetworkSessionOptions(ReceiptCapacity: 16) : new CookingNetworkSessionOptions();
-    using var session = new CookingNetworkSessionHost(adapter, new LiteNetChannelListener(IPAddress.Loopback, 0, "abilitykit-cooking-v3"),
+    using var session = new CookingNetworkSessionHost(adapter, new LiteNetChannelListener(IPAddress.Loopback, 0, "abilitykit-cooking-v3", maximumBufferedReceiveBytes: checked(options.FrameBytes + 4 + NetworkPacketHeader.Size)),
         fixture.Players.ToDictionary(p => p, p => "credential-" + p.Value), options);
     session.Start();
     activeEvidence = () => new { repeat, control, diagnostics = session.Diagnostics, session.LatestCapture };

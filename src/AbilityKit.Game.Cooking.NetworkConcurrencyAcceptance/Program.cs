@@ -1,3 +1,4 @@
+using AbilityKit.Network.Protocol;
 using System.Diagnostics;
 using System.Net;
 using System.Security.Cryptography;
@@ -59,7 +60,7 @@ try {
     Check((role is "host" or "client") && runId != "missing" && (order is "remote-first" or "local-first"), "legal-run-options");
     if (role == "host") {
         var fixture = new ConcurrencyFixture(); using var host = fixture.Host();
-        using var observer = new ObservedListener(new LiteNetChannelListener(IPAddress.Parse(address), port, "abilitykit-cooking-v3"));
+        using var observer = new ObservedListener(new LiteNetChannelListener(IPAddress.Parse(address), port, "abilitykit-cooking-v3", maximumBufferedReceiveBytes: checked(new CookingNetworkSessionOptions().FrameBytes + 4 + NetworkPacketHeader.Size)));
         using var session = new CookingNetworkSessionHost(new CookingNetworkAuthorityAdapter(host), observer,
             new Dictionary<PlayerId, string> { [ConcurrencyFixture.Chef] = "control-chef-credential", [ConcurrencyFixture.Partner] = "control-partner-credential" });
         session.Start(); port = session.Port;

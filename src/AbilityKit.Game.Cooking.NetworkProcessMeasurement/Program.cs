@@ -1,3 +1,4 @@
+using AbilityKit.Network.Protocol;
 using System.Diagnostics;
 using System.Net;
 using System.Text.Json;
@@ -32,7 +33,7 @@ void Save(bool passed,string? failure)
 async Task<object> Host()
 {
     var fixture=new ProcessMeasurementFixture(); using var host=fixture.CreateHost(); var adapter=new CookingNetworkAuthorityAdapter(host);
-    using var session=new CookingNetworkSessionHost(adapter,new LiteNetChannelListener(IPAddress.Parse(address),port,"abilitykit-cooking-v3"),
+    using var session=new CookingNetworkSessionHost(adapter,new LiteNetChannelListener(IPAddress.Parse(address),port,"abilitykit-cooking-v3", maximumBufferedReceiveBytes: checked(new CookingNetworkSessionOptions().FrameBytes + 4 + NetworkPacketHeader.Size)),
         new Dictionary<PlayerId,string>{{ProcessMeasurementFixture.Local,"local-credential"},{ProcessMeasurementFixture.Remote,"remote-credential"}});
     session.Start(); port=session.Port;
     using var local=new CookingNetworkSessionClient(ProcessMeasurementFixture.Local,"local-credential",session.CreateLocalClientTransport);

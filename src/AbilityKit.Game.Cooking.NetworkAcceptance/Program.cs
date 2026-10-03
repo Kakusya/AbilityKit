@@ -1,3 +1,4 @@
+using AbilityKit.Network.Protocol;
 using System.Diagnostics;
 using System.Net;
 using System.Text.Json;
@@ -57,7 +58,7 @@ try
         Check(authority.BeginPreparation(fixture.Preparation(ProcessServiceFixture.InitialScope)).Accepted, "prepared-existing-et-authority");
         var adapter = new CookingNetworkAuthorityAdapter(authority);
         using var session = new CookingNetworkSessionHost(adapter,
-            new LiteNetChannelListener(IPAddress.Parse(address), port, "abilitykit-cooking-v3"),
+            new LiteNetChannelListener(IPAddress.Parse(address), port, "abilitykit-cooking-v3", maximumBufferedReceiveBytes: checked(new CookingNetworkSessionOptions().FrameBytes + 4 + NetworkPacketHeader.Size)),
             new Dictionary<PlayerId, string> { [ProcessServiceFixture.Chef] = hostCredential, [ProcessServiceFixture.Partner] = remoteCredential });
         session.Start(); port = session.Port; Console.WriteLine("TRACE listener-started");
         using var local = new CookingNetworkSessionClient(ProcessServiceFixture.Chef, hostCredential, session.CreateLocalClientTransport);

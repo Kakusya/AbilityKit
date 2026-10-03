@@ -66,10 +66,56 @@ public sealed class CookingNetworkSessionV3Tests
         Task.WhenAll(tasks).GetAwaiter().GetResult();
     }
     private static CookingNetworkSessionHost Session(CookingLevelEtHost host, bool udp = false)
-        => new(new CookingNetworkAuthorityAdapter(host), udp ? new LiteNetChannelListener(IPAddress.Loopback, 0, "abilitykit-cooking-v3") : new InProcessChannelListener(),
+        => new(new CookingNetworkAuthorityAdapter(host), udp ? new LiteNetChannelListener(IPAddress.Loopback, 0, "abilitykit-cooking-v3", maximumBufferedReceiveBytes: checked(new CookingNetworkSessionOptions().FrameBytes + 4 + NetworkPacketHeader.Size)) : new InProcessChannelListener(),
             new Dictionary<PlayerId, string> { [A] = "join-a", [Z] = "join-z" });
     private static CookingNetworkSessionClient Local(CookingNetworkSessionHost session, PlayerId player)
         => new(player, player == A ? "join-a" : "join-z", session.CreateLocalClientTransport);
+
+    [Theory]
+    [InlineData(true)]
+    [InlineData(false)]
+    public void Exact_eight_MiB_wire_reaches_actual_ET_Session_and_admits_only_valid_Join(bool validWire)
+    {
+        using var host = Host(); using var session = Session(host, udp: true); session.Start();
+        using var transport = new LiteNetTransport("abilitykit-cooking-v3");
+        var connected = new TaskCompletionSource<bool>(TaskCreationOptions.RunContinuationsAsynchronously);
+        transport.Connected += () => connected.TrySetResult(true);
+        var images = new System.Collections.Concurrent.ConcurrentQueue<CookingNetworkWireEnvelope>();
+        var errors = new System.Collections.Concurrent.ConcurrentQueue<Exception>();
+        var bounds = new CookingNetworkSessionOptions();
+        var reader = new NetworkFrameReader { MaxFrameLength = bounds.FrameBytes + 64 };
+        transport.BytesReceived += bytes => { try { reader.Append(bytes); while (reader.TryRead(out var header, out var payload)) {
+            if (header.OpCode != CookingNetworkWireCodec.OpCode || !CookingNetworkWireCodec.TryDecode(payload.AsSpan(), bounds, out var image)) throw new InvalidOperationException("Invalid real Session response.");
+            images.Enqueue(image!);
+        } } catch (Exception error) { errors.Enqueue(error); } };
+        transport.Connect("127.0.0.1", session.Port); Assert.True(connected.Task.Wait(TimeSpan.FromSeconds(8)));
+        var small = CookingNetworkWireCodec.Encode(CookingNetworkMessageKind.Join, "exact-boundary", new CookingNetworkJoin(A, "join-a", null, null));
+        var wire = new byte[bounds.FrameBytes]; Array.Fill(wire, (byte)' '); small.CopyTo(wire, 0);
+        if (!validWire) wire[0] = (byte)'?';
+        Assert.Equal(validWire, CookingNetworkWireCodec.TryDecode(wire, bounds, out _));
+        transport.Send(LengthPrefixedFrameCodec.Instance.Encode(new(default, CookingNetworkWireCodec.OpCode, 1, (uint)wire.Length), new(wire)));
+        var deadline = System.Diagnostics.Stopwatch.StartNew();
+        bool Complete() => validWire ? images.Any(x => x.Kind == CookingNetworkMessageKind.Joined) && images.Any(x => x.Kind == CookingNetworkMessageKind.Baseline) : images.Any(x => x.Kind == CookingNetworkMessageKind.Rejected);
+        while (!Complete() && deadline.Elapsed < TimeSpan.FromSeconds(8)) {
+            session.ProcessOwnerFrame(); Thread.Sleep(5);
+        }
+        Assert.Empty(errors);
+        if (!validWire) {
+            Assert.True(Complete()); Assert.DoesNotContain(images, x => x.Kind is CookingNetworkMessageKind.Joined or CookingNetworkMessageKind.Baseline);
+            var rejected = CookingNetworkWireCodec.Read<CookingNetworkWireResult>(images.First(x => x.Kind == CookingNetworkMessageKind.Rejected))!;
+            Assert.Equal("ProtocolMismatch", rejected.Reason);
+            var unbound = Assert.Single(session.LatestSessionProjection.Participants.Where(x => x.Participant == A));
+            Assert.False(unbound.ConnectedOwnerBinding); Assert.Equal(0, unbound.ConnectionGeneration); Assert.False(unbound.Ready); Assert.False(unbound.CleanupPending);
+            return;
+        }
+        var joined = CookingNetworkWireCodec.Read<CookingNetworkJoined>(Assert.Single(images.Where(x => x.Kind == CookingNetworkMessageKind.Joined)))!;
+        var baseline = CookingNetworkWireCodec.Read<CookingNetworkBaseline>(images.First(x => x.Kind == CookingNetworkMessageKind.Baseline))!;
+        Assert.Equal(session.ServerSessionInstance, joined.ServerSessionInstance); Assert.Equal(A, joined.Participant); Assert.Equal(1, joined.ConnectionGeneration);
+        Assert.Equal(joined.ServerSessionInstance, baseline.Identity.ServerSessionInstance); Assert.Equal(A, baseline.Identity.Participant); Assert.Equal(joined.ConnectionGeneration, baseline.Identity.ConnectionGeneration);
+        var participant = Assert.Single(session.LatestSessionProjection.Participants.Where(x => x.Participant == A));
+        Assert.True(participant.ConnectedOwnerBinding); Assert.Equal(joined.ConnectionGeneration, participant.ConnectionGeneration); Assert.False(participant.CleanupPending);
+        Assert.True(session.Diagnostics.ReceivedBytes >= bounds.FrameBytes);
+    }
 
     [Fact]
     public async Task Framed_local_callback_is_readonly_and_reverse_player_arrival_wins_in_one_owner_tick()

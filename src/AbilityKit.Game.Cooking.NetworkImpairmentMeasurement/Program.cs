@@ -1,3 +1,4 @@
+using AbilityKit.Network.Protocol;
 using System.Diagnostics;
 using System.Net;
 using System.Text.Json;
@@ -19,7 +20,7 @@ void Save(bool passed,string? failure){Directory.CreateDirectory(Path.GetDirecto
 async Task<JsonElement> Control(string kind,Func<Task> pump){while(true){Require(overall.Elapsed.TotalSeconds<360,"Driver360s");if(mailbox.Take() is{} c){Require(c.GetProperty("kind").GetString()==kind,"Unexpected phase control");return c;}await pump();}}
 async Task<object> Host(){
  var fixture=new ProcessMeasurementFixture();using var host=fixture.CreateHost();var adapter=new CookingNetworkAuthorityAdapter(host);
- using var session=new CookingNetworkSessionHost(adapter,new LiteNetChannelListener(IPAddress.Loopback,0,"abilitykit-cooking-v3"),new Dictionary<PlayerId,string>{{ProcessMeasurementFixture.Local,"local-credential"},{ProcessMeasurementFixture.Remote,"remote-credential"}});session.Start();
+ using var session=new CookingNetworkSessionHost(adapter,new LiteNetChannelListener(IPAddress.Loopback,0,"abilitykit-cooking-v3", maximumBufferedReceiveBytes: checked(new CookingNetworkSessionOptions().FrameBytes + 4 + NetworkPacketHeader.Size)),new Dictionary<PlayerId,string>{{ProcessMeasurementFixture.Local,"local-credential"},{ProcessMeasurementFixture.Remote,"remote-credential"}});session.Start();
  using var local=new CookingNetworkSessionClient(ProcessMeasurementFixture.Local,"local-credential",session.CreateLocalClientTransport);var admitted=new HashSet<RecipeCommandId>();
  async Task Pump(){Require(overall.Elapsed.TotalSeconds<360,"Host360s");var frame=session.ProcessOwnerFrame();if(frame is not null)foreach(var a in frame.Admissions.Where(a=>a.Accepted))admitted.Add(a.CommandId);await Task.Delay(10);}
  async Task Wait(Func<bool> done,int seconds){var w=Stopwatch.StartNew();while(!done()&&w.Elapsed.TotalSeconds<seconds)await Pump();Require(done(),"Host phase deadline");}
