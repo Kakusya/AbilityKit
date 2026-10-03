@@ -12,9 +12,9 @@
     "assignee":  "Li He",
     "createdAt":  "2026-10-02",
     "completedAt":  null,
-    "branch":  "cooking-network-process-current",
+    "branch":  "master",
     "base_branch":  "master",
-    "worktree_path":  "C:/Users/Administrator/orca/workspaces/AbilityKit/cooking-network-process-current",
+    "worktree_path":  "D:/MyWork/AbilityKit",
     "commit":  "f6922712a",
     "pr_url":  null,
     "subtasks":  [
@@ -41,6 +41,7 @@
                  "owner_delegated_details":  true,
                  "execution_authorization":  "Latest owner: audit every topic then execute through completion. Task planning review and dependency checks precede execution; Unity and optional reference pool remain deferred.",
                  "local_increment_status":  "merged-and-master-verified",
-                 "remaining_exit":  "physical-two-PC-LAN-NOT_VERIFIED"
+                 "remaining_exit":  "physical-two-PC-LAN-NOT_VERIFIED",
+                 "retired_worktree_archive":  "local/Archives/worktrees/cooking-network-process-current-6891afdb9"
              }
 }
