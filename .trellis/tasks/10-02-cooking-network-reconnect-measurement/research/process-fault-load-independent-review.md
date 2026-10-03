@@ -1,0 +1,17 @@
+# Independent process fault/load review ? 2026-10-03
+
+Root reviewed producer f7204cd97 and whitespace-only190d6df5e; imported unchanged as3c2ad6d88/4a46912fb. Six owned files are a new app runner project (three C# sources/csproj), wrapper and report. Existing production and natural NetworkAcceptance remain unchanged; only SingleThreadOwner is compile-linked. Actual main runner build passed with0warnings/0errors: local/Logs/master-network-process-measurement-build.log. Current main full Cooking859/859 passed with0fail/skip; it is test regression rather than this runner's process proof.
+
+## Actual three-repeat evidence independently inspected
+
+Active recovery artifact local/Logs/cooking-execution/network-process-fault-load-final/20261003-045802-8496423 contains summary plus3paired/6endpoint reports; command session48062 actually ended exit0. Root parsed all: distinct3instances, each actual Host/client exit0 and different PIDs, actual deep equality of complete Host finalCapture and remote finalBaseline.State, equal complete gameplay hash/config identity/ET+Session MVID/StopwatchFrequency, one authority, current local/remote connected Ready/no cleanup at frozen Paused gate, null resumable checkpoint and exact remote ACK==issued baseline identity.
+
+Each remote report proves one application Submit reply was deliberately suppressed, followed by full committed exact ACK, token/generation rebind and cached original domain receipt duplicate. Source checks preserve original immutable Submit payload, settlement1 and exact two consumed cup/product records plus prior receipt history, not just an accepted boolean. Remote drop is after reliable delivery, not a raw UDP loss percentage. New work uses fresh IDs with actual admission and nonduplicate terminals.
+
+Root independently checked offered300/warmup50 per player; actual issued=accepted, no pending/reject/cancel; sample offers=issued+busy+scheduler skips; warmup likewise; every warmup/sample issued ID belongs to actual Host ET admissions. Local accepted300 each; remote44/48/44, busy256/252/256. Reported costs are numerical, not smoothness acceptance. The two clients are in different OS processes with Host local participant; this is same-machine synthetic control/load, not physical two-PC or a new rich-menu process run.
+
+## Failure retention and source boundaries
+
+Original diagnostics retain nonspatial Drop rejection, final hold lifecycle race and Host typed/client canonical config-shape wrapper failure. Producer corrected only its app fixture/runner/wrapper, preserving all original artifacts and distinguishing endpoint PASS from whole wrapper PASS. Current code captures both-connected full gate before close and then waits bounded actual remote close; postclose cleanup is not the Ready consensus. Canonical config strings come from actual typed/lifecycle values, not expected constants substituted as evidence. Native process Handle is retained before Refresh/WaitForExit and null/nonzero exits rejected; timeout cleanup targets only exact launched objects. Source/executable hashes, linked helper/wrapper hashes and clock frequency remain actual pre-format execution provenance;190 is cosmetic, not rerun.
+
+Scoped increment accepted/imported. No need to repeat all3pairs solely for an unchanged cherry-pick; new main build verifies compiler integration. Required physical control tooling/LAN pairing, registered higher loads/raw impairment and forward performance goals remain open. No production optimization or Unity permission follows.
