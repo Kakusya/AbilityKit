@@ -14,7 +14,7 @@
   "completedAt": "2026-10-03",
   "branch": "cooking-integration-s06-s14",
   "base_branch": "master",
-  "worktree_path": "C:/Users/Administrator/orca/workspaces/AbilityKit/cooking-integration-s06-s14",
+  "worktree_path": null,
   "commit": "4dadd25c8",
   "pr_url": null,
   "subtasks": [],
@@ -37,5 +37,12 @@
     "owner_delegated_details": true,
     "execution_authorization": "Latest owner: audit every topic then execute through completion. Task planning review and dependency checks precede execution; Unity and optional reference pool remain deferred.",
     "coordinator_verification": ".trellis/tasks/10-02-cooking-gameplay-menu-plan/research/master-prepared-layout-verification.md"
+  },
+  "retired_worktree": {
+    "name": "cooking-integration-s06-s14",
+    "originalHead": "9cabcd3471aed4e938740478b7be0ad5e83a804d",
+    "archiveOnlyHead": "78d2d56f82654f46ef08f65f8517ff7c5f75fd22",
+    "archive": "local/Artifacts/worktree-retirement-cooking-integration-s06-s14-20261003",
+    "note": "Accepted implementation remains on main; historical checkout retired after full source/evidence preservation, no new implementation acceptance."
   }
 }
