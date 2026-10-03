@@ -28,12 +28,12 @@
 
 - [x] S01–S14 纯 C# 单机与87款菜单、交付经营、准备布局及恢复已验收；证据见 [单机出口](../.trellis/tasks/10-02-cooking-gameplay-menu-plan/research/master-singleplayer-exit-verification.md)。这不代表 Unity 场景已完成。
 - [x] N01 网络契约及 KCP/LiteNet 来源冲突已审议；当前通用 LiteNet reliable UDP、单一 ET 固定 Tick 权威、被动全状态客户端，见 [N01 接受记录](../.trellis/tasks/10-02-cooking-network-contract-review/research/root-contract-acceptance.md)。
-- [ ] N02/N03 完整网络出口：P0/P1/P2 各三轮已通过；P3 抖动场景正在运行，P4–P6 尚待实测。保留并发、恢复和负载矩阵各自已验收的准确边界。
-- [ ] 性能标准尚未满足：原始与 O01b Release 四组均未达标；O02 仅隔离源码候选，尚未构建、测试或合入，不能用微测收益代替端到端验收。
-- [ ] 完整四断点独立进程恢复、只读配对验证器的真实正例及对抗控制尚待构建和执行；源码已冻结，不等于验证通过。
+- [ ] N02/N03 完整网络出口：P0–P5 各三轮已通过；P6 第二轮完整投影超过30秒而失败，不能用恢复成功替代负载验收。保留并发、恢复和负载矩阵各自已验收的准确边界。
+- [ ] 性能标准尚未满足：原始与 O01b Release 四组均未达标；O02 已通过7项聚焦测试，隔离完整回归正在运行，尚未合入或通过端到端验收。
+- [ ] 完整四断点独立进程恢复：审计构建已通过，但首个真实场景失败；runner 帧解码配置修正已有源码，失败诊断和精确 framing 存储边界正在补齐，待重新构建、真实四断点、只读配对正例与对抗控制验证。
 - [ ] 真实两台电脑 LAN：尚未验证。当前同机 UDP 证据不能代替物理双机。
 - [ ] 单机/网络 Unity：继续后置，由独立执行门控制；S15 成长参考池不自动纳入本轮基础。
-- [ ] 持续清理不用的 worktree：已有9个实际清理，活动和未审阅成果保留；每次恢复、集成、收尾检查，先保存源码和验证证据，见 [生命周期记录](../.trellis/tasks/10-02-cooking-gameplay-menu-plan/research/worktree-lifecycle.md)。
+- [ ] 持续清理不用的 worktree：已有13个实际清理，历史未提交草稿已保存为归档分支和 Git bundle，日志与证据逐文件核对哈希后保存；仍在使用的目录保留。每次恢复、集成、收尾检查，见 [生命周期记录](../.trellis/tasks/10-02-cooking-gameplay-menu-plan/research/worktree-lifecycle.md)。
 
 ## 1. 文件定位
 

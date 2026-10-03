@@ -1,3 +1,5 @@
+> Latest actual2026-10-03: S01-S14/N01 accepted; N02/N03 incomplete. P0-P5 each three fresh pairs accepted; P6 repeat2 failed fullprojection30s deadline. Rich auditedbuild passed but actual firstcase43003 failed default4MiB runner decoder; sourcefix676eb20fe pendingfreshvalidation. O02 focused7 accepted only; broadgates49357 live on isolated frozenb7024f8fd, no mainimport/performanceacceptance. PhysicaltwoPC unverified; Unity/S15 deferred. Current evidence remains master-assembled-relay-verification.md in N03 research; older progress notices below are historical.
+
 > Current reviewed stage2026-10-03: S01-S14 pure C# singleplayer completed on source4dadd25c8; actual final master gates644/772/299 and772/299 passed, zero failures/skips. Detailed evidence: .trellis/tasks/10-02-cooking-gameplay-menu-plan/research/master-singleplayer-exit-verification.md. N01-N03 next; parent remains active, Unity/S15 deferred and physical two-PC LAN unverified. Earlier remaining-singleplayer notices below are historical.
 
 # 完整出口审计表
