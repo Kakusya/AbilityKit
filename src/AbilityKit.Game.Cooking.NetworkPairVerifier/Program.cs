@@ -67,7 +67,7 @@ try {
             Check.That(path.StartsWith(Path.GetFullPath(checkpointRoot) + Path.DirectorySeparatorChar, StringComparison.OrdinalIgnoreCase) && new FileInfo(path).Length <= 4*1024*1024 && new FileInfo(path).LinkTarget is null, "Contained separately bounded durable checkpoint.");
             for (FileSystemInfo? entry = new FileInfo(path); entry is not null; entry = entry is FileInfo f ? f.Directory : ((DirectoryInfo)entry).Parent) Check.That(entry.LinkTarget is null, "No junction/symlink durable input ancestors.");
             Check.That((externalBytes += new FileInfo(path).Length) <= 16L*1024*1024, "All external metadata/durable files16MiB cumulative bound.");
-            hashes.TryAdd(path,BoundedJson.Hash(path));
+            hashes.TryAdd(path,BoundedJson.HashBounded(path,4*1024*1024,out _));
             Check.That(hashes[path] == file.GetProperty("sha256").GetString(), "Actual retained durable store file SHA.");
         }
         var exactStore = Path.Combine(checkpointRoot,"major.checkpoint.json"); BoundedJson.SafePath(exactStore);
@@ -94,7 +94,7 @@ try {
         var endpoint = rich ? cr.GetProperty("endpoint").GetString()! : cr.GetProperty("address").GetString()!;
         var target = rich ? System.Net.IPEndPoint.Parse(endpoint) : new System.Net.IPEndPoint(System.Net.IPAddress.Parse(endpoint), cr.GetProperty("port").GetInt32());
         Check.That(target.Address.Equals(ip), "Exact remote LAN address, no string-prefix match.");
-        var stdoutPath = Path.Combine(Path.GetDirectoryName(hostPath)!, "host.stdout.log"); Check.That(new FileInfo(stdoutPath).Length <= 4*1024*1024 && (externalBytes += new FileInfo(stdoutPath).Length) <= 16L*1024*1024, "READY stdout4MiB bound."); hashes.TryAdd(stdoutPath,BoundedJson.Hash(stdoutPath));
+        var stdoutPath = Path.Combine(Path.GetDirectoryName(hostPath)!, "host.stdout.log"); Check.That(new FileInfo(stdoutPath).Length <= 4*1024*1024 && (externalBytes += new FileInfo(stdoutPath).Length) <= 16L*1024*1024, "READY stdout4MiB bound."); hashes.TryAdd(stdoutPath,BoundedJson.HashBounded(stdoutPath,4*1024*1024,out _));
         var ready = System.Text.RegularExpressions.Regex.Match(File.ReadAllText(stdoutPath), @"(?m)^READY ([0-9]+) ([0-9]+)\s*$");
         Check.That(ready.Success && int.Parse(ready.Groups[1].Value) == target.Port && int.Parse(ready.Groups[2].Value) == hostExit.RootElement.GetProperty("pid").GetInt32(), "Actual READY exact UDP port/PID reconciliation.");
         physical = "TwoPhysicalPcAttestedPairedEvidence";
