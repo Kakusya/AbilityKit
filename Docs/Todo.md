@@ -22,13 +22,18 @@
 
 > 2026-10-02 21:36: integration `585e15982` preparation runtime passed coordinator kitchen462/589/223 and ET589/223, zero failures/skips. Preparing recovery and trusted layout/front installation remain pending; master production remains7a043b6cb. See [preparing verification](../.trellis/tasks/10-02-cooking-gameplay-menu-plan/research/preparing-composite-verification.md).
 
-## 2026-10-02 Cooking 玩法与菜单推进
+## 2026-10-03 Cooking 当前待办
 
-当前证据入口：[progress](design/CookingGame/progress.md) 与 [完整出口表](../.trellis/tasks/10-02-cooking-gameplay-menu-plan/research/completion-contract.md)。S01–S03 已完成受限纯 C# 核心，最新本地 master 7dd149b75 完整菜单门禁 372/494/197；S06 ET、S07 实物供应、S08 布局安装与 S14 完整营业仍待验证。以下其他日期及正文中的 KCP/旧运行状态保留为历史来源；网络最新取舍与冲突收敛以架构记录及 N01 任务为准。
+当前证据入口：[progress](design/CookingGame/progress.md)、[完整出口表](../.trellis/tasks/10-02-cooking-gameplay-menu-plan/research/completion-contract.md)及[网络实测记录](../.trellis/tasks/10-02-cooking-network-reconnect-measurement/research/master-assembled-relay-verification.md)。仍保持“单机 → 网络 → 单机 Unity → 网络 Unity”和现有架构；当前为网络阶段。下文较早日期中的 KCP、单机未完成等判断属于历史，不覆盖当前 N01 和实测记录。
 
-- [ ] 按 [总 plan](../.trellis/spec/cooking/gameplay-menu-plan.md) 和 [20 个 Task 注册表](../.trellis/tasks/10-02-cooking-gameplay-menu-plan/task-register.md) 逐项审阅推进；当前专注单机，按最新 owner 授权审议后实施并验证，不改变架构。网络在单机完整出口后接续，Unity 条件性 Task 仍禁止实施。
-- [ ] 完成 87 款候选的最终交付与经营整合；87 菜制作/盛装/恢复及 56 餐食交付已在 master 验证，31 饮品绑定交付已独立验证，完整菜单内容范围见 master-complete-menu-verification。候选文件与运行配置证据分开记录。见 [菜单整合](design/CookingGame/reference/menu-integration.md)。
-- [ ] 网络重新立项前协调 KCP/LiteNet 及仲裁来源冲突，见 [架构记录](design/CookingGame/gameplay-plan-architecture.md)。旧任务与历史 check 保留，不自动删除旧代码。
+- [x] S01–S14 纯 C# 单机与87款菜单、交付经营、准备布局及恢复已验收；证据见 [单机出口](../.trellis/tasks/10-02-cooking-gameplay-menu-plan/research/master-singleplayer-exit-verification.md)。这不代表 Unity 场景已完成。
+- [x] N01 网络契约及 KCP/LiteNet 来源冲突已审议；当前通用 LiteNet reliable UDP、单一 ET 固定 Tick 权威、被动全状态客户端，见 [N01 接受记录](../.trellis/tasks/10-02-cooking-network-contract-review/research/root-contract-acceptance.md)。
+- [ ] N02/N03 完整网络出口：P0/P1/P2 各三轮已通过；P3 抖动场景正在运行，P4–P6 尚待实测。保留并发、恢复和负载矩阵各自已验收的准确边界。
+- [ ] 性能标准尚未满足：原始与 O01b Release 四组均未达标；O02 仅隔离源码候选，尚未构建、测试或合入，不能用微测收益代替端到端验收。
+- [ ] 完整四断点独立进程恢复、只读配对验证器的真实正例及对抗控制尚待构建和执行；源码已冻结，不等于验证通过。
+- [ ] 真实两台电脑 LAN：尚未验证。当前同机 UDP 证据不能代替物理双机。
+- [ ] 单机/网络 Unity：继续后置，由独立执行门控制；S15 成长参考池不自动纳入本轮基础。
+- [ ] 持续清理不用的 worktree：已有9个实际清理，活动和未审阅成果保留；每次恢复、集成、收尾检查，先保存源码和验证证据，见 [生命周期记录](../.trellis/tasks/10-02-cooking-gameplay-menu-plan/research/worktree-lifecycle.md)。
 
 ## 1. 文件定位
 
