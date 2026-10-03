@@ -19,3 +19,8 @@ The tested scenario includes finite procurement, interrupted manual work taken o
 A full physical exit also needs the N02 concurrency/rejection controls: same item pickup and slot placement arbitration, simultaneous legal independent work, incompatible input rejection without item loss, stale scope/identity rejection and recovery after disconnect. Existing focused same-machine tests remain their own evidence; explicitly record which controls were or were not exercised on physical LAN. No pass from absence of errors or matching hostname alone.
 
 Keep performanceTargetUNSET unless a workload/threshold is separately approved. A connection failure or timeout is a failed/blocked run with its artifacts retained, not successful scope completion. Owner authorization does not supply a second machine, network address or executed proof. N02 stays in_progress until actual paired physical evidence satisfies its exit; N03 and Unity are not automatically completed by it.
+
+
+## Owner-confirmed environment availability - 2026-10-03
+
+Owner explicitly answered that no second physical PC is currently available. Actual two-PC LAN acceptance remains NOT_VERIFIED/environment-unavailable; do not keep requesting the same machine information absent an owner availability update. This does not remove the physical exit or replace it with local/virtual proof. Continue actionable local recovery, impairment, ordinary performance and verifier work, prepare exact frozen handoff once local tools are valid. N02/N03 remainin_progress while local exits are open; no Unity authorization or overall goal-blocked/completed conclusion follows solely from missing hardware.
