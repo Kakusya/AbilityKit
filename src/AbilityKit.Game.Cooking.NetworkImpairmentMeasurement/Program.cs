@@ -12,6 +12,7 @@ using AbilityKit.Game.Cooking.NetworkImpairmentMeasurement;
 using AbilityKit.Network.Transport.LiteNet;
 
 string Option(string name,string fallback){var i=Array.IndexOf(args,name);return i>=0&&i+1<args.Length?args[i+1]:fallback;}
+if(args.Contains("--load-wait-controls"))return LoadWaitControls.Run(Option("--report","load-wait-controls.json"));
 if(args.Contains("--retry-conservation-controls"))return RetryConservation.Controls(Option("--report","retry-conservation-controls.json"));
 var role=args.FirstOrDefault()??"";var nonce=Option("--nonce","");var profile=Option("--profile","P0");var repeat=int.Parse(Option("--repeat","1"));
 var output=Path.GetFullPath(Option("--report",role+".json"));var mailbox=new ControlMailbox(nonce);var overall=Stopwatch.StartNew();object? evidence=null;
@@ -109,26 +110,27 @@ static async Task<LoadResult> RunLoad(int player,Func<CookingNetworkAuthorityCap
         var due=i*200;while(watch.ElapsedMilliseconds<due)await Task.Delay(1);var measured=i>=50;var slot=diagnostic.Add(i,Stopwatch.GetTimestamp());
         process.Refresh();sampledPeakWorkingSet=Math.Max(sampledPeakWorkingSet,process.WorkingSet64);sampledPeakPrivateBytes=Math.Max(sampledPeakPrivateBytes,process.PrivateMemorySize64);
         if(measured)offered++;else warmup++;
-        if(watch.ElapsedMilliseconds>=due+200){slot.Outcome="scheduler-skipped";if(measured)late++;else warmupLate++;continue;}
-        if(flight is{IsCompleted:false}){slot.Outcome="backpressure-skipped";if(measured)busy++;else warmupBusy++;continue;}CookingRecipeCommand command;
+        if(watch.ElapsedMilliseconds>=due+200){LoadWaitEvidence.RecordSkipped(slot,true);if(measured)late++;else warmupLate++;continue;}
+        if(flight is{IsCompleted:false}){LoadWaitEvidence.RecordSkipped(slot,false);if(measured)busy++;else warmupBusy++;continue;}CookingRecipeCommand command;
         try{slot.FailureBoundary="prior-flight-terminal";if(flight is not null)await flight;
             slot.FailureBoundary="readiness";Require(ready(),"Load client not Ready.");
             slot.FailureBoundary="toggle-state";command=Toggle(read(),player);slot.FailureBoundary=null;}
-        catch(Exception error){slot.Error=DiagnosticError.From(error);slot.Outcome="offered-slot-failed-outside-complete";slot.FinishedAt=Stopwatch.GetTimestamp();diagnostic.Failure=slot.Error;throw;}
+        catch(Exception error){diagnostic.RecordFailure(slot,error,slot.FailureBoundary!,"offered-slot-failed-outside-complete");throw;}
         var stable=$"load-p{player}-{i}";
         if(!measured)warmupIssued++;
         slot.StableId=stable;slot.BeforeSend=observe();flight=Complete();
-        async Task Complete(){try{var started=Stopwatch.GetTimestamp();slot.SendStartedAt=started;slot.Outcome="awaiting-response";var result=await send(command,stable);slot.ResponseAt=Stopwatch.GetTimestamp();slot.AtResponse=observe();slot.DomainId=result.DomainCommandId?.Value;slot.TargetStateVersion=result.Result?.StateVersion;slot.AcceptedResponse=result.Result?.Outcome==CookingRecipeOutcome.Accepted;slot.Duplicate=result.Result?.IsDuplicate;if(slot.AcceptedResponse)diagnostic.AcceptedResponses++;Require(result.Result?.Outcome==CookingRecipeOutcome.Accepted,"Legal load command rejected: "+JsonSerializer.Serialize(new{command,result}));Require(!result.Result!.IsDuplicate,"Fresh load ID must not be a cached replay.");
-            var elapsed=(Stopwatch.GetTimestamp()-started)*1000.0/Stopwatch.Frequency;var wait=Stopwatch.StartNew();
+        async Task Complete(){try{var started=Stopwatch.GetTimestamp();slot.SendStartedAt=started;slot.Outcome="awaiting-response";var result=await send(command,stable);slot.ResponseAt=Stopwatch.GetTimestamp();var elapsed=LoadWaitEvidence.ResponseElapsed(started,slot.ResponseAt.Value);diagnostic.RecordResponse(slot,result);slot.AtResponse=observe();Require(result.Result?.Outcome==CookingRecipeOutcome.Accepted,"Legal load command rejected: "+JsonSerializer.Serialize(new{command,result}));Require(!result.Result!.IsDuplicate,"Fresh load ID must not be a cached replay.");
+            var wait=Stopwatch.StartNew();
             slot.WaitStartedAt=Stopwatch.GetTimestamp();slot.DeadlineAt=slot.WaitStartedAt+30*Stopwatch.Frequency;slot.Outcome="awaiting-projection";
             bool eligible=false;
             try{while(read().FullRecipe!.StateVersion<result.Result!.StateVersion&&wait.Elapsed.TotalSeconds<30)await Task.Delay(1);
                 // Freeze the original elapsed-only decision before cached diagnostic observation.
-                var finalVersion=read().FullRecipe!.StateVersion;var finalElapsed=wait.Elapsed;slot.FinalVersionPredicate=finalVersion>=result.Result!.StateVersion;eligible=finalElapsed.TotalSeconds<30;slot.FinishedAt=Stopwatch.GetTimestamp();slot.WaitElapsedMilliseconds=finalElapsed.TotalMilliseconds;slot.DeadlineExpired=!eligible;}
+                var finalElapsed=wait.Elapsed;eligible=slot.RecordDecision(finalElapsed,Stopwatch.GetTimestamp());
+                var finalVersion=read().FullRecipe!.StateVersion;slot.FinalVersionPredicate=finalVersion>=result.Result!.StateVersion;slot.PredicateObservedAt=Stopwatch.GetTimestamp();slot.FinishedAt=slot.PredicateObservedAt;}
             finally{slot.AfterWait=observe();}
-            Require(eligible,"Full committed projection deadline.");diagnostic.CompletedProjections++;slot.Outcome="projected-complete";
+            Require(eligible,"Full committed projection deadline.");diagnostic.RecordProjected(slot);
             if(measured){samples.Add(result);rtt.Add(elapsed);issuedIds.Add(result.DomainCommandId!.Value.Value);if(watch.ElapsedMilliseconds>=70000)completedAfterWindow++;}else {warmupAccepted++;warmupIds.Add(result.DomainCommandId!.Value.Value);}}
-            catch(Exception error){slot.Error=DiagnosticError.From(error);slot.FailureBoundary="complete";slot.Outcome="failed";slot.FinishedAt??=Stopwatch.GetTimestamp();diagnostic.Failure=slot.Error;throw;}}
+            catch(Exception error){diagnostic.RecordFailure(slot,error,"complete","failed");throw;}}
     }
     while(watch.ElapsedMilliseconds<70000)await Task.Delay(1);
     if(flight is not null)await flight;
