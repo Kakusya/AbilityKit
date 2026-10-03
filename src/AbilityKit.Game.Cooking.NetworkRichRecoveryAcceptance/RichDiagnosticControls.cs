@@ -55,6 +55,7 @@ internal static class RichDiagnosticControls
             Check(diagnostics.Active && diagnostics.SelectedDomain == CookingNetworkWireCodec.DomainId("diagnostic-instance", scope, new("natural-partner"), "process-action-366").Value,
                 "selected typed identity maps independently without authority execution");
             RealPaths(Check, options, wire);
+            ActualRunFailurePaths(Check);
             var callbackRow = new RichDiagnosticCallback(0, 1, "control", "in", null, 1, "remote-366", "CommandResult", 12,
                 10, null, null, null, null, 11, 12, 13, 14, 15, 0, "Complete callback; native UNKNOWN.", null);
             for (var i = 0; i < 300; i++) diagnostics.Callback(callbackRow);
@@ -87,6 +88,43 @@ internal static class RichDiagnosticControls
             Console.WriteLine("DIAGNOSTIC_CONTROLS " + count + " PASS; application metadata only, not ET/transport evidence.");
             return 0;
         } catch (Exception e) { Console.Error.WriteLine(e); return 1; }
+    }
+    private static void ActualRunFailurePaths(Action<bool, string> check)
+    {
+        var directory = Path.Combine(Path.GetTempPath(), "rich-error-control-" + Guid.NewGuid().ToString("N"));
+        Directory.CreateDirectory(directory);
+        var priorError = Console.Error;
+        try {
+            foreach (var fallbackFails in new[] { false, true }) {
+                var destination = Path.Combine(directory, fallbackFails ? "existing-directory" : "failure.json");
+                if (fallbackFails) Directory.CreateDirectory(destination);
+                using var captured = new StringWriter(); Console.SetError(captured);
+                // Invalid role is rejected before Host/Client and before authority/socket creation.
+                var code = new RichRunner("invalid-role", "manual-paused", "error-control", "127.0.0.1", 0,
+                    "ApplicationNoSocketControl", new string('a', 40), "clean", destination).Run().GetAwaiter().GetResult();
+                Console.SetError(priorError);
+                var stderr = captured.ToString();
+                check(code == 1 && stderr.Contains("ORIGINAL_FAILURE") && stderr.Contains("Role.") && stderr.Contains("EXPORT_FAILURE"),
+                    "actual Run original/export failure retained " + fallbackFails);
+                if (fallbackFails) check(stderr.Contains("FALLBACK_EXPORT_FAILURE") && Directory.Exists(destination),
+                    "actual Run unwritable fallback preserves all errors and returns nonzero");
+                else {
+                    using var report = JsonDocument.Parse(File.ReadAllBytes(destination));
+                    check(!report.RootElement.GetProperty("passed").GetBoolean() &&
+                        report.RootElement.GetProperty("failure").GetString()!.Contains("Role.") &&
+                        report.RootElement.TryGetProperty("exportFailure", out _), "actual fallback report preserves original bounded error");
+                }
+            }
+        } finally {
+            Console.SetError(priorError);
+            // Only this freshly owned, fixed-prefix temporary directory is removed.
+            var resolved = Path.GetFullPath(directory);
+            var tempRoot = Path.GetFullPath(Path.GetTempPath()).TrimEnd(Path.DirectorySeparatorChar) + Path.DirectorySeparatorChar;
+            if (!resolved.StartsWith(tempRoot, StringComparison.OrdinalIgnoreCase) ||
+                !Path.GetFileName(resolved).StartsWith("rich-error-control-", StringComparison.Ordinal))
+                throw new InvalidOperationException("Owned temporary control directory boundary.");
+            if (Directory.Exists(resolved)) Directory.Delete(resolved, true);
+        }
     }
     private static void RealPaths(Action<bool, string> check, RichDiagnosticOptions options, CookingNetworkWireCommand selected)
     {

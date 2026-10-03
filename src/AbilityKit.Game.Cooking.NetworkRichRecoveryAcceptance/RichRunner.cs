@@ -262,7 +262,21 @@ internal sealed class RichRunner(string role, string caseId, string runId, strin
             try { DiagnosticSnapshot("failure"); } catch (Exception observation) { _diagnostics?.Failure(observation); }
             try { _failureDiagnostic = CaptureFailure(); } catch { /* Original failure remains authoritative. */ }
             try { Write(false, error); }
-            catch (Exception exportError) { Directory.CreateDirectory(Path.GetDirectoryName(reportPath)!); File.WriteAllText(reportPath, JsonSerializer.Serialize(new { passed=false, suite="rich-recovery-four-cutpoints-v1", role,runId,caseId,stage=_stage,failure=error.ToString(),exportFailure=exportError.ToString(),coverage="INCOMPLETE_FAILED_EXPORT",failureDiagnostic=_failureDiagnostic,diagnosticOptions=_diagnosticOptions,commandPathDiagnostics=_diagnostics?.Export() })); }
+            catch (Exception exportError) {
+                // Report failure must never replace the original operation failure.
+                Console.Error.WriteLine("ORIGINAL_FAILURE " + RichCommandPathDiagnostics.Text(error.ToString()).Text);
+                Console.Error.WriteLine("EXPORT_FAILURE " + RichCommandPathDiagnostics.Text(exportError.ToString()).Text);
+                try {
+                    Directory.CreateDirectory(Path.GetDirectoryName(reportPath)!);
+                    File.WriteAllText(reportPath, JsonSerializer.Serialize(new { passed=false, suite="rich-recovery-four-cutpoints-v1", role,runId,caseId,stage=_stage,
+                        failure=RichCommandPathDiagnostics.Text(error.ToString()).Text,exportFailure=RichCommandPathDiagnostics.Text(exportError.ToString()).Text,
+                        failureDetail=RichCommandPathDiagnostics.Text(error.ToString()),exportFailureDetail=RichCommandPathDiagnostics.Text(exportError.ToString()),
+                        coverage="INCOMPLETE_FAILED_EXPORT",failureDiagnostic=_failureDiagnostic,diagnosticOptions=_diagnosticOptions,commandPathDiagnostics=_diagnostics?.Export() }));
+                } catch (Exception fallbackError) {
+                    Console.Error.WriteLine("FALLBACK_EXPORT_FAILURE " + RichCommandPathDiagnostics.Text(fallbackError.ToString()).Text);
+                }
+                return 1;
+            }
             Console.Error.WriteLine(error); return 1;
         }
         finally { _peer?.Dispose(); _session?.Dispose(); _observer?.Dispose(); _host?.Dispose(); }
