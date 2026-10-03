@@ -1,0 +1,18 @@
+# Independent concurrency-tool verification - 2026-10-03
+
+Root reviewed frozen source0b2e921a7/6d6d52e26, owned actual correction1ac293543 and execution report1788ec8cb. New application-only spatial ET fixture/passive framed peers/read-only ingress observer preserve existing authority, wire and production transport. Initial actual build failed CS0200 from treating immutable LevelEpoch as assignable; the public scope constructor correction preceded successful builds/runs. The failed055746 build log remains retained. No production/default/budget changes.
+
+## Actual independently parsed pairs
+
+- remote-first: local/Logs/cooking-network-concurrency/20261003-055824-7167121, Host24204/Client24336, both actual exits0, hash b8ebec152460cd2b27e722c1ba2941df843a651ad05629d1467897d9dc922ec4.
+- local-first: local/Logs/cooking-network-concurrency/20261003-055904-5780385, Host34028/Client16448, both actual exits0, hash dc0378b8d2b9b7999dc3ad69ca6ca85083b1f1a92ac8ba9fb6a9844f5749cad6.
+
+Root parsed both complete Host/Client/paired reports. Run/source/build/content/MVID/protocol/format agree, endpoint PIDs are distinct and match paired actual exits. Each21-phase remote wire and received terminal matches the independently recorded Host delivered wire/outbound terminal. Required2/1/0 admissions by scenario are actual same owner-frame records, not observer-only inference. Final Host capture, local baseline State and remote baseline State are DEEPLY EQUAL, in addition to equal reported hashes. Current remote issued identity equals received final identity. Pre-close projection has exactly local gen1/remote gen2, both connected Ready/noCleanup; exact final local/remote ACK/Ready facts precede actual final channel close.
+
+Same shared-item/slot contests each have one accepted and one rejected domain result, both real inputs admitted; six unique existing IDs and no Removed items remain at every phase. Pickup winner is remote in both runs; Drop winner reverses to local in local-first. Mode names express requested scheduling policy, not guaranteed receive winner. No fabricated opposite Pickup winner is claimed. Cache phases20/21 return BOTH original participant-qualified IDs/outcomes/reasons/state versions with IsDuplicate, zero new authority admissions and unchanged complete item/receipt arrays. Invalid high scope/instance sequences are followed by lower-current legal accepted phase14. Incompatible input, independent pickups, live actual close/generation2 rebind and original identity retry preserve the stated full-field obligations.
+
+Root extraction is local/Artifacts/network-concurrency-independent-review/paired-review.json. Actual producer full-field assertions additionally cover contents/processes/allocators/tombstones and immutable snapshots; original typed before/after graphs are retained, not replaced by selected hashes. Source callbacks retain bounded input; caller owner Poll performs baseline validation/ACK. Running current-generation exact grant is distinguished from newest continuously published issue; final Paused publication stabilizes exact newest grant.
+
+## Acceptance boundary
+
+The isolated concurrency TOOL and these two same-machine real UDP control runs are accepted. This is not actual physical two-PC LAN and does not substitute for required full rich service companion on copied physical build. N02/N03 remain in_progress, performance NOT_ACCEPTED and Unity deferred. Root currently owns active assembled-gate session50139 (kitchen then ET runtime); those gates have not yet completed. Relay source2d671ebe9 awaits independent review/build/controls/P0; no concurrent .NET grant.
