@@ -25,9 +25,18 @@ The producer's final three SameMachineUdp repeats each accepted73 of600 offered 
 
 ## Still required or deferred
 
-- The six synthetic cases do not close implement.md item5: rich F01+D31 finite-supply chain with four actual disconnect cutpoints and natural close/successor verification. Root has authorized that test-only follow-up; its results must be recorded separately.
+- Rich F01+D31 finite-supply four-cutpoint recovery is now integrated and passed in the corrected master ET gate below; see rich-recovery-independent-review.md for its precise boundaries.
 - Independent-process UDP fault/load combinations and physical two-PC paired evidence remain distinct, unverified exits. The two-player same-process measurement tool cannot substitute for them.
 - Formal workload/threshold approval and any subsequent optimization remain separate from measurement correctness. Higher participant/load and packet fault combinations have not been run.
 - Unity implementation and verification remain deferred.
 
 N03 remains in_progress. No baseline history is truncated, no default bounds are silently widened, and no secondary simulation or network restore grant is introduced.
+
+
+## Corrected master verification ? 2026-10-03
+
+Production ACK correction 0d0beb2f1, paused ACK regressions eff49ca90, rich four-cutpoint tests 621f3142f and deferred ACK isolation tests 444f03d84 are integrated. The first broad run exposed seven test failures from parallel classes constructing the process-wide singleton ET Host. Test collection correction 3979beed5 serializes only those three classes, preserving the production singleton and parallel pure tests. The first failed run is retained at local/Logs/master-n03-corrected-et-first.log and the 20261003-120928 gate directory.
+
+Actual corrected cooking-et-level-runtime passed: Cooking 815 and ET 328, zero failed/skipped, 629.653 seconds. Summary: local/Logs/test-gates/20261003-121713-cooking-et-level-runtime/cooking-et-level-runtime/gate-summary.json; log local/Logs/master-n03-corrected-et-second.log. Actual network-sdk passed: 311 tests, zero failed/skipped, 42.4 seconds; summary local/Logs/test-gates/20261003-122742-network-sdk/network-sdk/gate-summary.json and log local/Logs/master-n03-corrected-sdk.log. Test source was 3979beed5; documentation-only 6b49cc05d was committed during the run. Existing compiler warnings are not represented as a warning-free build.
+
+This closes the rich local four-cutpoint test follow-up, not N02/N03 overall. The rich tests use framed peers in one process; cold-generation recovery is separately covered. Independent-process fault/load, higher loads/packet fault combinations, physical two-PC acceptance and performance thresholds remain open.
