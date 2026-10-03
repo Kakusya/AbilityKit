@@ -1,4 +1,5 @@
 using System.Text.Json;
+using AbilityKit.Game.Cooking;
 using AbilityKit.Game.Cooking.NetworkPairVerifier;
 using AbilityKit.Game.Cooking.RichEvidence;
 using AbilityKit.Game.Cooking.Session;
@@ -43,10 +44,10 @@ try {
         long canonicalBytes = 0; var uniqueCanonical = new HashSet<string>(); var canonicalReferences=0;
         foreach (var endpoint in new[] { (Report:hr,Path:hostPath), (Report:cr,Path:clientPath) }) {
             var files = endpoint.Report.GetProperty("canonicalFiles").EnumerateArray().ToArray(); Check.That((canonicalReferences += files.Length) <= 256, "NOT_VERIFIED: paired canonical reference count256.");
-            var root = Path.GetDirectoryName(endpoint.Path)!;
+            var endpointRoot = Path.GetDirectoryName(endpoint.Path)!;
             foreach (var file in files) {
-                var relative = file.GetProperty("relativePath").GetString()!; var path = Path.GetFullPath(Path.Combine(root,relative));
-                Check.That(path.StartsWith(Path.Combine(root,"canonical") + Path.DirectorySeparatorChar, comparison) && new FileInfo(path).Length <= 4*1024*1024 , "Canonical contained4MiB individual/128MiB paired aggregate admission.");
+                var relative = file.GetProperty("relativePath").GetString()!; var path = Path.GetFullPath(Path.Combine(endpointRoot,relative));
+                Check.That(path.StartsWith(Path.Combine(endpointRoot,"canonical") + Path.DirectorySeparatorChar, comparison) && new FileInfo(path).Length <= 4*1024*1024 , "Canonical contained4MiB individual/128MiB paired aggregate admission.");
                 var originalHash = BoundedJson.HashBounded(path,4*1024*1024,out var readBytes); Check.That((canonicalBytes += readBytes) <= 128L*1024*1024 && (uniqueCanonical.Add(originalHash) ? uniqueCanonical.Count <= 128 : true), "NOT_VERIFIED: canonical actual paired128MiB/128unique content bound."); hashes.TryAdd(path,originalHash); Check.That(hashes[path] == file.GetProperty("sha256").GetString(), "Original canonical sidefile SHA.");
             }
             var report = endpoint.Report.Deserialize<RichEndpointReport>(CookingNetworkWireCodec.JsonOptions)!;
