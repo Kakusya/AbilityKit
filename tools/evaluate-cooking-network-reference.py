@@ -17,7 +17,14 @@ TARGETS = {"minimumPerParticipant": 285, "terminalP95Ms": 100, "terminalP99Ms": 
 
 def read_text(path):
     raw = path.read_bytes()
-    return raw.decode("utf-16" if raw.startswith((b"\xff\xfe", b"\xfe\xff")) else "utf-8-sig")
+    try:
+        return raw.decode("utf-16" if raw.startswith((b"\xff\xfe", b"\xfe\xff")) else "utf-8-sig")
+    except UnicodeDecodeError:
+        # Frozen Windows PowerShell 5 Set-Content inventory used local ANSI CP936.
+        # This legacy compatibility is confined to that specific structured artifact.
+        if path.name != "environment-inventory.json":
+            raise
+        return raw.decode("cp936", errors="strict")
 
 
 def load(path):
@@ -113,7 +120,7 @@ def evaluate(directory):
         for source in ("tools/run-cooking-network-measurement.ps1", "tools/evaluate-cooking-network-reference.py"):
             require(source in paths, "Tool source missing: " + source)
         require(paths.get("AbilityKit.Game.Cooking.NetworkMeasurement.dll") == executable.upper(), "Frozen executable mismatch")
-        for name in ("AbilityKit.Game.Cooking.EtRuntime.dll", "AbilityKit.Game.Cooking.Session.dll", "AbilityKit.Game.Cooking.NetworkMeasurement.runtimeconfig.json"):
+        for name in ("AbilityKit.Game.Cooking.EtRuntime.dll", "AbilityKit.Game.Cooking.dll", "AbilityKit.Game.Cooking.NetworkMeasurement.runtimeconfig.json"):
             require(name in paths, "Dependency/runtime evidence missing: " + name)
         built_sources = build["sourceHashes"]
         require(len(built_sources) == 5 and len({e["sourcePath"] for e in built_sources}) == 5, "Actual compiled source hashes missing")
