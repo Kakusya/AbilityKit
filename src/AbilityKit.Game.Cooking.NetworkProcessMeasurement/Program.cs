@@ -67,7 +67,7 @@ async Task<object> Host()
     Require(session.ApplyControl(new(CookingNetworkControlKind.Pause,"final-load-pause")).Accepted,"Trusted final Pause.");session.ProcessOwnerFrame();
     await Wait(()=>local.IsSynchronized&&local.LatestBaseline?.State.Observation.Lifecycle.State==CookingLevelState.Paused&&
         CookingNetworkWireCodec.Hash(local.LatestBaseline.State)==CookingNetworkWireCodec.Hash(session.LatestCapture),15);
-    
+
     var final=adapter.CaptureFullState().State!;
     Require(final.Observation.Lifecycle.State==CookingLevelState.Paused&&CookingNetworkWireCodec.Hash(final)==CookingNetworkWireCodec.Hash(session.LatestCapture),"Stable same-frame capture.");
     ValidateView(session.LatestSessionProjection,session.ServerSessionInstance,allowRemoteClosed:false);
