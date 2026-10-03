@@ -23,3 +23,8 @@ Before any correction or rerun, separately review a diagnostic increment confine
 Keep accumulated actual offered/issued/accepted/skipped counts and completed result lists on failure, plus the single failing flight; do not replace partial accounting with null. Distinguish accepted response, qualifying full projection, and exact ACK/Ready when genuinely observed. If Host issued-history correlation is needed, retain a bounded actual issuance ledger rather than reconstructing it from the final capture. Preserve failure evidence even if recovery/export later fails.
 
 No changes to30s projection timeout, operation/whole-process bounds, payload/history/queue limits, healthy criteria, production transport or frozen peer helper are authorized here. No inferred cause, normalization, retry-to-fill, or reencoded-size substitution. This proposal is a diagnosis prerequisite only; source correction and execution require separate root grants. No .NET was run for this audit.
+
+
+## Root narrow source-only grant
+
+Root reviewed current Program.RunLoad and accepts bounded app-only flight/partial evidence implementation. Own Program.cs and optional LoadWaitEvidence.cs only, with actual cached baseline/Ready metadata and monotonic existing wait boundaries, no extraCapture/hash/serialization perpoll. Preserve legacyLoadResult and healthy criteria; partialdiagnostics retain actual acceptedresponse vs projectedcompletion separately through load/recovery/export failures. No helper/transport/framework/wrapper change, rawmutation, altered schedule/30s/caps/history or inferred cause. Source freeze and independent review precede any root serial build/control/runtime grant.
