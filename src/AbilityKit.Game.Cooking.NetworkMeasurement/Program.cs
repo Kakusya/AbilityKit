@@ -51,6 +51,7 @@ async Task<object> Execute(int repeat, bool control)
     using var second = new CookingNetworkSessionClient(MeasurementFixture.Players[1], "credential-" + MeasurementFixture.Players[1].Value,
         topology == "InProcess" ? session.CreateLocalClientTransport : null, options);
     var clients = new[] { first, second };
+    var profile = new MeasurementProfile();
     var admitted = new HashSet<RecipeCommandId>();
     long ownerCalls = 0, ownerAllocated = 0, ownerTimestamp = 0;
     var runWatch = Stopwatch.StartNew();
@@ -58,8 +59,10 @@ async Task<object> Execute(int repeat, bool control)
     {
         var bytes = GC.GetAllocatedBytesForCurrentThread(); var timestamp = Stopwatch.GetTimestamp();
         var frame = session.ProcessOwnerFrame();
+        var ownerElapsedMs = (Stopwatch.GetTimestamp() - timestamp) * 1000.0 / Stopwatch.Frequency;
         if (measured) { ownerCalls++; ownerAllocated += GC.GetAllocatedBytesForCurrentThread() - bytes; ownerTimestamp += Stopwatch.GetTimestamp() - timestamp; }
         if (frame is not null) foreach (var admission in frame.Admissions.Where(a => a.Accepted)) admitted.Add(admission.CommandId);
+        profile.Observe(clients, measured, ownerElapsedMs);
         await Task.Delay(10);
     }
     async Task<T> PumpUntil<T>(Task<T> task)
@@ -89,7 +92,8 @@ async Task<object> Execute(int repeat, bool control)
         var deadline = Stopwatch.StartNew();
         while (clients[player].LatestBaseline!.State.Observation.Recipe!.Version < result.Result!.StateVersion && deadline.Elapsed.TotalSeconds < 30)
             await Task.Delay(1);
-        Require(deadline.Elapsed.TotalSeconds < 30, "Committed full projection deadline.");
+        if (clients[player].LatestBaseline!.State.Observation.Recipe!.Version < result.Result!.StateVersion)
+            throw new TimeoutException("Committed full projection deadline.");
         var state = clients[player].LatestBaseline!.State.Observation.Recipe!;
         Require(state.Items.Count == 2 && state.Containers.Count == 2 && state.Containers.All(i => i.ItemIds.Count == 0), "Two empty physical tools preserved.");
     }
@@ -141,7 +145,11 @@ async Task<object> Execute(int repeat, bool control)
         accepted = samples.Count(s => s.Sampled && s.Result?.Result?.Outcome == CookingRecipeOutcome.Accepted),
         rejected = samples.Count(s => s.Sampled && s.Result is not null && s.Result.Result?.Outcome != CookingRecipeOutcome.Accepted),
         pending = samples.Count(s => s.Sampled && s.Result is null), results = samples.Select(s => new { s.Player, s.Index, s.Sampled, s.Result }),
-        diagnostics = session.Diagnostics, session.LatestCapture };
+        projectionCompleted = samples.Count(s => s.Sampled && s.ProjectionCompleted),
+        terminalTimeouts = samples.Count(s => s.Sampled && s.TimedOut && s.FailureStage == "AwaitTerminal"),
+        projectionTimeouts = samples.Count(s => s.Sampled && s.TimedOut && s.FailureStage == "AwaitCommittedProjection"),
+        failedSamples = samples.Where(s => s.Failure is not null).Select(s => new { s.Player, s.Index, s.Sampled, s.FailureStage, s.TimedOut, s.Failure }),
+        diagnosticWindow = profile.FailureEvidence(), diagnostics = session.Diagnostics, session.LatestCapture };
     var clock = Stopwatch.StartNew(); var sampleStartTimestamp = Stopwatch.GetTimestamp() + 10L * Stopwatch.Frequency;
     var sampleEndTimestamp = sampleStartTimestamp + 60L * Stopwatch.Frequency;
     CookingNetworkSessionDiagnostics? sampleStart = null, sampleEnd = null;
@@ -164,9 +172,20 @@ async Task<object> Execute(int repeat, bool control)
                 CookingNetworkWireCodec.DomainId(session.ServerSessionInstance, MeasurementFixture.Scope, MeasurementFixture.Players[player], stableId)); samples.Add(sample);
             flight = Finish();
             async Task Finish() {
-                var result = await clients[player].SendCommandAsync(stableId, command).WaitAsync(TimeSpan.FromSeconds(30));
-                sample.Result = result; sample.RttMs = (Stopwatch.GetTimestamp() - sample.StartTimestamp) * 1000.0 / Stopwatch.Frequency;
-                await ObserveResult(player, result);
+                var stage = "AwaitTerminal";
+                try {
+                    var result = await clients[player].SendCommandAsync(stableId, command).WaitAsync(TimeSpan.FromSeconds(30));
+                    var terminalObserved = Stopwatch.GetTimestamp();
+                    sample.Result = result; sample.RttMs = (terminalObserved - sample.StartTimestamp) * 1000.0 / Stopwatch.Frequency;
+                    stage = "AwaitCommittedProjection";
+                    await ObserveResult(player, result);
+                    var projected = Stopwatch.GetTimestamp();
+                    sample.TerminalToProjectionMs = (projected - terminalObserved) * 1000.0 / Stopwatch.Frequency;
+                    sample.SendToProjectionMs = (projected - sample.StartTimestamp) * 1000.0 / Stopwatch.Frequency;
+                    sample.ProjectionCompleted = true;
+                } catch (Exception error) {
+                    sample.FailureStage = stage; sample.TimedOut = error is TimeoutException; sample.Failure = error.ToString(); throw;
+                }
             }
         }
         if (flight is not null) await flight;
@@ -174,8 +193,8 @@ async Task<object> Execute(int repeat, bool control)
     var workers = Task.WhenAll(Worker(0), Worker(1));
     while (!workers.IsCompleted && clock.Elapsed.TotalSeconds < 180) {
         var measured = clock.Elapsed.TotalSeconds >= 10 && clock.Elapsed.TotalSeconds < 70;
-        if (measured && sampleStart is null) { sampleStart = session.Diagnostics; cpuStart = process.TotalProcessorTime; }
-        if (!measured && sampleStart is not null && sampleEnd is null) { sampleEnd = session.Diagnostics; cpuEnd = process.TotalProcessorTime; }
+        if (measured && sampleStart is null) { sampleStart = session.Diagnostics; cpuStart = process.TotalProcessorTime; profile.Begin(); }
+        if (!measured && sampleStart is not null && sampleEnd is null) { profile.End(); sampleEnd = session.Diagnostics; cpuEnd = process.TotalProcessorTime; }
         if (measured) { process.Refresh(); peakWorking = Math.Max(peakWorking, process.WorkingSet64); peakPrivate = Math.Max(peakPrivate, process.PrivateMemorySize64); }
         await Pump(measured);
     }
@@ -186,10 +205,11 @@ async Task<object> Execute(int repeat, bool control)
         await Pump(clock.Elapsed.TotalSeconds >= 10);
     }
     sampleStart ??= session.Diagnostics;
-    if (sampleEnd is null) { sampleEnd = session.Diagnostics; cpuEnd = process.TotalProcessorTime; }
+    if (sampleEnd is null) { profile.End(); sampleEnd = session.Diagnostics; cpuEnd = process.TotalProcessorTime; }
     var measuredSamples = samples.Where(s => s.Sampled).ToArray();
     Require(offered.All(n => n == 300) && warmupOffered.All(n => n == 50), "Offered schedule complete.");
     Require(measuredSamples.All(s => s.Result?.Result?.Outcome == CookingRecipeOutcome.Accepted), "All issued legal operations completed accepted.");
+    Require(measuredSamples.All(s => s.ProjectionCompleted && s.Failure is null), "Every completed terminal has a committed continuation projection.");
     Require(measuredSamples.All(s => s.Result!.DomainCommandId == s.ExpectedDomainId && admitted.Contains(s.ExpectedDomainId)), "Issued operations really admitted by ET.");
     var timings = session.Diagnostics.Timings.Where(t => t.ReceivedTimestamp >= sampleStartTimestamp && t.ReceivedTimestamp < sampleEndTimestamp).ToArray();
     var final = adapter.CaptureFullState().State!;
@@ -205,8 +225,12 @@ async Task<object> Execute(int repeat, bool control)
         offered, skippedBackpressure = skipped, schedulerSkipped, warmupOffered, warmupSkipped,
         issued = measuredSamples.Length, admitted = measuredSamples.Length, accepted = measuredSamples.Length, rejected = 0, cancelled = 0,
         completed = measuredSamples.Count(s => s.Result is not null), pending = 0,
+        projectionCompleted = measuredSamples.Count(s => s.ProjectionCompleted), terminalTimeouts = 0, projectionTimeouts = 0,
         acceptedPerSecond = measuredSamples.Length / 60.0,
         rttMs = Distribution(measuredSamples.Select(s => s.RttMs)),
+        terminalObservedToCommittedProjectionMs = Distribution(measuredSamples.Select(s => s.TerminalToProjectionMs)),
+        sendToCommittedProjectionMs = Distribution(measuredSamples.Select(s => s.SendToProjectionMs)),
+        externalProfile = profile.Summary(),
         hostReceiveConsumeMs = Distribution(timings.Select(t => (t.ConsumedTimestamp - t.ReceivedTimestamp) * 1000.0 / Stopwatch.Frequency)),
         hostConsumeSendMs = Distribution(timings.Select(t => (t.CommittedTimestamp - t.ConsumedTimestamp) * 1000.0 / Stopwatch.Frequency)),
         ownerCalls, ownerAllocatedBytes = ownerAllocated, ownerCallMilliseconds = ownerTimestamp * 1000.0 / Stopwatch.Frequency,
@@ -254,4 +278,10 @@ internal sealed class Sample(int player, int index, bool sampled, long timestamp
     internal RecipeCommandId ExpectedDomainId { get; } = expectedDomainId;
     internal CookingNetworkWireResult? Result { get; set; }
     internal double RttMs { get; set; }
+    internal double TerminalToProjectionMs { get; set; }
+    internal double SendToProjectionMs { get; set; }
+    internal bool ProjectionCompleted { get; set; }
+    internal string? FailureStage { get; set; }
+    internal bool TimedOut { get; set; }
+    internal string? Failure { get; set; }
 }
