@@ -1,4 +1,4 @@
-﻿using System.Collections.Concurrent;
+using System.Collections.Concurrent;
 using AbilityKit.Game.Cooking;
 using AbilityKit.Game.Cooking.EtRuntime;
 using AbilityKit.Game.Cooking.Session;
@@ -277,4 +277,3 @@ public sealed class CookingNetworkRichLiveRecoveryEtTests
         }
     }
 }
-
