@@ -265,3 +265,8 @@ Root separate waitprimitivecalibration81994 actuallyterminal0: net10forcedbuild0
 
 
 Owner2026-10-03 explicitly confirms second physical PC unavailable. PhysicalLAN remains NOT_VERIFIED/environment-unavailable, physical-lan-runbook.md records routing; no repeated hardware question or scope removal. Localactionable work continues. Reviewed process-timer diagnostic receives only narrowlocal source correction grant, freshreview/build/run stillpending.
+
+
+## Superseding actual process timer diagnostic
+
+Root79616 finished actualnative0, fresh Release compile0warnings/errors; child36972 ran26.285s with no supervisor termination. Independent ack_fix_review accepted source/DLL/native receipts and allnine20warm+200samplegroups. WaitOne1 OFF/ON/OFF medians15.5102/1.0145/15.5099ms; Task.Delay10 medians15.5062/10.0167/15.5180ms. Actual single successful Begin1/End1 pair, currentlyAcquired false, no release/phase failure, asyncCPU null. Original artifacts local/Artifacts/native-process-timer-calibration-20261003 preserved; exact SHA/MVID and limits in native-wait-calibration.md. Previous pending calibration statements are historical. This measures primitives only, not native networking cadence or production suitability. Next isolated matchedmid12row two-factor design is under review; no production import/default adoption, timeout/cap/history relaxation, or full-exit acceptance. Owner absence of secondPC remains recorded; local recovery/impairment/performance exits remain actionable.
