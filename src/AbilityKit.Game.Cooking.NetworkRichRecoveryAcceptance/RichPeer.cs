@@ -38,7 +38,8 @@ internal sealed class RichPeer(PlayerId player, string credential, Func<ITranspo
     public void Open(string address, int port)
     {
         var incarnation = Interlocked.Increment(ref _incarnation);
-        _connection = new(transport, new ConnectionOptions { EnableReconnect = false, MaxFrameLength = 8 * 1024 * 1024 + 64 });
+        _connection = new(transport, new ConnectionOptions { EnableReconnect = false,
+            MaxFrameLength = RichFrameCodec.MaximumBodyBytes, FrameCodec = new RichFrameCodec() });
         _joinSent = false; _acknowledged = null;
         _connection.ServerPushReceived += (opcode, bytes) => {
             try {
