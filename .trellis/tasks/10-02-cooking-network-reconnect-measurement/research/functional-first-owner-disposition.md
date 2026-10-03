@@ -17,3 +17,8 @@
 3. Functional fault/arbitration/verifier coverage and applicable assembled gates on frozen source; retain remaining physical and deferredperformance exits with truthful status.
 
 Historical timer diagnostics remain valid within their stated scope but no longer lead current implementation.
+
+
+## 2026-10-04 actual closeout
+
+O04 newimplementation stopped and owner-deferred settlement accepted. Source439138f6b +notes4416e5c14 clean, archived21files/fullbundle (verify0); no.NET/run/mainmerge. Actualworkerrelease retaineduser_takeover/processActionnone, so noforcedterminal/tree removal. O03 archived20734files/allcopiedSHA/fullbundleverify0 and actualOrcarm withoutforce succeeded; branch0504 preserved. Parentresearch/existing-client-capability-reuse-audit.md is source-only, no facade integration yet. Comprehensive readable route is Docs/design/CookingGame/session-closeout-2026-10-04.md. Wholegoal notcompleted; latestowner asks sessionwrap/commit/push, no newimplementation started.
