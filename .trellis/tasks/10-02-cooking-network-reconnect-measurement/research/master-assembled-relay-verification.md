@@ -205,3 +205,31 @@ Root BuildOnly78750 actually terminated0 on77d375287, original frozen manifest l
 ## Isolated O03 actual forced compiler proof
 
 Frozen clean isolated d7e9cc873 (2197e9849 code plus explicit failure-EOF caveat) BuildOnly12864 actually terminated0; actual native build40324 exit0, 2096 warnings/0errors, empty stderr, no wrapper termination. Original local/Logs/cooking-network-cadence-profile/20261003-111845-2236726/compile-manifest.json preserves19962 input hashes/36 complete binary files. Root independently rehashed ALL19962 inputs, all36 binaries and wrapper script successfully against this exact original manifest. This is actual forced compile provenance only; loaded runtime assemblies/full Session graph not proven until controls. Root grants frozen NoBuild Controls with Repeats1 only at both15/1 cadences, worker exclusive.NET and no source changes; Profile remains ungranted. Default15 unchanged, no main generic/candidate import, no ordinary performance or rich-four-case acceptance.
+
+
+## O03 first typed controls actual failure, not native cadence evidence
+
+Original Controls31939 actually terminated1 on frozen d7e9cc873. Both initial15 Host38112 and initial1 Host44528 native1: Producer ingress fully drained before native transition. No clients started; no remote fullgraph/ACK/Ready pairing, controls NOT_MEASURED, matrixcompletefalse. Original isolated artifacts local/Logs/cooking-network-cadence-profile/20261003-112039-1900114 retained unchanged. Root independently inspected original receipts/reports and hashes:
+
+[
+  {
+    "row": "initial-15-1",
+    "hostPid": 38112,
+    "nativeExit": 1,
+    "reportBytes": 172929,
+    "sha256": "E4254EEF8CB6DD4F2F15C380BAF4E93440F8A29E5086923534A60EBB9A03905A",
+    "failure": "System.InvalidOperationException: Producer ingress fully drained before native transition.\r\n   at AbilityKit.Game.Cooking.NetworkCadenceProfile.Evidence.Require(Boolean value, String message) in C:\\Users\\Administrator\\orca\\workspaces\\AbilityKit\\cooking-network-cadence-o03\\src\\AbilityKit.Game.Cooking.NetworkCadenceProfile\\ProfileEvidence.cs:line 35\r\n   at AbilityKit.Game.Cooking.NetworkCadenceProfile.ProfileRunner.Host() in C:\\Users\\Administrator\\orca\\workspaces\\AbilityKit\\cooking-network-cadence-o03\\src\\AbilityKit.Game.Cooking.NetworkCadenceProfile\\ProfileRunner.cs:line 90\r\n   at AbilityKit.Game.Cooking.NetworkCadenceProfile.ProfileRunner.Run() in C:\\Users\\Administrator\\orca\\workspaces\\AbilityKit\\cooking-network-cadence-o03\\src\\AbilityKit.Game.Cooking.NetworkCadenceProfile\\ProfileRunner.cs:line 59",
+    "clientReportExists": false
+  },
+  {
+    "row": "initial-1-1",
+    "hostPid": 44528,
+    "nativeExit": 1,
+    "reportBytes": 172928,
+    "sha256": "F34C29BFB13F8DD6D17228EF19008ED44B6358D70A62A8FCD8DC981033459405",
+    "failure": "System.InvalidOperationException: Producer ingress fully drained before native transition.\r\n   at AbilityKit.Game.Cooking.NetworkCadenceProfile.Evidence.Require(Boolean value, String message) in C:\\Users\\Administrator\\orca\\workspaces\\AbilityKit\\cooking-network-cadence-o03\\src\\AbilityKit.Game.Cooking.NetworkCadenceProfile\\ProfileEvidence.cs:line 35\r\n   at AbilityKit.Game.Cooking.NetworkCadenceProfile.ProfileRunner.Host() in C:\\Users\\Administrator\\orca\\workspaces\\AbilityKit\\cooking-network-cadence-o03\\src\\AbilityKit.Game.Cooking.NetworkCadenceProfile\\ProfileRunner.cs:line 90\r\n   at AbilityKit.Game.Cooking.NetworkCadenceProfile.ProfileRunner.Run() in C:\\Users\\Administrator\\orca\\workspaces\\AbilityKit\\cooking-network-cadence-o03\\src\\AbilityKit.Game.Cooking.NetworkCadenceProfile\\ProfileRunner.cs:line 59",
+    "clientReportExists": false
+  }
+]
+
+Worker observed post-frame passive Poll consuming newly issued baseline2 and queuing genuine ACK2 after prior Ready; source-only phase-boundary drain proposal is under independent review, not implemented/approved runtime yet. No native15/1 latency conclusion from this initial pre-client failure. Exclusive.NET released on actual31939 terminal; do not rerun or grant Profile until source correction review and fresh compiler proof.
