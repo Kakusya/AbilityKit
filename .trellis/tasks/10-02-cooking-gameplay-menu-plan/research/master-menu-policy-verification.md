@@ -17,3 +17,6 @@ Independent source review: menu-host-runtime-independent-review.md. Producer evi
 Accepted behavior: per-Level menus are a subset of loaded graph range; matching catalog identity, actual owned kitchen Ready checks, exact scoped Front templates, effective material intersection and selected recipe closure, new supply/manufacturing/binding authorization, authorized in-flight reception and carry recovery, same-policy preview and generation private staging. Restore freezes trusted scope configuration once, compares saved required nullable menu identity and installs actual runtime policy. Saved state is not a permission grant.
 
 Current formats: definition3 / Recipe5 / Level8; typed major baseline2 is separate, old Level formats reject. Natural F01+D31 operating/replay/restore, real narrowed successor carry, durable Host baseline load/commit and full S14 exit remain open. S06/S07/S08/S14 remain in_progress. No network or Unity acceptance is inferred.
+
+
+Worktree retirement 2026-10-03: original runtime producer cooking-menu-ready-s14 is no longer an active directory. Its exact 2ba021764 branch/history is retained in local/Archives/worktrees/cooking-menu-ready-s14-2ba021764/source-refs.bundle (verified) and the original local branch. Root validation artifacts above remain in place. See worktree-lifecycle.md; retirement adds no new validation claim.

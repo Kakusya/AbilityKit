@@ -20,3 +20,10 @@ The first two worktrees were clean and their commits actual ancestors of master.
 The three frozen network producer trees were subsequently confirmed clean/inactive with no matching live non-coordinator processes. Their exact refs and complete histories were saved and git-bundle-verified in retired-network-frozen-20261003/source-refs.bundle;27 present log files were copied with source/destination SHA256 comparison and logs-manifest.json. This preserves the original producer sources independently of cherry-import equivalence; it does not infer extra files or test runs for the Session tree where no local/Logs directory existed. Current implementations and accepted broad evidence remain on main and in the continuing recovery tree.
 
 No new tests, physical LAN evidence or product capability follow from cleanup. No user Practice directory or main tools/__pycache__ files were removed. Any remaining dirty/unreviewed source must be reviewed or durably saved before retirement; currently active recovery work is explicitly retained.
+
+
+## Additional actual retirement ? cooking-menu-ready-s14
+
+2026-10-03: cooking-menu-ready-s14 at 2ba0217645785c01e7153a7e9b3af0d7900a6b6f was clean including untracked files, had no task.json worktree reference, no matching live non-coordinator process and no entry in current Orca worktree ps. Its source import and original actual master validation are documented in master-menu-policy-verification.md; this commit is not a literal master ancestor. Before removal, its complete original history/ref was saved to local/Archives/worktrees/cooking-menu-ready-s14-2ba021764/source-refs.bundle, successfully verified by git bundle verify and list-heads. No local directory/log artifacts were present in this tree; existing root validation logs remain at their original root paths.
+
+Native git worktree remove succeeded without force after resolving/checking the absolute path inside the managed workspace root. Test-Path then returned false; the original source branch remains available at the exact SHA above. This brings actual retirements to nine. No active recovery tree, dirty source or user Practice files were removed.
