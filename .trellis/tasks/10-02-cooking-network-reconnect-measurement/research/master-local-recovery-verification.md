@@ -2,6 +2,8 @@
 
 2026-10-03. This records actual local results, not completion of N02/N03 or physical LAN acceptance.
 
+Latest follow-up: production0d0beb2f1 fixes actual exact-ACK cleanup starvation and paused-state publication. Independent focused evidence is original2red→corrected2green; tests imported aseff49ca90. See ack-cleanup-paused-publication-review.md, paused-publication-increment.md and ack-fix-independent-review.md. The broad gates listed below predate this correction and do not validate it. Corrected master regression, rich four-cutpoint completion and additional deferred-slot isolation controls remain pending.
+
 ## Reviewed imports and actual master checks
 
 - Cold four-case tests: producer c15fde9d6, master c7ffb49ee; see cold-recovery-increment.md and independent review.
