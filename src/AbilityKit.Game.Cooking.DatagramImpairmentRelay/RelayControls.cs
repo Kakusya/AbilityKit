@@ -15,6 +15,12 @@ internal static class RelayControls
         try{
             Check(QueueBudget.CanAdmit(65535,64L*1024*1024-1,1),"exact shared queue last byte/entry");
             Check(!QueueBudget.CanAdmit(65536,0,0)&&!QueueBudget.CanAdmit(0,64L*1024*1024,1),"queue count/byte overflow rejection");
+            const long declared=100;var deadline=declared+5*System.Diagnostics.Stopwatch.Frequency;
+            bool Notify(long now,int count,bool frontend=true,bool windows=true,int code=10054,SocketError error=SocketError.ConnectionReset)=>CloseNotificationPolicy.CanHandle(windows,frontend,code,error,declared,deadline,now,count);
+            Check(Notify(declared,0)&&Notify(deadline,63),"Actual classifier declared start/exact5s/count64th boundary");
+            Check(!Notify(deadline+1,0)&&!Notify(declared-1,0)&&!Notify(deadline,64),"Actual classifier expired/predeclared/count65th rejection");
+            Check(!Notify(declared,0,frontend:false)&&!Notify(declared,0,windows:false)&&!Notify(declared,0,code:10053)&&!Notify(declared,0,error:SocketError.NetworkReset),"Actual classifier upstream/other OS/code/socket error fatal");
+            Check(!CloseNotificationPolicy.CanHandle(true,true,10054,SocketError.ConnectionReset,0,deadline,declared,0),"Actual classifier undeclared close fatal");
             foreach(var name in new[]{"P0","P1","P2","P3","P4","P5","P6"}){
                 var policy=Policy.For(name);var seed=Decisions.Seed(name,1,1,"c2s");
                 Check(seed==Decisions.Seed(name,1,1,"c2s"),name+" deterministic seed");
@@ -34,7 +40,8 @@ internal static class RelayControls
             }
             ControlledRelayChecks.Run();
             ControlledQueueChecks.Run();
-            var result=JsonSerializer.Serialize(new{passed=true,checks=checks.Count,relaySha=Convert.ToHexString(SHA256.HashData(File.ReadAllBytes(typeof(RelayControls).Assembly.Location))),mvid=typeof(RelayControls).Assembly.ManifestModule.ModuleVersionId,machine=Environment.MachineName,scope="Deterministic policy/default shared-cap boundaries; actual raw owner-loop pin/delay/off/retirement, nonce/sequence/route controls, reduced control-only count/byte below/exact/+1 and Off pending original epoch/due/target/hash. Not giant default-cap OS saturation.",pid=Environment.ProcessId});
+            ClosedPortControls.Run();
+            var result=JsonSerializer.Serialize(new{passed=true,checks=checks.Count,relaySha=Convert.ToHexString(SHA256.HashData(File.ReadAllBytes(typeof(RelayControls).Assembly.Location))),mvid=typeof(RelayControls).Assembly.ManifestModule.ModuleVersionId,machine=Environment.MachineName,scope="Deterministic policy/default shared-cap boundaries; actual raw owner-loop pin/delay/off/retirement, nonce/sequence/route controls, reduced control-only count/byte below/exact/+1 and Off pending original epoch/due/target/hash. Actual Windows declared-frontend/undeclared-frontend/upstream closed-port10054 controls plus classifier exact5s/64/+1 boundaries; not an OS64-notification storm or giant default-cap OS saturation.",pid=Environment.ProcessId});
             if(report is not null){var path=Path.GetFullPath(report);Directory.CreateDirectory(Path.GetDirectoryName(path)!);File.WriteAllText(path,result);}Console.WriteLine(result);return 0;
         }catch(Exception error){Console.Error.WriteLine(error);return 1;}
     }

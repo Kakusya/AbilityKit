@@ -20,6 +20,7 @@ var trace=new Queue<object>();long queuedBytes=0,highBytes=0,highCount=0,index=0
 long ingressDatagrams=0,ingressBytes=0,overflowDatagrams=0,overflowBytes=0;
 long workingPeak=0,privatePeak=0;var allocated=GC.GetTotalAllocatedBytes();using var process=Process.GetCurrentProcess();var cpu=process.TotalProcessorTime;
 var offDrainRequested=false;var stopped=false;string? failure=null;
+var socketFaults=new List<object>();long handledCloseNotifications=0,socketFaultObservationCount=0;
 try {
     if(!Guid.TryParse(nonce,out _)||repeat is <1 or >3||backend.Port==0)throw new ArgumentException("Invalid relay provenance.");
     if(countLimit is <1 or >65536||byteLimit is <1 or >67108864||!controlMode&&(countLimit!=65536||byteLimit!=67108864))throw new ArgumentException("Invalid control-only queue limits.");
@@ -47,6 +48,12 @@ try {
                     if(queue.UnorderedItems.Any(p=>p.Element.Route==route)||route.Unverified.Count!=0)throw new InvalidOperationException("Retirement before drain.");
                     route.Retired=true;route.Front.Dispose();route.Upstream.Dispose();ControlMailbox.Event(nonce,"RETIRED",new{route=route.Id});break;
                 }
+                case "DeclareClientClose":{
+                    var route=routes.Single(r=>r.Id==control.GetProperty("route").GetInt32());
+                    if(controlMode||epoch!=2||offDrainRequested||route.Retired||route.Client is null||route.CloseDeclaredAt!=0||queue.UnorderedItems.Any(p=>p.Element.Route==route)||route.Unverified.Count!=0)throw new InvalidOperationException("Invalid declared client close boundary.");
+                    route.CloseDeclaredAt=Stopwatch.GetTimestamp();route.CloseDeadline=route.CloseDeclaredAt+5*Stopwatch.Frequency;
+                    ControlMailbox.Event(nonce,"CLIENT_CLOSE_DECLARED",new{route=route.Id,declared=route.CloseDeclaredAt,deadline=route.CloseDeadline,notificationLimit=64});break;
+                }
                 case "Stop":if(queue.Count!=0||routes.Any(r=>r.Unverified.Count!=0))throw new InvalidOperationException("Stop before drain.");stopped=true;break;
                 case "HoldQueue":if(!controlMode)throw new InvalidOperationException("Control-only hold rejected.");holdQueue=true;ControlMailbox.Event(nonce,"HELD",new{epoch});break;
                 case "ReleaseQueue":if(!controlMode)throw new InvalidOperationException("Control-only release rejected.");holdQueue=false;ControlMailbox.Event(nonce,"RELEASED",new{epoch});break;
@@ -66,7 +73,9 @@ try {
             var socket=packet.Direction=="c2s"?packet.Route.Upstream:packet.Route.Front;
             var destination=packet.Direction=="c2s"?backend:packet.Route.Client!;
             int sent;try{sent=socket.SendTo(packet.Bytes,destination);}catch(SocketException e)when(e.SocketErrorCode==SocketError.WouldBlock){sendWouldBlock++;break;}
+            catch(SocketException error){RecordFault(new{operation="SendTo",route=packet.Route.Id,outboundDirection=packet.Direction,destination=destination.ToString(),error=error.SocketErrorCode.ToString(),nativeCode=error.NativeErrorCode,timestamp=Stopwatch.GetTimestamp(),epoch,handledCloseNotification=false,packetBytes=packet.Bytes.Length});throw;}
             if(sent!=packet.Bytes.Length||SHA256.HashData(packet.Bytes).AsSpan().SequenceEqual(packet.Digest)==false)throw new InvalidOperationException("Raw payload changed.");
+            if(packet.Direction=="s2c"){packet.Route.LastFrontendSendAt=now;packet.Route.LastFrontendSendBytes=sent;}
             queue.Dequeue();queuedBytes-=packet.Bytes.Length;
             var count=counters[(packet.Route.Id,packet.Direction,packet.Epoch)];count.Forwarded++;count.ForwardedBytes+=sent;
             if(packet.DirectionIndex<count.LastForwardedIndex)count.Reordered++;count.LastForwardedIndex=Math.Max(count.LastForwardedIndex,packet.DirectionIndex);
@@ -91,7 +100,8 @@ finally{
         processCpuMilliseconds=(process.TotalProcessorTime-cpu).TotalMilliseconds,allThreadAllocatedBytes=GC.GetTotalAllocatedBytes()-allocated,
         sampledPeakWorkingBytes=workingPeak,sampledPeakPrivateBytes=privatePeak,durationMilliseconds=watch.Elapsed.TotalMilliseconds,
         controlMode,holdQueue,limits=new{bytes=byteLimit,datagrams=countLimit,createdRoutes=4,activeRoutes=2,trace=4096,controlLines=64},
-        metrics="Relay whole-process only; memory sampled each event-loop iteration. Raw UDP bytes include LiteNet protocol/retransmission. Policy is receipt epoch; Off does not undo prior loss/delay. Trace is bounded, counters complete; no packet payload dump.",
+        handledCloseNotifications,socketFaultObservationCount,socketFaultTraceTruncated=socketFaultObservationCount>socketFaults.Count,socketFaults,closeWindows=routes.Select(r=>new{route=r.Id,declared=r.CloseDeclaredAt,deadline=r.CloseDeadline,notifications=r.CloseNotifications,lastFrontendSendAt=r.LastFrontendSendAt,lastFrontendSendBytes=r.LastFrontendSendBytes}),notificationAccounting="Windows UDP10054 reports a prior-send transport notification, payload bytes UNKNOWN. No accepted raw datagram/drop counter increment. Only declared frontend close5s/max64 is recoverable; other faults remain fatal.",
+        metrics="Relay whole-process only; memory sampled each event-loop iteration. Raw UDP bytes include LiteNet protocol/retransmission. Forwarded means SendTo returned full byte count, not destination receipt/application ACK; later ICMP is separate transport telemetry. Policy is receipt epoch; Off does not undo prior loss/delay. Trace is bounded, counters complete; no packet payload dump.",
         topology="SameMachineMixedLocalFramedRemoteUdpRawRelay",physicalTwoPc="NOT_VERIFIED",performanceTarget="UNSET"},new JsonSerializerOptions{WriteIndented=true}));
 }
 return failure is null?0:1;
@@ -105,8 +115,20 @@ void Prepare(){
     ControlMailbox.Event(nonce,"ROUTE_READY",new{route=route.Id,frontend=route.Frontend.ToString(),upstream=route.UpstreamEndpoint.ToString(),backend=backend.ToString()});
 }
 void Receive(Route route,Socket socket,string direction){
-    for(var quota=0;quota<256&&socket.Poll(0,SelectMode.SelectRead);quota++){
-        EndPoint source=new IPEndPoint(IPAddress.Any,0);var received=socket.ReceiveFrom(route.Buffer,ref source);var endpoint=(IPEndPoint)source;
+    for(var quota=0;quota<256&&Readable(route,socket,direction);quota++){
+        EndPoint source=new IPEndPoint(IPAddress.Any,0);int received;
+        try{received=socket.ReceiveFrom(route.Buffer,ref source);}
+        catch(SocketException error){
+            var now=Stopwatch.GetTimestamp();
+            var handled=CloseNotificationPolicy.CanHandle(OperatingSystem.IsWindows(),socket==route.Front,error.NativeErrorCode,error.SocketErrorCode,route.CloseDeclaredAt,route.CloseDeadline,now,route.CloseNotifications);
+            var detail=new{operation="ReceiveFrom",route=route.Id,inboundDirection=direction,socket=socket==route.Front?"frontend":"upstream",error=error.SocketErrorCode.ToString(),nativeCode=error.NativeErrorCode,timestamp=now,epoch,handledCloseNotification=handled,declared=route.CloseDeclaredAt,deadline=route.CloseDeadline,notificationPayloadBytes=(int?)null,lastFrontendSendTarget=route.Client?.ToString(),route.LastFrontendSendAt,route.LastFrontendSendBytes};
+            RecordFault(detail,!handled);
+            if(!handled)throw;
+            route.CloseNotifications++;handledCloseNotifications++;
+            if(route.CloseNotifications==1)ControlMailbox.Event(nonce,"CLOSE_TRANSPORT_NOTIFICATION",detail);
+            continue;
+        }
+        var endpoint=(IPEndPoint)source;
         ingressDatagrams++;ingressBytes+=received;
         if(received>65507)throw new InvalidOperationException("Oversize UDP payload.");
         if(direction=="s2c"&&!endpoint.Equals(backend)||direction=="c2s"&&route.Client is not null&&!endpoint.Equals(route.Client)){wrongSources++;wrongSourceBytes+=received;continue;}
@@ -122,6 +144,8 @@ void Receive(Route route,Socket socket,string direction){
         Schedule(route,direction,copy,now);
     }
 }
+void RecordFault(object detail,bool fatal=true){socketFaultObservationCount++;if(socketFaults.Count<64)socketFaults.Add(detail);if(fatal)Console.Error.WriteLine(JsonSerializer.Serialize(detail));}
+bool Readable(Route route,Socket socket,string direction){try{return socket.Poll(0,SelectMode.SelectRead);}catch(SocketException error){RecordFault(new{operation="Poll",route=route.Id,inboundDirection=direction,socket=socket==route.Front?"frontend":"upstream",error=error.SocketErrorCode.ToString(),nativeCode=error.NativeErrorCode,timestamp=Stopwatch.GetTimestamp(),epoch,handledCloseNotification=false});throw;}}
 void Schedule(Route route,string direction,byte[] bytes,long received){
     var key=(route.Id,direction,epoch);if(!counters.TryGetValue(key,out var count))counters.Add(key,count=new());
     count.Received++;count.ReceivedBytes+=bytes.Length;count.MaximumPayload=Math.Max(count.MaximumPayload,bytes.Length);
@@ -138,6 +162,7 @@ internal sealed class Route
     internal readonly int Id;internal readonly Socket Front,Upstream;internal readonly IPEndPoint Frontend,UpstreamEndpoint;
     internal readonly byte[] Buffer=new byte[65535];internal readonly List<(byte[] Bytes,long Received)> Unverified=new();
     internal IPEndPoint? Client,Candidate;internal int ClientPid;internal bool Retired;internal long C2s,S2c;
+    internal long CloseDeclaredAt,CloseDeadline,LastFrontendSendAt;internal int CloseNotifications,LastFrontendSendBytes;
     internal Route(int id){Id=id;Front=Open();Upstream=Open();Frontend=(IPEndPoint)Front.LocalEndPoint!;UpstreamEndpoint=(IPEndPoint)Upstream.LocalEndPoint!;}
     private static Socket Open(){var socket=new Socket(AddressFamily.InterNetwork,SocketType.Dgram,ProtocolType.Udp);socket.Bind(new IPEndPoint(IPAddress.Loopback,0));socket.Blocking=false;return socket;}
 }

@@ -9,6 +9,11 @@ internal static class QueueBudget
 {
     internal static bool CanAdmit(long count,long bytes,int incoming,long countLimit=65536,long byteLimit=64L*1024*1024)=>count<countLimit&&incoming>=0&&bytes<=byteLimit-incoming;
 }
+internal static class CloseNotificationPolicy
+{
+    internal static bool CanHandle(bool windows,bool frontend,int nativeCode,System.Net.Sockets.SocketError error,long declared,long deadline,long timestamp,int priorCount)=>
+        windows&&frontend&&nativeCode==10054&&error==System.Net.Sockets.SocketError.ConnectionReset&&declared>0&&timestamp>=declared&&timestamp<=deadline&&priorCount is >=0 and <64;
+}
 internal sealed record Policy(int Delay, int Jitter, int LossBasisPoints)
 {
     internal static Policy For(string profile) => profile switch {
