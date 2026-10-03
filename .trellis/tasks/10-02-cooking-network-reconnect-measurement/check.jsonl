@@ -1,11 +1,11 @@
-{"file": ".trellis/spec/cooking/gameplay-menu-plan.md", "reason": "本轮范围、推进顺序和规划规则"}
-{"file": "Docs/design/CookingGame/gameplay-plan-architecture.md", "reason": "保留架构、记录能力归属和历史冲突"}
-{"file": "Docs/design/CookingGame/reference/menu-integration.md", "reason": "候选内容映射和批量/阶段/订单约束"}
-{"file": ".trellis/tasks/10-02-cooking-gameplay-menu-plan/research/final-review.md", "reason": "Reviewed implementation boundary and required behavior evidence"}
-{"file": ".trellis/tasks/10-02-cooking-gameplay-menu-plan/research/completion-contract.md", "reason": "Reviewed implementation boundary and required behavior evidence"}
-{"file": ".trellis/tasks/10-02-cooking-gameplay-menu-plan/research/core-review.md", "reason": "Reviewed implementation boundary and required behavior evidence"}
-{"file": ".trellis/tasks/10-02-cooking-gameplay-menu-plan/research/menu-review.md", "reason": "Reviewed implementation boundary and required behavior evidence"}
-{"file": ".trellis/tasks/10-02-cooking-gameplay-menu-plan/research/operation-review.md", "reason": "Reviewed implementation boundary and required behavior evidence"}
+{"file":".trellis/spec/cooking/gameplay-menu-plan.md","reason":"本轮范围、推进顺序和规划规则"}
+{"file":"Docs/design/CookingGame/gameplay-plan-architecture.md","reason":"保留架构、记录能力归属和历史冲突"}
+{"file":"Docs/design/CookingGame/reference/menu-integration.md","reason":"候选内容映射和批量/阶段/订单约束"}
+{"file":".trellis/tasks/10-02-cooking-gameplay-menu-plan/research/final-review.md","reason":"Reviewed implementation boundary and required behavior evidence"}
+{"file":".trellis/tasks/10-02-cooking-gameplay-menu-plan/research/completion-contract.md","reason":"Reviewed implementation boundary and required behavior evidence"}
+{"file":".trellis/tasks/10-02-cooking-gameplay-menu-plan/research/core-review.md","reason":"Reviewed implementation boundary and required behavior evidence"}
+{"file":".trellis/tasks/10-02-cooking-gameplay-menu-plan/research/menu-review.md","reason":"Reviewed implementation boundary and required behavior evidence"}
+{"file":".trellis/tasks/10-02-cooking-gameplay-menu-plan/research/operation-review.md","reason":"Reviewed implementation boundary and required behavior evidence"}
 {"file":".trellis/tasks/10-02-cooking-network-contract-review/design.md","reason":"Approved bounded local recovery contract and exact current evidence; physical gate remains unverified"}
 {"file":".trellis/tasks/10-02-cooking-network-gameplay-loop/research/session-independent-review.md","reason":"Approved bounded local recovery contract and exact current evidence; physical gate remains unverified"}
 {"file":".trellis/tasks/10-02-cooking-network-gameplay-loop/research/process-integration-verification.md","reason":"Approved bounded local recovery contract and exact current evidence; physical gate remains unverified"}
@@ -15,4 +15,5 @@
 {"file":".trellis/tasks/10-02-cooking-network-reconnect-measurement/research/load-matrix-independent-review.md","reason":"Actual12 configurations36 fresh Debug samples; bounded correctness accepted, not Release or per-player latency acceptance"}
 {"file":".trellis/tasks/10-02-cooking-network-gameplay-loop/research/concurrency-tool-independent-review.md","reason":"Actual two21phase same-machine independent-process UDP competition/rebind/fullcapture controls; physical LAN still unverified"}
 {"file":".trellis/tasks/10-02-cooking-network-reconnect-measurement/research/final-tooling-review-followup.md","reason":"Actual kitchen644/859/328 passed; ET gate live; per-player latency and compiled-source provenance gaps must close before numerical acceptance"}
-{"file":".trellis/tasks/10-02-cooking-network-reconnect-measurement/research/master-assembled-relay-verification.md","reason":"Actual assembled gates644/859/328 and859/328, audited tool build and actual relay controls; P0 running and remaining numerical/physical exits unverified"}
+{"file":".trellis/tasks/10-02-cooking-network-reconnect-measurement/research/master-assembled-relay-verification.md","reason":"Actual assembled gates644/859/328 and859/328, corrected real relay controls; corrected P0 terminal failure and approved exact tick/watermark conservation audit, not acceptance"}
+{"file":".trellis/spec/cooking/cooking-network-measurement.md","reason":"Measurement correctness, unchanged performance scope and tick-accounted current-generation retry proof requirements"}
