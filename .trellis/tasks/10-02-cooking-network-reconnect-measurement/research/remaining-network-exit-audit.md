@@ -1,4 +1,6 @@
-﻿# Remaining network exit audit — current master
+> Current follow-up: items1-3 have accepted scoped boundary44 proof and actual master Cooking859, with unreachable ordinary Busy waiter timing explicitly disposed in the boundary review; assembled gates remain pending. Item4 has accepted three independent-process pairs; item5 has accepted profiling evidence. Item6 has ten independently reconciled configurations of twelve in progress; item7 raw relay implementation is in progress. Items8/9 physical LAN and performance remain incomplete. Read master-local-recovery-verification.md, load-matrix-partial-independent-review.md, tooling-implementation-approval.md and performance-source-cost-audit.md. The original audit below is historical gap discovery, not a claim these local gaps remain unworked.
+
+# Remaining network exit audit — current master
 
 2026-10-03. Read-only production/test audit; sole write ownership is this report. Source inspected at master3bb0b4898. No .NET execution, test creation, production changes, source cleanup or changes to other workers' artifacts. This report reconciles current N03 PRD/design/implement, N02 physical-lan-runbook, parent completion-contract/task-register and current actual master reports. It does not amend their scope or mark either task complete.
 

@@ -1,3 +1,5 @@
+> Later root checkpoint: first10 configurations/30 fresh sample instances now independently reconciled with the same executable and ET/Session MVIDs. Exact paths/numbers are in local/Artifacts/network-load-partial-review/current-reviewed-configurations.json; repeatable root verifier is verify.py beside it. Remaining2 configurations are not accepted here.
+
 # Load matrix partial independent review - 2026-10-03
 
 Root independently parsed the first seven completed configuration artifacts, covering21 distinct fresh sample server instances plus their capacity controls. Exact local artifact paths and extracted numbers are retained in local/Artifacts/network-load-partial-review/first-seven-configurations.json. Remaining five configurations are not accepted by this report. The owner continues original exec71580; no restart or rebuild was requested.
@@ -21,3 +23,9 @@ Readiness does NOT require asynchronous UDP clients to hold the same most-recent
 | InProcess2x50 |817/789/798|195.65/201.48/198.42|
 
 These are bounded correctness/observed cost checkpoints, not smoothness acceptance. Stress20/50 are offered opportunities, not sustained admitted command frequency. UDP remains well outside forward ordinary performance goals. No physical LAN, raw impairment or Release acceptance follows from this partial review. Final matrix review/source freeze and assembled master gates remain pending.
+
+## Checkpoint10 extension and timing cohorts
+
+Additional accepted artifacts: UDP2x50 20261003-053742-2353395 (71/73/72), InProcess4x20 20261003-054124-0873631 (812/806/798), UDP4x20 20261003-054456-7171413 (138/139/135). Each preserves per-participant reconciliation, zero errors/pending, baseline bounds and Ready identities. Root verifier also requires a single matching ET/Session MVID pair across all configurations.
+
+UDP2x50 repeat2 has73 issued/accepted/projected sample commands but72 Host timing samples. This is valid because command cohorts use offered sample index, while Host timings select receipt timestamp in the sample window; the source and report explicitly document distinct cohorts. The first broader root verifier incorrectly required equality and stopped; root corrected it to require client RTT/projection samples=issued and Host metric samples=timingSamples, preserving all original data. This does not weaken command admission/completion checks or authorize rewriting metric denominators.
