@@ -4,6 +4,8 @@
 
 Before merge, a clean detached checkout of `501bf383d` ran kitchen gate: focused 207/207, Cooking 328/328, ET 73/73, failed/skipped 0. This isolates the committed source from separately owned, uncommitted front-house changes. Logs: `C:/Users/Administrator/orca/workspaces/AbilityKit/cooking-core-verified-snapshot/local/Logs/test-gates/20261002-190750-cooking-kitchen-loop/`.
 
+2026-10-03 worktree retirement: the above detached snapshot was clean, its commit was an ancestor of master, and no active worker referenced it. All nine retained log/TRX/summary files were copied and individually SHA256-verified into `D:/MyWork/AbilityKit/local/Archives/worktrees/cooking-core-verified-snapshot-501bf383d/Logs/`; relative paths and hashes are in that archive's `manifest.json`. Orca removal returned `removed:true`. Read the archive location instead of the retired original path; source commit and historical results are unchanged.
+
 After merge, the coordinator actually ran on master:
 
 | Gate | Result | Actual evidence |
