@@ -21,6 +21,10 @@ $rootDirectory=[IO.Path]::GetFullPath((Join-Path (Join-Path $workspaceRoot $Outp
 New-Item -ItemType Directory -Force $rootDirectory | Out-Null
 function Q([string]$value) { if ($value.Contains('"')) {throw 'Unsupported double quotation.'}; return '"'+$value+'"' }
 function File-Sha([string]$path) { return (Get-FileHash -LiteralPath $path -Algorithm SHA256).Hash }
+function Write-Patch([string]$path,[object[]]$lines) {
+ $text=if($lines.Count -eq 0){''}else{[string]::Join([Environment]::NewLine,[string[]]$lines)+[Environment]::NewLine}
+ [IO.File]::WriteAllText($path,$text,(New-Object System.Text.UTF8Encoding($false)))
+}
 function Relative([string]$root,[string]$path) {
  $prefix=[IO.Path]::GetFullPath($root).TrimEnd('\','/')+[IO.Path]::DirectorySeparatorChar
  $absolute=[IO.Path]::GetFullPath($path)
@@ -65,7 +69,11 @@ if ($NoBuild) {
   try{while(!$process.HasExited -and [DateTime]::UtcNow -lt $until){Start-Sleep -Milliseconds 100;$process.Refresh()};if(!$process.HasExited){throw 'Build180s deadline.'};$process.WaitForExit();if($process.ExitCode -ne 0){throw ($label+' build failed.')}}
   finally{$process.Refresh();if(!$process.HasExited){$current=Get-Process -Id $process.Id -ErrorAction SilentlyContinue;if($current -and $current.StartTime -eq $start){Stop-Process -InputObject $current};$process.WaitForExit()};@{pid=$process.Id;startUtc=$start.ToUniversalTime().ToString('O');exitCode=$process.ExitCode;project=$target}|ConvertTo-Json|Set-Content -LiteralPath (Join-Path $rootDirectory ($label+'-build.exit.json')) -Encoding UTF8;$process.Dispose()}
  }
- $patchPath=Join-Path $rootDirectory 'tracked-source.patch'; & git -C $workspaceRoot diff --binary HEAD | Set-Content -LiteralPath $patchPath -Encoding UTF8
+ $patchPath=Join-Path $rootDirectory 'tracked-source.patch'
+ $patchLines=@(& git -C $workspaceRoot diff --binary HEAD)
+ $patchExit=$LASTEXITCODE
+ if($patchExit -ne 0){throw ('Actual git diff failed: '+$patchExit)}
+ Write-Patch $patchPath $patchLines
  Build-Project $project 'runner'
  Build-Project $controlProject 'controls'
  Build-Project $verifierProject 'verifier'
