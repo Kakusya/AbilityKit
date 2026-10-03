@@ -1,0 +1,21 @@
+# Performance source-cost audit - 2026-10-03
+
+Root inspected current main sources while the original load matrix remains live. This is source evidence of work performed, not a profiler attribution, optimization approval or performance acceptance. Preserve the registered ordinary targets and full-state contracts; do not fit thresholds to current slow results.
+
+## Confirmed source work and risks
+
+1. CookingNetworkWireCodec.Encode serializes payload to JsonElement, then serializes its containing envelope to bytes, then TryDecode scans and deserializes the resulting envelope to validate bounds. Baseline Hash independently serializes the complete State+Session payload before SHA256. ReadOnlyList converter additionally materializes ToArray for every written list. These are actual code paths; their share of runtime/allocation remains unmeasured. Encoding directly with Utf8JsonWriter and hashing a streamed identical UTF8 sequence are candidate experiments, not permission to remove bounded validation. Property order, escaping, enum spelling, nullability, wire3 and byte ownership must remain identical. No pooled array may be reused while a transport still owns it.
+
+2. CookingNetworkSessionHost.Publish calls RefreshSessionProjection and BaselineHash for each eligible connection. Same-frame captures can be shared, but Session rows may change during local synchronous callbacks or ACK/close processing. Any private hash reuse requires the same owned immutable full capture AND equality of every current Session field. Recipe/state version alone is insufficient: HostFrameSequence, lifecycle, layout, progress, receipts and session generation/watermarks/Ready/cleanup matter. Cross-frame cache based only on command count would silently change the contract.
+
+3. CookingLevelEtHost.CaptureReadOnlyFullState already reuses its exported checkpoint's copied recipe/front payload where available. It still legitimately Observe/ExportCheckpoint and exports explicit nonresumable projections. Busy/disposed/fault guards precede reads. An optimization must preserve genuine unavailable states, single owner, full canonical graph, and earlier snapshots across later mutations. Calling a stale read cache when Busy is forbidden.
+
+4. CookingRecipeLoop.BuildFixedTickPlan copies the entire tick-event history into a replacement List each tick; CommitFixedTick installs it with the rest of the prepared replacement state. This is an actual growing-history copy, but removing it can break transactional failure behavior. Candidate amortized append needs capacity reservation before any commit, no throwing mutation after partial commit, immutable exported old snapshots, exact retained history, allocator/process/supply rollback and failure-injection verification. Do not prune history or skip tick events to improve the benchmark.
+
+## Investigation and execution ordering
+
+Finish/freeze the current 12-profile matrix first and independently reconcile all raw reports. Then collect a separate source-frozen Release reference run on the recorded hardware, with explicit contention/build provenance; Debug measurements cannot certify Release targets. If internal cost attribution is needed, use a separate labelled profiling run and retain observer overhead, rather than inventing component percentages from whole-process GC totals.
+
+Select a bounded implementation increment only after its exact invariants and evidence are reviewed. Root serial .NET windows apply to optimization, relay and concurrency tooling alike. Compare complete old/new encoding and canonical hashes on realistic growing typed graphs, existing invalid/bounds controls and immutable snapshot recovery. Run actual applicable kitchen/ET/network gates, then three fresh matching ordinary profiles and remaining adopted stress/impairment profiles. A faster terminal response without faster covering full projection does not meet the target.
+
+Transport update interval/reliable-fragment window remains a hypothesis: this audit has not inspected pinned LiteNet API/source or attributed the approximately3s UDP projection cost. No unverified default value, tuning instruction, compression/framing change or architecture change is adopted. Physical LAN, degraded-network QoS and Unity response remain independent exits.
