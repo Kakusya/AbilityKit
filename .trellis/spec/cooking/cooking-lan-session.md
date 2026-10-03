@@ -3,6 +3,51 @@
 > N01 current route2026-10-03: read [N01 reviewed design](../../tasks/10-02-cooking-network-contract-review/design.md) and [resume audit](../../tasks/10-02-cooking-gameplay-menu-plan/research/network-resume-audit.md). Owner2026-09-24 selected generic LiteNet reliable-UDP only and accepted-ingress first-received arbitration; historical TCP/UDP selection/D1 requirements below no longer govern N01-N03. Preserve their limited proof boundary. One existing ET Host, unified local InProcess/remote framing, callback enqueue only and passive full typed baseline are required. Current source4dadd25c8 proves pure C# singleplayer, not current network. Physical two-PC LAN remains NOT_VERIFIED; Unity prohibited.
 
 # P1 LAN listen host/client：cooking-lan-session
+
+## 2026-10-03 exact ACK cleanup and paused publication contract
+
+### Scope / trigger
+
+Current Wire3 Session using the single actual ET authority. An exact issued baseline ACK can arrive while disconnect cleanup remains pending, or while Pause has left an older baseline awaiting acknowledgement. These controls must not strand a healthy connection on the old full projection. This supplements N01's accepted contract without changing protocol/schema, baseline bounds or authority ownership.
+
+### Signatures
+
+Public `CookingNetworkSessionHost.ProcessOwnerFrame()` and `ApplyControl(CookingNetworkOwnerControl)` are unchanged. Internally each connection owns at most one nullable `(CookingNetworkBaselineIdentity Identity, string Correlation)` deferred-ACK slot. `Publish(Connection, bool suppressUnchanged = false)` respects the existing single AwaitingAck guard; the paused branch requests unchanged-state suppression.
+
+### Request / response contract
+
+An ACK is eligible only when it equals that connection's actual Issued identity and the AwaitingAck slot is occupied. When cleanup is pending, retain the first eligible identity/correlation; do not clear AwaitingAck, reject that valid control, emit Ready or grant early business execution. Repeated exact ACKs coalesce into this one bounded slot. After actual accepted owner cleanup and successful capture, revalidate connected/current binding/actual Issued identity before emitting Ready and allowing the latest complete baseline to be published. No independent-response waiter is allocated for every repeated ACK.
+
+Paused owner frames process control ingress and reject business input as LevelPaused but do not call ConsumeFrame/Tick. With no outstanding issued ACK, publish only when the complete authority-plus-Session hash differs from the connection's last issued StateHash. SnapshotSequence/IssueId are outside that content hash and cannot themselves generate an infinite stream. Changes to other participants' binding/readiness/cleanup remain part of the complete Session view.
+
+### Validation / error matrix
+
+| Input or transition | Required outcome |
+|---|---|
+| Exact current ACK, no cleanup | Normal Ready; release issued slot |
+| Exact current ACK, cleanup pending | One deferred slot; no early Ready or BaselineRequired rejection |
+| Repeated exact ACK while deferred | Coalesce first identity/correlation; paused clocks remain unchanged |
+| Wrong/stale issue identity | BaselineRequired; cannot replace the deferred exact ACK |
+| Resume followed by accepted cleanup | Revalidate and complete deferred ACK; latest full projection can advance |
+| Close, supersession or scope retirement | Clear deferred record; old identity cannot ready a new binding/scope |
+| Faulted, Disposed or unavailable capture | Clear deferred record and synchronization admission; no stale Ready |
+| ACK old image after Pause | Eventually publish current complete paused state without a business Tick |
+| ACK current paused image, unchanged subsequent frames | No same-state publication flood |
+
+### Good / base / bad cases
+
+Base: normal running full snapshots use the existing one-issued-image ACK backpressure. Good: disconnect A while B's exact ACK is queued; cleanup executes before B becomes newly Ready, then B receives the current full projection. Good: hold old ACK, Pause, release old ACK, receive/ACK the paused image, and observe stable clocks and publication count. Bad: accept a stale issued identity for a replacement connection, or send Ready while cleanup remains pending.
+
+### Required executable controls and evidence
+
+`CookingNetworkPausedPublicationTests` covers actual old-slot release, retained ACK across Resume, duplicate coalescing and unchanged paused frames. `CookingNetworkDeferredAckIsolationTests` exercises close/rebind, supersession, real successor retirement, Disposed and actual product-allocator Faulted after creating a genuine deferred ACK. `CookingNetworkRichLiveRecoveryEtTests` composes the full finite F01/D31 chain at four recovery cutpoints with natural service and durable successor assertions. Exact local red/green and independent review are in N03 research/ack-cleanup-paused-publication-review.md, paused-publication-increment.md, deferred-ack-isolation-increment.md and rich-recovery-independent-review.md. Their focused passes do not imply corrected master gate, physical LAN or performance acceptance; inspect current progress/check evidence.
+
+All test classes constructing real ET Hosts in Game.Cooking.Tests must join `CookingEtHostTestCollection`. This serializes those tests around the process-wide ET World; it does not disable parallelism for pure simulation tests or weaken the production singleton. The ET runtime test assembly's own existing isolation remains unchanged.
+
+### Wrong versus correct
+
+Wrong: reject an exact issued ACK because cleanup is pending, then wait for a new ACK while refusing to send any new baseline. Correct: retain one exact ACK until cleanup actually completes, revalidate it, and release publication safely. Wrong: publish every ACKed paused frame merely because a new sequence/issue ID can be allocated. Correct: compare full content hash and publish only a changed complete paused state.
+
 ## 2026-09-16 收口状态
 
 - L01-L09 transport-neutral 纯 .NET session contract 已验证并作为 limited delivery 收口；production transport、真实 LAN 等仍未启动，见 successor backlog。
