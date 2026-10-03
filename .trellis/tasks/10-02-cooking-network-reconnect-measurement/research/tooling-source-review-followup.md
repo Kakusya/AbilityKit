@@ -1,0 +1,15 @@
+# Root tooling source-review follow-up - 2026-10-03
+
+Root read actual new concurrency Program/Fixture/Proof/PassivePeer/ObservedListener, impairment Program and wrapper source while the baseline load owner retained the .NET window. These files remain WIP; parser-only success is not source freeze, .NET compilation or gameplay acceptance.
+
+## Required fixes dispatched to owners
+
+Concurrency: prove cached replay of both accepted and rejected contested Pickup/Drop identities, not only a generic Move retry. Explicit invalid high sequence before early instance/scope guards followed by a lower still-current legal command must prove no watermark poisoning. Final pair must freeze both Connected/Ready/noCleanup and exact paused image/ACK before client close, with bounded report/hold and actual-close handshake. Observer channel errors must become failed evidence. Passive peer transport callbacks may retain bounded copied input; owner Poll performs full validation/ACK and scenario proof, with actual same-prefix admissions rather than observer Has alone.
+
+Running-readiness clarification accepted by root: exact-issued Ready must match validated baseline and CURRENT instance/participant/generation/scope; it need not grant the newest subsequent Running image, because the ACK consume frame can tick and publish another image. Older-generation/scope grants are invalid. Authoritative Ready at actual admission remains required. Only final Paused consensus requires stable newest image/current exact grant. This is source-backed reachability clarification, not stale image reopening permission.
+
+Impairment: candidate/unverified buffering shares global scheduled count/byte bounds; Arm retains previously received epoch0 entries without relabelling or delaying them, and newly received epoch1 traffic follows acknowledged policy. Apply the same Running-readiness clarification without editing frozen FramedFaultPeer. Cached retry conservation includes full container contents, process/allocator/tombstones/settlements and retained receipt history, not just selected item counters. Independent healthy-sample failure/recovery evidence is required; successful recovery never passes failed sampling. P0 prerequisite must compare full copied dependency/content and linked source manifests, since unchanged driver DLL alone does not freeze ET/Session/LiteNet dependencies. Drain original stdout/stderr through EOF and retain actual process handles/exits.
+
+Current wrapper actual name is tools/run-cooking-network-impairment-measurement.ps1; owner may adopt this canonical name if all plan/report/routes agree. No second wrapper alias is required. Both new wrappers were parsed by root PowerShell parser with zero syntax errors at the inspected WIP, not executed.
+
+.NET remains root-serialized; no grants to source owners yet. Both increments need final source review, actual build/controls/real paired operation and independent evidence review. Physical LAN NOT_VERIFIED, performance NOT_ACCEPTED, N02/N03 in_progress, Unity deferred.
