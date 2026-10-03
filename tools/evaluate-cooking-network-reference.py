@@ -21,7 +21,20 @@ def read_text(path):
 
 
 def load(path):
-    return json.loads(read_text(path))
+    def reject_constant(value):
+        raise ValueError("Non-finite JSON constant: " + value)
+    value = json.loads(read_text(path), parse_constant=reject_constant)
+    def verify_finite(item):
+        if isinstance(item, float):
+            require(math.isfinite(item), "Non-finite JSON number")
+        elif isinstance(item, dict):
+            for nested in item.values():
+                verify_finite(nested)
+        elif isinstance(item, list):
+            for nested in item:
+                verify_finite(nested)
+    verify_finite(value)
+    return value
 
 
 def valid_guid(value):
@@ -39,6 +52,14 @@ def integer(value):
 
 def sha(value):
     return isinstance(value, str) and re.fullmatch(r"[0-9a-fA-F]{64}", value) is not None
+
+
+def latency(distribution, count):
+    require(type(distribution["samples"]) is int and distribution["samples"] == count and
+            all(type(distribution[k]) in (int, float) and math.isfinite(distribution[k]) and distribution[k] >= 0
+                for k in ("p50", "p95", "p99")), "Invalid latency cohort")
+    require(distribution["p50"] <= distribution["p95"] <= distribution["p99"], "Invalid percentile ordering")
+    return {key: distribution[key] for key in ("samples", "p50", "p95", "p99")}
 
 
 def evaluate(directory):
@@ -128,12 +149,24 @@ def evaluate(directory):
             require(sum(p["issued"] for p in participants) == issued, "Aggregate participant count mismatch")
             require(len(repeat["skippedBackpressure"]) == len(repeat["schedulerSkipped"]) == people and issued + sum(repeat["skippedBackpressure"]) + sum(repeat["schedulerSkipped"]) == 300 * people, "Aggregate offered accounting mismatch")
             require(repeat["baselineBytes"] <= 8 * 1024**2 and repeat["baselineTokens"] <= 1048576, "Recorded baseline exceeds frozen bounds")
-            summary = {"repeat": repeat["repeat"], "issued": issued, "perParticipant": [], "terminal": repeat["rttMs"], "projection": repeat["sendToCommittedProjectionMs"]}
+            summary = {"repeat": repeat["repeat"], "issued": issued, "perParticipant": [], "terminal": latency(repeat["rttMs"], issued), "projection": latency(repeat["sendToCommittedProjectionMs"], issued)}
             for participant in participants:
                 count = participant["issued"]
                 require(integer(count) and count > 0 and all(participant[k] == count for k in ("admitted", "accepted", "completed", "projectionCompleted")), "Participant legal completion mismatch")
                 require(participant["offered"] == 300 and integer(participant["backpressure"]) and integer(participant["schedulerSkipped"]) and count + participant["backpressure"] + participant["schedulerSkipped"] == 300, "Participant offered accounting mismatch")
-                summary["perParticipant"].append({"participant": participant["participant"]["Value"], "completed": count})
+                require("rttMs" in participant and "sendToCommittedProjectionMs" in participant,
+                        "Missing per-participant latency evidence; aggregate percentiles cannot substitute")
+                terminal = latency(participant["rttMs"], count)
+                projection = latency(participant["sendToCommittedProjectionMs"], count)
+                summary["perParticipant"].append({"participant": participant["participant"]["Value"], "completed": count,
+                                                   "terminal": terminal, "projection": projection})
+                for field, distribution, q, target in (("rttMs", terminal, "p95", "terminalP95Ms"),
+                        ("rttMs", terminal, "p99", "terminalP99Ms"),
+                        ("sendToCommittedProjectionMs", projection, "p95", "projectionP95Ms"),
+                        ("sendToCommittedProjectionMs", projection, "p99", "projectionP99Ms")):
+                    if distribution[q] > TARGETS[target]:
+                        result["limitFailures"].append({"repeat": repeat["repeat"], "participant": participant["participant"]["Value"],
+                            "metric": field + "." + q, "actual": distribution[q], "maximum": TARGETS[target]})
                 if count < TARGETS["minimumPerParticipant"]:
                     result["limitFailures"].append({"repeat": repeat["repeat"], "participant": participant["participant"]["Value"], "metric": "fullyCompletedOffers", "actual": count, "requiredMinimum": 285})
             ready = repeat["finalReadiness"]
