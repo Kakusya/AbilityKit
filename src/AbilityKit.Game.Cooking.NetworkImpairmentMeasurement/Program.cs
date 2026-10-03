@@ -39,7 +39,7 @@ async Task<object> Host(){
  await Wait(()=>!session.LatestSessionProjection.Participants.Single(p=>p.Participant==ProcessMeasurementFixture.Remote).ConnectedOwnerBinding,30);return result;
 }
 async Task<object> Client(){
- var peer=new FramedFaultPeer();var routes=new List<int>();
+ var peer=new FramedFaultPeer();var routes=new List<int>();var finalClose=new Dictionary<string,object>();
  async Task Pump(){peer.Poll();Require(overall.Elapsed.TotalSeconds<360,"Client360s");await Task.Delay(2);}
  async Task Wait(Func<bool> done,int seconds=30){var w=Stopwatch.StartNew();while(!done()&&w.Elapsed.TotalSeconds<seconds)await Pump();peer.Poll();Require(done(),"Client phase deadline");}
  async Task<CookingNetworkWireResult> Send(CookingRecipeCommand c,string s){var t=peer.Queue(c,s);await Wait(()=>t.IsCompleted);return await t;}
@@ -67,10 +67,21 @@ async Task<object> Client(){
  }
  if(peer.Latest!.State.FullRecipe!.Items.Single(i=>i.Id==ProcessMeasurementFixture.Tools[1]).Location.Kind==LocationKind.PlayerHand)await Execute(Toggle(peer.Latest.State,1),"recovery-normalize");await Execute(Toggle(peer.Latest!.State,1),"recovery-new-pickup");await Execute(Toggle(peer.Latest!.State,1),"recovery-new-drop");
  await Wait(()=>peer.Latest!.State.Observation.Lifecycle.State==CookingLevelState.Paused&&peer.ReadyIdentity==peer.Latest.Identity&&peer.Ready&&peer.Connected,30);var baseline=peer.Latest!;ValidateView(baseline.Session,peer.Binding.ServerSessionInstance,false);Require(baseline.Identity.StateHash==CookingNetworkWireCodec.BaselineHash(baseline.State,baseline.Session),"Complete final ACK");
- var result=new{serverInstance=peer.Binding.ServerSessionInstance,generation=peer.Binding.ConnectionGeneration,configurationIdentity=baseline.State.Observation.Lifecycle.ConfigIdentity,hash=CookingNetworkWireCodec.Hash(baseline.State),baselineHash=baseline.Identity.StateHash,finalBaseline=baseline,finalAckIdentity=peer.ReadyIdentity,sessionProjection=baseline.Session,connected=peer.Connected,ready=peer.Ready,finalBaselineSize=BaselineSize(baseline),frontendHistory=routes,cachedDuplicate=replay!.Result!.IsDuplicate,originalDomainId=receipt.DomainCommandId,replayedDomainId=replay.DomainCommandId,preCloseItemState=beforeClose.Items,postCleanupPreRetryItemState=before.Items,retryCaptureEvidence,droppedApplicationResponses=peer.Dropped,load,healthySample=sampleError is null,sampleError,recoveryPassed=true};
+ var result=new{serverInstance=peer.Binding.ServerSessionInstance,generation=peer.Binding.ConnectionGeneration,configurationIdentity=baseline.State.Observation.Lifecycle.ConfigIdentity,hash=CookingNetworkWireCodec.Hash(baseline.State),baselineHash=baseline.Identity.StateHash,finalBaseline=baseline,finalAckIdentity=peer.ReadyIdentity,sessionProjection=baseline.Session,connected=peer.Connected,ready=peer.Ready,finalBaselineSize=BaselineSize(baseline),frontendHistory=routes,cachedDuplicate=replay!.Result!.IsDuplicate,originalDomainId=receipt.DomainCommandId,replayedDomainId=replay.DomainCommandId,preCloseItemState=beforeClose.Items,postCleanupPreRetryItemState=before.Items,retryCaptureEvidence,finalClose,droppedApplicationResponses=peer.Dropped,load,healthySample=sampleError is null,sampleError,recoveryPassed=true};
  ControlMailbox.Event(nonce,"FINAL_READY",new{hash=result.hash,baselineHash=result.baselineHash,ack=peer.ReadyIdentity,generation=peer.Binding.ConnectionGeneration,frontendPort=front,paused=true,ready=peer.Ready,connected=peer.Connected,timestamp=Stopwatch.GetTimestamp()});
- var hold=Stopwatch.StartNew();while(hold.Elapsed.TotalSeconds<5){await Pump();Require(peer.Connected&&peer.Ready,"Final hold disconnected");}return result;
- }finally{peer.Dispose();}
+ finalClose["holdStartedAt"]=Stopwatch.GetTimestamp();evidence=new{stage="final-close-supervision",frozenFinal=result};
+ var hold=Stopwatch.StartNew();while(hold.Elapsed.TotalSeconds<5){await Pump();Require(peer.Connected&&peer.Ready,"Final hold disconnected");}
+ finalClose["holdMilliseconds"]=hold.Elapsed.TotalMilliseconds;finalClose["requestedAt"]=Stopwatch.GetTimestamp();
+ ControlMailbox.Event(nonce,"FINAL_CLOSE_REQUEST",new{hash=result.hash,baselineHash=result.baselineHash,ack=peer.ReadyIdentity,generation=peer.Binding.ConnectionGeneration,frontendPort=front,paused=peer.Latest!.State.Observation.Lifecycle.State==CookingLevelState.Paused,ready=peer.Ready,connected=peer.Connected,holdMilliseconds=hold.Elapsed.TotalMilliseconds,timestamp=finalClose["requestedAt"]});
+ var permissionWait=Stopwatch.StartNew();finalClose["permissionWaitStartedAt"]=Stopwatch.GetTimestamp();
+ async Task AwaitClosePump(){await Pump();finalClose["permissionWaitMilliseconds"]=permissionWait.Elapsed.TotalMilliseconds;Require(permissionWait.Elapsed.TotalSeconds<30,"Final close supervisor authorization30s deadline");Require(peer.Connected&&peer.Ready&&peer.Latest!.State.Observation.Lifecycle.State==CookingLevelState.Paused&&peer.ReadyIdentity==peer.Latest.Identity&&peer.Latest.Identity.StateHash==baseline.Identity.StateHash,"Final close wait retains exact connected Paused Ready gate");}
+ var permission=await Control("ALLOW_FINAL_CLOSE",AwaitClosePump);var authorizedAt=Stopwatch.GetTimestamp();
+ finalClose["permissionWaitMilliseconds"]=permissionWait.Elapsed.TotalMilliseconds;Require(permissionWait.Elapsed.TotalSeconds<30,"Final close supervisor authorization30s deadline");
+ Require(peer.Connected&&peer.Ready&&peer.Latest!.State.Observation.Lifecycle.State==CookingLevelState.Paused&&peer.ReadyIdentity==peer.Latest.Identity&&peer.Latest.Identity.StateHash==baseline.Identity.StateHash,"Authorization observes actual exact connected Paused gate");
+ Require(permission.GetProperty("route").GetInt32()==2&&permission.GetProperty("frontendPort").GetInt32()==front&&permission.GetProperty("ackStateHash").GetString()==baseline.Identity.StateHash&&permission.GetProperty("deadline").GetInt64()-permission.GetProperty("declared").GetInt64()==5*Stopwatch.Frequency&&authorizedAt<=permission.GetProperty("deadline").GetInt64(),"Exact declared final close window authorization");
+ finalClose["declaredAt"]=permission.GetProperty("declared").GetInt64();finalClose["deadline"]=permission.GetProperty("deadline").GetInt64();finalClose["authorizedAt"]=authorizedAt;finalClose["authorized"]=true;
+ return result;
+ }finally{finalClose["disposeStartedAt"]=Stopwatch.GetTimestamp();peer.Dispose();finalClose["disposedAt"]=Stopwatch.GetTimestamp();ControlMailbox.Event(nonce,"FINAL_DISPOSED",new{authorized=finalClose.ContainsKey("authorized"),timestamp=finalClose["disposedAt"]});}
 }
 
 static bool RunningReady(FramedFaultPeer peer)=>peer.Ready&&peer.Connected&&peer.Binding is{} binding&&peer.ReadyIdentity is{} ack&&
