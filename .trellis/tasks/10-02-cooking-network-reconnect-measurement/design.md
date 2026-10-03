@@ -1,4 +1,4 @@
-﻿# N03 可审议设计
+# N03 可审议设计
 
 状态 planning；以下为拟实施契约，不是新 API 或已通过证据。
 
@@ -64,3 +64,14 @@ Root approves the minimal implementation proposed in research/process-fault-load
 No existing production files, transport callback authority, wire contract or fixed-tick semantics change. This increment is local separate-process evidence; random packet delay/loss, physical two-PC and formal performance acceptance are still distinct unverified exits. All .NET execution windows remain root-serialized.
 
 Use deterministic scripted boundary injection before transport timing experiments. Distinguish failure of reliable delivery from intentional bounded rejection and from delayed client projection. Physical two-PC execution remains NOT_VERIFIED until paired artifacts exist. Unity remains deferred.
+
+
+## Root disposition of registered load/fault topics ? 2026-10-03
+
+Root reviewed research/load-and-packet-fault-followup-plan.md (df6fafbac). Adopt its configurable workload matrix as concrete pending execution: preserve historical default2participants/5offered; add4participants/5offered as ordinary scalability control and2/4participants at20/50offered as bounded closed-loop stress. Three fresh repeats,10s warmup/60s sample and explicit per-participant offer/issue/ET-admission/terminal/projection accounting remain. Rates are input opportunities, not simulation/publication frequencies or sustained accepted-throughput promises. Finite exhaustion must be preserved and classified, without pruning/widening bounds. First source implementation ownership is the existing measurement Program/Fixture/Profile, wrapper and new load increment report; no production changes. Both existing topologies remain separate actual evidence requirements.
+
+The proposed P0-P6 raw-datagram delay/jitter/loss profiles are retained as adopted follow-up design scope, with P0 transparent-relay control required before impaired measurements. Relay source implementation is a later separately owned increment after independent-process runner acceptance. Application response loss cannot satisfy packet loss. No kernel/global-network setting change or external proxy is authorized. Exact relay bounds/seeds/queue saturation/recovery contract must be reviewed before implementation; this decision does not start an unreviewed proxy or close any execution row.
+
+Forward ordinary-load engineering goals adopt >=285/300 admitted/accepted/terminal/projected sample offers per participant, zero correctness/timeouts/unresolved work; terminal p95<=100ms/p99<=250ms and validated full projection p95<=200ms/p99<=400ms. These goals are frozen before optimization rather than fitted to73accepted. Reference applicability still requires recorded machine/hardware/contention plus an explicitly chosen Release deployment baseline for2/4participants at5offered with3fresh repeats and separate process/physical topology coverage. Existing Debug reports keep performanceTarget=UNSET and are not retroactively converted to performance passes. Current approximately3second UDP projection cost does not establish these goals. Stress/impaired profiles initially judge bounded safety/recovery/accounting and report costs, not ordinary smoothness. Formal resource/QoS thresholds and physical applicability remain unresolved decisions.
+
+.NET execution remains root-serialized. Current process runner has the window; new load/boundary test source work cannot build/test until a specific later grant. Unity/S15 and arbitrary nested Session reentry remain outside this authorized increment.
