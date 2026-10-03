@@ -1,13 +1,54 @@
-param([ValidateSet('P0','P1','P2','P3','P4','P5','P6')][string]$Profile='P0',[string]$OutputDirectory='local/Logs/cooking-execution/network-impairment',[string]$ControlEvidence,[Parameter(Mandatory=$true)][string]$RelayControlEvidence)
+param([ValidateSet('P0','P1','P2','P3','P4','P5','P6')][string]$Profile='P0',[string]$OutputDirectory='local/Logs/cooking-execution/network-impairment',[string]$ControlEvidence,[string]$RelayControlEvidence,[switch]$BuildOnly)
 $ErrorActionPreference='Stop'
 $root=Split-Path $PSScriptRoot -Parent
 $driver=Join-Path $root 'src/AbilityKit.Game.Cooking.NetworkImpairmentMeasurement/bin/Debug/net10.0/AbilityKit.Game.Cooking.NetworkImpairmentMeasurement.dll'
 $relay=Join-Path $root 'src/AbilityKit.Game.Cooking.DatagramImpairmentRelay/bin/Debug/net10.0/AbilityKit.Game.Cooking.DatagramImpairmentRelay.dll'
+$buildManifest=Join-Path (Split-Path $driver -Parent) 'impairment-build-provenance.json'
+$buildProjects=@('src/AbilityKit.Game.Cooking.DatagramImpairmentRelay/AbilityKit.Game.Cooking.DatagramImpairmentRelay.csproj','src/AbilityKit.Game.Cooking.NetworkImpairmentMeasurement/AbilityKit.Game.Cooking.NetworkImpairmentMeasurement.csproj')
+function Build-Inputs {
+ $inputs=@()
+ foreach($base in @((Join-Path $root 'src'),(Join-Path $root 'Unity/Packages'))){
+  foreach($file in @(Get-ChildItem -LiteralPath $base -File -Recurse|Where-Object {$_.FullName -notmatch '[\\/](bin|obj)[\\/]' -and $_.Extension -in @('.cs','.csproj','.props','.targets','.asmdef')}|Sort-Object FullName)){
+   $inputs+=[pscustomobject]@{path=$file.FullName.Substring($root.Length+1);sha=(Get-FileHash -LiteralPath $file.FullName -Algorithm SHA256).Hash}
+  }
+ }
+ foreach($name in @('Directory.Build.props','Directory.Build.targets','Directory.Packages.props','NuGet.Config','global.json','tools/run-cooking-network-impairment-measurement.ps1')){if(Test-Path -LiteralPath (Join-Path $root $name)){$inputs+=[pscustomobject]@{path=$name;sha=(Get-FileHash -LiteralPath (Join-Path $root $name) -Algorithm SHA256).Hash}}}
+ return @($inputs|Sort-Object path)
+}
+function Assert-InputsEqual($accepted,$current){
+ if(@($accepted).Count -ne @($current).Count){throw 'Compiled-source provenance file-set changed'}
+ for($i=0;$i -lt @($current).Count;$i++){if($accepted[$i].path -ne $current[$i].path -or $accepted[$i].sha -ne $current[$i].sha){throw "Compiled-source provenance differs: $($current[$i].path)"}}
+}
+if($BuildOnly){
+ if($Profile -ne 'P0'){throw 'Audited build is separate from impairment execution; use P0/default build-only.'}
+ $before=Build-Inputs;$buildDirectory=Join-Path $root ('local/Logs/cooking-execution/impairment-build/'+[DateTime]::UtcNow.ToString('yyyyMMdd-HHmmss-fffffff'));New-Item -ItemType Directory -Path $buildDirectory -Force|Out-Null
+ if(Test-Path -LiteralPath $buildManifest){Copy-Item -LiteralPath $buildManifest -Destination (Join-Path $buildDirectory 'previous-build-provenance.json');Remove-Item -LiteralPath $buildManifest}
+ $commands=@();$success=$false;$buildFailure=$null
+ try{
+  foreach($project in $buildProjects){
+   $log=Join-Path $buildDirectory ([IO.Path]::GetFileNameWithoutExtension($project)+'.log')
+   & dotnet build (Join-Path $root $project) --configuration Debug --no-incremental *> $log
+   $nativeExit=$LASTEXITCODE;$commands+=@{project=$project;configuration='Debug';noIncremental=$true;exitCode=$nativeExit;log=$log}
+   if($nativeExit -ne 0){throw "Actual audited build failed: $project exit$nativeExit"}
+  }
+  Assert-InputsEqual $before (Build-Inputs)
+  $success=$true
+  @{passed=$true;inputs=$before;commands=$commands;driverSha=(Get-FileHash -LiteralPath $driver -Algorithm SHA256).Hash;relaySha=(Get-FileHash -LiteralPath $relay -Algorithm SHA256).Hash;machine=$env:COMPUTERNAME;sourceHead=(& git -C $root rev-parse HEAD);builtUtc=[DateTime]::UtcNow.ToString('o');scope='Audited two-project no-incremental build with repository compile inputs unchanged before/after; complete runtime content is separately frozen by execution manifest.'}|ConvertTo-Json -Depth 8|Set-Content -LiteralPath $buildManifest
+  Write-Output "BUILD PASS $buildManifest"
+ }catch{$buildFailure=$_.ToString();throw}finally{@{passed=$success;failure=$buildFailure;commands=$commands;inputs=$before}|ConvertTo-Json -Depth 8|Set-Content -LiteralPath (Join-Path $buildDirectory 'build-attempt.json')}
+ return
+}
 if(!(Test-Path -LiteralPath $driver) -or !(Test-Path -LiteralPath $relay)){throw 'Build both owned projects explicitly first.'}
+if(!(Test-Path -LiteralPath $buildManifest)){throw 'Audited -BuildOnly compiled-source provenance required before any execution.'}
+$built=Get-Content -LiteralPath $buildManifest -Raw|ConvertFrom-Json
+if(!$built.passed -or $built.machine -ne $env:COMPUTERNAME -or $built.driverSha -ne (Get-FileHash -LiteralPath $driver -Algorithm SHA256).Hash -or $built.relaySha -ne (Get-FileHash -LiteralPath $relay -Algorithm SHA256).Hash -or @($built.commands).Count -ne 2 -or @($built.commands|Where-Object {$_.exitCode -ne 0 -or !$_.noIncremental -or $_.configuration -ne 'Debug'}).Count){throw 'Audited actual build manifest/binary mismatch'}
+for($i=0;$i -lt $buildProjects.Count;$i++){if($built.commands[$i].project -ne $buildProjects[$i]){throw 'Audited build manifest actual project paths/order mismatch'}}
+Assert-InputsEqual @($built.inputs) (Build-Inputs)
+if(!$RelayControlEvidence){throw 'Actual same-binary relay control evidence required.'}
 $sourcePaths=@('src/AbilityKit.Game.Cooking.DatagramImpairmentRelay/AbilityKit.Game.Cooking.DatagramImpairmentRelay.csproj','src/AbilityKit.Game.Cooking.DatagramImpairmentRelay/Program.cs','src/AbilityKit.Game.Cooking.DatagramImpairmentRelay/RelayModel.cs','src/AbilityKit.Game.Cooking.DatagramImpairmentRelay/RelayControls.cs','src/AbilityKit.Game.Cooking.DatagramImpairmentRelay/ControlledRelayChecks.cs','src/AbilityKit.Game.Cooking.DatagramImpairmentRelay/ControlledQueueChecks.cs','src/AbilityKit.Game.Cooking.DatagramImpairmentRelay/ControlMailbox.cs','src/AbilityKit.Game.Cooking.NetworkImpairmentMeasurement/AbilityKit.Game.Cooking.NetworkImpairmentMeasurement.csproj','src/AbilityKit.Game.Cooking.NetworkImpairmentMeasurement/Program.cs','src/AbilityKit.Game.Cooking.NetworkProcessMeasurement/ProcessMeasurementFixture.cs','src/AbilityKit.Game.Cooking.NetworkProcessMeasurement/FramedFaultPeer.cs','src/AbilityKit.Game.Cooking.NetworkAcceptance/SingleThreadOwner.cs','tools/run-cooking-network-impairment-measurement.ps1')
 $sourceManifest=@();foreach($sourcePath in $sourcePaths){$sourceManifest+=@{path=$sourcePath;sha=(Get-FileHash -LiteralPath (Join-Path $root $sourcePath) -Algorithm SHA256).Hash}}
 $runtimeManifest=@();foreach($assembly in @($driver,$relay)){$base=Split-Path $assembly -Parent;foreach($file in @(Get-ChildItem -LiteralPath $base -File -Recurse|Sort-Object FullName)){$runtimeManifest+=@{role=[IO.Path]::GetFileNameWithoutExtension($assembly);path=$file.FullName.Substring($base.Length+1);sha=(Get-FileHash -LiteralPath $file.FullName -Algorithm SHA256).Hash}}}
-$provenance=@{driverSha=(Get-FileHash -LiteralPath $driver -Algorithm SHA256).Hash;relaySha=(Get-FileHash -LiteralPath $relay -Algorithm SHA256).Hash;machine=$env:COMPUTERNAME;sources=$sourceManifest;runtime=$runtimeManifest}
+$provenance=@{driverSha=(Get-FileHash -LiteralPath $driver -Algorithm SHA256).Hash;relaySha=(Get-FileHash -LiteralPath $relay -Algorithm SHA256).Hash;machine=$env:COMPUTERNAME;sources=$sourceManifest;runtime=$runtimeManifest;auditedBuildManifestSha=(Get-FileHash -LiteralPath $buildManifest -Algorithm SHA256).Hash}
 $relayControls=Get-Content -LiteralPath $RelayControlEvidence -Raw|ConvertFrom-Json
 if(!$relayControls.passed -or $relayControls.relaySha -ne $provenance.relaySha -or $relayControls.machine -ne $provenance.machine){throw 'Actual relay control execution against current binary required.'}
 $provenance.relayControlReportSha=(Get-FileHash -LiteralPath $RelayControlEvidence -Algorithm SHA256).Hash
@@ -22,6 +63,7 @@ if($Profile -ne 'P0'){
 }
 $output=Join-Path ([IO.Path]::GetFullPath((Join-Path $root $OutputDirectory))) ([DateTime]::UtcNow.ToString('yyyyMMdd-HHmmss-fffffff'))
 New-Item -ItemType Directory -Path $output -Force | Out-Null
+Copy-Item -LiteralPath $buildManifest -Destination (Join-Path $output 'build-provenance.json')
 $pairs=@()
 function Start-Owned($role,$assembly,$arguments,$directory){
  $info=New-Object Diagnostics.ProcessStartInfo
