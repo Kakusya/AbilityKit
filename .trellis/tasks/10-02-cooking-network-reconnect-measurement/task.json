@@ -1,41 +1,47 @@
 {
-  "id": "cooking-network-reconnect-measurement",
-  "name": "cooking-network-reconnect-measurement",
-  "title": "网络恢复与测量",
-  "description": "断线、旧局输入、负载与延迟",
-  "status": "in_progress",
-  "dev_type": null,
-  "scope": null,
-  "package": null,
-  "priority": "P2",
-  "creator": "Li He",
-  "assignee": "Li He",
-  "createdAt": "2026-10-02",
-  "completedAt": null,
-  "branch": "cooking-network-recovery-current",
-  "base_branch": "master",
-  "worktree_path": "C:/Users/Administrator/orca/workspaces/AbilityKit/cooking-network-recovery-current",
-  "commit": "ea182bc65",
-  "pr_url": null,
-  "subtasks": [],
-  "children": [],
-  "parent": "10-02-cooking-gameplay-menu-plan",
-  "relatedFiles": [],
-  "notes": "Full no-impairment bounded load matrix12config/36fresh samples actual passed and independently reconciled. Separate-process fault/load threepairs and boundary44 remain accepted; master Cooking859 green, earlier ET328/networkSDK311 retained, new assembled gates RUNNING. Isolated concurrency actual two21phase UDP pairs accepted. Relay source2d671ebe9 not built/verified. Reference Release source work in progress; ordinary performance NOT_ACCEPTED, physical LAN NOT_VERIFIED, Unity deferred.",
-  "meta": {
-    "plan_id": "N03",
-    "stage": "network",
-    "planning_only": false,
-    "implementation_authorized": true,
-    "dependencies": [
-      "N02"
-    ],
-    "execution_gate": "reviewed-contract-and-dependencies",
-    "planning_maturity": "reviewed-contract",
-    "owner_delegated_details": true,
-    "execution_authorization": "Latest owner: audit every topic then execute through completion. Task planning review and dependency checks precede execution; Unity and optional reference pool remain deferred.",
-    "local_dependency_exception": "N02 source corrections reviewed and frozen; only local recovery/boundary engineering may precede whole N02/physical exit",
-    "local_increment_status": "accepted-cold-live-rich-boundary44-three-process-pairs-full36-load-matrix",
-    "remaining_exit": "raw-P0-P6-impairment; reference-Release-performance-and-optimization; actual-physical-two-PC-and-rich-companion; assembled-master-gates"
-  }
+    "id":  "cooking-network-reconnect-measurement",
+    "name":  "cooking-network-reconnect-measurement",
+    "title":  "网络恢复与测量",
+    "description":  "断线、旧局输入、负载与延迟",
+    "status":  "in_progress",
+    "dev_type":  null,
+    "scope":  null,
+    "package":  null,
+    "priority":  "P2",
+    "creator":  "Li He",
+    "assignee":  "Li He",
+    "createdAt":  "2026-10-02",
+    "completedAt":  null,
+    "branch":  "master",
+    "base_branch":  "master",
+    "worktree_path":  "D:/MyWork/AbilityKit",
+    "commit":  "ea182bc65",
+    "pr_url":  null,
+    "subtasks":  [
+
+                 ],
+    "children":  [
+
+                 ],
+    "parent":  "10-02-cooking-gameplay-menu-plan",
+    "relatedFiles":  [
+
+                     ],
+    "notes":  "Current implementations/owners run on master; original recovery tree remains retained with an attached terminal and historical producer artifacts. Assembled kitchen644/859/328 and ET859/328 actual passed. Original relay build/socket controls passed; first P0 failed UDP10054 after real close, source correction pending rebuild. Release2x5 profiles completed numeric shortfalls with encoding eligibility pending;4x5 still running under9093. Full36 Debug/load, boundary44, process pairs and isolated concurrency accepted within scope. Physical LAN NOT_VERIFIED, performance not accepted, Unity deferred.",
+    "meta":  {
+                 "plan_id":  "N03",
+                 "stage":  "network",
+                 "planning_only":  false,
+                 "implementation_authorized":  true,
+                 "dependencies":  [
+                                      "N02"
+                                  ],
+                 "execution_gate":  "reviewed-contract-and-dependencies",
+                 "planning_maturity":  "reviewed-contract",
+                 "owner_delegated_details":  true,
+                 "execution_authorization":  "Latest owner: audit every topic then execute through completion. Task planning review and dependency checks precede execution; Unity and optional reference pool remain deferred.",
+                 "local_dependency_exception":  "N02 source corrections reviewed and frozen; only local recovery/boundary engineering may precede whole N02/physical exit",
+                 "local_increment_status":  "accepted-cold-live-rich-boundary44-three-process-pairs-full36-load-matrix",
+                 "remaining_exit":  "corrected-raw-P0-P6; reference-Release-eligibility-and-performance-optimization; rich-companion-and-deep-verifier; actual-physical-two-PC"
+             }
 }
