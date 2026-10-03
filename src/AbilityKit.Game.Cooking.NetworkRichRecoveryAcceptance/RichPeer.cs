@@ -6,14 +6,14 @@ using AbilityKit.Network.Protocol;
 using AbilityKit.Network.Runtime;
 namespace AbilityKit.Game.Cooking.NetworkRichRecoveryAcceptance;
 
-internal sealed class RichPeer(PlayerId player, string credential, Func<ITransport> transport) : IDisposable
+internal sealed class RichPeer(PlayerId player, string credential, Func<ITransport> transport, RichCommandPathDiagnostics? diagnostics = null) : IDisposable
 {
     private readonly object _gate = new();
     private ConnectionManager? _connection;
     private CookingNetworkJoined? _binding;
     private CookingNetworkBaseline? _baseline;
     private long _sequence;
-    private readonly ConcurrentQueue<(CookingNetworkWireEnvelope Envelope, string Hash, long Incarnation)> _incoming = new();
+    private readonly ConcurrentQueue<(CookingNetworkWireEnvelope Envelope, string Hash, long Incarnation, RichDiagnosticCallback? Diagnostic)> _incoming = new();
     private int _incomingCount;
     private long _incarnation;
     private bool _joinSent;
@@ -35,6 +35,13 @@ internal sealed class RichPeer(PlayerId player, string credential, Func<ITranspo
     public bool CurrentGranted => HasBaseline && Grants.Contains(Baseline.Identity);
     public CookingNetworkBaseline? CurrentBusinessGrant => Grants.Reverse().Where(x => _validated.ContainsKey(x) && _binding is not null && x.ServerSessionInstance == _binding.ServerSessionInstance && x.Participant == player && x.ConnectionGeneration == _binding.ConnectionGeneration && x.Scope == _baseline?.Identity.Scope).Select(x => _validated[x]).FirstOrDefault();
     public bool Connected => _connection?.IsConnected == true;
+    public (long Before, long After)? LastDiagnosticSend { get; private set; }
+    public RichPeerDiagnosticState DiagnosticState()
+    {
+        lock (_gate) return new(_incarnation, _binding?.ConnectionGeneration, _baseline?.Identity.Scope,
+            _baseline?.Identity, _acknowledged, CurrentBusinessGrant?.Identity, _baseline?.State.Observation.Recipe?.Version,
+            _baselineOrdinal, _ackOrdinal, _readyOrdinal, Volatile.Read(ref _incomingCount));
+    }
     public void Open(string address, int port)
     {
         var incarnation = Interlocked.Increment(ref _incarnation);
@@ -42,13 +49,32 @@ internal sealed class RichPeer(PlayerId player, string credential, Func<ITranspo
             MaxFrameLength = RichFrameCodec.MaximumBodyBytes, FrameCodec = new RichFrameCodec() });
         _joinSent = false; _acknowledged = null;
         _connection.ServerPushReceived += (opcode, bytes) => {
+            var entered = diagnostics is null ? 0 : RichCommandPathDiagnostics.Now;
+            var callback = diagnostics?.CallbackId() ?? 0;
+            long? copyStart = null, copyEnd = null, decodeStart = null, decodeEnd = null;
+            CookingNetworkWireEnvelope? envelope = null;
             try {
                 if (incarnation != Volatile.Read(ref _incarnation)) return;
+                if (diagnostics is not null) copyStart = RichCommandPathDiagnostics.Now;
                 var owned = bytes.ToArray();
-                if (opcode != CookingNetworkWireCodec.OpCode || !CookingNetworkWireCodec.TryDecode(owned, new(), out var envelope)) throw new InvalidOperationException("Malformed server frame.");
+                if (diagnostics is not null) { copyEnd = RichCommandPathDiagnostics.Now; decodeStart = copyEnd; }
+                var decoded = opcode == CookingNetworkWireCodec.OpCode && CookingNetworkWireCodec.TryDecode(owned, new(), out envelope);
+                if (diagnostics is not null) decodeEnd = RichCommandPathDiagnostics.Now;
+                if (!decoded) throw new InvalidOperationException("Malformed server frame.");
                 if (Interlocked.Increment(ref _incomingCount) > 256) { Interlocked.Decrement(ref _incomingCount); throw new InvalidOperationException("Passive ingress bound exceeded."); }
-                _incoming.Enqueue((envelope!, RichProof.Sha(owned), incarnation));
-            } catch (Exception e) { if (incarnation == Volatile.Read(ref _incarnation)) Failure = e; }
+                var hash = RichProof.Sha(owned);
+                RichDiagnosticCallback? trace = diagnostics is null ? null : new(0, callback, "peer.complete-packet", "in", null,
+                    incarnation, envelope!.CorrelationId, envelope.Kind.ToString(), bytes.Count, entered, copyStart, copyEnd,
+                    null, null, decodeStart, decodeEnd, RichCommandPathDiagnostics.Now, null, null,
+                    Volatile.Read(ref _incomingCount), "Complete ConnectionManager packet; native first fragment UNKNOWN.", null);
+                _incoming.Enqueue((envelope!, hash, incarnation, trace));
+                if (trace is not null) diagnostics!.Callback(trace);
+            } catch (Exception e) {
+                if (incarnation == Volatile.Read(ref _incarnation)) Failure = e;
+                diagnostics?.Callback(new(0, callback, "peer.complete-packet", "in", null, incarnation, envelope?.CorrelationId,
+                    envelope?.Kind.ToString(), bytes.Count, entered, copyStart, copyEnd, null, null, decodeStart, decodeEnd,
+                    null, null, null, Volatile.Read(ref _incomingCount), "Complete packet; native timing UNKNOWN.", RichCommandPathDiagnostics.Text(e.ToString())));
+            }
         };
         _connection.Error += e => { if (incarnation == Volatile.Read(ref _incarnation)) Failure = e; };
         _connection.Open(address, port);
@@ -61,7 +87,19 @@ internal sealed class RichPeer(PlayerId player, string credential, Func<ITranspo
             _joinSent = true;
             Send(CookingNetworkMessageKind.Join, "join", new CookingNetworkJoin(player, credential, _binding?.ServerSessionInstance, _binding?.RebindToken));
         }
-        while (_incoming.TryDequeue(out var envelope)) { Interlocked.Decrement(ref _incomingCount); if (envelope.Incarnation == _incarnation) Receive(envelope.Envelope, envelope.Hash); }
+        while (_incoming.TryDequeue(out var envelope)) {
+            var dequeued = diagnostics is null ? 0 : RichCommandPathDiagnostics.Now;
+            Interlocked.Decrement(ref _incomingCount);
+            Exception? error = null;
+            try { if (envelope.Incarnation == _incarnation) Receive(envelope.Envelope, envelope.Hash); }
+            catch (Exception e) { error = e; throw; }
+            finally {
+                if (envelope.Diagnostic is { } trace) diagnostics!.Callback(trace with { Source = "peer.owner-poll",
+                    Dequeued = dequeued, Installed = error is null && envelope.Incarnation == _incarnation ? RichCommandPathDiagnostics.Now : null,
+                    QueueCount = Volatile.Read(ref _incomingCount), Failure = error is null ? null : RichCommandPathDiagnostics.Text(error.ToString()),
+                    FrameMapping = envelope.Incarnation == _incarnation ? "Typed receive/validation completion; native timing UNKNOWN." : "Old incarnation ignored, not installed." });
+            }
+        }
         if (HasBaseline && _acknowledged != Baseline.Identity) {
             _acknowledged = Baseline.Identity; _ackOrdinal = ++_ordinal;
             Send(CookingNetworkMessageKind.BaselineAck, "ack-" + _acknowledged.SnapshotSequence, _acknowledged);
@@ -113,12 +151,22 @@ internal sealed class RichPeer(PlayerId player, string credential, Func<ITranspo
             }
         }
     }
-    private void Send<T>(CookingNetworkMessageKind kind, string correlation, T value) => _connection!.Send(CookingNetworkWireCodec.OpCode, new ArraySegment<byte>(CookingNetworkWireCodec.Encode(kind, correlation, value)), (ushort)NetworkPacketFlags.ServerPush);
+    private void Send<T>(CookingNetworkMessageKind kind, string correlation, T value)
+    {
+        var bytes = CookingNetworkWireCodec.Encode(kind, correlation, value);
+        var before = diagnostics is null ? 0 : RichCommandPathDiagnostics.Now;
+        try { _connection!.Send(CookingNetworkWireCodec.OpCode, new ArraySegment<byte>(bytes), (ushort)NetworkPacketFlags.ServerPush); }
+        finally { if (diagnostics is not null) {
+            var after = RichCommandPathDiagnostics.Now; LastDiagnosticSend = (before, after);
+            diagnostics.Callback(new(0, 0, "peer.send-enqueue", "out", null, _incarnation, correlation, kind.ToString(), bytes.Length,
+                before, null, null, before, after, null, null, null, null, null, null, "Application enqueue only; native socket send UNKNOWN.", null));
+        } }
+    }
     public CookingNetworkWireCommand Command(CookingRecipeCommand command, string stable, string correlation, Func<CookingNetworkWireCommand, CookingNetworkWireCommand>? alter = null)
     {
         var binding = Binding;
         var wire = new CookingNetworkWireCommand(binding.ServerSessionInstance, binding.ConnectionGeneration, ++_sequence, stable, _baseline?.Identity.Scope, command);
-        wire = alter?.Invoke(wire) ?? wire; RichProof.Require(Sent.Count < 8192, "Passive issued command record bound."); Sent.Enqueue(new(correlation, wire, ++_ordinal)); Send(CookingNetworkMessageKind.Command, correlation, wire); return wire;
+        wire = alter?.Invoke(wire) ?? wire; RichProof.Require(Sent.Count < 8192, "Passive issued command record bound."); Sent.Enqueue(new(correlation, wire, ++_ordinal)); diagnostics?.ObserveCommand(wire, correlation); Send(CookingNetworkMessageKind.Command, correlation, wire); return wire;
     }
     public bool Has(string correlation) => Results.Any(x => x.Correlation == correlation);
     public CookingNetworkWireResult Result(string correlation) => Results.Single(x => x.Correlation == correlation).Result;

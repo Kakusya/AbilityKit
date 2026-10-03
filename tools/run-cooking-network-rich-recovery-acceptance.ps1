@@ -4,9 +4,13 @@ param(
  [ValidateSet('All','manual-paused','automatic-active','unbound-cup','submitted-reply-lost')][string]$Case='All',
  [string]$RemoteIp='127.0.0.1',[string]$BindIp='0.0.0.0',[ValidateRange(0,65535)][int]$Port=0,
  [string]$RunId='',[string]$Source='',[string]$Dirty='',
- [string]$OutputDirectory='local/Logs/cooking-network-rich-recovery',[string]$FrozenManifest='',[switch]$NoBuild
+ [string]$OutputDirectory='local/Logs/cooking-network-rich-recovery',[string]$FrozenManifest='',[switch]$NoBuild,
+ [ValidateSet('OFF','ON')][string]$Diagnostics='OFF',[string]$DiagnosticParticipant='',[string]$DiagnosticStable=''
 )
 $ErrorActionPreference='Stop'
+if($Diagnostics -eq 'OFF' -and ($DiagnosticParticipant -ne '' -or $DiagnosticStable -ne '')){throw 'OFF cannot have diagnostic selectors.'}
+if($Diagnostics -eq 'ON' -and ($DiagnosticParticipant -notmatch '^[A-Za-z0-9_-]{1,128}$' -or $DiagnosticStable -notmatch '^[A-Za-z0-9_-]{1,128}$')){throw 'ON requires bounded participant/stable selectors.'}
+if($Diagnostics -eq 'ON' -and $Mode -eq 'ConcurrencyControls'){throw 'Rich diagnostics do not configure the concurrency executable.'}
 function Write-Utf8Json { param([Parameter(ValueFromPipeline=$true)][string]$Text,[string]$LiteralPath) process { [IO.File]::WriteAllText($LiteralPath,$Text+[Environment]::NewLine,(New-Object System.Text.UTF8Encoding($false))) } }
 $workspaceRoot=Split-Path -Parent $PSScriptRoot
 $project=Join-Path $workspaceRoot 'src/AbilityKit.Game.Cooking.NetworkRichRecoveryAcceptance/AbilityKit.Game.Cooking.NetworkRichRecoveryAcceptance.csproj'
@@ -84,7 +88,7 @@ if ($NoBuild) {
  @{schema=2;buildSucceeded=$true;sourceHead=$currentHead;dirty=$Dirty;savedPatchSha256=(File-Sha $patchPath);runnerScriptSha256=(File-Sha $PSCommandPath);comparatorScriptSha256=(File-Sha (Join-Path $PSScriptRoot 'compare-cooking-network-pair.ps1'));sourceInputs=$beforeInputs;files=(Binary-Files $binDirectory);verifierFiles=(Binary-Files $verifierDirectory);controlFiles=(Binary-Files (Split-Path $controlDll));buildReceipts=@('runner','controls','verifier'|ForEach-Object{Get-Content -LiteralPath (Join-Path $rootDirectory ($_+'-build.exit.json')) -Raw|ConvertFrom-Json});buildUtc=[DateTime]::UtcNow.ToString('O')}|ConvertTo-Json -Depth 12|Write-Utf8Json -LiteralPath $manifestPath
 }
 if (!(Test-Path -LiteralPath $dll) -or !(Test-Path -LiteralPath $verifier)){throw 'Frozen runner/verifier binaries missing.'}
-@{currentHead=$currentHead;frozenManifestSha256=(File-Sha $manifestPath);frozenSourceHead=$Source}|ConvertTo-Json|Write-Utf8Json -LiteralPath (Join-Path $rootDirectory 'invocation-provenance.json')
+@{currentHead=$currentHead;frozenManifestSha256=(File-Sha $manifestPath);frozenSourceHead=$Source;diagnostics=$Diagnostics;diagnosticParticipant=$DiagnosticParticipant;diagnosticStable=$DiagnosticStable}|ConvertTo-Json|Write-Utf8Json -LiteralPath (Join-Path $rootDirectory 'invocation-provenance.json')
 if ($Mode -eq 'BuildOnly') { Write-Output "BUILD ONLY frozen artifacts $rootDirectory"; exit 0 }
 $cases=if($Mode -eq 'ConcurrencyControls'){@('remote-first','local-first')}elseif ($Case -eq 'All') {@('manual-paused','automatic-active','unbound-cup','submitted-reply-lost')}else{@($Case)}
 $pairSeconds=if($Mode -eq 'ConcurrencyControls'){210}else{630}
@@ -98,6 +102,7 @@ foreach ($selected in $cases) {
   $effectiveDll=if($Mode -eq 'ConcurrencyControls'){$controlDll}else{$dll}
   $arguments=(Q $effectiveDll)+' '+$role+' --case '+$selected+' --run-id '+(Q $RunId)+' --ip '+(Q $ip)+' --port '+$endpointPort+' --source '+(Q $Source)+' --dirty '+(Q $Dirty)+' --topology '+$topology+' --report '+(Q (Join-Path $runDirectory ($role+'.json')))
   if($Mode -eq 'ConcurrencyControls'){$arguments+=' --order '+$selected}
+  else{$arguments+=' --diagnostics '+$Diagnostics;if($Diagnostics -eq 'ON'){$arguments+=' --diagnostic-participant '+(Q $DiagnosticParticipant)+' --diagnostic-stable '+(Q $DiagnosticStable)}}
   $process=Start-Process dotnet -ArgumentList $arguments -WindowStyle Hidden -PassThru -RedirectStandardOutput (Join-Path $runDirectory ($role+'.stdout.log')) -RedirectStandardError (Join-Path $runDirectory ($role+'.stderr.log'))
   $null=$process.Handle; return $process
  }
@@ -128,6 +133,15 @@ foreach ($selected in $cases) {
   }
   if(@($owned|Where-Object{!$_.process.HasExited}).Count -ne 0){throw 'Real pair630s / aggregate2520s deadline.'}
   foreach($entry in $owned){Receipt $entry.process $entry.role;if($entry.process.ExitCode -ne 0){throw 'Actual endpoint failed; preserved complete artifacts.'}}
+  if($Mode -ne 'ConcurrencyControls'){
+   foreach($entry in $owned){
+    $endpointReport=Get-Content -LiteralPath (Join-Path $runDirectory ($entry.role+'.json')) -Raw|ConvertFrom-Json
+    $effective=$endpointReport.diagnosticOptions
+    if($null -eq $effective -or $effective.enabled -ne ($Diagnostics -eq 'ON')){throw 'Compiled endpoint diagnostic option missing/mismatched.'}
+    if($Diagnostics -eq 'ON' -and ($effective.participant -ne $DiagnosticParticipant -or $effective.stable -ne $DiagnosticStable -or $null -eq $endpointReport.commandPathDiagnostics)){throw 'Endpoint selector/diagnostic provenance mismatch.'}
+    if($Diagnostics -eq 'OFF' -and $null -ne $endpointReport.commandPathDiagnostics){throw 'OFF endpoint collected diagnostics.'}
+   }
+  }
   if($Mode -in @('SameMachine','ConcurrencyControls')){
    & dotnet $verifier --suite $(if($Mode -eq 'ConcurrencyControls'){'concurrency21'}else{'rich-recovery4-single'}) --host (Join-Path $runDirectory 'host.json') --client (Join-Path $runDirectory 'client.json') --host-exit (Join-Path $runDirectory 'host.exit.json') --client-exit (Join-Path $runDirectory 'client.exit.json') --manifest (Join-Path $runDirectory 'frozen-manifest.json') --run-id $RunId --case $selected --output (Join-Path (Join-Path $rootDirectory 'pairings') ($selected+'.json')) *> (Join-Path $runDirectory 'verifier.log')
    if($LASTEXITCODE -ne 0){throw 'Deep pairing failed/insufficient; original artifacts preserved.'}

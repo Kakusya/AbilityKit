@@ -39,11 +39,50 @@ public sealed record RichEndpointReport(int SchemaVersion, string Suite, string 
     LocalProcessReceipt Process, string Topology, string Endpoint, int Protocol, int LevelFormat, int RecipeSchema,
     RichProvenance Provenance, RichRolePolicy Roles, RichBudget Budget, IReadOnlyList<RichPhase> Phases, RichCut? Cut, RichEnded? Ended,
     RichSuccessor? Successor, RichFinal? Final, IReadOnlyList<RichWireInput> ObservedIngress, IReadOnlyList<RichWireReply> ObservedReplies,
-    IReadOnlyList<RichCallerCommand> CallerCommands, IReadOnlyList<RichCallerOutcome> CallerOutcomes, RichDroppedReply? DroppedReply, IReadOnlyList<RichIssued> ObservedIssued, IReadOnlyList<RichWireGrant> ObservedReady, IReadOnlyList<RichClose> ObservedClose, IReadOnlyList<CookingNetworkBaselineIdentity> CallerReady, IReadOnlyList<RichContainerRule> ContainerRules, IReadOnlyList<ArtifactHash> CanonicalFiles, RichFailureDiagnostic? FailureDiagnostic = null)
+    IReadOnlyList<RichCallerCommand> CallerCommands, IReadOnlyList<RichCallerOutcome> CallerOutcomes, RichDroppedReply? DroppedReply, IReadOnlyList<RichIssued> ObservedIssued, IReadOnlyList<RichWireGrant> ObservedReady, IReadOnlyList<RichClose> ObservedClose, IReadOnlyList<CookingNetworkBaselineIdentity> CallerReady, IReadOnlyList<RichContainerRule> ContainerRules, IReadOnlyList<ArtifactHash> CanonicalFiles, RichFailureDiagnostic? FailureDiagnostic = null,
+    RichDiagnosticOptions? DiagnosticOptions = null, RichCommandPathReport? CommandPathDiagnostics = null)
 {
     // Getter-only optional metadata avoids the shared wire resolver requiring this new field.
     public RichFailureDiagnostic? FailureDiagnostic { get; } = FailureDiagnostic;
+    public RichDiagnosticOptions? DiagnosticOptions { get; } = DiagnosticOptions;
+    public RichCommandPathReport? CommandPathDiagnostics { get; } = CommandPathDiagnostics;
 }
+
+// Optional application-only metadata. None of these fields grants Ready or changes gameplay validation.
+public sealed record RichDiagnosticOptions(bool Enabled, string? Participant, string? Stable);
+public sealed record RichDiagnosticText(string Text, int OriginalLength, bool Truncated);
+public sealed record RichDiagnosticRing<T>(int Capacity, long TotalSeen, int Retained, long Overwritten,
+    long? FirstOrdinal, long? LastOrdinal, IReadOnlyList<T> Rows);
+public sealed record RichPeerDiagnosticState(long Incarnation, long? Generation, CookingLevelScope? Scope,
+    CookingNetworkBaselineIdentity? Validated, CookingNetworkBaselineIdentity? Ack,
+    CookingNetworkBaselineIdentity? Granted, long? RecipeVersion, long BaselineOrdinal, long AckOrdinal, long ReadyOrdinal, int QueueCount);
+public sealed record RichDiagnosticWait(long Ordinal, long? ParentWait, string Stage, string? Correlation,
+    string? Stable, string? Domain, string? Operation, string Participant, long? SentOrdinal,
+    long? SendBefore, long? SendAfter, long? ResultWaitStart, long? ProjectionWaitStart,
+    long Started, long Observed, long OperationDeadline, long WholeDeadline, long RemainingOperationMs,
+    long RemainingWholeMs, bool? PredicateResult, string Status, long? TargetResultVersion, RichPeerDiagnosticState? Peer);
+public sealed record RichDiagnosticCallback(long Ordinal, long Callback, string Source, string Direction,
+    string? Channel, long? Incarnation, string? Correlation, string? Kind, int ActualBytes,
+    long Entered, long? CopyStart, long? CopyEnd, long? ForwardStart, long? ForwardEnd,
+    long? DecodeStart, long? DecodeEnd, long? Queued, long? Dequeued, long? Installed,
+    int? QueueCount, string FrameMapping, RichDiagnosticText? Failure, int? FramePayloadBytes = null);
+public sealed record RichDiagnosticDisposition(string Correlation, string Domain, string Reason,
+    string Kind, string? Outcome, long? StateVersion);
+public sealed record RichDiagnosticFrame(long Ordinal, long Before, long After, long? FrameBefore,
+    long? FrameAfter, long? VersionBefore, long? VersionAfter, IReadOnlyList<CookingNetworkParticipantProjection> ParticipantsBefore,
+    IReadOnlyList<CookingNetworkParticipantProjection> ParticipantsAfter, IReadOnlyList<RichDiagnosticDisposition> Admissions,
+    IReadOnlyList<RichDiagnosticDisposition> Dispositions, bool? SelectedReceipt, string? SelectedReceiptOutcome,
+    RichDiagnosticText? Failure);
+public sealed record RichDiagnosticSnapshot(long Ordinal, string Milestone, long Before, long After,
+    long AllocatedBytes, int PublicIngressPending, IReadOnlyList<CookingNetworkSessionTiming> SelectedTimings,
+    long? IngressOrdinal, long? IngressTimestamp, string? Channel, string? ReplyCorrelation,
+    RichIssued? ObservedIssued, RichWireInput? ObservedAck, RichWireGrant? ObservedReady, int SelectedTimingTotal);
+public sealed record RichCommandPathReport(int Version, RichDiagnosticOptions Options, long StopwatchFrequency,
+    RichDiagnosticWait? CurrentWait, RichDiagnosticRing<RichDiagnosticWait> Waits,
+    RichDiagnosticRing<RichDiagnosticCallback> Callbacks, RichDiagnosticRing<RichDiagnosticFrame> Frames,
+    RichDiagnosticRing<RichDiagnosticSnapshot> Snapshots, string Waiting, string DeferredAck, string InternalAcceptedAck,
+    string NativeTiming, string ObservationCost, RichDiagnosticText? InstrumentationFailure,
+    int SnapshotReservations, string DeadlineClock);
 
 public sealed record RichFailureDiagnostic(DateTimeOffset CapturedUtc, long ElapsedMs, string Stage,
     RichCallerCommand? InFlight, RichCallerOutcome? Terminal, long? TargetResultVersion,

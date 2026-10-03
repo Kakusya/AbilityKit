@@ -7,8 +7,9 @@ using AbilityKit.Network.Protocol;
 namespace AbilityKit.Game.Cooking.NetworkRichRecoveryAcceptance;
 
 // Observation follows forwarding. It proves delivery to Session, never admission.
-internal sealed class RichObserver(IChannelListener inner) : IChannelListener
+internal sealed class RichObserver(IChannelListener inner, RichCommandPathDiagnostics? diagnostics = null) : IChannelListener
 {
+    private readonly RichCommandPathDiagnostics? _diagnostics = diagnostics;
     private long _ordinal;
     public ConcurrentQueue<RichWireGrant> Grants { get; } = new();
     public ConcurrentQueue<RichIssued> Images { get; } = new();
@@ -32,7 +33,11 @@ internal sealed class RichObserver(IChannelListener inner) : IChannelListener
         private readonly RichObserver _owner;
         private readonly NetworkFrameReader _outbound = new() { MaxFrameLength = 8 * 1024 * 1024 + 64 };
         private readonly NetworkFrameReader _reader = new() { MaxFrameLength = 8 * 1024 * 1024 + 64 };
-        public ObservedChannel(IServerChannel inner, RichObserver owner) { _inner = inner; _owner = owner; inner.BytesReceived += OnBytes; inner.Closed += OnClosed; inner.Error += OnError; }
+        private readonly RichCommandPathDiagnostics.CallbackSegments? _inSegments;
+        private readonly RichCommandPathDiagnostics.CallbackSegments? _outSegments;
+        public ObservedChannel(IServerChannel inner, RichObserver owner) { _inner = inner; _owner = owner;
+            if (owner._diagnostics is not null) { _inSegments = new(); _outSegments = new(); }
+            inner.BytesReceived += OnBytes; inner.Closed += OnClosed; inner.Error += OnError; }
         public string Id => _inner.Id;
         public string RemoteEndpoint => _inner.RemoteEndpoint;
         public bool IsConnected => _inner.IsConnected;
@@ -41,33 +46,74 @@ internal sealed class RichObserver(IChannelListener inner) : IChannelListener
         public event Action<Exception>? Error;
         private void OnBytes(ArraySegment<byte> bytes)
         {
+            var diagnostic = _owner._diagnostics;
+            var callback = diagnostic?.CallbackId() ?? 0;
+            var entered = diagnostic is null ? 0 : RichCommandPathDiagnostics.Now;
             var owned = bytes.ToArray();
-            BytesReceived?.Invoke(bytes); // original bytes exactly once, production framing first
+            var copied = diagnostic is null ? 0 : RichCommandPathDiagnostics.Now;
+            var forwarding = diagnostic is null ? 0 : RichCommandPathDiagnostics.Now;
+            try { BytesReceived?.Invoke(bytes); } // original bytes exactly once, production framing first
+            catch (Exception e) {
+                diagnostic?.Callback(new(0, callback, "observer.original-forward-error", "in", Id, null, null, null, bytes.Count,
+                    entered, entered, copied, forwarding, RichCommandPathDiagnostics.Now, null, null, null, null, null,
+                    null, "No parsed correlation; native timing UNKNOWN.", RichCommandPathDiagnostics.Text(e.ToString())));
+                throw;
+            }
+            var forwarded = diagnostic is null ? 0 : RichCommandPathDiagnostics.Now;
             try {
                 lock (_reader) {
+                    _inSegments?.Append(callback, owned.Length);
                     _reader.Append(new ArraySegment<byte>(owned));
                     while (_reader.TryRead(out var header, out var payload)) {
+                        var mapping = _inSegments?.Consume(4 + NetworkPacketHeader.Size + payload.Count);
+                        var decodeStart = diagnostic is null ? 0 : RichCommandPathDiagnostics.Now;
                         if (header.OpCode != CookingNetworkWireCodec.OpCode || !CookingNetworkWireCodec.TryDecode(payload.AsSpan(), new(), out var envelope)) continue;
+                        var decodeEnd = diagnostic is null ? 0 : RichCommandPathDiagnostics.Now;
                         if (_owner.Received.Count >= 65536) throw new InvalidOperationException("Observer record bound exceeded.");
+                        var command = envelope!.Kind == CookingNetworkMessageKind.Command ? CookingNetworkWireCodec.Read<CookingNetworkWireCommand>(envelope) : null;
                         _owner.Received.Enqueue(new(Interlocked.Increment(ref _owner._ordinal), Stopwatch.GetTimestamp(), Id, RemoteEndpoint, envelope!.CorrelationId, envelope.Kind,
-                            envelope.Kind == CookingNetworkMessageKind.Command ? CookingNetworkWireCodec.Read<CookingNetworkWireCommand>(envelope) : null,
+                            command,
                             envelope.Kind == CookingNetworkMessageKind.BaselineAck ? CookingNetworkWireCodec.Read<CookingNetworkBaselineIdentity>(envelope) : null));
+                        if (command is not null) diagnostic?.ObserveCommand(command, envelope.CorrelationId);
+                        diagnostic?.Callback(new(0, callback, "observer.after-original-forward", "in", Id, null, envelope.CorrelationId,
+                            envelope.Kind.ToString(), bytes.Count, entered, entered, copied, forwarding, forwarded, decodeStart,
+                            decodeEnd, null, null, null, null, mapping!, null, payload.Count));
                     }
                 }
-            } catch (Exception e) { _owner.OnError(e); }
+            } catch (Exception e) {
+                diagnostic?.Callback(new(0, callback, "observer.decode-error", "in", Id, null, null, null, bytes.Count,
+                    entered, entered, copied, forwarding, forwarded, null, null, null, null, null, null,
+                    "Framework callback bytes; no decoded correlation/native timing.", RichCommandPathDiagnostics.Text(e.ToString())));
+                _owner.OnError(e);
+            }
         }
         private void OnClosed(IServerChannel _) { Closed?.Invoke(this); _owner.ClosedChannels.Enqueue(new(Id, Stopwatch.GetTimestamp())); }
         private void OnError(Exception e) { _owner.OnError(e); Error?.Invoke(e); }
         public void Send(ArraySegment<byte> bytes)
         {
-            _inner.Send(bytes);
+            var diagnostic = _owner._diagnostics;
+            var callback = diagnostic?.CallbackId() ?? 0;
+            var before = diagnostic is null ? 0 : RichCommandPathDiagnostics.Now;
+            try { _inner.Send(bytes); }
+            catch (Exception e) {
+                diagnostic?.Callback(new(0, callback, "observer.send-error", "out", Id, null, null, null, bytes.Count,
+                    before, null, null, before, RichCommandPathDiagnostics.Now, null, null, null, null, null,
+                    null, "Send enqueue failed; no native send guarantee.", RichCommandPathDiagnostics.Text(e.ToString())));
+                throw;
+            }
+            var after = diagnostic is null ? 0 : RichCommandPathDiagnostics.Now;
             lock (_outbound) {
+                _outSegments?.Append(callback, bytes.Count);
                 _outbound.Append(bytes);
                 while (_outbound.TryRead(out var header, out var payload)) {
+                    var mapping = _outSegments?.Consume(4 + NetworkPacketHeader.Size + payload.Count);
+                    var decodeStart = diagnostic is null ? 0 : RichCommandPathDiagnostics.Now;
                     if (header.OpCode != CookingNetworkWireCodec.OpCode || !CookingNetworkWireCodec.TryDecode(payload.AsSpan(), new(), out var envelope)) continue;
+                    var decodeEnd = diagnostic is null ? 0 : RichCommandPathDiagnostics.Now;
                     if (envelope!.Kind is CookingNetworkMessageKind.CommandResult or CookingNetworkMessageKind.Rejected) {
                         if (_owner.Replies.Count >= 8192) throw new InvalidOperationException("Readonly reply record bound exceeded.");
                         _owner.Replies.Enqueue(new(Id, envelope.CorrelationId, CookingNetworkWireCodec.Read<CookingNetworkWireResult>(envelope)!, RichProof.Sha(payload.ToArray())));
+                        diagnostic?.Terminal(envelope.CorrelationId);
                     } else if (envelope.Kind == CookingNetworkMessageKind.Ready) {
                         if (_owner.Grants.Count >= 65536) throw new InvalidOperationException("Readonly grant record bound exceeded.");
                         _owner.Grants.Enqueue(new(Id, CookingNetworkWireCodec.Read<CookingNetworkBaselineIdentity>(envelope)!));
@@ -76,6 +122,9 @@ internal sealed class RichObserver(IChannelListener inner) : IChannelListener
                         if (_owner.Images.Count >= 65536) throw new InvalidOperationException("Readonly image record bound exceeded.");
                         _owner.Images.Enqueue(new(Id, baseline.Identity, CookingNetworkWireCodec.Hash(baseline.State)));
                     }
+                    diagnostic?.Callback(new(0, callback, "observer.after-send-enqueue", "out", Id, null, envelope.CorrelationId,
+                        envelope.Kind.ToString(), bytes.Count, before, null, null, before, after, decodeStart, decodeEnd,
+                        null, null, null, null, mapping!, null, payload.Count));
                 }
             }
         }
