@@ -5,6 +5,7 @@ using AbilityKit.Network.Protocol;
 using AbilityKit.Network.Runtime;
 using Xunit;
 namespace AbilityKit.Game.Cooking.Tests;
+[Collection(CookingEtHostTestCollection.Name)]
 public sealed class CookingNetworkPausedPublicationTests
 {
     private sealed class Factory(CookingRecipeFixture fixture) : ICookingLevelGameplayFactory

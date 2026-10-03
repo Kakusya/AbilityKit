@@ -9,6 +9,7 @@ using AbilityKit.Network.Protocol;
 
 namespace AbilityKit.Game.Cooking.Tests;
 
+[Collection(CookingEtHostTestCollection.Name)]
 public sealed class CookingNetworkSessionV3Tests
 {
     private readonly Xunit.Abstractions.ITestOutputHelper _output;
