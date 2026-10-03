@@ -1,4 +1,6 @@
-﻿# Raw datagram impairment relay design (P0–P6)
+# Raw datagram impairment relay design (P0–P6)
+
+Implementation clarification adopted by root: the canonical wrapper is `tools/run-cooking-network-impairment-measurement.ps1`. Explicit `--control-mode` may reduce positive queue limits, never increase the ordinary 64MiB/65536 defaults. Control-only HoldQueue/ReleaseQueue/QueueStats permit deterministic actual owner-loop boundary and pending-Off checks; queue entries retain due/epoch/target/hash and existing5s residence deadline. Numerical profiles reject control-mode/nondefault cap provenance. These controls affect the proxy only, never gameplay authority. Arm preserves entries already received under epoch0 rather than requiring a live ping queue to be empty.
 
 2026-10-03. SOURCE-ONLY design on accepted process runner `3c2ad6d88` / `4a46912fb`. Sole owned artifact: this document. No tool code, frozen runner edit, .NET execution, kernel/network setting change or task-state promotion. Read N03 PRD/design/implement, load-and-packet-fault-followup-plan and accepted process fault/load source/report. Root reviews this exact design before implementation. Profile worker owns the current .NET window.
 
@@ -22,7 +24,7 @@ P0 three fresh successful controls are mandatory BEFORE any P1–P6 run. Order P
 
 ## New application-only ownership and minimal integration
 
-Propose separate `src/AbilityKit.Game.Cooking.DatagramImpairmentRelay/` net10 console project, no Cooking/ET/Session dependency: raw Socket owner, bounded scheduler, trusted stdin controls, metrics/report. Wrapper `tools/run-cooking-network-datagram-impairment.ps1` owns exactly Host/relay/client Process objects.
+Propose separate `src/AbilityKit.Game.Cooking.DatagramImpairmentRelay/` net10 console project, no Cooking/ET/Session dependency: raw Socket owner, bounded scheduler, trusted stdin controls, metrics/report. Wrapper `tools/run-cooking-network-impairment-measurement.ps1` owns exactly Host/relay/client Process objects.
 
 The frozen existing Program/wrapper cannot transparently satisfy phase arm/off/recovery: they use one fixed client port, mandatory application-response loss, immediately start load after a marker, and finish with Pause before an independent recovery stage. Reusing them unchanged would confound axes or hide setup timing. Recommend a separate `src/AbilityKit.Game.Cooking.NetworkImpairmentMeasurement/` application driver, linking ONLY reviewed ProcessMeasurementFixture.cs, FramedFaultPeer.cs and SingleThreadOwner.cs. Do not link another Program or introduce a simulator. New driver owns its scenario orchestration/control telemetry and reuses actual public ET/Session/framed peer paths. Existing runner/project/helper files remain byte-frozen. If root instead approves optional hooks in the existing runner, the same contracts below must be implemented default-disabled with unchanged historical mode; that alternative needs a separate reviewed diff, not a quiet refactor.
 
@@ -52,7 +54,7 @@ Maximum queue residence5s (separate from requested delay max170ms) and whole rel
 
 ## Trusted control plane and genuine phase barriers
 
-Wrapper owns redirected stdin/out of all three launched processes. Prefer typed newline JSON controls/events, max16KiB per line, monotonic control sequence and unique run nonce. Relay accepts only PrepareRoute/Arm/Off/Stats/RetireRoute/Stop with validated profile and bounded parameters. This controls proxy forwarding policy ONLY. It cannot create a Host, enqueue a game command, set Ready, change a baseline or grant participant actions. A side-file alternative must preserve the same nonce/sequence/atomic-write boundary; filesystem messages are not gameplay authority or command receipts.
+Wrapper owns redirected stdin/out of all three launched processes. Prefer typed newline JSON controls/events, max16KiB per line, monotonic control sequence and unique run nonce. Relay accepts only PrepareRoute/AllowSource/Arm/Off/RetireRoute/Stop with validated profile and bounded parameters. This controls proxy forwarding policy ONLY. It cannot create a Host, enqueue a game command, set Ready, change a baseline or grant participant actions. A side-file alternative must preserve the same nonce/sequence/atomic-write boundary; filesystem messages are not gameplay authority or command receipts.
 
 Driver telemetry contains actual instance/scope/config/MVID/participant/generation/current baseline identity+validated full hash/Ready and phase receipts, never rebind token or credential. It is derived from real public state; wrapper validates it before sending scheduling continuations. Host continues normal owner pumping while awaiting control; Client continues peer polling/ACKs. Do not block owner on synchronous Console.ReadLine, freeze business time to wait for proxy or call Tick from relay/control reader. Controls cannot accept arbitrary game operation payloads.
 
