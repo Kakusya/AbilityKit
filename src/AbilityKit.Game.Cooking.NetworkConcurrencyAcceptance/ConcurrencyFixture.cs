@@ -17,7 +17,7 @@ internal sealed class ConcurrencyFixture : ICookingLevelGameplayFactory
         var items = new[] { new CookingItemDefinition(a, tags), new CookingItemDefinition(b, tags), new CookingItemDefinition(bowl, tags, new(2, new HashSet<DefinitionId> { a })) };
         var station = new CookingApplianceDefinition(Slot, new HashSet<string> { "storage" });
         var registry = new CookingConfigurationRegistry();
-        
+
         var anchors = ItemIds.Select((id, i) => new CookingSpatialAnchor(LocationKind.WorldPosition, "home-" + id.Value, 1500, 400 + i * 100)).ToList();
         anchors.Add(new(LocationKind.WorldPosition, "clear-chef", 1500, 1100));
         anchors.Add(new(LocationKind.WorldPosition, "clear-partner", 1500, 1200));
