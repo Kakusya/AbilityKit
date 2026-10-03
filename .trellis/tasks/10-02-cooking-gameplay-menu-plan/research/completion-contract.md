@@ -18,10 +18,15 @@
 | S08 布局 | 准备态安装真实空间配置、旋转占位、交互面、玩家与顾客通路、扩建、拒绝零变更及恢复 | Master07bb27d54 includes trusted layout installation, same-Level geometry recovery, next trusted seed projection with rollback and durable rehashed alternate-seed rejection. Real natural Front layout/continuous paths verified. Narrowed-scope successor acceptance remains open. |
 | S09–S13 内容 | 44 正餐/12 甜品/31 饮品逐条供应→加工→容器→交付实跑，独立分支和最后收尾正确 | 87 菜实际生产与盛装、56 正餐甜品提交及 87 ET 恢复已验证；31 饮品绑定后提交与恢复已在 master 验证 |
 | S14 单机完整出口 | ET 固定 Tick 营业闭环、许可交集、可观察数据、重放与 checkpoint、失败/成功跨关 | Master07bb27d54 includes frozen Observe, actual scoped Ready/runtime policy/Level8 recovery, durable Host typed baseline3 with monotonic frame clock and trusted reconstruction, and four-branch real natural operating. Actual635/763/289 and763/289 gates passed. Natural Ended -> durable next service cold continuation, narrowed carry and consolidated success/technical-Failed exit remain open. |
-| N01 网络契约 | 较晚 owner 决定同步 ADR/spec；同一 Host 本地/远端入口、固定 Tick 队列、传输边界 | 研究结论已定位；正式修约及实现待单机后 |
-| N02 网络闭环 | 全部新状态 wire round-trip，同机双进程真实 UDP，物理两机 LAN 争抢/并行/交付/跨关 | 第二物理主机当前不可用，不可标通过 |
-| N03 恢复测量 | 身份重绑定、断线队列丢弃、暂停不消费、旧局拒绝、完整 baseline、真实拓扑指标 | 未重新验证新增功能 |
+| N01 网络契约 | 较晚 owner 决定同步 ADR/spec；同一 Host 本地/远端入口、固定 Tick 队列、传输边界 | 已接受 root-contract-acceptance.md 与 N01 final design；不是物理 LAN 或网络性能验收 |
+| N02 网络闭环 | 全部新状态 wire round-trip，同机双进程真实 UDP，物理两机 LAN 争抢/并行/交付/跨关 | 当前主线 kitchen644/859/328、ET859/328 实际通过；两组21阶段 UDP 并发验证接受。丰富菜品四断点独立进程伴随工具与完整配对核验仍在实施；物理双机 NOT_VERIFIED |
+| N03 恢复测量 | 身份重绑定、断线队列丢弃、暂停不消费、旧局拒绝、完整 baseline、真实拓扑指标 | 完整有界12配置/36样本、边界44与独立进程恢复证据已接受其局部范围；四组 Release 各3新样本均符合证据条件但性能 NOT_ACCEPTED。修正后的 P0 再次失败，精确 tick/发布水位修正 d1c7c52ef 尚未实跑；P1-P6、性能优化和物理双机仍未闭合 |
 
 实际门禁至少按变更运行 cooking-kitchen-loop、cooking-et-level-runtime；通用网络包另加 runtime-contracts 及协议检查（若 Catalogs/WireSchemas 改变则通过生成器）。Unity 环境缺失或 Editor 占用只记 blocked/skip，不记 pass。
 
 每行记录实际 commit、命令、exit、pass/fail/skip、日志与范围。未经审阅的分支、worker 自报、metadata、manifest 与 static verifier 均不能独自证明完成。不向远端推送；本地 master 合并前必须审阅差异并过相应门禁。
+
+
+## 当前网络证据路由（2026-10-03）
+
+以上网络行更新自实际终止结果；较早单机逐行说明由文件顶部的最终单机出口报告取代。网络综合证据读 ../10-02-cooking-network-reconnect-measurement/research/master-assembled-relay-verification.md，Release 实测读同目录 reference-release-plan.md，性能候选与失败处置读 performance-source-cost-audit.md。O01b 2d034b2ec 当前仅聚焦3/3通过，隔离 worktree 的完整门禁仍运行；不可推导为已合并、性能达标或网络出口完成。Unity/S15 仍后置。
