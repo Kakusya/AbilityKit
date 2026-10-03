@@ -30,7 +30,7 @@ void Wait(Func<bool> done, Action? pump = null, int milliseconds = 10000)
 void Write(bool passed, Exception? error = null)
 {
     Directory.CreateDirectory(Path.GetDirectoryName(reportPath)!);
-    var binaries = Directory.GetFiles(AppContext.BaseDirectory).Where(p => p.EndsWith(".dll") || p.EndsWith(".json") || p.EndsWith(".exe")).Order().ToDictionary(Path.GetFileName, p => Convert.ToHexString(SHA256.HashData(File.ReadAllBytes(p))));
+    var binaries = Directory.GetFiles(AppContext.BaseDirectory).Where(p => p.EndsWith(".dll") || p.EndsWith(".json") || p.EndsWith(".exe")).Order().ToDictionary(p => Path.GetFileName(p)!, p => Convert.ToHexString(SHA256.HashData(File.ReadAllBytes(p))));
     File.WriteAllText(reportPath, JsonSerializer.Serialize(new {
         schema = 1, fixture = "real-et-spatial-concurrency-v1", role, passed, runId, source, dirty, order, topology,
         physicalTwoPc = "NOT_VERIFIED", formalPerformanceTarget = "UNSET", stage, failure = error?.ToString(),
@@ -49,7 +49,7 @@ void Healthy(PassivePeer peer, ObservedListener? observer = null)
     if (observer?.Failure is { } failure2) throw new InvalidOperationException("Readonly observer failure", failure2);
 }
 Func<CookingNetworkWireCommand, CookingNetworkWireCommand>? Alter(int phase, long oldGeneration = 0) => phase switch {
-    11 => w => w with { Scope = w.Scope with { LevelEpoch = w.Scope.LevelEpoch + 1 }, ClientSequence = w.ClientSequence + 1000000 },
+    11 => w => w with { Scope = new CookingLevelScope(w.Scope.MatchScope, w.Scope.RestaurantRuntime, w.Scope.Level, w.Scope.LevelEpoch + 1), ClientSequence = w.ClientSequence + 1000000 },
     12 => w => w with { ServerSessionInstance = "wrong-instance", ClientSequence = w.ClientSequence + 1000000 },
     13 => w => w with { ClientSequence = 1 },
     17 => w => w with { ConnectionGeneration = oldGeneration }, _ => null

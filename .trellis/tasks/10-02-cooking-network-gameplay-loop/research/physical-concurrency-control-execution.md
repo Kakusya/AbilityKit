@@ -19,3 +19,7 @@ Proposed concrete validation once granted:
 `powershell -ExecutionPolicy Bypass -File tools/run-cooking-network-concurrency-acceptance.ps1 -Mode SameMachine -Order remote-first`
 
 Then a separate retained local-first scheduling run (actual ordinal/admission order is evidence; scheduling label does not predetermine a network winner), and root-approved appropriate gates. Pair artifact timestamps are wrapper identifiers only; no cross-PC clock subtraction. First build/execution failures remain retained and get fixture-only fixes; production defects are reported to root before edits. Physical acceptance still requires same frozen copied build on actual two PCs with paired topology/endpoint evidence **and separate rich service companion**, per physical-lan-runbook.md.
+
+## First actual build attempt
+
+Exclusive .NET granted after profile exit0. Wrapper remote-first actual exit1, 7.15s, artifacts `local/Logs/cooking-network-concurrency/20261003-055746-7263054/build.log`. Build failed before any endpoints launched: CS0200 because CookingLevelScope.LevelEpoch is read-only, not init-settable. Fixture correction constructs a genuine new CookingLevelScope with the unchanged Match/Restaurant/Level and wrong epoch; no production change. Also removed new nullable manifest-key warning. Original build log retained. Correction committed before rerun; no gameplay assertion weakened.
