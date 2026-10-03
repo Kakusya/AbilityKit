@@ -1,5 +1,21 @@
 # Datagram impairment source increment
 
+## Corrected P0 cached-retry failure: source correction NOT_EXECUTED
+
+Root session9642 ended exit1 at `Retry conserved business`, artifacts `local/Logs/cooking-execution/network-impairment/20261003-065406-5562567/repeat-1/`. Original report had evidence:null; it cannot prove which actual fields differed or that only clock changed. No red artifact was edited. Source inspection establishes that every real idle Running fixed tick increments LogicalTick, StateVersion and EventSequence and appends CookingRecipeTickEvent (`CookingRecipeLoop.BuildFixedTickPlan`). The previous business helper included two counters but omitted actual tick-ledger explanation; it also omitted some complete schema fields. Cached Execute waited against the historical receipt StateVersion, which was already exceeded after load and supplied no post-retry image barrier. Paused cannot be used to execute the retry because Session rejects Commands before cached mapping while Paused.
+
+Root adopted an application-only correction in NetworkImpairmentMeasurement. New-generation Join resets actual remote watermark0/0. The frozen peer's first queued command is the original cached Drop, wire sequence1; cached Map.ReplyMapped marks terminal1 before response/publication. Driver requires the actual before0/0, exact original payload/domain/result/version/Supply and contractual empty replay Events, then waits within unchanged30s for a strictly newer validated same-instance/scope/participant/gen2 baseline carrying actual LastValidated1/LastTerminal1. A queued pre-retry image0 cannot satisfy it. This remains Running and adds no authority permissions or production/helper edits.
+
+RetryConservation verifies full append-only TickEvents prefix, exact consecutive HostFrameSequence/Sequence/before-after logical/state deltas, zero active process/effects and fixture Supply null. All clock/version/eventsequence deltas must equal the actual appended idle tick count. It normalizes ONLY those separately proven fields/TickEvents, then compares serialized ENTIRE current checkpoint, retaining every schema field including inventories/container contents/tombstones/orders/receipts/allocator/poses/SupplyOrigins/Events. Full before/after validated baselines, original payload/receipt, replay, watermarks and per-field deltas are recorded by finally even on failure; successful report also retains them. This is accounted genuine idle progression, not simply removing version assertions.
+
+New `--retry-conservation-controls` source uses real public fixture Pickup/Drop, actual cached duplicate preserving original receipt version/empty Events, and two actual idle frames, then classifier negatives for allocator/item/container/schema/pose/receipt mutations, discontinuous tick frames and unaccounted version, plus a real accepted fresh Pickup/receipt that must not pass idle conservation. It requires populated fixture structures and actually changed negative inputs. Success and failure control reports retain checks reached, failure, current driver SHA/MVID/machine/frequency. These are pure simulation/classifier controls, **not live network retry evidence**. Source only, no build or controls were executed by this worker. Root reviews/freeze precede audited rebuild and actual fresh P0 rerun.
+
+Planned additional command after exclusive-window grant (NOT_EXECUTED):
+
+```powershell
+dotnet src/AbilityKit.Game.Cooking.NetworkImpairmentMeasurement/bin/Debug/net10.0/AbilityKit.Game.Cooking.NetworkImpairmentMeasurement.dll --retry-conservation-controls --report local/Logs/retry-conservation-controls.json
+```
+
 ## Actual first P0 close failure: investigation/proposal only
 
 Status update: root adopted the concrete narrow correction below. New relay/driver/wrapper and ClosedPortControls source is authored **NOT_BUILT/NOT_EXECUTED**; measurement owner9093 has the exclusive .NET window. Original first P0red artifacts remain untouched. This update supersedes the proposal-only status of the following investigation text, not its original evidence.
