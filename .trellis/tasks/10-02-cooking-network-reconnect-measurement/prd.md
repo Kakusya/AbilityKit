@@ -1,4 +1,4 @@
-﻿# N03 网络恢复与测量 PRD
+# N03 网络恢复与测量 PRD
 
 状态：in_progress / bounded local engineering，root2026-10-03审议批准。仅启动既有授权内的本地确定性恢复/边界增量，基线为reviewed assembled b6e102ac9。N02两个endpoint完整流程已通过但wrapper复跑和物理gate仍待完成，不将N02推导为completed。Unity不在执行范围；.NET窗口由root串行授予。
 
@@ -24,3 +24,8 @@
 ## 不包含
 
 Unity 场景、断网期间客户端预测权威、Host migration、旧网络映射 durable 化、跨 instance 自动重放和新增经营失败规则。
+
+
+## Current evidence reconciliation ? 2026-10-03
+
+The historical N02 wrapper-pending notice above is superseded by the actual accepted paired independent-process command in ../10-02-cooking-network-gameplay-loop/research/master-network-verification.md. N03 rich four-cutpoint recovery is now independently accepted, integrated and actually green in corrected master Cooking815/ET328, with network-sdk311 green and no failures/skips. Canonical current source/evidence: research/master-local-recovery-verification.md. Physical two-PC remains NOT_VERIFIED; separate-process fault/load and runner profiling are active local follow-ups, not accepted completed exits. No scope/dependency/Unity authorization is widened by this evidence update.

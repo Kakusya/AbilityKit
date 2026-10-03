@@ -11,4 +11,4 @@
 {"file":".trellis/tasks/10-02-cooking-network-gameplay-loop/research/process-integration-verification.md","reason":"Approved bounded local recovery contract and exact current evidence; physical gate remains unverified"}
 {"file":".trellis/tasks/10-02-cooking-network-reconnect-measurement/design.md","reason":"Approved bounded local recovery contract and exact current evidence; physical gate remains unverified"}
 {"file":".trellis/tasks/10-02-cooking-network-reconnect-measurement/research/cold-recovery-source-map.md","reason":"Approved bounded local recovery contract and exact current evidence; physical gate remains unverified"}
-{"file":".trellis/tasks/10-02-cooking-network-reconnect-measurement/research/master-local-recovery-verification.md","reason":"Actual master cold/live/capacity evidence and explicit remaining rich/physical/performance exits"}
+{"file":".trellis/tasks/10-02-cooking-network-reconnect-measurement/research/master-local-recovery-verification.md","reason":"Actual corrected master cold/live/rich/deferred-ACK/capacity evidence and remaining process-fault-load/physical/performance exits"}
