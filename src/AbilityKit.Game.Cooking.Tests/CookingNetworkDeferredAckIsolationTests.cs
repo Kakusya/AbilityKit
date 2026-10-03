@@ -1,4 +1,4 @@
-﻿using AbilityKit.Game.Cooking.EtRuntime;
+using AbilityKit.Game.Cooking.EtRuntime;
 using AbilityKit.Game.Cooking.Session;
 using AbilityKit.Network.Host.InProcess;
 using AbilityKit.Network.Protocol;
@@ -102,6 +102,3 @@ public sealed class CookingNetworkDeferredAckIsolationTests
         Assert.Empty(session.LatestCapture!.FullRecipe!.Deduplication);
     }
 }
-
-
-
