@@ -7,6 +7,7 @@ param(
  [string]$OutputDirectory='local/Logs/cooking-network-rich-recovery',[string]$FrozenManifest='',[switch]$NoBuild
 )
 $ErrorActionPreference='Stop'
+function Write-Utf8Json { param([Parameter(ValueFromPipeline=$true)][string]$Text,[string]$LiteralPath) process { [IO.File]::WriteAllText($LiteralPath,$Text+[Environment]::NewLine,(New-Object System.Text.UTF8Encoding($false))) } }
 $workspaceRoot=Split-Path -Parent $PSScriptRoot
 $project=Join-Path $workspaceRoot 'src/AbilityKit.Game.Cooking.NetworkRichRecoveryAcceptance/AbilityKit.Game.Cooking.NetworkRichRecoveryAcceptance.csproj'
 $dll=Join-Path $workspaceRoot 'src/AbilityKit.Game.Cooking.NetworkRichRecoveryAcceptance/bin/Debug/net10.0/AbilityKit.Game.Cooking.NetworkRichRecoveryAcceptance.dll'
@@ -68,7 +69,7 @@ if ($NoBuild) {
   $process=Start-Process dotnet -ArgumentList ('build '+(Q $target)+' --no-incremental --verbosity minimal') -WindowStyle Hidden -PassThru -RedirectStandardOutput (Join-Path $rootDirectory ($label+'-build.log')) -RedirectStandardError (Join-Path $rootDirectory ($label+'-build.stderr.log'))
   $null=$process.Handle; $start=$process.StartTime; $until=[DateTime]::UtcNow.AddSeconds(180)
   try{while(!$process.HasExited -and [DateTime]::UtcNow -lt $until){Start-Sleep -Milliseconds 100;$process.Refresh()};if(!$process.HasExited){throw 'Build180s deadline.'};$process.WaitForExit();if($process.ExitCode -ne 0){throw ($label+' build failed.')}}
-  finally{$process.Refresh();if(!$process.HasExited){$current=Get-Process -Id $process.Id -ErrorAction SilentlyContinue;if($current -and $current.StartTime -eq $start){Stop-Process -InputObject $current};$process.WaitForExit()};@{pid=$process.Id;startUtc=$start.ToUniversalTime().ToString('O');exitCode=$process.ExitCode;project=$target}|ConvertTo-Json|Set-Content -LiteralPath (Join-Path $rootDirectory ($label+'-build.exit.json')) -Encoding UTF8;$process.Dispose()}
+  finally{$process.Refresh();if(!$process.HasExited){$current=Get-Process -Id $process.Id -ErrorAction SilentlyContinue;if($current -and $current.StartTime -eq $start){Stop-Process -InputObject $current};$process.WaitForExit()};@{pid=$process.Id;startUtc=$start.ToUniversalTime().ToString('O');exitCode=$process.ExitCode;project=$target}|ConvertTo-Json|Write-Utf8Json -LiteralPath (Join-Path $rootDirectory ($label+'-build.exit.json'));$process.Dispose()}
  }
  $patchPath=Join-Path $rootDirectory 'tracked-source.patch'
  $patchLines=@(& git -C $workspaceRoot diff --binary HEAD)
@@ -80,10 +81,10 @@ if ($NoBuild) {
  Build-Project $verifierProject 'verifier'
  Equal-Manifest $beforeInputs (Inputs) 'compile before/after ALL actual dependency inputs'
  if($currentHead -ne (& git -C $workspaceRoot rev-parse HEAD).Trim()){throw 'HEAD changed while compiling.'}
- @{schema=2;buildSucceeded=$true;sourceHead=$currentHead;dirty=$Dirty;savedPatchSha256=(File-Sha $patchPath);runnerScriptSha256=(File-Sha $PSCommandPath);comparatorScriptSha256=(File-Sha (Join-Path $PSScriptRoot 'compare-cooking-network-pair.ps1'));sourceInputs=$beforeInputs;files=(Binary-Files $binDirectory);verifierFiles=(Binary-Files $verifierDirectory);controlFiles=(Binary-Files (Split-Path $controlDll));buildReceipts=@('runner','controls','verifier'|ForEach-Object{Get-Content -LiteralPath (Join-Path $rootDirectory ($_+'-build.exit.json')) -Raw|ConvertFrom-Json});buildUtc=[DateTime]::UtcNow.ToString('O')}|ConvertTo-Json -Depth 12|Set-Content -LiteralPath $manifestPath -Encoding UTF8
+ @{schema=2;buildSucceeded=$true;sourceHead=$currentHead;dirty=$Dirty;savedPatchSha256=(File-Sha $patchPath);runnerScriptSha256=(File-Sha $PSCommandPath);comparatorScriptSha256=(File-Sha (Join-Path $PSScriptRoot 'compare-cooking-network-pair.ps1'));sourceInputs=$beforeInputs;files=(Binary-Files $binDirectory);verifierFiles=(Binary-Files $verifierDirectory);controlFiles=(Binary-Files (Split-Path $controlDll));buildReceipts=@('runner','controls','verifier'|ForEach-Object{Get-Content -LiteralPath (Join-Path $rootDirectory ($_+'-build.exit.json')) -Raw|ConvertFrom-Json});buildUtc=[DateTime]::UtcNow.ToString('O')}|ConvertTo-Json -Depth 12|Write-Utf8Json -LiteralPath $manifestPath
 }
 if (!(Test-Path -LiteralPath $dll) -or !(Test-Path -LiteralPath $verifier)){throw 'Frozen runner/verifier binaries missing.'}
-@{currentHead=$currentHead;frozenManifestSha256=(File-Sha $manifestPath);frozenSourceHead=$Source}|ConvertTo-Json|Set-Content -LiteralPath (Join-Path $rootDirectory 'invocation-provenance.json') -Encoding UTF8
+@{currentHead=$currentHead;frozenManifestSha256=(File-Sha $manifestPath);frozenSourceHead=$Source}|ConvertTo-Json|Write-Utf8Json -LiteralPath (Join-Path $rootDirectory 'invocation-provenance.json')
 if ($Mode -eq 'BuildOnly') { Write-Output "BUILD ONLY frozen artifacts $rootDirectory"; exit 0 }
 $cases=if($Mode -eq 'ConcurrencyControls'){@('remote-first','local-first')}elseif ($Case -eq 'All') {@('manual-paused','automatic-active','unbound-cup','submitted-reply-lost')}else{@($Case)}
 $pairSeconds=if($Mode -eq 'ConcurrencyControls'){210}else{630}
@@ -102,7 +103,7 @@ foreach ($selected in $cases) {
  }
  function Receipt($process,[string]$role) {
   $process.Refresh();$process.WaitForExit()
-  @{schema=1;role=$role;runId=$RunId;caseId=$selected;pid=$process.Id;machine=[Environment]::MachineName;startUtc=$process.StartTime.ToUniversalTime().ToString('O');exitCode=$process.ExitCode;executableSha256=(File-Sha $(if($Mode -eq 'ConcurrencyControls'){$controlDll}else{$dll}));reportSha256=if(Test-Path -LiteralPath (Join-Path $runDirectory ($role+'.json'))){File-Sha (Join-Path $runDirectory ($role+'.json'))}else{$null}} | ConvertTo-Json | Set-Content -LiteralPath (Join-Path $runDirectory ($role+'.exit.json')) -Encoding UTF8
+  @{schema=1;role=$role;runId=$RunId;caseId=$selected;pid=$process.Id;machine=[Environment]::MachineName;startUtc=$process.StartTime.ToUniversalTime().ToString('O');exitCode=$process.ExitCode;executableSha256=(File-Sha $(if($Mode -eq 'ConcurrencyControls'){$controlDll}else{$dll}));reportSha256=if(Test-Path -LiteralPath (Join-Path $runDirectory ($role+'.json'))){File-Sha (Join-Path $runDirectory ($role+'.json'))}else{$null}} | ConvertTo-Json | Write-Utf8Json -LiteralPath (Join-Path $runDirectory ($role+'.exit.json'))
  }
  try {
   if ($Mode -eq 'Client' -and $Port -eq 0) { throw 'Client requires actual Host READY port.' }
@@ -134,7 +135,7 @@ foreach ($selected in $cases) {
   }
   Write-Output "Completed $selected artifacts $runDirectory; physical LAN NOT_VERIFIED."
  } catch {
-  @{passed=$false;runId=$RunId;caseId=$selected;failure=$_.Exception.ToString();physicalTwoPc='NOT_VERIFIED'} | ConvertTo-Json | Set-Content -LiteralPath (Join-Path $runDirectory 'wrapper-failure.json') -Encoding UTF8
+  @{passed=$false;runId=$RunId;caseId=$selected;failure=$_.Exception.ToString();physicalTwoPc='NOT_VERIFIED'} | ConvertTo-Json | Write-Utf8Json -LiteralPath (Join-Path $runDirectory 'wrapper-failure.json')
   throw
  } finally {
   foreach($entry in $owned){$process=$entry.process;$process.Refresh();if(!$process.HasExited){$current=Get-Process -Id $process.Id -ErrorAction SilentlyContinue;if($null -ne $current -and $current.StartTime -eq $entry.start){Stop-Process -InputObject $current};$process.WaitForExit()};if(!(Test-Path -LiteralPath (Join-Path $runDirectory ($entry.role+'.exit.json')))){Receipt $process $entry.role};$process.Dispose()}
@@ -142,5 +143,5 @@ foreach ($selected in $cases) {
 }
 if($Mode -eq 'SameMachine' -and $Case -eq 'All'){
  if(@($instances|Select-Object -Unique).Count -ne 4){throw 'Four fresh distinct authority instances required.'}
- @{passed=$true;runId=$RunId;cases=$cases;instances=$instances;physicalTwoPc='NOT_VERIFIED';formalPerformanceTarget='UNSET'}|ConvertTo-Json -Depth 8|Set-Content -LiteralPath (Join-Path $rootDirectory 'four-case-paired.json') -Encoding UTF8
+ @{passed=$true;runId=$RunId;cases=$cases;instances=$instances;physicalTwoPc='NOT_VERIFIED';formalPerformanceTarget='UNSET'}|ConvertTo-Json -Depth 8|Write-Utf8Json -LiteralPath (Join-Path $rootDirectory 'four-case-paired.json')
 }
