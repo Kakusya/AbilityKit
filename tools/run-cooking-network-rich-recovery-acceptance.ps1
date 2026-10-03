@@ -1,4 +1,5 @@
-﻿param(
+[CmdletBinding()]
+param(
  [ValidateSet('SameMachine','Host','Client','BuildOnly','ConcurrencyControls')][string]$Mode='SameMachine',
  [ValidateSet('All','manual-paused','automatic-active','unbound-cup','submitted-reply-lost')][string]$Case='All',
  [string]$RemoteIp='127.0.0.1',[string]$BindIp='0.0.0.0',[ValidateRange(0,65535)][int]$Port=0,
