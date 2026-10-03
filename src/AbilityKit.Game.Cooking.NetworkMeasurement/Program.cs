@@ -11,6 +11,7 @@ using AbilityKit.Network.Transport.LiteNet;
 var output = args.Length > 0 ? Path.GetFullPath(args[0]) : Path.GetFullPath("measurement.json");
 var topology = args.Length > 1 ? args[1] : "InProcess";
 var controlOnly = args.Contains("--control-only");
+var participantCount = 2; var offeredRate = 5;
 var reports = new List<object>();
 Func<object>? activeEvidence = null;
 return SingleThreadOwner.Run(Run);
@@ -18,6 +19,8 @@ return SingleThreadOwner.Run(Run);
 async Task<int> Run()
 {
     try {
+        participantCount = ReadOption("--participants", 2); offeredRate = ReadOption("--offered-rate", 5);
+        if (participantCount is not (2 or 4) || offeredRate is not (5 or 20 or 50)) throw new ArgumentException("Participants must be2|4 and offered rate5|20|50.");
         if (topology is not ("InProcess" or "SameMachineUdp")) throw new ArgumentException("Unsupported topology.");
         reports.Add(await Execute(0, true));
         if (!controlOnly) for (var repeat = 1; repeat <= 3; repeat++) reports.Add(await Execute(repeat, false));
@@ -29,7 +32,7 @@ void Save(bool passed, string? failure)
 {
     Directory.CreateDirectory(Path.GetDirectoryName(output)!);
     File.WriteAllText(output, JsonSerializer.Serialize(new { passed, failure, topology, physicalTwoPc = "NOT_VERIFIED",
-        performanceTarget = "UNSET", controlOnly, machine = Environment.MachineName, pid = Environment.ProcessId,
+        performanceTarget = "UNSET", forwardEngineeringGoals = "Ordinary-load criteria approved; reference hardware/Release applicability and matching performance evidence pending. This run is diagnostic, not performance PASS.", participantCount, offeredRate, controlOnly, machine = Environment.MachineName, pid = Environment.ProcessId,
         sdkRuntime = System.Runtime.InteropServices.RuntimeInformation.FrameworkDescription,
         etBuild = typeof(CookingLevelEtHost).Assembly.ManifestModule.ModuleVersionId,
         sessionBuild = typeof(CookingNetworkSessionHost).Assembly.ManifestModule.ModuleVersionId, reports,
@@ -39,19 +42,18 @@ void Save(bool passed, string? failure)
 
 async Task<object> Execute(int repeat, bool control)
 {
-    var fixture = new MeasurementFixture(); using var host = fixture.CreateHost();
+    var fixture = new MeasurementFixture(participantCount); using var host = fixture.CreateHost();
     var adapter = new CookingNetworkAuthorityAdapter(host);
     var options = control ? new CookingNetworkSessionOptions(ReceiptCapacity: 16) : new CookingNetworkSessionOptions();
     using var session = new CookingNetworkSessionHost(adapter, new LiteNetChannelListener(IPAddress.Loopback, 0, "abilitykit-cooking-v3"),
-        MeasurementFixture.Players.ToDictionary(p => p, p => "credential-" + p.Value), options);
+        fixture.Players.ToDictionary(p => p, p => "credential-" + p.Value), options);
     session.Start();
     activeEvidence = () => new { repeat, control, diagnostics = session.Diagnostics, session.LatestCapture };
-    using var first = new CookingNetworkSessionClient(MeasurementFixture.Players[0], "credential-" + MeasurementFixture.Players[0].Value,
-        topology == "InProcess" ? session.CreateLocalClientTransport : null, options);
-    using var second = new CookingNetworkSessionClient(MeasurementFixture.Players[1], "credential-" + MeasurementFixture.Players[1].Value,
-        topology == "InProcess" ? session.CreateLocalClientTransport : null, options);
-    var clients = new[] { first, second };
-    var profile = new MeasurementProfile();
+    using var clientLifetime = new MeasurementClientLifetime(fixture.Players.Select(player =>
+        new CookingNetworkSessionClient(player, "credential-" + player.Value,
+            topology == "InProcess" ? session.CreateLocalClientTransport : null, options)));
+    var clients = clientLifetime.Clients; var first = clients[0];
+    var profile = new MeasurementProfile(participantCount);
     var admitted = new HashSet<RecipeCommandId>();
     long ownerCalls = 0, ownerAllocated = 0, ownerTimestamp = 0;
     var runWatch = Stopwatch.StartNew();
@@ -76,12 +78,12 @@ async Task<object> Execute(int repeat, bool control)
     while (!connects.IsCompleted && runWatch.Elapsed.TotalSeconds < 30) await Pump();
     if (!connects.IsCompleted) throw new TimeoutException("Measurement baseline deadline.");
     await connects;
-    Require(fixture.CreateCount == 1 && clients.All(c => c.IsSynchronized), "One real ET authority and two acknowledged clients.");
+    Require(fixture.CreateCount == 1 && clients.All(c => c.IsSynchronized), "One real ET authority and all configured acknowledged clients.");
     Require(adapter.CaptureFullState().State!.Observation.Lifecycle.State == CookingLevelState.Preparing, "Preparing authority.");
     CookingRecipeCommand Command(int player, int index) {
         var state = clients[player].LatestBaseline!.State;
-        var item = state.Observation.Recipe!.Items.Single(i => i.Id == MeasurementFixture.Tools[player]);
-        return new(MeasurementFixture.Match, 0, MeasurementFixture.Players[player], new("wire-unused"),
+        var item = state.Observation.Recipe!.Items.Single(i => i.Id == fixture.Tools[player]);
+        return new(MeasurementFixture.Match, 0, fixture.Players[player], new("wire-unused"),
             item.Location.Kind == LocationKind.PlayerHand ? CookingRecipeOperation.Drop : CookingRecipeOperation.Pickup,
             Item: item.Id, ExpectedItemVersion: item.Version,
             WorldAnchor: item.Location.Kind == LocationKind.PlayerHand ? item.Id.Value : null);
@@ -95,18 +97,18 @@ async Task<object> Execute(int repeat, bool control)
         if (clients[player].LatestBaseline!.State.Observation.Recipe!.Version < result.Result!.StateVersion)
             throw new TimeoutException("Committed full projection deadline.");
         var state = clients[player].LatestBaseline!.State.Observation.Recipe!;
-        Require(state.Items.Count == 2 && state.Containers.Count == 2 && state.Containers.All(i => i.ItemIds.Count == 0), "Two empty physical tools preserved.");
+        Require(state.Items.Count == participantCount && state.Containers.Count == participantCount && state.Containers.All(i => i.ItemIds.Count == 0), "All distinct empty physical tools preserved.");
     }
     object Readiness(CookingNetworkAuthorityCapture final)
     {
         var participantView = session.LatestSessionProjection.Participants;
-        Require(participantView.Count == 2 && participantView.Select(p => p.Participant).ToHashSet().SetEquals(MeasurementFixture.Players),
-            "Exactly two configured participants at exit.");
+        Require(participantView.Count == participantCount && participantView.Select(p => p.Participant).ToHashSet().SetEquals(fixture.Players),
+            "Exactly the configured participants at exit.");
         Require(participantView.All(p => p.ConnectedOwnerBinding && p.Ready && !p.CleanupPending && p.ConnectionGeneration > 0),
             "Server participants remain connected Ready without cleanup.");
         for (var player = 0; player < clients.Length; player++) {
             var client = clients[player]; var identity = client.LatestBaseline!.Identity;
-            var server = participantView.Single(p => p.Participant == MeasurementFixture.Players[player]);
+            var server = participantView.Single(p => p.Participant == fixture.Players[player]);
             Require(client.IsSynchronized && client.ServerSessionInstance == session.ServerSessionInstance &&
                 identity.ServerSessionInstance == session.ServerSessionInstance && identity.Participant == server.Participant &&
                 identity.ConnectionGeneration == server.ConnectionGeneration && identity.Scope == final.Observation.Scope,
@@ -119,9 +121,10 @@ async Task<object> Execute(int repeat, bool control)
     if (control) {
         CookingRecipeCommand? original = null;
         for (var i = 0; i < 16; i++) {
-            var command = Command(0, i); original ??= command;
-            var result = await PumpUntil(first.SendCommandAsync("capacity-" + i, command));
-            var projection = ObserveResult(0, result);
+            var player = participantCount == 2 ? 0 : i % participantCount;
+            var command = Command(player, i); original ??= command;
+            var result = await PumpUntil(clients[player].SendCommandAsync("capacity-" + i, command));
+            var projection = ObserveResult(player, result);
             while (!projection.IsCompleted) await Pump(); await projection;
         }
         var before = adapter.CaptureFullState().State!.FullRecipe!;
@@ -132,13 +135,13 @@ async Task<object> Execute(int repeat, bool control)
         Require(duplicate.Result is { Outcome: CookingRecipeOutcome.Accepted, IsDuplicate: true }, "Original terminal survives capacity.");
         var after = adapter.CaptureFullState().State!.FullRecipe!;
         AssertOnlyIdleTicks(before, after);
-        return new { repeat, kind = "ReceiptCapacity16", accepted = 16, rejected = 1, cachedDuplicate = true,
+        return new { repeat, participantCount, offeredRate, kind = "ReceiptCapacity16", accepted = 16, rejected = 1, cachedDuplicate = true,
             idleLogicalTickDelta = after.LogicalTick - before.LogicalTick, fixture.Configuration.Identity, finalReadiness = Readiness(adapter.CaptureFullState().State!) };
     }
 
-    Console.WriteLine($"MEASURE repeat={repeat} topology={topology} warmup=10 sample=60 offeredPerParticipant=5");
-    var samples = new List<Sample>(); var offered = new int[2]; var skipped = new int[2]; var schedulerSkipped = new int[2];
-    var warmupOffered = new int[2]; var warmupSkipped = new int[2];
+    Console.WriteLine($"MEASURE repeat={repeat} topology={topology} warmup=10 sample=60 offeredPerParticipant={offeredRate} participants={participantCount}");
+    var samples = new List<Sample>(); var offered = new int[participantCount]; var skipped = new int[participantCount]; var schedulerSkipped = new int[participantCount];
+    var warmupOffered = new int[participantCount]; var warmupSkipped = new int[participantCount];
     activeEvidence = () => new { repeat, offered, skippedBackpressure = skipped, schedulerSkipped, warmupOffered, warmupSkipped,
         issued = samples.Count(s => s.Sampled), completed = samples.Count(s => s.Sampled && s.Result is not null),
         admitted = samples.Count(s => s.Sampled && admitted.Contains(s.ExpectedDomainId)),
@@ -158,18 +161,18 @@ async Task<object> Execute(int repeat, bool control)
     async Task Worker(int player)
     {
         Task? flight = null;
-        for (var index = 0; index < 350; index++) {
-            var due = index * 200;
+        for (var index = 0; index < 70 * offeredRate; index++) {
+            var intervalMs = 1000 / offeredRate; var due = index * intervalMs;
             while (clock.ElapsedMilliseconds < due) await Task.Delay(1);
-            var sampled = index >= 50;
+            var sampled = index >= 10 * offeredRate;
             if (sampled) offered[player]++; else warmupOffered[player]++;
-            if (clock.ElapsedMilliseconds >= due + 200) { if (sampled) schedulerSkipped[player]++; else warmupSkipped[player]++; continue; }
+            if (clock.ElapsedMilliseconds >= due + intervalMs) { if (sampled) schedulerSkipped[player]++; else warmupSkipped[player]++; continue; }
             if (flight is { IsCompleted: false }) { if (sampled) skipped[player]++; else warmupSkipped[player]++; continue; }
             if (flight is not null) await flight;
             if (!clients[player].IsSynchronized) throw new InvalidOperationException("Measurement authority became unavailable.");
             var stableId = $"run-{repeat}-p-{player}-i-{index}";
             var command = Command(player, index); var sample = new Sample(player, index, sampled, Stopwatch.GetTimestamp(),
-                CookingNetworkWireCodec.DomainId(session.ServerSessionInstance, MeasurementFixture.Scope, MeasurementFixture.Players[player], stableId)); samples.Add(sample);
+                CookingNetworkWireCodec.DomainId(session.ServerSessionInstance, MeasurementFixture.Scope, fixture.Players[player], stableId)); samples.Add(sample);
             flight = Finish();
             async Task Finish() {
                 var stage = "AwaitTerminal";
@@ -190,7 +193,7 @@ async Task<object> Execute(int repeat, bool control)
         }
         if (flight is not null) await flight;
     }
-    var workers = Task.WhenAll(Worker(0), Worker(1));
+    var workers = Task.WhenAll(Enumerable.Range(0, participantCount).Select(Worker));
     while (!workers.IsCompleted && clock.Elapsed.TotalSeconds < 180) {
         var measured = clock.Elapsed.TotalSeconds >= 10 && clock.Elapsed.TotalSeconds < 70;
         if (measured && sampleStart is null) { sampleStart = session.Diagnostics; cpuStart = process.TotalProcessorTime; profile.Begin(); }
@@ -207,10 +210,15 @@ async Task<object> Execute(int repeat, bool control)
     sampleStart ??= session.Diagnostics;
     if (sampleEnd is null) { profile.End(); sampleEnd = session.Diagnostics; cpuEnd = process.TotalProcessorTime; }
     var measuredSamples = samples.Where(s => s.Sampled).ToArray();
-    Require(offered.All(n => n == 300) && warmupOffered.All(n => n == 50), "Offered schedule complete.");
+    Require(offered.All(n => n == 60 * offeredRate) && warmupOffered.All(n => n == 10 * offeredRate), "Offered schedule complete.");
     Require(measuredSamples.All(s => s.Result?.Result?.Outcome == CookingRecipeOutcome.Accepted), "All issued legal operations completed accepted.");
     Require(measuredSamples.All(s => s.ProjectionCompleted && s.Failure is null), "Every completed terminal has a committed continuation projection.");
     Require(measuredSamples.All(s => s.Result!.DomainCommandId == s.ExpectedDomainId && admitted.Contains(s.ExpectedDomainId)), "Issued operations really admitted by ET.");
+    for (var player = 0; player < participantCount; player++) {
+        Require(measuredSamples.Any(s => s.Player == player), "Each participant really exercised its own tool during sample.");
+        Require(samples.Count(s => s.Sampled && s.Player == player) + skipped[player] + schedulerSkipped[player] == offered[player],
+            "Each participant's sample offers accounted.");
+    }
     var timings = session.Diagnostics.Timings.Where(t => t.ReceivedTimestamp >= sampleStartTimestamp && t.ReceivedTimestamp < sampleEndTimestamp).ToArray();
     var final = adapter.CaptureFullState().State!;
     Require(final.Observation.Lifecycle.State == CookingLevelState.Preparing && fixture.CreateCount == 1, "No service/second authority.");
@@ -221,8 +229,15 @@ async Task<object> Execute(int repeat, bool control)
     var baselineBytes = CookingNetworkWireCodec.Encode(CookingNetworkMessageKind.Baseline, "measure", first.LatestBaseline!);
     var tokenCount = CountTokens(baselineBytes);
     Console.WriteLine($"COMPLETE repeat={repeat} issued={measuredSamples.Length} skipped={skipped.Sum()+schedulerSkipped.Sum()} tokens={tokenCount}");
-    return new { repeat, kind = "BaselineMeasurement", warmupSeconds = 10, sampleSeconds = 60, offeredPerParticipantPerSecond = 5,
+    return new { repeat, kind = "BaselineMeasurement", warmupSeconds = 10, sampleSeconds = 60, participantCount, offeredPerParticipantPerSecond = offeredRate,
         offered, skippedBackpressure = skipped, schedulerSkipped, warmupOffered, warmupSkipped,
+        perParticipant = Enumerable.Range(0, participantCount).Select(player => new {
+            participant = fixture.Players[player], offered = offered[player], backpressure = skipped[player], schedulerSkipped = schedulerSkipped[player],
+            issued = measuredSamples.Count(s => s.Player == player),
+            admitted = measuredSamples.Count(s => s.Player == player && admitted.Contains(s.ExpectedDomainId)),
+            accepted = measuredSamples.Count(s => s.Player == player && s.Result?.Result?.Outcome == CookingRecipeOutcome.Accepted),
+            completed = measuredSamples.Count(s => s.Player == player && s.Result is not null),
+            projectionCompleted = measuredSamples.Count(s => s.Player == player && s.ProjectionCompleted) }).ToArray(),
         issued = measuredSamples.Length, admitted = measuredSamples.Length, accepted = measuredSamples.Length, rejected = 0, cancelled = 0,
         completed = measuredSamples.Count(s => s.Result is not null), pending = 0,
         projectionCompleted = measuredSamples.Count(s => s.ProjectionCompleted), terminalTimeouts = 0, projectionTimeouts = 0,
@@ -243,9 +258,17 @@ async Task<object> Execute(int repeat, bool control)
         clientBaselineHashes = clients.Select(c => c.LatestBaseline!.Identity.StateHash).ToArray(),
         finalReadiness = readiness,
         serverInstance = session.ServerSessionInstance,
-        metricDefinitions = "Closed loop: one inflight per participant; scheduled busy opportunities skipped, never catch-up burst. RTT send-to-terminal includes transport. Host timing same-process monotonic receive/map/result-send, not client receipt. GC sums all managed allocations on the owner thread during synchronous owner calls, including inlined InProcess client callbacks; excludes allocations on other threads, native allocation and awaits. CPU and memory include both clients and real authority in this process; memory is sampled, not OS lifetime peak. Bytes are Session payload, queue peak whole run including warmup. Timings selected by Host receipt within sample interval; results selected by offered sample index; counts therefore have distinct cohorts. No performance threshold." };
+        metricDefinitions = "Closed loop: one inflight per participant; scheduled busy opportunities skipped, never catch-up burst. RTT send-to-terminal includes transport. Host timing same-process monotonic receive/map/result-send, not client receipt. GC sums all managed allocations on the owner thread during synchronous owner calls, including inlined InProcess client callbacks; excludes allocations on other threads, native allocation and awaits. CPU and memory include all configured clients and real authority in this process; memory is sampled, not OS lifetime peak. Bytes are Session payload, queue peak whole run including warmup. Timings selected by Host receipt within sample interval; results selected by offered sample index; counts therefore have distinct cohorts. No performance threshold." };
 }
 
+int ReadOption(string name, int fallback)
+{
+    var positions = Enumerable.Range(0, args.Length).Where(i => args[i] == name).ToArray();
+    if (positions.Length == 0) return fallback;
+    if (positions.Length != 1 || positions[0] + 1 >= args.Length || !int.TryParse(args[positions[0] + 1], out var value))
+        throw new ArgumentException("Expected one integer value for " + name);
+    return value;
+}
 static object Distribution(IEnumerable<double> values)
 {
     var sorted = values.Order().ToArray();
@@ -284,4 +307,16 @@ internal sealed class Sample(int player, int index, bool sampled, long timestamp
     internal string? FailureStage { get; set; }
     internal bool TimedOut { get; set; }
     internal string? Failure { get; set; }
+}
+
+internal sealed class MeasurementClientLifetime : IDisposable
+{
+    internal CookingNetworkSessionClient[] Clients { get; }
+    internal MeasurementClientLifetime(IEnumerable<CookingNetworkSessionClient> clients)
+    {
+        var owned = new List<CookingNetworkSessionClient>();
+        try { foreach (var client in clients) owned.Add(client); Clients = owned.ToArray(); }
+        catch { foreach (var client in owned) client.Dispose(); throw; }
+    }
+    public void Dispose() { foreach (var client in Clients) client.Dispose(); }
 }

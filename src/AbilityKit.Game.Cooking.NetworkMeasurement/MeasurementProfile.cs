@@ -6,12 +6,18 @@ namespace AbilityKit.Game.Cooking.NetworkMeasurement;
 // External observation only: never calls a simulation, hooks GC, or encodes a baseline.
 internal sealed class MeasurementProfile
 {
-    private readonly long[] _lastSequence = new long[2];
-    private readonly int[] _observedChanges = new int[2];
+    private readonly long[] _lastSequence;
+    private readonly int[] _observedChanges;
     private readonly List<double> _ownerCallMs = new();
     private long _allocationStart, _allocationEnd, _windowStart, _windowEnd;
     private int[] _collectionsStart = new int[3], _collectionsEnd = new int[3];
     private long _observerTimestamp, _observerAllocated;
+    internal MeasurementProfile(int participants)
+    {
+        if (participants is not (2 or 4)) throw new ArgumentOutOfRangeException(nameof(participants));
+        _lastSequence = new long[participants]; _observedChanges = new int[participants];
+    }
+
     internal bool Started { get; private set; }
     internal bool Ended { get; private set; }
 
@@ -37,6 +43,7 @@ internal sealed class MeasurementProfile
 
     internal void Observe(CookingNetworkSessionClient[] clients, bool measured, double ownerCallMs)
     {
+        if (clients.Length != _lastSequence.Length) throw new InvalidOperationException("Profile participant count mismatch.");
         var bytes = GC.GetAllocatedBytesForCurrentThread(); var timestamp = Stopwatch.GetTimestamp();
         if (measured && Started && !Ended) _ownerCallMs.Add(ownerCallMs);
         for (var i = 0; i < clients.Length; i++) {
@@ -73,7 +80,7 @@ internal sealed class MeasurementProfile
             ownerCallMs = Distribution(_ownerCallMs),
             observerOverheadMilliseconds = _observerTimestamp * 1000.0 / Stopwatch.Frequency,
             observerOwnerManagedAllocatedBytes = _observerAllocated,
-            boundaries = "All-thread allocation and generation collections cover this process including both clients, Host and runtime background threads; not a standalone Host. Generation counters are nested, do not sum them as distinct collections. Snapshot observations poll immutable LatestBaseline after owner calls: distinct observed changes only, not actual publication/delivery count. Observer overhead includes polling and precise GC boundary calls over the entire run; post-sample summary/JSON export and latency-field assignments excluded. No forced GC, static hooks or added capture/encode calls." };
+            boundaries = "All-thread allocation and generation collections cover this process including all configured clients, Host and runtime background threads; not a standalone Host. Generation counters are nested, do not sum them as distinct collections. Snapshot observations poll immutable LatestBaseline after owner calls: distinct observed changes only, not actual publication/delivery count. Observer overhead includes polling and precise GC boundary calls over the entire run; post-sample summary/JSON export and latency-field assignments excluded. No forced GC, static hooks or added capture/encode calls." };
     }
 
     private static object Distribution(IEnumerable<double> values)
