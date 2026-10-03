@@ -1,43 +1,51 @@
 {
-  "id": "cooking-singleplayer-order-binding",
-  "name": "cooking-singleplayer-order-binding",
-  "title": "单机饮品贴单与交付分离",
-  "description": "E01–E12/F07–F08",
-  "status": "completed",
-  "dev_type": null,
-  "scope": null,
-  "package": null,
-  "priority": "P2",
-  "creator": "Li He",
-  "assignee": "Li He",
-  "createdAt": "2026-10-02",
-  "completedAt": "2026-10-02",
-  "branch": "cooking-order-s05",
-  "base_branch": "master",
-  "worktree_path": null,
-  "commit": "7dd149b75",
-  "pr_url": null,
-  "subtasks": [],
-  "children": [],
-  "parent": "10-02-cooking-gameplay-menu-plan",
-  "relatedFiles": [],
-  "notes": "Implemented and actual final gates passed; independent coordinator review/integration pending. See research/verification.md.",
-  "meta": {
-    "plan_id": "S05",
-    "stage": "singleplayer",
-    "planning_only": false,
-    "implementation_authorized": true,
-    "dependencies": [
-      "S03",
-      "S04"
-    ],
-    "execution_gate": "reviewed-contract-and-dependencies",
-    "planning_maturity": "reviewed-contract",
-    "owner_delegated_details": true,
-    "execution_authorization": "Latest owner: audit every topic then execute through completion. Task planning review and dependency checks precede execution; Unity and optional reference pool remain deferred.",
-    "verification": "final-kitchen221-domain343-et76; final-et-domain343-et76; 0failed/skip",
-    "verified_scope": "singleplayer-pure-csharp-content-and-delivery",
-    "coordinator_verification": ".trellis/tasks/10-02-cooking-gameplay-menu-plan/research/master-complete-menu-verification.md",
-    "integration_review_pending": false
-  }
+    "id":  "cooking-singleplayer-order-binding",
+    "name":  "cooking-singleplayer-order-binding",
+    "title":  "单机饮品贴单与交付分离",
+    "description":  "E01–E12/F07–F08",
+    "status":  "completed",
+    "dev_type":  null,
+    "scope":  null,
+    "package":  null,
+    "priority":  "P2",
+    "creator":  "Li He",
+    "assignee":  "Li He",
+    "createdAt":  "2026-10-02",
+    "completedAt":  "2026-10-02",
+    "branch":  "master",
+    "base_branch":  "master",
+    "worktree_path":  "D:/MyWork/AbilityKit",
+    "commit":  "7dd149b75",
+    "pr_url":  null,
+    "subtasks":  [
+
+                 ],
+    "children":  [
+
+                 ],
+    "parent":  "10-02-cooking-gameplay-menu-plan",
+    "relatedFiles":  [
+
+                     ],
+    "notes":  "Implemented and actual final gates passed; independent coordinator review/integration pending. See research/verification.md.",
+    "meta":  {
+                 "plan_id":  "S05",
+                 "stage":  "singleplayer",
+                 "planning_only":  false,
+                 "implementation_authorized":  true,
+                 "dependencies":  [
+                                      "S03",
+                                      "S04"
+                                  ],
+                 "execution_gate":  "reviewed-contract-and-dependencies",
+                 "planning_maturity":  "reviewed-contract",
+                 "owner_delegated_details":  true,
+                 "execution_authorization":  "Latest owner: audit every topic then execute through completion. Task planning review and dependency checks precede execution; Unity and optional reference pool remain deferred.",
+                 "verification":  "final-kitchen221-domain343-et76; final-et-domain343-et76; 0failed/skip",
+                 "verified_scope":  "singleplayer-pure-csharp-content-and-delivery",
+                 "coordinator_verification":  ".trellis/tasks/10-02-cooking-gameplay-menu-plan/research/master-complete-menu-verification.md",
+                 "integration_review_pending":  false,
+                 "retired_source_branch":  "cooking-order-s05",
+                 "retired_worktree_archive":  "local/Archives/worktrees/retired-singleplayer-clean-20261003/cooking-order-s05"
+             }
 }

@@ -40,7 +40,7 @@
 ## 构建与验证（仓库根目录）
 
 - 2026-10-02 后续 owner 已明确授权按 Cooking 总 plan 实施单机与联网部分，使用 **Orca 受管 worktree + supervised orchestration** 并行作业，验证通过后本地合并 `master`。这更新上文“只列 Task 不执行”的本轮历史边界；Unity 单机/联网继续后置且未获实施授权，S15 扩展参考池不自动纳入基础。执行恢复先读 [execution.md](.trellis/tasks/10-02-cooking-gameplay-menu-plan/execution.md)，核对实际 worker/dispatch 与 Git 状态，不能仅凭状态文件重启活跃 worker。
-- Worktree 生命周期：不再使用的 worktree 应及时清理，不长期堆积。每次集成、任务收尾和恢复会话时检查实际 worktree、worker、进程与任务引用；确认无在用任务/进程，且改动已合并或妥善保存后，用 Orca/Git 的 worktree 管理命令移除。清理前把仍需保留的验证日志、TRX、报告及未合并成果迁出并记录来源，更新 task/worktree 路由；不得强删含未保存改动的目录，也不得把活动 worktree 或仅因 worker 已停止而尚待审阅的分支误判为不用。Windows 删除前核对解析后的绝对路径位于目标受管工作区；不使用跨 shell 拼接删除或全局进程终止。
+- Worktree 生命周期：不再使用的 worktree 应及时清理，不长期堆积。每次集成、任务收尾和恢复会话时检查实际 worktree、worker、进程与任务引用；确认无在用任务/进程，且改动已合并或妥善保存后，用 Orca/Git 的 worktree 管理命令移除。清理前把仍需保留的验证日志、TRX、报告及未合并成果迁出并记录来源，更新 task/worktree 路由；不得强删含未保存改动的目录，也不得把活动 worktree 或仅因 worker 已停止而尚待审阅的分支误判为不用。Windows 删除前核对解析后的绝对路径位于目标受管工作区；不使用跨 shell 拼接删除或全局进程终止。已清理目录与证据的新位置读[worktree-lifecycle.md](.trellis/tasks/10-02-cooking-gameplay-menu-plan/research/worktree-lifecycle.md)，旧绝对路径不是活动工作区。
 
 - .NET 项目使用 `net10.0`。README 提及 SDK 10.0.300，但本次检查根目录没有 `global.json`，不要宣称已固定 SDK。
 - Unity 版本为 `2022.3.62f1`；打开 `Unity/`。不要编辑 Unity 自动生成的 `.csproj`、`Library/` 或 `Temp/`。

@@ -1,40 +1,48 @@
 {
-  "id": "cooking-singleplayer-portions-recovery",
-  "name": "cooking-singleplayer-portions-recovery",
-  "title": "单机批量分装与错误恢复",
-  "description": "B08–B14/C13/G08/H07",
-  "status": "completed",
-  "dev_type": null,
-  "scope": null,
-  "package": null,
-  "priority": "P2",
-  "creator": "Li He",
-  "assignee": "Li He",
-  "createdAt": "2026-10-02",
-  "completedAt": "2026-10-02",
-  "branch": "cooking-core-s01-s03",
-  "base_branch": "master",
-  "worktree_path": "C:/Users/Administrator/orca/workspaces/AbilityKit/cooking-core-s01-s03",
-  "commit": "79d93c923",
-  "pr_url": null,
-  "subtasks": [],
-  "children": [],
-  "parent": "10-02-cooking-gameplay-menu-plan",
-  "relatedFiles": [],
-  "notes": "Coordinator reviewed and locally merged pure-C# S01-S03 plus required checkpoint repairs. Master kitchen and ET Level gates passed; see master-core-integration-verification.md. Product-level S04-S14 consumers, network and Unity are not declared complete.",
-  "meta": {
-    "plan_id": "S03",
-    "stage": "singleplayer",
-    "planning_only": false,
-    "implementation_authorized": true,
-    "dependencies": [
-      "S01"
-    ],
-    "execution_gate": "reviewed-contract-and-dependencies",
-    "planning_maturity": "reviewed-contract",
-    "owner_delegated_details": true,
-    "execution_authorization": "Latest owner: audit every topic then execute through completion. Task planning review and dependency checks precede execution; Unity and optional reference pool remain deferred.",
-    "verification_scope": "singleplayer-pure-csharp-core"
-  },
-  "planning_maturity": "reviewed-contract"
+    "id":  "cooking-singleplayer-portions-recovery",
+    "name":  "cooking-singleplayer-portions-recovery",
+    "title":  "单机批量分装与错误恢复",
+    "description":  "B08–B14/C13/G08/H07",
+    "status":  "completed",
+    "dev_type":  null,
+    "scope":  null,
+    "package":  null,
+    "priority":  "P2",
+    "creator":  "Li He",
+    "assignee":  "Li He",
+    "createdAt":  "2026-10-02",
+    "completedAt":  "2026-10-02",
+    "branch":  "master",
+    "base_branch":  "master",
+    "worktree_path":  "D:/MyWork/AbilityKit",
+    "commit":  "79d93c923",
+    "pr_url":  null,
+    "subtasks":  [
+
+                 ],
+    "children":  [
+
+                 ],
+    "parent":  "10-02-cooking-gameplay-menu-plan",
+    "relatedFiles":  [
+
+                     ],
+    "notes":  "Coordinator reviewed and locally merged pure-C# S01-S03 plus required checkpoint repairs. Master kitchen and ET Level gates passed; see master-core-integration-verification.md. Product-level S04-S14 consumers, network and Unity are not declared complete.",
+    "meta":  {
+                 "plan_id":  "S03",
+                 "stage":  "singleplayer",
+                 "planning_only":  false,
+                 "implementation_authorized":  true,
+                 "dependencies":  [
+                                      "S01"
+                                  ],
+                 "execution_gate":  "reviewed-contract-and-dependencies",
+                 "planning_maturity":  "reviewed-contract",
+                 "owner_delegated_details":  true,
+                 "execution_authorization":  "Latest owner: audit every topic then execute through completion. Task planning review and dependency checks precede execution; Unity and optional reference pool remain deferred.",
+                 "verification_scope":  "singleplayer-pure-csharp-core",
+                 "retired_source_branch":  "cooking-core-s01-s03",
+                 "retired_worktree_archive":  "local/Archives/worktrees/retired-singleplayer-clean-20261003/cooking-core-s01-s03"
+             },
+    "planning_maturity":  "reviewed-contract"
 }
