@@ -39,4 +39,16 @@ public sealed record RichEndpointReport(int SchemaVersion, string Suite, string 
     LocalProcessReceipt Process, string Topology, string Endpoint, int Protocol, int LevelFormat, int RecipeSchema,
     RichProvenance Provenance, RichRolePolicy Roles, RichBudget Budget, IReadOnlyList<RichPhase> Phases, RichCut? Cut, RichEnded? Ended,
     RichSuccessor? Successor, RichFinal? Final, IReadOnlyList<RichWireInput> ObservedIngress, IReadOnlyList<RichWireReply> ObservedReplies,
-    IReadOnlyList<RichCallerCommand> CallerCommands, IReadOnlyList<RichCallerOutcome> CallerOutcomes, RichDroppedReply? DroppedReply, IReadOnlyList<RichIssued> ObservedIssued, IReadOnlyList<RichWireGrant> ObservedReady, IReadOnlyList<RichClose> ObservedClose, IReadOnlyList<CookingNetworkBaselineIdentity> CallerReady, IReadOnlyList<RichContainerRule> ContainerRules, IReadOnlyList<ArtifactHash> CanonicalFiles);
+    IReadOnlyList<RichCallerCommand> CallerCommands, IReadOnlyList<RichCallerOutcome> CallerOutcomes, RichDroppedReply? DroppedReply, IReadOnlyList<RichIssued> ObservedIssued, IReadOnlyList<RichWireGrant> ObservedReady, IReadOnlyList<RichClose> ObservedClose, IReadOnlyList<CookingNetworkBaselineIdentity> CallerReady, IReadOnlyList<RichContainerRule> ContainerRules, IReadOnlyList<ArtifactHash> CanonicalFiles, RichFailureDiagnostic? FailureDiagnostic = null)
+{
+    // Getter-only optional metadata avoids the shared wire resolver requiring this new field.
+    public RichFailureDiagnostic? FailureDiagnostic { get; } = FailureDiagnostic;
+}
+
+public sealed record RichFailureDiagnostic(DateTimeOffset CapturedUtc, long ElapsedMs, string Stage,
+    RichCallerCommand? InFlight, RichCallerOutcome? Terminal, long? TargetResultVersion,
+    CookingNetworkBaselineIdentity? LatestValidatedIdentity, long? LatestRecipeVersion, string? LatestBusinessHash,
+    int? RecomputedBaselineEnvelopeBytes, string SizeProbeStatus,
+    CookingNetworkBaselineIdentity? CurrentGrantedIdentity, CookingNetworkBaselineIdentity? LatestCallerReadyIdentity,
+    CookingNetworkBaselineIdentity? ExactAckSent, long? BaselineReceiveOrdinal, long? AckSendOrdinal, long? ReadyReceiveOrdinal,
+    RichIssued? LatestHostIssued, RichWireInput? LatestHostAck, RichWireGrant? LatestHostReady, string? AbsenceReason);

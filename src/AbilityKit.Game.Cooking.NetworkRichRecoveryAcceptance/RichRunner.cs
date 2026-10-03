@@ -6,6 +6,7 @@ using AbilityKit.Game.Cooking.EtRuntime;
 using AbilityKit.Game.Cooking.RichEvidence;
 using AbilityKit.Game.Cooking.Session;
 using AbilityKit.Network.Transport.LiteNet;
+using AbilityKit.Network.Protocol;
 namespace AbilityKit.Game.Cooking.NetworkRichRecoveryAcceptance;
 
 internal sealed class RichRunner(string role, string caseId, string runId, string address, int port, string topology, string source, string dirty, string reportPath)
@@ -19,6 +20,7 @@ internal sealed class RichRunner(string role, string caseId, string runId, strin
     private readonly List<CookingNetworkControlResult> _controls = new();
     private readonly HashSet<string> _consumed = new();
     private long _frames, _commands;
+    private string? _flightCorrelation; private long? _flightTargetVersion; private RichFailureDiagnostic? _failureDiagnostic;
     private string _stage = "initial";
     private bool _injected, _clientCut;
     private ProcessId? _process; private ItemId? _item, _container; private long? _manualElapsed;
@@ -168,6 +170,7 @@ internal sealed class RichRunner(string role, string caseId, string runId, strin
     private async Task<CookingRecipeCommandResult> Send(CookingRecipeCommand command)
     {
         Check(); _commands++; if (_commands % 50 == 0) { Console.WriteLine($"ACTIVITY {_stage} commands={_commands} frames={_frames} elapsed={Environment.TickCount64-_start}"); Console.Out.Flush(); } var stable = command.Command.Value; var correlation = (role == "host" ? "chef-" : "remote-") + stable;
+        _flightCorrelation = correlation; _flightTargetVersion = null;
         var before = _peer!.Baseline.State;
         if (command.Operation == CookingRecipeOperation.ServePortion) Save("portion-before-" + _commands);
         var lost = role == "client" && !_clientCut && caseId == "submitted-reply-lost" && command.Operation == CookingRecipeOperation.SubmitOrder;
@@ -187,7 +190,9 @@ internal sealed class RichRunner(string role, string caseId, string runId, strin
         }
         await Wait(() => _peer.Has(correlation), "terminal-" + correlation);
         var result = _peer.Result(correlation); RichProof.Require(result.Result?.Outcome == CookingRecipeOutcome.Accepted, "Actual legal command: " + command.Operation + "/" + result.Reason + "/" + result.Result?.Reason);
+        _flightTargetVersion = result.Result!.StateVersion;
         await Wait(() => _peer.Baseline.State.Observation.Recipe!.Version >= result.Result!.StateVersion, "committed-caller-projection");
+        _flightCorrelation = null; _flightTargetVersion = null;
         if (command.Operation == CookingRecipeOperation.ServePortion) {
             var old = before.FullRecipe!.Items.Single(x => x.Id == command.Item); var after = _peer.Baseline.State.FullRecipe!;
             RichProof.Require(old.RemainingPortions > 0 && after.Items.Single(x => x.Id == old.Id).RemainingPortions == old.RemainingPortions - 1 && after.NextProductId == before.FullRecipe.NextProductId + 1 && after.Containers.Single(x => x.Id == command.Container).ItemIds.Count == before.FullRecipe.Containers.Single(x => x.Id == command.Container).ItemIds.Count + 1, "Real portion decrement/allocation conservation."); Save("portion-after-" + _commands);
@@ -225,8 +230,9 @@ internal sealed class RichRunner(string role, string caseId, string runId, strin
             if (role == "host") await Host(); else await Client();
             Write(true); return 0;
         } catch (Exception error) {
+            try { _failureDiagnostic = CaptureFailure(); } catch { /* Original failure remains authoritative. */ }
             try { Write(false, error); }
-            catch (Exception exportError) { Directory.CreateDirectory(Path.GetDirectoryName(reportPath)!); File.WriteAllText(reportPath, JsonSerializer.Serialize(new { passed=false, suite="rich-recovery-four-cutpoints-v1", role,runId,caseId,stage=_stage,failure=error.ToString(),exportFailure=exportError.ToString(),coverage="INCOMPLETE_FAILED_EXPORT" })); }
+            catch (Exception exportError) { Directory.CreateDirectory(Path.GetDirectoryName(reportPath)!); File.WriteAllText(reportPath, JsonSerializer.Serialize(new { passed=false, suite="rich-recovery-four-cutpoints-v1", role,runId,caseId,stage=_stage,failure=error.ToString(),exportFailure=exportError.ToString(),coverage="INCOMPLETE_FAILED_EXPORT",failureDiagnostic=_failureDiagnostic })); }
             Console.Error.WriteLine(error); return 1;
         }
         finally { _peer?.Dispose(); _session?.Dispose(); _observer?.Dispose(); _host?.Dispose(); }
@@ -242,7 +248,7 @@ internal sealed class RichRunner(string role, string caseId, string runId, strin
             if (request == "successor") { var target = new CookingLevelScope(_host.Binding.LevelScope.MatchScope, _host.Binding.LevelScope.RestaurantRuntime, new("service-2"), 2); var next = _host.CreateSuccessor(target.Level, target.LevelEpoch, _fixture.Preparation(target), progress, store); return new(next.Accepted, next.Reason.ToString(), _host.Lifecycle.State.ToString(), _host.Lifecycle.Version, Array.Empty<CookingLevelPendingDisposition>()); }
             return new(false, "Unauthorized", _host.Lifecycle.State.ToString(), _host.Lifecycle.Version, Array.Empty<CookingLevelPendingDisposition>());
         }
-        _observer = new(new LiteNetChannelListener(IPAddress.Parse(address), port, "abilitykit-cooking-v3"));
+        _observer = new(new LiteNetChannelListener(IPAddress.Parse(address), port, "abilitykit-cooking-v3", maximumBufferedReceiveBytes: checked(new CookingNetworkSessionOptions().FrameBytes + 4 + NetworkPacketHeader.Size)));
         _session = new(new CookingNetworkAuthorityAdapter(_host, Transition), _observer, new Dictionary<PlayerId,string> { [CookingRichRecoveryFixture.Chef] = "rich-chef", [CookingRichRecoveryFixture.Partner] = "rich-partner" });
         _session.Start(); port = _session.Port; _peer = new(CookingRichRecoveryFixture.Chef, "rich-chef", _session.CreateLocalClientTransport); _peer.Open("inprocess", 1); _planner = Planner();
         await Wait(() => _peer.CurrentBusinessGrant is not null, "local-full-grant", true, 20000);
@@ -315,6 +321,28 @@ internal sealed class RichRunner(string role, string caseId, string runId, strin
         }
         return files.Values.OrderBy(x => x.RelativePath,StringComparer.Ordinal).ToArray();
     }
+    private RichFailureDiagnostic CaptureFailure()
+    {
+        var absent = new List<string>(); CookingNetworkBaseline? baseline = null; RichCallerCheckpoint? checkpoint = null;
+        CookingNetworkBaselineIdentity? grant = null; string? hash = null; int? size = null;
+        var sizeStatus = "unavailable: no existing validated baseline";
+        try { if (_peer?.HasBaseline == true) baseline = _peer.Baseline; } catch (Exception e) { absent.Add("baseline: " + e.Message); }
+        if (baseline is not null) {
+            try { hash = CookingNetworkWireCodec.Hash(baseline.State); } catch (Exception e) { absent.Add("businessHash: " + e.Message); }
+            try { size = CookingNetworkWireCodec.Encode(CookingNetworkMessageKind.Baseline, "failure-size-probe", baseline).Length; sizeStatus = size <= 8*1024*1024 ? "recomputed envelope bytes; not actual last received bytes" : "recomputed envelope exceeds existing8MiB admission; no artifact emitted"; }
+            catch (Exception e) { sizeStatus = "recomputed size unavailable: " + e.Message; }
+            try { grant = _peer!.CurrentBusinessGrant?.Identity; checkpoint = _peer.Checkpoint("failure-metadata", _flightCorrelation); }
+            catch (Exception e) { absent.Add("exact ACK/Ready ordinals unavailable: " + e.Message); }
+        }
+        var flight = _peer?.Sent.LastOrDefault(x => x.Correlation == _flightCorrelation);
+        var terminal = _peer?.Results.LastOrDefault(x => x.Correlation == _flightCorrelation);
+        return new(DateTimeOffset.UtcNow, Environment.TickCount64-_start, _stage, flight, terminal,
+            _flightTargetVersion ?? terminal?.Result.Result?.StateVersion, baseline?.Identity, baseline?.State.Observation.Recipe?.Version,
+            hash, size, sizeStatus, grant, _peer?.Grants.LastOrDefault(), checkpoint?.ExactAckSent,
+            checkpoint?.BaselineReceiveOrdinal, checkpoint?.AckSendOrdinal, checkpoint?.ReadyReceiveOrdinal,
+            _observer?.Images.LastOrDefault(), _observer?.Received.LastOrDefault(x => x.Ack is not null),
+            _observer?.Grants.LastOrDefault(), absent.Count == 0 ? null : string.Join("; ", absent));
+    }
     private void Write(bool passed, Exception? error = null)
     {
         Directory.CreateDirectory(Path.GetDirectoryName(reportPath)!);
@@ -324,7 +352,7 @@ internal sealed class RichRunner(string role, string caseId, string runId, strin
         var provenance = new RichProvenance(source, dirty, Files(bin), typeof(CookingLevelEtHost).Assembly.ManifestModule.ModuleVersionId, typeof(CookingNetworkSessionHost).Assembly.ManifestModule.ModuleVersionId, typeof(CookingNetworkWireCodec).Assembly.ManifestModule.ModuleVersionId, RichProof.Sha(File.ReadAllBytes(Path.Combine(bin, CookingMenuCatalog.ContentFileName))), _fixture.Catalog.Sha256, _fixture.Content.Identity, RichProof.TextHash(JsonSerializer.Serialize(Roles, CookingNetworkWireCodec.JsonOptions)), RichProof.Sha(File.ReadAllBytes(Path.Combine(bin, "sources", "CookingRichRecoveryFixture.cs"))), RichProof.Sha(File.ReadAllBytes(Path.Combine(bin, "sources", "CookingRichRecoveryPlanner.cs"))), State.FrontConfigurationIdentity, State.PreparationConfigurationIdentity, State.InstalledLayout is null ? null : RichProof.TextHash(JsonSerializer.Serialize(State.InstalledLayout, CookingNetworkWireCodec.JsonOptions)), System.Runtime.InteropServices.RuntimeInformation.FrameworkDescription, System.Runtime.InteropServices.RuntimeInformation.OSDescription);
         var cut = _injected || _clientCut ? new RichCut(caseId, true, _cutLifecycle, CookingRichRecoveryFixture.Partner, CookingRichRecoveryFixture.Chef, _originalGeneration, _recoveredGeneration, _peer!.Binding.ServerSessionInstance, _process, _item, _container, _cutSnapshots.ToArray(), _cutCallers.ToArray(), _cutFrames.ToArray(), _controls.ToArray(), _close, _originalWire, _originalReply, _retryWire, _retryOutcome, _peer.Dropped, _manualElapsed, 0, caseId == "manual-paused" ? "chef-completed-manual-cut" : "remote-recovery-complete", _preCutIssued, _preCutAck, _committedIssued, _pausedPending, _committedCallerImage) : null;
         var report = new RichEndpointReport(1, "rich-recovery-four-cutpoints-v1", role, runId, caseId, passed, _stage, error?.ToString(), new(Environment.ProcessId, _processStart, null, RichProof.Sha(File.ReadAllBytes(typeof(RichRunner).Assembly.Location))), topology, role == "host" ? _session?.Endpoint ?? address : address + ":" + port, CookingNetworkWireCodec.ProtocolVersion, CookingLevelCheckpointCodec.CurrentFormatVersion, 5, provenance, Roles,
-            new(600000,20000,30000,15000,10,Environment.TickCount64-_start,_commands,_frames), _phases.ToArray(), cut, _ended, _successor, _final, _observer?.Received.ToArray() ?? Array.Empty<RichWireInput>(), _observer?.Replies.ToArray() ?? Array.Empty<RichWireReply>(), _peer?.Sent.ToArray() ?? Array.Empty<RichCallerCommand>(), _peer?.Results.ToArray() ?? Array.Empty<RichCallerOutcome>(), _peer?.Dropped, _observer?.Images.ToArray() ?? Array.Empty<RichIssued>(), _observer?.Grants.ToArray() ?? Array.Empty<RichWireGrant>(), _observer?.ClosedChannels.ToArray() ?? Array.Empty<RichClose>(), _peer?.Grants.ToArray() ?? Array.Empty<CookingNetworkBaselineIdentity>(), _fixture.Content.Items.Values.Where(x => x.Container is not null).OrderBy(x => x.Id.Value, StringComparer.Ordinal).Select(x => new RichContainerRule(x.Id, x.Container!.Capacity, x.Container.AcceptedDefinitions.OrderBy(d => d.Value, StringComparer.Ordinal).ToArray(), x.Container.DisposableOnSubmission)).ToArray(), Canonicals());
+            new(600000,20000,30000,15000,10,Environment.TickCount64-_start,_commands,_frames), _phases.ToArray(), cut, _ended, _successor, _final, _observer?.Received.ToArray() ?? Array.Empty<RichWireInput>(), _observer?.Replies.ToArray() ?? Array.Empty<RichWireReply>(), _peer?.Sent.ToArray() ?? Array.Empty<RichCallerCommand>(), _peer?.Results.ToArray() ?? Array.Empty<RichCallerOutcome>(), _peer?.Dropped, _observer?.Images.ToArray() ?? Array.Empty<RichIssued>(), _observer?.Grants.ToArray() ?? Array.Empty<RichWireGrant>(), _observer?.ClosedChannels.ToArray() ?? Array.Empty<RichClose>(), _peer?.Grants.ToArray() ?? Array.Empty<CookingNetworkBaselineIdentity>(), _fixture.Content.Items.Values.Where(x => x.Container is not null).OrderBy(x => x.Id.Value, StringComparer.Ordinal).Select(x => new RichContainerRule(x.Id, x.Container!.Capacity, x.Container.AcceptedDefinitions.OrderBy(d => d.Value, StringComparer.Ordinal).ToArray(), x.Container.DisposableOnSubmission)).ToArray(), Canonicals(), _failureDiagnostic);
         File.WriteAllText(reportPath, JsonSerializer.Serialize(report, new JsonSerializerOptions(CookingNetworkWireCodec.JsonOptions) { WriteIndented = true }));
     }
 }
