@@ -8,7 +8,7 @@ $buildProjects=@('src/AbilityKit.Game.Cooking.DatagramImpairmentRelay/AbilityKit
 function Build-Inputs {
  $inputs=@()
  foreach($base in @((Join-Path $root 'src'),(Join-Path $root 'Unity/Packages'))){
-  foreach($file in @(Get-ChildItem -LiteralPath $base -File -Recurse|Where-Object {$_.FullName -notmatch '[\\/](bin|obj)[\\/]' -and $_.Extension -in @('.cs','.csproj','.props','.targets','.asmdef')}|Sort-Object FullName)){
+  foreach($file in @(Get-ChildItem -LiteralPath $base -File -Recurse|Where-Object {$_.FullName -notmatch '[\\/](bin|obj)[\\/]' -and $_.Extension -in @('.cs','.csproj','.props','.targets','.asmdef','.json')}|Sort-Object FullName)){
    $inputs+=[pscustomobject]@{path=$file.FullName.Substring($root.Length+1);sha=(Get-FileHash -LiteralPath $file.FullName -Algorithm SHA256).Hash}
   }
  }
