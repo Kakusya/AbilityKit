@@ -1,4 +1,4 @@
-﻿# N03 实施顺序与验证清单
+# N03 实施顺序与验证清单
 
 当前in_progress，仅root2026-10-03批准的本地确定性恢复/边界工程增量。N02整体仍in_progress，物理gate未满足；这个局部依赖例外不表示N02完成。.NET由root串行授窗。最新master实测和剩余出口见research/master-local-recovery-verification.md；旧授窗记录不代表当前进程仍在运行。
 
@@ -14,3 +14,7 @@
 
 历史规划阶段仅进行了只读审议。随后已获准执行并合入cold4、live6与测量工具，最新master ET808/324和两拓扑容量控制实际通过；不是未执行计划。第5项丰富链四断点仍在实施，独立进程故障/负载、物理两PC和正式性能验收尚未关闭，不得由受限测试推导整体完成。
 
+
+## Current verification update ? 2026-10-03
+
+Item5 rich F01+D31 four-cutpoint recovery is integrated and verified in actual master ET328; corrected master Cooking815 and network-sdk311 also passed with zero failures/skips. See research/master-local-recovery-verification.md and rich-recovery-independent-review.md. Historical pending statements above are superseded within that local scope. Independent-process fault/load, profiling, higher-load/packet faults and physical two-PC remain open. Root granted measurement_profile_resume the sole .NET window after confirming no dotnet/testhost process; ack_fix_review continues process-runner source review only until a separate explicit grant.

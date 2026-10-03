@@ -1,47 +1,41 @@
 {
-    "id":  "cooking-network-reconnect-measurement",
-    "name":  "cooking-network-reconnect-measurement",
-    "title":  "网络恢复与测量",
-    "description":  "断线、旧局输入、负载与延迟",
-    "status":  "in_progress",
-    "dev_type":  null,
-    "scope":  null,
-    "package":  null,
-    "priority":  "P2",
-    "creator":  "Li He",
-    "assignee":  "Li He",
-    "createdAt":  "2026-10-02",
-    "completedAt":  null,
-    "branch":  "cooking-network-recovery-current",
-    "base_branch":  "master",
-    "worktree_path":  "C:/Users/Administrator/orca/workspaces/AbilityKit/cooking-network-recovery-current",
-    "commit":  "8c9903488",
-    "pr_url":  null,
-    "subtasks":  [
-
-                 ],
-    "children":  [
-
-                 ],
-    "parent":  "10-02-cooking-gameplay-menu-plan",
-    "relatedFiles":  [
-
-                     ],
-    "notes":  "Root authorized bounded local recovery. Reviewed cold4/live6 and measurement increments merged; actual master ET808/324 and both capacity controls passed. N02 independent-process paired command passed. Overall N02/N03 remain in_progress: rich four-cutpoint recovery ongoing, physical two-PC not verified, performance thresholds unset; Unity deferred.",
-    "meta":  {
-                 "plan_id":  "N03",
-                 "stage":  "network",
-                 "planning_only":  false,
-                 "implementation_authorized":  true,
-                 "dependencies":  [
-                                      "N02"
-                                  ],
-                 "execution_gate":  "reviewed-contract-and-dependencies",
-                 "planning_maturity":  "reviewed-contract",
-                 "owner_delegated_details":  true,
-                 "execution_authorization":  "Latest owner: audit every topic then execute through completion. Task planning review and dependency checks precede execution; Unity and optional reference pool remain deferred.",
-                 "local_dependency_exception":  "N02 source corrections reviewed and frozen; only local recovery/boundary engineering may precede whole N02/physical exit",
-                 "local_increment_status":  "merged-and-master-verified-cold4-live6-measurement-control",
-                 "remaining_exit":  "rich-four-cutpoint-recovery; independent-process-fault-load; physical-two-PC-NOT_VERIFIED; performance-threshold-UNSET"
-             }
+  "id": "cooking-network-reconnect-measurement",
+  "name": "cooking-network-reconnect-measurement",
+  "title": "网络恢复与测量",
+  "description": "断线、旧局输入、负载与延迟",
+  "status": "in_progress",
+  "dev_type": null,
+  "scope": null,
+  "package": null,
+  "priority": "P2",
+  "creator": "Li He",
+  "assignee": "Li He",
+  "createdAt": "2026-10-02",
+  "completedAt": null,
+  "branch": "cooking-network-recovery-current",
+  "base_branch": "master",
+  "worktree_path": "C:/Users/Administrator/orca/workspaces/AbilityKit/cooking-network-recovery-current",
+  "commit": "3979beed5",
+  "pr_url": null,
+  "subtasks": [],
+  "children": [],
+  "parent": "10-02-cooking-gameplay-menu-plan",
+  "relatedFiles": [],
+  "notes": "Reviewed cold4/live6, full-menu rich4, deferred ACK isolation5 and ACK production correction merged. Actual corrected master Cooking815/ET328 and network-sdk311 passed, zero failures/skips. Independent-process fault/load and measurement profiling now executing; physical two-PC NOT_VERIFIED, formal performance thresholds UNSET; N02/N03 remain in_progress, Unity deferred.",
+  "meta": {
+    "plan_id": "N03",
+    "stage": "network",
+    "planning_only": false,
+    "implementation_authorized": true,
+    "dependencies": [
+      "N02"
+    ],
+    "execution_gate": "reviewed-contract-and-dependencies",
+    "planning_maturity": "reviewed-contract",
+    "owner_delegated_details": true,
+    "execution_authorization": "Latest owner: audit every topic then execute through completion. Task planning review and dependency checks precede execution; Unity and optional reference pool remain deferred.",
+    "local_dependency_exception": "N02 source corrections reviewed and frozen; only local recovery/boundary engineering may precede whole N02/physical exit",
+    "local_increment_status": "merged-and-master-verified-cold4-live6-rich4-deferred-ack5-corrected-production",
+    "remaining_exit": "independent-process-fault-load; higher-load-and-packet-fault-matrix; physical-two-PC-NOT_VERIFIED; performance-analysis-and-threshold-UNSET"
+  }
 }
