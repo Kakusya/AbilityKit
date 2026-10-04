@@ -1,0 +1,215 @@
+{
+  "notice": "Planning shape examples only; synthetic IDs, no execution/acceptance proof. All example=true.",
+  "cases": [
+    {
+      "scenario": "required-unity-missing",
+      "result": {
+        "schemaVersion": 1,
+        "example": true,
+        "resultType": "gate",
+        "runId": "example-run-not-executed",
+        "resultId": "example-result-not-executed",
+        "name": "example-gate",
+        "kind": "gate",
+        "status": "Blocked",
+        "cliExitCode": 2,
+        "processExitCode": null,
+        "reason": "UnityManagedMissing",
+        "source": {
+          "sha": "7aa3e8b67c13a469192edaa761cb3dfc1fa9294b",
+          "dirty": false,
+          "inputManifestSha256": null
+        },
+        "configSha256": "ce8a476835eb6ac0820538f9560a61a59a23bc1756ca5e9d54fd306bc9dd01b4",
+        "startedAt": null,
+        "endedAt": null,
+        "command": null,
+        "tools": [],
+        "coverage": {
+          "required": [
+            "unity-mirror"
+          ],
+          "optional": [],
+          "completed": [],
+          "missingRequired": [
+            "unity-mirror"
+          ],
+          "missingOptional": []
+        },
+        "tests": null,
+        "artifacts": [],
+        "fullGateAccepted": false,
+        "steps": []
+      }
+    },
+    {
+      "scenario": "optional-unity-dotnet-passed",
+      "result": {
+        "schemaVersion": 1,
+        "example": true,
+        "resultType": "gate",
+        "runId": "example-run-not-executed",
+        "resultId": "example-result-not-executed",
+        "name": "example-gate",
+        "kind": "gate",
+        "status": "Passed",
+        "cliExitCode": 0,
+        "processExitCode": null,
+        "reason": null,
+        "source": {
+          "sha": "7aa3e8b67c13a469192edaa761cb3dfc1fa9294b",
+          "dirty": false,
+          "inputManifestSha256": null
+        },
+        "configSha256": "ce8a476835eb6ac0820538f9560a61a59a23bc1756ca5e9d54fd306bc9dd01b4",
+        "startedAt": null,
+        "endedAt": null,
+        "command": null,
+        "tools": [],
+        "coverage": {
+          "required": [
+            "dotnet:fixture"
+          ],
+          "optional": [
+            "unity-mirror"
+          ],
+          "completed": [
+            "dotnet:fixture"
+          ],
+          "missingRequired": [],
+          "missingOptional": [
+            "unity-mirror"
+          ]
+        },
+        "tests": null,
+        "artifacts": [],
+        "fullGateAccepted": true,
+        "steps": [
+          {
+            "schemaVersion": 1,
+            "example": true,
+            "resultType": "step",
+            "runId": "example-run-not-executed",
+            "resultId": "example-mirror-skipped",
+            "name": "example-gate",
+            "kind": "powershell-script",
+            "status": "Skipped",
+            "cliExitCode": 3,
+            "processExitCode": 2,
+            "reason": "OptionalUnityUnavailable",
+            "source": {
+              "sha": "7aa3e8b67c13a469192edaa761cb3dfc1fa9294b",
+              "dirty": false,
+              "inputManifestSha256": null
+            },
+            "configSha256": "ce8a476835eb6ac0820538f9560a61a59a23bc1756ca5e9d54fd306bc9dd01b4",
+            "startedAt": null,
+            "endedAt": null,
+            "command": null,
+            "tools": [],
+            "coverage": {
+              "required": [],
+              "optional": [
+                "unity-mirror"
+              ],
+              "completed": [],
+              "missingRequired": [],
+              "missingOptional": [
+                "unity-mirror"
+              ]
+            },
+            "tests": null,
+            "artifacts": [],
+            "fullGateAccepted": false,
+            "steps": []
+          }
+        ]
+      }
+    },
+    {
+      "scenario": "stepname-partial",
+      "result": {
+        "schemaVersion": 1,
+        "example": true,
+        "resultType": "gate",
+        "runId": "example-run-not-executed",
+        "resultId": "example-result-not-executed",
+        "name": "example-gate",
+        "kind": "gate",
+        "status": "NotRun",
+        "cliExitCode": 4,
+        "processExitCode": null,
+        "reason": "FocusedSelection",
+        "source": {
+          "sha": "7aa3e8b67c13a469192edaa761cb3dfc1fa9294b",
+          "dirty": false,
+          "inputManifestSha256": null
+        },
+        "configSha256": "ce8a476835eb6ac0820538f9560a61a59a23bc1756ca5e9d54fd306bc9dd01b4",
+        "startedAt": null,
+        "endedAt": null,
+        "command": null,
+        "tools": [],
+        "coverage": {
+          "required": [
+            "step:a",
+            "step:b"
+          ],
+          "optional": [],
+          "completed": [
+            "step:a"
+          ],
+          "missingRequired": [
+            "step:b"
+          ],
+          "missingOptional": []
+        },
+        "tests": null,
+        "artifacts": [],
+        "fullGateAccepted": false,
+        "steps": []
+      }
+    },
+    {
+      "scenario": "invalid-child-report",
+      "result": {
+        "schemaVersion": 1,
+        "example": true,
+        "resultType": "gate",
+        "runId": "example-run-not-executed",
+        "resultId": "example-result-not-executed",
+        "name": "example-gate",
+        "kind": "gate",
+        "status": "Failed",
+        "cliExitCode": 1,
+        "processExitCode": null,
+        "reason": "MissingResult",
+        "source": {
+          "sha": "7aa3e8b67c13a469192edaa761cb3dfc1fa9294b",
+          "dirty": false,
+          "inputManifestSha256": null
+        },
+        "configSha256": "ce8a476835eb6ac0820538f9560a61a59a23bc1756ca5e9d54fd306bc9dd01b4",
+        "startedAt": null,
+        "endedAt": null,
+        "command": null,
+        "tools": [],
+        "coverage": {
+          "required": [
+            "script:fixture"
+          ],
+          "optional": [],
+          "completed": [],
+          "missingRequired": [
+            "script:fixture"
+          ],
+          "missingOptional": []
+        },
+        "tests": null,
+        "artifacts": [],
+        "fullGateAccepted": false,
+        "steps": []
+      }
+    }
+  ]
+}

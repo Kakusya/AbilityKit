@@ -1,0 +1,7 @@
+{"file": "AGENTS.md", "reason": "Merged result and scope rules"}
+{"file": ".trellis/spec/abilitykit/index.md", "reason": "Project engineering boundary"}
+{"file": ".trellis/spec/abilitykit/validation.md", "reason": "Actual verification recording"}
+{"file": "Docs/AbilityKit测试门禁与批量回归规范.md", "reason": "Existing gate semantics"}
+{"file": "Docs/design/CookingGame/current-et-foundation-contract.md", "reason": "Accepted contract E"}
+{"file": ".trellis/tasks/10-04-test-gate-result-contract/design.md", "reason": "Pending design and explicit decisions"}
+{"file": ".trellis/tasks/10-04-test-gate-result-contract/research/issue-6-requirements.md", "reason": "Full issue requirements"}

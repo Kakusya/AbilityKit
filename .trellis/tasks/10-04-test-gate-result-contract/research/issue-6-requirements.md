@@ -1,0 +1,81 @@
+## Orca required reading
+
+本任务所需资料已完整写入 [#5 体检报告全文](https://github.com/Kakusya/AbilityKit/issues/5#architecture-report) 与 [AGENTS.md 提案全文](https://github.com/Kakusya/AbilityKit/issues/5#agents-proposal)，无需读取聊天附件。
+
+**何时读取：** 当前可预读；获准领取后、制定实施计划和修改代码前必须阅读，提交验收前再次对照最新正文。重点阅读 [验收状态和治理断口](https://github.com/Kakusya/AbilityKit/issues/5#verification-and-governance)；首次反馈列明已读材料、依据的源码 SHA、采用的合同和仍未决问题。阅读材料不解除本任务的 blocked 状态，执行仍需本 Issue 的依赖及设计门满足。
+
+# 修复门禁结果真实性：Skipped / Blocked 不再误记 Passed
+
+## 优先级、依赖与执行边界
+
+- 架构基础优先，发布时保持 `blocked`；依赖 #5 的结果状态/覆盖合同审议通过后，由 dot 复核再交本地 Orca。不要仅因本 Issue 已创建就启动实施。
+- 本任务只修门禁运行器、结果合同和相应自测；不迁移 gameplay、不升级 ET/SDK/依赖、不启动 Unity/S15 或延期性能工作。
+- 审计源码基线：`a2cd7284e12d50a10bbb7abee6fc265577b9aa7c`。发布时 master：`5312c6e4bf2b612260297e2d8623aa362a9051e6`，仅新增仓库重建交接文档，未改变本问题的代码。实施前仍须记录实际 base SHA 与 dirty 状态。
+- 阅读最新 `AGENTS.md`、`Docs/design/CookingGame/progress.md`、`Docs/design/CookingGame/reclone-handoff-2026-10-04.md` 和相关 task/spec/check。历史 local 证据已迁到本机备份；缺原件写明 unavailable，不把新 clone、旧摘要或后来 DLL 当原始验证。
+
+## 已核实的问题
+
+`tools/run-unity-compile-check.ps1` 在 Unity managed DLL 目录不存在时警告后 `exit 0`。`tools/run_test_gate.ps1` 的 `Invoke-PowerShellScriptStep` 仅按 exit code 把这一结果写为 `Passed`。`core-stability` 使用该步骤，因此当前结构化结果无法区分“真正编译通过”和“没有编译”。这是静态可证明的误报路径，不是声称某次既有交付已被错误接受。
+
+已有 `Assert-DotNetTrxResult` 和 Unity XML 校验应保留并加强，不能另造一套只看文本的报告器。
+
+## 目标与允许改动
+
+延续 `tools/test-gates.json` 作为唯一 gate 定义入口，为子步骤与父 gate 建立可验证的结果/覆盖合同。
+
+主要路径：
+- `tools/run_test_gate.ps1`
+- `tools/run-unity-compile-check.ps1`
+- `tools/test-gates.json`
+- `tools/unity-compile-check/UnityCompileCheck.csproj`：仅在把已声明参数真正传到镜像编译所需时修改
+- `Docs/AbilityKit测试门禁与批量回归规范.md`
+- 建议新增 `tools/tests/test-gate-result-contract.tests.ps1` 及隔离 fixtures；若已有合适自测位置，复用并在任务计划解释
+
+注意：Unity managed DLL 的 asmdef-boundary mirror 编译只证明该镜像覆盖，不等于 Unity Editor 编译、EditMode、PlayMode、Mono 或 IL2CPP 验证。
+
+## 实施步骤
+
+1. 本地 Orca 先提交小型实施计划和结果 schema 样例。明确 `Passed`、`Failed`、`Blocked`、`Skipped`、`NotRun` 的含义、必需/可选覆盖规则、子 gate 汇总规则及 CLI exit code 映射；dot 审议后再改运行器。
+2. 给本次运行及每个步骤建立唯一 run identity；记录源 SHA、dirty 状态、开始/结束时间、实际命令、工具版本、输入配置 hash、退出码、结果与原始日志位置。引用产物需记录身份/hash；不要把机密或用户绝对路径放入公开报告。
+3. 脚本型步骤必须通过显式机器可读结果向父运行器报告状态/覆盖。缺必需工具、未执行、结果文件缺失/无效、旧 run identity、子结果与退出码矛盾，均不得归为 `Passed`。选定 schema 后只保留一个汇总真相来源，控制台与 JSON 不得各说一套。
+4. 把 Unity 镜像检查改为真实报告：缺安装为 `Skipped` 或 `Blocked`（依该 gate 的 requiredCoverage），保留具体原因与请求的覆盖；仅真实完成所声明编译且产物可归属本次运行才可 `Passed`。核实 `UnityVersion`/managed DLL 参数被实际使用，而非只检测一个路径后编译另一个硬编码路径。
+5. 为 gate/step 明确 `requiredCoverage`（字段最终名由实施计划确定）。纯 .NET gate 可在可选 Unity 未执行时通过自身的 .NET 合同，但摘要必须保留 Unity=`NotRun`/`Skipped`；要求 Unity 覆盖的 gate 则必须非成功退出。父 gate 继承所有 required child 的失败/阻塞/缺失覆盖，不能因聚合脚本 exit 0 变绿。
+6. `-StepName`、`-NoBuild`、`-NoRestore` 的结果必须显式列出缩减覆盖和产物前提；单步跑过不能打印完整 gate 已验收。中止后的未执行步骤记录 `NotRun`，不从汇总消失。
+7. 保留 TRX/XML 原始结果校验，补本次运行身份、结果新鲜度及失败计数一致性检查。不可用机器全局 mtime 作为唯一证据；使用独立输出目录与 manifest/run identity，禁止复用旧结果冒充本次运行。
+8. 给所有现有脚本步骤列兼容迁移表；只修改本 Issue 所需的结果输出，不重构无关测试。更新文档样例，明确总体结果、覆盖、未运行原因与 artifact provenance。
+
+## 必须自动执行的正反控制
+
+使用临时、隔离 fixture 和可注入工具探测/步骤执行，不要求安装 Unity 才能验证 runner 自身。测试不得污染真实 `local/Logs` 或伪造历史通过。
+
+- 正例：真实 fixture 成功退出且提交本次有效结果，父 gate 正确通过。
+- 缺 Unity 安装：step 不是 `Passed`；requiredCoverage=Unity 的父 gate 阻塞/非成功退出；可选时只允许对应 .NET gate 通过并清楚显示缺失覆盖。
+- 工具/子进程缺失、实际编译失败、超时、子进程被取消：状态/退出码与原因一致，未执行后续步骤不记通过。
+- exit 0 但缺结果、空产物、无效 JSON/XML/TRX、声明应运行测试却零测试、TRX 有失败但子进程 exit 0：均拒绝成功。
+- 旧目录中的有效 TRX、不同 SHA/run identity 的结果、后来覆盖的 DLL：均不能成为本次验收证据。
+- 子 gate 返回 `Blocked`/`Failed`/缺 required coverage，父 gate 不可 `Passed`。
+- `-StepName` 聚焦运行不声称全 gate 已通过；`-NoBuild` 没有满足身份前提时不认可旧二进制。
+- 现有有效正例、原始失败日志和具体覆盖范围保留，没有因修模型把全部历史状态直接重写。
+
+## 验收与完成条件
+
+- [ ] 修复前 fixture 能复现 skip→Passed 路径；修复后同一 fixture 按合同阻止误报。
+- [ ] 上述正反控制全部有可重跑命令、测试数、结果文件、退出码及 exact SHA。
+- [ ] 对一项适用的真实 .NET gate 执行新运行器，报告真实测试结果；对 Unity 镜像只按本机实际可用且已获准的覆盖执行，没有环境则明确阻塞，不安装/升级或扩大 Unity 任务。
+- [ ] 逐个检查所有现存 step kind 的汇总逻辑及脚本兼容清单，不能只有新增 fixture 正确而生产 runner 仍按 exit 0 通吃。
+- [ ] 文档中对 gate/step coverage 的描述与结构化结果一致，AGENTS 只链接现行规则，不重新堆历史状态。
+- [ ] dot 已复核最终 diff、真实命令与负例；本地 Orca 的反馈区分 Passed/Failed/Blocked/NotRun。本 Issue 不以“脚本完成”替代验收，不自动解锁 #1–4。
+
+## 反馈与停止条件
+
+首次反馈应附：实施计划、兼容影响、结果 schema 样例与预计受影响 gate。最终反馈附：提交/dirty 状态、命令矩阵、原始结果链接或仓库相对路径、覆盖差异、仍未运行项。
+
+如需改业务、升级工具、接入新 CI、改远端分支保护/权限或运行未授权 Unity，立即记录具体缺口并交 dot 审议；不在本 Issue 偷带扩大范围。
+
+## 源码证据
+
+- [Unity skip 分支](https://github.com/Kakusya/AbilityKit/blob/a2cd7284e12d50a10bbb7abee6fc265577b9aa7c/tools/run-unity-compile-check.ps1#L13-L17)
+- [父脚本退出码归并](https://github.com/Kakusya/AbilityKit/blob/a2cd7284e12d50a10bbb7abee6fc265577b9aa7c/tools/run_test_gate.ps1#L339-L345)
+- [门禁唯一入口](https://github.com/Kakusya/AbilityKit/blob/a2cd7284e12d50a10bbb7abee6fc265577b9aa7c/tools/test-gates.json)
+- [最新重建交接](https://github.com/Kakusya/AbilityKit/blob/5312c6e4bf2b612260297e2d8623aa362a9051e6/Docs/design/CookingGame/reclone-handoff-2026-10-04.md)
+
