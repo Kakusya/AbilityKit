@@ -3,7 +3,7 @@
 ## 协调者接管与 Issue #6 实施中（2026-10-04）
 
 - Owner 明确由当前协调者接替 dot 的方案审议、Issue 组织、派发、审计和收尾职责，采用 [协调审计与执行者 SOP](../../../.trellis/spec/abilitykit/supervised-issue-delivery.md)。下方等待 Dot 的调度已被本节覆盖，历史审阅证据保留。
-- [Issue #6](https://github.com/Kakusya/AbilityKit/issues/6) 的修订计划 `5dc303a809` 已经协调者审阅批准，在 `issue6-test-gate-results` 由 GPT-6.1-Sol / medium 分段实施。Slice A 提交 `086e73491` 的 86 项隔离测试经协调者独立复跑通过；补充反例发现步骤回执可伪装为嵌套门禁，修复和剩余脚本适配进行中。整个 Issue 尚未验收。
+- [Issue #6](https://github.com/Kakusya/AbilityKit/issues/6) 的修订计划 `5dc303a809` 已经协调者审阅批准，在 `issue6-test-gate-results` 由 GPT-6.1-Sol / medium 分段实施。2026-10-05 更新：B1 提交 `56ebd215d` 已修复步骤回执伪装；协调者独立复跑 133 项有 1 项输出捕获失败，并发现覆盖引用为空和非规范状态仍被接受。修复与剩余适配进行中，见 [SOP 试行审计记录](../../../.trellis/tasks/10-04-supervised-issue-delivery-sop/research/issue6-trial-audit.md)。整个 Issue 尚未验收。
 - Owner 已授权本次审计通过后的本地 master 合并与该 worktree 清理；尚未执行。真实 .NET 门禁、集成检查和证据迁移仍待完成，不能用隔离测试结果替代。其余 Issue 的实施、合并或发布不由本次授权解锁。
 - 既有 ET 固定版本、玩法/网络剩余出口、性能延期、Unity 后置和物理 LAN 未验证边界保留。
 
