@@ -1,15 +1,41 @@
-# Documentation verification method
+# Documentation verification method (R3 revision)
 
-This task-scoped checker is an audit aid, not a production architecture gate. It checks UTF-8 decoding, replacement/lossy text, local links and explicit contract anchors, balanced fences, exact archived AGENTS text, documentation-only paths and git diff --check. Existing baseline errors are reported separately. External URLs are not claimed HTTP-verified; Issue and labels were read through authenticated gh. Tables/source semantics receive independent manual review.
+This task-scoped audit aid is not the #6 production test runner or an implemented architecture gate. It checks declared documentation coverage: strict UTF-8, lossy/replacement text, local links and explicit contract anchors, balanced fences, exact historical AGENTS text and documentation-only scope. Pure documentation checks may pass their own declared coverage; .NET/Unity/game/network/protoc tests remain NotRun, never tests Passed.
 
-Controls: existing-link positive, deliberately missing-link negative, unclosed-fence negative. Runtime build/test/Unity NotRun.
+## Reproduce committed and local difference checks separately
 
-Actual command: `python local/verify_issue5_docs.py`. Exit/results are saved in doc-validation.json. To reproduce, save the following UTF-8 source as local/verify_issue5_docs.py and run from the repository root while this task path exists.
+Save the UTF-8 code below as local/verify_issue5_docs.py, then run from the repository root:
+
+```text
+python local/verify_issue5_docs.py --reviewed-head <reviewed-head> --output local/issue5-final-doc-validation.json
+git diff --check 5312c6e4bf2b612260297e2d8623aa362a9051e6 <reviewed-head>
+git diff --check
+git diff --cached --check
+```
+
+The first diff checks the committed PR change against its approved baseline even after the worktree is clean. The second diff checks unstaged changes; the third checks the index versus HEAD. A clean-tree zero from a local-only diff is not evidence for the committed PR difference. The checker resolves reviewed-head to an exact commit and records all three actual argv/exit codes, checkedOutHead, gitStatusBefore and committedContentProven (true only for a clean tree at the reviewed commit). The final reviewed SHA is reported in the Issue response rather than recursively committed into its own record.
+
+Markdown content is scanned from the working tree, so committed-content proof requires clean git status and checked-out HEAD equal to reviewed-head. For a different revision, use an authorized checkout of that revision; supplying its SHA alone does not check its file content. Precommit scans explicitly record dirty paths and the old committed head. The --output local/... option keeps final SHA receipts outside tracked documents, avoiding self-SHA commit loops.
+
+Controls: valid existing-link positive, deliberately missing-link negative, unclosed-fence negative. Previous baseline link issues are reported separately. External URLs are not blanket HTTP-verified; Issue/review/labels are read with gh. Source/table semantics require independent review. The checker does not assert CI execution; check-runs/status counts must be queried separately. Empty statuses and pending aggregate do not prove a running CI job.
+
+Original first-round commands/results in verification.md and prior Issue response remain historical evidence; this method supersedes their local-only reproduction recipe. No runtime/CI/protocol code is changed.
+
+## Checker source
 
 ```python
 from pathlib import Path
 from urllib.parse import unquote, urlsplit
-import subprocess, re, json, hashlib
+import subprocess, re, json, hashlib, argparse
+
+parser = argparse.ArgumentParser(description='Task-scoped documentation audit; not a runtime test gate.')
+parser.add_argument('--reviewed-head', default='HEAD', help='Committed PR revision to check against BASE.')
+parser.add_argument('--output', default='.trellis/tasks/10-04-current-et-foundation-contract/research/doc-validation.json')
+args = parser.parse_args()
+reviewed_head = subprocess.check_output(['git', 'rev-parse', '--verify', args.reviewed_head + '^{commit}'], text=True).strip()
+checked_out_head = subprocess.check_output(['git', 'rev-parse', '--verify', 'HEAD'], text=True).strip()
+tree_status = subprocess.check_output(['git', 'status', '--porcelain'], text=True).splitlines()
+committed_content_proven = not tree_status and checked_out_head == reviewed_head
 
 ROOT = Path.cwd()
 BASE = '5312c6e4bf2b612260297e2d8623aa362a9051e6'
@@ -106,12 +132,17 @@ allowed = {'AGENTS.md', 'Docs/design/CookingGame/progress.md', 'Docs/design/Cook
 out_of_scope = [p for p in tracked + untracked if p not in allowed and not p.startswith(TASK.as_posix() + '/')]
 if out_of_scope:
     introduced.append(['scope', 'out-of-scope', out_of_scope])
-diff = subprocess.run(['git', 'diff', '--check'], capture_output=True, text=True)
-if diff.returncode:
-    introduced.append(['git', 'diff-check', diff.stdout + diff.stderr])
-report = {'status': 'Passed' if not introduced else 'Failed', 'baseline': BASE, 'files': results, 'introducedErrors': introduced, 'preexistingErrors': preexisting, 'historicalTextExact': history_equal, 'outOfScope': out_of_scope, 'gitDiffCheckExit': diff.returncode, 'checkerControls': controls, 'runtime': {'dotnet': 'NotRun', 'unity': 'NotRun', 'game': 'NotRun'}, 'command': 'python local/verify_issue5_docs.py'}
-(TASK / 'research/doc-validation.json').write_text(json.dumps(report, ensure_ascii=False, indent=2) + '\n', encoding='utf-8')
-print(json.dumps({'status': report['status'], 'files': len(results), 'links': sum(x['localLinksChecked'] for x in results), 'introducedErrors': introduced, 'preexistingErrors': preexisting, 'historyExact': history_equal, 'gitDiffCheckExit': diff.returncode}, ensure_ascii=False, indent=2))
+diff_checks = []
+for label, argv in [('committedPR', ['git', 'diff', '--check', BASE, reviewed_head]),
+                    ('unstaged', ['git', 'diff', '--check']),
+                    ('staged', ['git', 'diff', '--cached', '--check'])]:
+    diff = subprocess.run(argv, capture_output=True, text=True)
+    diff_checks.append({'scope': label, 'argv': argv, 'exitCode': diff.returncode})
+    if diff.returncode:
+        introduced.append(['git', label, diff.stdout + diff.stderr])
+report = {'status': 'Passed' if not introduced else 'Failed', 'baseline': BASE, 'reviewedHead': reviewed_head, 'checkedOutHead': checked_out_head, 'committedContentProven': committed_content_proven, 'scannedTree': 'working tree', 'gitStatusBefore': tree_status, 'files': results, 'introducedErrors': introduced, 'preexistingErrors': preexisting, 'historicalTextExact': history_equal, 'outOfScope': out_of_scope, 'diffChecks': diff_checks, 'checkerControls': controls, 'runtime': {'dotnet': 'NotRun', 'unity': 'NotRun', 'game': 'NotRun'}, 'command': 'python local/verify_issue5_docs.py --reviewed-head ' + args.reviewed_head + ' --output ' + args.output}
+Path(args.output).write_text(json.dumps(report, ensure_ascii=False, indent=2) + '\n', encoding='utf-8')
+print(json.dumps({'status': report['status'], 'reviewedHead': reviewed_head, 'checkedOutHead': checked_out_head, 'committedContentProven': committed_content_proven, 'files': len(results), 'links': sum(x['localLinksChecked'] for x in results), 'introducedErrors': introduced, 'preexistingErrors': preexisting, 'historyExact': history_equal, 'diffChecks': diff_checks}, ensure_ascii=False, indent=2))
 raise SystemExit(bool(introduced))
 
 ```

@@ -24,13 +24,17 @@
   "notes": "",
   "meta": {
     "github_issue": 5,
-    "review_status": "documentation_checks_passed",
-    "delivery_state": "draft_pr_and_issue_report_delivered",
+    "review_status": "local_R1_R3_passed_dot_rereview_pending",
+    "delivery_state": "R1_R3_revised_waiting_dot_rereview",
     "runtime_validation": "NotRun",
     "authorization": "Latest approved Issue #5 documentation scope; explicit user request to execute to goal",
     "issue_report": "https://github.com/Kakusya/AbilityKit/issues/5#issuecomment-5976710597",
     "merge_state": "not_merged",
     "review_owner": "dot",
-    "documentation_gate": "Passed"
+    "documentation_gate": "Passed",
+    "revision_round": 1,
+    "reviewed_before_revision": "4fe2ff9f267cca839a478eff186839fa8a0165be",
+    "dot_review": "https://github.com/Kakusya/AbilityKit/pull/10#pullrequestreview-5404506672",
+    "revision_scope": "R1 supply closing, R2 declared test coverage, R3 committed diff proof; documentation only"
   }
 }

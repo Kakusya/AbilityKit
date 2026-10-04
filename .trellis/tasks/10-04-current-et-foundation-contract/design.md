@@ -15,3 +15,7 @@
 ## 风险与回退
 
 可回退本任务文档 diff；禁止双写、提升 Proposed、覆盖故障原件。源码可达与历史实测分开标注。
+
+## 首轮复审的最小修订
+
+仅修 AGENTS、合同 A/E、task 检查方法和本轮证据。R1 源行为以 StopNewSupplyRequests、Request、AdvanceFixedTick、PreviewReceive/CommitReceive、PreviewInfiniteTake 为准；关闭新预约不等于所有供应操作关闭。R2 将结果判断绑定声明覆盖。R3 明确已提交版本与本地差异的检查命令和实际 HEAD；不改运行器，不实施 #6。复审材料见 research/dot-review-round1.md。

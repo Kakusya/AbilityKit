@@ -1,5 +1,7 @@
 # Independent review: Issue #5
 
+This is the historical first local review, before dot's review of 4fe2ff9f2. Its supply-closing conclusion was corrected under R1; current R1-R3 findings and source verification are in [revision-review-round1.md](revision-review-round1.md). Preserve the initial evidence without treating its original acceptance as current dot approval.
+
 2026-10-04. Result: Passed for the authorized documentation and rule scope, after two local documentation fixes. This does not accept runtime migration, network exits, performance, Unity, dependency closure or release safety. .NET/Unity/game/network/protoc: NotRun.
 
 ## Findings fixed
