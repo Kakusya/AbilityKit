@@ -1,9 +1,15 @@
 # Cooking Game 当前工程进度
 
+## Issue #5 收尾与 #6 接续（2026-10-04）
+
+- #5 的最终文档版本 `530609fd0f0a264ea03a1e94a00647825f27cc67` 已经 Dot 复审接受，[PR #10](https://github.com/Kakusya/AbilityKit/pull/10) 已合并，merge SHA `f4aeff2fc1cae9efbbdf9a36484f0320d46a5100`。主仓库已快进到该版本；[任务归档与收尾证据](../../../.trellis/tasks/archive/2026-10/10-04-current-et-foundation-contract/research/closeout.md)。
+- Owner 已要求收尾后直接开始 [Issue #6](https://github.com/Kakusya/AbilityKit/issues/6)。本轮先提交实施计划和结果 schema，等待 Dot 审议；该明确计划门仍适用，尚未授权跳过它修改运行器。其余 blocked Issue 未解锁。
+- 以下 Issue #5 启动基线及更早进度保留历史上下文，由本节覆盖当前调度；既有玩法、ET、网络、性能、Unity 和物理 LAN 的验证边界不变。
+
 ## 当前基线与调度（2026-10-04，Issue #5）
 
 - 已核验源码 HEAD：`5312c6e4bf2b612260297e2d8623aa362a9051e6`；静态审计基线 `a2cd7284e12d50a10bbb7abee6fc265577b9aa7c`。差异仅新增 48 行 [重建交接](reclone-handoff-2026-10-04.md)，没有新增构建或运行验收。
-- [Issue #5](https://github.com/Kakusya/AbilityKit/issues/5) 是唯一 orca-ready：当前 ET 合同、源码核验、AGENTS 与依赖规划的文档工作。#1–#4/#6–#9 最新读取均 blocked；本地 [PRD](../../../.trellis/tasks/10-04-current-et-foundation-contract/prd.md) 与 [最小计划/冲突](../../../.trellis/tasks/10-04-current-et-foundation-contract/design.md)。标签不授权运行时迁移、升级、合并或发布。
+- [Issue #5](https://github.com/Kakusya/AbilityKit/issues/5) 是唯一 orca-ready：当前 ET 合同、源码核验、AGENTS 与依赖规划的文档工作。#1–#4/#6–#9 最新读取均 blocked；本地 [PRD](../../../.trellis/tasks/archive/2026-10/10-04-current-et-foundation-contract/prd.md) 与 [最小计划/冲突](../../../.trellis/tasks/archive/2026-10/10-04-current-et-foundation-contract/design.md)。标签不授权运行时迁移、升级、合并或发布。
 - [当前 ET 合同](current-et-foundation-contract.md) 分开事实、目标和待批准施工。当前 ET 固定，ADR-0003 仍 Proposed；单一 writer、单一 Tick、现有分阶段提交保留。文档交付不表示全面迁移完成。
 - S01–S14/N01 按原 SHA/范围已接受；N02/N03 整体未完成。command366 无终态、rich 四断点和 P6 原失败/出口保留，暂停不表示修复。可读来源为 [重建交接](reclone-handoff-2026-10-04.md) 与 [完整网络出口](../../../.trellis/tasks/10-02-cooking-network-reconnect-measurement/research/current-network-exit-refresh.md)；[会话收尾](session-closeout-2026-10-04.md) 有字面问号损坏，不据其猜造事实。
 - 功能/合作/恢复/故障正确性优先，当前施工以 Issue #5 文档范围为准。延迟/吞吐/native timer/scheduling/O04 仍 OWNER_DEFERRED，普通性能 NOT_ACCEPTED；Unity/S15 后置且未授权，物理两 PC LAN NOT_VERIFIED/environment-unavailable，不重复硬件问题。

@@ -30,7 +30,7 @@ import subprocess, re, json, hashlib, argparse
 
 parser = argparse.ArgumentParser(description='Task-scoped documentation audit; not a runtime test gate.')
 parser.add_argument('--reviewed-head', default='HEAD', help='Committed PR revision to check against BASE.')
-parser.add_argument('--output', default='.trellis/tasks/10-04-current-et-foundation-contract/research/doc-validation.json')
+parser.add_argument('--output', default='.trellis/tasks/archive/2026-10/10-04-current-et-foundation-contract/research/doc-validation.json')
 args = parser.parse_args()
 reviewed_head = subprocess.check_output(['git', 'rev-parse', '--verify', args.reviewed_head + '^{commit}'], text=True).strip()
 checked_out_head = subprocess.check_output(['git', 'rev-parse', '--verify', 'HEAD'], text=True).strip()
@@ -39,7 +39,7 @@ committed_content_proven = not tree_status and checked_out_head == reviewed_head
 
 ROOT = Path.cwd()
 BASE = '5312c6e4bf2b612260297e2d8623aa362a9051e6'
-TASK = Path('.trellis/tasks/10-04-current-et-foundation-contract')
+TASK = Path('.trellis/tasks/archive/2026-10/10-04-current-et-foundation-contract')
 files = [Path('AGENTS.md'), Path('Docs/design/CookingGame/progress.md'), Path('Docs/design/CookingGame/reference/et-entity-tree.md'), Path('Docs/design/CookingGame/current-et-foundation-contract.md'), Path('Docs/design/CookingGame/history/agents-notices-2026-10-04.md')]
 files += sorted(TASK.rglob('*.md'))
 

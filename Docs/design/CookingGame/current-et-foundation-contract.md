@@ -2,7 +2,7 @@
 
 2026-10-04，文档与规则交付；没有运行时迁移。源码审计基线为 `a2cd7284e12d50a10bbb7abee6fc265577b9aa7c`，本工作区起点为 `5312c6e4bf2b612260297e2d8623aa362a9051e6`。实际 `git diff --stat` 仅有 [reclone handoff](reclone-handoff-2026-10-04.md) 新增 48 行。本文的“已接线”指源码编译入口和调用路径，**不是本轮编译或运行通过**；本轮 .NET、游戏、Unity、IL2CPP 全部 NotRun。历史 S01–S14/N01 的受限接受保留，N02/N03、物理 LAN、性能与 Unity 不因本文完成。
 
-授权与最新状态分别见 [Issue #5](https://github.com/Kakusya/AbilityKit/issues/5) 和 [progress](progress.md)。#1–#4、#6–#9 仍 blocked；阅读、草案和标签不解锁实现。ADR [0003](../../../ADR/decisions/0003-cooking-et-runtime-direction.md) 保持 Proposed。本文固定既有语义并具体化 ET 目标；新 System 名称、纵切与新增检查都标为提案。事实来源见 [本轮源码审计](../../../.trellis/tasks/10-04-current-et-foundation-contract/research/source-audit.md)。
+授权与最新状态分别见 [Issue #5](https://github.com/Kakusya/AbilityKit/issues/5) 和 [progress](progress.md)。#1–#4、#6–#9 仍 blocked；阅读、草案和标签不解锁实现。ADR [0003](../../../ADR/decisions/0003-cooking-et-runtime-direction.md) 保持 Proposed。本文固定既有语义并具体化 ET 目标；新 System 名称、纵切与新增检查都标为提案。事实来源见 [本轮源码审计](../../../.trellis/tasks/archive/2026-10/10-04-current-et-foundation-contract/research/source-audit.md)。
 
 <a id="a"></a>
 
