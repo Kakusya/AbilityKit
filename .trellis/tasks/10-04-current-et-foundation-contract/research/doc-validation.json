@@ -72,13 +72,13 @@
       "file": ".trellis/tasks/10-04-current-et-foundation-contract/research/issue-5-report.md",
       "utf8": "Passed",
       "localLinksChecked": 0,
-      "bytes": 27662
+      "bytes": 27660
     },
     {
       "file": ".trellis/tasks/10-04-current-et-foundation-contract/research/issue-5-requirements.md",
       "utf8": "Passed",
       "localLinksChecked": 0,
-      "bytes": 13422
+      "bytes": 13420
     },
     {
       "file": ".trellis/tasks/10-04-current-et-foundation-contract/research/issue-5-snapshot.md",
@@ -90,7 +90,7 @@
       "file": ".trellis/tasks/10-04-current-et-foundation-contract/research/issue-5-sources.md",
       "utf8": "Passed",
       "localLinksChecked": 0,
-      "bytes": 15928
+      "bytes": 15926
     },
     {
       "file": ".trellis/tasks/10-04-current-et-foundation-contract/research/source-audit.md",
@@ -102,7 +102,7 @@
       "file": ".trellis/tasks/10-04-current-et-foundation-contract/research/verification.md",
       "utf8": "Passed",
       "localLinksChecked": 0,
-      "bytes": 3409
+      "bytes": 3925
     }
   ],
   "introducedErrors": [],

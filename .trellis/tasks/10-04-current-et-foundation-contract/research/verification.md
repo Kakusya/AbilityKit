@@ -25,3 +25,7 @@ External URLs are not claimed blanket HTTP-verified. GitHub Issue/dependency sta
 No unresolved product/transaction choice was selected. Whole-frame rollback remains unapproved; ADR-0003 remains Proposed. dot reviews the delivery. Recommend reviewing #6 verification truthfulness and #7 dependency/release closure before approving #8's actual state migration. #9's encoding study stays separate; protobuf is not a migration prerequisite. No dependent issue gets ready automatically. Original #1-#4 failures/deadlines/assets remain unchanged. Ordinary performance/native scheduling deferred; physical LAN unavailable; Unity/S15 deferred.
 
 Delivery is a review handoff, not a merge, release, deployment or automatic Issue closure.
+
+## Delivery receipt
+
+Implementation commit: `9c9778509d87842386b7c30123daef58185d45d9`. [Draft PR #10](https://github.com/Kakusya/AbilityKit/pull/10) is open against master; [Issue report](https://github.com/Kakusya/AbilityKit/issues/5#issuecomment-5976710597) was posted successfully. Task remains review for dot; no merge/archive or Issue closure is claimed. Final staged diff check passed after trimming trailing blank lines in three Issue-context slices; the full original Issue snapshot remains unchanged.

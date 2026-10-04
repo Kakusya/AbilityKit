@@ -15,8 +15,8 @@
   "branch": "Kakusya/p0-et-agents.md",
   "base_branch": "master",
   "worktree_path": null,
-  "commit": null,
-  "pr_url": null,
+  "commit": "9c9778509d87842386b7c30123daef58185d45d9",
+  "pr_url": "https://github.com/Kakusya/AbilityKit/pull/10",
   "subtasks": [],
   "children": [],
   "parent": null,
@@ -25,8 +25,12 @@
   "meta": {
     "github_issue": 5,
     "review_status": "documentation_checks_passed",
-    "delivery_state": "ready_for_dot_review",
+    "delivery_state": "draft_pr_and_issue_report_delivered",
     "runtime_validation": "NotRun",
-    "authorization": "Latest approved Issue #5 documentation scope; explicit user request to execute to goal"
+    "authorization": "Latest approved Issue #5 documentation scope; explicit user request to execute to goal",
+    "issue_report": "https://github.com/Kakusya/AbilityKit/issues/5#issuecomment-5976710597",
+    "merge_state": "not_merged",
+    "review_owner": "dot",
+    "documentation_gate": "Passed"
   }
 }
