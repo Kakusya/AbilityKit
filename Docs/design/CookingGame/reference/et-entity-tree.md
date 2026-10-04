@@ -1,3 +1,5 @@
+> 2026-10-04 Issue #5 适用性说明：目标领域树及 §8/§9 的 aggregate frame transaction、整帧原子提交描述是设计参考，不是现有 Host 行为或迁移批准。当前 `CookingLevelEtHost.ExecuteFrameCore` 先 Submit/terminalize 命令，再执行 fixed-step；后者失败时已接受命令的 effects/event/Executed terminal 保留，LogicalTick/HostFrameSequence 不推进。源码与现有测试对照见 [当前 ET 合同](../current-et-foundation-contract.md)。本次仅澄清现状与目标，整帧回滚须独立行为变更审阅；ADR-0003 保持 Proposed，未启动领域迁移。
+
 # Cooking ET Entity/Component 树参考
 
 > 性质：设计参考，不表示完整 ET 树已经实现或验证。目标是统一 `[ComponentOf]`、`[ChildOf]`、命名和生命周期所有权，避免后续 task 边实现边发明结构。

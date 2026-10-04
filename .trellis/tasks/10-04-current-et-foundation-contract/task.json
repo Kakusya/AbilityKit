@@ -1,0 +1,32 @@
+{
+  "id": "current-et-foundation-contract",
+  "name": "current-et-foundation-contract",
+  "title": "Issue 5 当前 ET 架构合同与 AGENTS",
+  "description": "按 GitHub Issue 5 核验源码、形成五份架构合同交付、精简 AGENTS 并保留历史证据",
+  "status": "review",
+  "dev_type": null,
+  "scope": "documentation",
+  "package": null,
+  "priority": "P0",
+  "creator": "Kakusya",
+  "assignee": "Kakusya",
+  "createdAt": "2026-10-04",
+  "completedAt": null,
+  "branch": "Kakusya/p0-et-agents.md",
+  "base_branch": "master",
+  "worktree_path": null,
+  "commit": null,
+  "pr_url": null,
+  "subtasks": [],
+  "children": [],
+  "parent": null,
+  "relatedFiles": [],
+  "notes": "",
+  "meta": {
+    "github_issue": 5,
+    "review_status": "documentation_checks_passed",
+    "delivery_state": "ready_for_dot_review",
+    "runtime_validation": "NotRun",
+    "authorization": "Latest approved Issue #5 documentation scope; explicit user request to execute to goal"
+  }
+}

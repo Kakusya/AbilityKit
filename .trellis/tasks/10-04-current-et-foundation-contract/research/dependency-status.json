@@ -1,0 +1,119 @@
+[
+  {
+    "labels": [
+      {
+        "id": "LA_kwDOTD7SkM8AAAAC6vvNBQ",
+        "name": "blocked",
+        "description": "",
+        "color": "ededed"
+      }
+    ],
+    "number": 9,
+    "state": "OPEN",
+    "title": "[底座 P1] 核实协议分层与版本兼容，明确 protobuf 准入条件"
+  },
+  {
+    "labels": [
+      {
+        "id": "LA_kwDOTD7SkM8AAAAC6vvNBQ",
+        "name": "blocked",
+        "description": "",
+        "color": "ededed"
+      }
+    ],
+    "number": 8,
+    "state": "OPEN",
+    "title": "[底座 P1] 当前 ET 首个领域权威迁移：物品、手持与容器"
+  },
+  {
+    "labels": [
+      {
+        "id": "LA_kwDOTD7SkM8AAAAC6vvNBQ",
+        "name": "blocked",
+        "description": "",
+        "color": "ededed"
+      }
+    ],
+    "number": 7,
+    "state": "OPEN",
+    "title": "[底座 P0] 固定验证闭包、真实 CI 路由与受限代码发布防线"
+  },
+  {
+    "labels": [
+      {
+        "id": "LA_kwDOTD7SkM8AAAAC6vvNBQ",
+        "name": "blocked",
+        "description": "",
+        "color": "ededed"
+      }
+    ],
+    "number": 6,
+    "state": "OPEN",
+    "title": "[底座 P0] 修复门禁结果真实性与覆盖判定"
+  },
+  {
+    "labels": [
+      {
+        "id": "LA_kwDOTD7SkM8AAAAC6r_9sA",
+        "name": "orca-ready",
+        "description": "",
+        "color": "ededed"
+      }
+    ],
+    "number": 5,
+    "state": "OPEN",
+    "title": "[底座 P0] 固定当前 ET 架构契约并落实 AGENTS.md"
+  },
+  {
+    "labels": [
+      {
+        "id": "LA_kwDOTD7SkM8AAAAC6vvNBQ",
+        "name": "blocked",
+        "description": "",
+        "color": "ededed"
+      }
+    ],
+    "number": 4,
+    "state": "OPEN",
+    "title": "[Cooking N03] 定位 P6 投影超时并完成三组功能验收"
+  },
+  {
+    "labels": [
+      {
+        "id": "LA_kwDOTD7SkM8AAAAC6vvNBQ",
+        "name": "blocked",
+        "description": "",
+        "color": "ededed"
+      }
+    ],
+    "number": 3,
+    "state": "OPEN",
+    "title": "[Cooking N03] 完成 rich 四断点恢复与专用离线反例验证"
+  },
+  {
+    "labels": [
+      {
+        "id": "LA_kwDOTD7SkM8AAAAC6vvNBQ",
+        "name": "blocked",
+        "description": "",
+        "color": "ededed"
+      }
+    ],
+    "number": 2,
+    "state": "OPEN",
+    "title": "[Cooking N03] 评审并最小化复用共享网络客户端"
+  },
+  {
+    "labels": [
+      {
+        "id": "LA_kwDOTD7SkM8AAAAC6vvNBQ",
+        "name": "blocked",
+        "description": "",
+        "color": "ededed"
+      }
+    ],
+    "number": 1,
+    "state": "OPEN",
+    "title": "[Cooking N03] 定位 rich command366 无终态并完成最小功能修复"
+  }
+]

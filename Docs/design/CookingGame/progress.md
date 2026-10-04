@@ -1,3 +1,18 @@
+# Cooking Game 当前工程进度
+
+## 当前基线与调度（2026-10-04，Issue #5）
+
+- 已核验源码 HEAD：`5312c6e4bf2b612260297e2d8623aa362a9051e6`；静态审计基线 `a2cd7284e12d50a10bbb7abee6fc265577b9aa7c`。差异仅新增 48 行 [重建交接](reclone-handoff-2026-10-04.md)，没有新增构建或运行验收。
+- [Issue #5](https://github.com/Kakusya/AbilityKit/issues/5) 是唯一 orca-ready：当前 ET 合同、源码核验、AGENTS 与依赖规划的文档工作。#1–#4/#6–#9 最新读取均 blocked；本地 [PRD](../../../.trellis/tasks/10-04-current-et-foundation-contract/prd.md) 与 [最小计划/冲突](../../../.trellis/tasks/10-04-current-et-foundation-contract/design.md)。标签不授权运行时迁移、升级、合并或发布。
+- [当前 ET 合同](current-et-foundation-contract.md) 分开事实、目标和待批准施工。当前 ET 固定，ADR-0003 仍 Proposed；单一 writer、单一 Tick、现有分阶段提交保留。文档交付不表示全面迁移完成。
+- S01–S14/N01 按原 SHA/范围已接受；N02/N03 整体未完成。command366 无终态、rich 四断点和 P6 原失败/出口保留，暂停不表示修复。可读来源为 [重建交接](reclone-handoff-2026-10-04.md) 与 [完整网络出口](../../../.trellis/tasks/10-02-cooking-network-reconnect-measurement/research/current-network-exit-refresh.md)；[会话收尾](session-closeout-2026-10-04.md) 有字面问号损坏，不据其猜造事实。
+- 功能/合作/恢复/故障正确性优先，当前施工以 Issue #5 文档范围为准。延迟/吞吐/native timer/scheduling/O04 仍 OWNER_DEFERRED，普通性能 NOT_ACCEPTED；Unity/S15 后置且未授权，物理两 PC LAN NOT_VERIFIED/environment-unavailable，不重复硬件问题。
+- 本次文档工作 .NET/Unity/游戏/网络验收 NotRun。旧结果仅按原 task/check、原件与范围解读；备份不随 clone 分发，缺失原件不能重建“已通过”。下方全部是历史正文，不产生当前授权；AGENTS 原文见 [历史索引](history/agents-notices-2026-10-04.md)。
+
+## 历史正文（原序保留，含字面问号损坏）
+
+以下 Current/LIVE 与阶段通知仅描述当时源/范围，已由上方当前入口覆盖。保留原链接，不猜测损坏文本、不改写旧验收。
+
 > 2026-10-04?????????[?????????????](session-closeout-2026-10-04.md)?????N02/N03???????????????????????????????
 
 > Owner2026-10-03: latency/throughput and O04 native/timer candidate OWNER_DEFERRED, not completed. Current priority: existing-framework functional gameplay/cooperation/recovery/fault correctness. Read [current disposition](../../../.trellis/tasks/10-02-cooking-network-reconnect-measurement/research/functional-first-owner-disposition.md). Preserve previous evidence/thresholds, physicalNOT_VERIFIED and Unity/S15deferred. Older optimization-first notices historical.

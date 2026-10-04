@@ -1,109 +1,48 @@
-> 2026-10-04?????[??????????](Docs/design/CookingGame/session-closeout-2026-10-04.md)???S01-S14?N01????N02/N03?????????????O04??????????????????????????O03?????????17??O04?Orca?????????????????LIVE??????????????
-
-> Owner2026-10-03 latest: latency/throughput/timer/native scheduling work is DEFERRED. Prioritize functional gameplay, cooperation, recovery/fault correctness using existing framework capabilities; [current disposition](.trellis/tasks/10-02-cooking-network-reconnect-measurement/research/functional-first-owner-disposition.md). O04 only saves unverifieddraft and stops newimplementation; checkpoint/cleanup pending. Existing deadlines/history/integrity remain, deferredperformance is not passed. Unity/S15 and physicalunavailable remain separate. Older O04/performance-first grants superseded.
-
-> Current2026-10-03 source supervision: O04 managedcandidate dispatchctx_f39f066627b8 in Runrun_fb2be40ea325 is source-only. Approvedbase861a5b718f7f4baf584691d53ba273aaa62f6138; Orca defaultold9bf caughtbeforeedits, worker cleanfast-forward completed; rootindependentlycheckedexactHEAD/clean/N03task andmeasurementpaths. [Candidate design/receipts](.trellis/tasks/10-02-cooking-network-reconnect-measurement/research/application-scheduling-candidate-design.md). O03 retainedfororiginaldiagnostics/ABI source; no.NET/runtime/adoption grant.
-
-> Current2026-10-03 actual: matrix85977 TERMINAL1 (finalHashtableaggregationfailure), ALL12originalrows/24native0 independently accepted ONLYdiagnosticscope oncompiled4ed; matched128commands133frames263047B. 1/ON observedfinalapplicationenqueueACK29.505/29.6956/29.1355ms, no native-only/ordinaryperformance/adoption claim. Isolated0504 fixesaggregation withactualASTcontrols/derivedsummary; not relabeledoriginalexit. [Execution](.trellis/tasks/10-02-cooking-network-reconnect-measurement/research/process-timer-matrix-execution.md), [review](.trellis/tasks/10-02-cooking-network-reconnect-measurement/research/process-timer-matrix-aggregation-review.md). Main rich/P6 sourcefrozen, freshbuild/controls next; olderLIVE notices historical.
-
-> Current2026-10-03 actual: timer4OFF/ON initialpairs independently accepted (8native0/fulltypedgraph/hash/ACKReady/close/release); matchedmid12pair matrix85977 LIVE under root sole.NET on frozen4ed366217. [Execution](.trellis/tasks/10-02-cooking-network-reconnect-measurement/research/process-timer-matrix-execution.md) and [independent preconditions](.trellis/tasks/10-02-cooking-network-reconnect-measurement/research/process-timer-paired-controls-review.md). No result/adoption claim; main rich/P6 diagnostic source frozen, build/runtime next.
-
-> Current actual2026-10-03: [timer execution](.trellis/tasks/10-02-cooking-network-reconnect-measurement/research/process-timer-matrix-execution.md) records fresh4ed366217 compile/native0,20lifecyclecontrols and exactWindowsrelease independently checked; OFFinitialpaired91622 terminal0 pendingrawreview, ONinitial31182 live. No12matrix/productionadoption/networkexit acceptance. Main rich/P6 diagnostic sources require focusedbuild/runtime; older source-only notices historical within stated scope.
-
-> Current2026-10-03 scoped source work only: isolated [timer matrix](.trellis/tasks/10-02-cooking-network-reconnect-measurement/research/process-timer-matrix-design.md), app-only [rich command diagnostics](.trellis/tasks/10-02-cooking-network-reconnect-measurement/research/rich-command-path-diagnostic-design.md), and app-only [P6 projection diagnostics](.trellis/tasks/10-02-cooking-network-reconnect-measurement/research/p6-projection-wait-source-audit.md). Source freezes require independent review before root serial .NET grants. Rich79916 exact outstanding step is command366 terminal before Running; P6 lacks failing-flight projection identities. No demonstrated cause, production timer/default adoption, or full-exit acceptance. Older runtime/source notices remain historical.
-
-> Owner2026-10-03 confirms no second physical PC currently available. Physical LAN remains NOT_VERIFIED/environment-unavailable; continue local recovery/impairment/performance work and prepare frozen handoff. Do not repeat the hardware question without an availability update or remove the physical exit. Read [physical environment/runbook](.trellis/tasks/10-02-cooking-network-gameplay-loop/research/physical-lan-runbook.md).
-
-> Current2026-10-03: O03 boundedProfile81315 terminal1 as required (12initial/midpassed,6finalNOT_MEASURED,36endpointnative0), originals independently reviewed. Matchedmid no stable1ms gain; no adoption/import. Separate net10 calibration81994 measured approx15.5ms waits; subsequent OFF/ON/OFF79616 actualnative0 independently verified1800samples, WaitOne1 median15.5102/1.0145/15.5099ms and Delay10 median15.5062/10.0167/15.5180ms, exact lease released. These primitive results permit further isolated diagnosis only, not network/native cadence or production acceptance. N02/N03 remain incomplete; fullrich4/P6/ordinaryperformance/physicalLAN open, Unitydeferred. Read [latest actual evidence](.trellis/tasks/10-02-cooking-network-reconnect-measurement/research/master-assembled-relay-verification.md), [wait calibration](.trellis/tasks/10-02-cooking-network-reconnect-measurement/research/native-wait-calibration.md), and [full remaining exits](.trellis/tasks/10-02-cooking-network-reconnect-measurement/research/current-network-exit-refresh.md); older notices historical.
-
-> Current2026-10-03: isolated O03 corrected initialControls21873 passed both15/1 (four native0), independently checked complete typedState+Session/exactACKReady/currentclose/drain and loaded assemblies. Bounded18requested-row Profile granted as diagnosis; unreachable final5000-command targets remain NOT_MEASURED, no ordinary performance/default adoption/main import. Main concurrency21/common seven negatives accepted; N02/N03 and full rich/P6/ordinaryperformance/physical exits incomplete, Unity deferred. Read master-assembled-relay-verification.md and current-network-exit-refresh.md; earlier notices historical.
-
-> Current2026-10-03: current concurrency21 two real pairs and offline verifier positive+seven targeted negative copies accepted within scope; O03 initial15/1 controls failed pre-client at genuine pending ACK boundary (original31939 retained). Reviewed correction9e10fd4d0 receives fresh BuildOnly only, not runtime accepted. S01-S14/N01 accepted; N02/N03 incomplete, full rich/P6/ordinary performance/physical LAN remain open, Unity deferred. Read current master-assembled-relay-verification.md; earlier notices are historical.
-
-> Current2026-10-03: current-source efe06ff8a fresh forced compile and two independent-process concurrency21 pairs accepted (root47261terminal0; four endpoints native0; exact full inventory and original hashes checked). O03 driver2197e9849 source reviewed; BuildOnly granted, runtime NOT_RUN. S01-S14/N01 accepted, N02/N03 incomplete; P6/rich/performance remain open, physical LAN NOT_VERIFIED, Unity deferred. Sixteen unused worktrees retired; main+activeO03 retained. Earlier notices below are historical.
-
-> Current checked2026-10-03: actual main source13ecae215 gates networkSDK311, kitchen644/867/328, ET867/328 passed with zero failures/skips (root17TRX review, actual49812terminal0). S01-S14/N01 accepted; N02/N03 incomplete. P6 repeat2 projection30s and rich79916 firstmanual600s remain failed; O02 all12 eligible Release samples/all4 configurations NOT_ACCEPTED, no import. O03 generic7/all25/oldconsumer controls passed within scope, default15 unchanged; driver9a88 source review found compilation/wrapper/settlement/provenance blockers now being fixed, NOT_BUILT/NOT_RUN. Sixteen unused worktrees archived/retired, onlymain+activeO03 remain. PhysicaltwoPC NOT_VERIFIED, Unity/S15 deferred. [Current actual evidence](.trellis/tasks/10-02-cooking-network-reconnect-measurement/research/master-assembled-relay-verification.md). Older notices below are historical.
-
-> Current checked 2026-10-03: three fresh P0 repetitions accepted on final-close handshake source272c336bb; actual wrapper40142exit0 and independently equal full Host/client states with exact5s close windows. P1 is RUNNING under root38708; P1-P6 not accepted. O01b twelve Release samples are fully eligible but all four configurations NOT_ACCEPTED; no performance candidate imported. Rich companion/verifier source01800828e remains NOT_BUILT/NOT_RUN. Singleplayer S01-S14 and N01 accepted; N02/N03 in_progress; physical two-PC NOT_VERIFIED and Unity deferred. Read [actual relay verification](.trellis/tasks/10-02-cooking-network-reconnect-measurement/research/master-assembled-relay-verification.md). Earlier notices below are historical.
-
-> Current checked continuation (2026-10-03): singleplayer S01-S14 and N01 accepted; N02/N03 remain in_progress. Latest main P0 session22359 failed relay final-close timing despite actual matching full Host/client states and successful 21-idle-tick cached-retry conservation; closing-handshake correction272c336bb is source-only pending fresh build/controls/three P0 runs. Rich recovery/verifier sourcef6544b680 is not built or run. Isolated O01b gates644/859/331,859/331 and SDK311 passed; four-profile Release comparison remains active under sole owner48447, with missing clean source-status artifact preventing acceptance of completed profiles. Physical two-PC remains NOT_VERIFIED; Unity deferred. Evidence: [relay verification](.trellis/tasks/10-02-cooking-network-reconnect-measurement/research/master-assembled-relay-verification.md). Earlier window notices below are historical.
-
-> Current checked status (2026-10-03): pure C# singleplayer S01-S14 accepted; N01 contract accepted; N02/N03 in_progress. Latest assembled gates kitchen644/859/328 and ET859/328 passed with zero failures/skips. All twelve fresh Release reference samples completed, but all four configurations are NOT_ACCEPTED against unchanged performance criteria; see [reference-release-plan.md](.trellis/tasks/10-02-cooking-network-reconnect-measurement/research/reference-release-plan.md). Corrected relay controls passed; corrected P0 session9642 terminated exit1 (client exited before FINAL_READY), so P0/P1-P6 are not accepted. Root released the rich companion source hold; no concurrent .NET grant. Physical two-PC LAN remains NOT_VERIFIED and Unity deferred. Older live-window notices below are historical.
-
-> Latest actual network validation (2026-10-03): kitchen644/859/328 and ET859/328 gates passed, zero failures/skips; audited impairment build and actual relay socket/queue controls passed. Read [.trellis/tasks/10-02-cooking-network-reconnect-measurement/research/master-assembled-relay-verification.md](.trellis/tasks/10-02-cooking-network-reconnect-measurement/research/master-assembled-relay-verification.md). First P0 session41558 failed on actual UDP ReceiveFrom10054 after old client close; retained red and bounded lifecycle correction are routed in that report. Release ordinary reference runs are live under measurement owner session9093; P1-P6, performance acceptance, rich physical companion and physical two-PC remain unverified. N02/N03 remain in_progress; Unity deferred.
-
-> Current network follow-up: complete12-profile/36sample bounded load matrix is independently accepted in [load-matrix-independent-review.md](.trellis/tasks/10-02-cooking-network-reconnect-measurement/research/load-matrix-independent-review.md); two actual21-phase concurrency pairs are accepted in [concurrency-tool-independent-review.md](.trellis/tasks/10-02-cooking-network-gameplay-loop/research/concurrency-tool-independent-review.md). Root owns active assembled kitchen/ET gate window; all workers remain source-only until explicit transfer. Relay source2d671ebe9 is not built/verified yet. N02/N03 in_progress, performance NOT_ACCEPTED, physical LAN NOT_VERIFIED, Unity deferred. Earlier window notices are historical.
-
-> Current network follow-up: read [master-local-recovery-verification.md](.trellis/tasks/10-02-cooking-network-reconnect-measurement/research/master-local-recovery-verification.md) for accepted separate-process three-pair and boundary44 evidence; actual master Cooking859 is green, assembled broad gates pending. The active load owner has the exclusive .NET window. New [raw relay design](.trellis/tasks/10-02-cooking-network-reconnect-measurement/research/datagram-impairment-relay-design.md) and [concurrency-tool plan](.trellis/tasks/10-02-cooking-network-gameplay-loop/research/physical-concurrency-control-plan.md) are approved for isolated application-tool source implementation; no production/frozen-runner edits or concurrent .NET. N02/N03 remain in_progress, performance NOT_ACCEPTED, physical LAN NOT_VERIFIED, Unity deferred.
-
-> Current 2026-10-03 master verification: reviewed ACK/paused-publication correction and full-menu four-cutpoint recovery are integrated. Actual corrected gates passed: Cooking 815, ET 328, network SDK 311; zero failures/skips. N02/N03 remain in_progress; independent-process fault/load follow-up, performance analysis and physical two-PC verification remain open. Unity remains deferred. Evidence: [master-local-recovery-verification.md](.trellis/tasks/10-02-cooking-network-reconnect-measurement/research/master-local-recovery-verification.md). Earlier notices below are historical.
-
-> Latest profile: six actual fresh samples and both capacity controls accepted/imported9f18dcb41; [independent review](.trellis/tasks/10-02-cooking-network-reconnect-measurement/research/measurement-profile-independent-review.md). UDP complete-projection p95 is3.0-3.1seconds, no smoothness/performance acceptance. Read [remaining network exits](.trellis/tasks/10-02-cooking-network-reconnect-measurement/research/remaining-network-exit-audit.md) and [approved Session boundary follow-up](.trellis/tasks/10-02-cooking-network-reconnect-measurement/research/session-boundary-followup-plan.md). B0/D1/small-bound controls are authorized; arbitrary nested Session reentry B1 is not a mandatory requirement. Independent-process fault/load is still being diagnosed; root serializes .NET windows. Physical two-PC, formal thresholds and higher load/packet-fault dispositions remain open.
-
-> Current pure C# singleplayer exit: [master-singleplayer-exit-verification.md](.trellis/tasks/10-02-cooking-gameplay-menu-plan/research/master-singleplayer-exit-verification.md). S01-S14 completed on source4dadd25c8; final gates644/772/299 and772/299 passed. Next stage N01 network contract reconciliation; Unity/S15 remain deferred, physical two-PC LAN unverified. Earlier stage notices below are historical.
-
-> Latest accepted source86c3eb41d: recovery/natural/technical master kitchen644/772/298 and ET772/298 passed with zero failures/skips. Read [master-s14-recovery-verification.md](.trellis/tasks/10-02-cooking-gameplay-menu-plan/research/master-s14-recovery-verification.md); actual ET floor expansion remains the last pure-C# singleplayer exit.
-
-> Current uncommitted S14 recovery corrections: [recovery-fixes-red-green.md](.trellis/tasks/10-02-cooking-gameplay-menu-plan/research/recovery-fixes-red-green.md). Actual root focus48/48 and technical ET producer5/5 are green; catalog retry and assembled broad gates remain pending. Do not infer master acceptance or stage completion.
-
-> Latest durable/natural execution proof: [master-durable-natural-verification.md](.trellis/tasks/10-02-cooking-gameplay-menu-plan/research/master-durable-natural-verification.md). Typed baseline3 preserves HostFrameSequence; narrowed carry and actual natural successor cold continuation still gate S14.
-
-> Current scoped menu execution/recovery proof: [master-menu-policy-verification.md](.trellis/tasks/10-02-cooking-gameplay-menu-plan/research/master-menu-policy-verification.md). Current Level8 supersedes historical Level7 evidence; natural operating, narrowed carry and durable Host loading are still incomplete.
-
-> Generation transaction/current pure-menu validation proof: [master-generation-menu-verification.md](.trellis/tasks/10-02-cooking-gameplay-menu-plan/research/master-generation-menu-verification.md). Read its remaining exits before continuing; helper/store verification is not Host Ready/restart or full S14 completion.
-
-> Current owner instruction (2026-10-02): continue auditing all topics, resolve their plans, then implement and verify to completion without stopping for routine confirmations. Preserve architecture and stage order: singleplayer -> network -> singleplayer Unity -> network Unity. Current stage: network contract review after accepted S01-S14. Older planning-only notices below are historical. Unity remains deferred under its separate gate.
-
 # AbilityKit 工作区指引
 
-- 2026-10-03网络恢复接续：N02当前实际流程、独立审查与待完成出口读[process-integration-verification.md](.trellis/tasks/10-02-cooking-network-gameplay-loop/research/process-integration-verification.md)。N03仅获准先行本地确定性恢复/边界工程，读取其[PRD](.trellis/tasks/10-02-cooking-network-reconnect-measurement/prd.md)、[design](.trellis/tasks/10-02-cooking-network-reconnect-measurement/design.md)及[cold source map](.trellis/tasks/10-02-cooking-network-reconnect-measurement/research/cold-recovery-source-map.md)。这项局部依赖例外不表示N02或物理两PC出口完成；.NET验证窗口由root串行协调，Unity继续后置。
-- 2026-10-03已合并网络增量与纯测试冷恢复以[master-network-verification.md](.trellis/tasks/10-02-cooking-network-gameplay-loop/research/master-network-verification.md)为当前实测入口。N03新增六项实际恢复测试、容量控制与测量的 master 证据读[master-local-recovery-verification.md](.trellis/tasks/10-02-cooking-network-reconnect-measurement/research/master-local-recovery-verification.md)，其末尾列出完整菜品四断点等剩余出口。N02/N03整体仍in_progress，物理LAN未验证、性能阈值UNSET；不能把同机完整流程或受限冷恢复推导为全部网络出口已完成。
+当前阶段、验证指针与完整剩余出口的唯一入口是 [Cooking progress](Docs/design/CookingGame/progress.md)。执行前再读对应 Issue 的最新正文、标签、依赖与批准范围；状态摘要和 `orca-ready` 不增加授权。历史通知与损坏原文见 [历史索引](Docs/design/CookingGame/history/agents-notices-2026-10-04.md)。
 
-- Cooking 本次最新指令是持续审计所有议题、审清后执行到完成。恢复时先读 [完整出口审计表](.trellis/tasks/10-02-cooking-gameplay-menu-plan/research/completion-contract.md)、[execution.md](.trellis/tasks/10-02-cooking-gameplay-menu-plan/execution.md)，再读各 Task 设计/manifests。不要把历史“只列不执行”重新当作当前指令，也不要把已停止 worker 当作存活；保留分支必须审阅和复跑。仍不改变架构，单机优先，Unity 由独立执行门控制。
+## 架构与权威
 
-## 项目与边界
+- 当前 ET 固定仓库副本 `core@3.0.3`、`sourcegenerator@3.0.1` 和提炼 runtime；包版本不等于统一 ET 大版本。禁止隐式升级或把完整 ET 网络/调度栈作为隐藏前置。来源、宿主闭包、现状/目标与规则检查映射见 [当前 ET 合同](Docs/design/CookingGame/current-et-foundation-contract.md)。
+- Cooking 目标是由 ET Entity/Component/System 实际持有可变领域状态。每状态族指定唯一 writer、释放责任方、允许 System、驱动时钟和导出/恢复出口；迁移时同时撤销旧可写权威。适配器可委托调用或导出只读 DTO；合法查询、无状态算法和库复用不受禁止。
+- ET Parent 只表达生命周期归属，业务关联使用稳定 ID；不得把 Entity/EntityRef/InstanceId、DI 容器、Unity 对象或内部可变集合当 wire/存档身份。异步继续前重验存活、代次、取消与 scope；销毁、取消、退订、关闭和归还须有重复调用控制。
+- 一房间只有一个权威 Tick 入口。网络回调仅入队，Unity/诊断不能旁路提交。owner、生命周期、五类消息或事务语义变化必须有前后对照、消费者影响及正负控制。
+- 保留当前分阶段提交：accepted command 的 effects/event/Executed terminal 在随后 fixed-step 失败时保留，LogicalTick/HostFrameSequence 不推进。整帧回滚是独立行为变更，不能藏在重构中。同 stable ID/同 payload 重试不得重复扣料、结算或新增事件。
+- Command、准入/处理终态、已提交 Domain Event、完整 Projection/Baseline、Join/ACK/Ready/Close/Rebind 分别定义。Task 完成、传输 ACK、业务提交、客户端完整投影和精确 ACK/Ready 是不同事实。通知监听异常不等于业务回滚；事件须注明线程、发布时点、顺序、重入、异常与订阅释放。
 
-- 这是 Unity UPM + 纯 C#/.NET 工具库；做菜经营游戏是本工作区的产品方向，不是框架已经具备的成品。先读 `ADR/long-term-goals.md` 和 `ADR/README.md`。
-- `Unity/Packages/` 是主要共享源码；`src/` 的 SDK 项目通过 `Compile Include` 复用它。修改前检查对应 `.csproj` 与 `.asmdef`，不能只验证单一宿主。
-- 核心逻辑保持纯 C#；Unity 负责场景、资源、表现和编辑器。游戏规则、房间流程、网络权威策略由应用层拥有，不塞进通用框架。
-- `Server/` 是 Orleans 等宿主示例，不是游戏必须依赖的服务；当前 Coordinator 是精简契约包，不要假设存在旧 SessionCoordinator 或 Local/Remote/Hybrid 实现。
-- `Docs/design/` 是既有跨模块设计入口；协议变更先读 `Protocols/README.md`，测试策略先读 `Docs/AbilityKit测试门禁与批量回归规范.md`。
-- 做菜经营游戏的应用层技术路线唯一正文是 [`Docs/design/CookingGame/technical-roadmap.md`](Docs/design/CookingGame/technical-roadmap.md)；其迁移规划入口是 [`.trellis/spec/cooking/index.md`](.trellis/spec/cooking/index.md)。两者均不把路线或未执行计划表述为已实现能力。
-- [`Docs/design/CookingGame/reference/`](Docs/design/CookingGame/reference/) 目录内的所有 Markdown 文件都是 Cooking 产品语义与 ET 结构的设计参考文件。开始相关规划或实现前应读取其 [`README.md`](Docs/design/CookingGame/reference/README.md) 和关联主题文件；它们用于记录已确认决定与统一术语，但不替代 ADR、`technical-roadmap.md`、`.trellis/spec/cooking/`、活动 task 或 `check.jsonl` 证据。来源冲突时必须显式指出并重新审议，不得把参考文件当作已实现或已验证能力。
-- 项目级待办事项统一记录在 [`Docs/Todo.md`](Docs/Todo.md)。该文件用于汇总尚未完成、待审议或待验证的工作；开始实施时仍须按本节的唯一归属规则读取对应 ADR、设计、spec 与 Trellis task/check 证据。
-- 恢复或审议做菜项目工作前，先读 [`Docs/design/CookingGame/progress.md`](Docs/design/CookingGame/progress.md) 确认当前执行基线、实际验证指针和完整出口 blocker。该文件只做跨阶段汇总；行为契约与验证证据仍分别以 `.trellis/spec/cooking/` 和对应 task 的 `check.jsonl` 为准。
-- 当前 Preparing 运行增量与准确恢复边界见 [preparing-composite-verification.md](.trellis/tasks/10-02-cooking-gameplay-menu-plan/research/preparing-composite-verification.md)；其中集成分支通过不代表已合并 master，也不代表布局安装或准备态恢复已经完成。后续实际结果继续由 progress 与活动 task 路由。
-- 2026-10-02 后续已合并的供应、准备厨房、同关布局及恢复以 [master-prepared-layout-verification.md](.trellis/tasks/10-02-cooking-gameplay-menu-plan/research/master-prepared-layout-verification.md) 为最新实测入口；较早增量报告保留其历史边界。跨关许可/几何、S14 完整经营、网络和 Unity 不由该受限交付推导为完成。
-- Cooking 功能、菜品和后续 Task 规划先读 [`.trellis/spec/cooking/gameplay-menu-plan.md`](.trellis/spec/cooking/gameplay-menu-plan.md)，再按其路由读取功能对照、[Task 注册表](.trellis/tasks/10-02-cooking-gameplay-menu-plan/task-register.md)、[菜单整合](Docs/design/CookingGame/reference/menu-integration.md)和[规划架构记录](Docs/design/CookingGame/gameplay-plan-architecture.md)。推进顺序为“单机 → 网络 → 单机 Unity → 网络 Unity”，当前专注单机、不改变架构；未提细节授权助手补足并及时落盘。早期“只列 Task 不执行”已由本文顶部及下节的后续明确授权取代。网络依赖单机出口，Unity 条件性 Task 仍 prohibited；不能从登记或排序本身推导执行批准。
-- 87 款菜单的原始 Markdown/Excel 位于 [`Docs/design/CookingGame/reference/menu-v0.1/`](Docs/design/CookingGame/reference/menu-v0.1/README.md)，是候选总目录，不是首关菜单、runtime 配置或已通过证据。恢复规划时同时读[现有 plan 接续路由](.trellis/tasks/10-02-cooking-gameplay-menu-plan/research/current-plans.md)，保持已确认的固定伙伴、自然完成与成功检查点语义；现有网络来源冲突按架构记录显式审议。
+## 复用、依赖与证据
+
+- 新基础设施先评估锁定版本的当前框架能力、平台/BCL、已有适配和成熟依赖。新增依赖、复制上游、长期 fork 或第二套同类机制须 ADR 记录差距、拒绝理由、宿主、维护者、来源/许可、测试、回退和退出条件；薄适配与业务规则无需强套通用框架。
+- DI 装配与 ET 释放责任不得重叠。日志与观测从提交结果旁路采集，不驱动成功，不默认记录凭证或无界 payload。持久化须声明正常重启/进程崩溃/OS/掉电故障模型；文件存在、hash 或序列化成功不能证明掉电事务。
+- 网络、存档、配置 schema 各有唯一权威源；生成文件不得手改，Check 不得改输入/产物。变更覆盖旧新互读或明确拒绝、未知/缺失字段、编号不重用、损坏与超限；同一 serializer 不意味着 schema 兼容。
+- 工具链、生成器、UPM/NuGet/npm 与 vendored 来源记录不可变版本、hash、patch、license/notice、宿主、消费者和退役条件。新依赖不使用浮动 latest/main；允许的版本差异逐宿主审阅。SDK/最终应用恢复闭包待补齐时如实标待建，不虚称已锁定。
+- 当前 ET 保持 internal-only；发布必须检查受限代码的传递依赖闭包，不能仅靠名字或 IsPackable=false。未知许可/再分发范围独立审阅，不据其他版本推断当前授权。
+- 架构规则映射到合同中的现有 gate、待建 gate 或明确人工 check；新机器检查必须有正确正例与故意违规负例。AKET001/002 不代表完整所有权防线。
+- 结果使用 Passed / Failed / Blocked / Skipped / NotRun；缺环境、零测试、旧产物、SHA 不匹配均不得记 Passed。记录源 SHA/dirty、工具版本、实际命令/退出码、覆盖数量、原始结果和二进制身份；保留原失败，性能延期不等于通过。CI/required checks 需实际核实，不能由配置引用推断已存在。
+- dot 负责方案、审阅与 Issue 组织，本地 Orca 在已批准边界内实施。经批准且依赖已审阅的有界任务可用 orca-ready 交接；标签、报告、草案和 Proposed ADR 不授权升级、扩大范围、合并或发布。删除旧框架先查反向消费者及替代验收。
+
+## 项目与来源边界
+
+- 项目是 Unity UPM + 纯 C#/.NET 工具库；Cooking 是应用产品方向。先读 [长期目标](ADR/long-term-goals.md)、[ADR 索引](ADR/README.md)；游戏规则、房间流程和权威策略由应用层拥有，不塞入通用框架。
+- `Unity/Packages/` 是共享源码主入口；`src/` 以 Compile Include 复用。修改前同时核对 csproj、asmdef、包依赖与生成器闭包；纯 .NET 编译不能证明 Unity Mono/IL2CPP/AOT 或跨宿主兼容。Server/Orleans 是示例，不是游戏必需服务；Coordinator 为精简契约，不假设旧 SessionCoordinator 或 Local/Remote/Hybrid 实现。
+- 应用路线唯一正文为 [technical-roadmap](Docs/design/CookingGame/technical-roadmap.md)，规范入口为 [cooking index](.trellis/spec/cooking/index.md)。相关规划先读 [gameplay-menu-plan](.trellis/spec/cooking/gameplay-menu-plan.md) 及其 Task 注册/菜单整合/架构记录路由。参考资料先读 [reference README](Docs/design/CookingGame/reference/README.md)，再读主题；参考、路线、计划不代表实现或验证。
+- 项目待办统一在 [Docs/Todo](Docs/Todo.md)；菜单原始资料见 [menu-v0.1](Docs/design/CookingGame/reference/menu-v0.1/README.md)，候选目录不等于 runtime 配置。保持已确认固定伙伴、自然完成和成功检查点语义。
+- 来源归属：长期方向/空白 → ADR/long-term-goals；架构取舍 → ADR/decisions；框架设计 → Docs/design；工程/稳定契约 → .trellis/spec；当前目标/研究/check → .trellis/tasks；.trellis/migration 只读。冲突显式列出，不自行合并成产品新语义；Proposed 不能因写完提案改 Accepted。
 
 ## 构建与验证（仓库根目录）
 
-- 2026-10-02 后续 owner 已明确授权按 Cooking 总 plan 实施单机与联网部分，使用 **Orca 受管 worktree + supervised orchestration** 并行作业，验证通过后本地合并 `master`。这更新上文“只列 Task 不执行”的本轮历史边界；Unity 单机/联网继续后置且未获实施授权，S15 扩展参考池不自动纳入基础。执行恢复先读 [execution.md](.trellis/tasks/10-02-cooking-gameplay-menu-plan/execution.md)，核对实际 worker/dispatch 与 Git 状态，不能仅凭状态文件重启活跃 worker。
-- Owner 明确要求（2026-10-03再次重申）：不用的 worktree 及时清理；这是持续维护要求，每次集成、任务收尾与会话恢复都检查执行，不只记录待办。确认成果和验证证据已保存、无在用任务或进程后及时移除，并更新生命周期记录。
-- Worktree 生命周期：不再使用的 worktree 应及时清理，不长期堆积。每次集成、任务收尾和恢复会话时检查实际 worktree、worker、进程与任务引用；确认无在用任务/进程，且改动已合并或妥善保存后，用 Orca/Git 的 worktree 管理命令移除。清理前把仍需保留的验证日志、TRX、报告及未合并成果迁出并记录来源，更新 task/worktree 路由；不得强删含未保存改动的目录，也不得把活动 worktree 或仅因 worker 已停止而尚待审阅的分支误判为不用。Windows 删除前核对解析后的绝对路径位于目标受管工作区；不使用跨 shell 拼接删除或全局进程终止。已清理目录与证据的新位置读[worktree-lifecycle.md](.trellis/tasks/10-02-cooking-gameplay-menu-plan/research/worktree-lifecycle.md)，旧绝对路径不是活动工作区。
+- 默认：`powershell -ExecutionPolicy Bypass -File tools/run_test_gate.ps1`，`-List` 查看、按范围选择 `-Gate core-stability` / `-Gate runtime-contracts`；权威为 [test-gates](tools/test-gates.json)。先读 [测试规范](Docs/AbilityKit测试门禁与批量回归规范.md)，不能用 MOBA precheck 代替全部范围。
+- 聚焦构建：`dotnet build src/AbilityKit.Demo.Moba.Console/AbilityKit.Demo.Moba.Console.csproj`。主要 .NET 项目 net10.0，其他宿主按实际 csproj；README SDK 10.0.300 不表示已有 global.json 固定。
+- Unity 2022.3.62f1，打开 Unity/；不得编辑自动生成 csproj、Library/、Temp/。编译辅助：`powershell -ExecutionPolicy Bypass -File tools/run-unity-compile-check.ps1`；需要本机 managed DLL，缺失或脚本 exit0 跳过都不算通过。
+- EditMode：`powershell -ExecutionPolicy Bypass -File tools/run-unity-editmode-tests.ps1 -TestAssembly AbilityKit.Ability.Editor.Tests`；另一 Editor 占用时不运行批处理、不删锁文件。
+- 协议修改先读 [Protocols README](Protocols/README.md)。Catalog：`powershell -ExecutionPolicy Bypass -File tools/compile-protocol-catalogs.ps1 -Check`；wire：`tools/export-protocol-wire.ps1 -Projects shooter,moba -Check -Strict`。Catalogs/WireSchemas 修改后经生成器更新，勿手改派生文件。
+- 以上是已发现命令，交付报告实际执行和未执行原因；Cooking Unity 仍后置且未授权实施。物理两 PC 不可用时保留 NOT_VERIFIED，不重复询问硬件、不用同机替代出口；见 [physical runbook](.trellis/tasks/10-02-cooking-network-gameplay-loop/research/physical-lan-runbook.md)。
 
-- .NET 项目使用 `net10.0`。README 提及 SDK 10.0.300，但本次检查根目录没有 `global.json`，不要宣称已固定 SDK。
-- Unity 版本为 `2022.3.62f1`；打开 `Unity/`。不要编辑 Unity 自动生成的 `.csproj`、`Library/` 或 `Temp/`。
-- 默认门禁：`powershell -ExecutionPolicy Bypass -File tools/run_test_gate.ps1`；用 `-List` 查看门禁，按范围选择 `-Gate core-stability` 或 `-Gate runtime-contracts`。配置权威是 `tools/test-gates.json`。
-- 聚焦构建：`dotnet build src/AbilityKit.Demo.Moba.Console/AbilityKit.Demo.Moba.Console.csproj`。
-- Unity 编译辅助：`powershell -ExecutionPolicy Bypass -File tools/run-unity-compile-check.ps1`。需要本机 Unity managed DLL；缺少环境而跳过不算通过。
-- EditMode：`powershell -ExecutionPolicy Bypass -File tools/run-unity-editmode-tests.ps1 -TestAssembly AbilityKit.Ability.Editor.Tests`。另一 Editor 占用项目时不要运行批处理，也不要删除锁文件强行执行。
-- 协议检查：`powershell -ExecutionPolicy Bypass -File tools/compile-protocol-catalogs.ps1 -Check`；wire 检查用 `tools/export-protocol-wire.ps1 -Projects shooter,moba -Check -Strict`。改 Catalogs/WireSchemas 后通过生成器更新派生文件，不手改生成结果。
-- 上述是已发现的命令，不代表每次交付已运行；报告实际执行与跳过原因。
+## Orca、工作树与 Trellis
 
-## Trellis 工作流
-
-- 本仓库只使用 Trellis 管理 AI 工程任务、会话上下文、规划、实现、检查、归档与可复用工程知识。项目共享配置位于 `.trellis/`；本机开发者身份、runtime session、缓存和局部日志遵循 `.trellis/.gitignore`，不得提交。
-- 复杂工作先创建 Trellis task；在 task 仍为 `planning` 时完成 `prd.md`、`design.md`、`implement.md` 和 context manifests 的审阅，只有明确批准后才可进入 `in_progress`。
-- 开始或恢复任务时，读取活动 task 的 `prd.md`、`design.md`、`implement.md`、`research/` 与 `implement.jsonl`/`check.jsonl` 引用的规范。涉及架构时再读取相关 `ADR/decisions/` 与 `Docs/design/`；新游戏范围尚未确认时读取 `ADR/long-term-goals.md`。来源冲突必须显式指出并核实，owner 决定前不扩大范围。
-- 唯一归属：长期产品方向与范围空白 → `ADR/long-term-goals.md`；架构取舍 → `ADR/decisions/`；框架设计 → `Docs/design/`；工程规则与稳定的做菜规划草案 → `.trellis/spec/`；当前任务的目标、设计、实施清单、研究与检查记录 → `.trellis/tasks/`；旧流程迁移来源 → `.trellis/migration/`，只读且不作为活动任务来源。
-- 做菜迁移任务处于 `planning`，其 `migration_status` 为 `planned` 或 `blocked` 的原因写在 task PRD 与 metadata 中。迁移只保留计划，不代表任务已启动、实现、验证或归档。
-- Trellis check 只编排和记录验证；交付必须区分计划命令、实际通过、失败、受阻和跳过。缺少 Unity 环境或另一 Editor 占用项目不得记录为通过。
-- 修改前检查 Git 状态，保留用户的解决方案与练习目录改动；不要把 `Unity/Assets/Practice/`、`src/AbilityKit.Demo.MyPractice/` 当作可清理的生成目录。
-
-## Trellis 安装与宿主集成
-
-- 已使用 Trellis `0.6.17` 在项目根目录初始化。开发环境要求 Node.js `>=18`、Python `>=3.9`；安装与升级方式见 `ADR/reference/README.md`。
-- Trellis 生成的 ZCode 与 Codex 集成位于 `.zcode/`、`.codex/` 与 `.agents/skills/trellis-*`。当前会话的宿主技能列表不会自动热刷新；新开会话后加载新的工作流入口。
-- ZCode hooks 已在 `.zcode/config.json` 启用。若宿主禁用项目 hooks，按 Trellis 输出提示安装对应 bridge 后新开会话；不要将磁盘存在的 hook 当作已获宿主授权或实际执行的证据。
+- 修改前看 Git 状态，保留用户解决方案及 `Unity/Assets/Practice/`、`src/AbilityKit.Demo.MyPractice/`；不用清空/reset/全局 kill 处理任务。
+- 获准并行工程使用 Orca 受管 worktree 与 supervised orchestration；恢复核对实际 worker/dispatch/进程，不凭状态文件重启。本轮文档任务不得清理用户工作树、备份或进程，不沿用旧合并授权。
+- 持续检查 worktree 生命周期。仅在无活动任务/进程、改动已合并或妥善保存、证据已迁出后按授权及时清理；worker 停止不等于分支可删。保留来源、更新路由，见 [生命周期记录](.trellis/tasks/10-02-cooking-gameplay-menu-plan/research/worktree-lifecycle.md)。Windows 递归删除/移动前核对绝对目标位于指定 workspace，不跨 shell 拼删除命令。
+- 本仓库只用 Trellis 管理工程任务与记录。复杂任务在 planning 完成并审阅 prd/design/implement/context manifests，明确批准后才 in_progress。恢复读 task 全部产物、research 与 manifest 规范；迁移 planning/blocked 不意味着已实施。验证、提交、归档独立，不提交本机 developer/runtime/cache/log。
+- Trellis 安装 0.6.17，Node >=18、Python >=3.9，见 [安装参考](ADR/reference/README.md)。共享配置 .trellis/；宿主集成 .zcode/、.codex/、.agents/skills/trellis-*。磁盘 hook/技能存在不代表宿主已批准或加载；技能列表需新会话刷新，宿主禁用 hooks 时按 bridge 提示安装后新开会话。
