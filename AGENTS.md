@@ -20,7 +20,7 @@
 - 当前 ET 保持 internal-only；发布必须检查受限代码的传递依赖闭包，不能仅靠名字或 IsPackable=false。未知许可/再分发范围独立审阅，不据其他版本推断当前授权。
 - 架构规则映射到合同中的现有 gate、待建 gate 或明确人工 check；新机器检查必须有正确正例与故意违规负例。AKET001/002 不代表完整所有权防线。
 - 结果使用 Passed / Failed / Blocked / Skipped / NotRun；声明覆盖所需环境缺失、声明应执行测试或必需测试覆盖却实际零测试、旧产物、SHA 不匹配均不得记 Passed。纯构建或文档检查可按自身声明覆盖记 Passed；不适用的测试明确记 N/A，未运行的测试记 NotRun，不得冒称测试通过。记录源 SHA/dirty、工具版本、实际命令/退出码、覆盖数量、原始结果和二进制身份；保留原失败，性能延期不等于通过。CI/required checks 需实际核实，不能由配置引用推断已存在。
-- dot 负责方案、审阅与 Issue 组织，本地 Orca 在已批准边界内实施。经批准且依赖已审阅的有界任务可用 orca-ready 交接；标签、报告、草案和 Proposed ADR 不授权升级、扩大范围、合并或发布。删除旧框架先查反向消费者及替代验收。
+- 协调审计者接替 dot，负责方案、审阅与 Issue 组织，Orca 执行者在已批准边界内实施；历史 dot 审阅保留来源，不再等待该角色。交付、依赖调度与收尾遵循 [协作 SOP](.trellis/spec/abilitykit/supervised-issue-delivery.md)。经批准且依赖已审阅的有界任务可用 orca-ready 交接；标签、报告、草案和 Proposed ADR 不授权升级、扩大范围、合并或发布。删除旧框架先查反向消费者及替代验收。
 
 ## 项目与来源边界
 

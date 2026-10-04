@@ -1,0 +1,33 @@
+{
+  "status": "Passed",
+  "scope": "UTF-8 decoding and existing local Markdown link targets only",
+  "files": 4,
+  "links": 20,
+  "sourceSha": "7aa3e8b67c13a469192edaa761cb3dfc1fa9294b",
+  "dirty": true,
+  "recordedAt": "2026-10-04T13:23:49.401012+00:00",
+  "runtimeTests": "NotRun",
+  "documentationTests": "N/A",
+  "initialTaskStart": "Blocked by empty context manifests; curated two entries per manifest then start succeeded",
+  "sopEndToEnd": "NotRun; Issue 6 trial remains in progress",
+  "pythonVersion": "3.14.8 (tags/v3.14.8:8e6e75d, Sep 30 2026, 18:19:33) [MSC v.1944 64 bit (AMD64)]",
+  "checks": [
+    {
+      "command": "Python stdlib inline UTF-8 decoding/local-link existence check",
+      "exitCode": 0
+    },
+    {
+      "command": "python .trellis/scripts/task.py validate .trellis/tasks/10-04-supervised-issue-delivery-sop",
+      "exitCode": 0,
+      "contextEntries": 4
+    },
+    {
+      "command": "git diff --check",
+      "exitCode": 0
+    },
+    {
+      "command": "git diff --cached --check",
+      "exitCode": 0
+    }
+  ]
+}

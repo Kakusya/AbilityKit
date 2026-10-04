@@ -12,6 +12,7 @@
 2. 涉及架构时读取 `ADR/decisions/`、`Docs/design/`；产品方向和范围空白读取 `ADR/long-term-goals.md`。
 3. 读取 `Docs/AbilityKit测试门禁与批量回归规范.md`，按受影响范围选择实际门禁。
 4. 不把路线图、任务计划或未执行测试写成已实现或已通过。
+5. 多代理交付读取 [协调审计与执行者 SOP](supervised-issue-delivery.md)：职责、Issue/Trellis/PR 分工、依赖调度、审计与工作树收尾。
 
 ## Quality Check
 
