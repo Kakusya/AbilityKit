@@ -3,7 +3,7 @@
   "name": "cooking-dot-workflow",
   "title": "Cooking dot supervised workflow skill",
   "description": "Implement the approved explicit-only Cooking skill with dot technical authority, Orca workers, durable recovery and bounded automatic delivery.",
-  "status": "in_progress",
+  "status": "completed",
   "dev_type": "docs",
   "scope": "Cooking workflow skill and opt-in documentation routing only",
   "package": null,
@@ -11,11 +11,11 @@
   "creator": "Kakusya",
   "assignee": "Kakusya",
   "createdAt": "2026-10-05",
-  "completedAt": null,
+  "completedAt": "2026-10-05",
   "branch": "docs/supervised-issue-sop",
   "base_branch": "master",
   "worktree_path": null,
-  "commit": null,
+  "commit": "a2434830b",
   "pr_url": null,
   "subtasks": [],
   "children": [],
@@ -28,6 +28,6 @@
     ".trellis/spec/abilitykit/supervised-issue-delivery.md",
     "AGENTS.md"
   ],
-  "notes": "Owner approved final proposed_plan with Implement the plan. Installation AC1-AC5 met: validator/document/context checks and 15 static independent scenarios passed. Live dot/GitHub, host loading, actual crash/rebind NotRun; no old Issue6 restart or product implementation. Routine settled Orca installer/reviewer terminals released; no worktree deletion. Local commit/archive pending.",
+  "notes": "Installation accepted: validator/document/context checks and 15 static independent scenarios Passed. Work committed at a2434830b on docs/supervised-issue-sop; no remote push/master merge. Live dot/GitHub, host loading and actual crash/rebind NotRun. Both installer/reviewer workers settled/released; no worktree deletion or old Issue6 continuation. Archive represents skill installation only.",
   "meta": {}
 }

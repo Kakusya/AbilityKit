@@ -37,3 +37,25 @@ Dot accepted final docs; PR 10 merged; task archived; ten local receipts copied 
 ### Next Steps
 
 - Issue 6 plan/schema for Dot; retire merged old Orca worktree after terminal exit.
+
+
+## Session 2: Cooking dot workflow skill implementation
+<!-- trellis-session: v=2 fp=bca03461849aa976 -->
+
+**Date**: 2026-10-05
+**Task**: Cooking dot workflow skill implementation
+**Branch**: `docs/supervised-issue-sop`
+
+### Summary
+
+Explicit-only Cooking skill delivered with dot technical authority and Orca workers; original validator and document checks passed, 15 independent static scenarios passed. Live dot/GitHub, host loading and normal Run recovery NotRun. Task archived; no product changes or old Issue6 restart.
+
+### Git Commits
+
+| Hash | Message |
+|------|---------|
+| `a2434830b` | feat(workflow): add explicit Cooking dot orchestration skill |
+
+### Status
+
+[OK] **Completed**

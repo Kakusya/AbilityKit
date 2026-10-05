@@ -9,7 +9,7 @@ Approved boundary: explicit-only Cooking workflow skill; Owner approved final pr
 - [x] Worker creates explicit-only skill and references, validates frontmatter/links/format and reports actual commands/exit/results. No unrelated source, commits, GitHub/dot writes or worker spawning.
 - [x] Independent Orca reviewer reads final skill and raw behavior scenarios, gives actual action decisions, checks scope and records findings in this task research. Review output is not approval to coordinator edit worker-owned files; fixes routed to implementer and re-reviewed. No blocker/fix required.
 - [x] Coordinator inspects final diff and targeted checks, records status/identities and remaining NotRun live paths. Integrates only these doc changes in current branch; no master/remote merge, publication or worktree deletion. Routine accepted-settlement terminal release was completed through Orca, separate from future paused-flow resource deletion.
-- [ ] Record final task status/evidence and journal according to local workflow. Do not archive unrelated tasks or commit developer/runtime/cache/log.
+- [x] Record final task status/evidence and journal according to local workflow. Do not archive unrelated tasks or commit developer/runtime/cache/log.
 
 ## Validation
 

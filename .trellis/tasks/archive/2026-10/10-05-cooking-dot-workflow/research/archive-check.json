@@ -1,0 +1,11 @@
+{
+  "check": "postarchive delivered hashes, local links and manifests",
+  "status": "Passed",
+  "head": "a2434830b5ab5a776a41e14e97533257002de073",
+  "delivered_files_unchanged": 6,
+  "local_links_checked": 40,
+  "task_status": "completed",
+  "errors": [],
+  "live_dot_github": "NotRun",
+  "actual_run_crash_rebind": "NotRun"
+}

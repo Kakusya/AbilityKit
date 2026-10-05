@@ -37,11 +37,11 @@ The Issue6 tree was read-only: inspected AGENTS, 10-04-test-gate-result-contract
 
 Paths in the following shorthand are relative to repository root; numbers are file line anchors in the hashed delivered files.
 
-- **S** = [.agents/skills/cooking-dot-workflow/SKILL.md](../../../../.agents/skills/cooking-dot-workflow/SKILL.md): explicit entry 8, constraints 12, live CLI discovery 13, flow selection 14, authorization 15, remote identity 21, dot planning 22–23, workers 24–26, evidence/delivery 30–34, host refresh 36.
-- **D** = [.agents/skills/cooking-dot-workflow/references/dot-dialogue.md](../../../../.agents/skills/cooking-dot-workflow/references/dot-dialogue.md): request/reply binding 7–11, original budget/cadence 15–17, observation actions 23–28, no-progress wait 30, resource-safe pause 34–38.
-- **R** = [.agents/skills/cooking-dot-workflow/references/recovery.md](../../../../.agents/skills/cooking-dot-workflow/references/recovery.md): durable records 11–18, cross-tree discovery 22–23, factual/authority reconciliation 24–27, lost-effects/retry 33–39, paused resources 43–47.
-- **P** = [.trellis/spec/abilitykit/supervised-issue-delivery.md](../../../spec/abilitykit/supervised-issue-delivery.md): explicit override 7, delegated approval/automatic delivery 9, recovery 11, workers/waits 13, retention 15; scope 19/56, evidence 38.
-- **A** = [AGENTS.md](../../../../AGENTS.md): scope 5–9, true results 30, explicit route 31, Unity/LAN boundary 48, user/resource preservation 52–55, host refresh 56.
+- **S** = [.agents/skills/cooking-dot-workflow/SKILL.md](../../../../../../.agents/skills/cooking-dot-workflow/SKILL.md): explicit entry 8, constraints 12, live CLI discovery 13, flow selection 14, authorization 15, remote identity 21, dot planning 22–23, workers 24–26, evidence/delivery 30–34, host refresh 36.
+- **D** = [.agents/skills/cooking-dot-workflow/references/dot-dialogue.md](../../../../../../.agents/skills/cooking-dot-workflow/references/dot-dialogue.md): request/reply binding 7–11, original budget/cadence 15–17, observation actions 23–28, no-progress wait 30, resource-safe pause 34–38.
+- **R** = [.agents/skills/cooking-dot-workflow/references/recovery.md](../../../../../../.agents/skills/cooking-dot-workflow/references/recovery.md): durable records 11–18, cross-tree discovery 22–23, factual/authority reconciliation 24–27, lost-effects/retry 33–39, paused resources 43–47.
+- **P** = [.trellis/spec/abilitykit/supervised-issue-delivery.md](../../../../../spec/abilitykit/supervised-issue-delivery.md): explicit override 7, delegated approval/automatic delivery 9, recovery 11, workers/waits 13, retention 15; scope 19/56, evidence 38.
+- **A** = [AGENTS.md](../../../../../../AGENTS.md): scope 5–9, true results 30, explicit route 31, Unity/LAN boundary 48, user/resource preservation 52–55, host refresh 56.
 - **O** = [owner-decisions.md](owner-decisions.md); **Q** = [review-scenarios.md](review-scenarios.md). These are raw evidence, not instructions to perform their hypothetical effects.
 
 ## Concrete next actions for all 15 raw scenarios
