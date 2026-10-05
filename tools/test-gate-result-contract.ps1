@@ -339,10 +339,14 @@ function Get-GateProjectClosure {
         $preprocessed=Join-Path (Get-GateNodeRoot $Context.runRoot $Result.resultId) ($stem+'.pp.xml')
         $null=Invoke-GateTool $Context $Result @('msbuild',$path,'-nologo',('-p:Configuration='+$Context.configuration),('-preprocess:'+$preprocessed)) ($stem+'-imports')
         $null=Add-GateArtifact $Result $Context.runRoot $preprocessed 'evaluated-imports'
+        $invalidPathCharacters=[IO.Path]::GetInvalidPathChars()
         foreach ($comment in [regex]::Matches([IO.File]::ReadAllText($preprocessed),'(?s)<!--(.*?)-->')) {
             foreach ($line in $comment.Groups[1].Value.Split("`n")) {
                 $candidate=$line.Trim()
-                if ($candidate -and [IO.Path]::IsPathRooted($candidate) -and [IO.File]::Exists($candidate)) { $inputs+=[IO.Path]::GetFullPath($candidate) }
+                # SDK boundary comments also contain XML/prose. On .NET Framework,
+                # IsPathRooted throws for those invalid characters; reject them
+                # before asking the BCL to interpret an actual existing path.
+                if ($candidate -and $candidate.IndexOfAny($invalidPathCharacters) -lt 0 -and [IO.Path]::IsPathRooted($candidate) -and [IO.File]::Exists($candidate)) { $inputs+=[IO.Path]::GetFullPath($candidate) }
             }
         }
         foreach ($itemName in @('Compile','Analyzer','AdditionalFiles','EmbeddedResource','Content','None','Reference','EditorConfigFiles')) {

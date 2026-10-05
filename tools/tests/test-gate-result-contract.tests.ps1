@@ -98,6 +98,31 @@ function Runner-Case {
     }
 }
 
+function Set-ControlPreprocessedImports {
+    param($Fixture)
+    $directory=Join-Path $Fixture.root ('import space '+[char]0x6761+[char]0x4ef6)
+    $null=New-Item -ItemType Directory -Path $directory
+    $imports=@((Join-Path $directory 'conditional file.nonstandard'),(Join-Path $directory 'sdk file.props'))
+    foreach ($path in $imports) { [IO.File]::WriteAllText($path,'<Project />') }
+    foreach ($project in $Fixture.context.projectData) { $project | Add-Member -NotePropertyName preprocessedOnlyImports -NotePropertyValue $imports }
+}
+
+function Test-ControlPreprocessedImportRetention {
+    param($Run)
+    $fixture=Get-Content (Join-Path $Run.fixtureRoot 'context.json') -Raw -Encoding UTF8 | ConvertFrom-Json
+    foreach ($leaf in $Run.summary.children) {
+        foreach ($path in $fixture.projectData[0].preprocessedOnlyImports) {
+            $source=@($leaf.source.before.inputs | Where-Object path -ieq $path)
+            $archive=@($leaf.provenance.build.inputs | Where-Object path -ieq $path)
+            if ($source.Count -ne 1 -or $archive.Count -ne 1 -or $source[0].sha256 -cne (Get-GateHash $path) -or $archive[0].sha256 -cne $source[0].sha256) { return $false }
+        }
+    }
+    return $true
+}
+
+$null=Runner-Case 'imports' 'mixed-sdk-comments-retain-spaces-unicode-nonstandard-imports' 'valid' 0 'Passed' -Configure { param($f) Set-ControlPreprocessedImports $f } -Verify { param($r) Test-ControlPreprocessedImportRetention $r }
+$null=Runner-Case 'imports' 'changed-preprocessed-only-import-refused' 'import-change' 1 'Failed' 'build' -Configure { param($f) Set-ControlPreprocessedImports $f } -Verify { param($r) $r.summary.children[0].reason -like 'Source/assets/binary changed:*conditional file.nonstandard' }
+
 $positive=Runner-Case 'valid' 'current-build-test-JSON-roundtrip' 'valid' 0 'Passed' -Verify { param($r) $r.summary.fullGateAccepted -and $r.summary.children[0].tests -eq $null -and $r.summary.children[1].tests.counts.executed -eq 2 -and @($r.summary.children[1].provenance.compilerInputs | Where-Object { $_.path -like '*Generated.opaque' }).Count -eq 1 }
 # Pipeline logging is separate from returned runs.
 if ($positive -is [array]) { $positive=$positive[-1] }

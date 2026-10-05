@@ -16,7 +16,9 @@ if ($stage -ceq 'msbuild') {
     $preprocess=@($argv | Where-Object { $_ -like '-preprocess:*' })
     if ($preprocess.Count) {
         $path=$preprocess[0].Substring('-preprocess:'.Length)
-        [IO.File]::WriteAllText($path,('<Project><!--'+"`n"+($p.imports -join "`n")+"`n"+'--></Project>'))
+        $commentLines=@('<Import Project="Sdk.props" Sdk="Microsoft.NET.Sdk">', 'This import was added implicitly because the Project element''s Sdk attribute specified "Microsoft.NET.Sdk".', '<Import Project="$(AlternateCommonProps)" Condition="''$(AlternateCommonProps)'' != ''''" />')
+        $commentLines+=@($p.imports)+@($p.preprocessedOnlyImports)
+        [IO.File]::WriteAllText($path,('<Project><!--'+"`n"+($commentLines -join "`n")+"`n"+'--></Project>'))
         exit 0
     }
     $items=[ordered]@{}
@@ -54,6 +56,7 @@ if ($stage -ceq 'build') {
     $trace=@(foreach ($file in $traceInputs) { $file+'|'+(Get-FileHash -LiteralPath $file -Algorithm SHA256).Hash }) -join "`n"
     [IO.File]::WriteAllText($tracePath,$trace)
     if ($context.mode -ceq 'source-change') { [IO.File]::AppendAllText($p.compile[0],'changed') }
+    if ($context.mode -ceq 'import-change') { [IO.File]::AppendAllText($p.preprocessedOnlyImports[0],'changed import') }
     exit 0
 }
 if ($stage -ceq 'test') {
