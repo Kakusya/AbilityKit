@@ -1,0 +1,7 @@
+# Source and placement audit
+
+Git inventory: main docs/supervised-issue-sop at86d44e8; stopped issue6-test-gate-results at15e79fef; new cooking-dot-skill-polish at86d44e8. Orca lists these three AbilityKit workspaces, local host only, no omitted hosts; unrelated TempProject/blade_game excluded. Read stopped issue6 AGENTS and Cooking progress references; its actual dirty state is clean and its examples remain stopped/isolation only. Prior original skill task archived at86d44; previous dot review artifacts copied read-only from main task archive with provenance. No changes to main dirty journals or archived evidence.
+
+Worktree create receipt: c17feb04-57a0-4425-bb8a-fe8b380972a0; child identity wt2:local:887e0c5b-6658-42b8-8f44-bd0b7b09ca9c; path C:/Users/Administrator/orca/workspaces/AbilityKit/cooking-dot-skill-polish; branch Kakusya/cooking-dot-skill-polish; setup skip, inherited source86d44. Bare creation may leave a setup/fallback terminal; preserve it unless separately accounted/authorized. Actual origin Kakusya/AbilityKit; stale Orca project github:hobobo/abilitykit is not a destination.
+
+Current normal run-use help advertises --id/--from/--retry-request; --takeover-legacy is legacy-only. No exclusive ordinary-Run takeover capability is proven from this help. Read live orchestration kernel/coordinator/placement/recovery and browser references, Orca1.4.220. Earlier plural worktrees list command was rejected with invalid_argument; corrected to documented singular worktree list, no mutation.

@@ -1,0 +1,13 @@
+# Design and boundaries
+
+Start from reviewed source 86d44e8f8a6ac2ca958f4c453555817da7b1f15c on one Orca-managed child worktree. Preserve source review and original failures. One coordinator remains this main conversation; implementation/checking use Orca supervised workers on the exact child worktree, normally sequential owners.
+
+Expected files: .agents/skills/cooking-dot-workflow/SKILL.md and agents/openai.yaml if needed; references/dot-dialogue.md and recovery.md; necessary task/request/decision templates and focused skill-local validation helpers; opt-in section of .trellis/spec/abilitykit/supervised-issue-delivery.md; this owning Trellis task and bounded pilot artifacts. Existing AGENTS route is adequate unless a concrete mismatch is found. No generic task schema/lifecycle changes and no product/example changes.
+
+The pilot is a real documentation delivery needed by this Cooking skill: worker creates a usable handoff/checkpoint example or final operator guide through the updated instructions. Integration target remains this isolated branch. Branch-only approval explicitly withholds merge; validate the accepted branch candidate and record merge/postmerge behavior NotRun rather than pretending to have tested it. Issue is optional for this single bounded skill task; avoid empty Issue/PR side effects merely to claim a full production delivery.
+
+Before implementation ask dot to choose the smallest correction and validation path, including normal Run-use authority semantics. The CLI exposes run-use for normal Runs, but help/capability listings alone do not prove sole coordinator takeover. A capability probe must be isolated with no product worker and must not bind or disrupt existing Runs. If exclusivity is unsupported, document a fail-closed supported envelope rather than build a new scheduler.
+
+Recovery contract should have a stable task-local versioned entry, stable flow identity and authority location, append-only numbered intent/receipt records with atomic derived-index replacement through existing Trellis io utilities. Process-crash is the declared fault model; no OS/power-loss promise. Cross-worktree copies are evidence, not competing authorities. Unknown/unavailable canonical authority or unresolved effects blocks mutation.
+
+Dot timing must define posted versus observed UTC and unknown timestamps, one supplemental question quota, preserved expired requests and explicit new request identity when reopened. End-session saves a paused task; only declared delivery acceptance exits permit archive. Premerge inspection removes closing keywords and server-side automatic close associations before explicit close after integration.
