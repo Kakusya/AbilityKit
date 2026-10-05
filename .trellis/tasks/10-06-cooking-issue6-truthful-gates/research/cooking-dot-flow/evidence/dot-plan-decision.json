@@ -1,0 +1,23 @@
+{
+  "decision": "accept-plan",
+  "request_id": "AK-I6-COOK-PLAN-20261006-01",
+  "flow_id": "6d3174fd-2b01-4136-8ea5-0b0cd0e2845d",
+  "reviewed_sha": "cf41218ab468a40457f6a15bbe0fc2556158b983",
+  "conversation_id": "01a10258-c084-74bb-8bcc-ec01958e5023",
+  "request_message_id": "3f12f99a2ea4819b8541c90bd4ea9e30~3f12f99a2ea4819b8541c90bd4ea9e30~CalpicoMessage~Sentinel_9e959e2adaa08191ac9612050c33e981",
+  "reply_message_id": "3f12f99a2ea4819b8541c90bd4ea9e30~3f12f99a2ea4819b8541c90bd4ea9e30~CalpicoMessage~Sentinel_074b409374d88191a2968cd42ff6ff13",
+  "full": true,
+  "generating": false,
+  "reply_posted_utc": null,
+  "observed_utc": "2026-10-05T17:07:20.140048+00:00",
+  "timing_basis": "complete-observation-upper-bound",
+  "time_source": "local UTC OS clock observed via Python datetime; workflow start and current UTC consistent",
+  "uncertainty_ms": 2000,
+  "clock_jump_observed": false,
+  "prior_snapshot_ref": "evidence/dot-planning-boundary.json",
+  "full_snapshot_ref": "evidence/dot-plan-poll-04.json",
+  "full_dom_ref": "evidence/dot-plan-poll-04-dom.json",
+  "scope_checked": true,
+  "allowed_next_action": "Main sync plans/schema/Issue6 current scope then bounded slice1 Orca dispatch; not final acceptance",
+  "raw_reply_ref": "evidence/dot-plan-reply-raw.txt"
+}

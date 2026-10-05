@@ -1,0 +1,22 @@
+{
+  "version": 1,
+  "flow_id": "6d3174fd-2b01-4136-8ea5-0b0cd0e2845d",
+  "seq": 3,
+  "op_id": "6d3174fd-2b01-4136-8ea5-0b0cd0e2845d:000003",
+  "kind": "receipt",
+  "recorded_utc": "2026-10-05T16:58:24.571906Z",
+  "intent_hash": "9a45b3f13e12f81396a9d1e338299ecb395ec2ebaabcd930cdd217cc9100edc6",
+  "outcome": "applied",
+  "raw_ref": "evidence/dot-planning-send-raw.json",
+  "result": {
+    "command": "orca fill once then click @e64; DOM readback",
+    "exit_code": 0,
+    "request_id": "AK-I6-COOK-PLAN-20261006-01",
+    "candidate_sha": "cf41218ab468a40457f6a15bbe0fc2556158b983",
+    "request_message_id": "3f12f99a2ea4819b8541c90bd4ea9e30~3f12f99a2ea4819b8541c90bd4ea9e30~CalpicoMessage~Sentinel_9e959e2adaa08191ac9612050c33e981",
+    "conversation_id": "01a10258-c084-74bb-8bcc-ec01958e5023",
+    "posted_verified": true,
+    "posted_utc": null,
+    "observed_utc": "2026-10-05T16:58:24.523446+00:00"
+  }
+}

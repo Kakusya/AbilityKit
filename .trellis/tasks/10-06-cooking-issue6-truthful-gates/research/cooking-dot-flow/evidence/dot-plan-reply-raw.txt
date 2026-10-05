@@ -1,0 +1,147 @@
+决定：accept-plan，采用下述收窄后的技术方案。现有草案中的待定项由本回复替换；主控先同步 task 与 Issue #6 的现行合同，再派发实施，无需重复请求同一需求批准。
+
+request_id：AK-I6-COOK-PLAN-20261006-01
+flow_id：6d3174fd-2b01-4136-8ea5-0b0cd0e2845d
+reviewed_sha：cf41218ab468a40457f6a15bbe0fc2556158b983
+分支：Kakusya/issue6-cooking-truthful-gates
+本回复只接受规划，没有实现验收，也没有提前合并决定。
+
+已读取本 SHA 的 PRD/design/implement、entry-approval、historical README/shared-source.patch、Issue #5/#6 快照、AGENTS/progress/SOP、当前 runner 与 gate 配置，并核对历史审计与修复材料。所有判断来自只读源码和证据，没有执行代码。
+
+A. 最终选择：当前 runner 的最小 Cooking 驱动实现
+
+选择方案 2。可以逐函数复用已审过的通用逻辑，但不应用整份 patch、不 cherry-pick 旧实现提交、不合并旧分支。
+
+原因很具体：当前两个 Cooking gate 共九个配置步骤，只需要 .NET build/test 和共享结果树。旧 helper 还包含按 MOBA/Shooter 脚本名分派的第二套注册表、benchmark/AOI 报告校验、Unity proof 和各种 producer 前后依赖。这些不是 Cooking 本轮的必要条件。
+
+可选择性复用：唯一运行身份、完整未执行结果树、严格五状态验证、覆盖绑定、路径/hash 校验、原生输出捕获、TRX 检查、.NET restore/build/test provenance。每处复用记录旧来源、保留内容、删除依赖及本轮新验证。
+
+明确不复制：Get-GateProducerContract 等示例脚本注册表、MOBA content-report/IR 路由、六个示例/benchmark 文件名特判、AOI/性能报告校验、Unity managed/build-proof/execute-method 能力、十八 producer 迁移和相应示例 fixtures。历史输入文件扩展名白名单也不能直接当作完整源码闭包。
+
+B. 逐文件实施边界
+
+tools/run_test_gate.ps1
+消费者：cooking-et-level-runtime、cooking-kitchen-loop。
+允许：运行身份、完整结果树、dotnet-build/test 执行与证据、nested 汇总、选择/复用模式、终态/CLI、未适配入口的拒绝处理。
+验收：两项真实 Cooking gate 与下文正反控制；不存在 exit0 自动升级 Passed 的备用路径。
+
+tools/test-gate-result-contract.ps1，新增一个精简共享 helper
+消费者：上述 runner 和它的隔离自测。
+允许：唯一结果模型、严格校验、覆盖推导、artifact/provenance 检查及必要原生进程辅助。加载文件本身不启动工作。
+验收：内存结果与 JSON 序列化再读回结果接受同一套验证；不含示例注册表、Unity/benchmark 适配或第二份 gate 定义。
+
+tools/test-gates.json
+只改上述两个 Cooking entry 的必要合同元数据，例如 required coverage、明确项目/配置/TFM/filter；必要时增加真正共享的版本说明。
+保留原步骤次序、两个完整测试项目和 focused filter。其他 gate 对象、defaultGate、示例配置保持原样，不整文件格式化；自动比较非 Cooking 对象，证明无语义差异。
+验收：Cooking 声明可解析到具体执行身份；没有未展开占位符或“运行什么都算完成”的覆盖词。
+
+tools/tests/test-gate-result-contract.tests.ps1 与 tools/tests/fixtures/ 下明确列名的共享合同 fixtures
+消费者：本轮 runner/validator。
+只允许假工具、临时产物、合成结果树和进程故障探针。派发前在 manifest 列出 fixture 文件名，不给整个 tools/tests 无限修改权。
+验收：实际运行控制；生产模式拒绝 example/synthetic 证据。禁止调用真实示例、服务、清理脚本或 Unity。
+
+Docs/AbilityKit测试门禁与批量回归规范.md
+只更新共享结果合同、Cooking 命令、复用参数、兼容迁移表、证据与当前验证边界。历史示例说明保留并标明当前适配状态，不借机维护示例功能。
+验收：文档、CLI、JSON 和真实结果一致；不把文档中的 workflow 链接当作已存在/已通过 CI 的证明。
+
+当前 task 的 prd/design/implement、context manifests、research，以及 Docs/design/CookingGame/progress.md 的最小当前入口
+消费者：Cooking 主控、实施者和审阅者。
+保存本决定、逐文件范围、原始失败、命令与验收；progress 新增本轮入口，明确覆盖旧 #6 调度，保留历史原文。
+AGENTS/SOP 不需要再改，更不需要修改玩法、项目文件、包或 SDK。
+
+未适配的兼容策略：
+
+生产实现本轮只保证 dotnet-build、dotnet-test、gate 三类的完整合同。
+调用缺少明确覆盖合同的旧 gate，或包含未适配 powershell-script/Unity kind 的计划，在执行前输出 Blocked/exit2，说明 UnsupportedProducerContract 或 MissingCoverageContract；保留可列举、可诊断能力，不启动这些 producer。
+未知/损坏配置明确拒绝，不能掉回旧 exit0 汇总。
+对全配置做只读兼容清单：哪些入口因未适配现在会非成功退出、哪些调用方依赖旧 exit0。记录影响，不修改禁止的消费端来恢复“全示例正常”。只校验所选执行树的适配要求，不能因仓库里存在其他未适配 gate 阻止两个 Cooking gate。
+
+当前缺陷依据：runner 已检查 TRX 缺失、损坏和零结果，但读取 failed 后未据此拒绝 exit0；StepName 跳过兄弟步骤后仍可打印整个 gate passed。源码(https://github.com/Kakusya/AbilityKit/blob/cf41218ab468a40457f6a15bbe0fc2556158b983/tools/run_test_gate.ps1)。
+
+C. Unity mirror：本轮不改
+
+两个 Cooking gate 没有 Unity mirror、Editor 或 exporter 步骤，因此无法证明修改 tools/run-unity-compile-check.ps1、UnityCompileCheck.csproj 或 Unity adapter 的当前必要性。这些修改及其真实运行从本轮退出条件移除，标为范围 N/A；其未来适配/能力仍未完成。
+
+旧 skip→Passed 缺陷通过隔离的“警告后 exit0、未提供有效执行证据”假 producer 复现，再证明新父运行器拒绝。真实旧脚本被调用前即因未适配阻塞；不能声称其独立运行行为已经修好。
+
+但 .NET 实际编译引用的 Unity/Packages 目录源码必须进入输入指纹。例如 ET Runtime 项目已有 Compile Include。读取/hash 这些现有 C# 输入属于 .NET provenance，不授权修改它们或运行 Unity。
+
+Cooking 配置依据(https://github.com/Kakusya/AbilityKit/blob/cf41218ab468a40457f6a15bbe0fc2556158b983/tools/test-gates.json#L260-L355)。
+
+D. 实现合同、派发顺序与必跑验证
+
+结果合同必须先定清楚：
+
+五状态大小写严格匹配：Passed/0、Failed/1、Blocked/2、Skipped/3、NotRun/4。processExitCode 单独保留真实原生值，不能把任意程序的 exit2 直接解释为 Blocked。
+缺必需工具或尚未支持的执行合同是 Blocked；已执行失败、损坏/矛盾证据、超时和已启动后的取消是 Failed，附具体 reason。未启动的后续步骤为 NotRun。
+N/A 是验收范围说明，不新增第六种执行状态。
+每次运行使用唯一 runId，每个节点使用唯一 resultId/调用路径；目录必须全新。不能继续使用“秒级时间+gate 名”作为唯一隔离，也不能让重复 nested gate 共用产物目录。
+结果至少包含：schemaVersion、身份/父子关系、kind/status/CLI/原生退出码、reason、源 SHA/dirty/输入指纹、配置 hash、实际命令参数数组、工具身份、调用与执行时间、required/optional/completed/missing、coverage bindings、tests、artifacts、provenance、完整 children、fullGateAccepted。
+主控/runner 分配身份和声明，子结果不能自行选择它的信任上下文。叶子不能带 children 或宣布整个 gate 已验收。
+completed 只能来自已验证的当前 Passed 叶子；每个 token 必须绑定非空、唯一、可解析的结果 ID。父节点按配置树和叶子重新计算，拒绝空绑定、失配、重复、缺子项和伪造汇总；必须测试 JSON 往返后的对象，不能只验证内存 Hashtable。
+required/optional 不重叠；missing 是声明集合减去真实完成集合。所有 Cooking 步骤仍 required，不为变绿改成 optional。
+必需 Failed/Blocked 向上传播；聚焦选择导致覆盖不足时，父结果 NotRun/4、fullGateAccepted=false，即使选中叶子 Passed。父调用时间可存在；未启动叶子的命令/执行时间/原生退出码为 null。
+可选项只有预先声明的非执行政策可以保留原始原因并记 Skipped；坏证据、真实失败不能借 optional 被洗掉。仅在必需覆盖全部完成时，父 gate 才能通过自身声明。
+
+.NET 与产物身份：
+
+保留并加强现有 TRX 校验。解析实际结果条目、唯一执行身份、测试定义/程序集、summary 与 counters；零实际执行、失败/错误/超时/中止、计数矛盾、错误程序集/filter、旧结果均不能成功。规范化计数使用不重叠分类：total=resultEntries=passed+failed+skipped+notExecuted，executed=passed+failed；原始 TRX 各字段按其真实语义核对，不能机械相加重叠计数。
+纯 build 的 tests=null，不虚构测试数。完整测试声明下未执行/跳过的必需测试不能当成覆盖完成；任何例外必须事先明确，不能事后豁免失败。
+source 包含精确提交、dirty 明细/指纹及运行前后检查；输入覆盖实际项目引用、Compile Include、导入 props/targets、配置、包解析与生成/分析工具。不能只靠扩展名白名单、mtime 或“SHA 一样”。
+记录 restore/build/test 各阶段真实 argv、工具/SDK/宿主版本、开始结束和退出码；保存 assets/依赖解析、项目/TFM/Configuration 与实际测试程序集、相关依赖二进制的 hash。执行前后核对，快照只写进本 run 拥有的证据目录，避免下一步重建覆盖旧证据。
+可把 test 适配器拆为有记录的 restore→build→test --no-build --no-restore，让测试消费已核实的二进制；不能把前两段藏成“没有执行”。
+NoBuild 保持现有语义：跳过测试隐式构建，不跳过配置里的显式 dotnet-build 步骤。NoBuild/NoRestore 必须分别记录跳过与复用来源，不获得“本次执行过”的信用。
+最小复用入口可新增显式 -ReuseManifestPath，指向按项目/TFM/配置索引的既有阶段回执集合；不自动猜最近一次成功目录。NoRestore 只要求有效 restore 证据，不强迫先前 build 也成功；NoBuild 因同时依赖已恢复的构建产物，须两者均有效。缺证明 Blocked，证明损坏/失配 Failed。默认完整验收不使用这些复用开关。
+artifact 记录所属 run/result、相对路径、角色、长度/hash；拒绝路径越界、reparse/symlink 逃逸、旧 run 与后来替换的 DLL。原生 stdout/stderr 直接保存，不能经过 PowerShell ErrorRecord 排版再当原文；不宣称合并两条流后的顺序是真实时序。
+
+最小有序派发：
+
+主控先落地规划合同
+同步本决定、逐文件 manifest、schema 字段/状态例子和 Issue #6 的收窄正文；保存旧正文/评论及旧分支来源。明确本轮范围、非适配入口的兼容变化、三个切片和完成条件，再转实施。此步骤不要求重开无意义的 Issue，也不沿用旧 ready/合并授权。
+
+一个 Orca worker：精简 helper＋runner＋Cooking 声明＋隔离控制
+上述文件同一 owner，避免 helper/schema/runner 并行漂移。先保存当前误报红例，再完成修复及控制；交付冻结 checkpoint 后停止，主控审查源码、范围和原始输出。
+
+一个后续有界验证派发：精确提交上的真实 Cooking gates
+在同一已批准分支、干净的实现提交上串行执行。可复用已结算 worker，但须新派发与实际启动证据。只补本轮工具缺陷；若真实测试暴露业务问题，保存原失败并停止该验收，不修改玩法、删测试或升级依赖。
+
+主控独立检查与最终审阅
+独立构造关键反例、核对全部 JSON/原始结果与 forbidden diff；冻结最终候选、发布精确 SHA，再向我请求 final-review。若修代码，受影响控制与两项真实 gate 必须绑定新候选重跑。
+
+必须自动执行的控制分组：
+
+当前有效 build/test 正例；原 skip→Passed 红例和修复后的拒绝；exit0 缺/空/坏结果；exit非0却提交 Passed。
+缺工具、错误配置/重复 gate 或结果 ID、同秒两次运行、重复 nested 调用、空结果树、抛错前未生成子记录。
+TRX 零测试、无条目、失败却 exit0、计数矛盾、非规范状态、错误程序集/filter、旧 TRX/错 run/错 SHA、被覆盖二进制。
+required 失败/阻塞、optional 合法跳过、嵌套部分覆盖、StepName 成功但父不完整、找不到/歧义 StepName、序列化空 bindings、伪造 descendant ID。
+NoBuild/NoRestore 各自有效复用正例，以及缺回执、错配置/TFM/SDK、assets/源码/DLL 改变的负例。
+捕获真实假子进程 stdout/stderr，含长行/不同控制台宽度；timeout/cancel 后保留当前失败和后续 NotRun。只处置本次拥有的测试进程，绝不全局 kill；无法证明退出则保留未知 writer 并阻止继续。
+模拟证据不能混进生产验收；源变化、产物路径逃逸、未适配 producer 在启动前阻塞。
+
+真实验收命令，两个都必须运行：
+
+powershell -NoProfile -ExecutionPolicy Bypass -File tools/run_test_gate.ps1 -Gate cooking-et-level-runtime -Configuration Debug -CI
+
+powershell -NoProfile -ExecutionPolicy Bypass -File tools/run_test_gate.ps1 -Gate cooking-kitchen-loop -Configuration Debug -CI
+
+第一个保留两个 build＋Cooking/ET 两个完整测试项目；第二个保留两个 build＋Gate=CookingKitchenLoop focused＋同两个完整测试项目。不能拿 focused 代替完整项目，也不能换成旧五项目 runtime-contracts。保存本次实际测试数量，不套用历史 226/67 等计数。
+
+自测采用新脚本的实际命令，例如 powershell -NoProfile -ExecutionPolicy Bypass -File tools/tests/test-gate-result-contract.tests.ps1；实施时固化所需参数和独立输出路径。所有控制必须有逐项 expected/actual、命令、退出码和原始输出，而非只报总数。
+
+最终源验证输出放在明确排除的产物目录，记录该排除规则；随后新增证据提交须列差异并证明实现文件不变，不能把 dirty-source 结果冒充最终提交验证。
+
+E. 合法的本轮 Issue #6 完成出口
+
+主控将 #6 当前目标明确改为“Cooking 已声明 .NET gates 的结果真实性、覆盖与 provenance”，并在正文注明本决定替代旧宽范围退出条件；旧证据保留。
+
+保留必需：五状态、required/optional/nested/StepName、真实证据身份、原误报隔离复现、完整自动正反控制、两项真实 Cooking gate、独立检查、精确 SHA 最终技术接受。
+七种 kind：三种完成生产适配；其余四种只验收明确拒绝/不误报的共享边界，能力本身仍未适配。不能写“七种全部迁移完成”。
+十八 producer：全量适配为本轮 N/A；兼容清单和未适配拒绝仍必需。未来被请求时其执行覆盖保持 Blocked。
+旧五项目 runtime-contracts、Unity mirror/Editor、exporter、服务/benchmark/物理 LAN：本轮范围 N/A，实际未运行仍如实 NotRun，旧失败不改写。它们不作为修完 Cooking 才能结束的隐藏前置。
+B1 的 133 控制原失败、空绑定/小写状态缺陷和 B2a 的 dirty 232 控制全部保留为历史，不能折算成本轮通过项。
+
+只有新的 Issue 合同与以上范围一致、实现出口全部满足、最终候选获接受，才进入条件性交付。合并前重新核对 head/base、范围、实际 required checks 与自动关单关联；合入 master 后在实际集成源运行必要控制和上述两项 Cooking gate，成功后再明确关 #6、归档。未获授权/未知的 CI 或环境条件不得伪造通过；不要新建 CI 来绕过问题。
+
+若 Issue 仍保留旧“全部 producer/Unity”作为必需出口，则不能关闭 #6；仅可报告 Cooking 切片完成。合法的收窄来自本轮 Owner 范围与本决定，不来自实施者自行删验收项。
+
+allowed_next_action：原主控 run_5ba664a5f016 保存并核实本规划决定，更新当前 task/schema/Issue #6 合同与范围清单，经主控一致性检查后派发切片 1。没有必须再问 Owner 的同范围技术选择；任何需要越出上述文件、修改产品或补 Unity/示例能力的情况，停止对应部分并回报。

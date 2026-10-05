@@ -1,0 +1,15 @@
+{
+  "version": 1,
+  "flow_id": "6d3174fd-2b01-4136-8ea5-0b0cd0e2845d",
+  "seq": 2,
+  "op_id": "6d3174fd-2b01-4136-8ea5-0b0cd0e2845d:000002",
+  "kind": "intent",
+  "recorded_utc": "2026-10-05T16:55:41.890714Z",
+  "action": "branch-push",
+  "target": "https://github.com/Kakusya/AbilityKit refs/heads/Kakusya/issue6-cooking-truthful-gates cf41218ab468a40457f6a15bbe0fc2556158b983",
+  "authorization_ref": "evidence/approval.md",
+  "payload_ref": "evidence/approval.md",
+  "preconditions": {
+    "run_id": "run_5ba664a5f016"
+  }
+}

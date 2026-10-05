@@ -1,0 +1,17 @@
+{
+  "type": "planning",
+  "flow_id": "6d3174fd-2b01-4136-8ea5-0b0cd0e2845d",
+  "request_id": "AK-I6-COOK-PLAN-20261006-01",
+  "candidate_sha": "cf41218ab468a40457f6a15bbe0fc2556158b983",
+  "conversation_id": "01a10258-c084-74bb-8bcc-ec01958e5023",
+  "page_id": "77075ca3-7da4-4890-8bd5-002b9ef6a07e",
+  "prior_message_boundary": "3f12f99a2ea4819b8541c90bd4ea9e30~3f12f99a2ea4819b8541c90bd4ea9e30~CalpicoMessage~Sentinel_8655297dfe3481918d29366172b2b984",
+  "request_message_id": "3f12f99a2ea4819b8541c90bd4ea9e30~3f12f99a2ea4819b8541c90bd4ea9e30~CalpicoMessage~Sentinel_9e959e2adaa08191ac9612050c33e981",
+  "wait_started_utc": "2026-10-05T16:57:44.928341Z",
+  "deadline_utc": "2026-10-05T17:27:44.928341Z",
+  "poll_ordinal": 0,
+  "next_poll_utc": "2026-10-05T16:58:14.928341Z",
+  "fingerprint": "11f2da4db22139757cd457413c3e7b4d4afe08f4f812c02da10afcc2729b2151",
+  "paused": false,
+  "generation_before_send": false
+}

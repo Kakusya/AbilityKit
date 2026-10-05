@@ -2,6 +2,7 @@
 {"file": ".trellis/spec/cooking/index.md", "reason": "Current Cooking contract routing"}
 {"file": ".trellis/spec/abilitykit/supervised-issue-delivery.md", "reason": "Explicit workflow authority"}
 {"file": ".trellis/spec/abilitykit/validation.md", "reason": "Evidence rules"}
-{"file": "Docs/design/CookingGame/current-et-foundation-contract.md", "reason": "Accepted Issue5 result/coverage contract"}
 {"file": ".trellis/tasks/10-06-cooking-issue6-truthful-gates/prd.md", "reason": "Scoped requirement"}
 {"file": ".trellis/tasks/10-06-cooking-issue6-truthful-gates/design.md", "reason": "Pending dot technical plan"}
+{"file": ".trellis/tasks/10-06-cooking-issue6-truthful-gates/research/cooking-dot-flow/evidence/dot-plan-reply-raw.txt", "reason": "Complete current dot technical decision; do not substitute historical plan"}
+{"file": ".trellis/tasks/10-06-cooking-issue6-truthful-gates/research/result-contract-fields.md", "reason": "Result field model/state examples and exact named fixture scope"}

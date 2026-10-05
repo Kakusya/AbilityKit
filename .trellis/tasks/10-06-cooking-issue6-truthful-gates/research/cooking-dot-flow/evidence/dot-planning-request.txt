@@ -1,0 +1,27 @@
+请给出 Issue #6 的本轮最终技术规划（只对话、读 GitHub commits；不要执行代码、启动 Work/Codex/云工作或写 GitHub）。
+
+type: planning
+request_id: AK-I6-COOK-PLAN-20261006-01
+flow_id: 6d3174fd-2b01-4136-8ea5-0b0cd0e2845d
+repository: https://github.com/Kakusya/AbilityKit
+branch: Kakusya/issue6-cooking-truthful-gates
+完整已发布规划 SHA: cf41218ab468a40457f6a15bbe0fc2556158b983
+commit: https://github.com/Kakusya/AbilityKit/commit/cf41218ab468a40457f6a15bbe0fc2556158b983
+task: .trellis/tasks/10-06-cooking-issue6-truthful-gates
+
+Owner 本轮明确调用 cooking-dot-workflow，要求我继续完成 #6、push 一个新 origin 分支、先让你给出方向再执行。Owner 最高优先范围仍只 Cooking，禁止修改 Shooter/MOBA/Orleans 示例代码、配置、协议、专用脚本/测试/gates。共享修改每文件须说明已批准 Cooking 消费者、必要性和验收；旧 #6 的 18-producer、全示例验证和旧合并授权不解锁越界内容。Unity 实施/Editor 执行、依赖/ET/SDK 升级、服务/benchmark/物理 LAN 工作不授权。本轮条件性交付目标 master，但当前只是 plan，绝不提前合并。
+
+请读取本提交 task 的 prd.md/design.md/implement.md、research/entry-approval.md、research/historical/README.md 和 shared-source.patch，以及当前 AGENTS/progress/SOP、tools/run_test_gate.ps1、tools/test-gates.json。research/historical 是停止分支的只读证据，不是实施许可；旧分支保留且不整枝合并。最新 #6 正文/评论和 #5 正文/接受在 research/issue6-latest.json / issue5-latest.json。原先更宽实现没有真实 .NET gate 验收。
+
+事实与冲突：
+1. 当前实际 origin/master 为 c78ed3de83f69bb53ff1a09bbc23638115928e1e；新 managed worktree 从它干净创建。主工作区用户 dirty 和旧 #6 树不变。Orca gitRemoteIdentity 与 origin 均 Kakusya/AbilityKit，旧 project/upstream 显示 HOBOBO，不作为写入目的地。新 Run 仅此原主控，run_5ba664a5f016；不接管旧 Run。你的 skill-polish task 已完成，本请求不是其继续。
+2. #6 仍 OPEN/blocked；正文要求所有脚本迁移，与 Cooking-only 冲突。#5 CLOSED，五状态/声明覆盖/零测试/provenance 合同已接受。本轮需要你明确收窄旧退出条件并使现行 Issue 合同一致，不把未知/N/A 偷换为已通过。
+3. 已存在具体 Cooking 消费者：cooking-et-level-runtime（2 build + Cooking/ET 两个完整测试项目）、cooking-kitchen-loop（2 build + focused CookingKitchenLoop + 同两项目完整测试）。其通过共享 runner 获取 TRX/汇总，目前仍存在旧 exit0 成功判定和身份不足。请选真实验证 gate，避免旧 runtime-contracts 五项目示例修复。
+4. 隔离旧分支 SHA15e79fefd5ba1d9294491122c91df286ef94e2f8 相对基线改了152文件，包含禁止示例工具；不可合入。共享 source patch 展示 runner/helper/Unity mirror/harness 可复用部分。B1 独立审计133控制有1 stderr formatting失败，还证实序列化 parent coverage bindings为空仍通过、lowercase passed被接受。B2a 232控制称修复，但 dirty来源且无真实 .NET/Unity 验证，不等于本轮验收。旧原失败/计数在历史 handoffs，必须保留。
+
+请明确回答：
+A. 本轮推荐“选择性复用旧共享 helper/runner”还是“当前 runner 最小 Cooking 驱动实现”，给出最终理由与明确不复制的部分。
+B. 逐文件允许范围、Cooking 消费者、必要性、验收；test-gates.json 只能改 Cooking entries/真正共享元数据，其他示例 gate 配置保持原样。未适配脚本/kinds如何 fail closed、兼容影响如何记录，不能以要保持全示例正常为前置。
+C. 若 Unity mirror 原误报路径必须改，请证明它作为当前 Cooking 验收工具的必要性并给最小边界；不能为示例/未批准 Unity 补能力。若范围无法成立，明确 N/A或阻塞并改当前 #6合同，不偷偷扩大。
+D. 最小有序 Orca 派发切片，精确不变量、必须自动执行正反控制、实际 Cooking gate 命令、原始证据/source/binary身份要求；NoBuild/NoRestore/StepName/nested/timeout/cancel/零测试/旧TRX必须诚实。
+E. 旧“七kind/十八producer、五项目/Unity/exporter”哪些 N/A或保留 Blocked，怎样合法定义本轮 Issue6完成出口。给出完整最终技术决定并明确 reviewed_sha=cf41218ab468a40457f6a15bbe0fc2556158b983、request_id、allowed_next_action；不能给本轮实现 final acceptance，因为还没有实现。

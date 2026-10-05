@@ -1,0 +1,7 @@
+{
+  "poll_ordinal": 2,
+  "observed_utc": "2026-10-05T16:59:30.746899+00:00",
+  "next_poll_utc": "2026-10-05T17:01:30.746899+00:00",
+  "raw_ref": "evidence/dot-plan-poll-02.json",
+  "paused": false
+}
