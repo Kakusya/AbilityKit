@@ -21,6 +21,6 @@
   "children": [],
   "parent": null,
   "relatedFiles": [],
-  "notes": "Owner delegated former dot duties to coordinator on 2026-10-04. Bounded SOP documentation reviewed; documentation checks passed. Await integration/closeout separately from Issue 6 runtime acceptance.",
+  "notes": "Owner delegated former dot duties to coordinator on 2026-10-04. Bounded SOP documentation reviewed; documentation checks passed. Await integration/closeout separately from Issue 6 runtime acceptance. 2026-10-05: Owner Cooking-only correction and cross-worktree search requirement landed; original Issue 6 broad implementation/integration stopped. Whole SOP trial remains incomplete.",
   "meta": {}
 }

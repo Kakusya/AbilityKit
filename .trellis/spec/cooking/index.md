@@ -8,6 +8,10 @@
 
 # 做菜经营游戏规划索引
 
+## 最高优先级范围（2026-10-05）
+
+Owner 重申：只做 Cooking，Shooter、MOBA、Orleans 等其他示例不得修改。范围规则以 [AGENTS](../../../AGENTS.md) 为准，先于下方历史通知、Issue 计划和调度；共享框架／工具仅允许为已批准的 Cooking 需求做必要改动。示例的缺陷或门禁失败不能成为扩张工程范围的理由。
+
 ## 2026-10-02 功能与菜单规划入口
 
 Owner 确认不改架构，按“单机 → 网络 → 单机 Unity → 网络 Unity”推进，当前专注单机，只登记 Task 不执行。见 [功能与菜单总 plan](gameplay-menu-plan.md)：124 项功能对照、87 款候选菜单整合、20 个 planning Task 与架构记录。Unity Task 为条件性禁止执行记录，未解除禁令；新规划不改下列生效历史契约，也不代表内容已导入。现有 planning 与 reference 路由见总 plan。

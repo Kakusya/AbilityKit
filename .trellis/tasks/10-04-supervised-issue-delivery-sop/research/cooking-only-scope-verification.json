@@ -1,0 +1,40 @@
+{
+  "status": "Passed",
+  "scope": "Cooking-only documentation and cross-worktree recovery rules",
+  "worktrees": [
+    {
+      "path": "D:\\MyWorkTree\\AbilityKit",
+      "changed_documents": [
+        ".trellis/spec/abilitykit/supervised-issue-delivery.md",
+        ".trellis/spec/cooking/index.md",
+        ".trellis/tasks/10-04-supervised-issue-delivery-sop/prd.md",
+        ".trellis/tasks/10-04-supervised-issue-delivery-sop/research/issue6-trial-audit.md",
+        ".trellis/tasks/10-04-supervised-issue-delivery-sop/task.json",
+        ".trellis/workflow.md",
+        "AGENTS.md",
+        "Docs/design/CookingGame/progress.md",
+        ".trellis/tasks/10-04-supervised-issue-delivery-sop/research/cooking-only-scope-correction.md",
+        ".trellis/tasks/10-04-supervised-issue-delivery-sop/research/cooking-only-scope-verification.json"
+      ],
+      "new_local_links_checked": 11,
+      "missing_links": [],
+      "existing_Cooking_only_source": ".trellis\\tasks\\09-19-cooking-productization-network-slice-planning\\prd.md"
+    },
+    {
+      "path": "C:\\Users\\Administrator\\orca\\workspaces\\AbilityKit\\issue6-test-gate-results",
+      "changed_documents": [
+        ".trellis/tasks/10-04-test-gate-result-contract/design.md",
+        ".trellis/tasks/10-04-test-gate-result-contract/implement.md",
+        ".trellis/tasks/10-04-test-gate-result-contract/prd.md",
+        ".trellis/tasks/10-04-test-gate-result-contract/task.json",
+        "AGENTS.md",
+        "Docs/design/CookingGame/progress.md",
+        ".trellis/tasks/10-04-test-gate-result-contract/research/cooking-only-scope-stop.md"
+      ],
+      "new_local_links_checked": 6,
+      "missing_links": [],
+      "existing_Cooking_only_source": ".trellis\\tasks\\09-19-cooking-productization-network-slice-planning\\prd.md"
+    }
+  ],
+  "product_runtime_tests": "NotRun"
+}

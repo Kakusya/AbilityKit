@@ -1,5 +1,7 @@
 # Issue 6 SOP trial — in progress
 
+2026-10-05 owner correction supersedes the continuation below: Cooking is the sole product scope; Shooter/MOBA example adaptation and the original whole-branch integration plan are stopped. Existing commits/evidence remain isolated, not accepted or merged. See [scope correction and cross-worktree source search](cooking-only-scope-correction.md). Historical audit findings below retain their original scope.
+
 2026-10-05: coordinator owns former dot duties; implementation uses GPT-6.1-Sol / medium in the existing managed worktree. Full Issue acceptance, integration and cleanup remain pending.
 
 - Slice A `086e73491b35fa0e8fe76708f3cb3956bd7e7505`: coordinator independently reran 86 isolated controls successfully, then demonstrated actual runner acceptance of a step receipt masquerading as a gate. The original failure was retained and returned to the worker.

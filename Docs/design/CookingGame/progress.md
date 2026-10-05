@@ -1,5 +1,12 @@
 # Cooking Game 当前工程进度
 
+## Owner 最高优先级范围与停止越界实施（2026-10-05）
+
+- Owner 重申只做 Cooking（Cook／做菜项目）；Shooter、MOBA、Orleans 等其他项目仅为示例，不得修改。最高优先级规则已写入 [AGENTS](../../../AGENTS.md)，并加入 [SOP](../../../.trellis/spec/abilitykit/supervised-issue-delivery.md) 的派发和审计前置检查。
+- Issue #6 原全示例适配计划偏离该边界：立即停止 Shooter／MOBA 等示例的后续切片，不再按原计划启动 MOBA 或五项目运行验收；共享改动必须重新证明 Cooking 的具体必要性，不能整项沿用旧授权。
+- worker 的范围纠偏前源码 checkpoint 为 `4dd4f3fff0d7d08cf59dfdbbadc73fe35836705f`，已存在的越界提交与证据保留，未合入 master；本轮仅追加约束／任务文档。2026-10-05 本次核对：该 worktree 无 Orca 终端，未发现匹配的活动测试／执行进程，旧 Shooter dispatch 已 failed/abandoned；不重启。master 仍为 `7aa3e8b67c13a469192edaa761cb3dfc1fa9294b`。
+- 下方“#6 实施中”与原整项合并安排保留为历史，由本节覆盖；整个 Issue 未验收，worktree 未删除。具体范围纠偏见 [记录](../../../.trellis/tasks/10-04-supervised-issue-delivery-sop/research/cooking-only-scope-correction.md)。
+
 ## 协调者接管与 Issue #6 实施中（2026-10-04）
 
 - Owner 明确由当前协调者接替 dot 的方案审议、Issue 组织、派发、审计和收尾职责，采用 [协调审计与执行者 SOP](../../../.trellis/spec/abilitykit/supervised-issue-delivery.md)。下方等待 Dot 的调度已被本节覆盖，历史审阅证据保留。

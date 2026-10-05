@@ -2,6 +2,7 @@
 
 ## 项目约束
 
+- 最高优先级范围见 [AGENTS](../AGENTS.md)：只推进 Cooking；Shooter、MOBA、Orleans 等示例及其专用脚本／测试／门禁不得修改。先做范围检查，再排序、规划、派发或审计；共享改动须证明 Cooking 的具体必要性。历史 Issue 计划和标签不能覆盖该限制。
 - AbilityKit 是 Unity UPM + 纯 C#/.NET 工具库；做菜经营游戏是应用层方向，不能把游戏规则、房间流程或网络权威策略加入通用框架。
 - 共享源码以 `Unity/Packages/` 为主，`src/` 通过 `Compile Include` 复用。改动共享逻辑时同时检查相关 `.csproj` 与 `.asmdef`。
 - 不编辑 Unity 自动生成 `.csproj`、`Library/` 或 `Temp/`；不因其他 Editor 占用项目而删除锁文件或强制执行批处理。

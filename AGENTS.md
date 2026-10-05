@@ -1,5 +1,13 @@
 # AbilityKit 工作区指引
 
+## 最高优先级产品范围（Owner 重申，2026-10-05）
+
+- 只推进 Cooking（Cook／做菜项目）。Shooter、MOBA、Orleans 等其他项目是示例，不得修改其代码、配置、协议、脚本、测试或专用门禁，不为其补齐功能、修复失败或维护示例完整性。
+- 本范围约束先于 Issue 优先级、历史计划、标签、SOP 和执行者派发适用；它是授权边界，不能用 P0、统一基础设施、全仓回归或“顺手修复”绕过。只有 Owner 后续明确改变范围才可解除。
+- 共享框架／工具改动必须服务于已批准的 Cooking 具体需求，计划与审计逐文件说明 Cooking 消费者、必要性和验收。不得把无关示例的适配、迁移或修复列为 Cooking 的隐藏前置；不清楚关联时停止该部分实施并重审范围。
+- 已产生的越界示例改动保留原提交和证据，隔离且不得合入 master；撤销相应后续派发。通过测试不代表范围被授权，不能沿用此前整项 Issue 的合并授权接纳越界改动。
+- 恢复、范围审议和来源搜索必须枚举本仓库 Git／Orca worktree，检查相关其他工作树的 AGENTS、task、research 和实际改动，不能只搜索当前工作树；尤其检查 `issue6-test-gate-results`。跨树搜索不授权修改或清理用户已有工作。
+
 当前阶段、验证指针与完整剩余出口的唯一入口是 [Cooking progress](Docs/design/CookingGame/progress.md)。执行前再读对应 Issue 的最新正文、标签、依赖与批准范围；状态摘要和 `orca-ready` 不增加授权。历史通知与损坏原文见 [历史索引](Docs/design/CookingGame/history/agents-notices-2026-10-04.md)。
 
 ## 架构与权威
