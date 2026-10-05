@@ -1,0 +1,18 @@
+{
+  "version": 1,
+  "skill": "cooking-dot-workflow",
+  "flow_id": "6d3174fd-2b01-4136-8ea5-0b0cd0e2845d",
+  "canonical_root": "C:\\Users\\Administrator\\orca\\workspaces\\AbilityKit\\issue6-cooking-truthful-gates\\.trellis\\tasks\\10-06-cooking-issue6-truthful-gates\\research\\cooking-dot-flow",
+  "execution_host": "local",
+  "worktree_id": "aaa97e0d-5026-4e5c-95f8-bb420dcb4c65::C:/Users/Administrator/orca/workspaces/AbilityKit/issue6-cooking-truthful-gates",
+  "task_path": ".trellis/tasks/10-06-cooking-issue6-truthful-gates",
+  "repository": "https://github.com/Kakusya/AbilityKit",
+  "branch": "Kakusya/issue6-cooking-truthful-gates",
+  "target_branch": "master",
+  "delivery_mode": "production",
+  "original_session": "01a10cf3-81fd-7120-99e8-5587f9526a3c",
+  "original_terminal": "term_08a896e7-f2ff-477d-85c0-1962eb3a8136",
+  "run_id": null,
+  "approval_ref": "evidence/approval.md",
+  "created_utc": "2026-10-05T16:53:43.857258Z"
+}

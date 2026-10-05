@@ -1,0 +1,2200 @@
+diff --git a/tools/run-unity-compile-check.ps1 b/tools/run-unity-compile-check.ps1
+index 149bc50dd..84f066f0c 100644
+--- a/tools/run-unity-compile-check.ps1
++++ b/tools/run-unity-compile-check.ps1
+@@ -1,27 +1,43 @@
+-﻿# 无 Unity 实例也能做"Unity 侧编译验证"：按 asmdef 边界镜像编译 behaviortree 包 + demo BTree 源码，
+-# 直接引用 Unity 2022.3 托管 DLL。dotnet 的 net10/latest + ImplicitUsings 会掩盖 Unity 侧错误
+-# （init 访问器、缺 using、跨 asmdef 引用缺失），此校验能提前抓。
+-# 用法：powershell -ExecutionPolicy Bypass -File tools/run-unity-compile-check.ps1
+-# 退出码：0=编译通过；1=存在编译错误。产物落 local/Logs/。
++﻿# asmdef boundary mirror; requires the actual Unity installation and project DLLs.
+ param(
+-    [string]$UnityVersion = "2022.3.62f1"
++    [string]$UnityVersion = '2022.3.62f1',
++    [string]$Configuration = 'Debug',
++    [string]$UnityBuildProofPath,
++    [string]$ResultContextPath,
++    [string]$ResultFilePath,
++    [string]$TestAdapterPath
+ )
+-
+-$ErrorActionPreference = "Stop"
+-$repoRoot = Split-Path -Parent $PSScriptRoot
+-$project = Join-Path $repoRoot "tools\unity-compile-check\UnityCompileCheck.csproj"
+-$unityManaged = "C:\Program Files\Unity\Hub\Editor\$UnityVersion\Editor\Data\Managed"
+-
+-if (-not (Test-Path $unityManaged)) {
+-    Write-Warning "Unity managed DLL 目录不存在：$unityManaged（编译检查需要 Unity 安装；跳过）"
+-    exit 0
++$ErrorActionPreference='Stop'
++. (Join-Path $PSScriptRoot 'test-gate-result-contract.ps1')
++Start-GateProducer $ResultContextPath $ResultFilePath $PSCommandPath $TestAdapterPath $PSBoundParameters
++try {
++    $repoRoot=Split-Path -Parent $PSScriptRoot
++    $project=Join-Path $repoRoot 'tools/unity-compile-check/UnityCompileCheck.csproj'
++    $unityManaged=Get-GateUnityManaged $UnityVersion
++    if(-not (Test-Path -LiteralPath $unityManaged -PathType Container)) {
++        Write-Warning "Missing Unity installation: $unityManaged"
++        exit (Complete-GateProducer 2 'MissingUnityInstallation' 'Blocked')
++    }
++    $platform=Get-GateUnityPlatformAssembly $repoRoot
++    if(-not (Test-Path -LiteralPath $platform -PathType Leaf)) {
++        exit (Complete-GateProducer 2 'MissingUnityProjectBinaryProvenance' 'Blocked')
++    }
++    if($script:GateProducer) {
++        $editor=[IO.Path]::GetFullPath((Join-Path $unityManaged '../../Unity.exe'))
++        $proof=Assert-GateUnityBuildProof $UnityBuildProofPath $script:GateProducer.result $UnityVersion $editor @($platform)
++        if(-not $proof){exit (Complete-GateProducer 2 'MissingUnityProjectBinaryProvenance' 'Blocked')}
++        Save-GateUnityBuildProof $script:GateProducer.result $proof $script:GateProducer.context.runRoot $script:GateProducer.context.nodeRoot
++        $step=[pscustomobject]@{project='tools/unity-compile-check/UnityCompileCheck.csproj';kind='dotnet-build'}
++        $script:GateDotNetProperties=@("-p:UnityManaged=$unityManaged","-p:RepoRoot=$repoRoot","-p:UnityVersion=$UnityVersion","-p:UnityPlatformAssembly=$platform")
++        $producer=$script:GateProducer
++        $built=Invoke-GateDotNet $producer.result $step $producer.context.nodeRoot $producer.context.runRoot $repoRoot $Configuration
++        $producer.result=$built
++        if($built.status -eq 'Passed'){Assert-GateUnityEvidence $built $producer.context.runRoot}
++        exit (Complete-GateProducer $built.processExitCode $built.reason $built.status)
++    }
++    Write-Warning 'Current Unity project binary build proof requires a bound gate invocation; existence alone is insufficient.'
++    exit 2
++} catch {
++    $null=Complete-GateProducer 1 $_.Exception.Message 'Failed'
++    throw
+ }
+-
+-Write-Host "Unity compile check (asmdef-boundary mirror) ..."
+-Write-Host "Project: $project"
+-
+-# 覆盖 csproj 内硬编码路径：用 -p 传全局属性（需 csproj 里对 UnityManaged/RepoRoot 用 Condition 兜底）。
+-# 当前 csproj 为硬编码本机路径；如需 CI 参数化，把两处 PropertyGroup 改为 Condition="'$(X)'==''" 形式。
+-& dotnet build $project -v quiet
+-$exitCode = $LASTEXITCODE
+-exit $exitCode
+diff --git a/tools/run_test_gate.ps1 b/tools/run_test_gate.ps1
+index 04c9aab70..0411be9ca 100644
+--- a/tools/run_test_gate.ps1
++++ b/tools/run_test_gate.ps1
+@@ -1,4 +1,4 @@
+-param(
++﻿param(
+     [Alias('GateId')]
+     [string]$Gate,
+     [string]$StepName,
+@@ -8,7 +8,10 @@ param(
+     [switch]$List,
+     [switch]$NoRestore,
+     [switch]$NoBuild,
+-    [switch]$CI
++    [switch]$CI,
++    [switch]$FixtureMode,
++    [string]$BuildManifestPath,
++    [string]$UnityTestAdapterPath
+ )
+ 
+ $ErrorActionPreference = 'Stop'
+@@ -18,6 +21,7 @@ if ($CI) {
+ }
+ 
+ $repoRoot = Resolve-Path (Join-Path $PSScriptRoot '..')
++. (Join-Path $PSScriptRoot 'test-gate-result-contract.ps1')
+ 
+ function Resolve-RepoPath {
+     param([string]$Path)
+@@ -43,7 +47,9 @@ if (-not (Test-Path $resolvedConfigPath)) {
+ $config = Get-Content -Path $resolvedConfigPath -Raw -Encoding utf8 | ConvertFrom-Json
+ $gatesByName = @{}
+ foreach ($gateDef in $config.gates) {
++    if($gatesByName.ContainsKey([string]$gateDef.name)){throw 'Duplicate gate declaration.'}
+     $gatesByName[[string]$gateDef.name] = $gateDef
++    foreach($step in $gateDef.steps){if($step.PSObject.Properties['coverage']){$step.coverage=@(Resolve-GateCoverage $step $Configuration)}}
+ }
+ 
+ function ConvertTo-SafeName {
+@@ -123,9 +129,22 @@ if (-not $gatesByName.ContainsKey($Gate)) {
+ }
+ 
+ $resultsRoot = Resolve-RepoPath $ResultsDirectory
+-$runId = '{0}-{1}' -f (Get-Date -Format 'yyyyMMdd-HHmmss'), (ConvertTo-SafeName $Gate)
++$runId = [guid]::NewGuid().ToString()
+ $runRoot = Join-Path $resultsRoot $runId
+-$null = New-Item -ItemType Directory -Force -Path $runRoot
++$null = New-Item -ItemType Directory -Path $runRoot -ErrorAction Stop
++$configHash = Get-GateHash $resolvedConfigPath
++if ($config.PSObject.Properties['example'] -and $config.example -and -not $FixtureMode) { throw 'Synthetic configuration cannot qualify for production acceptance.' }
++if ($FixtureMode -and (-not $config.PSObject.Properties['example'] -or -not $config.example)) { throw 'FixtureMode requires an explicitly synthetic configuration.' }
++if($UnityTestAdapterPath){
++    if(-not $FixtureMode){throw 'Production rejects Unity fixture adapter.'}
++    $allowed=Join-Path $repoRoot 'tools/tests/fixtures'
++    $name=[IO.Path]::GetFileName($UnityTestAdapterPath)
++    if((Resolve-GateArtifact $allowed $name) -ine [IO.Path]::GetFullPath($UnityTestAdapterPath)){throw 'Unity adapter outside fixture directory.'}
++    . $UnityTestAdapterPath
++    Install-GateUnityFixture ([string]$repoRoot) $config $runRoot
++    if(-not $script:GateUnityExecutor){throw 'Unity fixture did not intercept native execution.'}
++}
++$runSource = Get-GateSource ([string]$repoRoot)
+ 
+ function Write-GateHeader {
+     param($GateDef, [string]$GateOutputDirectory)
+@@ -192,8 +211,8 @@ function Invoke-DotNetStep {
+         command          = ('dotnet {0}' -f ($Arguments -join ' '))
+         status           = $(if ($exitCode -eq 0) { 'Passed' } else { 'Failed' })
+         exitCode         = $exitCode
+-        startedAt        = $startedAt.ToString('o')
+-        endedAt          = $endedAt.ToString('o')
++        startedAt        = $startedAt.ToUniversalTime().ToString('yyyy-MM-ddTHH:mm:ssZ')
++        endedAt          = $endedAt.ToUniversalTime().ToString('yyyy-MM-ddTHH:mm:ssZ')
+         elapsedSeconds   = [math]::Round(($endedAt - $startedAt).TotalSeconds, 3)
+         logFile          = $LogFilePath
+         resultsDirectory = $ResultsDirectory
+@@ -204,62 +223,16 @@ function Invoke-DotNetStep {
+ }
+ 
+ function Assert-DotNetTrxResult {
+-    param(
+-        [pscustomobject]$Record,
+-        [string]$DisplayName,
+-        [string]$TrxFilePath
+-    )
+-
+-    $failureReason = $null
+-    $testTotal = $null
+-    $testPassed = $null
+-    $testFailed = $null
+-    $testResultCount = $null
+-
+-    if (-not (Test-Path -LiteralPath $TrxFilePath -PathType Leaf)) {
+-        $failureReason = "dotnet test did not create expected TRX results file '$TrxFilePath'."
+-    }
+-    else {
+-        try {
+-            [xml]$trxXml = Get-Content -LiteralPath $TrxFilePath -Raw
+-            $testRun = $trxXml.DocumentElement
+-            if ($null -eq $testRun -or $testRun.LocalName -ne 'TestRun') {
+-                throw "Root element 'TestRun' was not found."
+-            }
+-
+-            $counters = $trxXml.SelectSingleNode("/*[local-name()='TestRun']/*[local-name()='ResultSummary']/*[local-name()='Counters']")
+-            if ($null -eq $counters -or -not $counters.Attributes['total']) {
+-                throw "ResultSummary/Counters total attribute was not found."
+-            }
+-
+-            $testTotal = [int]$counters.Attributes['total'].Value
+-            $testPassed = if ($counters.Attributes['passed']) { [int]$counters.Attributes['passed'].Value } else { $null }
+-            $testFailed = if ($counters.Attributes['failed']) { [int]$counters.Attributes['failed'].Value } else { $null }
+-            $testResultCount = @($trxXml.SelectNodes("/*[local-name()='TestRun']/*[local-name()='Results']/*[local-name()='UnitTestResult']")).Count
+-
+-            if ($testTotal -le 0) {
+-                $failureReason = "dotnet test step '$DisplayName' matched zero tests."
+-            }
+-            elseif ($testResultCount -le 0) {
+-                $failureReason = "dotnet test step '$DisplayName' produced a TRX file without test results."
+-            }
+-        }
+-        catch {
+-            $failureReason = "dotnet test TRX results file '$TrxFilePath' is invalid: $($_.Exception.Message)"
+-        }
+-    }
+-
+-    $Record | Add-Member -NotePropertyName trxFileExists -NotePropertyValue (Test-Path -LiteralPath $TrxFilePath -PathType Leaf) -Force
+-    $Record | Add-Member -NotePropertyName testTotal -NotePropertyValue $testTotal -Force
+-    $Record | Add-Member -NotePropertyName testPassed -NotePropertyValue $testPassed -Force
+-    $Record | Add-Member -NotePropertyName testFailed -NotePropertyValue $testFailed -Force
+-    $Record | Add-Member -NotePropertyName testResultCount -NotePropertyValue $testResultCount -Force
+-    $Record | Add-Member -NotePropertyName failureReason -NotePropertyValue $failureReason -Force
+-
+-    if ($null -ne $failureReason) {
++    param([pscustomobject]$Record, [string]$DisplayName, [string]$TrxFilePath)
++    try {
++        $counts = Get-GateTestCounts $TrxFilePath 'trx'
++        Assert-GateTests $counts
++        $Record | Add-Member tests $counts -Force
++        $Record | Add-Member failureReason $null -Force
++    } catch {
+         $Record.status = 'Failed'
++        $Record | Add-Member failureReason $_.Exception.Message -Force
+     }
+-
+     return $Record
+ }
+ 
+@@ -284,10 +257,12 @@ function Invoke-PowerShellScriptStep {
+     $arguments = @('-NoProfile', '-ExecutionPolicy', 'Bypass', '-File', $fullScriptPath)
+     if ($Step.PSObject.Properties['arguments']) {
+         $arguments += @($Step.arguments | ForEach-Object {
+-            ([string]$_).Replace('{GateOutputDirectory}', $GateOutputDirectory)
++            ([string]$_).Replace('{GateOutputDirectory}', $GateOutputDirectory).Replace('{Configuration}',$Configuration)
+         })
+     }
+ 
++    $arguments += @('-ResultContextPath', (Join-Path $GateOutputDirectory 'context.json'), '-ResultFilePath', (Join-Path $GateOutputDirectory 'producer-result.json'))
++
+     $logFile = Join-Path $GateOutputDirectory (('{0:00}-{1}.log' -f $StepIndex, (ConvertTo-SafeName $DisplayName)))
+     $errorLogFile = Join-Path $GateOutputDirectory (('{0:00}-{1}.error.log' -f $StepIndex, (ConvertTo-SafeName $DisplayName)))
+     $commandText = 'powershell {0}' -f (($arguments | ForEach-Object {
+@@ -312,8 +287,8 @@ function Invoke-PowerShellScriptStep {
+     $process = New-Object System.Diagnostics.Process
+     $process.StartInfo = $processStartInfo
+     $null = $process.Start()
+-    $standardOutputStream = [System.IO.File]::Create($logFile)
+-    $standardErrorStream = [System.IO.File]::Create($errorLogFile)
++    $standardOutputStream = [System.IO.File]::Create((Convert-GateNativePath $logFile))
++    $standardErrorStream = [System.IO.File]::Create((Convert-GateNativePath $errorLogFile))
+     $standardOutputTask = $process.StandardOutput.BaseStream.CopyToAsync($standardOutputStream)
+     $standardErrorTask = $process.StandardError.BaseStream.CopyToAsync($standardErrorStream)
+     $timedOut = $timeoutSeconds -gt 0 -and -not $process.WaitForExit($timeoutSeconds * 1000)
+@@ -345,8 +320,8 @@ function Invoke-PowerShellScriptStep {
+         exitCode = $exitCode
+         timedOut = $timedOut
+         timeoutSeconds = $timeoutSeconds
+-        startedAt = $startedAt.ToString('o')
+-        endedAt = $endedAt.ToString('o')
++        startedAt = $startedAt.ToUniversalTime().ToString('yyyy-MM-ddTHH:mm:ssZ')
++        endedAt = $endedAt.ToUniversalTime().ToString('yyyy-MM-ddTHH:mm:ssZ')
+         elapsedSeconds = [math]::Round(($endedAt - $startedAt).TotalSeconds, 3)
+         logFile = $logFile
+         errorLogFile = $errorLogFile
+@@ -432,9 +407,8 @@ function Invoke-UnityBatchModeStep {
+     Write-Host ("=== {0} ===" -f $DisplayName) -ForegroundColor Cyan
+     Write-Host $commandText -ForegroundColor DarkGray
+ 
+-    $process = Start-Process -FilePath $editorPath -ArgumentList $fullArguments -Wait -PassThru
+-
+-    $exitCode = $process.ExitCode
++    $native=Invoke-GateNative $editorPath $fullArguments (Join-Path $unityArtifactsDirectory 'native.log')
++    $exitCode = $native.processExitCode
+     $endedAt = Get-Date
+     $hasResultsFile = $true
+     if (-not [string]::IsNullOrWhiteSpace($resolvedResultsFilePath)) {
+@@ -455,10 +429,11 @@ function Invoke-UnityBatchModeStep {
+         project           = $projectPath
+         filter            = $Filter
+         command           = $commandText
++        nativeArguments   = $fullArguments
+         status            = $(if ($null -eq $failureReason) { 'Passed' } else { 'Failed' })
+         exitCode          = $exitCode
+-        startedAt         = $startedAt.ToString('o')
+-        endedAt           = $endedAt.ToString('o')
++        startedAt         = $startedAt.ToUniversalTime().ToString('yyyy-MM-ddTHH:mm:ssZ')
++        endedAt           = $endedAt.ToUniversalTime().ToString('yyyy-MM-ddTHH:mm:ssZ')
+         elapsedSeconds    = [math]::Round(($endedAt - $startedAt).TotalSeconds, 3)
+         logFile           = $logFilePath
+         resultsFile       = $resolvedResultsFilePath
+@@ -514,12 +489,6 @@ function Invoke-UnityTestStep {
+         $batchmodeQuitInvoked = $null -ne (Select-String -Path $record.logFile -Pattern '^Batchmode quit successfully invoked - shutting down!$' | Select-Object -First 1)
+     }
+ 
+-    if (-not $hasResultsFile -and -not [string]::IsNullOrWhiteSpace($savedResultsPathFromLog) -and (Test-Path $savedResultsPathFromLog)) {
+-        Copy-Item -Path $savedResultsPathFromLog -Destination $xmlFilePath -Force
+-        $recoveredResultsFrom = $savedResultsPathFromLog
+-        $hasResultsFile = Test-Path $xmlFilePath
+-    }
+-
+     $failureReason = $record.failureReason
+     if ($null -eq $failureReason -and -not $hasResultsFile) {
+         if (-not $testRunnerStarted -and $batchmodeQuitInvoked) {
+@@ -597,180 +566,262 @@ function Invoke-UnityExecuteMethodStep {
+     if ($Step.PSObject.Properties['resultsFile'] -and -not [string]::IsNullOrWhiteSpace([string]$Step.resultsFile)) {
+         $resultsFileName = [string]$Step.resultsFile
+     }
++    if(-not $resultsFileName){throw 'Unity execute-method requires a current structured completion report.'}
++    $null=Resolve-GateArtifact $GateOutputDirectory ('unity-results/'+$resultsFileName)
++    $arguments+=@('-abilityKitResultContext',(Join-Path $GateOutputDirectory 'context.json'),'-abilityKitResultFile',(Join-Path (Join-Path $GateOutputDirectory 'unity-results') $resultsFileName))
+ 
+     return Invoke-UnityBatchModeStep -DisplayName $DisplayName -Kind 'unity-execute-method' -Step $Step -GateOutputDirectory $GateOutputDirectory -Arguments $arguments -ResultsFilePath $resultsFileName -Filter $null -ExtraSummary $executeMethod
+ }
+ 
+-function Invoke-Gate {
+-    param(
+-        [string]$GateName,
+-        [System.Collections.Generic.HashSet[string]]$Visiting,
+-        [string[]]$GatePath,
+-        [string]$RunRoot,
+-        [string]$OnlyStepName = $null
+-    )
+-
+-    if (-not $gatesByName.ContainsKey($GateName)) {
+-        throw "Nested gate '$GateName' is not defined."
+-    }
+-
+-    if ($Visiting.Contains($GateName)) {
+-        throw "Circular gate dependency detected at '$GateName'."
+-    }
++function Get-GateDeclarations {
++    param([string]$Name,[string[]]$Stack=@())
++    if($Name -in $Stack){throw 'Circular gate declaration.'}
++    if(-not $gatesByName.ContainsKey($Name)){throw "Unknown nested gate $Name"}
++    $r=@();$o=@()
++    $earlierSteps=@()
++    foreach($step in $gatesByName[$Name].steps){
++        Assert-GateProducerDeclaration $step $earlierSteps
++        if($step.kind -notin @('gate','dotnet-build','dotnet-test','powershell-script','unity-editmode-test','unity-playmode-test','unity-execute-method')){throw 'Unsupported configured kind.'}
++        if($step.kind -eq 'gate'){$nested=Get-GateDeclarations $step.gate @($Stack+$Name);$tokens=@($nested.required+$nested.optional)}
++        else {
++            if(-not $step.PSObject.Properties['coverage'] -or -not @($step.coverage).Count){throw "Missing config coverage: $Name/$($step.name)"}
++            $tokens=@($step.coverage)
++            if(@($tokens|Sort-Object -Unique).Count -ne $tokens.Count -or @($tokens|Where-Object{[string]::IsNullOrWhiteSpace($_)}).Count){throw 'Duplicate/empty configured token.'}
++        }
++        $required=-not ($step.PSObject.Properties['required'] -and -not [bool]$step.required)
++        if($required){if($step.kind -eq 'gate'){$r+=@($nested.required);$o+=@($nested.optional)}else{$r+=$tokens}}
++        else{$o+=$tokens}
++        $earlierSteps+=,$step
++    }
++    if(-not ($r.Count+$o.Count)){throw 'Empty gate configuration.'}
++    if(@($r|Where-Object{$_ -in $o}).Count){throw 'Required/optional configuration overlap.'}
++    return @{required=@($r|Sort-Object -Unique);optional=@($o|Sort-Object -Unique)}
++}
+ 
+-    $null = $Visiting.Add($GateName)
+-    $gateDef = $gatesByName[$GateName]
+-    $pathSegments = @($GatePath)
+-    if ($pathSegments.Count -eq 0) {
+-        $pathSegments = @($GateName)
+-    }
++function New-UninvokedGate {
++    param([string]$Name,[bool]$Required=$true)
++    $declared=Get-GateDeclarations $Name
++    $node=New-GateResult $runId $Name 'gate' $runSource $configHash @($declared.required+$declared.optional) $Required
++    $node.example=[bool]$FixtureMode
++    $node.coverage.required=@($declared.required);$node.coverage.optional=@($declared.optional)
++    $null=New-Item -ItemType Directory -Path (Join-Path $runRoot $node.resultId)
++    $children=@()
++    foreach($definition in $gatesByName[$Name].steps){
++        $edge=-not ($definition.PSObject.Properties['required'] -and -not [bool]$definition.required)
++        if($definition.kind -eq 'gate'){$nested=New-UninvokedGate $definition.gate $edge}
++        else{$nested=New-GateResult $runId $definition.name $definition.kind $runSource $configHash @($definition.coverage) $edge;$nested.example=[bool]$FixtureMode;$null=New-Item -ItemType Directory -Path (Join-Path $runRoot $nested.resultId)}
++        $children+=,$nested
++    }
++    Merge-GateResults $node $children
++    return $node
++}
+ 
+-    $safePathSegments = foreach ($segment in $pathSegments) {
+-        ConvertTo-SafeName ([string]$segment)
++function Assert-ConfiguredTree {
++    param($Node,[string]$Name)
++    $definition=$gatesByName[$Name];$declared=Get-GateDeclarations $Name
++    if($Node.resultType -cne 'gate' -or $Node.kind -cne 'gate' -or $Node.name -cne $Name){throw 'Configured gate type/kind/name mismatch.'}
++    if($Node.steps.Count -ne @($definition.steps).Count -or ((@($Node.coverage.required)|Sort-Object) -join '|') -ne ((@($declared.required)|Sort-Object) -join '|') -or ((@($Node.coverage.optional)|Sort-Object) -join '|') -ne ((@($declared.optional)|Sort-Object) -join '|')){throw 'Configured gate declaration/tree mismatch.'}
++    for($index=0;$index -lt @($definition.steps).Count;$index++){
++        $step=$definition.steps[$index];$child=$Node.steps[$index]
++        $required=-not ($step.PSObject.Properties['required'] -and -not [bool]$step.required)
++        if($child.kind -ne $step.kind -or $child.required -ne $required){throw 'Configured child order/policy mismatch.'}
++        if($step.kind -eq 'gate'){Assert-ConfiguredTree $child $step.gate}
++        else{
++            if($child.resultType -cne 'step' -or @($child.steps).Count -ne 0 -or $child.fullGateAccepted){throw 'Configured leaf type/shape mismatch.'}
++            if($child.name -ne $step.name -or ((@($child.coverage.required+$child.coverage.optional)|Sort-Object) -join '|') -ne ((@($step.coverage)|Sort-Object) -join '|')){throw 'Configured child token/name mismatch.'}
++        }
+     }
+-    $gateOutputDirectory = Join-Path $RunRoot (($safePathSegments -join [System.IO.Path]::DirectorySeparatorChar))
+-    $null = New-Item -ItemType Directory -Force -Path $gateOutputDirectory
++}
+ 
+-    $startedAt = Get-Date
+-    $stepResults = New-Object System.Collections.Generic.List[object]
+-    $status = 'Passed'
+-    $failureMessage = $null
++function New-ProducerContext {
++    param($Child,$Step,[string]$NodeRoot,$Before,[object[]]$Previous)
++    $scriptName=[IO.Path]::GetFileName([string]$Step.script)
++    $evidence=$(if($Step.PSObject.Properties['evidenceType']){$Step.evidenceType}else{'receipt'})
++    if($Step.kind -eq 'powershell-script' -and $scriptName -in @('run_shooter_multiprocess_smoke.ps1','test_shooter_multiprocess_ownership_cleanup.ps1','run_runtime_benchmarks.ps1','run_shooter_aoi_lod_gate.ps1','run_moba_smoke.ps1','run_moba_multiprocess_smoke.ps1') -and -not $Step.PSObject.Properties['evidenceType']){throw 'Unadapted producer evidence contract pending B2.'}
++    $predecessors=@();$edges=@();if($Step.PSObject.Properties['predecessors']){$edges=@($Step.predecessors)}
++    foreach($edge in $edges){
++        $role=$edge.role
++        $candidates=@(foreach($prior in $Previous){if($prior.status -eq 'Passed' -and $prior.name -ceq $edge.sourceStep){foreach($artifact in $prior.artifacts){if($artifact.role -ceq $role){@{role=$role;sourceStep=$edge.sourceStep;result=@{runId=$prior.runId;resultId=$prior.resultId;status=$prior.status};artifact=$artifact}}}}})
++        if($candidates.Count -ne 1){throw "Exact configured predecessor unavailable: $role"}
++        $predecessors+=@($candidates[0])
++    }
++    $priorManifest=$BuildManifestPath
++    if($Step.PSObject.Properties['buildManifestStep'] -and -not $priorManifest){
++        $builds=@($Previous|Where-Object{$_.name -ceq $Step.buildManifestStep -and $_.status -eq 'Passed' -and $_.kind -eq 'dotnet-build' -and $_.provenance.project -eq [IO.Path]::GetFullPath((Join-Path ([string]$repoRoot) $Step.provenanceProject))})
++        if($builds.Count -eq 1){$priorManifest=Join-Path (Join-Path $runRoot $builds[0].resultId) 'build-restore-manifest.json'}
++    }
++    $arguments=@();if($Step.PSObject.Properties['arguments']){$arguments=@($Step.arguments)}
++    $producerConfiguration=$Configuration
++    if($Step.PSObject.Properties['coverageDimensions']){$producerConfiguration=([string]$Step.coverageDimensions.configuration).Replace('{Configuration}',$Configuration)}
++    $context=[ordered]@{schemaVersion=1;example=[bool]$FixtureMode;runRoot=$runRoot;nodeRoot=$NodeRoot;result=$Child;repoRoot=[string]$repoRoot;source=$Before;configuration=$producerConfiguration;evidenceType=$evidence;script=[string]$Step.script;arguments=$arguments;predecessors=$predecessors;buildManifestPath=$priorManifest}
++    foreach($field in @('provenanceProject','reportContract','coverageDimensions')){if($Step.PSObject.Properties[$field]){$context[$field]=$Step.$field}}
++    return $context
++}
+ 
+-    try {
+-        Write-GateHeader -GateDef $gateDef -GateOutputDirectory $gateOutputDirectory
+-
+-        $stepIndex = 0
+-        $matchedOnlyStep = [string]::IsNullOrWhiteSpace($OnlyStepName)
+-        foreach ($step in $gateDef.steps) {
+-            $stepIndex++
+-            $stepName = [string]$step.name
+-            if (-not [string]::IsNullOrWhiteSpace($OnlyStepName) -and $stepName -ne $OnlyStepName) {
+-                continue
++function Invoke-Gate {
++    param([string]$GateName,[string[]]$Stack=@(),[string]$OnlyStepName=$null)
++    if($GateName -in $Stack){throw 'Circular gate execution.'}
++    $gateDef=$gatesByName[$GateName];$declared=Get-GateDeclarations $GateName
++    $result=New-GateResult $runId $GateName 'gate' $runSource $configHash @($declared.required+$declared.optional)
++    $result.coverage.required=@($declared.required);$result.coverage.optional=@($declared.optional)
++    $result.coverage.missingRequired=@($declared.required);$result.coverage.missingOptional=@($declared.optional)
++    $result.example=[bool]$FixtureMode
++    $directory=Join-Path $runRoot $result.resultId;$null=New-Item -ItemType Directory -Path $directory
++    $result.startedAt=[DateTimeOffset]::UtcNow.ToString('yyyy-MM-ddTHH:mm:ssZ');$children=@();$stopped=$false;$matched=[string]::IsNullOrWhiteSpace($OnlyStepName)
++    foreach($step in $gateDef.steps){
++        $required=-not ($step.PSObject.Properties['required'] -and -not [bool]$step.required)
++        $selected=[string]::IsNullOrWhiteSpace($OnlyStepName) -or $OnlyStepName -eq $step.name
++        if($selected){$matched=$true}
++        if($step.kind -eq 'gate'){
++            if($selected -and -not $stopped){$child=Invoke-Gate $step.gate @($Stack+$GateName)}
++            else{
++                $child=New-UninvokedGate $step.gate $required
+             }
+-
+-            $matchedOnlyStep = $true
+-            switch ([string]$step.kind) {
+-                'gate' {
+-                    $nestedGateName = [string]$step.gate
+-                    $nestedGatePath = @($pathSegments + $nestedGateName)
+-                    $nestedResult = Invoke-Gate -GateName $nestedGateName -Visiting $Visiting -GatePath $nestedGatePath -RunRoot $RunRoot
+-                    $stepResults.Add([pscustomobject]@{
+-                        name             = $stepName
+-                        kind             = 'gate'
+-                        gate             = $nestedGateName
+-                        status           = $nestedResult.status
+-                        outputDirectory  = $nestedResult.outputDirectory
+-                        summaryPath      = $nestedResult.summaryPath
+-                        startedAt        = $nestedResult.startedAt
+-                        endedAt          = $nestedResult.endedAt
+-                        elapsedSeconds   = $nestedResult.elapsedSeconds
+-                    })
+-                }
+-                'dotnet-build' {
+-                    $project = Resolve-RepoPath ([string]$step.project)
+-                    $arguments = @('build', $project, '-c', $Configuration)
+-                    if ($NoRestore) { $arguments += '--no-restore' }
+-                    if ($CI) { $arguments += '--nologo' }
+-                    $logFile = Join-Path $gateOutputDirectory (('{0:00}-{1}.log' -f $stepIndex, (ConvertTo-SafeName $stepName)))
+-                    $record = Invoke-DotNetStep -DisplayName $stepName -Kind 'dotnet-build' -Arguments $arguments -LogFilePath $logFile -ProjectPath $project -Filter $null -ResultsDirectory $null -TrxFilePath $null
+-                    $stepResults.Add($record)
+-                    if ($record.status -ne 'Passed') {
+-                        throw "Step '$stepName' failed with exit code $($record.exitCode)."
+-                    }
+-                }
+-                'dotnet-test' {
+-                    $project = Resolve-RepoPath ([string]$step.project)
+-                    $testResultsDirectory = Join-Path $gateOutputDirectory 'test-results'
+-                    $null = New-Item -ItemType Directory -Force -Path $testResultsDirectory
+-                    $trxFileName = ('{0:00}-{1}.trx' -f $stepIndex, (ConvertTo-SafeName $stepName))
+-                    $trxFilePath = Join-Path $testResultsDirectory $trxFileName
+-                    $logFile = Join-Path $gateOutputDirectory (('{0:00}-{1}.log' -f $stepIndex, (ConvertTo-SafeName $stepName)))
+-                    $arguments = @('test', $project, '-c', $Configuration, '-v', 'minimal', '--logger', ("trx;LogFileName=$trxFileName"), '--results-directory', $testResultsDirectory)
+-                    if ($NoRestore) { $arguments += '--no-restore' }
+-                    if ($NoBuild) { $arguments += '--no-build' }
+-                    if ($CI) { $arguments += '--nologo' }
+-                    if ($step.PSObject.Properties['filter'] -and -not [string]::IsNullOrWhiteSpace([string]$step.filter)) {
+-                        $arguments += @('--filter', [string]$step.filter)
+-                    }
+-                    $record = Invoke-DotNetStep -DisplayName $stepName -Kind 'dotnet-test' -Arguments $arguments -LogFilePath $logFile -ProjectPath $project -Filter ([string]$step.filter) -ResultsDirectory $testResultsDirectory -TrxFilePath $trxFilePath
+-                    $record = Assert-DotNetTrxResult -Record $record -DisplayName $stepName -TrxFilePath $trxFilePath
+-                    $stepResults.Add($record)
+-                    if ($record.status -ne 'Passed') {
+-                        $failureDetail = if ([string]::IsNullOrWhiteSpace([string]$record.failureReason)) { "exit code $($record.exitCode)" } else { [string]$record.failureReason }
+-                        throw "Step '$stepName' failed: $failureDetail"
+-                    }
++            $children+=,$child
++            if($child.status -in @('Failed','Blocked')){$stopped=$true}
++            continue
++        }
++        $child=New-GateResult $runId $step.name $step.kind $runSource $configHash @($step.coverage) $required
++        $child.example=[bool]$FixtureMode
++        $nodeDirectory=Join-Path $runRoot $child.resultId;$null=New-Item -ItemType Directory -Path $nodeDirectory
++        if(-not $selected -or $stopped){$children+=,$child;continue}
++        # Producers declare their own required proof; the caller owns optional edge policy.
++        if(-not $required){$child.required=$true;$child.coverage.required=@($step.coverage);$child.coverage.optional=@();$child.coverage.missingRequired=@($step.coverage);$child.coverage.missingOptional=@()}
++        $child.startedAt=[DateTimeOffset]::UtcNow.ToString('yyyy-MM-ddTHH:mm:ssZ')
++        $expectedChild=$child|ConvertTo-Json -Depth 40|ConvertFrom-Json
++        $before=Get-GateSource ([string]$repoRoot)
++        $context=$null
++        $record=$null
++        try {
++            $context=New-ProducerContext $child $step $nodeDirectory $before $children
++            $context|ConvertTo-Json -Depth 40|Set-Content -LiteralPath (Join-Path $nodeDirectory 'context.json') -Encoding UTF8
++            switch($step.kind){
++                {$_ -in @('dotnet-test','dotnet-build')} {
++                    $child=Invoke-GateDotNet -Result $child -Step $step -NodeRoot $nodeDirectory -RunRoot $runRoot -RepoRoot ([string]$repoRoot) -Configuration $Configuration -NoBuild:$NoBuild -NoRestore:$NoRestore -BuildManifestPath $BuildManifestPath
+                 }
+                 'powershell-script' {
+-                    $record = Invoke-PowerShellScriptStep -DisplayName $stepName -Step $step -GateOutputDirectory $gateOutputDirectory -StepIndex $stepIndex
+-                    $stepResults.Add($record)
+-                    if ($record.status -ne 'Passed') {
+-                        throw "Step '$stepName' failed with exit code $($record.exitCode)."
++                    if($FixtureMode -and $step.script -notmatch '^tools/tests/fixtures/') {throw 'Fixture scripts must be isolated fixture entries.'}
++                    $record=Invoke-PowerShellScriptStep $step.name $step $nodeDirectory 1
++                    $receiptPath=Join-Path $nodeDirectory 'producer-result.json'
++                    if(-not (Test-Path -LiteralPath $receiptPath -PathType Leaf)){throw 'Producer result missing; native exit is not coverage proof.'}
++                    $receipt=Get-Content -LiteralPath $receiptPath -Raw|ConvertFrom-Json
++                    if($receipt.runId -ne $child.runId -or $receipt.resultId -ne $child.resultId -or $receipt.configSha256 -ne $child.configSha256 -or $receipt.source.sha -ne $child.source.sha -or (@($receipt.coverage.required+$receipt.coverage.optional) -join '|') -ne (@($step.coverage) -join '|')){throw 'Producer context mismatch.'}
++                    if($record.exitCode -ne $receipt.cliExitCode){throw 'Producer CLI/receipt contradiction.'}
++                    if($receipt.status -eq 'Skipped' -or $receipt.originalResult){throw 'Only config-approved runner edge policy can skip a producer.'}
++                    if($receipt.provenance){
++                        $project=$step.provenanceProject;$properties=@()
++                        switch([IO.Path]::GetFileName([string]$step.script)){
++                            'run-unity-compile-check.ps1' {
++                                $version='2022.3.62f1';$argsList=@($step.arguments);$at=[Array]::IndexOf($argsList,'-UnityVersion');if($at -ge 0){$version=$argsList[$at+1]}
++                                $platform=Get-GateUnityPlatformAssembly ([string]$repoRoot)
++                                $managed=Get-GateUnityManaged $version
++                                $properties=@("-p:UnityManaged=$managed","-p:RepoRoot=$repoRoot","-p:UnityVersion=$version","-p:UnityPlatformAssembly=$platform")
++                                if($receipt.status -eq 'Passed'){Register-GateUnityChildProof $receipt $context $version ([IO.Path]::GetFullPath((Join-Path $managed '../../Unity.exe'))) @($platform)}
++                            }
++                        }
++                        Register-GateChildProvenance $receipt $context $project $properties $context.buildManifestPath
+                     }
++                    Assert-GateResult $receipt $runRoot -AllowExample:$FixtureMode -Expected $expectedChild
++                    if($receipt.status -eq 'Passed'){Assert-GateProducerEvidence $receipt ([pscustomobject]$context)}
++                    if($context.evidenceType -eq 'assertions' -and $receipt.status -eq 'Passed'){Assert-GateTests $receipt.tests}
++                    $child=$receipt
++                    foreach($file in @($record.logFile,$record.errorLogFile)){if((Test-Path -LiteralPath $file) -and (Get-Item -LiteralPath $file).Length -gt 0){Add-GateArtifact $child $runRoot $file 'wrapper-log'}}
++                    Add-GateArtifact $child $runRoot $receiptPath 'producer-receipt'
+                 }
+-                { $_ -in @('unity-editmode-test', 'unity-playmode-test') } {
+-                    $record = Invoke-UnityTestStep -DisplayName $stepName -Step $step -GateOutputDirectory $gateOutputDirectory
+-                    $stepResults.Add($record)
+-                    if ($record.status -ne 'Passed') {
+-                        throw "Step '$stepName' failed with exit code $($record.exitCode)."
++                {$_ -in @('unity-editmode-test','unity-playmode-test','unity-execute-method')} {
++                    if(-not (Test-Path -LiteralPath (Get-UnityEditorPath $step))){Set-GateTerminal $child 'Blocked' 'MissingUnityInstallation'}
++                    else {
++                        if($FixtureMode -and -not $script:GateUnityExecutor){throw 'Installed Unity fixture requires entry interception.'}
++                        if(Test-Path -LiteralPath (Join-Path (Resolve-RepoPath $step.projectPath) 'Temp/UnityLockfile')){Set-GateTerminal $child 'Blocked' 'UnityProjectInUse';break}
++                        $version=$(if($step.PSObject.Properties['unityVersion']){$step.unityVersion}else{'2022.3.62f1'})
++                        $assemblies=@();if($step.PSObject.Properties['unityAssemblyNames']){$assemblies=@($step.unityAssemblyNames|ForEach-Object{Join-Path (Resolve-RepoPath $step.projectPath) ('Library/ScriptAssemblies/'+$_+'.dll')})}
++                        if(-not $assemblies.Count){Set-GateTerminal $child 'Blocked' 'MissingUnityDeclaredAssemblyProvenance';break}
++                        $proofPath=$null;if($step.PSObject.Properties['unityBuildProofPath']){$proofPath=([string]$step.unityBuildProofPath).Replace('{GateOutputDirectory}',$nodeDirectory)}
++                        if($script:GateUnityFixtureSetup){$proofPath=& $script:GateUnityFixtureSetup $child $step $nodeDirectory $assemblies}
++                        $proof=Assert-GateUnityBuildProof $proofPath $child $version (Get-UnityEditorPath $step) $assemblies (Resolve-RepoPath $step.projectPath)
++                        if(-not $proof){Set-GateTerminal $child 'Blocked' 'MissingUnityProjectBinaryProvenance';break}
++                        Save-GateUnityBuildProof $child $proof $runRoot $nodeDirectory
++                        $child.executionStartedAt=[DateTimeOffset]::UtcNow.ToString('yyyy-MM-ddTHH:mm:ssZ')
++                        if($step.kind -eq 'unity-execute-method'){$record=Invoke-UnityExecuteMethodStep $step.name $step $nodeDirectory}
++                        else{$record=Invoke-UnityTestStep $step.name $step $nodeDirectory}
++                        $child.executionEndedAt=[DateTimeOffset]::UtcNow.ToString('yyyy-MM-ddTHH:mm:ssZ');$child.processExitCode=$record.exitCode
++                        $child.command=@{executable=(Get-UnityEditorPath $step);arguments=@($record.nativeArguments)}
++                        if($record.logFile -and (Test-Path -LiteralPath $record.logFile)){Add-GateArtifact $child $runRoot $record.logFile 'log'}
++                        if($record.resultsFile -and (Test-Path -LiteralPath $record.resultsFile)){Add-GateArtifact $child $runRoot $record.resultsFile $(if($step.kind -eq 'unity-execute-method'){'report'}else{'nunit'})}
++                        if($record.status -ne 'Passed'){throw $record.failureReason}
++                        if($step.kind -ne 'unity-execute-method'){$child.tests=Get-GateTestCounts $record.resultsFile 'nunit';Assert-GateTests $child.tests}
++                        $scope=$(if($step.kind -eq 'unity-execute-method'){$step.executeMethod}else{if($step.testFilter){$step.testFilter}else{'all'}})
++                        $policy=$(if($step.coverageDimensions){$step.coverageDimensions.policy}else{'required'})
++                        $binding=Join-Path $nodeDirectory 'unity-invocation-binding.json'
++                        @{runId=$child.runId;resultId=$child.resultId;kind=$child.kind;source=$child.source;host=('Unity'+$version);scope=$scope;policy=$policy;editorSha256=Get-GateHash (Get-UnityEditorPath $step);reportSha256=Get-GateHash $record.resultsFile}|ConvertTo-Json -Depth 12|Set-Content $binding -Encoding UTF8
++                        Add-GateArtifact $child $runRoot $binding 'unity-invocation-binding'
++                        $child.tools=@(@{name='Unity';version=$version})
++                        Assert-GateUnityEvidence $child $runRoot
++                        Set-GateTerminal $child 'Passed' $null
+                     }
+                 }
+-                'unity-execute-method' {
+-                    $record = Invoke-UnityExecuteMethodStep -DisplayName $stepName -Step $step -GateOutputDirectory $gateOutputDirectory
+-                    $stepResults.Add($record)
+-                    if ($record.status -ne 'Passed') {
+-                        throw "Step '$stepName' failed with exit code $($record.exitCode)."
+-                    }
+-                }
+-                default {
+-                    throw "Unsupported gate step kind '$($step.kind)' in '$GateName'."
+-                }
++                default {throw "Unsupported step kind $($step.kind)"}
+             }
++            Assert-GateCoverageProof $child $step $Configuration $nodeDirectory
++            $after=Get-GateSource ([string]$repoRoot);$child.source.inputManifestAfterSha256=$after.inputManifestSha256;Assert-GateSource $before $after
++            $child.endedAt=[DateTimeOffset]::UtcNow.ToString('yyyy-MM-ddTHH:mm:ssZ')
++            Assert-GateResult $child $runRoot -AllowExample:$FixtureMode
++            if(-not $required -and $child.status -eq 'Blocked' -and $child.reason -eq 'MissingUnityInstallation' -and $step.PSObject.Properties['optionalReason'] -and $step.optionalReason -eq 'MissingUnityInstallation'){
++                $raw=$child|ConvertTo-Json -Depth 60|ConvertFrom-Json
++                $rawPath=Join-Path $nodeDirectory 'original-result.json';$raw|ConvertTo-Json -Depth 60|Set-Content $rawPath -Encoding UTF8
++                Set-GateTerminal $child 'Skipped' 'OptionalMissingUnityInstallation';$child.originalResult=$raw
++                Add-GateArtifact $child $runRoot $rawPath 'original-result'
++            }
++        } catch {
++            Set-GateTerminal $child 'Failed' $_.Exception.Message
++            $child.source.inputManifestAfterSha256=(Get-GateSource ([string]$repoRoot)).inputManifestSha256
++            if($record){
++                $child.processExitCode=$record.exitCode;$child.command=@{executable=$(if($record.unityEditorPath){$record.unityEditorPath}else{'powershell'});arguments=@($(if($record.nativeArguments){$record.nativeArguments}else{$record.command}))}
++                $child.executionStartedAt=([DateTimeOffset]$record.startedAt).ToUniversalTime().ToString('yyyy-MM-ddTHH:mm:ssZ')
++                $child.executionEndedAt=([DateTimeOffset]$record.endedAt).ToUniversalTime().ToString('yyyy-MM-ddTHH:mm:ssZ')
++                foreach($path in @($record.logFile,$record.errorLogFile,(Join-Path $nodeDirectory 'producer-result.json'))|Where-Object{$_}){if((Test-Path -LiteralPath $path -PathType Leaf) -and (Get-Item -LiteralPath $path).Length -gt 0){Add-GateArtifact $child $runRoot $path 'rejected-producer-evidence'}}
++            }
++            $child.endedAt=[DateTimeOffset]::UtcNow.ToString('yyyy-MM-ddTHH:mm:ssZ')
++            if($child.executionStartedAt -and -not $child.executionEndedAt){$child.executionEndedAt=$child.endedAt}
+         }
+-
+-        if (-not $matchedOnlyStep) {
+-            throw "Step '$OnlyStepName' was not found in gate '$GateName'."
+-        }
+-    }
+-    catch {
+-        $status = 'Failed'
+-        $failureMessage = $_.Exception.Message
+-        throw
+-    }
+-    finally {
+-        $endedAt = Get-Date
+-        $gateLevel = Get-OptionalStringProperty -Value $gateDef -PropertyName 'level'
+-        $gateOwner = Get-OptionalStringProperty -Value $gateDef -PropertyName 'owner'
+-        $summaryPath = Join-Path $gateOutputDirectory 'gate-summary.json'
+-        $summary = New-Object psobject
+-        $summary | Add-Member -MemberType NoteProperty -Name gate -Value $GateName
+-        $summary | Add-Member -MemberType NoteProperty -Name gatePath -Value ([object[]]@($pathSegments))
+-        $summary | Add-Member -MemberType NoteProperty -Name level -Value $gateLevel
+-        $summary | Add-Member -MemberType NoteProperty -Name owner -Value $gateOwner
+-        $summary | Add-Member -MemberType NoteProperty -Name status -Value $status
+-        $summary | Add-Member -MemberType NoteProperty -Name startedAt -Value ($startedAt.ToString('o'))
+-        $summary | Add-Member -MemberType NoteProperty -Name endedAt -Value ($endedAt.ToString('o'))
+-        $summary | Add-Member -MemberType NoteProperty -Name elapsedSeconds -Value ([math]::Round(($endedAt - $startedAt).TotalSeconds, 3))
+-        $summary | Add-Member -MemberType NoteProperty -Name outputDirectory -Value $gateOutputDirectory
+-        $summary | Add-Member -MemberType NoteProperty -Name summaryPath -Value $summaryPath
+-        $summary | Add-Member -MemberType NoteProperty -Name failureMessage -Value $failureMessage
+-        $summary | Add-Member -MemberType NoteProperty -Name steps -Value ([object[]]$stepResults.ToArray())
+-
+-        $summary | ConvertTo-Json -Depth 12 | Set-Content -Path $summaryPath -Encoding UTF8
+-        $Visiting.Remove($GateName) | Out-Null
+-    }
+-
+-    return $summary
++        $child.required=$required
++        if(-not $required){$child.coverage.required=@();$child.coverage.optional=@($step.coverage);$child.coverage.missingRequired=@();$child.coverage.missingOptional=@($step.coverage|Where-Object{$_ -notin $child.coverage.completed})}
++        $children+=,$child
++        $child|ConvertTo-Json -Depth 80|Set-Content (Join-Path $nodeDirectory 'result.json') -Encoding UTF8
++        Write-Host ("{0}: {1} (cli={2}, native={3}) {4}" -f $child.name,$child.status,$child.cliExitCode,$child.processExitCode,$child.reason)
++        if($child.status -in @('Failed','Blocked')){$stopped=$true}
++    }
++    if(-not $matched){throw "Step '$OnlyStepName' was not found in '$GateName'."}
++    Merge-GateResults $result $children
++    $result.endedAt=[DateTimeOffset]::UtcNow.ToString('yyyy-MM-ddTHH:mm:ssZ')
++    $result|ConvertTo-Json -Depth 80|Set-Content (Join-Path $directory 'gate-summary.json') -Encoding UTF8
++    return $result
+ }
+ 
+-$startedAt = Get-Date
+ try {
+-    $gateResult = Invoke-Gate -GateName $Gate -Visiting ([System.Collections.Generic.HashSet[string]]::new()) -GatePath @($Gate) -RunRoot $runRoot -OnlyStepName $StepName
+-    $elapsed = (Get-Date) - $startedAt
+-    Write-Host ("`nGate '{0}' passed in {1:n1}s." -f $Gate, $elapsed.TotalSeconds) -ForegroundColor Green
+-    Write-Host ("Summary: {0}" -f $gateResult.summaryPath) -ForegroundColor DarkGray
+-    exit 0
+-}
+-catch {
+-    Write-Host ("`nGate '{0}' failed. See summary under {1}." -f $Gate, $runRoot) -ForegroundColor Red
+-    throw
++    # Validate declarations before any tool, process or service work.
++    foreach($definition in $config.gates){$null=Get-GateDeclarations $definition.name}
++    $gateResult=Invoke-Gate $Gate -OnlyStepName $StepName
++    Assert-ConfiguredTree $gateResult $Gate
++    $postSource=Get-GateSource ([string]$repoRoot)
++    $postPath=Join-Path (Join-Path $runRoot $gateResult.resultId) 'source-after.json'
++    $postSource|ConvertTo-Json -Depth 12|Set-Content $postPath -Encoding UTF8
++    Add-GateArtifact $gateResult $runRoot $postPath 'source-after'
++    $gateResult.source.inputManifestAfterSha256=$postSource.inputManifestSha256
++    $sourceChanged=$runSource.sha -ne $postSource.sha -or $runSource.dirty -ne $postSource.dirty -or $runSource.inputManifestSha256 -ne $postSource.inputManifestSha256
++    Merge-GateResults $gateResult $gateResult.steps $sourceChanged
++    Assert-GateResult $gateResult $runRoot -AllowExample:$FixtureMode
++    $gateResult|ConvertTo-Json -Depth 80|Set-Content (Join-Path $runRoot 'gate-summary.json') -Encoding UTF8
++    $gateResult|ConvertTo-Json -Depth 80|Set-Content (Join-Path (Join-Path $runRoot $gateResult.resultId) 'gate-summary.json') -Encoding UTF8
++    Write-Host ("Gate '{0}': {1}; fullGateAccepted={2}; exit={3}; summary={4}" -f $Gate,$gateResult.status,$gateResult.fullGateAccepted,$gateResult.cliExitCode,(Join-Path $runRoot 'gate-summary.json'))
++    exit $gateResult.cliExitCode
++} catch {
++    if($gateResult){
++        $gateResult.status='Failed';$gateResult.cliExitCode=1;$gateResult.fullGateAccepted=$false;$gateResult.reason=$_.Exception.Message
++        $gateResult|ConvertTo-Json -Depth 80|Set-Content (Join-Path $runRoot 'gate-summary.json') -Encoding UTF8
++        $gateResult|ConvertTo-Json -Depth 80|Set-Content (Join-Path (Join-Path $runRoot $gateResult.resultId) 'gate-summary.json') -Encoding UTF8
++    }
++    @{status='Failed';cliExitCode=1;reason=$_.Exception.Message;runId=$runId}|ConvertTo-Json|Set-Content (Join-Path $runRoot 'runner-error.json') -Encoding UTF8
++    Write-Error $_ -ErrorAction Continue
++    exit 1
+ }
+diff --git a/tools/test-gate-result-contract.ps1 b/tools/test-gate-result-contract.ps1
+new file mode 100644
+index 000000000..31bf04eff
+--- /dev/null
++++ b/tools/test-gate-result-contract.ps1
+@@ -0,0 +1,1292 @@
++﻿# Shared result semantics. Dot-source; no work is launched while loading this file.
++function Get-GateHash {
++    param([string]$Path,[switch]$AllowEmptyImmutableInput)
++    if (-not (Test-Path -LiteralPath $Path -PathType Leaf)) { throw "Missing artifact: $Path" }
++    if (-not $AllowEmptyImmutableInput -and (Get-Item -LiteralPath $Path).Length -eq 0) { throw "Empty artifact: $Path" }
++    return (Get-FileHash -LiteralPath $Path -Algorithm SHA256).Hash.ToLowerInvariant()
++}
++
++function Get-GateFingerprint {
++    param([object[]]$Entries)
++    $text = (@($Entries | Sort-Object path | ForEach-Object { $_.path + [char]0 + $_.sha256 + "`n" }) -join '')
++    $algorithm = [System.Security.Cryptography.SHA256]::Create()
++    try { return ([BitConverter]::ToString($algorithm.ComputeHash([Text.Encoding]::UTF8.GetBytes($text)))).Replace('-', '').ToLowerInvariant() }
++    finally { $algorithm.Dispose() }
++}
++
++function Get-GateSource {
++    param([string]$RepoRoot)
++    $sha = (& git -C $RepoRoot rev-parse HEAD).Trim()
++    if ($LASTEXITCODE -ne 0) { throw 'Cannot capture source SHA.' }
++    $dirty = @(& git -C $RepoRoot status --porcelain).Count -gt 0
++    $paths = @(& git -C $RepoRoot ls-files -co --exclude-standard | Sort-Object -Unique)
++    $algorithm=[Security.Cryptography.SHA256]::Create()
++    $entries = @(try { foreach ($path in $paths) {
++        if ($path -match '\.(cs|csproj|props|targets|sln|json|ps1|py|config|lock|dll|asmdef|asmref|md|txt|meta|prefab|yml|yaml|rsp|ruleset)$' -and $path -notmatch '^\.(trellis|agents|codex)/|/(bin|obj|Library|Temp)/') {
++            $full = Join-Path $RepoRoot $path
++            if ([IO.File]::Exists($full)) {
++                # Empty source files are valid inputs, unlike result artifacts.
++                $stream=[IO.File]::OpenRead($full)
++                try{$hash=([BitConverter]::ToString($algorithm.ComputeHash($stream))).Replace('-','').ToLowerInvariant()}
++                finally{$stream.Dispose()}
++                [pscustomobject]@{ path=$path; sha256=$hash }
++            }
++        }
++    }}finally{$algorithm.Dispose()})
++    $fingerprint = Get-GateFingerprint (Get-GateLogicalInputs $entries)
++    return [pscustomobject]@{ sha=$sha; dirty=$dirty; inputManifestSha256=$fingerprint; inputManifestAfterSha256=$fingerprint; inputs=$entries }
++}
++
++function Assert-GateSource {
++    param($Before, $After)
++    if ($Before.sha -ne $After.sha -or $Before.dirty -ne $After.dirty -or $Before.inputManifestSha256 -ne $After.inputManifestSha256) { throw 'Source changed during invocation.' }
++}
++
++function Resolve-GateArtifact {
++    param([string]$Root, [string]$RelativePath)
++    if ([string]::IsNullOrWhiteSpace($RelativePath) -or $RelativePath -notmatch '^[A-Za-z0-9_-][A-Za-z0-9._-]*(/[A-Za-z0-9_-][A-Za-z0-9._-]*)*$') { throw 'Artifact path must be slash-only relative.' }
++    foreach ($part in $RelativePath.Split('/')) {
++        if ($part -eq '' -or $part -in @('.', '..') -or $part -match '[ .]$|^(?i:CON|PRN|AUX|NUL|COM[1-9]|LPT[1-9])(?:\.|$)') { throw 'Unsafe artifact component.' }
++    }
++    $base = [IO.Path]::GetFullPath($Root).TrimEnd('\','/')
++    $current = $base
++    $ancestor=$base
++    while($ancestor){
++        if((Test-Path -LiteralPath $ancestor) -and ((Get-Item -LiteralPath $ancestor -Force).Attributes -band [IO.FileAttributes]::ReparsePoint)){throw 'Reparse artifact root/ancestor.'}
++        $parent=[IO.Directory]::GetParent($ancestor);$ancestor=$(if($parent){$parent.FullName}else{$null})
++    }
++    foreach ($part in $RelativePath.Split('/')) {
++        $current = Join-Path $current $part
++        if ((Test-Path -LiteralPath $current) -and ((Get-Item -LiteralPath $current -Force).Attributes -band [IO.FileAttributes]::ReparsePoint)) { throw 'Reparse artifact component.' }
++    }
++    if (-not $current.StartsWith($base + [IO.Path]::DirectorySeparatorChar, [StringComparison]::OrdinalIgnoreCase)) { throw 'Artifact escapes root.' }
++    return $current
++}
++
++function New-GateResult {
++    param([string]$RunId, [string]$Name, [string]$Kind, $Source, [string]$ConfigHash, [string[]]$Tokens, [bool]$Required=$true, [string]$ResultId=([guid]::NewGuid().ToString()))
++    $requiredTokens = @(); $optionalTokens = @()
++    if ($Required) { $requiredTokens=@($Tokens) } else { $optionalTokens=@($Tokens) }
++    return [pscustomobject][ordered]@{
++        schemaVersion=1; example=$false; resultType=$(if($Kind -eq 'gate'){'gate'}else{'step'}); runId=$RunId; resultId=$ResultId
++        name=$Name; kind=$Kind; status='NotRun'; cliExitCode=4; processExitCode=$null; reason='Unselected or not reached'; required=$Required
++        source=[pscustomobject]@{sha=$Source.sha;dirty=$Source.dirty;inputManifestSha256=$Source.inputManifestSha256;inputManifestAfterSha256=$Source.inputManifestSha256}
++        configSha256=$ConfigHash; startedAt=$null; endedAt=$null; executionStartedAt=$null; executionEndedAt=$null; command=$null; tools=@()
++        coverage=[pscustomobject]@{required=$requiredTokens;optional=$optionalTokens;completed=@();missingRequired=$requiredTokens;missingOptional=$optionalTokens;bindings=@{}}
++        tests=$null; artifacts=@(); fullGateAccepted=$false; steps=@(); originalResult=$null; provenance=$null
++    }
++}
++
++function Set-GateTerminal {
++    param($Result, [ValidateSet('Passed','Failed','Blocked','Skipped','NotRun')][string]$Status, [string]$Reason)
++    $Result.status=$Status; $Result.cliExitCode=@{Passed=0;Failed=1;Blocked=2;Skipped=3;NotRun=4}[$Status]
++    $Result.reason=$(if($Status -eq 'Passed'){$null}elseif([string]::IsNullOrWhiteSpace($Reason)){$Status}else{$Reason})
++    if ($Status -eq 'Passed') {
++        $Result.coverage.bindings=@{}
++        $Result.coverage.completed=@($Result.coverage.required + $Result.coverage.optional)
++        $Result.coverage.missingRequired=@(); $Result.coverage.missingOptional=@()
++        foreach($token in $Result.coverage.completed) { $Result.coverage.bindings[$token]=@($Result.resultId) }
++    } else {
++        $Result.coverage.completed=@(); $Result.coverage.bindings=@{}
++        $Result.coverage.missingRequired=@($Result.coverage.required); $Result.coverage.missingOptional=@($Result.coverage.optional)
++    }
++}
++
++function Add-GateArtifact {
++    param($Result,[string]$RunRoot,[string]$Path,[string]$Role)
++    $base=[IO.Path]::GetFullPath($RunRoot).TrimEnd('\','/') + [IO.Path]::DirectorySeparatorChar
++    $full=[IO.Path]::GetFullPath($Path)
++    if(-not $full.StartsWith($base,[StringComparison]::OrdinalIgnoreCase)){ throw 'Artifact outside run root.' }
++    $ownedRoot=Join-Path $RunRoot $Result.resultId
++    $ownedBase=[IO.Path]::GetFullPath($ownedRoot).TrimEnd('\','/')+[IO.Path]::DirectorySeparatorChar
++    if(-not $full.StartsWith($ownedBase,[StringComparison]::OrdinalIgnoreCase)){throw 'Artifact owned by another node.'}
++    $relative=$full.Substring($ownedBase.Length).Replace('\','/')
++    $null=Resolve-GateArtifact $ownedRoot $relative
++    $Result.artifacts += [pscustomobject]@{root='run-step';path=$relative;bytes=(Get-Item -LiteralPath $full).Length;sha256=Get-GateHash $full;role=$Role;producerRunId=$Result.runId;producerResultId=$Result.resultId}
++}
++
++function Get-GateTestCounts {
++    param([string]$Path,[ValidateSet('trx','nunit')][string]$Format)
++    [xml]$xml=Get-Content -LiteralPath $Path -Raw
++    $counts=[ordered]@{declared=$true;total=0;resultEntries=0;executed=0;passed=0;failed=0;skipped=0;notExecuted=0}
++    $seen=@{}; $native=@{}
++    if($Format -eq 'trx') {
++        if($xml.DocumentElement.LocalName -ne 'TestRun'){throw 'TRX root missing.'}
++        $entries=@($xml.SelectNodes("/*[local-name()='TestRun']/*[local-name()='Results']/*[local-name()='UnitTestResult']"))
++        $counter=$xml.SelectSingleNode("/*[local-name()='TestRun']/*[local-name()='ResultSummary']/*[local-name()='Counters']")
++        if($null -eq $counter){throw 'TRX counters missing.'}
++        foreach($entry in $entries) {
++            $id=[string]$entry.executionId; $outcome=[string]$entry.outcome
++            if([string]::IsNullOrWhiteSpace($id) -or $seen.ContainsKey($id)){throw 'Duplicate or absent TRX execution ID.'}; $seen[$id]=$true
++            $key=$outcome.ToLowerInvariant(); if(-not $native.ContainsKey($key)){$native[$key]=0}; $native[$key]++
++            switch($outcome) {
++                'Passed' {$counts.passed++}
++                {$_ -in @('Failed','Error','Timeout','Aborted','Inconclusive','Warning')} {$counts.failed++}
++                {$_ -in @('NotExecuted','Pending','NotRunnable','Disconnected')} {$counts.notExecuted++}
++                default {throw "Unsupported TRX outcome $outcome"}
++            }
++        }
++        foreach($key in @('passed','failed','error','timeout','aborted','inconclusive','warning','notExecuted','pending','notRunnable','disconnected','completed','inProgress')) {
++            $actual=0; if($native.ContainsKey($key)){$actual=$native[$key]}
++            if($counter.HasAttribute($key)) { if([int]$counter.GetAttribute($key) -ne $actual){throw "TRX counter contradiction: $key"} }
++            elseif($actual -gt 0){throw "TRX counter absent: $key"}
++        }
++        $counts.executed=$counts.passed+$counts.failed
++        if(-not $counter.HasAttribute('executed') -or [int]$counter.executed -ne $counts.executed){throw 'TRX executed contradiction.'}
++        $counts.total=$entries.Count
++        if(-not $counter.HasAttribute('total') -or [int]$counter.total -ne $counts.total){throw 'TRX total contradiction.'}
++    } else {
++        $root=$xml.DocumentElement; if($root.LocalName -ne 'test-run'){throw 'NUnit root missing.'}
++        $entries=@($xml.SelectNodes('//test-case')); $rawFailed=0; $inconclusive=0; $ignored=0
++        foreach($entry in $entries) {
++            $id=[string]$entry.id
++            if([string]::IsNullOrWhiteSpace($id) -or $seen.ContainsKey($id)){throw 'Duplicate or absent NUnit case ID.'};$seen[$id]=$true
++            switch([string]$entry.result) {
++                'Passed' {$counts.passed++}
++                'Failed' {$counts.failed++;$rawFailed++}
++                'Inconclusive' {$counts.failed++;$inconclusive++}
++                {$_ -in @('Skipped','Ignored','Explicit')} {$counts.skipped++;if($_ -eq 'Ignored' -or [string]$entry.label -eq 'Ignored'){$ignored++}}
++                default {throw 'Unknown NUnit outcome.'}
++            }
++        }
++        $counts.total=$entries.Count;$counts.executed=$counts.passed+$counts.failed
++        foreach($pair in @(@('total',$counts.total),@('passed',$counts.passed),@('failed',$rawFailed),@('inconclusive',$inconclusive),@('skipped',$counts.skipped))) {
++            if(-not $root.HasAttribute($pair[0]) -or [int]$root.GetAttribute($pair[0]) -ne $pair[1]){throw "NUnit counter contradiction: $($pair[0])"}
++        }
++        if($root.HasAttribute('testcasecount') -and [int]$root.testcasecount -ne $counts.total){throw 'NUnit testcasecount contradiction.'}
++        if($root.HasAttribute('ignored') -and [int]$root.ignored -ne $ignored){throw 'NUnit ignored contradiction.'}
++        if($root.HasAttribute('executed') -and [int]$root.executed -ne $counts.executed){throw 'NUnit executed contradiction.'}
++    }
++    $counts.resultEntries=$counts.total
++    return [pscustomobject]$counts
++}
++
++function Assert-GateTests {
++    param($Tests)
++    if($null -eq $Tests -or -not $Tests.declared){throw 'Declared tests absent.'}
++    foreach($key in @('total','resultEntries','executed','passed','failed','skipped','notExecuted')){if(($Tests.$key -isnot [int] -and $Tests.$key -isnot [long]) -or $Tests.$key -lt 0){throw 'Invalid test count.'}}
++    if($Tests.total -ne $Tests.resultEntries -or $Tests.total -ne ($Tests.passed+$Tests.failed+$Tests.skipped+$Tests.notExecuted) -or $Tests.executed -ne ($Tests.passed+$Tests.failed)){throw 'Test count equations contradicted.'}
++    if($Tests.total -le 0 -or $Tests.executed -le 0 -or $Tests.failed -gt 0 -or $Tests.skipped -gt 0 -or $Tests.notExecuted -gt 0){throw 'Declared test coverage incomplete or failed.'}
++}
++
++function Get-GateAssertionCounts {
++    param([string]$Path)
++    $document=Get-Content -LiteralPath $Path -Raw|ConvertFrom-Json
++    $entries=@($document)
++    $seen=@{};$passed=0;$failed=0
++    foreach($entry in $entries){
++        if(-not $entry.id -or $seen.ContainsKey($entry.id)){throw 'Assertion IDs absent or duplicated.'};$seen[$entry.id]=$true
++        switch($entry.outcome){'Passed'{$passed++};'Failed'{$failed++};default{throw 'Unknown assertion outcome.'}}
++    }
++    return [pscustomobject]@{declared=$true;total=$entries.Count;resultEntries=$entries.Count;executed=$entries.Count;passed=$passed;failed=$failed;skipped=0;notExecuted=0}
++}
++
++function Add-GateAssertion {
++    param([string]$Name,[bool]$Passed=$true)
++    if(-not $script:GateAssertionEntries){$script:GateAssertionEntries=New-Object 'System.Collections.Generic.List[object]'}
++    $script:GateAssertionEntries.Add([pscustomobject]@{id=[guid]::NewGuid().ToString();name=$Name;outcome=$(if($Passed){'Passed'}else{'Failed'})})
++    $script:GateAssertions=$script:GateAssertionEntries.Count
++}
++
++function Merge-GateResults {
++    param($GateResult,[object[]]$Children,[bool]$SourceChanged=$false)
++    $GateResult.steps=@($Children);$completed=@();$bindings=@{}
++    foreach($child in $Children){foreach($token in $child.coverage.completed){$completed+=$token; $bindings[$token]=@($bindings[$token])+@(Get-GateBindingIds $child.coverage.bindings $token)}}
++    $declared=@($GateResult.coverage.required+$GateResult.coverage.optional)
++    $GateResult.coverage.completed=@($completed | Where-Object {$_ -in $declared} | Sort-Object -Unique)
++    $GateResult.coverage.bindings=@{};foreach($token in $GateResult.coverage.completed){$GateResult.coverage.bindings[$token]=@($bindings[$token]|Sort-Object -Unique)}
++    $GateResult.coverage.missingRequired=@($GateResult.coverage.required|Where-Object{$_ -notin $completed})
++    $GateResult.coverage.missingOptional=@($GateResult.coverage.optional|Where-Object{$_ -notin $completed})
++    if($SourceChanged -or @($Children|Where-Object{$_.status -eq 'Failed'}).Count){$status='Failed'}
++    elseif(@($Children|Where-Object{$_.status -eq 'Blocked'}).Count){$status='Blocked'}
++    elseif($GateResult.coverage.missingRequired.Count){$status='NotRun'}
++    elseif(-not $GateResult.coverage.completed.Count){$status='Skipped'}else{$status='Passed'}
++    $GateResult.status=$status;$GateResult.cliExitCode=@{Passed=0;Failed=1;Blocked=2;Skipped=3;NotRun=4}[$status]
++    $GateResult.fullGateAccepted=$status -eq 'Passed';$GateResult.reason=$(if($status -eq 'Passed'){$null}else{'See child results and missing coverage'})
++}
++
++function Assert-GateResult {
++    param($Result,[string]$RunRoot,[switch]$AllowExample,$Expected)
++    $fields=@('schemaVersion','example','resultType','runId','resultId','name','kind','status','cliExitCode','processExitCode','reason','required','source','configSha256','startedAt','endedAt','executionStartedAt','executionEndedAt','command','tools','coverage','tests','artifacts','fullGateAccepted','steps','originalResult','provenance')
++    foreach($field in $fields){if(-not $Result.PSObject.Properties[$field]){throw "Missing result field $field"}}
++    foreach($field in $Result.PSObject.Properties.Name){if($field -notin $fields){throw "Unknown result field $field"}}
++    if($Result.example -isnot [bool] -or $Result.required -isnot [bool] -or $Result.fullGateAccepted -isnot [bool] -or $Result.cliExitCode -isnot [int] -or ($null -ne $Result.processExitCode -and $Result.processExitCode -isnot [int])){throw 'Invalid result scalar types.'}
++    if($Result.schemaVersion -ne 1 -or ($Result.example -and -not $AllowExample)){throw 'Unsupported or synthetic production result.'}
++    if($Expected){
++        if($Result.example -ne $Expected.example -or $Result.required -ne $Expected.required){throw 'Invocation policy mismatch.'}
++        foreach($field in @('runId','resultId','resultType','name','kind','configSha256')){if($Result.$field -cne $Expected.$field){throw "Invocation $field mismatch."}}
++        if($Result.source.sha -ne $Expected.source.sha -or $Result.source.dirty -ne $Expected.source.dirty -or $Result.source.inputManifestSha256 -ne $Expected.source.inputManifestSha256){throw 'Invocation source identity mismatch.'}
++        foreach($field in @('required','optional')){if(((@($Result.coverage.$field)|Sort-Object) -join '|') -ne ((@($Expected.coverage.$field)|Sort-Object) -join '|')){throw 'Config declaration mismatch.'}}
++    }
++    if($Result.kind -cnotin @('gate','powershell-script','dotnet-build','dotnet-test','unity-editmode-test','unity-playmode-test','unity-execute-method') -or
++       $Result.resultType -cne $(if($Result.kind -eq 'gate'){'gate'}else{'step'})){throw 'Result type/kind contradiction.'}
++    if($Result.resultType -eq 'step' -and (@($Result.steps).Count -ne 0 -or $Result.fullGateAccepted)){throw 'Leaf cannot contain children or accept a full gate.'}
++    if($Result.resultType -eq 'gate' -and ($null -ne $Result.tests -or $null -ne $Result.processExitCode -or $Result.executionStartedAt -or $Result.executionEndedAt)){throw 'Gate cannot claim leaf execution.'}
++    foreach($id in @($Result.runId,$Result.resultId)){if(-not [guid]::TryParse($id,[ref]([guid]::Empty))){throw 'Invalid UUID.'}}
++    $canonical=@{Passed=0;Failed=1;Blocked=2;Skipped=3;NotRun=4}
++    if($Result.status -cnotin @('Passed','Failed','Blocked','Skipped','NotRun') -or $Result.cliExitCode -ne $canonical[$Result.status]){throw 'Canonical exit contradiction.'}
++    if($Result.source.inputManifestSha256 -ne $Result.source.inputManifestAfterSha256 -and $Result.status -ne 'Failed'){throw 'Source changed.'}
++    if($Result.source.dirty -isnot [bool] -or $Result.source.sha -cnotmatch '^[0-9a-f]{40}$' -or $Result.source.inputManifestSha256 -cnotmatch '^[0-9a-f]{64}$' -or $Result.configSha256 -cnotmatch '^[0-9a-f]{64}$'){throw 'Malformed source/config fingerprint.'}
++    if($Result.startedAt){
++        if(-not $Result.endedAt -or [DateTimeOffset]$Result.endedAt -lt [DateTimeOffset]$Result.startedAt){throw 'Invalid invocation time.'}
++    }elseif($Result.status -ne 'NotRun' -and -not ($Result.resultType -eq 'gate' -and $Result.status -eq 'Skipped')){throw 'Missing invocation time.'}
++    if($Result.executionStartedAt){if(-not $Result.executionEndedAt -or [DateTimeOffset]$Result.executionStartedAt -lt [DateTimeOffset]$Result.startedAt -or [DateTimeOffset]$Result.executionEndedAt -gt [DateTimeOffset]$Result.endedAt -or [DateTimeOffset]$Result.executionEndedAt -lt [DateTimeOffset]$Result.executionStartedAt){throw 'Invalid process time.'}}
++    elseif($null -ne $Result.processExitCode){throw 'Native exit without launch.'}
++    if($Result.status -eq 'Blocked' -and $Result.processExitCode -eq 0 -and $null -ne $Result.processExitCode){throw 'Blocked/native0 contradiction.'}
++    if($Result.status -eq 'NotRun' -and $Result.resultType -eq 'step' -and $Result.executionStartedAt){throw 'Launched invocation cannot be NotRun.'}
++    $r=@($Result.coverage.required);$o=@($Result.coverage.optional);$c=@($Result.coverage.completed)
++    if(@($r+$o|Where-Object{$_ -match '\{|\}|project-tfm|listHash'}).Count){throw 'Raw coverage contains unresolved declarations.'}
++    if(-not ($r.Count+$o.Count) -or @($r+$o|Sort-Object -Unique).Count -ne ($r.Count+$o.Count)){throw 'Empty or overlapping declaration.'}
++    if(@($c|Sort-Object -Unique).Count -ne $c.Count -or @($c|Where-Object{$_ -notin ($r+$o)}).Count){throw 'Invalid completed coverage.'}
++    if((@($r|Where-Object{$_ -notin $c}) -join '|') -ne (@($Result.coverage.missingRequired) -join '|') -or (@($o|Where-Object{$_ -notin $c}) -join '|') -ne (@($Result.coverage.missingOptional) -join '|')){throw 'Missing coverage equation.'}
++    $bindingKeys=@($Result.coverage.bindings.PSObject.Properties.Name)
++    if($Result.coverage.bindings -is [System.Collections.IDictionary]){$bindingKeys=@($Result.coverage.bindings.Keys)}
++    if((@($bindingKeys|Sort-Object) -join '|') -ne (@($c|Sort-Object) -join '|')){throw 'Binding keys contradiction.'}
++    foreach($token in $c){$ids=@(Get-GateBindingIds $Result.coverage.bindings $token);if(-not $ids.Count -or @($ids|Where-Object{[string]::IsNullOrWhiteSpace($_)}).Count -or @($ids|Sort-Object -Unique).Count -ne $ids.Count){throw 'Completed coverage requires nonempty unique binding IDs.'}}
++    foreach($artifact in $Result.artifacts){
++        if($artifact.producerRunId -ne $Result.runId -or $artifact.producerResultId -ne $Result.resultId){throw 'Wrong artifact owner.'}
++        $resolved=Resolve-GateArtifact (Join-Path $RunRoot $Result.resultId) $artifact.path
++        if($artifact.root -cne 'run-step' -or (Get-Item -LiteralPath $resolved).Length -ne $artifact.bytes -or (Get-GateHash $resolved) -ne $artifact.sha256){throw 'Artifact identity changed.'}
++    }
++    if($Result.resultType -eq 'step' -and $Result.status -eq 'Passed'){
++        if($Result.processExitCode -ne 0 -or $null -eq $Result.command -or -not $Result.executionStartedAt -or -not $Result.artifacts.Count -or $Result.coverage.missingRequired.Count){throw 'Passed leaf lacks completed execution evidence.'}
++        if($Result.kind -match 'test' -or $null -ne $Result.tests) {Assert-GateTests $Result.tests}
++        if($Result.kind -in @('dotnet-test','unity-editmode-test','unity-playmode-test')){
++            $role=$(if($Result.kind -eq 'dotnet-test'){'trx'}else{'nunit'})
++            $reports=@($Result.artifacts|Where-Object{$_.role -eq $role})
++            if($reports.Count -ne 1){throw 'Exact current raw test report missing.'}
++            $raw=Get-GateTestCounts (Resolve-GateArtifact (Join-Path $RunRoot $Result.resultId) $reports[0].path) $(if($role -eq 'trx'){'trx'}else{'nunit'})
++            foreach($field in @('total','resultEntries','executed','passed','failed','skipped','notExecuted')){if($raw.$field -ne $Result.tests.$field){throw 'Raw/normalized test count contradiction.'}}
++            Assert-GateTests $raw
++            Assert-GateRawReportBinding $Result (Resolve-GateArtifact (Join-Path $RunRoot $Result.resultId) $reports[0].path) $role
++        }
++        elseif($null -ne $Result.tests){
++            $reports=@($Result.artifacts|Where-Object{$_.role -eq 'assertions'})
++            if($reports.Count -ne 1){throw 'Raw assertion entries absent.'}
++            $raw=Get-GateAssertionCounts (Resolve-GateArtifact (Join-Path $RunRoot $Result.resultId) $reports[0].path)
++            foreach($field in @('total','resultEntries','executed','passed','failed','skipped','notExecuted')){if($raw.$field -ne $Result.tests.$field){throw 'Raw assertion count contradiction.'}}
++            Assert-GateTests $raw
++        }
++        foreach($token in $c){if((@($Result.coverage.bindings.$token) -join '') -ne $Result.resultId){throw 'Leaf binding contradiction.'}}
++        if($Result.kind -in @('dotnet-build','dotnet-test') -and -not $Result.provenance){throw 'Missing build/restore/binary provenance.'}
++        if($Result.kind -like 'unity-*'){Assert-GateUnityEvidence $Result $RunRoot}
++    }
++    if($Result.provenance){Assert-GateConsumerProvenance $Result $RunRoot}
++    if($Result.originalResult){
++        $original=$Result.originalResult
++        if($Result.status -ne 'Skipped' -or $Result.required -or $Result.reason -ne 'OptionalMissingUnityInstallation' -or $original.status -ne 'Blocked' -or $original.cliExitCode -ne 2 -or $original.reason -ne 'MissingUnityInstallation' -or $original.runId -ne $Result.runId -or $original.resultId -ne $Result.resultId){throw 'Invalid optional conversion.'}
++        Assert-GateResult $original $RunRoot -AllowExample:$AllowExample
++    }elseif($Result.status -eq 'Skipped' -and $Result.resultType -eq 'step' -and $Result.startedAt){throw 'Executed skip lacks original producer evidence.'}
++    if($Result.resultType -eq 'gate'){
++        $ids=@{}; $leaves=@{}
++        function Visit-GateNode($node){if($ids.ContainsKey($node.resultId)){throw 'Duplicate result UUID.'};$ids[$node.resultId]=$true;if($node.runId -ne $Result.runId){throw 'Wrong child run.'};if($node.resultType -eq 'step'){$leaves[$node.resultId]=$node};foreach($nested in $node.steps){Visit-GateNode $nested}}
++        Visit-GateNode $Result
++        foreach($child in $Result.steps){
++            if($child.source.sha -ne $Result.source.sha -or $child.source.dirty -ne $Result.source.dirty -or $child.source.inputManifestSha256 -ne $Result.source.inputManifestSha256 -or $child.configSha256 -ne $Result.configSha256){throw 'Child source/config mismatch.'}
++            Assert-GateResult $child $RunRoot -AllowExample:$AllowExample
++        }
++        foreach($token in $c){foreach($id in $Result.coverage.bindings.$token){if(-not $leaves.ContainsKey($id) -or $leaves[$id].status -ne 'Passed' -or $token -notin $leaves[$id].coverage.completed){throw 'Invalid descendant binding.'}}}
++        $sourceChanged=$false
++        foreach($artifact in @($Result.artifacts|Where-Object{$_.role -eq 'source-after'})){
++            $post=Get-Content (Resolve-GateArtifact (Join-Path $RunRoot $Result.resultId) $artifact.path) -Raw|ConvertFrom-Json
++            $sourceChanged=$post.sha -ne $Result.source.sha -or $post.dirty -ne $Result.source.dirty -or $post.inputManifestSha256 -ne $Result.source.inputManifestSha256
++        }
++        $copy=$Result|ConvertTo-Json -Depth 80|ConvertFrom-Json; Merge-GateResults $copy $Result.steps $sourceChanged
++        if($copy.status -ne $Result.status -or $copy.cliExitCode -ne $Result.cliExitCode -or $copy.fullGateAccepted -ne $Result.fullGateAccepted -or (@($copy.coverage.completed) -join '|') -ne (@($c|Sort-Object) -join '|')){throw 'Aggregate derivation contradiction.'}
++    }
++}
++
++function Invoke-GateNative {
++    param([string]$Executable,[string[]]$Arguments,[string]$LogPath)
++    $started=[DateTimeOffset]::UtcNow.ToString('yyyy-MM-ddTHH:mm:ssZ')
++    $command=Get-Command $Executable -CommandType Application -ErrorAction Stop|Select-Object -First 1
++    $info=New-Object Diagnostics.ProcessStartInfo
++    $info.FileName=$command.Source
++    $info.Arguments=(@($Arguments|ForEach-Object{ConvertTo-GateProcessArgument $_}) -join ' ')
++    $info.UseShellExecute=$false;$info.CreateNoWindow=$true
++    $info.RedirectStandardOutput=$true;$info.RedirectStandardError=$true
++    $process=New-Object Diagnostics.Process;$process.StartInfo=$info
++    try {
++        if(-not $process.Start()){throw 'Native process could not start.'}
++        $stdout=$process.StandardOutput.ReadToEndAsync();$stderr=$process.StandardError.ReadToEndAsync()
++        $process.WaitForExit();$code=$process.ExitCode
++        $out=$stdout.GetAwaiter().GetResult();$err=$stderr.GetAwaiter().GetResult()
++        # Store the native stream text directly: Out-File formats ErrorRecords and
++        # can inject parent stack traces in the middle of child stderr messages.
++        [IO.File]::WriteAllText($LogPath,$out+$err,[Text.Encoding]::UTF8)
++    } finally {$process.Dispose()}
++    return [pscustomobject]@{command=@{executable=$Executable;arguments=@($Arguments)};processExitCode=$code;startedAt=$started;endedAt=[DateTimeOffset]::UtcNow.ToString('yyyy-MM-ddTHH:mm:ssZ');log=$LogPath}
++}
++
++function Convert-GateNativePath {
++    param([string]$Path)
++    $full=[IO.Path]::GetFullPath($Path)
++    if($full.StartsWith('\\?\')){return $full}
++    if($full.StartsWith('\\')){return '\\?\UNC\'+$full.Substring(2)}
++    return '\\?\'+$full
++}
++
++function Get-GateProjectClosure {
++    param([string]$Project,[string]$Configuration,[string]$NodeRoot)
++    $visited=@{};$queue=New-Object 'System.Collections.Generic.Queue[string]';$queue.Enqueue([IO.Path]::GetFullPath($Project));$items=@()
++    while($queue.Count){
++        $path=$queue.Dequeue();if($visited.ContainsKey($path)){continue};$visited[$path]=$true
++        $log=Join-Path $NodeRoot ('evaluate-'+$items.Count+'.json')
++        $query=Invoke-GateNative 'dotnet' (@('msbuild',$path,"-p:Configuration=$Configuration",'-getProperty:TargetPath,ProjectAssetsFile,TargetFramework','-getItem:ProjectReference','--nologo')+@($script:GateDotNetProperties | Where-Object { $_ })) $log
++        if($query.processExitCode -ne 0){throw 'Project closure evaluation failed.'}
++        $value=Get-Content -LiteralPath $log -Raw|ConvertFrom-Json
++        if(-not $value.Properties.TargetPath -or -not $value.Properties.ProjectAssetsFile){throw 'Project output/restore closure absent.'}
++        $items += [pscustomobject]@{project=$path;targetPath=$value.Properties.TargetPath;assetsPath=$value.Properties.ProjectAssetsFile;tfm=$value.Properties.TargetFramework}
++        foreach($reference in $value.Items.ProjectReference){
++            $next=[string]$reference.FullPath
++            if(-not $next){$next=Join-Path (Split-Path $path) $reference.Identity}
++            $queue.Enqueue([IO.Path]::GetFullPath($next))
++        }
++    }
++    return @($items)
++}
++
++function Get-GateFileSet {
++    param([object[]]$Paths,[string]$RepoRoot,[switch]$AllowMissing)
++    $entries=@();$base=[IO.Path]::GetFullPath($RepoRoot).TrimEnd('\','/')+[IO.Path]::DirectorySeparatorChar
++    foreach($path in @($Paths|Sort-Object -Unique)){
++        $full=[IO.Path]::GetFullPath([string]$path)
++        if(-not $full.StartsWith($base,[StringComparison]::OrdinalIgnoreCase)){throw 'Evaluated output outside repository.'}
++        if(-not (Test-Path -LiteralPath $full -PathType Leaf)){if($AllowMissing){continue}else{throw "Required output missing: $full"}}
++        $entries += [pscustomobject]@{path=$full.Substring($base.Length).Replace('\','/');sha256=Get-GateHash $full}
++    }
++    return @($entries)
++}
++
++function Assert-GateFileSet {
++    param([object[]]$Entries,[string]$RepoRoot)
++    if(-not @($Entries).Count){throw 'Empty output manifest.'}
++    foreach($entry in $Entries){
++        $path=Resolve-GateArtifact $RepoRoot $entry.path
++        if((Get-GateHash $path) -ne $entry.sha256){throw "Stale/changed output: $($entry.path)"}
++    }
++}
++
++function Save-GateOutputSet {
++    param([object[]]$Entries,[string]$RepoRoot,[string]$NodeRoot,[string]$Prefix)
++    $saved=@();$index=0
++    foreach($entry in $Entries){
++        $name=$Prefix+'-'+$index+[IO.Path]::GetExtension($entry.path);$index++
++        $destination=Join-Path $NodeRoot $name
++        Copy-Item -LiteralPath (Resolve-GateArtifact $RepoRoot $entry.path) -Destination $destination
++        $saved += [pscustomobject]@{path=$entry.path;sha256=$entry.sha256;artifact=$name}
++    }
++    return @($saved)
++}
++
++function Start-GateProducer {
++    param([string]$ContextPath,[string]$ResultPath,[string]$ScriptPath,[string]$TestAdapterPath,[System.Collections.IDictionary]$BoundParameters)
++    $script:GateNativeExecutor=$null
++    $script:GateAssertions=0
++    $script:GateAssertionEntries=New-Object 'System.Collections.Generic.List[object]'
++    $script:GateProducer=$null
++    if(-not $ContextPath){if($ResultPath -or $TestAdapterPath){throw 'Result/adapter requires invocation context.'};return}
++    $context=Get-Content -LiteralPath $ContextPath -Raw|ConvertFrom-Json
++    $node=[IO.Path]::GetFullPath($context.nodeRoot)
++    if($node -ne (Resolve-GateArtifact $context.runRoot $context.result.resultId) -or [IO.Path]::GetFullPath($ContextPath) -ne (Join-Path $node 'context.json')){throw 'Invocation node context mismatch.'}
++    if([IO.Path]::GetFullPath($ResultPath) -ne (Join-Path $node 'producer-result.json')){throw 'Producer result location mismatch.'}
++    if($context.result.example -ne $context.example){throw 'Context example contradiction.'}
++    if($context.PSObject.Properties['script']){
++        $expectedScriptPath=$(if([IO.Path]::IsPathRooted($context.script)){$context.script}else{Join-Path $context.repoRoot $context.script})
++        if([IO.Path]::GetFullPath($ScriptPath) -ne [IO.Path]::GetFullPath($expectedScriptPath)){throw 'Invocation script mismatch.'}
++    }
++    $script:GateProducer=[pscustomobject]@{context=$context;result=$context.result;resultPath=$ResultPath;scriptPath=$ScriptPath;completed=$false;inputs=@{}}
++    $script:GateProducer.result.startedAt=[DateTimeOffset]::UtcNow.ToString('yyyy-MM-ddTHH:mm:ssZ')
++    $script:GateProducer.result.command=@{executable='powershell';arguments=@('-File',$ScriptPath)}
++    $script:GateProducer.result.executionStartedAt=[DateTimeOffset]::UtcNow.ToString('yyyy-MM-ddTHH:mm:ssZ')
++    $script:GateProducer.result.tools=@(@{name='PowerShell';version=$PSVersionTable.PSVersion.ToString()})
++    $externalBodies=@('check_sample_baseline.ps1','moba_business_id.tests.ps1','build_moba_content_report.tests.ps1','run_runtime_benchmarks.ps1','run_shooter_aoi_lod_gate.ps1','run-unity-compile-check.ps1')
++    if($context.example -and -not $TestAdapterPath -and [IO.Path]::GetFileName($ScriptPath) -in $externalBodies){throw 'External-work fixture requires entry interception.'}
++    if($null -ne $BoundParameters){
++        $arguments=@($context.arguments)
++        for($index=0;$index -lt $arguments.Count;$index++){
++            $name=([string]$arguments[$index]).TrimStart('-')
++            if(-not $name -or $name -notin $BoundParameters.Keys){throw "Configured parameter missing: $name"}
++            $expected=$true
++            if($index+1 -lt $arguments.Count -and ([string]$arguments[$index+1]) -notmatch '^-'){$index++;$expected=([string]$arguments[$index]).Replace('{GateOutputDirectory}',$context.nodeRoot).Replace('{Configuration}',$context.configuration)}
++            $actual=$BoundParameters[$name]
++            if($expected -is [bool]){if(-not [bool]$actual){throw "Configured switch mismatch: $name"}}
++            elseif((@($actual) -join ',') -cne $expected){throw "Configured parameter mismatch: $name"}
++        }
++        $bindingPath=Join-Path $node 'invocation-contract.json'
++        @{script=$context.script;arguments=$arguments;configuration=$context.configuration;actualParameters=$BoundParameters}|ConvertTo-Json -Depth 12|Set-Content $bindingPath -Encoding UTF8
++        Add-GateArtifact $script:GateProducer.result $context.runRoot $bindingPath 'invocation-contract'
++        $script:GateProducer.result.command.arguments+=@($arguments|ForEach-Object{([string]$_).Replace('{GateOutputDirectory}',$context.nodeRoot).Replace('{Configuration}',$context.configuration)})
++    }
++    if($TestAdapterPath){
++        if(-not $context.example){throw 'Production rejects fixture adapter.'}
++        $allowed=Join-Path $context.repoRoot 'tools/tests/fixtures'
++        $relative=[IO.Path]::GetFullPath($TestAdapterPath).Substring([IO.Path]::GetFullPath($allowed).TrimEnd('\','/').Length+1).Replace('\','/')
++        if((Resolve-GateArtifact $allowed $relative) -ne [IO.Path]::GetFullPath($TestAdapterPath)){throw 'Adapter outside fixture directory.'}
++        # Entry seam runs before the original body imports process helpers or probes ports.
++        . $TestAdapterPath
++        Install-GateProducerFixture $script:GateProducer $ScriptPath
++    }
++    if($context.example -and [IO.Path]::GetFileName($ScriptPath) -in $externalBodies -and -not $script:GateNativeExecutor){throw 'Fixture entry did not install its native executor.'}
++    Assert-GateSource $context.source (Get-GateSource $context.repoRoot)
++}
++
++# Validator expectations for the existing bodies; declarations live only in config.
++function Get-GateProducerContract {
++    param([string]$ScriptPath)
++    $contractRoot=[IO.Path]::GetFullPath((Join-Path $PSScriptRoot '..'))
++    $resolvedScript=[IO.Path]::GetFullPath($(if([IO.Path]::IsPathRooted($ScriptPath)){$ScriptPath}else{Join-Path $contractRoot $ScriptPath}))
++    if(-not $resolvedScript.StartsWith($contractRoot+[IO.Path]::DirectorySeparatorChar,[StringComparison]::OrdinalIgnoreCase)){return $null}
++    switch($resolvedScript.Substring($contractRoot.Length+1).Replace('\','/')){
++        {$_ -in @('tools/validate_moba_codegen_ownership.ps1','tools/audit_core_boundaries.ps1','tools/audit_unity_package_dependencies.ps1','tools/validate_moba_hero_acceptance_coverage.ps1','tools/moba_business_id.ps1')} {return @{evidenceType='audit';roles=@()}}
++        {$_ -in @('tools/moba_business_id.tests.ps1','tools/build_moba_content_report.tests.ps1')} {return @{evidenceType='assertions';roles=@()}}
++        'tools/check_sample_baseline.ps1' {return @{evidenceType='audit';roles=@();project='src/AbilityKit.Samples/AbilityKit.Samples.csproj'}}
++        'tools/run-unity-compile-check.ps1' {return @{evidenceType='build';roles=@();project='tools/unity-compile-check/UnityCompileCheck.csproj'}}
++        'tools/run_runtime_benchmarks.ps1' {return @{evidenceType='measurement';roles=@();project='src/AbilityKit.Runtime.Benchmarks/AbilityKit.Runtime.Benchmarks.csproj'}}
++        'tools/run_shooter_aoi_lod_gate.ps1' {return @{evidenceType='thresholds';roles=@();project='src/AbilityKit.Demo.Shooter.AoiLodBenchmarks/AbilityKit.Demo.Shooter.AoiLodBenchmarks.csproj'}}
++        'tools/build_moba_content_report.ps1' {return @{evidenceType='report';roles=@()}}
++        'tools/export_moba_content_ir.ps1' {return @{evidenceType='report';roles=@('content-report')}}
++        'tools/build_moba_content_graph.ps1' {return @{evidenceType='report';roles=@('content-ir','content-diagnostics')}}
++    }
++    return $null
++}
++
++function Assert-GateProducerDeclaration {
++    param($Step,[object[]]$EarlierSteps=@())
++    if($Step.kind -ne 'powershell-script'){return}
++    $contract=Get-GateProducerContract ([string]$Step.script)
++    $declared=$Step.PSObject.Properties['evidenceType']
++    if($contract -and (-not $declared -or [string]$declared.Value -cne $contract.evidenceType)){throw 'Configured producer evidence contract missing or contradictory.'}
++    if($declared -and [string]$declared.Value -notin @('audit','assertions','report','build','receipt','measurement','thresholds')){throw 'Unsupported configured producer evidence type.'}
++    $predecessors=@();if($Step.PSObject.Properties['predecessors']){$predecessors=@($Step.predecessors)}
++    $roles=@($predecessors|ForEach-Object{$_.role})
++    if(@($roles|Sort-Object -Unique).Count -ne $roles.Count){throw 'Duplicate configured predecessor role.'}
++    if($contract -and ((@($roles|Sort-Object) -join '|') -cne (@($contract.roles|Sort-Object) -join '|'))){throw 'Configured producer predecessor roles missing or contradictory.'}
++    foreach($edge in $predecessors){
++        if(-not $edge.sourceStep -or -not $edge.role -or @($edge.PSObject.Properties.Name|Where-Object{$_ -notin @('sourceStep','role')}).Count){throw 'Invalid configured predecessor declaration.'}
++        $sources=@($EarlierSteps|Where-Object{$_.name -ceq $edge.sourceStep})
++        if($sources.Count -ne 1 -or $sources[0].kind -cne 'powershell-script'){throw 'Configured predecessor source step missing or ambiguous.'}
++        # Validate actual output roles of the declared source adapter, not any sibling.
++        $expectedScript=switch($edge.role){'content-report'{'tools/build_moba_content_report.ps1'};{$_ -in @('content-ir','content-diagnostics')}{'tools/export_moba_content_ir.ps1'};default{$null}}
++        $root=[IO.Path]::GetFullPath((Join-Path $PSScriptRoot '..'))
++        $sourcePath=[IO.Path]::GetFullPath($(if([IO.Path]::IsPathRooted($sources[0].script)){$sources[0].script}else{Join-Path $root $sources[0].script}))
++        if(-not $expectedScript -or $sourcePath -ine [IO.Path]::GetFullPath((Join-Path $root $expectedScript))){throw 'Configured predecessor source/role mismatch.'}
++    }
++    if($contract -and $contract.project){
++        if(-not $Step.PSObject.Properties['provenanceProject'] -or $Step.provenanceProject -cne $contract.project){throw 'Configured producer provenance project missing or contradictory.'}
++        if($Step.PSObject.Properties['buildManifestStep']){
++            $sources=@($EarlierSteps|Where-Object{$_.name -ceq $Step.buildManifestStep})
++            if($sources.Count -ne 1 -or $sources[0].kind -cne 'dotnet-build' -or $sources[0].project -cne $Step.provenanceProject){throw 'Configured build manifest predecessor mismatch.'}
++        }
++    }elseif($Step.PSObject.Properties['provenanceProject'] -or $Step.PSObject.Properties['buildManifestStep']){throw 'Undeclared producer provenance contract.'}
++}
++
++function Complete-GateProducer {
++    param([int]$NativeExitCode=0,[string]$Reason,[ValidateSet('Passed','Failed','Blocked')][string]$Status)
++    if(-not $script:GateProducer){return $NativeExitCode}
++    $producer=$script:GateProducer
++    if($producer.completed){return $producer.result.cliExitCode}
++    $result=$producer.result;$context=$producer.context
++    $result.processExitCode=$NativeExitCode;$result.executionEndedAt=[DateTimeOffset]::UtcNow.ToString('yyyy-MM-ddTHH:mm:ssZ')
++    if(-not $Status){$Status=$(if($NativeExitCode -eq 0){'Passed'}else{'Failed'})}
++    try {
++        if($producer.inputs.Count){
++            $inputs=@($producer.inputs.Values|Sort-Object path)
++            foreach($input in $inputs){
++                if((Get-GateHash $input.path -AllowEmptyImmutableInput) -ne $input.sha256){throw 'Producer input changed during body.'}
++                $null=Assert-GateBuildArtifact $input.artifact $context.nodeRoot $result.runId $result.resultId -AllowBoundImmutableInput
++            }
++            $inputManifest=Join-Path $context.nodeRoot 'producer-inputs.json'
++            ConvertTo-Json -InputObject $inputs -Depth 12|Set-Content $inputManifest -Encoding UTF8
++            Add-GateArtifact $result $context.runRoot $inputManifest 'producer-inputs'
++        }
++        $after=Get-GateSource $context.repoRoot;$result.source.inputManifestAfterSha256=$after.inputManifestSha256;Assert-GateSource $context.source $after
++        if($script:GateAssertions -gt 0){
++            $assertionPath=Join-Path $context.nodeRoot 'assertions.json'
++            ConvertTo-Json -InputObject @($script:GateAssertionEntries.ToArray()) -Depth 12|Set-Content $assertionPath -Encoding UTF8
++            Add-GateArtifact $result $context.runRoot $assertionPath $(if($context.evidenceType -eq 'assertions'){'assertions'}else{'audit-assertions'})
++            if($context.evidenceType -eq 'assertions'){$result.tests=Get-GateAssertionCounts $assertionPath}
++        }
++        if($Status -eq 'Passed'){
++            if($context.evidenceType -in @('assertions','audit') -and $script:GateAssertions -le 0){throw 'Producer reported no actual criteria entries.'}
++            if($context.evidenceType -eq 'assertions'){Assert-GateTests $result.tests}
++            elseif($context.evidenceType -eq 'audit'){Assert-GateTests (Get-GateAssertionCounts $assertionPath)}
++            Assert-GateProducerEvidence $result $context
++        }
++        $completionPath=Join-Path $context.nodeRoot 'completion.json'
++        @{script=$producer.scriptPath;nativeExit=$NativeExitCode;criteriaCompleted=($Status -eq 'Passed');assertions=$script:GateAssertions;source=$result.source}|ConvertTo-Json -Depth 8|Set-Content $completionPath -Encoding UTF8
++        Add-GateArtifact $result $context.runRoot $completionPath 'producer-completion'
++        Set-GateTerminal $result $Status $Reason
++    }catch{Set-GateTerminal $result 'Failed' $_.Exception.Message}
++    $result.endedAt=[DateTimeOffset]::UtcNow.ToString('yyyy-MM-ddTHH:mm:ssZ')
++    $result|ConvertTo-Json -Depth 80|Set-Content -LiteralPath $producer.resultPath -Encoding UTF8
++    $producer.completed=$true
++    return $result.cliExitCode
++}
++
++# Child process execution seam. Fixtures replace only the executor, never the body.
++function Invoke-GateProducerCommand {
++    param([string]$Executable,[string[]]$Arguments)
++    if(-not $script:GateProducer){
++        & $Executable @Arguments 2>&1
++        $global:LASTEXITCODE=$LASTEXITCODE
++        return
++    }
++    $producer=$script:GateProducer
++    if($producer.context.example -and -not $script:GateNativeExecutor){throw 'Fixture invocation requires an installed executor before native work.'}
++    $index=@($producer.result.artifacts|Where-Object{$_.role -eq 'native-invocation'}).Count
++    $log=Join-Path $producer.context.nodeRoot ('native-'+$index+'.log')
++    $call=$(if($script:GateNativeExecutor){& $script:GateNativeExecutor $Executable $Arguments $log}else{Invoke-GateNative $Executable $Arguments $log})
++    if($null -eq $call.processExitCode){throw 'Native executor omitted exit code.'}
++    $receipt=Join-Path $producer.context.nodeRoot ('native-'+$index+'.json')
++    $call|ConvertTo-Json -Depth 12|Set-Content $receipt -Encoding UTF8
++    Add-GateArtifact $producer.result $producer.context.runRoot $receipt 'native-invocation'
++    if((Test-Path -LiteralPath $log) -and (Get-Item -LiteralPath $log).Length){Add-GateArtifact $producer.result $producer.context.runRoot $log 'native-log'}
++    $global:LASTEXITCODE=[int]$call.processExitCode
++    if(Test-Path -LiteralPath $log){Get-Content -LiteralPath $log -Encoding UTF8}
++}
++
++function Get-GatePredecessorPath {
++    param([string]$Role)
++    $producer=$script:GateProducer
++    $entries=@($producer.context.predecessors|Where-Object{$_.role -eq $Role})
++    if($entries.Count -ne 1){throw "Exact predecessor missing: $Role"}
++    $entry=$entries[0];$artifact=$entry.artifact
++    if($entry.result.runId -ne $producer.result.runId -or $entry.result.status -ne 'Passed' -or $artifact.producerRunId -ne $entry.result.runId -or $artifact.producerResultId -ne $entry.result.resultId){throw 'Predecessor owner/status mismatch.'}
++    $path=Resolve-GateArtifact (Join-Path $producer.context.runRoot $entry.result.resultId) $artifact.path
++    if($artifact.root -ne 'run-step' -or $artifact.role -ne $Role -or (Get-GateHash $path) -ne $artifact.sha256 -or (Get-Item -LiteralPath $path).Length -ne $artifact.bytes){throw 'Predecessor bytes mismatch.'}
++    return $path
++}
++
++function Save-GatePredecessorBindings {
++    if(-not $script:GateProducer){return}
++    $producer=$script:GateProducer
++    foreach($entry in $producer.context.predecessors){$null=Get-GatePredecessorPath $entry.role}
++    $path=Join-Path $producer.context.nodeRoot 'predecessor-bindings.json'
++    ConvertTo-Json -InputObject @($producer.context.predecessors) -Depth 20|Set-Content $path -Encoding UTF8
++    Add-GateArtifact $producer.result $producer.context.runRoot $path 'predecessor-bindings'
++}
++
++function Add-GateProducerOutput {
++    param([string]$Path,[string]$Role)
++    if($script:GateProducer){Add-GateArtifact $script:GateProducer.result $script:GateProducer.context.runRoot $Path $Role}
++}
++
++function Use-GateProducerInput {
++    param([string]$Path)
++    if(-not $script:GateProducer){return}
++    $producer=$script:GateProducer;$full=[IO.Path]::GetFullPath($Path)
++    if($producer.inputs.ContainsKey($full)){return}
++    $hash=Get-GateHash $full -AllowEmptyImmutableInput
++    $directory=Join-Path $producer.context.nodeRoot 'inputs';$null=New-Item -ItemType Directory $directory -Force
++    $copy=Join-Path $directory ('input-'+$producer.inputs.Count+'.input')
++    Copy-Item -LiteralPath $full -Destination $copy
++    $artifact=New-GateBuildArtifact $producer.context.nodeRoot $copy 'immutable-input' $producer.result.runId $producer.result.resultId
++    if($artifact.sha256 -ne $hash){throw 'Input changed while archiving.'}
++    $producer.inputs[$full]=@{path=$full;sha256=$hash;artifact=$artifact}
++}
++
++function Assert-GateProducerEvidence {
++    param($Result,$Context)
++    if($Context.evidenceType -in @('measurement','thresholds')){Assert-GateBenchmarkEvidence $Result $Context}
++    if([IO.Path]::GetFileName($Context.script) -ceq 'run-unity-compile-check.ps1'){Assert-GateUnityEvidence $Result $Context.runRoot}
++    foreach($manifest in @($Result.artifacts|Where-Object{$_.role -eq 'producer-inputs'})){
++        $inputs=Get-Content (Resolve-GateArtifact $Context.nodeRoot $manifest.path) -Raw -Encoding UTF8|ConvertFrom-Json
++        $seen=@{}
++        foreach($input in $inputs){
++            if($seen.ContainsKey($input.path)){throw 'Duplicate producer input.'};$seen[$input.path]=$true
++            $null=Assert-GateBuildArtifact $input.artifact $Context.nodeRoot $Result.runId $Result.resultId -AllowBoundImmutableInput
++            if($input.sha256 -ne $input.artifact.sha256 -or (Get-GateHash $input.path -AllowEmptyImmutableInput) -ne $input.sha256){throw 'Producer input binding changed.'}
++        }
++    }
++    if($Context.evidenceType -eq 'audit'){
++        $raw=@($Result.artifacts|Where-Object{$_.role -eq 'audit-assertions'})
++        if($raw.Count -ne 1){throw 'Current audit criteria absent.'}
++        Assert-GateTests (Get-GateAssertionCounts (Resolve-GateArtifact $Context.nodeRoot $raw[0].path))
++        if([IO.Path]::GetFileName($Context.script) -eq 'check_sample_baseline.ps1'){
++            $baseline=@($Result.artifacts|Where-Object{$_.role -eq 'sample-baseline'})
++            $captures=@($Result.artifacts|Where-Object{$_.role -eq 'sample-capture'})
++            if($baseline.Count -ne 1 -or $captures.Count -notin @(1,2) -or -not @($Result.artifacts|Where-Object{$_.role -eq 'sample-raw'}).Count){throw 'Golden baseline raw evidence absent.'}
++            $expected=[IO.File]::ReadAllText((Resolve-GateArtifact $Context.nodeRoot $baseline[0].path),[Text.Encoding]::UTF8).TrimStart([char]0xfeff).Replace("`r`n","`n").Replace("`r","`n")
++            $matched=$false
++            foreach($capture in $captures){$actual=[IO.File]::ReadAllText((Resolve-GateArtifact $Context.nodeRoot $capture.path),[Text.Encoding]::UTF8);if($actual -ceq $expected){$matched=$true}}
++            if(-not $matched){throw 'No normalized sample capture matches the bound golden baseline.'}
++        }
++    }
++    if($Context.evidenceType -eq 'report'){
++        $scriptName=[IO.Path]::GetFileName($Context.script)
++        $roles=switch($scriptName){
++            'build_moba_content_report.ps1' {@('content-report')}
++            'export_moba_content_ir.ps1' {@('content-ir','content-diagnostics')}
++            'build_moba_content_graph.ps1' {@('content-html','content-dot')}
++            default {throw 'Unspecified report evidence contract.'}
++        }
++        foreach($role in $roles){
++            $artifacts=@($Result.artifacts|Where-Object{$_.role -eq $role})
++            if($artifacts.Count -ne 1){throw "Exact report output missing: $role"}
++            $path=Resolve-GateArtifact $Context.nodeRoot $artifacts[0].path;$null=Get-GateHash $path
++            switch($role){
++                'content-report' {
++                    $r=Get-Content $path -Raw -Encoding UTF8|ConvertFrom-Json
++                    if($r.schemaVersion -ne 1 -or $r.report -cne 'moba-content-dependency' -or $r.status -cne 'passed' -or @($r.tables).Count -le 0 -or $r.summary.tables -ne @($r.tables).Count -or $r.summary.edges -ne @($r.edges).Count -or $r.summary.errors -ne @($r.issues|Where-Object{$_.severity -eq 'error'}).Count -or $r.summary.errors -ne 0){throw 'Content dependency report contract failed.'}
++                }
++                'content-ir' {
++                    $r=Get-Content $path -Raw -Encoding UTF8|ConvertFrom-Json
++                    if($r.schemaVersion -ne 1 -or $r.graph -cne 'moba-content-graph' -or $r.status -cne 'passed' -or @($r.nodes).Count -le 0 -or $r.summary.nodes -ne @($r.nodes).Count -or $r.summary.edges -ne @($r.edges).Count -or @($r.nodes.id|Sort-Object -Unique).Count -ne @($r.nodes).Count){throw 'Content IR contract failed.'}
++                    foreach($edge in $r.edges){if($edge.source -notin $r.nodes.id -or $edge.target -notin $r.nodes.id){throw 'IR edge endpoint absent.'}}
++                }
++                'content-diagnostics' {
++                    $r=Get-Content $path -Raw -Encoding UTF8|ConvertFrom-Json
++                    if($r.schemaVersion -ne 1 -or $r.diagnostics -cne 'moba-content-diagnostics' -or $r.status -cne 'passed' -or $r.summary.total -ne @($r.items).Count -or $r.summary.errors -ne @($r.items|Where-Object{$_.severity -eq 'error'}).Count -or $r.summary.errors -ne 0){throw 'Content diagnostics contract failed.'}
++                }
++                'content-html' {if((Get-Content $path -Raw -Encoding UTF8) -notmatch '(?i)<!doctype html>|<html'){throw 'HTML output invalid.'}}
++                'content-dot' {if((Get-Content $path -Raw -Encoding UTF8) -notmatch 'digraph'){throw 'DOT output invalid.'}}
++            }
++        }
++        if($scriptName -ne 'build_moba_content_report.ps1'){
++            $bindings=@($Result.artifacts|Where-Object{$_.role -eq 'predecessor-bindings'})
++            if($bindings.Count -ne 1){throw 'Report predecessor bindings missing.'}
++            $actual=Get-Content (Resolve-GateArtifact $Context.nodeRoot $bindings[0].path) -Raw -Encoding UTF8|ConvertFrom-Json
++            if((ConvertTo-Json -InputObject @($actual) -Depth 20 -Compress) -cne (ConvertTo-Json -InputObject @($Context.predecessors) -Depth 20 -Compress)){throw 'Report predecessor context mismatch.'}
++            foreach($entry in $Context.predecessors){
++                $path=Resolve-GateArtifact (Join-Path $Context.runRoot $entry.result.resultId) $entry.artifact.path
++                if((Get-GateHash $path) -ne $entry.artifact.sha256){throw 'Predecessor changed after use.'}
++            }
++        }
++    }
++}
++
++# A child may describe its provenance, but only the parent chooses validation roots,
++# project/configuration, tool identity and evaluated closure.
++function Register-GateChildProvenance {
++    param($Result,$Context,[string]$Project,[string[]]$Properties=@(),[string]$PriorManifestPath)
++    if(-not $Result.provenance){return}
++    if(-not $Project){throw 'Child provenance has no parent-owned project contract.'}
++    $root=$Context.nodeRoot
++    if($Result.provenance.noBuild){
++        if(-not $PriorManifestPath){throw 'Child requested unapproved prior build root.'}
++        $root=Split-Path -Parent ([IO.Path]::GetFullPath($PriorManifestPath))
++    }
++    $projectPath=[IO.Path]::GetFullPath((Join-Path $Context.repoRoot $Project))
++    $sdk=(& dotnet --version).Trim();if($LASTEXITCODE -ne 0){throw 'Cannot bind child SDK.'}
++    $versions=@($Result.tools|Where-Object{$_.name -eq 'dotnet'})
++    if($versions.Count -ne 1 -or $versions[0].version -cne $sdk){throw 'Child tool version differs from parent probe.'}
++    $validationRoot=Join-Path $Context.nodeRoot 'parent-validation';$null=New-Item -ItemType Directory $validationRoot -Force
++    $old=$script:GateDotNetProperties
++    try{$script:GateDotNetProperties=$Properties;$closure=Get-GateProjectClosure $projectPath $Context.configuration $validationRoot}
++    finally{$script:GateDotNetProperties=$old}
++    if(-not $script:GateBuildValidation){$script:GateBuildValidation=@{}}
++    $script:GateBuildValidation[$Result.resultId]=@{buildRoot=$root;repoRoot=$Context.repoRoot;source=$Context.source;project=$projectPath;configuration=$Context.configuration;sdk=$sdk;closure=$closure}
++    Assert-GateConsumerProvenance $Result $Context.runRoot
++}
++
++function New-GateBuildArtifact {
++    param([string]$BuildRoot,[string]$Path,[string]$Role,[string]$RunId,[string]$ResultId)
++    $relative=[IO.Path]::GetFullPath($Path).Substring([IO.Path]::GetFullPath($BuildRoot).TrimEnd('\','/').Length+1).Replace('\','/')
++    $resolved=Resolve-GateArtifact $BuildRoot $relative
++    return [pscustomobject]@{root='build';role=$Role;path=$relative;bytes=(Get-Item -LiteralPath $resolved).Length;sha256=Get-GateHash $resolved -AllowEmptyImmutableInput:($Role -eq 'immutable-input');producerRunId=$RunId;producerResultId=$ResultId}
++}
++
++function Assert-GateBuildArtifact {
++    param($Artifact,[string]$BuildRoot,[string]$RunId,[string]$ResultId,[switch]$AllowBoundImmutableInput)
++    if($Artifact.root -ne 'build' -or $Artifact.producerRunId -ne $RunId -or $Artifact.producerResultId -ne $ResultId){throw 'Build artifact producer mismatch.'}
++    $path=Resolve-GateArtifact $BuildRoot $Artifact.path
++    if($AllowBoundImmutableInput -and $Artifact.role -ne 'immutable-input'){throw 'Invalid immutable input role.'}
++    if((Get-Item -LiteralPath $path).Length -ne $Artifact.bytes -or (Get-GateHash $path -AllowEmptyImmutableInput:$AllowBoundImmutableInput) -ne $Artifact.sha256){throw 'Build artifact size/hash mismatch.'}
++    return $path
++}
++
++function Save-GateBoundInputs {
++    param([object[]]$Entries,[string]$RepoRoot,[string]$BuildRoot,[string]$RunId,[string]$ResultId,[string]$Prefix)
++    $directory=Join-Path $BuildRoot 'source';$null=New-Item -ItemType Directory -Path $directory -Force
++    $index=0;$saved=@()
++    foreach($entry in $Entries){
++        $destination=Join-Path $directory ($Prefix+'-'+$index+'.input');$index++
++        $sourcePath=Join-Path $RepoRoot $entry.path
++        Copy-Item -LiteralPath $sourcePath -Destination $destination
++        # Input logical paths use generated IDs, private mapping retains source filenames.
++        $logical=(Get-GateLogicalInputs @($entry))[0].path
++        $artifact=New-GateBuildArtifact $BuildRoot $destination 'immutable-input' $RunId $ResultId
++        if($artifact.sha256 -ne $entry.sha256){throw 'Input changed while archiving.'}
++        $saved += [pscustomobject]@{path=$logical;sha256=$entry.sha256;artifact=$artifact}
++    }
++    return @($saved)
++}
++
++function Get-GateLogicalInputs {
++    param([object[]]$Entries)
++    return @(foreach($entry in $Entries){
++        $algorithm=[Security.Cryptography.SHA256]::Create()
++        try{$logical='input-'+([BitConverter]::ToString($algorithm.ComputeHash([Text.Encoding]::UTF8.GetBytes($entry.path)))).Replace('-','').ToLowerInvariant()}
++        finally{$algorithm.Dispose()}
++        [pscustomobject]@{path=$logical;sha256=$entry.sha256}
++    })
++}
++
++function Get-GateRestoreBundle {
++    param($Manifest,[string]$BuildRoot,[string]$RepoRoot,[object[]]$ExpectedClosure,[switch]$AllowExample)
++    $path=Assert-GateBuildArtifact $Manifest.restore.assetsAfter $BuildRoot $Manifest.restore.producerRunId $Manifest.restore.producerResultId
++    $bundle=Get-Content -LiteralPath $path -Raw|ConvertFrom-Json
++    if(($bundle.example -and -not $AllowExample) -or -not @($bundle.assets).Count){throw 'Synthetic or empty assets bundle.'}
++    $seen=@{};$expected=@{}
++    foreach($project in $ExpectedClosure){$key=([IO.Path]::GetFullPath($project.project)+'|'+$project.tfm);$expected[$key]=[IO.Path]::GetFullPath($project.assetsPath)}
++    foreach($entry in $bundle.assets){
++        if($seen.ContainsKey($entry.projectKey)){throw 'Duplicate restore project/TFM key.'};$seen[$entry.projectKey]=$true
++        if(-not $expected.ContainsKey($entry.projectKey) -or [IO.Path]::GetFullPath((Join-Path $RepoRoot $entry.path)) -ne $expected[$entry.projectKey]){throw 'Extra or mismatched restore closure entry.'}
++        $null=Assert-GateBuildArtifact $entry.artifact $BuildRoot $Manifest.restore.producerRunId $Manifest.restore.producerResultId
++        if($entry.sha256 -ne $entry.artifact.sha256){throw 'Restore output binding mismatch.'}
++    }
++    if($seen.Count -ne $expected.Count){throw 'Missing referenced project assets.'}
++    Assert-GateFileSet $bundle.assets $RepoRoot
++    return $bundle
++}
++
++function Assert-GateProvenance {
++    param($Manifest,[string]$BuildRoot,[string]$RepoRoot,$Source,[string]$ConfigHash,[string]$Project,[string]$Configuration,[string]$Sdk,[object[]]$ExpectedClosure,[switch]$RestoreOnly,[switch]$AllowExample)
++    $fields=@('example','producerRunId','producerResultId','source','configSha256','project','configuration','tfm','sdk','immutableInputs','lockFile','restore','build','binaries')
++    foreach($field in $fields){if(-not $Manifest.PSObject.Properties[$field]){throw "Missing manifest field $field"}}
++    foreach($field in $Manifest.PSObject.Properties.Name){if($field -notin $fields){throw "Unknown manifest field $field"}}
++    if($Manifest.example -and -not $AllowExample){throw 'Synthetic production build manifest.'}
++    if($Manifest.source.sha -ne $Source.sha -or $Manifest.source.dirty -ne $Source.dirty -or $Manifest.source.inputManifestSha256 -ne $Source.inputManifestSha256 -or $Manifest.source.inputManifestAfterSha256 -ne $Source.inputManifestSha256 -or $Manifest.configSha256 -ne $ConfigHash -or $Manifest.project -ne $Project -or $Manifest.configuration -ne $Configuration -or $Manifest.sdk -ne $Sdk){throw 'Build source/configuration/SDK mismatch.'}
++    if(-not @($ExpectedClosure).Count -or [string]::IsNullOrWhiteSpace($Manifest.tfm) -or $Manifest.tfm -cne $ExpectedClosure[0].tfm){throw 'Evaluated target framework mismatch.'}
++    if($Manifest.restore.processExitCode -ne 0 -or $Manifest.build.processExitCode -ne 0){throw 'Prior restore/build not valid.'}
++    $restoreArguments=@($Manifest.restore.command.arguments);$buildArguments=@($Manifest.build.command.arguments)
++    if($Manifest.restore.command.executable -cne 'dotnet' -or $Manifest.build.command.executable -cne 'dotnet' -or $restoreArguments.Count -lt 2 -or $restoreArguments[0] -cne 'restore' -or $restoreArguments[1] -cne $Project -or $buildArguments.Count -lt 4 -or $buildArguments[0] -cne 'build' -or $buildArguments[1] -cne $Project -or '-c' -notin $buildArguments -or $buildArguments[[Array]::IndexOf($buildArguments,'-c')+1] -cne $Configuration -or '--no-restore' -notin $buildArguments){throw 'Stage command project/configuration contract mismatch.'}
++    $boundImmutable=@{}
++    foreach($input in $Manifest.immutableInputs){
++        $null=Assert-GateBuildArtifact $input.artifact $BuildRoot $Manifest.producerRunId $Manifest.producerResultId -AllowBoundImmutableInput
++        if($boundImmutable.ContainsKey($input.path)){throw 'Duplicate immutable input binding.'}
++        $boundImmutable[$input.path]=$input
++        if($input.sha256 -ne $input.artifact.sha256){throw 'Immutable input artifact contradiction.'}
++    }
++    if((Get-GateFingerprint $Manifest.immutableInputs) -ne $Source.inputManifestSha256){throw 'Immutable input fingerprint contradiction.'}
++    foreach($stage in @($Manifest.restore,$Manifest.build)){
++        if($stage.inputBeforeSha256 -ne $stage.inputAfterSha256 -or (Get-GateFingerprint $stage.inputs) -ne $stage.inputBeforeSha256){throw 'Stage input contradiction.'}
++        foreach($input in $stage.inputs){
++            $owner=$input.artifact.producerResultId
++            if($owner -notin @($Manifest.producerResultId,$Manifest.restore.producerResultId,$Manifest.build.producerResultId) -and $stage -ne $Manifest.restore){throw 'Stage input owner absent.'}
++            $bound=$boundImmutable[$input.path]
++            $exactBound=$null -ne $bound -and $bound.sha256 -eq $input.sha256
++            if($exactBound){foreach($field in @('root','role','path','bytes','sha256','producerRunId','producerResultId')){if($bound.artifact.$field -cne $input.artifact.$field){$exactBound=$false;break}}}
++            $null=Assert-GateBuildArtifact $input.artifact $BuildRoot $input.artifact.producerRunId $owner -AllowBoundImmutableInput:$exactBound
++            if($input.sha256 -ne $input.artifact.sha256){throw 'Stage input hash mismatch.'}
++        }
++    }
++    $bundle=Get-GateRestoreBundle $Manifest $BuildRoot $RepoRoot $ExpectedClosure -AllowExample:$AllowExample
++    $expected=@($Manifest.immutableInputs)+@(foreach($asset in $bundle.assets){[pscustomobject]@{path=$asset.logicalPath;sha256=$asset.sha256}})
++    if((Get-GateFingerprint $expected) -ne $Manifest.build.inputBeforeSha256){throw 'Stale restored build inputs.'}
++    if(-not $RestoreOnly){
++        if(-not @($Manifest.binaries).Count){throw 'Binary manifest empty.'}
++        $mapPath=Join-Path $BuildRoot 'binary-path-map.json'
++        if(-not (Test-Path -LiteralPath $mapPath -PathType Leaf)){throw 'Binary path map absent.'}
++        $map=Get-Content -LiteralPath $mapPath -Raw|ConvertFrom-Json
++        if(@($map).Count -ne @($Manifest.binaries).Count){throw 'Binary map closure contradiction.'}
++        for($i=0;$i -lt $Manifest.binaries.Count;$i++){
++            $artifact=$Manifest.binaries[$i];$null=Assert-GateBuildArtifact $artifact $BuildRoot $Manifest.build.producerRunId $Manifest.build.producerResultId
++            if($artifact.sha256 -ne $map[$i].sha256){throw 'Binary map identity mismatch.'}
++        }
++        Assert-GateFileSet $map $RepoRoot
++    }
++    $stagePath=Join-Path $BuildRoot 'stage-invocations.json'
++    if(-not (Test-Path -LiteralPath $stagePath -PathType Leaf)){throw 'Stage invocation receipt absent.'}
++    $times=Get-Content -LiteralPath $stagePath -Raw|ConvertFrom-Json
++    if($times.restore.processExitCode -ne 0 -or $times.build.processExitCode -ne 0 -or [DateTimeOffset]$times.build.startedAt -lt [DateTimeOffset]$times.restore.endedAt){throw 'Stage order/native exit contradiction.'}
++    if(($times.restore.command|ConvertTo-Json -Depth 12 -Compress) -cne ($Manifest.restore.command|ConvertTo-Json -Depth 12 -Compress) -or ($times.build.command|ConvertTo-Json -Depth 12 -Compress) -cne ($Manifest.build.command|ConvertTo-Json -Depth 12 -Compress)){throw 'Stage invocation/manifest command contradiction.'}
++}
++
++function Invoke-GateDotNet {
++    param($Result,$Step,[string]$NodeRoot,[string]$RunRoot,[string]$RepoRoot,[string]$Configuration,[switch]$NoBuild,[switch]$NoRestore,[string]$BuildManifestPath,[switch]$PrepareOnly)
++    if(-not (Get-Command dotnet -ErrorAction SilentlyContinue)){Set-GateTerminal $Result 'Blocked' 'MissingDotNet';return $Result}
++    $project=[IO.Path]::GetFullPath((Join-Path $RepoRoot $Step.project))
++    $sdk=(& dotnet --version).Trim();if($LASTEXITCODE -ne 0){throw 'Cannot identify dotnet SDK.'}
++    $Result.tools=@(@{name='dotnet';version=$sdk},@{name='PowerShell';version=$PSVersionTable.PSVersion.ToString()})
++    $source=Get-GateSource $RepoRoot;$manifest=$null;$buildRoot=$NodeRoot
++    $closure=Get-GateProjectClosure $project $Configuration $NodeRoot
++    if($Step.PSObject.Properties['coverageDimensions'] -and $closure[0].tfm -cne $Step.coverageDimensions.tfm){throw 'Configured expected TFM differs from evaluated project.'}
++    $skipBuild=$NoBuild -and ($Step.kind -eq 'dotnet-test' -or $PrepareOnly)
++    if($NoRestore -or $skipBuild){
++        if(-not $BuildManifestPath -or -not (Test-Path -LiteralPath $BuildManifestPath -PathType Leaf)){Set-GateTerminal $Result 'Blocked' 'MissingBuildRestoreManifest';return $Result}
++        $priorRoot=Split-Path -Parent ([IO.Path]::GetFullPath($BuildManifestPath))
++        $prior=Get-Content -LiteralPath $BuildManifestPath -Raw|ConvertFrom-Json
++        Assert-GateProvenance $prior $priorRoot $RepoRoot $source $Result.configSha256 $project $Configuration $sdk $closure -RestoreOnly:($NoRestore -and -not $skipBuild) -AllowExample:$Result.example
++        if($skipBuild){$manifest=$prior;$buildRoot=$priorRoot}
++    }
++    $Result.executionStartedAt=[DateTimeOffset]::UtcNow.ToString('yyyy-MM-ddTHH:mm:ssZ')
++    if(-not $skipBuild){
++        $restoreId=[guid]::NewGuid().ToString();$buildId=[guid]::NewGuid().ToString()
++        $immutable=Save-GateBoundInputs $source.inputs $RepoRoot $NodeRoot $Result.runId $Result.resultId 'immutable'
++        $restoreInputs=@($immutable|Where-Object{$_.path -in @((Get-GateLogicalInputs @($source.inputs|Where-Object{$_.path -match '\.(csproj|props|targets|config|json|lock)$'})).path)})
++        $assetsBefore=Get-GateFileSet @($closure.assetsPath) $RepoRoot -AllowMissing
++        $restoreRoot=Join-Path $NodeRoot 'restore';$null=New-Item -ItemType Directory -Path $restoreRoot
++        $priorAssetArtifact=$null
++        if($assetsBefore.Count){
++            $priorAssets=@();$i=0
++            foreach($entry in $assetsBefore){$file=Join-Path $restoreRoot ('prior-assets-'+$i+'.json');$i++;Copy-Item -LiteralPath (Join-Path $RepoRoot $entry.path) -Destination $file;$priorAssets+=@{path=$entry.path;sha256=$entry.sha256;artifact=New-GateBuildArtifact $NodeRoot $file 'prior-assets' $Result.runId $restoreId}}
++            $file=Join-Path $restoreRoot 'prior-assets-bundle.json';@{example=$false;assets=$priorAssets}|ConvertTo-Json -Depth 12|Set-Content $file -Encoding UTF8
++            $priorAssetArtifact=New-GateBuildArtifact $NodeRoot $file 'prior-assets-bundle' $Result.runId $restoreId
++        }
++        if($NoRestore){
++            # Only restore is skipped. The requested build below always executes.
++            $restoreInvocation=$null
++            $restoreCommand=$prior.restore.command
++            $restoreProducerRun=$prior.restore.producerRunId
++            # Preserve prior producer IDs and hashed archived bytes; no pretend restore.
++            foreach($entry in @($prior.immutableInputs)+@($prior.restore.inputs)){
++                $archive=Assert-GateBuildArtifact $entry.artifact $priorRoot $entry.artifact.producerRunId $entry.artifact.producerResultId -AllowBoundImmutableInput:($entry.artifact.role -eq 'immutable-input')
++                $destination=Join-Path $NodeRoot $entry.artifact.path;$null=New-Item -ItemType Directory (Split-Path $destination) -Force
++                if(-not (Test-Path -LiteralPath $destination)){Copy-Item -LiteralPath $archive -Destination $destination}
++            }
++            $priorBundle=Get-GateRestoreBundle $prior $priorRoot $RepoRoot $closure -AllowExample:$Result.example
++            foreach($artifact in @($prior.restore.assetsAfter)+@($priorBundle.assets.artifact)){
++                $archive=Assert-GateBuildArtifact $artifact $priorRoot $artifact.producerRunId $artifact.producerResultId
++                $destination=Join-Path $NodeRoot $artifact.path;$null=New-Item -ItemType Directory (Split-Path $destination) -Force
++                Copy-Item -LiteralPath $archive -Destination $destination
++            }
++        }else{
++            $restoreInvocation=Invoke-GateNative 'dotnet' (@('restore',$project,'--nologo')+@($script:GateDotNetProperties | Where-Object { $_ })) (Join-Path $NodeRoot 'restore.log')
++            $Result.processExitCode=$restoreInvocation.processExitCode;$Result.command=$restoreInvocation.command
++            Add-GateArtifact $Result $RunRoot $restoreInvocation.log 'restore-log'
++            if($restoreInvocation.processExitCode -ne 0){$Result.executionEndedAt=$restoreInvocation.endedAt;Set-GateTerminal $Result 'Failed' 'RestoreFailed';return $Result}
++            $restoreCommand=$restoreInvocation.command
++            $restoreProducerRun=$Result.runId
++        }
++        Assert-GateSource $source (Get-GateSource $RepoRoot)
++        if(-not $NoRestore){$closure=Get-GateProjectClosure $project $Configuration $NodeRoot}
++        $assets=Get-GateFileSet @($closure.assetsPath) $RepoRoot
++        if(-not $NoRestore){
++        $boundAssets=@();$i=0
++        foreach($entry in $assets){
++            $file=Join-Path $restoreRoot ('assets-'+$i+'.json');$logical='restore-assets-'+$i;$i++;Copy-Item -LiteralPath (Join-Path $RepoRoot $entry.path) -Destination $file
++            $matched=@($closure|Where-Object{[IO.Path]::GetFullPath($_.assetsPath) -eq [IO.Path]::GetFullPath((Join-Path $RepoRoot $entry.path))})
++            if($matched.Count -ne 1){throw 'Ambiguous assets closure identity.'}
++            $key=[IO.Path]::GetFullPath($matched[0].project)+'|'+$matched[0].tfm
++            $boundAssets += [pscustomobject]@{projectKey=$key;path=$entry.path;logicalPath=$logical;sha256=$entry.sha256;artifact=New-GateBuildArtifact $NodeRoot $file 'restore-assets' $Result.runId $restoreId}
++        }
++        $bundlePath=Join-Path $restoreRoot 'assets-bundle.json';@{example=$Result.example;assets=$boundAssets}|ConvertTo-Json -Depth 12|Set-Content $bundlePath -Encoding UTF8
++        $assetArtifact=New-GateBuildArtifact $NodeRoot $bundlePath 'restore-assets-bundle' $Result.runId $restoreId
++        $restore=[pscustomobject]@{producerRunId=$Result.runId;producerResultId=$restoreId;processExitCode=0;command=$restoreCommand;inputs=$restoreInputs;inputBeforeSha256=Get-GateFingerprint $restoreInputs;inputAfterSha256=Get-GateFingerprint $restoreInputs;assetsBefore=$priorAssetArtifact;assetsAfter=$assetArtifact}
++        }else{$restore=$prior.restore;$boundAssets=@($priorBundle.assets)}
++        $buildInputs=@($immutable)+@(foreach($entry in $boundAssets){[pscustomobject]@{path=$entry.logicalPath;sha256=$entry.sha256;artifact=$entry.artifact}})
++        $buildInvocation=Invoke-GateNative 'dotnet' (@('build',$project,'-c',$Configuration,'--no-restore','--nologo')+@($script:GateDotNetProperties | Where-Object { $_ })) (Join-Path $NodeRoot 'build.log')
++        $Result.command=$buildInvocation.command;$Result.processExitCode=$buildInvocation.processExitCode
++        Add-GateArtifact $Result $RunRoot $buildInvocation.log 'build-log'
++        Assert-GateSource $source (Get-GateSource $RepoRoot);Assert-GateFileSet $assets $RepoRoot
++        if($buildInvocation.processExitCode -ne 0){$Result.executionEndedAt=$buildInvocation.endedAt;Set-GateTerminal $Result 'Failed' 'BuildFailed';return $Result}
++        $binaryPaths=@(foreach($item in $closure){$item.targetPath;[IO.Path]::ChangeExtension($item.targetPath,'deps.json');[IO.Path]::ChangeExtension($item.targetPath,'runtimeconfig.json')})
++        # Capture copies actually loaded by the test host, including package dependencies.
++        foreach($item in $closure){
++            $output=Split-Path $item.targetPath
++            if(Test-Path -LiteralPath $output -PathType Container){$binaryPaths+=@(Get-ChildItem -LiteralPath $output -File -Filter '*.dll'|ForEach-Object{$_.FullName})}
++        }
++        $binaryMap=Get-GateFileSet $binaryPaths $RepoRoot -AllowMissing
++        foreach($item in $closure){if(-not (Test-Path -LiteralPath $item.targetPath -PathType Leaf)){throw 'Built project DLL missing.'}}
++        $buildRootDir=Join-Path $NodeRoot 'build';$null=New-Item -ItemType Directory -Path $buildRootDir
++        $binaries=@();$i=0
++        foreach($entry in $binaryMap){$file=Join-Path $buildRootDir ('binary-'+$i+[IO.Path]::GetExtension($entry.path));$i++;Copy-Item -LiteralPath (Join-Path $RepoRoot $entry.path) -Destination $file;$binaries+=New-GateBuildArtifact $NodeRoot $file 'binary' $Result.runId $buildId}
++        $build=[pscustomobject]@{producerRunId=$Result.runId;producerResultId=$buildId;processExitCode=0;command=$buildInvocation.command;inputs=$buildInputs;inputBeforeSha256=Get-GateFingerprint $buildInputs;inputAfterSha256=Get-GateFingerprint $buildInputs}
++        $manifest=[pscustomobject]@{example=$Result.example;producerRunId=$Result.runId;producerResultId=$Result.resultId;source=$Result.source;configSha256=$Result.configSha256;project=$project;configuration=$Configuration;tfm=$closure[0].tfm;sdk=$sdk;immutableInputs=$immutable;lockFile=$(if(@($source.inputs|Where-Object{$_.path -match 'packages.lock.json$'}).Count){'Present'}else{'Absent'});restore=$restore;build=$build;binaries=$binaries}
++        $binaryMap|ConvertTo-Json -Depth 12|Set-Content (Join-Path $NodeRoot 'binary-path-map.json') -Encoding UTF8
++        # NoRestore retains the original restore invocation's time and identity explicitly.
++        $restoreTimes=$(if($restoreInvocation){$restoreInvocation}else{(Get-Content (Join-Path $priorRoot 'stage-invocations.json') -Raw|ConvertFrom-Json).restore})
++        @{restore=$restoreTimes;build=$buildInvocation;restoreReused=[bool]$NoRestore;priorRestoreProducerRunId=$restoreProducerRun}|ConvertTo-Json -Depth 15|Set-Content (Join-Path $NodeRoot 'stage-invocations.json') -Encoding UTF8
++        $manifest|ConvertTo-Json -Depth 60|Set-Content (Join-Path $NodeRoot 'build-restore-manifest.json') -Encoding UTF8
++        foreach($name in @('build-restore-manifest.json','binary-path-map.json','stage-invocations.json')){Add-GateArtifact $Result $RunRoot (Join-Path $NodeRoot $name) 'provenance'}
++    }
++    Assert-GateProvenance $manifest $buildRoot $RepoRoot $source $Result.configSha256 $project $Configuration $sdk $closure -AllowExample:$Result.example
++    $manifestArtifact=New-GateBuildArtifact $buildRoot (Join-Path $buildRoot 'build-restore-manifest.json') 'manifest' $manifest.producerRunId $manifest.producerResultId
++    if(-not $script:GateBuildValidation){$script:GateBuildValidation=@{}}
++    $script:GateBuildValidation[$Result.resultId]=@{buildRoot=$buildRoot;repoRoot=$RepoRoot;source=$source;project=$project;configuration=$Configuration;sdk=$sdk;closure=$closure}
++    $Result.provenance=[pscustomobject]@{noBuild=[bool]$skipBuild;noRestore=[bool]($NoRestore -or $skipBuild);manifest=$manifestArtifact;consumerInputBeforeSha256=$source.inputManifestSha256;consumerInputAfterSha256=$source.inputManifestSha256;consumerAssetsBeforeSha256=$manifest.restore.assetsAfter.sha256;consumerAssetsAfterSha256=$manifest.restore.assetsAfter.sha256;consumerBuildInputBeforeSha256=$manifest.build.inputBeforeSha256;consumerBuildInputAfterSha256=$manifest.build.inputBeforeSha256;consumerBinariesBefore=$manifest.binaries;consumerBinariesAfter=$manifest.binaries;project=$project;configuration=$Configuration;tfm=$manifest.tfm;sdk=$sdk}
++    if($PrepareOnly){return $Result}
++    if($Step.kind -eq 'dotnet-build'){$Result.command=$manifest.build.command;$Result.processExitCode=0;$Result.executionEndedAt=$buildInvocation.endedAt;Set-GateTerminal $Result 'Passed' $null;return $Result}
++    $trx=Join-Path $NodeRoot 'test-results.trx'
++    $arguments=@('test',$project,'-c',$Configuration,'--no-build','--no-restore','--logger','trx;LogFileName=test-results.trx','--results-directory',$NodeRoot,'--nologo')
++    if($Step.PSObject.Properties['filter'] -and $Step.filter){$arguments+=@('--filter',[string]$Step.filter)}
++    $test=Invoke-GateNative 'dotnet' $arguments (Join-Path $NodeRoot 'test.log')
++    $Result.command=$test.command;$Result.processExitCode=$test.processExitCode;$Result.executionEndedAt=$test.endedAt
++    Add-GateArtifact $Result $RunRoot $test.log 'test-log'
++    Assert-GateSource $source (Get-GateSource $RepoRoot)
++    Assert-GateProvenance $manifest $buildRoot $RepoRoot $source $Result.configSha256 $project $Configuration $sdk $closure -AllowExample:$Result.example
++    if(Test-Path -LiteralPath $trx -PathType Leaf){Add-GateArtifact $Result $RunRoot $trx 'trx';$Result.tests=Get-GateTestCounts $trx 'trx'}
++    if($test.processExitCode -ne 0){Set-GateTerminal $Result 'Failed' 'NativeTestFailure';return $Result}
++    Assert-GateTests $Result.tests
++    Set-GateTerminal $Result 'Passed' $null;return $Result
++}
++
++function Assert-GateConsumerProvenance {
++    param($Result,[string]$RunRoot)
++    $p=$Result.provenance
++    if(-not $script:GateBuildValidation -or -not $script:GateBuildValidation.ContainsKey($Result.resultId)){throw 'No trusted invocation build-root context.'}
++    $context=$script:GateBuildValidation[$Result.resultId]
++    $path=Assert-GateBuildArtifact $p.manifest $context.buildRoot $p.manifest.producerRunId $p.manifest.producerResultId
++    $manifest=Get-Content -LiteralPath $path -Raw|ConvertFrom-Json
++    if($manifest.producerRunId -ne $p.manifest.producerRunId -or $manifest.producerResultId -ne $p.manifest.producerResultId){throw 'Manifest identity mismatch.'}
++    Assert-GateProvenance $manifest $context.buildRoot $context.repoRoot $context.source $Result.configSha256 $context.project $context.configuration $context.sdk $context.closure -AllowExample:$Result.example
++    if($p.consumerInputBeforeSha256 -ne $Result.source.inputManifestSha256 -or $p.consumerInputAfterSha256 -ne $p.consumerInputBeforeSha256 -or $p.consumerAssetsBeforeSha256 -ne $manifest.restore.assetsAfter.sha256 -or $p.consumerAssetsAfterSha256 -ne $p.consumerAssetsBeforeSha256 -or $p.consumerBuildInputBeforeSha256 -ne $manifest.build.inputBeforeSha256 -or $p.consumerBuildInputAfterSha256 -ne $p.consumerBuildInputBeforeSha256 -or $p.project -ne $manifest.project -or $p.configuration -ne $manifest.configuration -or $p.sdk -ne $manifest.sdk -or $p.tfm -ne $manifest.tfm){throw 'Consumer stage identity mismatch.'}
++    foreach($entries in @($p.consumerBinariesBefore,$p.consumerBinariesAfter)){
++        if(@($entries).Count -ne @($manifest.binaries).Count){throw 'Consumer binary closure mismatch.'}
++        for($i=0;$i -lt $manifest.binaries.Count;$i++){if(($entries[$i]|ConvertTo-Json -Compress) -ne ($manifest.binaries[$i]|ConvertTo-Json -Compress)){throw 'Consumer binary capture contradiction.'}}
++    }
++}
++
++function Assert-GateRawReportBinding {
++    param($Result,[string]$Path,[string]$Format)
++    [xml]$xml=Get-Content -LiteralPath $Path -Raw
++    if($Format -eq 'trx'){
++        $times=$xml.SelectSingleNode("/*[local-name()='TestRun']/*[local-name()='Times']")
++        if($null -eq $times -or -not $times.start -or -not $times.finish){throw 'TRX invocation times absent.'}
++        $start=[DateTimeOffset]$times.start;$end=[DateTimeOffset]$times.finish
++        $summary=$xml.SelectSingleNode("/*[local-name()='TestRun']/*[local-name()='ResultSummary']")
++        if($summary.outcome -notin @('Completed','Passed')){throw 'TRX overall result rejected.'}
++        if(-not $script:GateBuildValidation -or -not $script:GateBuildValidation.ContainsKey($Result.resultId)){throw 'TRX trusted binary context absent.'}
++        $context=$script:GateBuildValidation[$Result.resultId]
++        $target=@($context.closure|Where-Object{$_.project -eq $context.project})
++        if($target.Count -ne 1){throw 'Ambiguous test assembly target.'}
++        $targetPath=[IO.Path]::GetFullPath($target[0].targetPath)
++        $definitions=@{};$nodes=@($xml.SelectNodes("/*[local-name()='TestRun']/*[local-name()='TestDefinitions']/*[local-name()='UnitTest']"))
++        foreach($node in $nodes){
++            $id=[string]$node.id;if(-not $id -or $definitions.ContainsKey($id)){throw 'Duplicate/absent TRX definition.'}
++            $definitions[$id]=$node
++        }
++        foreach($entry in $xml.SelectNodes("/*[local-name()='TestRun']/*[local-name()='Results']/*[local-name()='UnitTestResult']")){
++            if(-not $definitions.ContainsKey([string]$entry.testId)){throw 'TRX entry lacks assembly definition.'}
++            $definition=$definitions[[string]$entry.testId]
++            foreach($location in @([string]$definition.storage,[string]$definition.TestMethod.codeBase)){
++                if(-not $location){throw 'TRX assembly identity absent.'}
++                $resolved=$(if([IO.Path]::IsPathRooted($location)){[IO.Path]::GetFullPath($location)}else{[IO.Path]::GetFullPath((Join-Path (Split-Path $targetPath) $location))})
++                if(-not $resolved.Equals($targetPath,[StringComparison]::OrdinalIgnoreCase)){throw 'TRX bound to wrong test assembly.'}
++            }
++        }
++    }else{
++        $root=$xml.DocumentElement
++        if($root.result -ne 'Passed' -or -not $root.'start-time' -or -not $root.'end-time'){throw 'NUnit overall result or invocation times invalid.'}
++        $start=[DateTimeOffset]$root.'start-time';$end=[DateTimeOffset]$root.'end-time'
++    }
++    # Canonical times have second precision; raw producer timestamps retain fractions.
++    if($start -lt [DateTimeOffset]$Result.executionStartedAt -or $end -lt $start -or $end -gt ([DateTimeOffset]$Result.executionEndedAt).AddSeconds(1)){throw 'Old/out-of-invocation test report.'}
++}
++
++# Concrete declaration resolution is pure: uninvoked leaves do not probe a host.
++function Resolve-GateCoverage {
++    param($Step,[string]$Configuration)
++    $tokens=@($Step.coverage|ForEach-Object{([string]$_).Replace('{Configuration}',$Configuration)})
++    foreach($token in $tokens){if($token -match '\{|\}|project-tfm|listHash'){throw 'Unresolved coverage declaration.'}}
++    if($Step.PSObject.Properties['coverageDimensions']){
++        $dimensions=$Step.coverageDimensions
++        foreach($field in @('configuration','tfm','host','policy','scope')){if(-not $dimensions.$field){throw "Coverage dimension absent: $field"}}
++        $cfg=([string]$dimensions.configuration).Replace('{Configuration}',$Configuration)
++        $arguments=@();if($Step.PSObject.Properties['arguments']){$arguments=@($Step.arguments)}
++        # Paths express output routing, not successful coverage. Bind the exact configured
++        # argument vector (including placeholders) by a deterministic hash in the token.
++        $argumentHash=Get-GateFingerprint @(@{path='arguments';sha256=Get-GateStringHash (ConvertTo-Json -InputObject $arguments -Compress)})
++        $suffix='|configuration='+$cfg+'|tfm='+$dimensions.tfm+'|host='+$dimensions.host+'|policy='+$dimensions.policy+'|scope='+$dimensions.scope+'|arguments='+$argumentHash
++        $tokens=@($tokens|ForEach-Object{$_+$suffix})
++    }
++    return $tokens
++}
++function Get-GateStringHash {
++    param([string]$Value)
++    $hash=[Security.Cryptography.SHA256]::Create()
++    try{return ([BitConverter]::ToString($hash.ComputeHash([Text.Encoding]::UTF8.GetBytes($Value)))).Replace('-','').ToLowerInvariant()}
++    finally{$hash.Dispose()}
++}
++function Assert-GateCoverageProof {
++    param($Result,$Step,[string]$Configuration,[string]$NodeRoot)
++    if($Result.status -ne 'Passed' -or -not $Step.PSObject.Properties['coverageDimensions']){return}
++    $d=$Step.coverageDimensions;$cfg=([string]$d.configuration).Replace('{Configuration}',$Configuration)
++    if($Result.provenance){
++        if($Result.provenance.configuration -cne $cfg -or $Result.provenance.tfm -cne $d.tfm){throw 'Concrete configuration/TFM coverage mismatch.'}
++        if($d.host -cne 'dotnet'){throw 'Concrete evaluated .NET host mismatch.'}
++        $project=$(if($Step.kind -in @('dotnet-build','dotnet-test')){$Step.project}else{$Step.provenanceProject})
++        if([IO.Path]::GetFullPath($Result.provenance.project) -ine [IO.Path]::GetFullPath((Join-Path (Split-Path -Parent $PSScriptRoot) $project))){throw 'Concrete project coverage mismatch.'}
++    }elseif($d.tfm -cne 'N-A' -and $Result.kind -notlike 'unity-*'){throw 'Concrete TFM coverage lacks evaluated proof.'}
++    if($Result.kind -eq 'dotnet-test'){
++        $args=@($Result.command.arguments);$index=[Array]::IndexOf($args,'--filter')
++        $actual=$(if($index -ge 0){$args[$index+1]}else{'all'})
++        $expected=$(if($Step.filter){$Step.filter}else{'all'})
++        if($actual -cne $expected -or $d.scope -cne $expected){throw 'Concrete test filter coverage mismatch.'}
++    }
++    if($Result.kind -eq 'powershell-script'){
++        $contracts=@($Result.artifacts|Where-Object{$_.role -eq 'invocation-contract'})
++        if($contracts.Count -ne 1){throw 'Concrete script invocation contract missing.'}
++        $actual=Get-Content (Resolve-GateArtifact $NodeRoot $contracts[0].path) -Raw -Encoding UTF8|ConvertFrom-Json
++        if((ConvertTo-Json -InputObject @($actual.arguments) -Compress) -cne (ConvertTo-Json -InputObject @($Step.arguments) -Compress)){throw 'Concrete script argument coverage mismatch.'}
++        if($actual.actualParameters.PSObject.Properties['Configuration'] -and $actual.actualParameters.Configuration -cne $cfg){throw 'Concrete script configuration mismatch.'}
++    }
++    if($Result.kind -like 'unity-*'){
++        $proof=@($Result.artifacts|Where-Object{$_.role -eq 'unity-invocation-binding'})
++        if($proof.Count -ne 1){throw 'Concrete Unity binding missing.'}
++        $binding=Get-Content (Resolve-GateArtifact $NodeRoot $proof[0].path) -Raw -Encoding UTF8|ConvertFrom-Json
++        if($binding.host -cne $d.host -or $binding.scope -cne $d.scope -or $binding.policy -cne $d.policy){throw 'Concrete Unity host/filter/policy mismatch.'}
++    }
++}
++function Assert-GateObjectFields {
++    param($Value,[string[]]$Fields)
++    if($null -eq $Value -or (@($Value.PSObject.Properties.Name|Sort-Object) -join '|') -cne (@($Fields|Sort-Object) -join '|')){throw 'Source report schema fields mismatch.'}
++}
++function Assert-GateFinite {
++    param($Value,[switch]$Positive,[switch]$Integer)
++    if($null -eq $Value -or $Value -is [string] -or $Value -is [bool]){throw 'Report numeric field missing or wrong type.'}
++    $number=[double]$Value
++    if([double]::IsNaN($number) -or [double]::IsInfinity($number) -or $number -lt 0 -or ($Positive -and $number -le 0) -or ($Integer -and $number -ne [Math]::Floor($number))){throw 'Report numeric field invalid.'}
++}
++function Assert-GateNear {
++    param($Actual,$Expected)
++    Assert-GateFinite $Actual
++    if([Math]::Abs([double]$Actual-[double]$Expected) -gt (1e-8*[Math]::Max(1,[Math]::Abs([double]$Expected)))){throw 'Report summary/sample contradiction.'}
++}
++function Assert-GateRuntimeMeasurementReport {
++    param($Report,$Contract,[string]$Configuration)
++    Assert-GateObjectFields $Report @('schemaVersion','timestampUtc','profile','environment','options','metricDefinitions','results','notes')
++    if($Report.schemaVersion -cne 'abilitykit.runtime-benchmark.v1' -or $Report.profile -cne $Contract.profile){throw 'Runtime schema/profile mismatch.'}
++    Assert-GateObjectFields $Report.options @('warmupIterations','measurementIterations','invocationsPerIteration')
++    foreach($field in @('warmupIterations','measurementIterations','invocationsPerIteration')){
++        Assert-GateFinite $Report.options.$field -Integer -Positive:($field -ne 'warmupIterations')
++        if($Report.options.$field -ne $Contract.options.$field){throw 'Runtime configured sample options mismatch.'}
++    }
++    Assert-GateObjectFields $Report.environment @('machineName','osDescription','processArchitecture','frameworkDescription','processorCount','serverGc','buildConfiguration','commit')
++    if($Report.environment.buildConfiguration -cne $Configuration -or -not $Report.environment.commit){throw 'Runtime build configuration absent/mismatched.'}
++    Assert-GateFinite $Report.environment.processorCount -Integer -Positive
++    if(-not @($Report.results).Count -or @($Report.results).Count -ne @($Contract.cases).Count){throw 'Runtime expected nonzero case coverage missing.'}
++    $seen=@{}
++    foreach($case in $Report.results){
++        Assert-GateObjectFields $case @('descriptor','samples','summary','determinismDigest','result')
++        Assert-GateObjectFields $case.descriptor @('id','module','operationUnit','workload')
++        $id=$case.descriptor.id
++        if(-not $id -or $seen.ContainsKey($id)){throw 'Runtime duplicate/absent case ID.'};$seen[$id]=$true
++        $expected=@($Contract.cases|Where-Object{$_.id -ceq $id})
++        if($expected.Count -ne 1 -or $case.result -cne 'measurement' -or -not $case.determinismDigest){throw 'Runtime case/outcome/determinism contract failed.'}
++        if($case.descriptor.module -cne $expected[0].module -or $case.descriptor.operationUnit -cne $expected[0].operationUnit){throw 'Runtime descriptor module/unit mismatch.'}
++        Assert-GateObjectFields $case.descriptor.workload @($expected[0].workload.PSObject.Properties.Name)
++        foreach($field in $expected[0].workload.PSObject.Properties.Name){if($case.descriptor.workload.$field -cne $expected[0].workload.$field){throw 'Runtime workload dimensions mismatch.'}}
++        if(($Contract.module -ne 'all' -and $case.descriptor.module -cne $Contract.module) -or ($Contract.scope -ne 'all' -and $case.descriptor.workload.scope -cne $Contract.scope)){throw 'Runtime selected module/scope mismatch.'}
++        if(@($case.samples).Count -ne $Report.options.measurementIterations){throw 'Runtime samples missing.'}
++        $operations=0L;$allocated=0L;$weightedNs=0.0;$cpu=@();$index=0;$frequency=$null
++        foreach($sample in $case.samples){
++            Assert-GateObjectFields $sample @('index','operations','elapsedTimestampTicks','threadAllocatedBytes','nanosecondsPerOperation','allocatedBytesPerOperation')
++            foreach($field in @('index','operations','elapsedTimestampTicks','threadAllocatedBytes','nanosecondsPerOperation','allocatedBytesPerOperation')){Assert-GateFinite $sample.$field -Integer:($field -notmatch 'PerOperation') -Positive:($field -eq 'operations')}
++            if($sample.index -ne $index){throw 'Runtime sample index sequence mismatch.'};$index++
++            Assert-GateNear $sample.allocatedBytesPerOperation ($sample.threadAllocatedBytes/[double]$sample.operations)
++            if($sample.elapsedTimestampTicks -gt 0){
++                if($sample.nanosecondsPerOperation -le 0){throw 'Runtime timing contradiction.'}
++                $f=$sample.elapsedTimestampTicks*1e9/($sample.nanosecondsPerOperation*$sample.operations)
++                if($null -ne $frequency){Assert-GateNear $f $frequency}else{$frequency=$f}
++            }elseif($sample.nanosecondsPerOperation -ne 0){throw 'Runtime zero-tick contradiction.'}
++            $operations+=$sample.operations;$allocated+=$sample.threadAllocatedBytes;$weightedNs+=$sample.nanosecondsPerOperation*$sample.operations;$cpu+=,$sample.nanosecondsPerOperation
++        }
++        Assert-GateObjectFields $case.summary @('sampleCount','totalOperations','meanNanosecondsPerOperation','medianNanosecondsPerOperation','p95NanosecondsPerOperation','p99NanosecondsPerOperation','maxNanosecondsPerOperation','meanAllocatedBytesPerOperation','totalThreadAllocatedBytes','operationsPerSecond')
++        if($case.summary.sampleCount -ne $index -or $case.summary.totalOperations -ne $operations -or $case.summary.totalThreadAllocatedBytes -ne $allocated){throw 'Runtime summary counts mismatch.'}
++        $cpu=@($cpu|Sort-Object)
++        foreach($p in @(@('medianNanosecondsPerOperation',0.5),@('p95NanosecondsPerOperation',0.95),@('p99NanosecondsPerOperation',0.99))){Assert-GateNear $case.summary.($p[0]) $cpu[[Math]::Max(0,[Math]::Ceiling($index*$p[1])-1)]}
++        Assert-GateNear $case.summary.maxNanosecondsPerOperation $cpu[-1]
++        Assert-GateNear $case.summary.meanNanosecondsPerOperation ($weightedNs/$operations)
++        Assert-GateNear $case.summary.meanAllocatedBytesPerOperation ($allocated/[double]$operations)
++        Assert-GateNear $case.summary.operationsPerSecond $(if($weightedNs -gt 0){$operations*1e9/$weightedNs}else{0})
++    }
++    return $true
++}
++function Assert-GateShooterAoiReport {
++    param($Report,$Contract)
++    Assert-GateObjectFields $Report @('schemaVersion','timestampUtc','profile','environment','options','thresholds','metricDefinitions','results','passed')
++    if($Report.schemaVersion -cne 'abilitykit.shooter-aoi-lod-benchmark.v1' -or $Report.profile -cne $Contract.profile){throw 'AOI schema/profile mismatch.'}
++    foreach($part in @('options','thresholds')){
++        Assert-GateObjectFields $Report.$part @($Contract.$part.PSObject.Properties.Name)
++        foreach($field in $Contract.$part.PSObject.Properties.Name){if($Report.$part.$field -cne $Contract.$part.$field){throw 'AOI options/threshold policy mismatch.'}}
++    }
++    if(-not @($Report.results).Count -or @($Report.results).Count -ne @($Contract.cases).Count){throw 'AOI expected nonzero matrix coverage absent.'}
++    $seen=@{};$allPassed=$true
++    foreach($row in $Report.results){
++        Assert-GateObjectFields $row @('case','metrics','failures','passed')
++        Assert-GateObjectFields $row.case @('id','entities','observers','scenario')
++        $expected=@($Contract.cases|Where-Object{$_.id -ceq $row.case.id})
++        if($expected.Count -ne 1 -or $seen.ContainsKey($row.case.id)){throw 'AOI duplicate/wrong matrix case.'};$seen[$row.case.id]=$true
++        foreach($field in @('entities','observers','scenario')){if($row.case.$field -cne $expected[0].$field){throw 'AOI case dimensions mismatch.'}}
++        $metrics=@('meanTickMilliseconds','medianTickMilliseconds','normalizedNanosecondsPerEntityObserver','threadAllocatedBytesPerTick','allocatedBytesPerEntityObserver','exportMillisecondsPerTick','serializationMillisecondsPerTick','observationMillisecondsPerTick','exportAllocatedBytesPerTick','serializationAllocatedBytesPerTick','observationAllocatedBytesPerTick','payloadBytesPerTick','enterCount','leaveCount','changedCount','starvedEntitiesAtEnd','maxUnsentTicks','determinismDigest')
++        Assert-GateObjectFields $row.metrics $metrics
++        foreach($field in $metrics){Assert-GateFinite $row.metrics.$field}
++        if($row.metrics.changedCount -ne ($row.metrics.enterCount+$row.metrics.leaveCount)){throw 'AOI changed count contradiction.'}
++        $m=$row.metrics;$c=$row.case;$t=$Report.thresholds;$o=$Report.options
++        # Same comparisons as BenchmarkThresholdEvaluator, with no baseline configured
++        # by these wrappers. This verifies failures without changing native thresholds.
++        $values=@{
++            'cpu.normalizedNanoseconds'=@($m.normalizedNanosecondsPerEntityObserver,$t.maxNormalizedNanoseconds)
++            'allocation.bytesPerEntityObserver'=@($m.allocatedBytesPerEntityObserver,$t.maxAllocatedBytesPerEntityObserver)
++            'payload.bytesPerObserverTick'=@(($m.payloadBytesPerTick/[double]$c.observers),$t.maxPayloadBytesPerObserverTick)
++            'aoi.churnFractionPerTick'=@(($m.changedCount/[double]([Math]::Max(1,$c.entities*$c.observers*$o.measurementIterations*$o.ticksPerIteration))),$(if($c.scenario -ceq 'steady'){0}else{$t.maxChurnFractionPerTick}))
++            'starvation.entitiesPerObserver'=@(($m.starvedEntitiesAtEnd/[double]$c.observers),$(if($c.scenario -ceq 'steady'){0}else{$t.maxStarvedEntitiesPerObserver}))
++            'starvation.maxUnsentTicks'=@($m.maxUnsentTicks,$t.maxUnsentTicks)
++        }
++        $expectedFailures=@($values.Keys|Where-Object{$values[$_][0] -gt $values[$_][1]}|Sort-Object)
++        if((@($row.failures.metric|Sort-Object) -join '|') -cne ($expectedFailures -join '|')){throw 'AOI threshold failures contradict metrics.'}
++        foreach($failure in $row.failures){Assert-GateObjectFields $failure @('metric','actual','limit','message');Assert-GateNear $failure.actual $values[$failure.metric][0];Assert-GateNear $failure.limit $values[$failure.metric][1];if(-not $failure.message){throw 'AOI failure diagnostic absent.'}}
++        $passed=@($row.failures).Count -eq 0
++        if($row.passed -isnot [bool] -or $row.passed -ne $passed){throw 'AOI per-case Passed contradiction.'}
++        $allPassed=$allPassed -and $passed
++    }
++    if($Report.passed -isnot [bool] -or $Report.passed -ne $allPassed){throw 'AOI aggregate Passed contradiction.'}
++    return $allPassed
++}
++function Invoke-GateBenchmarkProducer {
++    param([string]$Project,[string]$Output,[string]$Profile,[string]$Module,[string]$Scope,[string]$Configuration,[switch]$NoRestore)
++    $p=$script:GateProducer;$context=$p.context
++    if($context.configuration -cne $Configuration){throw 'Benchmark configuration differs from caller.'}
++    if(-not $context.PSObject.Properties['reportContract']){throw 'Configured benchmark report contract absent.'}
++    $contract=$context.reportContract
++    if($Profile -cne $contract.profile -or $Module -cne $contract.module -or $Scope -cne $contract.scope){throw 'Benchmark requested scope differs from config.'}
++    $relative=$Output.Substring([IO.Path]::GetFullPath($context.nodeRoot).TrimEnd('\','/').Length+1).Replace('\','/')
++    if((Resolve-GateArtifact $context.nodeRoot $relative) -ine [IO.Path]::GetFullPath($Output)){throw 'Benchmark output outside invocation root.'}
++    if(Test-Path -LiteralPath $Output){throw 'Benchmark output already exists before native invocation.'}
++    $step=[pscustomobject]@{project=$context.provenanceProject;kind='dotnet-build'}
++    if($context.PSObject.Properties['coverageDimensions']){$step|Add-Member coverageDimensions $context.coverageDimensions}
++    $built=Invoke-GateDotNet $p.result $step $context.nodeRoot $context.runRoot $context.repoRoot $Configuration -PrepareOnly -NoRestore:$NoRestore -BuildManifestPath $context.buildManifestPath
++    $p.result=$built
++    if($built.status -in @('Blocked','Failed')){return (Complete-GateProducer $built.processExitCode $built.reason $built.status)}
++    $args=@('run','--project',$Project,'--configuration',$Configuration,'--no-build','--no-restore','--','--profile',$Profile,'--output',$Output)
++    if($context.evidenceType -eq 'measurement'){$args+=@('--module',$Module,'--scope',$Scope)}
++    $p.result.executionStartedAt=[DateTimeOffset]::UtcNow.ToString('yyyy-MM-ddTHH:mm:ssZ')
++    Invoke-GateProducerCommand 'dotnet' $args|Out-Host
++    $native=$LASTEXITCODE
++    Assert-GateConsumerProvenance $p.result $context.runRoot
++    if(Test-Path -LiteralPath $Output -PathType Leaf){Add-GateProducerOutput $Output 'benchmark-report'}
++    $p.result.executionEndedAt=[DateTimeOffset]::UtcNow.ToString('yyyy-MM-ddTHH:mm:ssZ')
++    $p.result.processExitCode=$native
++    if(Test-Path -LiteralPath $Output -PathType Leaf){
++        $bindingPath=Join-Path $context.nodeRoot 'benchmark-binding.json'
++        @{runId=$p.result.runId;resultId=$p.result.resultId;sourceSha=$p.result.source.sha;sourceFingerprint=$p.result.source.inputManifestSha256;profile=$Profile;module=$Module;scope=$Scope;configuration=$Configuration;reportSha256=Get-GateHash $Output;binaryManifestSha256=$p.result.provenance.manifest.sha256;nativeExit=$native}|ConvertTo-Json -Depth 10|Set-Content $bindingPath -Encoding UTF8
++        Add-GateProducerOutput $bindingPath 'benchmark-binding'
++    }
++    $accepted=Assert-GateBenchmarkEvidence $p.result $context -ReturnOutcome
++    if($context.evidenceType -eq 'thresholds'){
++        if(($accepted -and $native -ne 0) -or (-not $accepted -and $native -ne 2)){throw 'AOI native exit/report outcome contradiction.'}
++    }elseif($native -ne 0){throw 'Runtime measurement native failure.'}
++    return (Complete-GateProducer $native $(if($accepted){$null}else{'AoiThresholdRejected'}) $(if($accepted){'Passed'}else{'Failed'}))
++}
++function Assert-GateBenchmarkEvidence {
++    param($Result,$Context,[switch]$ReturnOutcome)
++    $raw=@($Result.artifacts|Where-Object{$_.role -eq 'benchmark-report'})
++    if($raw.Count -ne 1){throw 'Current benchmark report absent.'}
++    $path=Resolve-GateArtifact $Context.nodeRoot $raw[0].path
++    if((Get-GateHash $path) -ne $raw[0].sha256){throw 'Benchmark report changed.'}
++    $report=Get-Content $path -Raw -Encoding UTF8|ConvertFrom-Json
++    $bindings=@($Result.artifacts|Where-Object{$_.role -eq 'benchmark-binding'})
++    if($bindings.Count -ne 1){throw 'Benchmark current invocation binding absent.'}
++    $binding=Get-Content (Resolve-GateArtifact $Context.nodeRoot $bindings[0].path) -Raw -Encoding UTF8|ConvertFrom-Json
++    if($binding.runId -cne $Result.runId -or $binding.resultId -cne $Result.resultId -or $binding.sourceSha -cne $Result.source.sha -or $binding.sourceFingerprint -cne $Result.source.inputManifestSha256 -or $binding.reportSha256 -cne $raw[0].sha256 -or $binding.binaryManifestSha256 -cne $Result.provenance.manifest.sha256 -or $binding.nativeExit -ne $Result.processExitCode -or $binding.profile -cne $Context.reportContract.profile -or $binding.module -cne $Context.reportContract.module -or $binding.scope -cne $Context.reportContract.scope -or $binding.configuration -cne $Context.configuration){throw 'Benchmark invocation/report binding mismatch.'}
++    $timestamp=[DateTimeOffset]$report.timestampUtc
++    if($timestamp -lt [DateTimeOffset]$Result.executionStartedAt -or $timestamp -gt ([DateTimeOffset]$Result.executionEndedAt).AddSeconds(1)){throw 'Old/out-of-invocation benchmark report.'}
++    $outcome=$(if($Context.evidenceType -eq 'measurement'){Assert-GateRuntimeMeasurementReport $report $Context.reportContract $Context.configuration}else{Assert-GateShooterAoiReport $report $Context.reportContract})
++    if(-not $Result.provenance){throw 'Benchmark source/binary provenance absent.'}
++    Assert-GateConsumerProvenance $Result $Context.runRoot
++    if($ReturnOutcome){return $outcome}
++    if(-not $outcome){throw 'Benchmark report did not complete accepted coverage.'}
++}
++function Get-GateBindingIds {
++    param($Bindings,[string]$Token)
++    if($Bindings -is [System.Collections.IDictionary]){return @($Bindings[$Token])}
++    if($Bindings.PSObject.Properties[$Token]){return @($Bindings.PSObject.Properties[$Token].Value)}
++    return @()
++}
++function ConvertTo-GateProcessArgument {
++    param([string]$Value)
++    # Windows CommandLineToArgvW-compatible quoting, including trailing slashes.
++    if($Value -notmatch '[\s"]' -and $Value.Length){return $Value}
++    $escaped=[regex]::Replace($Value,'(\\*)"','$1$1\"')
++    $escaped=[regex]::Replace($escaped,'(\\+)$','$1$1')
++    return '"'+$escaped+'"'
++}
++
++function Get-GateUnityManaged {
++    param([string]$Version)
++    return "C:\Program Files\Unity\Hub\Editor\$Version\Editor\Data\Managed"
++}
++function Get-GateUnityPlatformAssembly {
++    param([string]$RepoRoot)
++    return (Join-Path $RepoRoot 'Unity/Library/ScriptAssemblies/AbilityKit.Editor.Platform.dll')
++}
++function Assert-GateUnityBuildProof {
++    param([string]$ProofPath,$Result,[string]$UnityVersion,[string]$EditorPath,[string[]]$AssemblyPaths,[string]$ProjectPath)
++    if(-not $ProjectPath){$ProjectPath=Join-Path (Split-Path -Parent $PSScriptRoot) 'Unity'}
++    if(-not $ProofPath -or -not (Test-Path -LiteralPath $ProofPath -PathType Leaf)){return $null}
++    $root=Split-Path -Parent ([IO.Path]::GetFullPath($ProofPath))
++    $proof=Get-Content $ProofPath -Raw -Encoding UTF8|ConvertFrom-Json
++    Assert-GateObjectFields $proof @('schemaVersion','example','producerRunId','producerResultId','configSha256','source','unityVersion','editor','assemblies','command','processExitCode','status','startedAt','endedAt','buildLog')
++    if($proof.schemaVersion -cne 'abilitykit.unity-build-proof.v1' -or $proof.example -isnot [bool] -or ($proof.example -and -not $Result.example) -or $proof.producerRunId -cne $Result.runId -or -not [guid]::TryParse($proof.producerResultId,[ref]([guid]::Empty)) -or $proof.configSha256 -cne $Result.configSha256 -or $proof.unityVersion -cne $UnityVersion -or $proof.status -cne 'Passed' -or $proof.processExitCode -ne 0){throw 'Unity current build proof identity/status mismatch.'}
++    Assert-GateSource $proof.source $Result.source
++    if($proof.source.inputManifestAfterSha256 -cne $proof.source.inputManifestSha256){throw 'Unity build source changed.'}
++    if(-not $proof.startedAt -or -not $proof.endedAt -or [DateTimeOffset]$proof.endedAt -lt [DateTimeOffset]$proof.startedAt -or [DateTimeOffset]$proof.endedAt -gt [DateTimeOffset]::UtcNow.AddSeconds(1)){throw 'Unity build times invalid.'}
++    if([IO.Path]::GetFullPath($proof.command.executable) -ine [IO.Path]::GetFullPath($EditorPath) -or '-batchmode' -notin @($proof.command.arguments) -or '-projectPath' -notin @($proof.command.arguments)){throw 'Unity build command not bound to editor/project.'}
++    $projectIndex=[Array]::IndexOf(@($proof.command.arguments),'-projectPath')
++    if([IO.Path]::GetFullPath($proof.command.arguments[$projectIndex+1]) -ine [IO.Path]::GetFullPath($ProjectPath)){throw 'Unity build project mismatch.'}
++    $entries=@($proof.editor)+@($proof.assemblies)
++    $expected=@([IO.Path]::GetFullPath($EditorPath))+@($AssemblyPaths|ForEach-Object{[IO.Path]::GetFullPath($_)})
++    if(@($entries).Count -ne @($expected).Count -or ((@($entries|ForEach-Object{[IO.Path]::GetFullPath($_.originalPath)}|Sort-Object) -join '|') -ine (@($expected|Sort-Object) -join '|'))){throw 'Unity expected binary closure mismatch.'}
++    foreach($entry in $entries){
++        Assert-GateObjectFields $entry @('originalPath','beforeSha256','afterSha256','artifact')
++        $archived=Assert-GateBuildArtifact $entry.artifact $root $proof.producerRunId $proof.producerResultId
++        if($entry.beforeSha256 -cne $entry.afterSha256 -or $entry.artifact.sha256 -cne $entry.afterSha256 -or (Get-GateHash $entry.originalPath) -cne $entry.afterSha256){throw 'Unity historical/current binary identity mismatch.'}
++    }
++    $null=Assert-GateBuildArtifact $proof.buildLog $root $proof.producerRunId $proof.producerResultId
++    return [pscustomobject]@{path=[IO.Path]::GetFullPath($ProofPath);root=$root;value=$proof;sha256=Get-GateHash $ProofPath;expectedPaths=$AssemblyPaths;editorPath=$EditorPath;version=$UnityVersion;projectPath=$ProjectPath}
++}
++function Save-GateUnityBuildProof {
++    param($Result,$Proof,[string]$RunRoot,[string]$NodeRoot)
++    if(-not $Proof){throw 'Unity prerequisite proof absent.'}
++    $directory=Join-Path $NodeRoot 'unity-proof';$null=New-Item -ItemType Directory $directory -Force
++    $copy=$Proof.value|ConvertTo-Json -Depth 25|ConvertFrom-Json
++    $index=0
++    foreach($entry in @($copy.editor)+@($copy.assemblies)){
++        $from=Resolve-GateArtifact $Proof.root $entry.artifact.path
++        $to=Join-Path $directory ('binary-'+$index+'.bin');$index++;Copy-Item -LiteralPath $from -Destination $to
++        $entry.artifact=New-GateBuildArtifact $NodeRoot $to 'unity-build-binary' $copy.producerRunId $copy.producerResultId
++        Add-GateArtifact $Result $RunRoot $to 'unity-build-binary'
++    }
++    $to=Join-Path $directory 'build.log';Copy-Item -LiteralPath (Resolve-GateArtifact $Proof.root $copy.buildLog.path) -Destination $to
++    $copy.buildLog=New-GateBuildArtifact $NodeRoot $to 'unity-build-log' $copy.producerRunId $copy.producerResultId
++    Add-GateArtifact $Result $RunRoot $to 'unity-build-log'
++    $path=Join-Path $NodeRoot 'unity-build-proof.json';$copy|ConvertTo-Json -Depth 25|Set-Content $path -Encoding UTF8
++    Add-GateArtifact $Result $RunRoot $path 'unity-build-proof'
++    if(-not $script:GateUnityValidation){$script:GateUnityValidation=@{}}
++    $script:GateUnityValidation[$Result.resultId]=@{version=$Proof.version;editorPath=$Proof.editorPath;assemblyPaths=$Proof.expectedPaths;proofPath=$path;projectPath=$Proof.projectPath}
++}
++function Assert-GateUnityEvidence {
++    param($Result,[string]$RunRoot)
++    if(-not $script:GateUnityValidation -or -not $script:GateUnityValidation.ContainsKey($Result.resultId)){throw 'Unity trusted host/binary context absent.'}
++    $trusted=$script:GateUnityValidation[$Result.resultId]
++    $null=Assert-GateUnityBuildProof $trusted.proofPath $Result $trusted.version $trusted.editorPath $trusted.assemblyPaths $trusted.projectPath
++    if($Result.kind -notlike 'unity-*'){return}
++    $node=Join-Path $RunRoot $Result.resultId
++    $bindings=@($Result.artifacts|Where-Object{$_.role -eq 'unity-invocation-binding'})
++    if($bindings.Count -ne 1){throw 'Unity invocation binding absent.'}
++    $binding=Get-Content (Resolve-GateArtifact $node $bindings[0].path) -Raw -Encoding UTF8|ConvertFrom-Json
++    if($binding.runId -cne $Result.runId -or $binding.resultId -cne $Result.resultId -or $binding.source.inputManifestSha256 -cne $Result.source.inputManifestSha256 -or $binding.source.sha -cne $Result.source.sha -or $binding.kind -cne $Result.kind -or $binding.editorSha256 -cne (Get-GateHash $trusted.editorPath)){throw 'Unity invocation identity changed.'}
++    $reports=@($Result.artifacts|Where-Object{$_.role -eq $(if($Result.kind -eq 'unity-execute-method'){'report'}else{'nunit'})})
++    if($reports.Count -ne 1 -or $binding.reportSha256 -cne $reports[0].sha256){throw 'Unity raw report binding mismatch.'}
++    if($Result.kind -eq 'unity-execute-method'){
++        $raw=Get-Content (Resolve-GateArtifact $node $reports[0].path) -Raw -Encoding UTF8|ConvertFrom-Json
++        Assert-GateObjectFields $raw @('schemaVersion','runId','resultId','sourceSha','sourceFingerprint','executeMethod','status','completed','startedAt','endedAt')
++        if($raw.schemaVersion -cne 'abilitykit.unity-execute-method.v1' -or $raw.runId -cne $Result.runId -or $raw.resultId -cne $Result.resultId -or $raw.sourceSha -cne $Result.source.sha -or $raw.sourceFingerprint -cne $Result.source.inputManifestSha256 -or $raw.executeMethod -cne $binding.scope -or $raw.status -cne 'Passed' -or $raw.completed -isnot [bool] -or -not $raw.completed -or [DateTimeOffset]$raw.startedAt -lt [DateTimeOffset]$Result.executionStartedAt -or [DateTimeOffset]$raw.endedAt -lt [DateTimeOffset]$raw.startedAt -or [DateTimeOffset]$raw.endedAt -gt ([DateTimeOffset]$Result.executionEndedAt).AddSeconds(1)){throw 'Unity execute-method raw completion invalid.'}
++    }else{
++        [xml]$raw=Get-Content (Resolve-GateArtifact $node $reports[0].path) -Raw -Encoding UTF8
++        if($binding.scope -ne 'all'){
++            foreach($case in $raw.SelectNodes("//*[local-name()='test-case']")){if(-not ([string]$case.fullname).Contains([string]$binding.scope)){throw 'Unity NUnit test filter scope mismatch.'}}
++        }
++        $assemblies=@($raw.SelectNodes("//*[local-name()='test-suite' and @type='Assembly']"))
++        $expected=@($trusted.assemblyPaths|ForEach-Object{[IO.Path]::GetFileNameWithoutExtension($_)})
++        $names=@($assemblies|ForEach-Object{[IO.Path]::GetFileNameWithoutExtension([string]$_.fullname)}|Sort-Object -Unique)
++        if(($names -join '|') -cne (@($expected|Sort-Object) -join '|')){throw 'Unity NUnit loaded assembly scope mismatch.'}
++        foreach($assembly in $assemblies){
++            $location=[string]$assembly.fullname
++            if(-not [IO.Path]::IsPathRooted($location) -or -not @($trusted.assemblyPaths|Where-Object{[IO.Path]::GetFullPath($_) -ieq [IO.Path]::GetFullPath($location)}).Count){throw 'Unity NUnit assembly path mismatch.'}
++        }
++    }
++}
++function Register-GateUnityChildProof {
++    param($Result,$Context,[string]$Version,[string]$Editor,[string[]]$Assemblies)
++    $proofs=@($Result.artifacts|Where-Object{$_.role -eq 'unity-build-proof'})
++    if($proofs.Count -ne 1){throw 'Unity child build proof absent.'}
++    $path=Resolve-GateArtifact $Context.nodeRoot $proofs[0].path
++    $proof=Assert-GateUnityBuildProof $path $Result $Version $Editor $Assemblies
++    if(-not $script:GateUnityValidation){$script:GateUnityValidation=@{}}
++    $script:GateUnityValidation[$Result.resultId]=@{version=$Version;editorPath=$Editor;assemblyPaths=$Assemblies;proofPath=$path;projectPath=$Proof.projectPath}
++    Assert-GateUnityEvidence $Result $Context.runRoot
++}
+diff --git a/tools/tests/fixtures/README.md b/tools/tests/fixtures/README.md
+new file mode 100644
+index 000000000..121dd6fb7
+--- /dev/null
++++ b/tools/tests/fixtures/README.md
+@@ -0,0 +1,29 @@
++# Isolated result-contract controls
++
++result.schema.json and provenance.schema.json are the durable approved schema snapshots, promoted from the Issue 6 planning contract by parent message msg_e68cb7319918. The minimal Python subset reader is test-only, dependency-free and resolves solely from this fixture directory, including after task archive.
++
++Parent clarification msg_a524a52bec20 / msg_a3e0e00db0ed permits artifact.bytes >= 0 structurally. Semantically a zero-byte artifact is permitted only as an immutable-input source snapshot bound in immutableInputs, or the exact already validated identity reused in restore.inputs/build.inputs. The snapshot retains original bytes and SHA; an empty artifact cannot satisfy result/report evidence, manifest, required log, binary identity or coverage. Tests exercise this exception through the real shared dotnet body with fake native execution; generated example=true artifacts are rejected by production mode.
++
++Run powershell -NoProfile -ExecutionPolicy Bypass -File tools/tests/test-gate-result-contract.tests.ps1 for the full isolated suite. No real dotnet build, Unity, services, network, soak or performance workload is launched. SkipRunnerIntegration is a focused subset and cannot establish full-suite acceptance. Unique ignored local/Artifacts roots retain original failures and command/source/tool receipts.
++
++Slice B1 binds resultType/kind/name and leaf shape to the configured invocation. The current result schema additionally constrains gate versus leaf shape; the declared Python keyword subset now includes allOf/maxItems. Invocation binding remains a production semantic check, not a schema-only claim.
++
++b1-controls.ps1 exercises all eleven bounded adapters' real bodies. body-source-adapter.ps1 supplies a narrow synthetic source scope, always example=true; the surrounding harness captures and checks the complete actual repository before/after. sample-executor.ps1 fakes every dotnet evaluation/restore/build/run and intercepts at entry before work. deterministic-child-executor.ps1 allows only the four deterministic PowerShell bodies used by the two assertion harnesses; those PowerShell child processes are real and their command/native exit/logs are retained. It blocks .NET/services and unknown children. No fake early-return producer implementation substitutes for the body.
++
++Report chains serialize explicit predecessor role/result/artifact hashes. Producer input manifests bind original archived bytes (including a legitimate empty input) and recheck current inputs; only explicitly bound immutable-input snapshots permit zero bytes. All result/report/raw/binary artifacts remain nonempty. Script audit criteria remain tests=null (N/A), while assertion harnesses count raw assertion entries. sample log display names may contain spaces; serialized evidence uses safe generated IDs and retains a name map.
++
++Default UPM and hero audit failures are preserved as actual failures; isolated positives specify known-valid packages or a separate policy fixture. These controls do not fix or grant acceptance to the current repository's dependency/CI policy gaps. Four service adapters remain B2b; clean-source real runtime-contracts remains C work.
++
++tools/test-gates.json explicitly declares evidenceType for the fourteen adapted producers and sourceStep/role edges for report predecessors, plus the sample/Unity project contracts and sample build predecessor. Runner consumes these declarations; missing, unsupported or contradictory evidence and missing/ambiguous/mismatched predecessors fail before producer execution. Known adapter identity uses its resolved repository path, so path aliases cannot bypass the declaration requirement. Controls exercise the production runner with the real three-body report chain, configured type mutations and an exit0 producer without a receipt. Default evidence roots use a short i6 UUID prefix to keep Windows PowerShell paths within its host limits; artifacts remain isolated and retained.
++
++## B2a contracts and prerequisites
++
++The two benchmark wrappers now execute their actual bodies through entry-level fake native executors in controls. Gate context records an explicit restore/build and runs the bound binary with --no-build/--no-restore; standalone CLI retains its original implicit dotnet run build and native exit. Runtime report acceptance completes measurement coverage only. AOI validates the existing smoke/full case matrix and unchanged thresholds; native threshold exit2 is Failed1 with native2 retained. Reports are bound to invocation UUIDs, source/config, evaluated project/configuration/TFM, sample/outcome semantics and archived binary identity. Missing, malformed, stale, wrong-scope and contradictory reports fail. Fixtures do not benchmark.
++
++coverageDimensions in tools/test-gates.json supplies concrete expected configuration, TFM, host, policy and scope; the pure resolver appends those dimensions and a deterministic hash of configured arguments to declarations. It never probes an uninvoked host or guesses coverage from result names. Raw receipts cannot contain unresolved templates. Actual evaluated TFM/configuration, command filters and configured argument bindings must match before completion. The four Server/Orleans adapters still fail closed pending B2b; their concrete net10.0 declarations grant no completed service coverage.
++
++Installed Unity mirror requires explicit UnityBuildProofPath in a bound gate invocation. The proof schema is unity-build-proof.schema.json (abilitykit.unity-build-proof.v1): current run/config/source fingerprint before/after, prior successful editor compilation command/native exit/times/log, exact Unity version and editor identity, and before/after plus archived/current identity for the required project assemblies. Existing DLL bytes, a later hash capture or an installation path alone are not build proof. Absent proof is Blocked/MissingUnityProjectBinaryProvenance; malformed or mismatched proof is Failed. Optional conversion remains limited to exact MissingUnityInstallation. Standalone mirror reports Blocked2 once installation/project binaries exist because it has no bound current-run build context. This slice provides no production Unity compilation/proof exporter and does not claim the local installation or Library binaries are validated. A separately authorized, instrumented current-source Unity compile must supply the full proof before actual mirror/Unity acceptance can be attempted.
++
++Unity EditMode/PlayMode require declared assembly names, the same prerequisite build proof, current raw NUnit, reconciled executed counts and loaded assembly paths, and a host/filter/policy/report binding. An occupied project's UnityLockfile is Blocked/UnityProjectInUse and is never removed. Execute-method requires resultsFile and a method that consumes -abilityKitResultContext/-abilityKitResultFile and writes the exact abilitykit.unity-execute-method.v1 completion schema in unity-execute-method.schema.json. It is N/A for tests. There is currently no configured production execute-method producer; lack of completion/provenance cannot pass. unity-executor.ps1 exercises each actual runner path with only synthetic owned bytes and intercepted native operations; example=true proof/results cannot establish production acceptance.
++
++Frozen-B1 coordinator findings are regression controls: serialized dictionary/object binding IDs stay nonempty through nested aggregation; canonical status/kind/root enums are case exact; native stdout/stderr is captured as raw stream text without parent ErrorRecord formatting. Original coordinator evidence remains read-only. ControlFilter and SkipRunnerIntegration declare subsets and cannot set fullControlSuiteAccepted; total and executed are recorded separately. All earlier local b2f/b2u failures and raw invocation logs are retained.
+diff --git a/tools/tests/test-gate-result-contract.tests.ps1 b/tools/tests/test-gate-result-contract.tests.ps1
+new file mode 100644
+index 000000000..cae713c0e
+--- /dev/null
++++ b/tools/tests/test-gate-result-contract.tests.ps1
+@@ -0,0 +1,149 @@
++﻿param([string]$ArtifactRoot,[switch]$SkipRunnerIntegration,[string]$ControlFilter)
++$ErrorActionPreference='Stop'
++$repoRoot=[IO.Path]::GetFullPath((Join-Path $PSScriptRoot '../..'))
++. (Join-Path $repoRoot 'tools/test-gate-result-contract.ps1')
++$actualSourceReader=(Get-Command Get-GateSource).ScriptBlock
++$sourceBefore=& $actualSourceReader $repoRoot
++$testInputsBefore=@(Get-ChildItem -LiteralPath $PSScriptRoot -Recurse -File|Where-Object{$_.Extension -in @('.ps1','.py','.json')}|Sort-Object FullName|ForEach-Object{@{path=$_.FullName.Substring($repoRoot.Length+1).Replace('\','/');sha256=Get-GateHash $_.FullName}})
++$invocationArguments=@('-NoProfile','-ExecutionPolicy','Bypass','-File','tools/tests/test-gate-result-contract.tests.ps1')
++if($PSBoundParameters.ContainsKey('ArtifactRoot')){$invocationArguments+=@('-ArtifactRoot',$ArtifactRoot)}
++if($SkipRunnerIntegration){$invocationArguments+='-SkipRunnerIntegration'}
++if($ControlFilter){$invocationArguments+=@('-ControlFilter',$ControlFilter)}
++$pythonVersion=(& python --version 2>&1|Out-String).Trim()
++if(-not $ArtifactRoot){$ArtifactRoot=Join-Path $repoRoot ('local/Artifacts/i6-'+[guid]::NewGuid().ToString())}
++$ArtifactRoot=[IO.Path]::GetFullPath($ArtifactRoot)
++$null=New-Item -ItemType Directory -Path $ArtifactRoot -Force
++$cases=New-Object 'System.Collections.Generic.List[object]'
++function Check([string]$Name,[scriptblock]$Body){
++    if($ControlFilter -and $Name -notlike $ControlFilter){$cases.Add(@{name=$Name;status='NotRun';reason='Focused control filter'});return}
++    try{& $Body;$cases.Add(@{name=$Name;status='Passed'})}
++    catch{$cases.Add(@{name=$Name;status='Failed';reason=$_.Exception.Message});Write-Host "FAIL $Name : $_"}
++}
++function Require($Condition,[string]$Message){if(-not $Condition){throw $Message}}
++function Reject([scriptblock]$Body){$rejected=$false;try{& $Body}catch{$rejected=$true};Require $rejected 'Expected rejection did not occur.'}
++function Copy-Result($Value){return $Value|ConvertTo-Json -Depth 80|ConvertFrom-Json}
++$source=@{sha=('a'*40);dirty=$false;inputManifestSha256=('b'*64)}
++$run=[guid]::NewGuid().ToString()
++$leaf=New-GateResult $run 'fixture assertion producer' 'powershell-script' $source ('c'*64) @('tests:fixture')
++$leaf.startedAt='2026-10-04T00:00:00Z';$leaf.endedAt='2026-10-04T00:00:05Z';$leaf.executionStartedAt='2026-10-04T00:00:01Z';$leaf.executionEndedAt='2026-10-04T00:00:04Z'
++$leaf.command=@{executable='fixture';arguments=@('test')};$leaf.processExitCode=0
++$leaf.tests=@{declared=$true;total=1;resultEntries=1;executed=1;passed=1;failed=0;skipped=0;notExecuted=0}
++$node=Join-Path $ArtifactRoot $leaf.resultId;$null=New-Item -ItemType Directory $node
++Set-Content (Join-Path $node 'report.txt') 'owned evidence' -Encoding UTF8
++Add-GateArtifact $leaf $ArtifactRoot (Join-Path $node 'report.txt') 'report'
++Require ((Get-Item (Join-Path $node 'report.txt')).Length -gt 0) 'Owned fixture evidence must exist.'
++ConvertTo-Json -InputObject @(@{id='fixture-assertion-1';outcome='Passed';name='owned fixture artifact exists'})|Set-Content (Join-Path $node 'assertions.json') -Encoding UTF8
++Add-GateArtifact $leaf $ArtifactRoot (Join-Path $node 'assertions.json') 'assertions'
++Set-GateTerminal $leaf 'Passed' $null
++Check 'valid-semantic-leaf' {Assert-GateResult $leaf $ArtifactRoot}
++foreach($field in @('runId','resultId','coverage','source','status','command','tests','artifacts')){
++    Check "missing-$field" {$v=Copy-Result $leaf;$v.PSObject.Properties.Remove($field);Reject {Assert-GateResult $v $ArtifactRoot}}
++}
++Check 'unknown-field' {$v=Copy-Result $leaf;$v|Add-Member invented 1;Reject {Assert-GateResult $v $ArtifactRoot}}
++Check 'production-example' {$v=Copy-Result $leaf;$v.example=$true;Reject {Assert-GateResult $v $ArtifactRoot}}
++Check 'canonical-exit' {$v=Copy-Result $leaf;$v.cliExitCode=2;Reject {Assert-GateResult $v $ArtifactRoot}}
++Check 'native-failure-zero-cli' {$v=Copy-Result $leaf;$v.processExitCode=2;Reject {Assert-GateResult $v $ArtifactRoot}}
++Check 'source-mutated' {$v=Copy-Result $leaf;$v.source.inputManifestAfterSha256='d'*64;Reject {Assert-GateResult $v $ArtifactRoot}}
++Check 'process-time-outside-invocation' {$v=Copy-Result $leaf;$v.executionEndedAt='2026-10-04T00:00:06Z';Reject {Assert-GateResult $v $ArtifactRoot}}
++Check 'negative-duration' {$v=Copy-Result $leaf;$v.endedAt='2026-10-03T00:00:00Z';Reject {Assert-GateResult $v $ArtifactRoot}}
++foreach($counter in @('total','executed','resultEntries','passed','failed','skipped','notExecuted')){
++    Check "count-$counter" {$v=Copy-Result $leaf;$v.tests.$counter++;Reject {Assert-GateResult $v $ArtifactRoot}}
++}
++Check 'zero-test-coverage' {$v=Copy-Result $leaf;foreach($key in @('total','executed','resultEntries','passed')){$v.tests.$key=0};Reject {Assert-GateResult $v $ArtifactRoot}}
++Check 'wrong-artifact-owner' {$v=Copy-Result $leaf;$v.artifacts[0].producerResultId=[guid]::NewGuid().ToString();Reject {Assert-GateResult $v $ArtifactRoot}}
++Check 'artifact-hash' {$v=Copy-Result $leaf;$v.artifacts[0].sha256='d'*64;Reject {Assert-GateResult $v $ArtifactRoot}}
++Check 'artifact-size' {$v=Copy-Result $leaf;$v.artifacts[0].bytes++;Reject {Assert-GateResult $v $ArtifactRoot}}
++Check 'leaf-binding-wrong-id' {$v=Copy-Result $leaf;$v.coverage.bindings.'tests:fixture'=@([guid]::NewGuid().ToString());Reject {Assert-GateResult $v $ArtifactRoot}}
++foreach($path in @('../old.txt','x/../old.txt','x\old.txt','C:/old.txt','//host/path','x:stream','CON.txt','x/NUL','x/COM1.log','x/end.','x/end ','x//file','/root','x/./file','x/a b.txt','x/thing?')){
++    Check "unsafe-path:$path" {Reject {Resolve-GateArtifact $ArtifactRoot $path}}
++}
++Check 'safe-slash-path' {Require ((Resolve-GateArtifact $ArtifactRoot ($leaf.resultId+'/report.txt')) -eq (Join-Path $node 'report.txt')) 'Safe path did not resolve.'}
++function Write-Trx([string]$Name,[string]$Outcome,[int]$Total=1,[int]$Passed=0,[int]$Failed=0){
++    $path=Join-Path $ArtifactRoot ($Name+'.trx')
++    "<TestRun xmlns='http://microsoft.com/schemas/VisualStudio/TeamTest/2010'><Results><UnitTestResult executionId='1' outcome='$Outcome'/></Results><ResultSummary><Counters total='$Total' executed='1' passed='$Passed' failed='$Failed'/></ResultSummary></TestRun>"|Set-Content $path -Encoding UTF8
++    return $path
++}
++Check 'trx-valid' {$counts=Get-GateTestCounts (Write-Trx 'passed' 'Passed' 1 1 0) 'trx';Assert-GateTests $counts}
++Check 'trx-failed-native0' {$counts=Get-GateTestCounts (Write-Trx 'failed-native0' 'Failed' 1 0 1) 'trx';Reject {Assert-GateTests $counts}}
++Check 'trx-total-contradiction-native0' {Reject {Get-GateTestCounts (Write-Trx 'bad-total' 'Passed' 2 1 0) 'trx'}}
++Check 'trx-outcome-counter-contradiction' {Reject {Get-GateTestCounts (Write-Trx 'bad-failed' 'Failed' 1 1 0) 'trx'}}
++Check 'trx-unknown-outcome' {Reject {Get-GateTestCounts (Write-Trx 'unknown-outcome' 'Completed' 1 1 0) 'trx'}}
++Check 'nunit-skips-not-executed' {
++    $path=Join-Path $ArtifactRoot 'skipped.xml'
++    "<test-run total='3' testcasecount='3' passed='1' failed='0' inconclusive='0' skipped='2' ignored='1'><test-case id='1' result='Passed'/><test-case id='2' result='Skipped' label='Ignored'/><test-case id='3' result='Skipped'/></test-run>"|Set-Content $path
++    $counts=Get-GateTestCounts $path 'nunit'
++    Require ($counts.executed -eq 1 -and $counts.skipped -eq 2 -and $counts.total -eq 3) 'Skipped tests counted as executed.'
++    Reject {Assert-GateTests $counts}
++}
++Check 'nunit-raw-skip-counter' {
++    $path=Join-Path $ArtifactRoot 'bad-skipped.xml'
++    "<test-run total='1' passed='0' failed='0' inconclusive='0' skipped='0'><test-case id='1' result='Skipped'/></test-run>"|Set-Content $path
++    Reject {Get-GateTestCounts $path 'nunit'}
++}
++Check 'audit-tests-na' {$v=Copy-Result $leaf;$v.tests=$null;Assert-GateResult $v $ArtifactRoot}
++Check 'build-missing-provenance' {$v=Copy-Result $leaf;$v.kind='dotnet-build';$v.tests=$null;Reject {Assert-GateResult $v $ArtifactRoot}}
++Check 'focus-partial-aggregate4' {
++    $parent=New-GateResult $run 'gate' 'gate' $source ('c'*64) @('tests:fixture','tests:unselected')
++    $unselected=New-GateResult $run 'unselected' 'dotnet-test' $source ('c'*64) @('tests:unselected')
++    $parent.startedAt=$leaf.startedAt;$parent.endedAt=$leaf.endedAt
++    Merge-GateResults $parent @($leaf,$unselected)
++    Require ($parent.cliExitCode -eq 4 -and -not $parent.fullGateAccepted -and $parent.startedAt) 'Focus aggregate overstated coverage.'
++    Assert-GateResult $parent $ArtifactRoot
++}
++Check 'failure-precedence' {$v=Copy-Result $leaf;Set-GateTerminal $v 'Failed' 'business';$parent=New-GateResult $run 'parent' 'gate' $source ('c'*64) @('tests:fixture');Merge-GateResults $parent @($v);Require ($parent.cliExitCode -eq 1) 'Failure must dominate.'}
++Check 'required-blocked-precedence' {$v=Copy-Result $leaf;Set-GateTerminal $v 'Blocked' 'MissingTool';$parent=New-GateResult $run 'parent' 'gate' $source ('c'*64) @('tests:fixture');Merge-GateResults $parent @($v);Require ($parent.cliExitCode -eq 2) 'Blocked must dominate.'}
++Check 'duplicate-node-id' {$parent=New-GateResult $run 'parent' 'gate' $source ('c'*64) @('tests:fixture');$parent.startedAt=$leaf.startedAt;$parent.endedAt=$leaf.endedAt;Merge-GateResults $parent @($leaf,$leaf);Reject {Assert-GateResult $parent $ArtifactRoot}}
++Check 'false-parent-coverage' {$parent=New-GateResult $run 'parent' 'gate' $source ('c'*64) @('tests:fixture');$parent.startedAt=$leaf.startedAt;$parent.endedAt=$leaf.endedAt;Merge-GateResults $parent @($leaf);$parent.coverage.completed=@();Reject {Assert-GateResult $parent $ArtifactRoot}}
++if(-not $SkipRunnerIntegration){Check 'required-missing-unity-green' {
++    $configPath=Join-Path $ArtifactRoot 'missing-unity-config.json'
++    @{defaultGate='mirror';gates=@(@{name='mirror';steps=@(@{name='missing mirror';kind='powershell-script';script='tools/run-unity-compile-check.ps1';evidenceType='build';provenanceProject='tools/unity-compile-check/UnityCompileCheck.csproj';arguments=@('-UnityVersion','issue6-intentionally-absent');required=$true;coverage=@('build:mirror:absent')})})}|ConvertTo-Json -Depth 15|Set-Content $configPath -Encoding UTF8
++    & powershell -NoProfile -ExecutionPolicy Bypass -File (Join-Path $repoRoot 'tools/run_test_gate.ps1') -ConfigPath $configPath -Gate mirror -ResultsDirectory (Join-Path $ArtifactRoot 'runner-green') *> (Join-Path $ArtifactRoot 'runner-green.log')
++    Require ($LASTEXITCODE -eq 2) "Missing mirror must Blocked2, actual $LASTEXITCODE"
++    $summary=Get-ChildItem (Join-Path $ArtifactRoot 'runner-green') -Filter gate-summary.json -Recurse|Where-Object{$_.Directory.Parent.Name -eq 'runner-green'}|Select-Object -First 1
++    Require ($null -ne $summary) 'Root summary missing.'
++    $result=Get-Content $summary.FullName -Raw|ConvertFrom-Json
++    Require ($result.status -eq 'Blocked' -and $result.steps[0].reason -eq 'MissingUnityInstallation') 'Original skip red did not become truthful Blocked.'
++    & python (Join-Path $PSScriptRoot 'fixtures/validate-emitted-shape.py') result $summary.FullName *> (Join-Path $ArtifactRoot 'runner-green-shape.log')
++    Require ($LASTEXITCODE -eq 0) 'Actual production-mode missing-install tree schema mismatch.'
++}}else{$cases.Add(@{name='required-missing-unity-green';status='NotRun';reason='Focused semantic/provenance controls'})}
++if(-not $SkipRunnerIntegration){
++    foreach($scenario in @('Passed','Failed','Blocked')){
++        Check "runner-focus-$scenario" {
++            $configPath=Join-Path $ArtifactRoot ("focus-$scenario.json")
++            @{example=$true;defaultGate='focus';gates=@(@{name='focus';steps=@(
++                @{name='selected';kind='powershell-script';script='tools/tests/fixtures/runner-producer.ps1';arguments=@('-Outcome',$scenario);coverage=@('tests:selected');evidenceType='assertions'},
++                @{name='unselected';kind='powershell-script';script='tools/tests/fixtures/runner-producer.ps1';arguments=@();coverage=@('tests:unselected');evidenceType='assertions'}
++            )})}|ConvertTo-Json -Depth 15|Set-Content $configPath -Encoding UTF8
++            $runnerRoot=Join-Path $ArtifactRoot ("focus-$scenario")
++            & powershell -NoProfile -ExecutionPolicy Bypass -File (Join-Path $repoRoot 'tools/run_test_gate.ps1') -ConfigPath $configPath -Gate focus -StepName selected -ResultsDirectory $runnerRoot -FixtureMode *> (Join-Path $ArtifactRoot ("focus-$scenario.log"))
++            $expected=@{Passed=4;Failed=1;Blocked=2}[$scenario]
++            Require ($LASTEXITCODE -eq $expected) "Expected focus $scenario exit$expected; actual $LASTEXITCODE"
++            $summary=Get-ChildItem $runnerRoot -Filter gate-summary.json -Recurse|Where-Object{$_.Directory.Parent.FullName -eq $runnerRoot}|Select-Object -First 1
++            $result=Get-Content $summary.FullName -Raw|ConvertFrom-Json
++            Require ($result.steps.Count -eq 2 -and $result.steps[1].status -eq 'NotRun' -and $null -eq $result.steps[1].startedAt -and -not $result.fullGateAccepted) 'Focus did not retain all unselected coverage.'
++            Require ($result.steps[0].status -eq $scenario) 'Selected leaf status mismatch.'
++            if($scenario -eq 'Failed'){Require ($result.steps[0].processExitCode -eq 2 -and $result.steps[0].cliExitCode -eq 1) 'Business native2 lost or mistaken for Blocked.'}
++        }
++    }
++    Check 'optional-missing-unity-exact-reason' {
++        $configPath=Join-Path $ArtifactRoot 'optional-unity.json'
++        @{defaultGate='optional';gates=@(@{name='optional';steps=@(@{name='optional mirror';kind='powershell-script';script='tools/run-unity-compile-check.ps1';evidenceType='build';provenanceProject='tools/unity-compile-check/UnityCompileCheck.csproj';arguments=@('-UnityVersion','issue6-intentionally-absent');required=$false;optionalReason='MissingUnityInstallation';coverage=@('build:optional-mirror')})})}|ConvertTo-Json -Depth 15|Set-Content $configPath -Encoding UTF8
++        $runnerRoot=Join-Path $ArtifactRoot 'optional-unity'
++        & powershell -NoProfile -ExecutionPolicy Bypass -File (Join-Path $repoRoot 'tools/run_test_gate.ps1') -ConfigPath $configPath -Gate optional -ResultsDirectory $runnerRoot *> (Join-Path $ArtifactRoot 'optional-unity.log')
++        Require ($LASTEXITCODE -eq 3) 'All optional absence should aggregate Skipped3.'
++        $summary=Get-ChildItem $runnerRoot -Filter gate-summary.json -Recurse|Where-Object{$_.Directory.Parent.FullName -eq $runnerRoot}|Select-Object -First 1
++        $result=Get-Content $summary.FullName -Raw|ConvertFrom-Json
++        Require ($result.steps[0].status -eq 'Skipped' -and $result.steps[0].originalResult.status -eq 'Blocked' -and $result.steps[0].originalResult.required -and $result.steps[0].processExitCode -eq 2) 'Optional conversion erased required raw missing-install evidence.'
++    }
++}
++. (Join-Path $PSScriptRoot 'fixtures/b1-controls.ps1')
++. (Join-Path $PSScriptRoot 'fixtures/b2a-controls.ps1')
++. (Join-Path $PSScriptRoot 'fixtures/provenance-controls.ps1')
++$sourceAfter=& $actualSourceReader $repoRoot
++$testInputsAfter=@(Get-ChildItem -LiteralPath $PSScriptRoot -Recurse -File|Where-Object{$_.Extension -in @('.ps1','.py','.json')}|Sort-Object FullName|ForEach-Object{@{path=$_.FullName.Substring($repoRoot.Length+1).Replace('\','/');sha256=Get-GateHash $_.FullName}})
++Check 'harness-tested-inputs-stable' {Assert-GateSource $sourceBefore $sourceAfter;Require ((Get-GateFingerprint $testInputsBefore) -eq (Get-GateFingerprint $testInputsAfter)) 'Test harness/fixture inputs changed during controls.'}
++$failed=@($cases|Where-Object{$_.status -eq 'Failed'})
++$observedExitCode=$(if($failed.Count){1}else{0})
++@{status=$(if($failed.Count){'Failed'}else{'Passed'});cases=$cases.ToArray();total=$cases.Count;executed=@($cases|Where-Object{$_.status -in @('Passed','Failed')}).Count;failed=$failed.Count;artifactRoot=$ArtifactRoot;tools=@{powershell=$PSVersionTable.PSVersion.ToString();python=$pythonVersion};sourceBefore=$sourceBefore;sourceAfter=$sourceAfter;testInputsBefore=$testInputsBefore;testInputsAfter=$testInputsAfter;command=@{executable='powershell';arguments=$invocationArguments};observedExitCode=$observedExitCode;declaredControlScope=$(if($ControlFilter){'filtered controls: '+$ControlFilter}elseif($SkipRunnerIntegration){'semantic and real-body fake-executor provenance controls'}else{'semantic, real-body fake-executor provenance and isolated runner integration controls'});fullControlSuiteAccepted=(-not $SkipRunnerIntegration -and -not $ControlFilter -and -not $failed.Count);notRun=@('real dotnet gate','Unity Editor','services/network smoke','soak','performance','online CI')}|ConvertTo-Json -Depth 20|Set-Content (Join-Path $ArtifactRoot 'controls.json') -Encoding UTF8
++Write-Host "Result contract controls: total=$($cases.Count), failed=$($failed.Count), evidence=$ArtifactRoot"
++exit $observedExitCode

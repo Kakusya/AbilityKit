@@ -1,0 +1,18 @@
+{
+  "version": 1,
+  "flow_id": "6d3174fd-2b01-4136-8ea5-0b0cd0e2845d",
+  "seq": 1,
+  "op_id": "6d3174fd-2b01-4136-8ea5-0b0cd0e2845d:000001",
+  "kind": "receipt",
+  "recorded_utc": "2026-10-05T16:55:23.586839Z",
+  "intent_hash": "86b990e14ae2fb1acb9a7341c8d4fbb45366fdb86b601bf3088c3a3be81f04b3",
+  "outcome": "applied",
+  "raw_ref": "evidence/run-create-raw.json",
+  "result": {
+    "run_id": "run_5ba664a5f016",
+    "request_id": "df4d9ad2-09b5-441b-ba0d-1b73bc12fd0b",
+    "command": "orca orchestration run-create --from invoking-main --json",
+    "exit_code": 0,
+    "coordinator_handle": "term_08a896e7-f2ff-477d-85c0-1962eb3a8136"
+  }
+}

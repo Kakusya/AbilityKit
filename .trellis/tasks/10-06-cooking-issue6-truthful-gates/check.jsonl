@@ -1,0 +1,7 @@
+{"file": "AGENTS.md", "reason": "Owner Cooking-only authorization"}
+{"file": ".trellis/spec/cooking/index.md", "reason": "Current Cooking contract routing"}
+{"file": ".trellis/spec/abilitykit/supervised-issue-delivery.md", "reason": "Explicit workflow authority"}
+{"file": ".trellis/spec/abilitykit/validation.md", "reason": "Evidence rules"}
+{"file": "Docs/design/CookingGame/current-et-foundation-contract.md", "reason": "Accepted Issue5 result/coverage contract"}
+{"file": ".trellis/tasks/10-06-cooking-issue6-truthful-gates/prd.md", "reason": "Scoped requirement"}
+{"file": ".trellis/tasks/10-06-cooking-issue6-truthful-gates/design.md", "reason": "Pending dot technical plan"}

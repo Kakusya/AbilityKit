@@ -1,0 +1,16 @@
+{
+  "argv": [
+    "gh",
+    "issue",
+    "view",
+    "6",
+    "--repo",
+    "Kakusya/AbilityKit",
+    "--json",
+    "number,title,body,labels,state,comments,url"
+  ],
+  "exit": 1,
+  "observed_utc": "2026-10-05T16:52:39.516438Z",
+  "stdout": "",
+  "stderr": "Post \"https://api.github.com/graphql\": EOF\n"
+}

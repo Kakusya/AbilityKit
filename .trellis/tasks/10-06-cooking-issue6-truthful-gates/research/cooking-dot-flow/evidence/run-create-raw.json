@@ -1,0 +1,22 @@
+﻿{
+  "id": "e575e8a4-bbeb-4eaa-9b91-10d2dbbe95c3",
+  "ok": true,
+  "result": {
+    "run": {
+      "id": "run_5ba664a5f016",
+      "objective": "Issue6 Cooking-only truthful gate continuation; original main sole coordinator; dot plans and exact-SHA acceptance; old broad tree stopped",
+      "coordinator_handle": "term_08a896e7-f2ff-477d-85c0-1962eb3a8136",
+      "consumer_generation": 1,
+      "legacy": 0,
+      "created_at": "2026-10-05T16:54:36Z",
+      "updated_at": "2026-10-05T16:54:36Z"
+    },
+    "mutation": {
+      "requestId": "df4d9ad2-09b5-441b-ba0d-1b73bc12fd0b",
+      "replayed": false
+    }
+  },
+  "_meta": {
+    "runtimeId": "ff0c5f2c-d341-4455-bc1c-c113650bdd60"
+  }
+}

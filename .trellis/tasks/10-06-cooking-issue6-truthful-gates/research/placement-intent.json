@@ -1,0 +1,14 @@
+{
+  "operation": "issue6-cooking-managed-placement-20261006-01",
+  "action": "orca-worktree-create",
+  "authorization": "entry-approval.md",
+  "repository": "https://github.com/Kakusya/AbilityKit",
+  "repo_id": "aaa97e0d-5026-4e5c-95f8-bb420dcb4c65",
+  "name": "issue6-cooking-truthful-gates",
+  "base_ref": "origin/master",
+  "expected_base_sha": "c78ed3de83f69bb53ff1a09bbc23638115928e1e",
+  "parent_worktree": "aaa97e0d-5026-4e5c-95f8-bb420dcb4c65::D:/MyWorkTree/AbilityKit",
+  "setup": "skip",
+  "agent": null,
+  "reason": "Preserve main-tree dirty work and stopped broad example implementation; dot planning must precede worker implementation. No worker prompt is sent by placement."
+}

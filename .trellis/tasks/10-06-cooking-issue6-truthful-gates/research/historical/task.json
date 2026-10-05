@@ -1,0 +1,40 @@
+{
+  "id": "test-gate-result-contract",
+  "name": "test-gate-result-contract",
+  "title": "Issue 6 gate result truth and coverage contract",
+  "description": "Implement approved truthful gate result, coverage and provenance contract",
+  "status": "blocked",
+  "dev_type": "backend",
+  "scope": "test-gate-result-contract-implementation",
+  "package": null,
+  "priority": "P0",
+  "creator": "Kakusya",
+  "assignee": "Kakusya",
+  "createdAt": "2026-10-04",
+  "completedAt": null,
+  "branch": "Kakusya/issue6-test-gate-results",
+  "base_branch": "master",
+  "worktree_path": null,
+  "commit": null,
+  "pr_url": "https://github.com/Kakusya/AbilityKit/pull/11",
+  "subtasks": [],
+  "children": [],
+  "parent": null,
+  "relatedFiles": [],
+  "notes": "2026-10-05 OWNER SCOPE CORRECTION: only Cooking; stop Shooter/MOBA/Orleans examples, original broad B2b/B2/C and whole-branch integration. Preserve commits/evidence. Revised shared work requires Cooking-specific necessity and reviewed scope. Previous historical note: Parent coordinator approved plan at clean 5dc303a80953afefbaed8acd315e1978fdcd74d9 on 2026-10-04; production implementation authorized, final acceptance reserved to parent. Approval receipt: D:/MyWorkTree/AbilityKit/local/Artifacts/issue6-coordinator-audit/plan-approval-5dc303a809.json. Dispatch task_25749232d7ec / ctx_69db98a13305. Preserve prior evidence.",
+  "meta": {
+    "issue": 6,
+    "base_sha": "7aa3e8b67c13a469192edaa761cb3dfc1fa9294b",
+    "base_dirty": false,
+    "approval": "parent-plan-approved-5dc303a809",
+    "review_revision": "PR11 review 5405864745, Issue comment 5979617698, and parent audit A/B of 325ef2b9bd50ea196e14dd8d17b7aca0c503cf3b",
+    "approvalReceipt": "D:/MyWorkTree/AbilityKit/local/Artifacts/issue6-coordinator-audit/plan-approval-5dc303a809.json",
+    "scope_correction": {
+      "date": "2026-10-05",
+      "authority": "Owner explicitly reaffirmed Cooking-only scope",
+      "state": "original-broad-plan-stopped",
+      "record": "research/cooking-only-scope-stop.md",
+      "prior_implementation_approval_superseded_for_broad_scope": true
+    }
+  }
+}

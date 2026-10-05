@@ -1,0 +1,14 @@
+{
+  "argv": [
+    "orca",
+    "terminal",
+    "list",
+    "--worktree",
+    "id:aaa97e0d-5026-4e5c-95f8-bb420dcb4c65::D:/MyWorkTree/AbilityKit",
+    "--json"
+  ],
+  "exit": 0,
+  "observed_utc": "2026-10-05T16:52:36.096229Z",
+  "stdout": "{\n  \"id\": \"ecef4649-ee1a-45f6-8679-e03c28cbffc9\",\n  \"ok\": true,\n  \"result\": {\n    \"terminals\": [\n      {\n        \"handle\": \"term_08a896e7-f2ff-477d-85c0-1962eb3a8136\",\n        \"ptyId\": \"aaa97e0d-5026-4e5c-95f8-bb420dcb4c65::D:/MyWorkTree/AbilityKit@@c66676f4\",\n        \"incarnationId\": \"70c07a7c-bcea-4ae7-abd4-4184f6399feb\",\n        \"orphaned\": false,\n        \"worktreeId\": \"aaa97e0d-5026-4e5c-95f8-bb420dcb4c65::D:/MyWorkTree/AbilityKit\",\n        \"worktreePath\": \"D:/MyWorkTree/AbilityKit\",\n        \"branch\": \"\",\n        \"tabId\": \"a7e3cdc6-4c1a-4914-87a0-4652bd7ac845\",\n        \"leafId\": \"0100b47f-33a3-419b-afb2-78bcaeedddba\",\n        \"title\": \"⠼ 继续完成issue#6并推送新分支 | AbilityKit\",\n        \"connected\": true,\n        \"writable\": true,\n        \"lastOutputAt\": 1791219156010,\n        \"preview\": \"ngkingkingingingngnggg2•••••3•••••4•••••WW5Wo•WoWor•WorkWork•WorkiWorki•WorkinWorkin•Workingorkingrkingrkingkingkingingingngngg6•••••7•••••8•••••WW9•WoWor•WorWork•WorkWorki•WorkiWorkinWoring•orkingrkingrkingkingkingingngnggg50•••••1••••• · 1 background terminal running · /ps to view · /stop to close\",\n        \"executionHostId\": \"local\",\n        \"agentIdentity\": \"codex\"\n      }\n    ],\n    \"hostScope\": {\n      \"hostIds\": [\n        \"local\"\n      ],\n      \"omittedHostIds\": []\n    },\n    \"topologyRevisions\": {\n      \"aaa97e0d-5026-4e5c-95f8-bb420dcb4c65::D:/MyWorkTree/AbilityKit\": 59\n    },\n    \"totalCount\": 1,\n    \"truncated\": false\n  },\n  \"_meta\": {\n    \"runtimeId\": \"ff0c5f2c-d341-4455-bc1c-c113650bdd60\"\n  }\n}\n",
+  "stderr": ""
+}

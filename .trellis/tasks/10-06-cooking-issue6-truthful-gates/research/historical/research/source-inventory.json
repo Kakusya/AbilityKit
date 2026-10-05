@@ -1,0 +1,360 @@
+{
+  "sourceSha": "7aa3e8b67c13a469192edaa761cb3dfc1fa9294b",
+  "sourceDirtyBeforePlanning": false,
+  "gateCount": 32,
+  "stepKindCounts": {
+    "dotnet-build": 8,
+    "dotnet-test": 73,
+    "powershell-script": 21,
+    "gate": 9,
+    "unity-editmode-test": 18,
+    "unity-playmode-test": 1
+  },
+  "scriptCount": 18,
+  "scripts": [
+    {
+      "path": "tools/validate_moba_codegen_ownership.ps1",
+      "sha256": "9faf133942c4177e327ed05abfe97d8bbd5a14dc13150fe69144c4225b22f756",
+      "uses": [
+        {
+          "gate": "moba-codegen",
+          "step": "Validate MOBA CodeGen package ownership",
+          "arguments": []
+        }
+      ],
+      "migration": "Explicit producer result; preserve existing validation and standalone CLI; validation details audited before implementation approval."
+    },
+    {
+      "path": "tools/audit_core_boundaries.ps1",
+      "sha256": "af310901a4097201d3db98a0fd09a2ace8d23bdfb2b801f6b0f6b472f756fb39",
+      "uses": [
+        {
+          "gate": "core-stability",
+          "step": "Core assembly and platform boundary audit",
+          "arguments": []
+        }
+      ],
+      "migration": "Explicit producer result; preserve existing validation and standalone CLI; validation details audited before implementation approval."
+    },
+    {
+      "path": "tools/run-unity-compile-check.ps1",
+      "sha256": "58ed14c6a015dad78d27a18b358c628975e3b6578fed8136a19845cf4f6abadd",
+      "uses": [
+        {
+          "gate": "core-stability",
+          "step": "BehaviorTree Unity compile check (asmdef boundary mirror; skips if Unity absent)",
+          "arguments": []
+        }
+      ],
+      "migration": "Explicit producer result; preserve existing validation and standalone CLI; validation details audited before implementation approval."
+    },
+    {
+      "path": "tools/audit_unity_package_dependencies.ps1",
+      "sha256": "176d6a145cad5ef1451d82df5a594819e92b01e5670fa7272eced79ac6dcda26",
+      "uses": [
+        {
+          "gate": "core-stability",
+          "step": "Core UPM direct dependency audit",
+          "arguments": [
+            "-PackageNames",
+            "com.abilitykit.continuous,com.abilitykit.behavior,com.abilitykit.record,com.abilitykit.world.statesync,com.abilitykit.world.framesync,com.abilitykit.network.runtime,com.abilitykit.network.transport.websocket,com.abilitykit.host,com.abilitykit.triggering,com.abilitykit.context,com.abilitykit.attributes,com.abilitykit.modifiers,com.abilitykit.demo.moba.runtime,com.abilitykit.demo.moba.editor,com.abilitykit.demo.moba.view.runtime"
+          ]
+        }
+      ],
+      "migration": "Explicit producer result; preserve existing validation and standalone CLI; validation details audited before implementation approval."
+    },
+    {
+      "path": "tools/check_sample_baseline.ps1",
+      "sha256": "ea01e94451618b60717eb46402926adb238488a2863275c45fb1ce57c4ee17c5",
+      "uses": [
+        {
+          "gate": "foundation-units",
+          "step": "Sample catalog golden baseline",
+          "arguments": [
+            "-NoBuild"
+          ]
+        }
+      ],
+      "migration": "Explicit producer result; preserve existing validation and standalone CLI; validation details audited before implementation approval."
+    },
+    {
+      "path": "tools/validate_moba_hero_acceptance_coverage.ps1",
+      "sha256": "1a8b2ae221e6034cea0e4fefa5551fd06731c1334867a6bf47a75ef49315d0fb",
+      "uses": [
+        {
+          "gate": "moba-content-contracts",
+          "step": "MOBA hero acceptance coverage manifest",
+          "arguments": []
+        }
+      ],
+      "migration": "Explicit producer result; preserve existing validation and standalone CLI; validation details audited before implementation approval."
+    },
+    {
+      "path": "tools/moba_business_id.tests.ps1",
+      "sha256": "e466a35f28177b5dda2c55a7808961144ee6d4ccad30e41acd1741ad454b600f",
+      "uses": [
+        {
+          "gate": "moba-content-contracts",
+          "step": "MOBA business ID governance tests",
+          "arguments": []
+        }
+      ],
+      "migration": "Explicit producer result; preserve existing validation and standalone CLI; validation details audited before implementation approval."
+    },
+    {
+      "path": "tools/moba_business_id.ps1",
+      "sha256": "93555e36599be302ae59d31838c9f0f2ba35c1974fa79b293ae6515da7bf4837",
+      "uses": [
+        {
+          "gate": "moba-content-contracts",
+          "step": "MOBA authoritative business IDs",
+          "arguments": [
+            "-Mode",
+            "Validate"
+          ]
+        }
+      ],
+      "migration": "Explicit producer result; preserve existing validation and standalone CLI; validation details audited before implementation approval."
+    },
+    {
+      "path": "tools/build_moba_content_report.tests.ps1",
+      "sha256": "54becc88c47db54a7eeedeea5061e782d035112053658f48e80a53508a91345b",
+      "uses": [
+        {
+          "gate": "moba-content-contracts",
+          "step": "MOBA content dependency report tests",
+          "arguments": []
+        }
+      ],
+      "migration": "Explicit producer result; preserve existing validation and standalone CLI; validation details audited before implementation approval."
+    },
+    {
+      "path": "tools/build_moba_content_report.ps1",
+      "sha256": "cc5ca3494eddb6f233900d2807ec59fda2230ef9f70d152272444f37ec736aec",
+      "uses": [
+        {
+          "gate": "moba-content-contracts",
+          "step": "MOBA content dependency report",
+          "arguments": [
+            "-OutputPath",
+            "{GateOutputDirectory}/moba-content-dependency-report.json",
+            "-Validate"
+          ]
+        }
+      ],
+      "migration": "Explicit producer result; preserve existing validation and standalone CLI; validation details audited before implementation approval."
+    },
+    {
+      "path": "tools/export_moba_content_ir.ps1",
+      "sha256": "f435da6ac0f513c97c088651ea16c9127bb21f2c7825875f58508eca94f69fb4",
+      "uses": [
+        {
+          "gate": "moba-content-contracts",
+          "step": "MOBA portable content analysis data",
+          "arguments": [
+            "-ReportPath",
+            "{GateOutputDirectory}/moba-content-dependency-report.json",
+            "-GraphOutputPath",
+            "{GateOutputDirectory}/moba-content-graph.json",
+            "-DiagnosticsOutputPath",
+            "{GateOutputDirectory}/moba-content-diagnostics.json"
+          ]
+        }
+      ],
+      "migration": "Explicit producer result; preserve existing validation and standalone CLI; validation details audited before implementation approval."
+    },
+    {
+      "path": "tools/build_moba_content_graph.ps1",
+      "sha256": "563dba644e5df779d5b4e98af411d183e6848dec497bcccbb9434f50bcf6258e",
+      "uses": [
+        {
+          "gate": "moba-content-contracts",
+          "step": "MOBA content dependency graph",
+          "arguments": [
+            "-GraphPath",
+            "{GateOutputDirectory}/moba-content-graph.json",
+            "-DiagnosticsPath",
+            "{GateOutputDirectory}/moba-content-diagnostics.json",
+            "-HtmlOutputPath",
+            "{GateOutputDirectory}/moba-content-dependency-graph.html",
+            "-DotOutputPath",
+            "{GateOutputDirectory}/moba-content-dependency-graph.dot"
+          ]
+        }
+      ],
+      "migration": "Explicit producer result; preserve existing validation and standalone CLI; validation details audited before implementation approval."
+    },
+    {
+      "path": "Server/Orleans/tools/run_shooter_multiprocess_smoke.ps1",
+      "sha256": "27b525f71375fb83d1bac276e348a57dbbcc809955486330da94b75ab27c7cff",
+      "uses": [
+        {
+          "gate": "shooter-multiprocess",
+          "step": "TEST-01B minimal profile",
+          "arguments": [
+            "-Configuration",
+            "Release",
+            "-Profile",
+            "minimal",
+            "-TcpPort",
+            "44101",
+            "-SiloPort",
+            "15111",
+            "-OrleansGatewayPort",
+            "34101",
+            "-ArtifactRoot",
+            "{GateOutputDirectory}\\test-01b",
+            "-GlobalTimeoutSeconds",
+            "240"
+          ]
+        },
+        {
+          "gate": "shooter-multiprocess-compatibility",
+          "step": "Shooter compatibility matrix",
+          "arguments": [
+            "-Configuration",
+            "Release",
+            "-Profile",
+            "compatibility",
+            "-TcpPort",
+            "44201",
+            "-SiloPort",
+            "15211",
+            "-OrleansGatewayPort",
+            "34201",
+            "-ArtifactRoot",
+            "{GateOutputDirectory}\\compatibility",
+            "-GlobalTimeoutSeconds",
+            "1200"
+          ]
+        },
+        {
+          "gate": "shooter-multiprocess-soak",
+          "step": "Shooter 16/64 observer soak matrix",
+          "arguments": [
+            "-Configuration",
+            "Release",
+            "-Profile",
+            "soak",
+            "-SoakDurationSeconds",
+            "1800",
+            "-TcpPort",
+            "44401",
+            "-SiloPort",
+            "15411",
+            "-OrleansGatewayPort",
+            "34401",
+            "-ArtifactRoot",
+            "{GateOutputDirectory}\\soak",
+            "-GlobalTimeoutSeconds",
+            "3900"
+          ]
+        }
+      ],
+      "migration": "Explicit producer result; preserve existing validation and standalone CLI; validation details audited before implementation approval."
+    },
+    {
+      "path": "Server/Orleans/tools/test_shooter_multiprocess_ownership_cleanup.ps1",
+      "sha256": "dbd54fadb3a60f09a7459b7253a7d0376959a5df84eb34c640bf7e321a264c04",
+      "uses": [
+        {
+          "gate": "shooter-multiprocess-ownership-cleanup",
+          "step": "TEST-01C ownership cleanup probe",
+          "arguments": [
+            "-Configuration",
+            "Release",
+            "-TcpPort",
+            "44301",
+            "-SiloPort",
+            "15311",
+            "-OrleansGatewayPort",
+            "34301",
+            "-ArtifactRoot",
+            "{GateOutputDirectory}\\test-01c",
+            "-GlobalTimeoutSeconds",
+            "35"
+          ]
+        }
+      ],
+      "migration": "Explicit producer result; preserve existing validation and standalone CLI; validation details audited before implementation approval."
+    },
+    {
+      "path": "tools/run_runtime_benchmarks.ps1",
+      "sha256": "a90f114d7303c9818479883fc3a6cd1c0da700157ec332203b48086179449cde",
+      "uses": [
+        {
+          "gate": "runtime-performance-measurement",
+          "step": "Runtime package and capability benchmark smoke",
+          "arguments": [
+            "-Profile",
+            "smoke",
+            "-OutputPath",
+            "{GateOutputDirectory}\\runtime-benchmarks.json"
+          ]
+        }
+      ],
+      "migration": "Explicit producer result; preserve existing validation and standalone CLI; validation details audited before implementation approval."
+    },
+    {
+      "path": "tools/run_shooter_aoi_lod_gate.ps1",
+      "sha256": "a3e5163e5850c8be7e7fc28801f84b80ffc1a6017fa3dcf633bb7a92372f6680",
+      "uses": [
+        {
+          "gate": "shooter-performance",
+          "step": "AOI LOD smoke",
+          "arguments": [
+            "-Profile",
+            "smoke",
+            "-OutputPath",
+            "{GateOutputDirectory}\\performance\\smoke.json"
+          ]
+        },
+        {
+          "gate": "shooter-performance",
+          "step": "AOI LOD full",
+          "arguments": [
+            "-Profile",
+            "full",
+            "-OutputPath",
+            "{GateOutputDirectory}\\performance\\full.json"
+          ]
+        }
+      ],
+      "migration": "Explicit producer result; preserve existing validation and standalone CLI; validation details audited before implementation approval."
+    },
+    {
+      "path": "Server/Orleans/tools/run_moba_smoke.ps1",
+      "sha256": "569201833db6a9b7eed667bdcfec33a6a8a4899d6793fbc535eee7559cda4a4d",
+      "uses": [
+        {
+          "gate": "moba-smoke",
+          "step": "MOBA two-client smoke",
+          "arguments": [
+            "-Configuration",
+            "Release",
+            "-TcpPort",
+            "44101"
+          ]
+        }
+      ],
+      "migration": "Explicit producer result; preserve existing validation and standalone CLI; validation details audited before implementation approval."
+    },
+    {
+      "path": "Server/Orleans/tools/run_moba_multiprocess_smoke.ps1",
+      "sha256": "1a7a1edb12db33f640ddf4de70f37c9964293ede79d7dbbf6e438ff4727b6542",
+      "uses": [
+        {
+          "gate": "moba-multiprocess",
+          "step": "MOBA multiprocess smoke",
+          "arguments": [
+            "-Configuration",
+            "Release",
+            "-TcpPort",
+            "44201"
+          ]
+        }
+      ],
+      "migration": "Explicit producer result; preserve existing validation and standalone CLI; validation details audited before implementation approval."
+    }
+  ]
+}

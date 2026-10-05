@@ -1,0 +1,21 @@
+{"file": "AGENTS.md", "reason": "Merged result and scope rules"}
+{"file": ".trellis/spec/abilitykit/index.md", "reason": "Project engineering boundary"}
+{"file": ".trellis/spec/abilitykit/validation.md", "reason": "Actual verification recording"}
+{"file": "Docs/AbilityKit测试门禁与批量回归规范.md", "reason": "Existing gate semantics"}
+{"file": "Docs/design/CookingGame/current-et-foundation-contract.md", "reason": "Accepted contract E"}
+{"file": ".trellis/tasks/10-04-test-gate-result-contract/design.md", "reason": "Pending design and explicit decisions"}
+{"file": ".trellis/tasks/10-04-test-gate-result-contract/research/issue-6-requirements.md", "reason": "Full issue requirements"}
+{"file": ".trellis/tasks/10-04-test-gate-result-contract/research/revision-contract.md", "reason": "Revised normative R1-R5 contract and parent approval transfer"}
+{"file": "tools/run_test_gate.ps1", "reason": "Approved execution owner"}
+{"file": "tools/test-gates.json", "reason": "Sole declared coverage authority"}
+{"file": ".trellis/tasks/10-04-test-gate-result-contract/research/implementation-progress.md", "reason": "Exact parent approval and implementation scope"}
+{"file": "tools/test-gate-result-contract.ps1", "reason": "Shared production semantics and staged provenance"}
+{"file": "tools/tests/test-gate-result-contract.tests.ps1", "reason": "Durable isolated real-body controls"}
+{"file": "tools/tests/fixtures/README.md", "reason": "Current schemas and approved empty-input clarification"}
+{"file": ".trellis/tasks/10-04-test-gate-result-contract/research/slice-a-handoff.md", "reason": "Measured checkpoint and remaining producer scope"}
+{"file":"tools/tests/fixtures/b1-controls.ps1","reason":"Bounded eleven real-body adapters, configured type regression and parent provenance controls"}
+{"file":".trellis/tasks/10-04-test-gate-result-contract/research/slice-b1-handoff.md","reason":"B1 boundary, retained failures, current validation and remaining B2/C"}
+{"file":"tools/tests/fixtures/b2a-controls.ps1","reason":"B2a real-body benchmark/Unity controls and three frozen-B1 audit regressions"}
+{"file":"tools/tests/fixtures/unity-build-proof.schema.json","reason":"Explicit current-run Unity compilation prerequisite provenance"}
+{"file":"tools/tests/fixtures/unity-execute-method.schema.json","reason":"Execute-method structured completion evidence"}
+{"file":".trellis/tasks/10-04-test-gate-result-contract/research/slice-b2a-handoff.md","reason":"B2a measured checkpoint, retained raw evidence and exact B2b/C boundary"}
