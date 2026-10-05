@@ -1,0 +1,163 @@
+{
+  "status": "Passed",
+  "source_sha": "4cf5b38bcb06b2f58d49fd73fc9de26e5cec02fe",
+  "dirty": true,
+  "branch": "Kakusya/cooking-dot-skill-polish",
+  "python": "3.14.8 (tags/v3.14.8:8e6e75d, Sep 30 2026, 18:19:33) [MSC v.1944 64 bit (AMD64)]",
+  "links_checked": 19,
+  "syntax_files": [
+    ".agents\\skills\\cooking-dot-workflow\\scripts\\records.py",
+    ".agents\\skills\\cooking-dot-workflow\\scripts\\test_controls.py"
+  ],
+  "checks": [
+    {
+      "check": "required branch",
+      "expected": "Kakusya/cooking-dot-skill-polish",
+      "actual": "Kakusya/cooking-dot-skill-polish",
+      "status": "Passed"
+    },
+    {
+      "check": "simple two-scalar frontmatter keys",
+      "expected": [
+        "description",
+        "name"
+      ],
+      "actual": [
+        "description",
+        "name"
+      ],
+      "status": "Passed"
+    },
+    {
+      "check": "frontmatter name",
+      "expected": "cooking-dot-workflow",
+      "actual": "cooking-dot-workflow",
+      "status": "Passed"
+    },
+    {
+      "check": "description present and bounded",
+      "expected": true,
+      "actual": true,
+      "status": "Passed"
+    },
+    {
+      "check": "local linked resources exist",
+      "expected": [],
+      "actual": [],
+      "status": "Passed"
+    },
+    {
+      "check": "three concise templates",
+      "expected": [
+        "checkpoint-operation.md",
+        "dot-decision.md",
+        "dot-request.md"
+      ],
+      "actual": [
+        "checkpoint-operation.md",
+        "dot-decision.md",
+        "dot-request.md"
+      ],
+      "status": "Passed"
+    },
+    {
+      "check": "skill-local Python AST parses",
+      "expected": 2,
+      "actual": 2,
+      "status": "Passed"
+    },
+    {
+      "check": "SOP before opt-in section unchanged",
+      "expected": "# Э�������ִ���߽���\n\n2026-10-04 owner ������Ĭ��������Э������ȫ���� dot�����𷽰����顢Issue ��֯�����Ⱥ��������գ�ִ������ Orca �ܹ� worktree ��ʵ�֡���ʷ dot ���ļ�����Ϊ��Դ��Ĭ�ϲ��ٵȴ��ý�ɫ�ظ�����Լ����� [Trellis workflow](../../workflow.md) ʹ�ã����� Issue #6 ���У�#6 �������Χʵʩ��ֹͣ���룬�ĵ���ز�����������������֤�����·���ʽ���ܼ���Լ���ı䵱ǰ���̵ļ���ְ��\n\n",
+      "actual": "# Э�������ִ���߽���\n\n2026-10-04 owner ������Ĭ��������Э������ȫ���� dot�����𷽰����顢Issue ��֯�����Ⱥ��������գ�ִ������ Orca �ܹ� worktree ��ʵ�֡���ʷ dot ���ļ�����Ϊ��Դ��Ĭ�ϲ��ٵȴ��ý�ɫ�ظ�����Լ����� [Trellis workflow](../../workflow.md) ʹ�ã����� Issue #6 ���У�#6 �������Χʵʩ��ֹͣ���룬�ĵ���ز�����������������֤�����·���ʽ���ܼ���Լ���ı䵱ǰ���̵ļ���ְ��\n\n",
+      "status": "Passed"
+    },
+    {
+      "check": "SOP after opt-in section unchanged",
+      "expected": "\n\n- 2026-10-05 Owner ����������ȼ���Χ��[ֻ�ƽ� Cooking������ʾ�������޸�](../../../AGENTS.md)��Э����������������Ƿ������ Cooking�����������������ȼ��Ͳ��У���ʷ Issue �Ŀ��Χ�����Զ���Ϊ�����Χ��\n- Owner ������ƷĿ�����Ȩ�߽硣Э����������Ȩ��Χ�ڲ����������ƻ����ɷ����˶�ԭʼ֤�ݡ���֯�޸�����β����ͨ����ѡ���ظ�������׼��\n- ִ���߸���ָ���ļ��������������ṩ commit��ʵ�������������������������Χ���ı��׼���ϲ���������ɾ����������Э���߱�������������Ρ�\n- Issue ���ı��浱ǰĿ�ꡢ��Χ�����ȼ������������ձ�׼�� task/PR ���ӣ����۱��������ں� SHA �ľ�����Trellis �ǹ��̼ƻ���״̬���о���֤�ݵ�Ȩ����PR �Ǵ�������������ڡ�ժҪ�������ӣ������������ƻ���ά���ڶ������״̬��\n- ��ǩ��ʾ����״̬������������Ȩ��ĳ�� Issue �ĺϲ���Զ��д�롢������������Ȩ�����Զ��������� Issue���ָ�ʱ�˶Ե�ǰ�û�ָ���������ȷ������\n\n## ��С����˳��\n\n| �׶� | ��������� |\n| --- | --- |\n| ��Χ��� | ����ʵ Cooking Ψһ��Ʒ��Χ���г������ļ���Cooking �����ߡ���Ҫ�Լ����գ��漰����ʾ�����룯���ã�Э�飯ר�ýű������ԣ��Ž��ı���ܾ��ɷ����Ѳ�����Խ��Ķ��ܾ��ϲ� |\n| ��ȡ | Э���߶����� Issue��������AGENTS/progress �� task����¼��ʵ base/dirty������ worker/���̼��ļ����� |\n| �滮 | ��ȷ��Ϊ���졢�����ļ�������������֤������ԭʼʧ�ܣ������������ PRD/design/implement/manifests ����Э��������������С����ʹ������ PRD |\n| ʵʩ | һ���н��ɷ�ָ��Ψһ owner��ִ����ֻ����Ȩ��Χ�����������˵ĸĶ���������ֿɶ������ĵ�С�� |\n| �Լ����ύ | ִ�����������ü�飬����ԭʼ�����ʧ�ܣ���������֤�ݰ�Դ�����������ݣ�����ժҪ�� exit0 ����ͨ�� |\n| ������� | Э������������ diff����Ӱ�������ߡ�֤����ؼ��������ƣ��������������˻��޸���������ƽ���������ͨ�� |\n| ���� | �����кϲ���Ȩ�£����������ύ����Ŀ���֧�����ϲ����ʵ��Դ��/��Լ�����б�Ҫ���ɼ�飬����ֱ��Ų��ʧ����� |\n| ��β | ֤��Ǩ������֤������·�ɡ���¼���պ� task �鵵��ȷ���޻����/�����ҸĶ��Ѻϲ��򱣴�󣬰���Ȩɾ�� worktree����ʵʵ��ɾ�� |\n\nʹ�� Passed / Failed / Blocked / Skipped / NotRun�����ĵ������԰��ĵ���Χ Passed��.NET��Unity������ LAN �� CI δ���в��ܱ�����ͨ����������ɡ����ܡ��ϲ���Issue �رա�task �鵵�͹�����ɾ���ֱ��¼���ϲ�����ʧ��ʱ����ʧ�ܲ��޸��������鷽�����ˣ����������β��\n\n## �����벢��\n\n���ȼ��ش𡰶���Ҫ���������ش��ܷ�ʼ�����ȴ���ʹ֤��ʧ������������Ļ������⣬�ٰ�Ӱ�췶Χ��������ֵ�ͷ�������Issue ��Ų���ִ��˳������д���������������������޹ع��������Ϊ����ǰ�á�blocked ���������ȱ�ڡ����֤������һ�����ˣ�����ͨ���ı�ǩ�ƿ���ƻ򻷾��š�\n\n���ȼ�ֻ���ĵ���P0 Ϊ���������ʧ�������ϵ�ǰ�����Ĺ��ϣ�P1 Ϊ��ǰ��̱�����������֤��ʧ�棻P2 Ϊ����׼������������P3 Ϊ�����ڸĽ���Э����ά��һ������Ŀ�ִ�ж��У��Ȱ��������ˣ��ٱȽ����ȼ���������ֵ�ͱ�����ա����ȼ�����ʵʩ��Ȩ��Ҳ����ȱ��ǰ������������ֱ�ӿ�����\n\nĬ��һ��ʵʩ worker ��Э������ơ�ֻ�з�Χ��������Լ����Դ�޳�ͻʱ����������ʵʩ worker��ͬһ�ļ���schema/DTO/hash��������� writer ֻ����һ�� owner����ͬ worktree ����֤�˿ڡ����̺͹���������룻���ֿ���� .NET ��ռ��֤�����Դ��С��о������׼��������ȷ�߽��ڲ��У��ϲ�˳��ͼ��ɼ��Ԥ��ָ����\n\n������ƻ�����׼������Դ�����ʱ��Э���߿���ƶ����ύ��Ψһʵʩ��ͬʱ�ƽ���һ��Ƭ����������޸�����Ʒ�֧����ʱ������ı� master���ȱ��浱ǰ��֧�͸Ķ�����֤������ָ�����һ��Ƭ����ʵʩ��������һ��Ƭ�ѽ��ܣ��������ձ���ر�ȫ���������֡�\n\nִ��ģ�Ͱ�������ȷָ�������ʱ�˶�ʵ�� model/effort��Issue #6 ָ�� GPT-6.1-Sol / medium�����ݴ˼ٶ�����������ѡ��ģ�͡������������޸��Բ�������ͬ��������Э�������ز����񡢲������֤�ݺͲ��ԣ���Ҫ�ı��û�ָ��ģ��ʱ��ȷ˵����ȡ����Ӧ��Ȩ�����ܽ������ձ�׼��ƥ��ģ��������\n\n## �ɷ���ָ�\n\n�ָ�����Դ������ö�� Git��Orca worktree���ټ����������ص����������������� `issue6-test-gate-results`���е�Լ�����ƻ���֤�ݺ���ʵ���죻��¼������Χ�������õ�ǰ���������ļ�ȱʧ�ƶϾ��������ڡ������������޸������������������û���������Ȩ��\n\nÿ���ɷ������������ Cooking������ʾ�������޸ġ���Լ���������������ļ��� Cooking �ľ������������Ⱥ˶������ļ�����͸ù������ٺ˶Լ�������������ͨ�����ܵ���Խ�硣Owner ��խ��Χʱ����������ƥ��ĺ�����Ƭ��ֹͣ���ִ�С�����ԭ�ύ��֤�ݣ����±߽��������飻���������ԭ��Ƭ�ٴ����Χ��Issue #6 ԭ Shooter��MOBA ������ȫʾ�����Ǽƻ����� 2026-10-05 ֹͣ��ԭ����ϲ����Ų���������ЩԽ��Ķ���\n\nOrca supervised orchestration ���������е� Task/Dispatch��Trellis ������������ɷ�д��Ŀ���ļ�����������������������Ȩ���ɹ۲����պ�ֹͣ�߽硣��ʵ���������ʵ�� turn ��ʼ���ȴ��Ϸ� worker_done ������沢�������û��ͷš�û���������ʱ��״̬�ļ�����֤���������˳��������������ڶ���д���ߡ�\n\n�������ڿ���֤���ύ�����ӣ���¼����ɷ�Χ��ʧ��֤�ݡ���һ�������޸ĵ��ļ���δ��ɳ��ڣ�������ָͬ��ģ�͵��»Ự����������һ����Ƭ�� Dispatch ���������� Issue ��ɣ���С�ɷ���Χ������Э������ȷ��¼��������ִ��������ɾ���������Ƴ����ܼ��в��ԣ���Ӧ�Ӻ�ͬ��������ؼ��������Լ�ȫ��ͨ�������������ơ�\n\nЭ���ߵķ������뱻ִ����ʵ�ʶ�ȡ����ӻ�ִ�������Ѵ����������ʾ���������ʱ�Ⱥ˶�ԭ��ʾ�͵�ǰ����״̬���ٻָ��ύ�������ظ��ɷ����ն˱��û��ӹܻ�״̬���ɺ�ʵʱ�����������ȫ�� kill/reset/ǿɾ������β����ÿ����ɺ��¼��Դ�Ͳ�����Դ��ɾ��ǰ�ٴκ�ʵ��\n\n## Issue ������\n\nһ�� Issue ��Ӧһ�������ս�����ϴ� Issue �� Trellis ���������Ƭ������ÿ�����ÿ���ļ���ÿ�����ĵ����� Issue�����ı��ּ�̵ĵ�ǰ��ͬ����ʷ�����ۺͲ��ɱ��ύ����׷�ݡ���Χ�����������ձ仯��Э���߼�¼��ȷ������ԭʧ�����֤�ݲ���д�ɳɹ���\n\n���μ�����ɡ���Χ��ȷ��û�п�Ự׷�ټ�ֵ��С�Ķ�����ֱ��ʹ������ Trellis task ���ύ��¼����ǿ�Ʋ��� Issue����Ҫ�Ŷӡ�����Э������Ự�ָ���������յĹ���ʹ�� Issue��\n",
+      "actual": "\n\n- 2026-10-05 Owner ����������ȼ���Χ��[ֻ�ƽ� Cooking������ʾ�������޸�](../../../AGENTS.md)��Э����������������Ƿ������ Cooking�����������������ȼ��Ͳ��У���ʷ Issue �Ŀ��Χ�����Զ���Ϊ�����Χ��\n- Owner ������ƷĿ�����Ȩ�߽硣Э����������Ȩ��Χ�ڲ����������ƻ����ɷ����˶�ԭʼ֤�ݡ���֯�޸�����β����ͨ����ѡ���ظ�������׼��\n- ִ���߸���ָ���ļ��������������ṩ commit��ʵ�������������������������Χ���ı��׼���ϲ���������ɾ����������Э���߱�������������Ρ�\n- Issue ���ı��浱ǰĿ�ꡢ��Χ�����ȼ������������ձ�׼�� task/PR ���ӣ����۱��������ں� SHA �ľ�����Trellis �ǹ��̼ƻ���״̬���о���֤�ݵ�Ȩ����PR �Ǵ�������������ڡ�ժҪ�������ӣ������������ƻ���ά���ڶ������״̬��\n- ��ǩ��ʾ����״̬������������Ȩ��ĳ�� Issue �ĺϲ���Զ��д�롢������������Ȩ�����Զ��������� Issue���ָ�ʱ�˶Ե�ǰ�û�ָ���������ȷ������\n\n## ��С����˳��\n\n| �׶� | ��������� |\n| --- | --- |\n| ��Χ��� | ����ʵ Cooking Ψһ��Ʒ��Χ���г������ļ���Cooking �����ߡ���Ҫ�Լ����գ��漰����ʾ�����룯���ã�Э�飯ר�ýű������ԣ��Ž��ı���ܾ��ɷ����Ѳ�����Խ��Ķ��ܾ��ϲ� |\n| ��ȡ | Э���߶����� Issue��������AGENTS/progress �� task����¼��ʵ base/dirty������ worker/���̼��ļ����� |\n| �滮 | ��ȷ��Ϊ���졢�����ļ�������������֤������ԭʼʧ�ܣ������������ PRD/design/implement/manifests ����Э��������������С����ʹ������ PRD |\n| ʵʩ | һ���н��ɷ�ָ��Ψһ owner��ִ����ֻ����Ȩ��Χ�����������˵ĸĶ���������ֿɶ������ĵ�С�� |\n| �Լ����ύ | ִ�����������ü�飬����ԭʼ�����ʧ�ܣ���������֤�ݰ�Դ�����������ݣ�����ժҪ�� exit0 ����ͨ�� |\n| ������� | Э������������ diff����Ӱ�������ߡ�֤����ؼ��������ƣ��������������˻��޸���������ƽ���������ͨ�� |\n| ���� | �����кϲ���Ȩ�£����������ύ����Ŀ���֧�����ϲ����ʵ��Դ��/��Լ�����б�Ҫ���ɼ�飬����ֱ��Ų��ʧ����� |\n| ��β | ֤��Ǩ������֤������·�ɡ���¼���պ� task �鵵��ȷ���޻����/�����ҸĶ��Ѻϲ��򱣴�󣬰���Ȩɾ�� worktree����ʵʵ��ɾ�� |\n\nʹ�� Passed / Failed / Blocked / Skipped / NotRun�����ĵ������԰��ĵ���Χ Passed��.NET��Unity������ LAN �� CI δ���в��ܱ�����ͨ����������ɡ����ܡ��ϲ���Issue �رա�task �鵵�͹�����ɾ���ֱ��¼���ϲ�����ʧ��ʱ����ʧ�ܲ��޸��������鷽�����ˣ����������β��\n\n## �����벢��\n\n���ȼ��ش𡰶���Ҫ���������ش��ܷ�ʼ�����ȴ���ʹ֤��ʧ������������Ļ������⣬�ٰ�Ӱ�췶Χ��������ֵ�ͷ�������Issue ��Ų���ִ��˳������д���������������������޹ع��������Ϊ����ǰ�á�blocked ���������ȱ�ڡ����֤������һ�����ˣ�����ͨ���ı�ǩ�ƿ���ƻ򻷾��š�\n\n���ȼ�ֻ���ĵ���P0 Ϊ���������ʧ�������ϵ�ǰ�����Ĺ��ϣ�P1 Ϊ��ǰ��̱�����������֤��ʧ�棻P2 Ϊ����׼������������P3 Ϊ�����ڸĽ���Э����ά��һ������Ŀ�ִ�ж��У��Ȱ��������ˣ��ٱȽ����ȼ���������ֵ�ͱ�����ա����ȼ�����ʵʩ��Ȩ��Ҳ����ȱ��ǰ������������ֱ�ӿ�����\n\nĬ��һ��ʵʩ worker ��Э������ơ�ֻ�з�Χ��������Լ����Դ�޳�ͻʱ����������ʵʩ worker��ͬһ�ļ���schema/DTO/hash��������� writer ֻ����һ�� owner����ͬ worktree ����֤�˿ڡ����̺͹���������룻���ֿ���� .NET ��ռ��֤�����Դ��С��о������׼��������ȷ�߽��ڲ��У��ϲ�˳��ͼ��ɼ��Ԥ��ָ����\n\n������ƻ�����׼������Դ�����ʱ��Э���߿���ƶ����ύ��Ψһʵʩ��ͬʱ�ƽ���һ��Ƭ����������޸�����Ʒ�֧����ʱ������ı� master���ȱ��浱ǰ��֧�͸Ķ�����֤������ָ�����һ��Ƭ����ʵʩ��������һ��Ƭ�ѽ��ܣ��������ձ���ر�ȫ���������֡�\n\nִ��ģ�Ͱ�������ȷָ�������ʱ�˶�ʵ�� model/effort��Issue #6 ָ�� GPT-6.1-Sol / medium�����ݴ˼ٶ�����������ѡ��ģ�͡������������޸��Բ�������ͬ��������Э�������ز����񡢲������֤�ݺͲ��ԣ���Ҫ�ı��û�ָ��ģ��ʱ��ȷ˵����ȡ����Ӧ��Ȩ�����ܽ������ձ�׼��ƥ��ģ��������\n\n## �ɷ���ָ�\n\n�ָ�����Դ������ö�� Git��Orca worktree���ټ����������ص����������������� `issue6-test-gate-results`���е�Լ�����ƻ���֤�ݺ���ʵ���죻��¼������Χ�������õ�ǰ���������ļ�ȱʧ�ƶϾ��������ڡ������������޸������������������û���������Ȩ��\n\nÿ���ɷ������������ Cooking������ʾ�������޸ġ���Լ���������������ļ��� Cooking �ľ������������Ⱥ˶������ļ�����͸ù������ٺ˶Լ�������������ͨ�����ܵ���Խ�硣Owner ��խ��Χʱ����������ƥ��ĺ�����Ƭ��ֹͣ���ִ�С�����ԭ�ύ��֤�ݣ����±߽��������飻���������ԭ��Ƭ�ٴ����Χ��Issue #6 ԭ Shooter��MOBA ������ȫʾ�����Ǽƻ����� 2026-10-05 ֹͣ��ԭ����ϲ����Ų���������ЩԽ��Ķ���\n\nOrca supervised orchestration ���������е� Task/Dispatch��Trellis ������������ɷ�д��Ŀ���ļ�����������������������Ȩ���ɹ۲����պ�ֹͣ�߽硣��ʵ���������ʵ�� turn ��ʼ���ȴ��Ϸ� worker_done ������沢�������û��ͷš�û���������ʱ��״̬�ļ�����֤���������˳��������������ڶ���д���ߡ�\n\n�������ڿ���֤���ύ�����ӣ���¼����ɷ�Χ��ʧ��֤�ݡ���һ�������޸ĵ��ļ���δ��ɳ��ڣ�������ָͬ��ģ�͵��»Ự����������һ����Ƭ�� Dispatch ���������� Issue ��ɣ���С�ɷ���Χ������Э������ȷ��¼��������ִ��������ɾ���������Ƴ����ܼ��в��ԣ���Ӧ�Ӻ�ͬ��������ؼ��������Լ�ȫ��ͨ�������������ơ�\n\nЭ���ߵķ������뱻ִ����ʵ�ʶ�ȡ����ӻ�ִ�������Ѵ����������ʾ���������ʱ�Ⱥ˶�ԭ��ʾ�͵�ǰ����״̬���ٻָ��ύ�������ظ��ɷ����ն˱��û��ӹܻ�״̬���ɺ�ʵʱ�����������ȫ�� kill/reset/ǿɾ������β����ÿ����ɺ��¼��Դ�Ͳ�����Դ��ɾ��ǰ�ٴκ�ʵ��\n\n## Issue ������\n\nһ�� Issue ��Ӧһ�������ս�����ϴ� Issue �� Trellis ���������Ƭ������ÿ�����ÿ���ļ���ÿ�����ĵ����� Issue�����ı��ּ�̵ĵ�ǰ��ͬ����ʷ�����ۺͲ��ɱ��ύ����׷�ݡ���Χ�����������ձ仯��Э���߼�¼��ȷ������ԭʧ�����֤�ݲ���д�ɳɹ���\n\n���μ�����ɡ���Χ��ȷ��û�п�Ự׷�ټ�ֵ��С�Ķ�����ֱ��ʹ������ Trellis task ���ύ��¼����ǿ�Ʋ��� Issue����Ҫ�Ŷӡ�����Э������Ự�ָ���������յĹ���ʹ�� Issue��\n",
+      "status": "Passed"
+    },
+    {
+      "check": "AGENTS and openai.yaml unchanged",
+      "expected": "",
+      "actual": "",
+      "status": "Passed"
+    },
+    {
+      "check": "record helper imports only approved stdlib",
+      "expected": [],
+      "actual": [],
+      "status": "Passed"
+    }
+  ],
+  "commands": [
+    {
+      "command": [
+        "git",
+        "rev-parse",
+        "HEAD"
+      ],
+      "exit": 0,
+      "stdout": "4cf5b38bcb06b2f58d49fd73fc9de26e5cec02fe\n",
+      "stderr": ""
+    },
+    {
+      "command": [
+        "git",
+        "branch",
+        "--show-current"
+      ],
+      "exit": 0,
+      "stdout": "Kakusya/cooking-dot-skill-polish\n",
+      "stderr": ""
+    },
+    {
+      "command": [
+        "git",
+        "show",
+        "4cf5b38bcb06b2f58d49fd73fc9de26e5cec02fe:.trellis/spec/abilitykit/supervised-issue-delivery.md"
+      ],
+      "exit": 0,
+      "stdout": "# Э�������ִ���߽���\n\n2026-10-04 owner ������Ĭ��������Э������ȫ���� dot�����𷽰����顢Issue ��֯�����Ⱥ��������գ�ִ������ Orca �ܹ� worktree ��ʵ�֡���ʷ dot ���ļ�����Ϊ��Դ��Ĭ�ϲ��ٵȴ��ý�ɫ�ظ�����Լ����� [Trellis workflow](../../workflow.md) ʹ�ã����� Issue #6 ���У�#6 �������Χʵʩ��ֹͣ���룬�ĵ���ز�����������������֤�����·���ʽ���ܼ���Լ���ı䵱ǰ���̵ļ���ְ��\n\n## ��ʽ Cooking dot ��������2026-10-05 Owner ��׼��\n\n����ʽ���� [$cooking-dot-workflow](../../../.agents/skills/cooking-dot-workflow/SKILL.md) ʱ�������ڸ������ڸ��ǡ�Э���߽��� dot��������Э���߶������������Ĭ��ְ�������Ự���䣬��ʷ������������õ����Ự��ΨһЭ���ߣ�dot ���������滮����������ռ����þ������س���������ͻ֤�ݲ���ʵ dot �����ռ���������ͬʱ�����˶� Owner ��Χ��ԭʼ����֤�ݡ�dot ֻ�Ի�����ȡ GitHub commit����ִ�д��롢����ƹ�����д GitHub��Owner ��Χ����ʵ֤�ݲ��ܱ������þ����ǡ�\n\n������������ Owner ��׼һ�κ�ί�м����滮�����ظ�����ͬһ��׼����ʽ�������׼��������Ȩ���η�Χ�ڵ� dot ��ͨ�������֧���͡�Issue/PR д�룬�Լ���ȷ���� SHA �� dot ��ȷ���������غ���ʵ�ʷ�Χ��ԭʼ֤������������Զ��ϲ����ϲ���ʵ�ʼ��ɼ��ɹ��Źر� Issue���鵵���´���ʹ�ɽ���ʧЧ�������� NotRun/Failed �򼯳�ʧ�ܲ��������β����¼���á���׼��Դ���ֿ⼰Ŀ���֧����������Դɾ��������Ȩ������װ/��ȡ���ܲ��������̣����ΰ�װ�������ܣ��������� `orca-ready`��#6 �� `issue6-test-gate-results`��\n\n���̼�¼�Թ� owning Trellis task��Orca ֻ������ʵ������ʵ���ⲿ������ǰ�־û���ͼ��֮�󱣴�����/��Ӧ��ݣ���ʧ��ִ�Ⱥ˶�ʵ�ʽ�������ԡ�Ψһδ��ɼ��������Զ��ָ��������ѡ�� Owner ѡ�񣻾�Э�����Ի��״̬δ֪��ʵ�� Run ��֧���ذ�ʱֹͣ������������� `takeover-legacy` �ӹ���ͨ Run��\n\nִ���߽�Ϊ Orca �ܹ� worktree worker��Ĭ��һ��������������� owner����ͨ�Ӵ�����������ģ��ʹ�� Orca ����Ĭ��ֵ����¼ʵ�� model/effort�������� #6 ָ��ģ�ͣ�.NET ��ռ��鴮�С�dot �ȴ������ܵ� 30 ����ԭʼ�־�Ԥ�㼰 30/60/120 �롢��� 300 ����ѯ����ֲ����� 60 ��۲�Ƭ�ε��������������ѯ�������в��ظ���ʾ��ȷ��δ�������������ظ��������һ�Σ�������Ԥ�㡣�ȴ��ڼ������ɷ�������������ϲ������ɷ�ִ����ֻ��ɵ�ǰ�н������ idle����Ҫ�¾�����ȴ���Owner ���ط�Χʱ����ֹͣ��Ӱ�칤����\n\ndot ʧ��/��ʱ������Դ��ԭʼʧ�ܺʹ���ʵ�֣����潻�Ӻ�ֹͣ���أ����Ự������ɱ worker�������Ự���Զ�������Owner ��׼�ĸù�������ȷ������ͣ�ڼ䱣���ѽ��� worker �նˣ������¼�����Դ���� live Orca `worker-retain` ��ͬ���ˣ��ⲻ�������رա��ͷŻ�ɾ����Ȩ�������ȴ���ָ����򰴼�����������ִ�У����̴��ڲ���ʾ�����Ѽ��ػ� live �Զ���������֤��\n\n## ְ����Ȩ��\n\n- 2026-10-05 Owner ����������ȼ���Χ��[ֻ�ƽ� Cooking������ʾ�������޸�](../../../AGENTS.md)��Э����������������Ƿ������ Cooking�����������������ȼ��Ͳ��У���ʷ Issue �Ŀ��Χ�����Զ���Ϊ�����Χ��\n- Owner ������ƷĿ�����Ȩ�߽硣Э����������Ȩ��Χ�ڲ����������ƻ����ɷ����˶�ԭʼ֤�ݡ���֯�޸�����β����ͨ����ѡ���ظ�������׼��\n- ִ���߸���ָ���ļ��������������ṩ commit��ʵ�������������������������Χ���ı��׼���ϲ���������ɾ����������Э���߱�������������Ρ�\n- Issue ���ı��浱ǰĿ�ꡢ��Χ�����ȼ������������ձ�׼�� task/PR ���ӣ����۱��������ں� SHA �ľ�����Trellis �ǹ��̼ƻ���״̬���о���֤�ݵ�Ȩ����PR �Ǵ�������������ڡ�ժҪ�������ӣ������������ƻ���ά���ڶ������״̬��\n- ��ǩ��ʾ����״̬������������Ȩ��ĳ�� Issue �ĺϲ���Զ��д�롢������������Ȩ�����Զ��������� Issue���ָ�ʱ�˶Ե�ǰ�û�ָ���������ȷ������\n\n## ��С����˳��\n\n| �׶� | ��������� |\n| --- | --- |\n| ��Χ��� | ����ʵ Cooking Ψһ��Ʒ��Χ���г������ļ���Cooking �����ߡ���Ҫ�Լ����գ��漰����ʾ�����룯���ã�Э�飯ר�ýű������ԣ��Ž��ı���ܾ��ɷ����Ѳ�����Խ��Ķ��ܾ��ϲ� |\n| ��ȡ | Э���߶����� Issue��������AGENTS/progress �� task����¼��ʵ base/dirty������ worker/���̼��ļ����� |\n| �滮 | ��ȷ��Ϊ���졢�����ļ�������������֤������ԭʼʧ�ܣ������������ PRD/design/implement/manifests ����Э��������������С����ʹ������ PRD |\n| ʵʩ | һ���н��ɷ�ָ��Ψһ owner��ִ����ֻ����Ȩ��Χ�����������˵ĸĶ���������ֿɶ������ĵ�С�� |\n| �Լ����ύ | ִ�����������ü�飬����ԭʼ�����ʧ�ܣ���������֤�ݰ�Դ�����������ݣ�����ժҪ�� exit0 ����ͨ�� |\n| ������� | Э������������ diff����Ӱ�������ߡ�֤����ؼ��������ƣ��������������˻��޸���������ƽ���������ͨ�� |\n| ���� | �����кϲ���Ȩ�£����������ύ����Ŀ���֧�����ϲ����ʵ��Դ��/��Լ�����б�Ҫ���ɼ�飬����ֱ��Ų��ʧ����� |\n| ��β | ֤��Ǩ������֤������·�ɡ���¼���պ� task �鵵��ȷ���޻����/�����ҸĶ��Ѻϲ��򱣴�󣬰���Ȩɾ�� worktree����ʵʵ��ɾ�� |\n\nʹ�� Passed / Failed / Blocked / Skipped / NotRun�����ĵ������԰��ĵ���Χ Passed��.NET��Unity������ LAN �� CI δ���в��ܱ�����ͨ����������ɡ����ܡ��ϲ���Issue �رա�task �鵵�͹�����ɾ���ֱ��¼���ϲ�����ʧ��ʱ����ʧ�ܲ��޸��������鷽�����ˣ����������β��\n\n## �����벢��\n\n���ȼ��ش𡰶���Ҫ���������ش��ܷ�ʼ�����ȴ���ʹ֤��ʧ������������Ļ������⣬�ٰ�Ӱ�췶Χ��������ֵ�ͷ�������Issue ��Ų���ִ��˳������д���������������������޹ع��������Ϊ����ǰ�á�blocked ���������ȱ�ڡ����֤������һ�����ˣ�����ͨ���ı�ǩ�ƿ���ƻ򻷾��š�\n\n���ȼ�ֻ���ĵ���P0 Ϊ���������ʧ�������ϵ�ǰ�����Ĺ��ϣ�P1 Ϊ��ǰ��̱�����������֤��ʧ�棻P2 Ϊ����׼������������P3 Ϊ�����ڸĽ���Э����ά��һ������Ŀ�ִ�ж��У��Ȱ��������ˣ��ٱȽ����ȼ���������ֵ�ͱ�����ա����ȼ�����ʵʩ��Ȩ��Ҳ����ȱ��ǰ������������ֱ�ӿ�����\n\nĬ��һ��ʵʩ worker ��Э������ơ�ֻ�з�Χ��������Լ����Դ�޳�ͻʱ����������ʵʩ worker��ͬһ�ļ���schema/DTO/hash��������� writer ֻ����һ�� owner����ͬ worktree ����֤�˿ڡ����̺͹���������룻���ֿ���� .NET ��ռ��֤�����Դ��С��о������׼��������ȷ�߽��ڲ��У��ϲ�˳��ͼ��ɼ��Ԥ��ָ����\n\n������ƻ�����׼������Դ�����ʱ��Э���߿���ƶ����ύ��Ψһʵʩ��ͬʱ�ƽ���һ��Ƭ����������޸�����Ʒ�֧����ʱ������ı� master���ȱ��浱ǰ��֧�͸Ķ�����֤������ָ�����һ��Ƭ����ʵʩ��������һ��Ƭ�ѽ��ܣ��������ձ���ر�ȫ���������֡�\n\nִ��ģ�Ͱ�������ȷָ�������ʱ�˶�ʵ�� model/effort��Issue #6 ָ�� GPT-6.1-Sol / medium�����ݴ˼ٶ�����������ѡ��ģ�͡������������޸��Բ�������ͬ��������Э�������ز����񡢲������֤�ݺͲ��ԣ���Ҫ�ı��û�ָ��ģ��ʱ��ȷ˵����ȡ����Ӧ��Ȩ�����ܽ������ձ�׼��ƥ��ģ��������\n\n## �ɷ���ָ�\n\n�ָ�����Դ������ö�� Git��Orca worktree���ټ����������ص����������������� `issue6-test-gate-results`���е�Լ�����ƻ���֤�ݺ���ʵ���죻��¼������Χ�������õ�ǰ���������ļ�ȱʧ�ƶϾ��������ڡ������������޸������������������û���������Ȩ��\n\nÿ���ɷ������������ Cooking������ʾ�������޸ġ���Լ���������������ļ��� Cooking �ľ������������Ⱥ˶������ļ�����͸ù������ٺ˶Լ�������������ͨ�����ܵ���Խ�硣Owner ��խ��Χʱ����������ƥ��ĺ�����Ƭ��ֹͣ���ִ�С�����ԭ�ύ��֤�ݣ����±߽��������飻���������ԭ��Ƭ�ٴ����Χ��Issue #6 ԭ Shooter��MOBA ������ȫʾ�����Ǽƻ����� 2026-10-05 ֹͣ��ԭ����ϲ����Ų���������ЩԽ��Ķ���\n\nOrca supervised orchestration ���������е� Task/Dispatch��Trellis ������������ɷ�д��Ŀ���ļ�����������������������Ȩ���ɹ۲����պ�ֹͣ�߽硣��ʵ���������ʵ�� turn ��ʼ���ȴ��Ϸ� worker_done ������沢�������û��ͷš�û���������ʱ��״̬�ļ�����֤���������˳��������������ڶ���д���ߡ�\n\n�������ڿ���֤���ύ�����ӣ���¼����ɷ�Χ��ʧ��֤�ݡ���һ�������޸ĵ��ļ���δ��ɳ��ڣ�������ָͬ��ģ�͵��»Ự����������һ����Ƭ�� Dispatch ���������� Issue ��ɣ���С�ɷ���Χ������Э������ȷ��¼��������ִ��������ɾ���������Ƴ����ܼ��в��ԣ���Ӧ�Ӻ�ͬ��������ؼ��������Լ�ȫ��ͨ�������������ơ�\n\nЭ���ߵķ������뱻ִ����ʵ�ʶ�ȡ����ӻ�ִ�������Ѵ����������ʾ���������ʱ�Ⱥ˶�ԭ��ʾ�͵�ǰ����״̬���ٻָ��ύ�������ظ��ɷ����ն˱��û��ӹܻ�״̬���ɺ�ʵʱ�����������ȫ�� kill/reset/ǿɾ������β����ÿ����ɺ��¼��Դ�Ͳ�����Դ��ɾ��ǰ�ٴκ�ʵ��\n\n## Issue ������\n\nһ�� Issue ��Ӧһ�������ս�����ϴ� Issue �� Trellis ���������Ƭ������ÿ�����ÿ���ļ���ÿ�����ĵ����� Issue�����ı��ּ�̵ĵ�ǰ��ͬ����ʷ�����ۺͲ��ɱ��ύ����׷�ݡ���Χ�����������ձ仯��Э���߼�¼��ȷ������ԭʧ�����֤�ݲ���д�ɳɹ���\n\n���μ�����ɡ���Χ��ȷ��û�п�Ự׷�ټ�ֵ��С�Ķ�����ֱ��ʹ������ Trellis task ���ύ��¼����ǿ�Ʋ��� Issue����Ҫ�Ŷӡ�����Э������Ự�ָ���������յĹ���ʹ�� Issue��\n",
+      "stderr": ""
+    },
+    {
+      "command": [
+        "git",
+        "diff",
+        "--name-only",
+        "4cf5b38bcb06b2f58d49fd73fc9de26e5cec02fe",
+        "--",
+        "AGENTS.md",
+        ".agents/skills/cooking-dot-workflow/agents/openai.yaml"
+      ],
+      "exit": 0,
+      "stdout": "",
+      "stderr": ""
+    },
+    {
+      "command": [
+        "git",
+        "status",
+        "--porcelain"
+      ],
+      "exit": 0,
+      "stdout": " M .agents/skills/cooking-dot-workflow/SKILL.md\n M .agents/skills/cooking-dot-workflow/references/dot-dialogue.md\n M .agents/skills/cooking-dot-workflow/references/recovery.md\n M .trellis/spec/abilitykit/supervised-issue-delivery.md\n M .trellis/tasks/10-05-cooking-dot-skill-polish/check.jsonl\n M .trellis/tasks/10-05-cooking-dot-skill-polish/design.md\n M .trellis/tasks/10-05-cooking-dot-skill-polish/implement.jsonl\n M .trellis/tasks/10-05-cooking-dot-skill-polish/implement.md\n M .trellis/tasks/10-05-cooking-dot-skill-polish/task.json\n?? .agents/skills/cooking-dot-workflow/assets/\n?? .agents/skills/cooking-dot-workflow/scripts/\n?? .trellis/tasks/10-05-cooking-dot-skill-polish/research/controls-run-01-console.txt\n?? .trellis/tasks/10-05-cooking-dot-skill-polish/research/controls-run-01/\n?? .trellis/tasks/10-05-cooking-dot-skill-polish/research/controls-run-02-console.txt\n?? .trellis/tasks/10-05-cooking-dot-skill-polish/research/controls-run-02/\n?? .trellis/tasks/10-05-cooking-dot-skill-polish/research/controls-run-03-console.txt\n?? .trellis/tasks/10-05-cooking-dot-skill-polish/research/controls-run-03/\n?? .trellis/tasks/10-05-cooking-dot-skill-polish/research/controls-run-04-console.txt\n?? .trellis/tasks/10-05-cooking-dot-skill-polish/research/controls-run-04/\n?? .trellis/tasks/10-05-cooking-dot-skill-polish/research/coordinator-execution.md\n?? .trellis/tasks/10-05-cooking-dot-skill-polish/research/delivery-cff8223bf60c.json\n?? .trellis/tasks/10-05-cooking-dot-skill-polish/research/diff-check-output-final.txt\n?? .trellis/tasks/10-05-cooking-dot-skill-polish/research/diff-check-output.txt\n?? .trellis/tasks/10-05-cooking-dot-skill-polish/research/dot-plan.md\n?? .trellis/tasks/10-05-cooking-dot-skill-polish/research/dot-timing-rule.md\n?? .trellis/tasks/10-05-cooking-dot-skill-polish/research/implementation-start.json\n?? .trellis/tasks/10-05-cooking-dot-skill-polish/research/independent-review.md\n?? .trellis/tasks/10-05-cooking-dot-skill-polish/research/pilot-brief.txt\n?? .trellis/tasks/10-05-cooking-dot-skill-polish/research/plan-observation-01.json\n?? .trellis/tasks/10-05-cooking-dot-skill-polish/research/plan-observation-02.json\n?? .trellis/tasks/10-05-cooking-dot-skill-polish/research/plan-observation-03.json\n?? .trellis/tasks/10-05-cooking-dot-skill-polish/research/plan-request.txt\n?? .trellis/tasks/10-05-cooking-dot-skill-polish/research/plan-send.json\n?? .trellis/tasks/10-05-cooking-dot-skill-polish/research/plan-wait.json\n?? .trellis/tasks/10-05-cooking-dot-skill-polish/research/quick-validate-output.txt\n?? .trellis/tasks/10-05-cooking-dot-skill-polish/research/reviewer-spec.txt\n?? .trellis/tasks/10-05-cooking-dot-skill-polish/research/reviewer-start-intent.json\n?? .trellis/tasks/10-05-cooking-dot-skill-polish/research/reviewer-start.json\n?? .trellis/tasks/10-05-cooking-dot-skill-polish/research/run-create-intent.json\n?? .trellis/tasks/10-05-cooking-dot-skill-polish/research/run-create-receipt.json\n?? .trellis/tasks/10-05-cooking-dot-skill-polish/research/source-and-structure-check.py\n?? .trellis/tasks/10-05-cooking-dot-skill-polish/research/source-and-structure-output-final.json\n?? .trellis/tasks/10-05-cooking-dot-skill-polish/research/source-and-structure-output.json\n?? .trellis/tasks/10-05-cooking-dot-skill-polish/research/timing-observation-01.json\n?? .trellis/tasks/10-05-cooking-dot-skill-polish/research/timing-request.txt\n?? .trellis/tasks/10-05-cooking-dot-skill-polish/research/timing-send.json\n?? .trellis/tasks/10-05-cooking-dot-skill-polish/research/timing-wait.json\n?? .trellis/tasks/10-05-cooking-dot-skill-polish/research/validation-exits-final.json\n?? .trellis/tasks/10-05-cooking-dot-skill-polish/research/validation-exits.json\n?? .trellis/tasks/10-05-cooking-dot-skill-polish/research/worker-spec.txt\n",
+      "stderr": ""
+    }
+  ],
+  "file_sha256": {
+    ".agents/skills/cooking-dot-workflow/agents/openai.yaml": "a1499d95abd8447558c535fe5554adcc3c9b988a0a39264a6283d430effe1e94",
+    ".agents/skills/cooking-dot-workflow/assets/checkpoint-operation.md": "05394909dab19b81c2b3580253c497b3bc862659990d40726364e434763c32f0",
+    ".agents/skills/cooking-dot-workflow/assets/dot-decision.md": "1aa113fdaa6c9f5d8fb53973beb058027286caf132886ae3abecd17360a83a8d",
+    ".agents/skills/cooking-dot-workflow/assets/dot-request.md": "a4083c29f0dadb92e548c5864ebd95623aa58e5a168cdf3cf15afda29b6aed00",
+    ".agents/skills/cooking-dot-workflow/references/dot-dialogue.md": "c5f3c244676c3ec92e0adacda531bf9fe999f222a1f4d2b4eba96b02227a2fd8",
+    ".agents/skills/cooking-dot-workflow/references/recovery.md": "04dc2272e7eb380a2d7ec943c14e9528c23ad604dd923fd5ea9cf47ce654f384",
+    ".agents/skills/cooking-dot-workflow/scripts/records.py": "d42f5d5c0306c0fe888fad451aeeff497ee2a85a1ea50fe27e5f3c52ae40e362",
+    ".agents/skills/cooking-dot-workflow/scripts/test_controls.py": "05424093d4a6ceaaa4b0483116944b46ae58cc2ab7efcfc0be4d31972a072856",
+    ".agents/skills/cooking-dot-workflow/SKILL.md": "e1e37dbac50e1eab475126f5cca7e33f2e9fa765c4eb4a31caff1aebdac7b8c5",
+    ".trellis/spec/abilitykit/supervised-issue-delivery.md": "0ca9fe386845801288b46d0df053f4ba7e7de9d768f7a094f99d011eaeb2157c"
+  },
+  "scope": "simple frontmatter/local links/Python syntax/SOP boundary; no PyYAML or live integration proof"
+}

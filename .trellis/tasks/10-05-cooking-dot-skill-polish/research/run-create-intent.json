@@ -1,0 +1,9 @@
+{
+  "operation": "polish-run-create",
+  "objective": "Cooking skill polish and bounded branch-only pilot under accepted dot plan",
+  "allowed_worktree": "C:/Users/Administrator/orca/workspaces/AbilityKit/cooking-dot-skill-polish",
+  "original_install_run": "run_b97f93be47e5",
+  "previous_run_settled": "Prior two install workers succeeded and resources released; do not modify that Run",
+  "scope_authority": "Current Owner request plus dot-plan.md",
+  "utc": "2026-10-05T12:16:04.680232+00:00"
+}

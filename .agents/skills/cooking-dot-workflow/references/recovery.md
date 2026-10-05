@@ -1,47 +1,83 @@
-# Durable checkpoints and recovery
+# Durable records and diagnostic recovery
 
-Read on entry, before external effects and after interruptions. Keep records under the **owning Trellis task**, using its research directory for a workflow recovery index and append-only intent/receipt evidence. These are recovery records, not a new scheduler or second task completion database; engineering status stays in existing Trellis artifacts. Do not change task schema or generic workflow infrastructure.
+This is the sole discovery/authority/reconciliation contract. Trellis owns engineering status; these are evidence/derived pointers, not a scheduler, lease or completion database. Fault model: **process crash only**. Atomic replacement/readback does not prove OS/power-loss durability or external idempotency.
 
-## Minimal durable record
+## Fixed entry and format (version 1)
 
-Record actual values, explicit unknowns and links to raw receipts; never manufacture identities. Do not checkpoint credentials or unrestricted payloads.
+One flow per task: `<task>/research/cooking-dot-flow/flow.json`, UTF-8 JSON object, `version: 1`, `skill: cooking-dot-workflow`. Generate UUID once as `flow_id`, persist before first effect; never derive from branch/handle/title. Archive preserves ID/frozen evidence; active canonical location is not silently relocated/recreated.
 
-| Record | Required facts |
+Immutable binding fields: `flow_id`, `canonical_root` (resolved absolute record directory), `execution_host`, `worktree_id`, `task_path` (repository-relative), `repository`, `branch`, `target_branch`, `delivery_mode`, `original_session`, `original_terminal`, `run_id` (verified existing Run or null), `approval_ref` (root-relative evidence), `created_utc`. When initially null, an `action: run-create` intent and applied receipt with `result.run_id` establish the effective Run; reconstruct derives `effective_run_id` without editing flow.json. Recover a lost run-create receipt on its original operation after authoritative lookup; a conflicting Run identity blocks. Following Run-bound intents carry `preconditions.run_id` matching the effective Run. Unknown observations are null with explanatory raw evidence; missing required identity/approval blocks writes. Runtime IDs are observations, never defaults. Approval evidence contains invocation, scoped consumers/acceptance and mode authorization.
+
+```text
+research/cooking-dot-flow/
+  flow.json
+  records/000001.intent.json
+  records/000001.receipt.json
+  records/000002.intent.json
+  index.json                       # disposable derived pointers
+  evidence/<unique-name>           # raw receipts/requests/decisions/checkpoints
+```
+
+Operation ID: `<flow_id>:<six-digit-sequence>`, contiguous from 000001, never reused for another payload. Every record has `version`, `flow_id`, `seq`, `op_id`, `kind`, `recorded_utc`. Intent adds `action`, exact `target`, `authorization_ref`, `payload_ref`, `preconditions` (candidate/request/Run/Task/Dispatch/host as relevant). Receipt adds `intent_hash` (SHA-256 of sorted compact UTF-8 intent JSON), `outcome` (`applied`, `not-applied`, `unknown`), `raw_ref`, `result` (command/exit/actual identities/postconditions/replay/stages). File refs are existing root-relative evidence paths without traversal/symlink escape. Store bounded nonsecret evidence, not credentials/unrestricted payloads.
+
+Use [checkpoint template](../assets/checkpoint-operation.md) for binding/resource inventory/operation pair. Checkpoints capture real Git/Orca HEAD/dirty/hosts, workers' Task/Dispatch/owner/model/effort/turn-start/liveness/accounting, candidate/hashes, dot request and next bounded action. No completion field in derived index.
+
+## Write order and privileges
+
+1. Verify **original sole coordinator** and separately its canonical record-write authority; save live identity/Run evidence and approval ref. Owner field/task pointer/silence/timeout/`run-use` is not proof. New/unproven recoverer can only read and reconstruct in memory; no shared index repair before authority.
+2. Write independent immutable intent via existing `.trellis/scripts/common/io.py` atomic utility, read back exact content. Only then external action. Failed checkpoint prevents effect. Evidence uses unique immutable names; preserve old failures/replies.
+3. Save raw result and independent immutable receipt referencing intent hash; read back/validate. Uncertain result uses `unknown`, requiring read-only external reconciliation. Later reconciliation uses a **new operation pair**, `action: reconcile`, `preconditions.resolves` naming unresolved earlier op, and `result.resolves` matching it with `applied`/`not-applied`; never overwrite an unknown receipt. Only this local reconciliation recording may follow an unresolved predecessor.
+4. Replace/read back derived index after receipt. Scan immutable records to rebuild stale/corrupt/missing index. Missing receipt means unresolved, **not** safe retry. No later external effect until all earlier uncertainty is authoritatively resolved. Intent absent from old index is still discovered.
+
+Optional [helper](../scripts/records.py) validates identities/references/order, uses Trellis atomic I/O and pure wait/delivery predicates. CLI `inspect`/`copies` is **read-only**, never repairs. Write API requires separate `WriteAuthority` attestation backed by current live evidence: caller proves authority; helper cannot obtain/prove exclusivity. No Orca/GitHub/browser calls, effects, locks/background service. Controls: `python -B .agents/skills/cooking-dot-workflow/scripts/test_controls.py --output-dir <task-research-controls>`. Local mock reconciliation is simulation, not real Orca/GitHub idempotency.
+
+From repository root, read with `python -B .agents/skills/cooking-dot-workflow/scripts/records.py inspect <records-root>` or `copies <root> <copy-root>`. For authorized recording, use the Python API below with real values from live verification and the template. There is deliberately no write/rebind/dispatch CLI. `WriteAuthority` is an attestation, not a newly acquired privilege or concurrency mechanism; caller must already have proven sole authority. The exists/atomic-replace sequence relies on that sole writer and does not claim safety against competing writers.
+
+```python
+import sys
+sys.path.insert(0, ".agents/skills/cooking-dot-workflow/scripts")
+from records import WriteAuthority, initialize, append, write_index, reconstruct, fingerprint
+
+# root/flow/intent/receipt follow the checkpoint template; evidence refs already exist.
+authority = WriteAuthority(session, terminal, sole_verified, record_write_authorized, live_evidence_ref)
+initialize(root, flow, authority)       # once; identical retry only, never replace binding
+append(root, intent, authority)        # validated immutable intent + readback
+# Caller now performs the authorized effect, or reconciles an uncertain one read-only.
+receipt["intent_hash"] = fingerprint(intent)
+append(root, receipt, authority)       # actual raw evidence + readback
+write_index(root, authority)           # optional derived pointer replacement
+diagnostic = reconstruct(root)        # read-only; callable without any authority
+```
+
+Pure `reply_decision`/`supplement_allowed`/`reopen_allowed` consume request fields (`candidate_sha`, `type`, `flow_id`, `request_id`, `conversation_id`, `prior_message_boundary`, `request_message_id`, original budget, explicit `paused` fact). Reply adds `full`, `generating`, `decision`, `reviewed_sha`, `message_id`, matching conversation/request/flow, verified after-request/absent-at-boundary flags, `time_reliable`, `reply_posted_utc`. Optional `timing_proof` follows dialogue: matching identities/boundary, `verified`, `full`, `generating`, `full_snapshot_ref`, `prior_snapshot_ref`, `observed_utc`, trusted `time_source`, `clock_trusted`, `clock_jump: false`, nonnegative `uncertainty_ms`. Latest upper bound is computed, not guessed. Eligibility never grants execution/write rights; elapsed deadline rejects applying/continuing even with stale pause flag. `mutation_allowed` checks separately attested original identity/write qualification. `delivery_allowed` checks mode, explicit unpaused fact, matching candidate/accepted SHA, scope/independent/check/worker/hash evidence and mode exits; production needs premerge/merge/integration verification and required Issue close verification (`issue_required: false` means N/A). `premerge_allowed` checks explicit authorization/current head-base/accepted candidate/checks/scope/sole authority/inspected-clear closing links. Missing flags fail closed; booleans assert linked raw evidence, not proof generated by helper.
+
+Gate input keys: `delivery_allowed` requires `mode`, `paused: false`, `candidate_sha`, `accepted_sha` and true `scope_checked`, `independent_check`, `workers_accounted`, `required_checks_passed`, `candidate_accepted`, `hashes_unchanged`, `effects_reconciled`. Branch-only adds true `branch_push_verified`, `required_pilot_passed`. Production adds true `premerge_verified`, `merge_verified`, `integration_passed`, plus explicit `issue_required` and true `issue_close_verified` when required. `premerge_allowed` accepts **only** `mode: production`, with true `authorized`, `head_base_current`, `candidate_accepted`, `required_checks_passed`, `scope_checked`, `sole_coordinator_verified`, `closing_links_inspected`, `closing_links_clear`, `effects_reconciled`. Branch-only cannot pass this merge gate even if all booleans are true. Unresolved effects cannot pass either completion or merge.
+
+## Discover copies and reconcile
+
+Enumerate Git/Orca worktrees/hosts; inspect relevant other trees' AGENTS/task/manifests/research/actual diffs, especially stopped tree named by progress. Search fixed entry across active/archived tasks. Legacy unversioned records need read-only provenance reconciliation, not replacement flow creation. Missing canonical entry/host visibility blocks writes. Dedup before unique unfinished flow selection; multiple distinct IDs need Owner selection.
+
+Group by `flow_id`; immutable binding must match including canonical host/location. Equal parsed records dedup; strict subsets are old evidence copies, not another flow. Conflicting same seq/kind, changed binding, non-prefix histories or newer copy records missing from reachable canonical root block mutation. Preserve copies/identify missing evidence; index never elects a winner. Only declared canonical root is writable. Missing/corrupt authority does not promote a copy. Archive is evidence-only after completion: preserve archive routing receipt/original location, do not resume guessed-path writes.
+
+Scan records validating version/flow/sequence/op ID/references/hash/time/receipt pairing; reject corrupt/unknown formats. Index is only `{version, flow_id, effective_run_id, last_seq, unresolved, record_hashes}`. Read complete task plans/manifests/research/latest applicable Issue before execution. Read actual remote/dot/Orca Run/Dispatch/process facts and discover fresh handles; never dual-send stale/current handles.
+
+Receipt `result.action`, when supplied, matches its intent. Shared declared request/Task/Dispatch/Run/host/candidate identity fields match intent preconditions; contradictory identities reject the receipt. The helper's hash/field checks do not prove omitted facts or external raw receipt authenticity; main must independently verify required action-specific identities/stages.
+
+Normal-Run cross-main takeover is **Blocked until positively proven exclusive by a supported actual runtime contract**; this version does not implement it. No `takeover-legacy` workaround or competing Run/worker to resolve silence. Another main diagnoses last reliable boundary/blockers but cannot dispatch/write shared records. Fresh subprocess read is not Orca coordinator takeover. Resume requires original verified sole main regaining authorized context and reconciled facts, or a separately reviewed supported exclusive transfer contract.
+
+## Uncertain effects
+
+| Intent/effect | Read-only evidence before retry |
 | --- | --- |
-| Workflow binding | Skill name, owning task path, requirement/acceptance, explicit invocation and Owner approval provenance; allowed files/Cooking consumers; remote repository, task/target branches; original and current coordinator session/terminal, Run identity and binding authority |
-| Resource inventory | Git and Orca worktree identities/paths/branches/HEAD/dirty; execution hosts; worker Task/Dispatch IDs, unique file ownership, actual effective model/effort, turn-start proof, liveness observations and settlement/retention obligations |
-| External intent, persisted before effect | Unique local operation identity, action and exact target, authorization source, UTC time, expected preconditions/head SHA, request body fingerprint or task-owned content path, supported client request identity if available |
-| Receipt, persisted after effect | Operation identity, exact command/exit and raw result path; remote request/message/Run/Dispatch/Issue/PR identities, postcondition/SHA, replay status and observed stages; unresolved uncertainty if response was lost |
-| Dot wait/review | Conversation and original request identity/fingerprint/SHA; original UTC start/deadline and poll schedule; reminder intent/receipt, raw reply identity/content, explicit final decision and accepted SHA |
-| Resume boundary | Last proven operation, unresolved intents, original failures and NotRun exits, next bounded action/preconditions; live/unknown/settled workers and explicit paused retention permission |
+| Dot request/supplement | Conversation/prior-message boundary/fingerprint/request/SHA/posted message. Found gets recovered receipt/original budget/quota; only proven absence and no generation permits same send inside budget. Unknown pauses |
+| Worker placement/start/dispatch | Supported request replay/stages/residual resources, actual Run worker/Dispatch and host writer facts. Accepted input differs from turn start; live waits, done needs Task+Dispatch settlement, unknown retains. Preserve failure/prove old writer exit and accounting before new bounded Dispatch |
+| Push/Issue/PR edit | Explicit remote/ref/object/content/task provenance. Found gets receipt; incomplete search is not absence, multiple matches block. Retry only proven non-application with documented identity |
+| Merge/close | PR merged state/SHA/target containment/candidate/Issue state. Applied gets receipt/pending checks, never duplicate. Unapplied still needs fresh authority/head/base/acceptance/checks; unknown blocks writes |
 
-Checkpoint before sends, branch pushes, Issue/PR creation or edits, worker placement/start/dispatch, merge/close, retention and any separately authorized cleanup. Save response identities afterwards and update the recovery index to point at those raw records. If durable checkpointing fails, do not perform the effect. Reconcile unresolved intents before planning later effects; no receipt does not mean no effect.
+Use returned supported replay argv/identity unchanged on same executable/host; no invented idempotency flags. Fully process/persist messages/accounting before acknowledgment. Crash leaves workers running; scope withdrawal overrides bounded completion. Keep unknown writers/branches/failures. Owner-approved retention is per worker through live contract, not release/delete permission. Pause checkpoint links unresolved operations/old deadlines/next evidence/owner/accounting; cannot complete/archive.
 
-## Discover and bind once
+## Production merge and close
 
-1. Enumerate this repository's Git and Orca worktrees. Inspect relevant other trees' AGENTS, tasks, research and real diffs, especially `issue6-test-gate-results`; preserve its stopped isolation. Search for explicit skill workflow records rather than choosing every unfinished Trellis task. Record search coverage, missing hosts and ambiguous candidates.
-2. A unique unfinished skill flow is selected automatically; several require Owner selection before any continuation. Never create a replacement flow to avoid ambiguity. Missing required records/cross-host visibility is a blocker, not proof of absence. Read the selected task's complete PRD/design/implement/manifests, research and latest Issue contracts.
-3. Reconcile Git remote and local branch/dirty state, actual GitHub Issue/PR heads/merge status, actual dot conversation/request and Orca Run/Dispatch/processes by read-only observations. Saved paths, titles, copied handles, old provider transcripts and task status do not prove current authority. Recover runtime handles from current listings, never send to old and replacement handles together.
-4. Positively verify original coordinator inactive, using live session/process/Run observations on the owning host; a stale timestamp or silent terminal is insufficient. If still active, do not bind another coordinator: report the conflict and stop. If inactive cannot be proved, pause with unknown authority.
-5. Inspect live orchestration guide/capabilities and command help for this **actual Run**. Bind a new coordinator only through a supported operation with proof of authority and its returned receipt; verify the resulting sole-coordinator binding. If normal Run rebinding/takeover is unsupported or unknown, preserve records and stop for an explicit supported recovery path. Never invent a generic takeover command or use `takeover-legacy` for a normal Run. Legacy compatibility requires an actual legacy receipt and its dedicated live contract, not a workaround for this workflow.
-6. Only after authority and unresolved effects reconcile, resume at the last proven boundary. Restore the original dot wait deadline/reminder/cadence; expired waits enter resource-safe pause immediately, never a fresh 30 minutes. No automatic continuation happens without a main session.
+Before merge inspect actual PR body/title, relevant commit closing keywords, linked automatic-close associations and server-side state. Use non-closing references before integration. Handle unsafe links only within authorization and reread clearance; unknown/unsafe associations block merge. Repository settings need separate authorization.
 
-## Reconcile before retry
-
-| Lost/uncertain effect | Read-only reconciliation and allowed next action |
-| --- | --- |
-| Browser/dot send | Inspect the verified conversation against the saved prior-message boundary, request fingerprint, exact SHA and posted-message identity; check generating/full reply. If posted, record recovered receipt and wait on it. If absence is proven and no generation is running, send the same intended request within its original deadline. Ambiguous send or reminder remains paused; never repeat a running prompt |
-| Worker create/start/dispatch | Inspect supported durable request replay, failed stage/residual resources, Run worker list, exact Dispatch and owning execution-host observations. Accepted input is not proven turn start. If live, wait; if done, validate/collect the exact settlement; if unknown, retain and pause. Do not create another worktree/process/editor to resolve silence |
-| Proven failed worker | Preserve changes and original failure. Require positive agent exit/failure evidence and reconciliation of outstanding Dispatch/resource obligations through the live contract before a retry; a failed task row alone does not prove no writer remains. Retry only the same bounded assignment under valid main/technical authority, with a new authoritative Dispatch and prior evidence linked |
-| GitHub push or Issue/PR create/edit | Verify explicit remote repository and actual ref/object state; find the intended object by task provenance, branch and exact intended content. Record its recovered identity if found. Zero visible matches is not proof if retrieval failed or was incomplete; multiple matches stop for reconciliation. Retry only after authoritative absence/non-application is established, reusing supported request identity where available |
-| Merge or Issue close | Inspect actual PR merged state, merge SHA, target branch containment, reviewed candidate and Issue state. If applied, recover receipt and perform pending integration checks; never merge again. If definitely unapplied, revalidate authorization, current head/base, dot acceptance and actual checks before retry. Unknown state blocks writes |
-
-When supported client receipts expose an exact replay/recovery request or next-action argv, use it unchanged with the same executable and host. Discover it in the live guide; do not guess idempotency flags. Process inbox deliveries fully, validate completions against both Task and current Dispatch IDs, and persist accounting before acknowledgment so replay cannot duplicate actions.
-
-## Pause without destroying resources
-
-Live workers continue only their already approved current bounded assignment, then idle. A new technical decision waits; no main session starts follow-ups. Scope withdrawal takes precedence and stops affected work. Collect valid completion reports and label implementations awaiting review when dot is unavailable; they are not accepted delivery.
-
-The Owner-approved workflow includes explicit retention permission for settled terminals while paused. Record its provenance and account for each accepted settlement through live `worker-retain`; retain branches, worktrees, evidence and unknown processes. Record remaining obligations if an unreachable host prevents accounting. Never infer exit from silence, call blanket close/delete, release unsettled workers or restart an unverifiable writer. Main crash does not terminate workers.
-
-Report what is proven, unknown and required for safe resumption. Preserve original failed results and absent environments. Completion/merge/close/archive/cleanup are distinct exits; no task status or dot endorsement erases outstanding integration checks. Publication and resource deletion require separate authorization even after success.
+Recheck full candidate SHA/base/accepted hashes, actual required CI/checks, scope and coordinator authority immediately before intent/effect. Changed code/base requires affected checks and renewed dot review as needed; old acceptance does not cover new code. Record merge identity, run required integration on actual merged source/binaries. Only Passed integration permits explicit Issue close/readback. Failed/NotRun leaves task incomplete/Issue open; preserve failure/review repair or rollback. Branch-only keeps these actions NotRun.

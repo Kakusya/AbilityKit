@@ -1,0 +1,17 @@
+{
+  "request_id": "AK-CDF-TIMING-CLARIFY-01",
+  "sha": "4cf5b38bcb06b2f58d49fd73fc9de26e5cec02fe",
+  "baseline_article_count": 41,
+  "wait_started_utc": "2026-10-05T12:32:24.435638+00:00",
+  "deadline_utc": "2026-10-05T13:02:24.435638+00:00",
+  "poll_ordinal": 1,
+  "reminder_sent": false,
+  "fingerprint": "1c80e8d301dc011ab2dba710310898d7dab104d6366bd36801fce42834d0c3cf",
+  "status": "rule-approved",
+  "full_reply_received": true,
+  "reply_id": "3f12f99a2ea4819b8541c90bd4ea9e30~3f12f99a2ea4819b8541c90bd4ea9e30~CalpicoMessage~Sentinel_4a5061c3639c8191ad1577c6b3112670",
+  "observed_utc": "2026-10-05T12:34:31.989735+00:00",
+  "timing_basis": "Complete matching reply directly observed before original deadline; exact posted UTC unavailable, not fabricated",
+  "reply_posted_utc": null,
+  "next_poll_utc": null
+}

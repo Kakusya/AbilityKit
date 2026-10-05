@@ -1,0 +1,74 @@
+{
+    "id":  "61a096fd-a913-4d04-8bf2-2ee95e307031",
+    "ok":  true,
+    "result":  {
+                   "runId":  "run_840202cc5621",
+                   "messages":  [
+                                    {
+                                        "id":  "msg_e436b0848825",
+                                        "run_id":  "run_840202cc5621",
+                                        "delivery_contract":  "current_delivery",
+                                        "from_handle":  "term_d82fab32-3780-4c17-8b2d-4fefaf8254eb",
+                                        "to_handle":  "run:run_840202cc5621",
+                                        "subject":  "Implementation bytes frozen; report finishing",
+                                        "body":  "Implementation files are settled and frozen in research/implementation-file-hashes.json: source base remains 4cf5b38bcb06b2f58d49fd73fc9de26e5cec02fe with dirty delivered bytes, and candidate_commit_sha is explicitly null pending your commit. Final isolated run passed 122 observable assertions with 12 actual subprocess executions, and scoped structural/link/SOP checks passed; original PyYAML failure remains preserved. I am writing the final exact-file report now and will send one worker_done after the final inbox check.",
+                                        "type":  "status",
+                                        "priority":  "normal",
+                                        "thread_id":  null,
+                                        "payload":  "{\"taskId\":\"task_b1846da24106\",\"dispatchId\":\"ctx_2ede5e596818\"}",
+                                        "created_at":  "2026-10-05T12:49:50Z",
+                                        "delivered_at":  null
+                                    },
+                                    {
+                                        "id":  "msg_131410390d01",
+                                        "run_id":  "run_840202cc5621",
+                                        "delivery_contract":  "current_delivery",
+                                        "from_handle":  "term_d82fab32-3780-4c17-8b2d-4fefaf8254eb",
+                                        "to_handle":  "run:run_840202cc5621",
+                                        "subject":  "Freeze manifest readback confirmed",
+                                        "body":  "The first manifest extraction hit PowerShell UTF-16 redirected stdout and created no manifest; I corrected decoding without touching delivered files. research/implementation-file-hashes.json now exists as UTF-8 and every listed hash was read back against current bytes; source-and-structure-output-final-utf8.json provides an explicitly normalized readable copy while the original raw output is retained. Candidate commit remains yours to pin, and report will preserve the extraction failure.",
+                                        "type":  "status",
+                                        "priority":  "normal",
+                                        "thread_id":  null,
+                                        "payload":  "{\"taskId\":\"task_b1846da24106\",\"dispatchId\":\"ctx_2ede5e596818\"}",
+                                        "created_at":  "2026-10-05T12:50:32Z",
+                                        "delivered_at":  null
+                                    },
+                                    {
+                                        "id":  "msg_ba95c41f23c8",
+                                        "run_id":  "run_840202cc5621",
+                                        "delivery_contract":  "current_delivery",
+                                        "from_handle":  "term_d82fab32-3780-4c17-8b2d-4fefaf8254eb",
+                                        "to_handle":  "run:run_840202cc5621",
+                                        "subject":  "Cooking skill implementation and controls completed",
+                                        "body":  "Implemented the approved Cooking dot skill path, authoritative dialogue/recovery contracts, three templates, restricted record helper, isolated controls and opt-in SOP deduplication, with frozen delivery hashes and a detailed report. Final controls passed 122 expected/actual assertions across 12 actual subprocess executions, scoped structure/link/SOP checks passed, and the original validator missing-PyYAML failure is preserved as Blocked. Main still owns the original validator rerun, frozen candidate commit and independent audit, bounded manual-load pilot, dot acceptance and worker retention accounting, while real takeover and production merge/postmerge remain Blocked or NotRun.",
+                                        "type":  "worker_done",
+                                        "priority":  "normal",
+                                        "thread_id":  null,
+                                        "payload":  "{\"taskId\":\"task_b1846da24106\",\"dispatchId\":\"ctx_2ede5e596818\",\"outcome\":\"succeeded\",\"filesModified\":[\".agents/skills/cooking-dot-workflow/SKILL.md\",\".agents/skills/cooking-dot-workflow/references/dot-dialogue.md\",\".agents/skills/cooking-dot-workflow/references/recovery.md\",\".agents/skills/cooking-dot-workflow/assets/checkpoint-operation.md\",\".agents/skills/cooking-dot-workflow/assets/dot-request.md\",\".agents/skills/cooking-dot-workflow/assets/dot-decision.md\",\".agents/skills/cooking-dot-workflow/scripts/records.py\",\".agents/skills/cooking-dot-workflow/scripts/test_controls.py\",\".trellis/spec/abilitykit/supervised-issue-delivery.md\",\".trellis/tasks/10-05-cooking-dot-skill-polish/research/implementation-report.md\",\".trellis/tasks/10-05-cooking-dot-skill-polish/research/implementation-file-hashes.json\",\".trellis/tasks/10-05-cooking-dot-skill-polish/research/worker-worktree-inventory.json\",\".trellis/tasks/10-05-cooking-dot-skill-polish/research/source-and-structure-check.py\",\".trellis/tasks/10-05-cooking-dot-skill-polish/research/source-and-structure-output.json\",\".trellis/tasks/10-05-cooking-dot-skill-polish/research/source-and-structure-output-final.json\",\".trellis/tasks/10-05-cooking-dot-skill-polish/research/source-and-structure-output-final-utf8.json\",\".trellis/tasks/10-05-cooking-dot-skill-polish/research/quick-validate-output.txt\",\".trellis/tasks/10-05-cooking-dot-skill-polish/research/diff-check-output.txt\",\".trellis/tasks/10-05-cooking-dot-skill-polish/research/diff-check-output-final.txt\",\".trellis/tasks/10-05-cooking-dot-skill-polish/research/validation-exits.json\",\".trellis/tasks/10-05-cooking-dot-skill-polish/research/validation-exits-final.json\",\".trellis/tasks/10-05-cooking-dot-skill-polish/research/controls-run-01-console.txt\",\".trellis/tasks/10-05-cooking-dot-skill-polish/research/controls-run-02-console.txt\",\".trellis/tasks/10-05-cooking-dot-skill-polish/research/controls-run-03-console.txt\",\".trellis/tasks/10-05-cooking-dot-skill-polish/research/controls-run-04-console.txt\",\".trellis/tasks/10-05-cooking-dot-skill-polish/research/controls-run-01/controls-output.json\",\".trellis/tasks/10-05-cooking-dot-skill-polish/research/controls-run-01/controls-fixtures.json\",\".trellis/tasks/10-05-cooking-dot-skill-polish/research/controls-run-02/controls-output.json\",\".trellis/tasks/10-05-cooking-dot-skill-polish/research/controls-run-02/controls-fixtures.json\",\".trellis/tasks/10-05-cooking-dot-skill-polish/research/controls-run-03/controls-output.json\",\".trellis/tasks/10-05-cooking-dot-skill-polish/research/controls-run-03/controls-fixtures.json\",\".trellis/tasks/10-05-cooking-dot-skill-polish/research/controls-run-04/controls-output.json\",\".trellis/tasks/10-05-cooking-dot-skill-polish/research/controls-run-04/controls-fixtures.json\"],\"reportPath\":\".trellis/tasks/10-05-cooking-dot-skill-polish/research/implementation-report.md\"}",
+                                        "created_at":  "2026-10-05T12:55:11Z",
+                                        "delivered_at":  null
+                                    },
+                                    {
+                                        "id":  "msg_747391fe2e80",
+                                        "run_id":  "run_840202cc5621",
+                                        "delivery_contract":  "current_delivery",
+                                        "from_handle":  "term_05f2d02e-37fa-44a3-9627-ef6375d69e08",
+                                        "to_handle":  "run:run_840202cc5621",
+                                        "subject":  "alive",
+                                        "body":  "",
+                                        "type":  "heartbeat",
+                                        "priority":  "normal",
+                                        "thread_id":  null,
+                                        "payload":  "{\"taskId\":\"task_0658d87815e2\",\"dispatchId\":\"ctx_51d6193106de\",\"phase\":\"waiting\"}",
+                                        "created_at":  "2026-10-05T12:55:49Z",
+                                        "delivered_at":  null
+                                    }
+                                ],
+                   "count":  4,
+                   "acknowledged":  null
+               },
+    "_meta":  {
+                  "runtimeId":  "ff0c5f2c-d341-4455-bc1c-c113650bdd60"
+              }
+}

@@ -1,0 +1,46 @@
+﻿{
+    "hostScope":  {
+                      "hostIds":  [
+                                      "local"
+                                  ],
+                      "omittedHostIds":  [
+
+                                         ]
+                  },
+    "worktrees":  [
+                      {
+                          "path":  "D:/MyWorkTree/AbilityKit",
+                          "branch":  "refs/heads/docs/supervised-issue-sop",
+                          "head":  "86d44e8f8a6ac2ca958f4c453555817da7b1f15c",
+                          "identity":  {
+                                           "key":  "wt2:local:d1bfa4bf-fd73-4fda-aa71-58d7e64561ce",
+                                           "executionHostId":  "local",
+                                           "instanceId":  "d1bfa4bf-fd73-4fda-aa71-58d7e64561ce"
+                                       },
+                          "comment":  ""
+                      },
+                      {
+                          "path":  "C:/Users/Administrator/orca/workspaces/AbilityKit/cooking-dot-skill-polish",
+                          "branch":  "refs/heads/Kakusya/cooking-dot-skill-polish",
+                          "head":  "4cf5b38bcb06b2f58d49fd73fc9de26e5cec02fe",
+                          "identity":  {
+                                           "key":  "wt2:local:887e0c5b-6658-42b8-8f44-bd0b7b09ca9c",
+                                           "executionHostId":  "local",
+                                           "instanceId":  "887e0c5b-6658-42b8-8f44-bd0b7b09ca9c"
+                                       },
+                          "comment":  "Cooking workflow skill polish and bounded pilot; branch-only, no master merge"
+                      },
+                      {
+                          "path":  "C:/Users/Administrator/orca/workspaces/AbilityKit/issue6-test-gate-results",
+                          "branch":  "refs/heads/Kakusya/issue6-test-gate-results",
+                          "head":  "15e79fefd5ba1d9294491122c91df286ef94e2f8",
+                          "identity":  {
+                                           "key":  "wt2:local:26d32d7c-da9b-4342-8c98-1cff54769b01",
+                                           "executionHostId":  "local",
+                                           "instanceId":  "26d32d7c-da9b-4342-8c98-1cff54769b01"
+                                       },
+                          "comment":  "STOPPED: Owner Cooking-only scope; example changes isolated, no merge; scope correction recorded"
+                      }
+                  ],
+    "command":  "orca worktree list --json"
+}

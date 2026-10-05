@@ -1,0 +1,43 @@
+# Exact coordinator validation input, piped to Python; this is audit evidence, not installed tooling.
+from pathlib import Path
+import hashlib, importlib.abc, importlib.util, io, json, runpy, sys, urllib.request, zipfile
+
+version = '6.0.3'
+filename = 'pyyaml-6.0.3-cp314-cp314-win_amd64.whl'
+expected = '4a2e8cebe2ff6ab7d1050ecd59c25d4c8bd7e6f400f5f82b96557ac0abafd0ac'
+metadata_url = 'https://pypi.org/pypi/PyYAML/6.0.3/json'
+with urllib.request.urlopen(metadata_url, timeout=30) as response:
+    metadata = json.load(response)
+entry = next(item for item in metadata['urls'] if item['filename'] == filename)
+assert entry['digests']['sha256'] == expected
+with urllib.request.urlopen(entry['url'], timeout=30) as response:
+    wheel_bytes = response.read()
+assert hashlib.sha256(wheel_bytes).hexdigest() == expected
+archive = zipfile.ZipFile(io.BytesIO(wheel_bytes))
+members = set(archive.namelist())
+
+class MemoryYaml(importlib.abc.MetaPathFinder, importlib.abc.Loader):
+    def find_spec(self, fullname, path=None, target=None):
+        if fullname != 'yaml' and not fullname.startswith('yaml.'):
+            return None
+        stem = fullname.replace('.', '/')
+        for member, is_package in ((stem + '/__init__.py', True), (stem + '.py', False)):
+            if member in members:
+                return importlib.util.spec_from_loader(fullname, self, is_package=is_package)
+        return None
+    def create_module(self, spec):
+        return None
+    def exec_module(self, module):
+        stem = module.__name__.replace('.', '/')
+        member = stem + '/__init__.py' if module.__spec__.submodule_search_locations is not None else stem + '.py'
+        module.__file__ = '<PyYAML-' + version + '-RAM/' + member + '>'
+        exec(compile(archive.read(member), module.__file__, 'exec'), module.__dict__)
+
+sys.meta_path.insert(0, MemoryYaml())
+import yaml
+assert yaml.__version__ == version
+validator = Path('C:/Users/Administrator/AppData/Roaming/orca/codex-accounts/81627c2b-efc2-4498-aeb6-64c652c0acab/home/skills/.system/skill-creator/scripts/quick_validate.py')
+skill = Path('.agents/skills/cooking-dot-workflow')
+print(json.dumps({'dependency':'PyYAML', 'version':version, 'filename':filename, 'sha256':expected, 'metadata_url':metadata_url, 'download_url':entry['url'], 'mode':'pure Python RAM-only import; no installation or disk extraction', 'validator_sha256':hashlib.sha256(validator.read_bytes()).hexdigest(), 'python':sys.version}, ensure_ascii=False))
+sys.argv = [str(validator), str(skill)]
+runpy.run_path(str(validator), run_name='__main__')

@@ -1,0 +1,776 @@
+{
+  "status": "Passed",
+  "passed": 90,
+  "failed": 0,
+  "observed_utc": "2026-10-05T12:34:57.539469+00:00",
+  "python": "3.14.8 (tags/v3.14.8:8e6e75d, Sep 30 2026, 18:19:33) [MSC v.1944 64 bit (AMD64)]",
+  "simulation": "local mock effect reconciliation; no GitHub/Orca idempotency claim",
+  "fault_model": "process-crash only",
+  "events": [
+    {
+      "control": "subprocess exit 1",
+      "expected": 71,
+      "actual": 71,
+      "status": "Passed"
+    },
+    {
+      "control": "subprocess exit 2",
+      "expected": 0,
+      "actual": 0,
+      "status": "Passed"
+    },
+    {
+      "control": "pre-effect: actual subprocess read last_seq",
+      "expected": 1,
+      "actual": 1,
+      "status": "Passed"
+    },
+    {
+      "control": "pre-effect: unresolved before reconciliation",
+      "expected": 1,
+      "actual": 1,
+      "status": "Passed"
+    },
+    {
+      "control": "pre-effect: persisted stale index",
+      "expected": 0,
+      "actual": 0,
+      "status": "Passed"
+    },
+    {
+      "control": "subprocess exit 3",
+      "expected": 0,
+      "actual": 0,
+      "status": "Passed"
+    },
+    {
+      "control": "pre-effect: no duplicate effect invocation",
+      "expected": 0,
+      "actual": 0,
+      "status": "Passed"
+    },
+    {
+      "control": "pre-effect: resolved after actual subprocess reconciliation",
+      "expected": [],
+      "actual": [],
+      "status": "Passed"
+    },
+    {
+      "control": "subprocess exit 4",
+      "expected": 72,
+      "actual": 72,
+      "status": "Passed"
+    },
+    {
+      "control": "subprocess exit 5",
+      "expected": 0,
+      "actual": 0,
+      "status": "Passed"
+    },
+    {
+      "control": "lost-receipt: actual subprocess read last_seq",
+      "expected": 1,
+      "actual": 1,
+      "status": "Passed"
+    },
+    {
+      "control": "lost-receipt: unresolved before reconciliation",
+      "expected": 1,
+      "actual": 1,
+      "status": "Passed"
+    },
+    {
+      "control": "lost-receipt: persisted stale index",
+      "expected": 0,
+      "actual": 0,
+      "status": "Passed"
+    },
+    {
+      "control": "subprocess exit 6",
+      "expected": 0,
+      "actual": 0,
+      "status": "Passed"
+    },
+    {
+      "control": "lost-receipt: no duplicate effect invocation",
+      "expected": 1,
+      "actual": 1,
+      "status": "Passed"
+    },
+    {
+      "control": "lost-receipt: resolved after actual subprocess reconciliation",
+      "expected": [],
+      "actual": [],
+      "status": "Passed"
+    },
+    {
+      "control": "subprocess exit 7",
+      "expected": 73,
+      "actual": 73,
+      "status": "Passed"
+    },
+    {
+      "control": "subprocess exit 8",
+      "expected": 0,
+      "actual": 0,
+      "status": "Passed"
+    },
+    {
+      "control": "stale-index: actual subprocess read last_seq",
+      "expected": 1,
+      "actual": 1,
+      "status": "Passed"
+    },
+    {
+      "control": "stale-index: unresolved before reconciliation",
+      "expected": 0,
+      "actual": 0,
+      "status": "Passed"
+    },
+    {
+      "control": "stale-index: persisted stale index",
+      "expected": 0,
+      "actual": 0,
+      "status": "Passed"
+    },
+    {
+      "control": "subprocess exit 9",
+      "expected": 0,
+      "actual": 0,
+      "status": "Passed"
+    },
+    {
+      "control": "stale-index: no duplicate effect invocation",
+      "expected": 1,
+      "actual": 1,
+      "status": "Passed"
+    },
+    {
+      "control": "stale-index: resolved after actual subprocess reconciliation",
+      "expected": [],
+      "actual": [],
+      "status": "Passed"
+    },
+    {
+      "diagnostic": "unresolved effect blocks subsequent intent"
+    },
+    {
+      "control": "unknown receipt blocks subsequent external intent",
+      "expected": true,
+      "actual": true,
+      "status": "Passed"
+    },
+    {
+      "diagnostic": "immutable record conflict"
+    },
+    {
+      "control": "immutable unknown receipt cannot be overwritten",
+      "expected": true,
+      "actual": true,
+      "status": "Passed"
+    },
+    {
+      "control": "rejected overwrite preserves receipt bytes",
+      "expected": true,
+      "actual": true,
+      "status": "Passed"
+    },
+    {
+      "control": "new reconciliation pair resolves prior uncertainty",
+      "expected": [],
+      "actual": [],
+      "status": "Passed"
+    },
+    {
+      "control": "subprocess exit 10",
+      "expected": 0,
+      "actual": 0,
+      "status": "Passed"
+    },
+    {
+      "control": "corrupt index ignored by actual subprocess read",
+      "expected": 2,
+      "actual": 2,
+      "status": "Passed"
+    },
+    {
+      "control": "read-only reconstruction does not repair shared index",
+      "expected": true,
+      "actual": true,
+      "status": "Passed"
+    },
+    {
+      "control": "authorized index repair matches immutable records",
+      "expected": {
+        "version": 1,
+        "flow_id": "2e2e0e24-41f4-46c4-be47-750f829a0d75",
+        "effective_run_id": "simulation-run",
+        "last_seq": 2,
+        "unresolved": [],
+        "record_hashes": {
+          "000001.intent.json": "920cf341388b594b1b6869919f1d82eb93facce7146eadc61f83ef982ddc7887",
+          "000001.receipt.json": "4f56c98f4f3d78c57e80a0fd4d2d0cffef9f695610c1bac30c7e55f34d0b497d",
+          "000002.intent.json": "696f1eec55bba14605cf00238813da1d53c03123541c3539f4190df56019e846",
+          "000002.receipt.json": "06bca817711a16f7138f4d1c7883731894493b0e6f7a067622a5ba7b0dc2fce0"
+        }
+      },
+      "actual": {
+        "version": 1,
+        "flow_id": "2e2e0e24-41f4-46c4-be47-750f829a0d75",
+        "effective_run_id": "simulation-run",
+        "last_seq": 2,
+        "unresolved": [],
+        "record_hashes": {
+          "000001.intent.json": "920cf341388b594b1b6869919f1d82eb93facce7146eadc61f83ef982ddc7887",
+          "000001.receipt.json": "4f56c98f4f3d78c57e80a0fd4d2d0cffef9f695610c1bac30c7e55f34d0b497d",
+          "000002.intent.json": "696f1eec55bba14605cf00238813da1d53c03123541c3539f4190df56019e846",
+          "000002.receipt.json": "06bca817711a16f7138f4d1c7883731894493b0e6f7a067622a5ba7b0dc2fce0"
+        }
+      },
+      "status": "Passed"
+    },
+    {
+      "control": "same flow copies dedup",
+      "expected": 1,
+      "actual": 1,
+      "status": "Passed"
+    },
+    {
+      "control": "old copy recognized against canonical",
+      "expected": "old-subset",
+      "actual": "old-subset",
+      "status": "Passed"
+    },
+    {
+      "diagnostic": "copy is read-only"
+    },
+    {
+      "control": "old copy cannot write index",
+      "expected": true,
+      "actual": true,
+      "status": "Passed"
+    },
+    {
+      "diagnostic": "conflicting/newer copy records"
+    },
+    {
+      "control": "conflicting valid copies refuse election",
+      "expected": true,
+      "actual": true,
+      "status": "Passed"
+    },
+    {
+      "diagnostic": "sequence gap"
+    },
+    {
+      "control": "sequence gap rejected",
+      "expected": true,
+      "actual": true,
+      "status": "Passed"
+    },
+    {
+      "diagnostic": "record identity/version mismatch"
+    },
+    {
+      "control": "invalid record version rejected",
+      "expected": true,
+      "actual": true,
+      "status": "Passed"
+    },
+    {
+      "diagnostic": "record identity/version mismatch"
+    },
+    {
+      "control": "invalid record flow_id rejected",
+      "expected": true,
+      "actual": true,
+      "status": "Passed"
+    },
+    {
+      "diagnostic": "record identity/version mismatch"
+    },
+    {
+      "control": "invalid record op_id rejected",
+      "expected": true,
+      "actual": true,
+      "status": "Passed"
+    },
+    {
+      "diagnostic": "invalid evidence reference"
+    },
+    {
+      "control": "invalid record payload_ref rejected",
+      "expected": true,
+      "actual": true,
+      "status": "Passed"
+    },
+    {
+      "control": "effective Run derived from immutable receipt",
+      "expected": "simulation-derived-run",
+      "actual": "simulation-derived-run",
+      "status": "Passed"
+    },
+    {
+      "control": "flow binding remains immutable",
+      "expected": true,
+      "actual": true,
+      "status": "Passed"
+    },
+    {
+      "diagnostic": "operation Run identity mismatch/unbound"
+    },
+    {
+      "control": "mismatched operation Run refused",
+      "expected": true,
+      "actual": true,
+      "status": "Passed"
+    },
+    {
+      "diagnostic": "conflicting/missing Run binding"
+    },
+    {
+      "control": "conflicting effective Run refused",
+      "expected": true,
+      "actual": true,
+      "status": "Passed"
+    },
+    {
+      "control": "new main refuses dispatch predicate",
+      "expected": false,
+      "actual": false,
+      "status": "Passed"
+    },
+    {
+      "diagnostic": "Blocked: exclusive original coordinator/record-write authority"
+    },
+    {
+      "control": "new main refuses canonical record write",
+      "expected": true,
+      "actual": true,
+      "status": "Passed"
+    },
+    {
+      "diagnostic": "Blocked: exclusive original coordinator/record-write authority"
+    },
+    {
+      "control": "new main refuses index write",
+      "expected": true,
+      "actual": true,
+      "status": "Passed"
+    },
+    {
+      "control": "unproven sole authority refuses dispatch predicate",
+      "expected": false,
+      "actual": false,
+      "status": "Passed"
+    },
+    {
+      "diagnostic": "Blocked: exclusive original coordinator/record-write authority"
+    },
+    {
+      "control": "unproven sole authority refuses canonical record write",
+      "expected": true,
+      "actual": true,
+      "status": "Passed"
+    },
+    {
+      "diagnostic": "Blocked: exclusive original coordinator/record-write authority"
+    },
+    {
+      "control": "unproven sole authority refuses index write",
+      "expected": true,
+      "actual": true,
+      "status": "Passed"
+    },
+    {
+      "control": "record write unapproved refuses dispatch predicate",
+      "expected": false,
+      "actual": false,
+      "status": "Passed"
+    },
+    {
+      "diagnostic": "Blocked: exclusive original coordinator/record-write authority"
+    },
+    {
+      "control": "record write unapproved refuses canonical record write",
+      "expected": true,
+      "actual": true,
+      "status": "Passed"
+    },
+    {
+      "diagnostic": "Blocked: exclusive original coordinator/record-write authority"
+    },
+    {
+      "control": "record write unapproved refuses index write",
+      "expected": true,
+      "actual": true,
+      "status": "Passed"
+    },
+    {
+      "control": "denied recovery leaves all shared files unchanged",
+      "expected": true,
+      "actual": true,
+      "status": "Passed"
+    },
+    {
+      "control": "reply timely classification",
+      "expected": "timely",
+      "actual": "timely",
+      "status": "Passed"
+    },
+    {
+      "control": "reply timely valid",
+      "expected": true,
+      "actual": true,
+      "status": "Passed"
+    },
+    {
+      "control": "reply ambiguous classification",
+      "expected": "ambiguous",
+      "actual": "ambiguous",
+      "status": "Passed"
+    },
+    {
+      "control": "reply ambiguous valid",
+      "expected": false,
+      "actual": false,
+      "status": "Passed"
+    },
+    {
+      "control": "reply old SHA classification",
+      "expected": "wrong-SHA",
+      "actual": "wrong-SHA",
+      "status": "Passed"
+    },
+    {
+      "control": "reply old SHA valid",
+      "expected": false,
+      "actual": false,
+      "status": "Passed"
+    },
+    {
+      "control": "reply old request classification",
+      "expected": "wrong-request",
+      "actual": "wrong-request",
+      "status": "Passed"
+    },
+    {
+      "control": "reply old request valid",
+      "expected": false,
+      "actual": false,
+      "status": "Passed"
+    },
+    {
+      "control": "reply late-read timely classification",
+      "expected": "timely-late-read",
+      "actual": "timely-late-read",
+      "status": "Passed"
+    },
+    {
+      "control": "reply late-read timely valid",
+      "expected": true,
+      "actual": true,
+      "status": "Passed"
+    },
+    {
+      "control": "reply late classification",
+      "expected": "late",
+      "actual": "late",
+      "status": "Passed"
+    },
+    {
+      "control": "reply late valid",
+      "expected": false,
+      "actual": false,
+      "status": "Passed"
+    },
+    {
+      "control": "reply unknown time classification",
+      "expected": "unknown-time",
+      "actual": "unknown-time",
+      "status": "Passed"
+    },
+    {
+      "control": "reply unknown time valid",
+      "expected": false,
+      "actual": false,
+      "status": "Passed"
+    },
+    {
+      "control": "timely late-read preserves prior pause",
+      "expected": [
+        true,
+        false
+      ],
+      "actual": [
+        true,
+        false
+      ],
+      "status": "Passed"
+    },
+    {
+      "control": "one supplement available within budget",
+      "expected": true,
+      "actual": true,
+      "status": "Passed"
+    },
+    {
+      "control": "lost supplement receipt still consumes quota",
+      "expected": false,
+      "actual": false,
+      "status": "Passed"
+    },
+    {
+      "control": "supplement refused generating",
+      "expected": false,
+      "actual": false,
+      "status": "Passed"
+    },
+    {
+      "control": "supplement refused unknown generation",
+      "expected": false,
+      "actual": false,
+      "status": "Passed"
+    },
+    {
+      "control": "supplement refused deadline",
+      "expected": false,
+      "actual": false,
+      "status": "Passed"
+    },
+    {
+      "control": "timeout does not grant fresh budget",
+      "expected": false,
+      "actual": false,
+      "status": "Passed"
+    },
+    {
+      "control": "explicit Owner reopening permits new linked request",
+      "expected": true,
+      "actual": true,
+      "status": "Passed"
+    },
+    {
+      "control": "valid revision permits later candidate request",
+      "expected": true,
+      "actual": true,
+      "status": "Passed"
+    },
+    {
+      "control": "old timeout/pause retained",
+      "expected": true,
+      "actual": true,
+      "status": "Passed"
+    },
+    {
+      "control": "complete declared branch-only delivery eligible",
+      "expected": true,
+      "actual": true,
+      "status": "Passed"
+    },
+    {
+      "control": "paused session rejects complete/archive",
+      "expected": false,
+      "actual": false,
+      "status": "Passed"
+    },
+    {
+      "control": "branch delivery refuses missing required_pilot_passed",
+      "expected": false,
+      "actual": false,
+      "status": "Passed"
+    },
+    {
+      "control": "branch delivery refuses missing accepted_sha",
+      "expected": false,
+      "actual": false,
+      "status": "Passed"
+    },
+    {
+      "control": "branch delivery refuses missing hashes_unchanged",
+      "expected": false,
+      "actual": false,
+      "status": "Passed"
+    },
+    {
+      "control": "branch delivery refuses missing workers_accounted",
+      "expected": false,
+      "actual": false,
+      "status": "Passed"
+    },
+    {
+      "control": "simulated postmerge failure rejects archive/close completion",
+      "expected": false,
+      "actual": false,
+      "status": "Passed"
+    },
+    {
+      "control": "pure premerge all conditions",
+      "expected": true,
+      "actual": true,
+      "status": "Passed"
+    },
+    {
+      "control": "pure premerge refuses automatic close association",
+      "expected": false,
+      "actual": false,
+      "status": "Passed"
+    },
+    {
+      "control": "pure premerge refuses unknown server associations",
+      "expected": false,
+      "actual": false,
+      "status": "Passed"
+    },
+    {
+      "control": "pure premerge refuses missing authority",
+      "expected": false,
+      "actual": false,
+      "status": "Passed"
+    }
+  ],
+  "subprocesses": [
+    {
+      "command": [
+        "C:\\Python314\\python.exe",
+        "-B",
+        "C:\\Users\\Administrator\\orca\\workspaces\\AbilityKit\\cooking-dot-skill-polish\\.agents\\skills\\cooking-dot-workflow\\scripts\\test_controls.py",
+        "--child",
+        "pre-effect",
+        "--root",
+        "C:\\Users\\ADMINI~1\\AppData\\Local\\Temp\\cooking-flow-controls-euze_0qd\\pre-effect"
+      ],
+      "exit": 71,
+      "expected_exit": 71,
+      "stdout": "{\"simulation\": true, \"stage\": \"intent-read-back\", \"op_id\": \"ebc14e09-9a95-4180-b5c8-a3528ea04e86:000001\"}\n",
+      "stderr": ""
+    },
+    {
+      "command": [
+        "C:\\Python314\\python.exe",
+        "-B",
+        "C:\\Users\\Administrator\\orca\\workspaces\\AbilityKit\\cooking-dot-skill-polish\\.agents\\skills\\cooking-dot-workflow\\scripts\\records.py",
+        "inspect",
+        "C:\\Users\\ADMINI~1\\AppData\\Local\\Temp\\cooking-flow-controls-euze_0qd\\pre-effect"
+      ],
+      "exit": 0,
+      "expected_exit": 0,
+      "stdout": "{\n  \"version\": 1,\n  \"flow_id\": \"ebc14e09-9a95-4180-b5c8-a3528ea04e86\",\n  \"effective_run_id\": \"simulation-run\",\n  \"last_seq\": 1,\n  \"unresolved\": [\n    \"ebc14e09-9a95-4180-b5c8-a3528ea04e86:000001\"\n  ],\n  \"record_hashes\": {\n    \"000001.intent.json\": \"33b1064d9cd3b50a58040ae07711f6e4dc17723b478ea0f6783b17a3e7d26141\"\n  }\n}\n",
+      "stderr": ""
+    },
+    {
+      "command": [
+        "C:\\Python314\\python.exe",
+        "-B",
+        "C:\\Users\\Administrator\\orca\\workspaces\\AbilityKit\\cooking-dot-skill-polish\\.agents\\skills\\cooking-dot-workflow\\scripts\\test_controls.py",
+        "--child",
+        "recover",
+        "--root",
+        "C:\\Users\\ADMINI~1\\AppData\\Local\\Temp\\cooking-flow-controls-euze_0qd\\pre-effect"
+      ],
+      "exit": 0,
+      "expected_exit": 0,
+      "stdout": "{\"simulation\": true, \"ledger\": {}, \"index\": {\"version\": 1, \"flow_id\": \"ebc14e09-9a95-4180-b5c8-a3528ea04e86\", \"effective_run_id\": \"simulation-run\", \"last_seq\": 1, \"unresolved\": [], \"record_hashes\": {\"000001.intent.json\": \"33b1064d9cd3b50a58040ae07711f6e4dc17723b478ea0f6783b17a3e7d26141\", \"000001.receipt.json\": \"6012bcda59cc9a722b0b9ecd02e27ca3cd1dba50bcb5f03b841e463a9ebff900\"}}}\n",
+      "stderr": ""
+    },
+    {
+      "command": [
+        "C:\\Python314\\python.exe",
+        "-B",
+        "C:\\Users\\Administrator\\orca\\workspaces\\AbilityKit\\cooking-dot-skill-polish\\.agents\\skills\\cooking-dot-workflow\\scripts\\test_controls.py",
+        "--child",
+        "lost-receipt",
+        "--root",
+        "C:\\Users\\ADMINI~1\\AppData\\Local\\Temp\\cooking-flow-controls-euze_0qd\\lost-receipt"
+      ],
+      "exit": 72,
+      "expected_exit": 72,
+      "stdout": "{\"simulation\": true, \"stage\": \"intent-read-back\", \"op_id\": \"574df7e3-433c-4e83-b476-321853f156dc:000001\"}\n{\"simulation\": true, \"stage\": \"effect-applied\", \"invocations\": 1}\n",
+      "stderr": ""
+    },
+    {
+      "command": [
+        "C:\\Python314\\python.exe",
+        "-B",
+        "C:\\Users\\Administrator\\orca\\workspaces\\AbilityKit\\cooking-dot-skill-polish\\.agents\\skills\\cooking-dot-workflow\\scripts\\records.py",
+        "inspect",
+        "C:\\Users\\ADMINI~1\\AppData\\Local\\Temp\\cooking-flow-controls-euze_0qd\\lost-receipt"
+      ],
+      "exit": 0,
+      "expected_exit": 0,
+      "stdout": "{\n  \"version\": 1,\n  \"flow_id\": \"574df7e3-433c-4e83-b476-321853f156dc\",\n  \"effective_run_id\": \"simulation-run\",\n  \"last_seq\": 1,\n  \"unresolved\": [\n    \"574df7e3-433c-4e83-b476-321853f156dc:000001\"\n  ],\n  \"record_hashes\": {\n    \"000001.intent.json\": \"37639a76e7d6bb17ffff82801cbc93d3ef51f599bbb8df049d4e5608e756562d\"\n  }\n}\n",
+      "stderr": ""
+    },
+    {
+      "command": [
+        "C:\\Python314\\python.exe",
+        "-B",
+        "C:\\Users\\Administrator\\orca\\workspaces\\AbilityKit\\cooking-dot-skill-polish\\.agents\\skills\\cooking-dot-workflow\\scripts\\test_controls.py",
+        "--child",
+        "recover",
+        "--root",
+        "C:\\Users\\ADMINI~1\\AppData\\Local\\Temp\\cooking-flow-controls-euze_0qd\\lost-receipt"
+      ],
+      "exit": 0,
+      "expected_exit": 0,
+      "stdout": "{\"simulation\": true, \"ledger\": {\"574df7e3-433c-4e83-b476-321853f156dc:000001\": 1}, \"index\": {\"version\": 1, \"flow_id\": \"574df7e3-433c-4e83-b476-321853f156dc\", \"effective_run_id\": \"simulation-run\", \"last_seq\": 1, \"unresolved\": [], \"record_hashes\": {\"000001.intent.json\": \"37639a76e7d6bb17ffff82801cbc93d3ef51f599bbb8df049d4e5608e756562d\", \"000001.receipt.json\": \"9d860a8b6bd13c31f9bbdd17b612b1bd6f90d65ee23dbbb5eb6614d8082ae604\"}}}\n",
+      "stderr": ""
+    },
+    {
+      "command": [
+        "C:\\Python314\\python.exe",
+        "-B",
+        "C:\\Users\\Administrator\\orca\\workspaces\\AbilityKit\\cooking-dot-skill-polish\\.agents\\skills\\cooking-dot-workflow\\scripts\\test_controls.py",
+        "--child",
+        "stale-index",
+        "--root",
+        "C:\\Users\\ADMINI~1\\AppData\\Local\\Temp\\cooking-flow-controls-euze_0qd\\stale-index"
+      ],
+      "exit": 73,
+      "expected_exit": 73,
+      "stdout": "{\"simulation\": true, \"stage\": \"intent-read-back\", \"op_id\": \"ac317807-dbc7-4a32-8b7d-4a23794867db:000001\"}\n{\"simulation\": true, \"stage\": \"effect-applied\", \"invocations\": 1}\n{\"simulation\": true, \"stage\": \"receipt-read-back\"}\n",
+      "stderr": ""
+    },
+    {
+      "command": [
+        "C:\\Python314\\python.exe",
+        "-B",
+        "C:\\Users\\Administrator\\orca\\workspaces\\AbilityKit\\cooking-dot-skill-polish\\.agents\\skills\\cooking-dot-workflow\\scripts\\records.py",
+        "inspect",
+        "C:\\Users\\ADMINI~1\\AppData\\Local\\Temp\\cooking-flow-controls-euze_0qd\\stale-index"
+      ],
+      "exit": 0,
+      "expected_exit": 0,
+      "stdout": "{\n  \"version\": 1,\n  \"flow_id\": \"ac317807-dbc7-4a32-8b7d-4a23794867db\",\n  \"effective_run_id\": \"simulation-run\",\n  \"last_seq\": 1,\n  \"unresolved\": [],\n  \"record_hashes\": {\n    \"000001.intent.json\": \"755632334cac6e65c12de04f8557292ea617030f01252b63a1ecc496236cda8c\",\n    \"000001.receipt.json\": \"4712f991175c012e36fef9a75d605ba3ece702152be832570f49aab27291cc68\"\n  }\n}\n",
+      "stderr": ""
+    },
+    {
+      "command": [
+        "C:\\Python314\\python.exe",
+        "-B",
+        "C:\\Users\\Administrator\\orca\\workspaces\\AbilityKit\\cooking-dot-skill-polish\\.agents\\skills\\cooking-dot-workflow\\scripts\\test_controls.py",
+        "--child",
+        "recover",
+        "--root",
+        "C:\\Users\\ADMINI~1\\AppData\\Local\\Temp\\cooking-flow-controls-euze_0qd\\stale-index"
+      ],
+      "exit": 0,
+      "expected_exit": 0,
+      "stdout": "{\"simulation\": true, \"ledger\": {\"ac317807-dbc7-4a32-8b7d-4a23794867db:000001\": 1}, \"index\": {\"version\": 1, \"flow_id\": \"ac317807-dbc7-4a32-8b7d-4a23794867db\", \"effective_run_id\": \"simulation-run\", \"last_seq\": 1, \"unresolved\": [], \"record_hashes\": {\"000001.intent.json\": \"755632334cac6e65c12de04f8557292ea617030f01252b63a1ecc496236cda8c\", \"000001.receipt.json\": \"4712f991175c012e36fef9a75d605ba3ece702152be832570f49aab27291cc68\"}}}\n",
+      "stderr": ""
+    },
+    {
+      "command": [
+        "C:\\Python314\\python.exe",
+        "-B",
+        "C:\\Users\\Administrator\\orca\\workspaces\\AbilityKit\\cooking-dot-skill-polish\\.agents\\skills\\cooking-dot-workflow\\scripts\\records.py",
+        "inspect",
+        "C:\\Users\\ADMINI~1\\AppData\\Local\\Temp\\cooking-flow-controls-euze_0qd\\records"
+      ],
+      "exit": 0,
+      "expected_exit": 0,
+      "stdout": "{\n  \"version\": 1,\n  \"flow_id\": \"2e2e0e24-41f4-46c4-be47-750f829a0d75\",\n  \"effective_run_id\": \"simulation-run\",\n  \"last_seq\": 2,\n  \"unresolved\": [],\n  \"record_hashes\": {\n    \"000001.intent.json\": \"920cf341388b594b1b6869919f1d82eb93facce7146eadc61f83ef982ddc7887\",\n    \"000001.receipt.json\": \"4f56c98f4f3d78c57e80a0fd4d2d0cffef9f695610c1bac30c7e55f34d0b497d\",\n    \"000002.intent.json\": \"696f1eec55bba14605cf00238813da1d53c03123541c3539f4190df56019e846\",\n    \"000002.receipt.json\": \"06bca817711a16f7138f4d1c7883731894493b0e6f7a067622a5ba7b0dc2fce0\"\n  }\n}\n",
+      "stderr": ""
+    }
+  ]
+}

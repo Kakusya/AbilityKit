@@ -1,0 +1,8 @@
+{
+  "operation": "independent-reviewer-start",
+  "run_id": "run_840202cc5621",
+  "role": "read-only source audit; task-local independent controls owner",
+  "spec_ref": "research/reviewer-spec.txt",
+  "authority": "Owner polish request + accepted dot plan",
+  "utc": "2026-10-05T12:40:41.326418+00:00"
+}

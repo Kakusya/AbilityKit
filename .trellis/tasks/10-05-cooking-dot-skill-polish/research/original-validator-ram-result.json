@@ -1,0 +1,9 @@
+{
+  "command": "python -B -c <original-validator-ram-command.txt>",
+  "exit_code": 0,
+  "status": "Passed",
+  "mode": "Original skill-creator validator; fixed-hash PyYAML6.0.3 pure-Python RAM import, no install/extraction",
+  "source_file_hashes_verified": 10,
+  "scope": "Skill frontmatter validation only; not runtime workflow proof",
+  "original_missing_dependency_failure_preserved": "quick-validate-output.txt"
+}

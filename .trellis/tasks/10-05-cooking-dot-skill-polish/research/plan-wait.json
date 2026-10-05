@@ -1,0 +1,19 @@
+{
+  "request_id": "AK-CDF-POLISH-PLAN-01",
+  "sha": "4cf5b38bcb06b2f58d49fd73fc9de26e5cec02fe",
+  "conversation_url": "https://chatgpt.com/dots/01a10258-c084-74bb-8bcc-ec01958e5023",
+  "browser_page_id": "77075ca3-7da4-4890-8bd5-002b9ef6a07e",
+  "baseline_article_count": 38,
+  "wait_started_utc": "2026-10-05T12:09:30.125588+00:00",
+  "deadline_utc": "2026-10-05T12:39:30.125588+00:00",
+  "poll_ordinal": 3,
+  "reminder_sent": false,
+  "status": "final-plan-accepted",
+  "fingerprint": "55855b8dc33bfd0da7097fcaa8a65f12f999a9e7aecd9228eafb8aff750c7dbe",
+  "posted_message_id": "3f12f99a2ea4819b8541c90bd4ea9e30~3f12f99a2ea4819b8541c90bd4ea9e30~CalpicoMessage~Sentinel_b87bac37b0d88191af724782975a6d74",
+  "last_poll_utc": "2026-10-05T12:12:05.677064+00:00",
+  "next_poll_utc": null,
+  "full_reply_received": true,
+  "reply_id": "3f12f99a2ea4819b8541c90bd4ea9e30~3f12f99a2ea4819b8541c90bd4ea9e30~CalpicoMessage~Sentinel_7fa40d5bc9b881918bb0a797a3f560d8",
+  "observed_utc": "2026-10-05T12:16:04.678223+00:00"
+}

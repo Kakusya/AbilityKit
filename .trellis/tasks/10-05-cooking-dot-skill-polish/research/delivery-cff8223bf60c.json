@@ -1,0 +1,119 @@
+{
+    "id":  "0e89ac56-692c-4e82-bcf4-1e93111fd8a9",
+    "ok":  true,
+    "result":  {
+                   "runId":  "run_840202cc5621",
+                   "messages":  [
+                                    {
+                                        "id":  "msg_0f43673b482b",
+                                        "run_id":  "run_840202cc5621",
+                                        "delivery_contract":  "current_delivery",
+                                        "from_handle":  "term_d82fab32-3780-4c17-8b2d-4fefaf8254eb",
+                                        "to_handle":  "run:run_840202cc5621",
+                                        "subject":  "alive",
+                                        "body":  "",
+                                        "type":  "heartbeat",
+                                        "priority":  "normal",
+                                        "thread_id":  null,
+                                        "payload":  "{\"taskId\":\"task_b1846da24106\",\"dispatchId\":\"ctx_2ede5e596818\",\"phase\":\"implementing\"}",
+                                        "created_at":  "2026-10-05T12:18:32Z",
+                                        "delivered_at":  null
+                                    },
+                                    {
+                                        "id":  "msg_bd6578e2aebb",
+                                        "run_id":  "run_840202cc5621",
+                                        "delivery_contract":  "current_delivery",
+                                        "from_handle":  "term_d82fab32-3780-4c17-8b2d-4fefaf8254eb",
+                                        "to_handle":  "run:run_840202cc5621",
+                                        "subject":  "alive",
+                                        "body":  "",
+                                        "type":  "heartbeat",
+                                        "priority":  "normal",
+                                        "thread_id":  null,
+                                        "payload":  "{\"taskId\":\"task_b1846da24106\",\"dispatchId\":\"ctx_2ede5e596818\",\"phase\":\"implementing\"}",
+                                        "created_at":  "2026-10-05T12:29:35Z",
+                                        "delivered_at":  null
+                                    },
+                                    {
+                                        "id":  "msg_9a3118db2707",
+                                        "run_id":  "run_840202cc5621",
+                                        "delivery_contract":  "current_delivery",
+                                        "from_handle":  "term_d82fab32-3780-4c17-8b2d-4fefaf8254eb",
+                                        "to_handle":  "run:run_840202cc5621",
+                                        "subject":  "Run binding consistency addressed",
+                                        "body":  "Implemented immutable flow binding with verified existing run_id or null, and applied run-create receipt deriving effective_run_id without overwriting flow.json. Subsequent Run-bound intent preconditions validate against that derived identity; focused controls will cover receipt derivation and conflicting Run identity. Read-only CLI remains separate from the attested original-coordinator write API.",
+                                        "type":  "status",
+                                        "priority":  "normal",
+                                        "thread_id":  null,
+                                        "payload":  "{\"taskId\":\"task_b1846da24106\",\"dispatchId\":\"ctx_2ede5e596818\"}",
+                                        "created_at":  "2026-10-05T12:31:08Z",
+                                        "delivered_at":  null
+                                    },
+                                    {
+                                        "id":  "msg_457cc04b12fd",
+                                        "run_id":  "run_840202cc5621",
+                                        "delivery_contract":  "current_delivery",
+                                        "from_handle":  "term_d82fab32-3780-4c17-8b2d-4fefaf8254eb",
+                                        "to_handle":  "run:run_840202cc5621",
+                                        "subject":  "alive",
+                                        "body":  "",
+                                        "type":  "heartbeat",
+                                        "priority":  "normal",
+                                        "thread_id":  null,
+                                        "payload":  "{\"taskId\":\"task_b1846da24106\",\"dispatchId\":\"ctx_2ede5e596818\",\"phase\":\"reviewing\"}",
+                                        "created_at":  "2026-10-05T12:34:56Z",
+                                        "delivered_at":  null
+                                    },
+                                    {
+                                        "id":  "msg_434ddd238ef0",
+                                        "run_id":  "run_840202cc5621",
+                                        "delivery_contract":  "current_delivery",
+                                        "from_handle":  "term_d82fab32-3780-4c17-8b2d-4fefaf8254eb",
+                                        "to_handle":  "run:run_840202cc5621",
+                                        "subject":  "alive",
+                                        "body":  "",
+                                        "type":  "heartbeat",
+                                        "priority":  "normal",
+                                        "thread_id":  null,
+                                        "payload":  "{\"taskId\":\"task_b1846da24106\",\"dispatchId\":\"ctx_2ede5e596818\",\"phase\":\"implementing\"}",
+                                        "created_at":  "2026-10-05T12:37:44Z",
+                                        "delivered_at":  null
+                                    },
+                                    {
+                                        "id":  "msg_ef36981b3e17",
+                                        "run_id":  "run_840202cc5621",
+                                        "delivery_contract":  "current_delivery",
+                                        "from_handle":  "dispatch:ctx_51d6193106de",
+                                        "to_handle":  "run:run_840202cc5621",
+                                        "subject":  "Question",
+                                        "body":  "Independent preparation is saved at research/independent-review.md; contract controls are ready and no mutable helper tests ran. Please provide the explicitly frozen candidate full SHA and delivered skill/SOP/helper hashes after implementation settles, plus original report/output identities and pilot identity if available; I will wait on this same question and will not elect a candidate.",
+                                        "type":  "question",
+                                        "priority":  "normal",
+                                        "thread_id":  "msg_ef36981b3e17",
+                                        "payload":  "{\"taskId\":\"task_0658d87815e2\",\"dispatchId\":\"ctx_51d6193106de\",\"question\":\"Independent preparation is saved at research/independent-review.md; contract controls are ready and no mutable helper tests ran. Please provide the explicitly frozen candidate full SHA and delivered skill/SOP/helper hashes after implementation settles, plus original report/output identities and pilot identity if available; I will wait on this same question and will not elect a candidate.\",\"options\":[]}",
+                                        "created_at":  "2026-10-05T12:42:59Z",
+                                        "delivered_at":  null
+                                    },
+                                    {
+                                        "id":  "msg_1d025f861c83",
+                                        "run_id":  "run_840202cc5621",
+                                        "delivery_contract":  "current_delivery",
+                                        "from_handle":  "term_d82fab32-3780-4c17-8b2d-4fefaf8254eb",
+                                        "to_handle":  "run:run_840202cc5621",
+                                        "subject":  "Timing rule implemented; validation underway",
+                                        "body":  "Applied research/dot-timing-rule.md to dialogue, templates, helper and controls; null posted UTC can now use verified complete-observation upper-bound evidence while fragment, wrong identity, unverified proof and crossed-deadline intervals fail closed. Expired stale paused=false retains technical validity but refuses continuation, including late-read revision budget reopening. Isolated controls passed 113 assertions in the intermediate run; skill-creator quick_validate is blocked by missing PyYAML, so I will preserve that raw failure and use a scoped stdlib structural/link/SOP-boundary check without installing tools.",
+                                        "type":  "status",
+                                        "priority":  "normal",
+                                        "thread_id":  null,
+                                        "payload":  "{\"taskId\":\"task_b1846da24106\",\"dispatchId\":\"ctx_2ede5e596818\"}",
+                                        "created_at":  "2026-10-05T12:43:14Z",
+                                        "delivered_at":  null
+                                    }
+                                ],
+                   "count":  7,
+                   "acknowledged":  null
+               },
+    "_meta":  {
+                  "runtimeId":  "ff0c5f2c-d341-4455-bc1c-c113650bdd60"
+              }
+}
