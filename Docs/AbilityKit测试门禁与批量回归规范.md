@@ -125,7 +125,7 @@ powershell -ExecutionPolicy Bypass -File tools\run_test_gate.ps1 -List
 
 ### 4.3 Step 类型
 
-当前支持以下 step：
+历史配置包含以下 step；2026-10-06 起的可执行合同与兼容状态以第 15 节为准：
 
 | kind | 用途 | 必要字段 |
 | --- | --- | --- |
@@ -347,3 +347,99 @@ DSL 或脚本场景测试的目标不是复刻所有人工操作，而是把“�
 3. 每个线上 bug 或关键回归都应沉淀为一个最小测试，但不要求每个临时实现细节都有测试。
 4. 测试用例数量增长后，必须通过标签、门禁和 nightly 分层管理，否则 CI 时间和维护成本会反噬开发效率。
 5. 文档、门禁配置和测试标签必须同步演进，避免测试存在但无人知道何时运行。
+
+## 15. Cooking 结果真实性合同（2026-10-06）
+
+本节为 Owner Cooking-only 范围及 [dot 完整规划决定](../.trellis/tasks/10-06-cooking-issue6-truthful-gates/research/cooking-dot-flow/evidence/dot-plan-reply-raw.txt) 的共享 runner 合同。上面的示例命令、推荐 CI、历史门禁说明继续保留来源，不能视为当前适配、实际 CI 或执行通过的证明。此改动只服务既有 `cooking-et-level-runtime` 与 `cooking-kitchen-loop`；其他示例不迁移、不修复。旧 Unity 脚本独立运行的 skip 行为未修改。
+
+### 状态、身份与覆盖
+
+| canonical status | CLI exit | 事实 |
+| --- | --- | --- |
+| Passed | 0 | 所声明覆盖由已验证的当前执行证据完成 |
+| Failed | 1 | 已执行失败、坏/矛盾证据、配置错误、超时或启动后取消 |
+| Blocked | 2 | 缺必需工具、缺明确覆盖/未适配 producer 或缺复用证明，不能宣称成功 |
+| Skipped | 3 | 仅预先声明的 optional `MissingTool` 非执行政策；保留原原因 |
+| NotRun | 4 | 未选择/尚未执行；或聚焦结果导致父门禁覆盖不完整 |
+
+大小写严格；`processExitCode` 单独保存真实原生值，原生 exit2 不自动变成 Blocked。N/A 只用于验收范围说明。纯 build 的 `tests=null`；测试零命中、零实际条目、失败、必需跳过/未执行和计数矛盾不能 Passed。
+
+每次调用分配 UUID `runId`，完整计划树为每个调用分配独立 UUID `resultId`、`parentResultId`、`invocationPath`。全新 run 目录内以 result UUID 的 12 个字符分配短目录键，创建时拒绝碰撞；重复 nested 调用不能共享目录。所有兄弟及后续节点都保留，包括未执行的 NotRun。`-StepName` 接受唯一名称或准确调用路径，缺失/歧义为 Failed；成功选中叶子仍不等于父 gate 完整通过。未启动叶子的 command、执行时间和原生退出码均为 null。
+
+配置权威仍是 `tools/test-gates.json`。适配 entry 显式提供 `requiredCoverage`、`optionalCoverage`；每个叶子有 `coverage`、project、TFM、filter。required/optional 不重叠；Cooking 全部九个步骤仍 required，步骤次序、focused filter 和两个完整测试项目保留。完整字段模型见 [result-contract-fields](../.trellis/tasks/10-06-cooking-issue6-truthful-gates/research/result-contract-fields.md)。
+
+`coverage.completed` 仅来自通过唯一 validator 的 Passed 叶子。每个 token 的 `bindings` 是非空、唯一、可解析的叶子 ID；父节点重新推导 completed/missing/bindings/status/fullGateAccepted，拒绝伪造汇总、缺孩子、旧/重复身份与空序列化绑定。内存对象及 JSON 写入再读取使用同一个 validator。所有真实失败和损坏均传播；optional 政策不豁免失败。required 未完成的聚焦父结果为 NotRun/4，`fullGateAccepted=false`。
+
+### 执行与复用
+
+两个最终真实命令保持：
+
+```powershell
+powershell -NoProfile -ExecutionPolicy Bypass -File tools/run_test_gate.ps1 -Gate cooking-et-level-runtime -Configuration Debug -CI
+powershell -NoProfile -ExecutionPolicy Bypass -File tools/run_test_gate.ps1 -Gate cooking-kitchen-loop -Configuration Debug -CI
+```
+
+每个 test 适配器显式执行 restore → build → test `--no-build --no-restore`，逐阶段记录 argv、宿主/SDK/工具身份、时间和原生退出码；build 步骤也显式 restore/build。不能把准备阶段隐藏成未执行。`-TimeoutSeconds` 为每个子进程超时；`-CancelSignalPath` 为明确的取消信号文件，启动后的取消保留 Failed 和后续 NotRun。只处置本次 Process 实例，不全局 kill；若退出无法确认，UnknownWriter 阻止继续。
+
+`-NoBuild` 只跳过 test 的准备 build，同时复用恢复证据；配置中的显式 build 步骤仍执行。`-NoRestore` 只跳过 restore，build 继续执行。使用 `-ReuseManifestPath` 指向一个明确 run 的 `reuse-manifest.json`，按 project/TFM/Configuration 索引原始阶段回执；不搜索最新目录。NoRestore 只要求有效 restore，允许原 build 失败；NoBuild 要求 restore 与 build 均有效。缺证明 Blocked，坏/失配证明 Failed。Reused 阶段 command、时间和 processExitCode 为 null，原始 producer 身份/回执和归档副本另外保留，不能获得“本次执行”的信用。
+
+### 证据与验收界限
+
+源证据记录精确 Git SHA、dirty 与完整 dirty 明细、输入指纹和前后检查。输入取自真实 MSBuild 评估的项目引用、Compile Include、SDK/条件导入、配置、包解析及生成/分析工具；引用的 `Unity/Packages` 输入也读取/hash，但不运行 Unity。不能靠扩展名白名单、文件存在或 mtime 宣称源码闭包。
+
+每次 build 另在本 run 拥有的目录写入临时 compiler target，通过命令参数导入；不修改项目文件。该 target 在每个项目的 CoreCompile 前使用 MSBuild 自带 [GetFileHash](https://learn.microsoft.com/en-us/visualstudio/msbuild/getfilehash-task) 记录最终 Compile、ReferencePath、Analyzer、AdditionalFiles、EmbeddedResource 与导入的实际路径/hash，包括 target 加入的生成文件。runner 归档此 trace 与输入副本，执行后逐项复验；SDK 的 MSBuild 与 Roslyn 工具输入也归档。普通评估和实际编译 trace 各自保留，不能用评估的静态 Compile 列表冒充完整编译输入。
+
+每个阶段的输入、restore assets、build/test 程序集和依赖二进制归档进本 run 独立目录，记录路径/长度/SHA-256/所属 run/result，执行前后核对。artifact 只允许节点拥有的相对路径，拒绝逃逸、reparse/junction、旧身份和替换 DLL。stdout/stderr 直接从两个原生流保存为独立文件，允许空日志；不经过 ErrorRecord 排版，也不宣称两条流的合并顺序是真实时序。
+
+TRX 按实际 UnitTestResult、Execution、UnitTest/TestMethod 程序集与 summary/counters 解析并绑定当前调用、源 SHA 和 filter argv。total=resultEntries=passed+failed+skipped+notExecuted；executed=passed+failed。TRX 的其它 outcome counters 按本身语义核对，不再相加；例如 VSTest 的 [TestRunSummary](https://source.dot.net/Microsoft.VisualStudio.TestPlatform.Extensions.Trx.TestLogger/ObjectModel/TestRunSummary.cs.html) 将普通 Passed 测试的 completed 写为 0，它不是 executed 的别名。失败却 native0、零实际执行、错误程序集/执行身份、旧时间/旧 run/错 SHA、覆盖二进制和计数矛盾均拒绝。
+
+隔离自测命令：
+
+```powershell
+powershell -NoProfile -ExecutionPolicy Bypass -File tools/tests/test-gate-result-contract.tests.ps1
+```
+
+自测仅使用唯一 TEMP 项目、明确假执行器与 `local/Artifacts/issue6-cooking-slice1-<unique-id>` 全新目录；逐项保存 expected/actual、命令、原生退出码、计数、raw 路径、源码前后身份，并保留失败运行。`-ControlContextPath` 只接受 TEMP 中明确 fixture 的上下文与配置及仓库指定 fixture 的 hash；所有此类结果 `example=true`，生产 validator 拒绝 synthetic/example，不能据此声称真实 .NET/Unity 验收。slice1 的两项真实 Cooking gate、CI、Issue 最终技术接受、merge/close 仍 NotRun，须独立派发与精确提交验证。
+
+原生宽度控制在独立 `width-evidence.json` 中记录请求的 RawUI buffer width、setter 是否成功、实际应用值、观测 buffer/window width、重定向及限制。参数 40/80/180 本身不证明实际宽度。`contractControlsAccepted` 单独记录字节与合同断言；缺实际宽度覆盖时 `consoleWidthCoverage=Blocked`，整套 `fullControlSuiteAccepted=false`、自测 CLI2，不能借已通过的原始流校验冒称完整控制组通过。此证据不声明交互控制台的渲染验收。
+
+### 只读兼容清单
+
+生产仅适配 dotnet-build / dotnet-test / gate。所选执行树含未适配 kind 或缺明确覆盖合同，启动任何 producer 前完整输出 Blocked/exit2。未知/损坏配置 Failed。只检查所选树的适配要求，其他 legacy 定义存在不阻止两个 Cooking gate；`-List` 保留所有 entry 并给出诊断。defaultGate=`precheck` 保持原值，当前默认执行因此 Blocked；调用方必须检查 canonical CLI 与 JSON 覆盖事实。
+
+| entry | 配置 kind（含直接步骤） | 当前边界 |
+| --- | --- | --- |
+| precheck | build/test | Blocked: MissingCoverageContract |
+| moba-codegen | build/test/script | Blocked: MissingCoverageContract + UnsupportedProducerContract |
+| moba-console-smoke | test | Blocked: MissingCoverageContract |
+| runtime-contracts | test | Blocked: MissingCoverageContract |
+| moba-network-options | test | Blocked: MissingCoverageContract |
+| moba-acceptance-dotnet | test | Blocked: MissingCoverageContract |
+| cooking-et-level-runtime | build/test | 显式合同；真实执行另验 |
+| cooking-kitchen-loop | build/test | 显式合同；真实执行另验 |
+| network-sdk | test | Blocked: MissingCoverageContract |
+| core-stability | test/script | Blocked: MissingCoverageContract + UnsupportedProducerContract |
+| foundation-units | build/test/script | Blocked: MissingCoverageContract + UnsupportedProducerContract |
+| regression | test/gate | Blocked: MissingCoverageContract；nested core-stability 也未适配 |
+| moba-content-contracts | script/EditMode | Blocked: MissingCoverageContract + UnsupportedProducerContract |
+| moba-xiaoqiao-unity | EditMode | Blocked: MissingCoverageContract + UnsupportedProducerContract |
+| moba-lianpo-unity | EditMode | Blocked: MissingCoverageContract + UnsupportedProducerContract |
+| moba-zhaoyun-unity | EditMode | Blocked: MissingCoverageContract + UnsupportedProducerContract |
+| moba-mozi-unity | EditMode | Blocked: MissingCoverageContract + UnsupportedProducerContract |
+| moba-daji-unity | EditMode | Blocked: MissingCoverageContract + UnsupportedProducerContract |
+| moba-yingzheng-unity | EditMode | Blocked: MissingCoverageContract + UnsupportedProducerContract |
+| moba-config-sync | EditMode | Blocked: MissingCoverageContract + UnsupportedProducerContract |
+| shooter-fast | test | Blocked: MissingCoverageContract |
+| shooter-integration | test | Blocked: MissingCoverageContract |
+| shooter-unity-playmode | PlayMode | Blocked: MissingCoverageContract + UnsupportedProducerContract |
+| shooter-multiprocess | script | Blocked: MissingCoverageContract + UnsupportedProducerContract |
+| shooter-multiprocess-compatibility | script | Blocked: MissingCoverageContract + UnsupportedProducerContract |
+| shooter-multiprocess-soak | script | Blocked: MissingCoverageContract + UnsupportedProducerContract |
+| shooter-multiprocess-ownership-cleanup | script | Blocked: MissingCoverageContract + UnsupportedProducerContract |
+| runtime-performance-measurement | test/script | Blocked: MissingCoverageContract + UnsupportedProducerContract |
+| shooter-performance | script | Blocked: MissingCoverageContract + UnsupportedProducerContract |
+| moba-complete-battle-journey | test/EditMode | Blocked: MissingCoverageContract + UnsupportedProducerContract |
+| moba-smoke | script | Blocked: MissingCoverageContract + UnsupportedProducerContract |
+| moba-multiprocess | script | Blocked: MissingCoverageContract + UnsupportedProducerContract |
+
+兼容消费者搜索中，本 checkout 的生产 `.ps1/.yml/.yaml` 没有另一个 runner/summary 消费调用方；`tools/README.md`、本规范历史命令和 task/设计文档仍引用旧入口/exit0 成功习惯。历史 `gate-summary.json.steps` 已由完整 `children` 与声明覆盖取代，外部未发现的消费端仍须自行迁移；不推断外部使用为零。磁盘未发现 `.github/workflows`，文档的旧 workflow 引用不能证明 CI 存在/通过，主控另行核实远端实际 checks。该只读清单不授权修改任何禁止的示例消费者。

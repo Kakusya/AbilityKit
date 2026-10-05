@@ -278,26 +278,41 @@
         "runOnSchedule": false,
         "artifactRequired": true
       },
+      "requiredCoverage": [
+        "cooking-et-level-runtime:1:dotnet-build:AbilityKit.ET.RelationAnalyzer",
+        "cooking-et-level-runtime:2:dotnet-build:AbilityKit.Game.Cooking.EtRuntime",
+        "cooking-et-level-runtime:3:dotnet-test:AbilityKit.Game.Cooking.Tests",
+        "cooking-et-level-runtime:4:dotnet-test:AbilityKit.ET.Runtime.Tests"
+      ],
+      "optionalCoverage": [],
       "steps": [
         {
           "name": "ET relation analyzer build",
           "kind": "dotnet-build",
-          "project": "src/AbilityKit.ET.RelationAnalyzer/AbilityKit.ET.RelationAnalyzer.csproj"
+          "project": "src/AbilityKit.ET.RelationAnalyzer/AbilityKit.ET.RelationAnalyzer.csproj",
+          "tfm": "netstandard2.0",
+          "coverage": ["cooking-et-level-runtime:1:dotnet-build:AbilityKit.ET.RelationAnalyzer"]
         },
         {
           "name": "Cooking ET runtime build with relation analyzer",
           "kind": "dotnet-build",
-          "project": "src/AbilityKit.Game.Cooking.EtRuntime/AbilityKit.Game.Cooking.EtRuntime.csproj"
+          "project": "src/AbilityKit.Game.Cooking.EtRuntime/AbilityKit.Game.Cooking.EtRuntime.csproj",
+          "tfm": "net10.0",
+          "coverage": ["cooking-et-level-runtime:2:dotnet-build:AbilityKit.Game.Cooking.EtRuntime"]
         },
         {
           "name": "Cooking domain and Level lifecycle tests",
           "kind": "dotnet-test",
-          "project": "src/AbilityKit.Game.Cooking.Tests/AbilityKit.Game.Cooking.Tests.csproj"
+          "project": "src/AbilityKit.Game.Cooking.Tests/AbilityKit.Game.Cooking.Tests.csproj",
+          "tfm": "net10.0",
+          "coverage": ["cooking-et-level-runtime:3:dotnet-test:AbilityKit.Game.Cooking.Tests"]
         },
         {
           "name": "Cooking ET Level host and runtime tests",
           "kind": "dotnet-test",
-          "project": "src/AbilityKit.ET.Runtime.Tests/AbilityKit.ET.Runtime.Tests.csproj"
+          "project": "src/AbilityKit.ET.Runtime.Tests/AbilityKit.ET.Runtime.Tests.csproj",
+          "tfm": "net10.0",
+          "coverage": ["cooking-et-level-runtime:4:dotnet-test:AbilityKit.ET.Runtime.Tests"]
         }
       ]
     },
@@ -324,32 +339,50 @@
         "runOnSchedule": false,
         "artifactRequired": true
       },
+      "requiredCoverage": [
+        "cooking-kitchen-loop:1:dotnet-build:AbilityKit.Game.Cooking",
+        "cooking-kitchen-loop:2:dotnet-build:AbilityKit.Game.Cooking.EtRuntime",
+        "cooking-kitchen-loop:3:dotnet-test:AbilityKit.Game.Cooking.Tests:Gate=CookingKitchenLoop",
+        "cooking-kitchen-loop:4:dotnet-test:AbilityKit.Game.Cooking.Tests",
+        "cooking-kitchen-loop:5:dotnet-test:AbilityKit.ET.Runtime.Tests"
+      ],
+      "optionalCoverage": [],
       "steps": [
         {
           "name": "Cooking domain build",
           "kind": "dotnet-build",
-          "project": "src/AbilityKit.Game.Cooking/AbilityKit.Game.Cooking.csproj"
+          "project": "src/AbilityKit.Game.Cooking/AbilityKit.Game.Cooking.csproj",
+          "tfm": "net10.0",
+          "coverage": ["cooking-kitchen-loop:1:dotnet-build:AbilityKit.Game.Cooking"]
         },
         {
           "name": "Cooking ET runtime build with relation analyzer",
           "kind": "dotnet-build",
-          "project": "src/AbilityKit.Game.Cooking.EtRuntime/AbilityKit.Game.Cooking.EtRuntime.csproj"
+          "project": "src/AbilityKit.Game.Cooking.EtRuntime/AbilityKit.Game.Cooking.EtRuntime.csproj",
+          "tfm": "net10.0",
+          "coverage": ["cooking-kitchen-loop:2:dotnet-build:AbilityKit.Game.Cooking.EtRuntime"]
         },
         {
           "name": "Kitchen-loop focused contract tests",
           "kind": "dotnet-test",
           "project": "src/AbilityKit.Game.Cooking.Tests/AbilityKit.Game.Cooking.Tests.csproj",
+          "tfm": "net10.0",
+          "coverage": ["cooking-kitchen-loop:3:dotnet-test:AbilityKit.Game.Cooking.Tests:Gate=CookingKitchenLoop"],
           "filter": "Gate=CookingKitchenLoop"
         },
         {
           "name": "Cooking domain and Level lifecycle regression",
           "kind": "dotnet-test",
-          "project": "src/AbilityKit.Game.Cooking.Tests/AbilityKit.Game.Cooking.Tests.csproj"
+          "project": "src/AbilityKit.Game.Cooking.Tests/AbilityKit.Game.Cooking.Tests.csproj",
+          "tfm": "net10.0",
+          "coverage": ["cooking-kitchen-loop:4:dotnet-test:AbilityKit.Game.Cooking.Tests"]
         },
         {
           "name": "Cooking ET Level host and runtime regression",
           "kind": "dotnet-test",
-          "project": "src/AbilityKit.ET.Runtime.Tests/AbilityKit.ET.Runtime.Tests.csproj"
+          "project": "src/AbilityKit.ET.Runtime.Tests/AbilityKit.ET.Runtime.Tests.csproj",
+          "tfm": "net10.0",
+          "coverage": ["cooking-kitchen-loop:5:dotnet-test:AbilityKit.ET.Runtime.Tests"]
         }
       ]
     },
