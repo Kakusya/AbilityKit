@@ -1,0 +1,12 @@
+{
+  "version": 1,
+  "flow_id": "6d3174fd-2b01-4136-8ea5-0b0cd0e2845d",
+  "seq": 4,
+  "op_id": "6d3174fd-2b01-4136-8ea5-0b0cd0e2845d:000004",
+  "kind": "receipt",
+  "recorded_utc": "2026-10-05T17:17:08.361542Z",
+  "intent_hash": "0da382ba8a627662588f3afc7a140dc72f1554ecef308c6daad7aa6deb44ffb3",
+  "outcome": "applied",
+  "raw_ref": "evidence/push-plan-decision-raw.json",
+  "result": {}
+}

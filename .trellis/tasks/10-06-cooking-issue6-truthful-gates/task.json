@@ -3,7 +3,7 @@
   "name": "cooking-issue6-truthful-gates",
   "title": "Issue 6 Cooking gate truth scoped continuation",
   "description": "Continue Issue 6 under Owner Cooking-only scope; publish scoped branch for dot technical plan then use Orca workers and exact-source verification.",
-  "status": "planning",
+  "status": "in_progress",
   "dev_type": null,
   "scope": "Cooking gate result truth only",
   "package": null,

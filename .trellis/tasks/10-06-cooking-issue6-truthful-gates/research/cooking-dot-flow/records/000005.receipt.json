@@ -1,0 +1,19 @@
+{
+  "version": 1,
+  "flow_id": "6d3174fd-2b01-4136-8ea5-0b0cd0e2845d",
+  "seq": 5,
+  "op_id": "6d3174fd-2b01-4136-8ea5-0b0cd0e2845d:000005",
+  "kind": "receipt",
+  "recorded_utc": "2026-10-05T17:18:46.352807Z",
+  "intent_hash": "c20e4d5de664612fcad4739130ae533b8b1dea65ca6b9c20459e785e1aec1998",
+  "outcome": "applied",
+  "raw_ref": "evidence/issue6-edit-raw.txt",
+  "result": {
+    "command": "gh issue edit 6 --repo Kakusya/AbilityKit --body-file scoped-task-body --title scoped-title",
+    "exit_code": 0,
+    "issue_number": 6,
+    "url": "https://github.com/Kakusya/AbilityKit/issues/6",
+    "body_readback_verified": true,
+    "state": "OPEN"
+  }
+}
