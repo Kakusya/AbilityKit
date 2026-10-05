@@ -13,6 +13,8 @@ Assert-GateNoReparse $artifactRootFull
 $null=New-Item -ItemType Directory -Path $artifactRootFull
 $cases=New-Object 'System.Collections.Generic.List[object]'
 $caseCounter=0
+$widthDimension='RawUI.WindowSize.Width'
+$requiredWidths=@(40,80,120)
 $sourceInputs=@($PSCommandPath,$runner,(Join-Path $repoRoot 'tools/test-gate-result-contract.ps1'),$executor,(Join-Path $PSScriptRoot 'fixtures/gate-result-model.ps1'),(Join-Path $PSScriptRoot 'fixtures/gate-result-native-probe.ps1'),(Join-Path $repoRoot 'tools/test-gates.json'))
 $sourceBefore=Get-GateSource $repoRoot $sourceInputs @('local/ ignored control evidence','TEMP unique synthetic fixtures','coordinator task records are outside these control inputs')
 
@@ -23,13 +25,31 @@ function New-ControlDirectory {
     return $directory
 }
 
+function Test-ControlWindowWidth {
+    param($Evidence,[int]$Requested)
+    return [bool]($Evidence -and $Evidence.dimension -ceq $widthDimension -and $Evidence.mode -ceq 'Window' -and $Evidence.requestedWidth -eq $Requested -and $Evidence.widthCoverageStatus -ceq 'Passed' -and $Evidence.setterSucceeded -eq $true -and $Evidence.applied -eq $true -and $Evidence.appliedWidth -eq $Requested -and $Evidence.observedWidth -eq $Requested -and $Evidence.observedWindowWidth -eq $Requested -and $Evidence.finalState.windowWidth -eq $Requested -and $Evidence.observedBufferWidth -eq $Evidence.finalState.bufferWidth -and $Evidence.initialState.windowHeight -gt 0 -and $Evidence.finalState.windowHeight -eq $Evidence.initialState.windowHeight -and $Evidence.outputRedirected -eq $true -and $Evidence.errorRedirected -eq $true)
+}
+
+function Get-ControlWidthStatus {
+    param([object[]]$Records)
+    if ($Records.Count -ne $requiredWidths.Count) { return 'NotRun' }
+    foreach ($requested in $requiredWidths) {
+        $matching=@($Records | Where-Object { $_.evidence.width.requestedWidth -eq $requested })
+        if ($matching.Count -ne 1) { return 'Blocked' }
+        $record=$matching[0]
+        if ($record.status -cne 'Passed' -or $record.nativeExit -ne 7 -or $record.evidence.exitConfirmed -ne $true -or $record.evidence.streamsExact -ne $true -or -not (Test-ControlWindowWidth $record.evidence.width $requested)) { return 'Blocked' }
+    }
+    return 'Passed'
+}
+
 function Save-ControlReceipt {
     param([bool]$Final=$false)
     $failed=@($cases | Where-Object { $_.status -ceq 'Failed' }).Count
-    $widthEvidence=@($cases | Where-Object { $_.group -ceq 'native-streams' } | ForEach-Object { $_.evidence.width })
-    $widthStatus=if ($widthEvidence.Count -ne 3) { 'NotRun' } elseif (@($widthEvidence | Where-Object { $_.widthCoverageStatus -cne 'Passed' }).Count) { 'Blocked' } else { 'Passed' }
+    $widthRecords=@($cases | Where-Object { $_.group -ceq 'native-streams' })
+    $widthEvidence=@($widthRecords | ForEach-Object { $_.evidence.width })
+    $widthStatus=Get-ControlWidthStatus $widthRecords
     $receipt=[pscustomobject]@{schemaVersion=1; example=$true; acceptance='IsolatedContractControlsOnly'; sourceBefore=$sourceBefore; sourceAfter=$(if ($Final) { Get-GateSource $repoRoot $sourceInputs $sourceBefore.evidenceExclusions } else { $null }); tool=[pscustomobject]@{powershell=$PSVersionTable.PSVersion.ToString(); host=[Environment]::Version.ToString(); os=[Environment]::OSVersion.VersionString}; command=@('powershell','-NoProfile','-ExecutionPolicy','Bypass','-File',$PSCommandPath,'-ArtifactRoot',$ArtifactRoot); status=$(if ($Final -and $failed -eq 0) { 'Passed' } else { 'Failed' }); total=$cases.Count; executed=$cases.Count; passed=$cases.Count-$failed; failed=$failed; fullControlSuiteAccepted=($Final -and $failed -eq 0); cases=@($cases.ToArray()); realDotNet='NotRun'; unity='NotRun'; issueAcceptance='NotRun'}
-    $receipt | Add-Member -NotePropertyName consoleWidthCoverage -NotePropertyValue ([pscustomobject]@{status=$widthStatus; requested=@(40,80,180); observations=$widthEvidence})
+    $receipt | Add-Member -NotePropertyName consoleWidthCoverage -NotePropertyValue ([pscustomobject]@{status=$widthStatus; dimension=$widthDimension; requested=$requiredWidths; observations=$widthEvidence})
     $receipt | Add-Member -NotePropertyName contractControlsAccepted -NotePropertyValue ($Final -and $failed -eq 0)
     if ($Final -and $failed -eq 0 -and $widthStatus -cne 'Passed') { $receipt.status=$widthStatus; $receipt.fullControlSuiteAccepted=$false }
     [IO.File]::WriteAllText((Join-Path $artifactRootFull 'controls.json'),(ConvertTo-GateJson $receipt),[Text.UTF8Encoding]::new($false))
@@ -301,16 +321,30 @@ foreach ($gate in $repositoryConfig.gates) {
 }
 
 # Direct raw stream checks run real fake processes at several console widths.
-foreach ($width in @(40,80,180)) {
+foreach ($width in $requiredWidths) {
     $directory=New-ControlDirectory
     $widthPath=Join-Path $directory 'width-evidence.json'
-    $argv=@('-NoProfile','-ExecutionPolicy','Bypass','-File',(Join-Path $PSScriptRoot 'fixtures/gate-result-native-probe.ps1'),'-Width',[string]$width,'-NativeExit','7','-WidthEvidencePath',$widthPath)
+    $argv=@('-NoProfile','-ExecutionPolicy','Bypass','-File',(Join-Path $PSScriptRoot 'fixtures/gate-result-native-probe.ps1'),'-WidthMode','Window','-Width',[string]$width,'-NativeExit','7','-WidthEvidencePath',$widthPath)
     $native=Invoke-GateNative $powershell $argv $directory 'probe' $repoRoot
     $out=[IO.File]::ReadAllText($native.stdoutPath); $err=[IO.File]::ReadAllText($native.stderrPath)
     $ok=$native.processExitCode -eq 7 -and $out -ceq ('stdout:'+('O'*8192)+"`r`n") -and $err -ceq ('stderr:'+('E'*8192)+"`r`nWARNING: required evidence unavailable; skipping`r`n")
     $widthEvidence=Get-Content -LiteralPath $widthPath -Raw -Encoding UTF8 | ConvertFrom-Json
-    $widthAccounted=$widthEvidence.requestedWidth -eq $width -and (($widthEvidence.widthCoverageStatus -ceq 'Passed' -and $widthEvidence.applied -and $widthEvidence.appliedWidth -eq $width -and $widthEvidence.observedWidth -eq $width) -or ($widthEvidence.widthCoverageStatus -ceq 'Blocked' -and -not $widthEvidence.applied -and $widthEvidence.limitation))
-    Record-Control 'native-streams' ('width-'+$width+'-long-lines-direct-capture') $true ([bool]($ok -and $widthAccounted)) $directory $native.command $native.processExitCode ([pscustomobject]@{stdout=$native.stdoutPath; stderr=$native.stderrPath; stdoutBytes=(Get-Item $native.stdoutPath).Length; stderrBytes=(Get-Item $native.stderrPath).Length; exitConfirmed=$native.exitConfirmed; widthPath=$widthPath; width=$widthEvidence})
+    $widthAccounted=(Test-ControlWindowWidth $widthEvidence $width) -or ($widthEvidence.dimension -ceq $widthDimension -and $widthEvidence.requestedWidth -eq $width -and $widthEvidence.widthCoverageStatus -ceq 'Blocked' -and -not $widthEvidence.applied -and $widthEvidence.limitation)
+    Record-Control 'native-streams' ('window-width-'+$width+'-long-lines-direct-capture') $true ([bool]($ok -and $widthAccounted)) $directory $native.command $native.processExitCode ([pscustomobject]@{stdout=$native.stdoutPath; stderr=$native.stderrPath; stdoutBytes=(Get-Item $native.stdoutPath).Length; stderrBytes=(Get-Item $native.stderrPath).Length; streamsExact=[bool]$ok; exitConfirmed=$native.exitConfirmed; widthPath=$widthPath; width=$widthEvidence})
+}
+# Mutate actual subprocess receipts to prove aggregation cannot accept nominal
+# widths, repeated observations, failed setters or truncated streams.
+$actualWidthRecords=@($cases | Where-Object { $_.group -ceq 'native-streams' })
+foreach ($mutation in @('dimension','duplicate','setter','streams')) {
+    $directory=New-ControlDirectory
+    $mutated=(ConvertTo-GateJson $actualWidthRecords) | ConvertFrom-Json
+    switch ($mutation) {
+        'dimension' { $mutated[0].evidence.width.dimension='RawUI.BufferSize.Width' }
+        'duplicate' { $mutated[1].evidence.width.requestedWidth=$mutated[0].evidence.width.requestedWidth }
+        'setter' { $mutated[0].evidence.width.setterSucceeded=$false }
+        'streams' { $mutated[0].evidence.streamsExact=$false }
+    }
+    Record-Control 'native-width-bindings' ('reject-'+$mutation) 'Blocked' (Get-ControlWidthStatus $mutated) $directory @('Get-ControlWidthStatus',$mutation) $null ([pscustomobject]@{original=@($actualWidthRecords | ForEach-Object { $_.rawDirectory }); mutated=$mutated})
 }
 $reparseDirectory=New-ControlDirectory
 $target=Join-Path $reparseDirectory 'target'; $link=Join-Path $reparseDirectory 'link'

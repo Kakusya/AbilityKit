@@ -401,7 +401,7 @@ powershell -NoProfile -ExecutionPolicy Bypass -File tools/tests/test-gate-result
 
 自测仅使用唯一 TEMP 项目、明确假执行器与 `local/Artifacts/issue6-cooking-slice1-<unique-id>` 全新目录；逐项保存 expected/actual、命令、原生退出码、计数、raw 路径、源码前后身份，并保留失败运行。`-ControlContextPath` 只接受 TEMP 中明确 fixture 的上下文与配置及仓库指定 fixture 的 hash；所有此类结果 `example=true`，生产 validator 拒绝 synthetic/example，不能据此声称真实 .NET/Unity 验收。slice1 的两项真实 Cooking gate、CI、Issue 最终技术接受、merge/close 仍 NotRun，须独立派发与精确提交验证。
 
-原生宽度控制在独立 `width-evidence.json` 中记录请求的 RawUI buffer width、setter 是否成功、实际应用值、观测 buffer/window width、重定向及限制。参数 40/80/180 本身不证明实际宽度。`contractControlsAccepted` 单独记录字节与合同断言；缺实际宽度覆盖时 `consoleWidthCoverage=Blocked`，整套 `fullControlSuiteAccepted=false`、自测 CLI2，不能借已通过的原始流校验冒称完整控制组通过。此证据不声明交互控制台的渲染验收。
+原生宽度控制明确以 `RawUI.WindowSize.Width` 为覆盖维度，请求 40/80/120，保留实际 window height，并在独立 `width-evidence.json` 中记录维度、请求、setter 是否成功、实际应用值、观测 buffer/window 尺寸与位置、重定向及限制。窗口宽度直接对应 formatter 的窗口维度，满足已批准的不同控制台宽度要求；此前 40/80/180 的 buffer 模式及其 Blocked 记录保留，不作为窗口模式证据。只有三个不同请求各有成功 setter 与匹配读回、高度保持、native7 和精确的每流 8192 字符 payload 时才接受宽度覆盖；参数值或重复观测不能代替实际覆盖。`contractControlsAccepted` 单独记录字节与合同断言；缺实际宽度覆盖时 `consoleWidthCoverage=Blocked`，整套 `fullControlSuiteAccepted=false`、自测 CLI2，不能借已通过的原始流校验冒称完整控制组通过。此证据不声明交互控制台的渲染验收。
 
 ### 只读兼容清单
 

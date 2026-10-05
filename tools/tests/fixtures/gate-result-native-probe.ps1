@@ -1,6 +1,6 @@
-param([int]$Width=80,[int]$NativeExit=0,[int]$SleepMilliseconds=0,[string]$SignalPath,[string]$WidthEvidencePath)
+param([int]$Width=80,[int]$NativeExit=0,[int]$SleepMilliseconds=0,[string]$SignalPath,[string]$WidthEvidencePath,[ValidateSet('Buffer','Window')][string]$WidthMode='Buffer')
 # This process owns no children and writes only explicitly supplied evidence/signal paths.
-$widthEvidence=[ordered]@{requestedWidth=$Width; dimension='RawUI.BufferSize.Width'; windowAdjustmentAttempted=$false; windowAdjustmentSucceeded=$null; setterSucceeded=$false; applied=$false; appliedWidth=$null; observedWidth=$null; observedWindowWidth=$null; widthCoverageStatus='Blocked'; limitation=$null; host=$Host.Name; outputRedirected=[Console]::IsOutputRedirected; errorRedirected=[Console]::IsErrorRedirected}
+$widthEvidence=[ordered]@{requestedWidth=$Width; mode=$WidthMode; dimension=$(if ($WidthMode -ceq 'Window') { 'RawUI.WindowSize.Width' } else { 'RawUI.BufferSize.Width' }); windowAdjustmentAttempted=$false; windowAdjustmentSucceeded=$null; setterSucceeded=$false; applied=$false; appliedWidth=$null; observedWidth=$null; observedBufferWidth=$null; observedWindowWidth=$null; widthCoverageStatus='Blocked'; limitation=$null; host=$Host.Name; outputRedirected=[Console]::IsOutputRedirected; errorRedirected=[Console]::IsErrorRedirected}
 $limitations=@()
 $initialState=[ordered]@{bufferWidth=$null; bufferHeight=$null; windowWidth=$null; windowHeight=$null; windowLeft=$null; windowTop=$null; cursorLeft=$null; cursorTop=$null}
 try {
@@ -12,6 +12,14 @@ try {
     $initialState.cursorLeft=$cursor.X; $initialState.cursorTop=$cursor.Y
 } catch { $limitations+= 'InitialRawUI: '+$_.Exception.Message }
 $widthEvidence.initialState=$initialState
+if ($WidthMode -ceq 'Window') {
+    # Set the actual formatter-window width without changing its observed height.
+    try {
+        if ($Width -le 0 -or -not $initialState.windowHeight -or $initialState.windowHeight -le 0) { throw 'Requested width or existing window height is unavailable.' }
+        $Host.UI.RawUI.WindowSize=New-Object Management.Automation.Host.Size $Width,$initialState.windowHeight
+        $widthEvidence.setterSucceeded=$true
+    } catch { $limitations+= 'SetWindowSize: '+$_.Exception.Message }
+} else {
 # A buffer cannot be narrower than this process's window. Shrink the owned
 # fake host's window first when possible; failure is recorded, never swallowed.
 try {
@@ -27,9 +35,10 @@ try {
     $Host.UI.RawUI.BufferSize=New-Object Management.Automation.Host.Size ([Math]::Max(20,$Width)),$initialState.bufferHeight
     $widthEvidence.setterSucceeded=$true
 } catch { $limitations+= 'SetBufferSize: '+$_.Exception.Message }
+}
 try {
     $observed=[int]$Host.UI.RawUI.BufferSize.Width
-    if ($observed -gt 0) { $widthEvidence.observedWidth=$observed }
+    if ($observed -gt 0) { $widthEvidence.observedBufferWidth=$observed }
     else { $limitations+= 'Redirected host reported no positive buffer width.' }
 } catch { $limitations+= 'GetBufferSize: '+$_.Exception.Message }
 try {
@@ -46,7 +55,9 @@ try {
     $finalState.cursorLeft=$cursor.X; $finalState.cursorTop=$cursor.Y
 } catch { $limitations+= 'FinalRawUI: '+$_.Exception.Message }
 $widthEvidence.finalState=$finalState
-if ($widthEvidence.setterSucceeded -and $widthEvidence.observedWidth -eq $Width) {
+$widthEvidence.observedWidth=if ($WidthMode -ceq 'Window') { $widthEvidence.observedWindowWidth } else { $widthEvidence.observedBufferWidth }
+$heightPreserved=if ($WidthMode -ceq 'Window') { $finalState.windowHeight -eq $initialState.windowHeight -and $finalState.windowHeight -gt 0 } else { $finalState.bufferHeight -eq $initialState.bufferHeight -and $finalState.bufferHeight -gt 0 }
+if ($widthEvidence.setterSucceeded -and $widthEvidence.observedWidth -eq $Width -and $heightPreserved) {
     $widthEvidence.applied=$true; $widthEvidence.appliedWidth=$Width; $widthEvidence.widthCoverageStatus='Passed'
 } else { $limitations+= 'Requested width was not confirmed applied and observed.' }
 $widthEvidence.limitation=$limitations -join ' | '
