@@ -1,0 +1,8 @@
+{
+  "push_exit": 0,
+  "push_stdout": "",
+  "push_stderr": "To https://github.com/Kakusya/AbilityKit\n   4a4f36e64..d6b475b42  d6b475b42e76c4f93b1d96b3965dda4e67d379b4 -> Kakusya/cooking-dot-skill-polish\n",
+  "verify_exit": 0,
+  "verify_stdout": "d6b475b42e76c4f93b1d96b3965dda4e67d379b4\trefs/heads/Kakusya/cooking-dot-skill-polish\n",
+  "verify_stderr": ""
+}

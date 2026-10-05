@@ -17,8 +17,10 @@ Consumer: Cooking engineering coordinator and Orca workers using cooking-dot-wor
 
 ## Acceptance
 
-- [ ] Minimal operational contracts and templates address each original finding without altering Owner boundaries.
-- [ ] Actual skill-guided bounded worker workflow completed and independently checked; source/Run/Dispatch/raw evidence recorded.
-- [ ] Relevant restart/dedup/wait/end-session contracts have observable validation, with runtime takeover capabilities explicitly bounded.
-- [ ] Dot explicitly accepts a pinned skill candidate and stated validation envelope; generic praise is insufficient.
-- [ ] All commits/pushes stay on Kakusya/cooking-dot-skill-polish; master and original branch unchanged; all settled workers accounted for.
+- [x] Minimal operational contracts and templates address each original finding without altering Owner boundaries.
+- [x] Actual skill-guided bounded worker workflow completed and independently checked; source/Run/Dispatch/raw evidence recorded.
+- [x] Relevant restart/dedup/wait/end-session contracts have observable validation, with runtime takeover capabilities explicitly bounded.
+- [x] Dot explicitly accepts a pinned skill candidate and stated validation envelope; generic praise is insufficient.
+- [x] All commits/pushes stay on Kakusya/cooking-dot-skill-polish; master and original branch unchanged; all settled workers accounted for.
+
+Accepted source: ca077b3c42f9d86e8bd5dce76445e3d9b8534f75; exact dot acceptance and branch-delivery-gate are in research. Limits remain as accepted-limits.md; future candidate work is not part of this completion.

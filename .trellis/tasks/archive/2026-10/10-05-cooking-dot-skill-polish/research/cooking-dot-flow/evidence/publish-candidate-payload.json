@@ -1,0 +1,10 @@
+{
+  "command": [
+    "git",
+    "push",
+    "origin",
+    "d6b475b42e76c4f93b1d96b3965dda4e67d379b4:refs/heads/Kakusya/cooking-dot-skill-polish"
+  ],
+  "source_candidate": "ca077b3c42f9d86e8bd5dce76445e3d9b8534f75",
+  "publication_sha": "d6b475b42e76c4f93b1d96b3965dda4e67d379b4"
+}

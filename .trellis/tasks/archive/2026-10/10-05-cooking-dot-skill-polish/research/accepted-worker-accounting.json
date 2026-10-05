@@ -1,0 +1,357 @@
+{
+  "id": "2a303850-89ec-4836-8fb6-abe8ade7b0c0",
+  "ok": true,
+  "result": {
+    "workers": [
+      {
+        "dispatchId": "ctx_31a62bbd882d",
+        "taskId": "task_0e2318dcd203",
+        "runId": "run_840202cc5621",
+        "workerState": "succeeded",
+        "dispatchStatus": "completed",
+        "agentTerminalHandle": "term_04f2f37b-9f35-46d6-81cc-b26500d3c821",
+        "terminalState": "retained",
+        "resource": {
+          "id": "wtr_014b2c806982",
+          "ownershipState": "user_owned",
+          "releaseState": "retained",
+          "retainedReason": "user_requested",
+          "terminalHandle": "term_04f2f37b-9f35-46d6-81cc-b26500d3c821",
+          "worktreeId": "aaa97e0d-5026-4e5c-95f8-bb420dcb4c65::C:/Users/Administrator/orca/workspaces/AbilityKit/cooking-dot-skill-polish",
+          "endpointId": "ff0c5f2c-d341-4455-bc1c-c113650bdd60",
+          "endpointIncarnation": "aaa97e0d-5026-4e5c-95f8-bb420dcb4c65::C:/Users/Administrator/orca/workspaces/AbilityKit/cooking-dot-skill-polish@@548a4fcd:d4fbf1b2-bf3d-4d60-92db-9e8d65abf165",
+          "originDispatchId": "ctx_31a62bbd882d",
+          "ownerDispatchId": "ctx_31a62bbd882d",
+          "releaseRequestedAt": null,
+          "releaseCompletedAt": null,
+          "releaseError": null,
+          "recoveryAttemptCount": 0,
+          "lastRecoveryAt": null,
+          "archive": {
+            "source": null,
+            "status": null
+          }
+        },
+        "projection": {
+          "id": "ctx_31a62bbd882d",
+          "dispatchId": "ctx_31a62bbd882d",
+          "taskId": "task_0e2318dcd203",
+          "runId": "run_840202cc5621",
+          "role": "worker",
+          "parent": null,
+          "provider": {
+            "id": "codex",
+            "model": "gpt-6.1-sol"
+          },
+          "host": {
+            "kind": "local",
+            "id": "local"
+          },
+          "workspace": {
+            "id": "aaa97e0d-5026-4e5c-95f8-bb420dcb4c65::C:/Users/Administrator/orca/workspaces/AbilityKit/cooking-dot-skill-polish",
+            "kind": "folder_or_worktree"
+          },
+          "stage": {
+            "worker": "succeeded",
+            "dispatch": "completed",
+            "detail": "settled",
+            "activity": "done"
+          },
+          "outcome": "succeeded",
+          "liveness": {
+            "verdict": "live",
+            "observedAt": 1791208140476,
+            "source": "agent_status"
+          },
+          "evidence": {
+            "durable": true,
+            "liveStatus": "fresh",
+            "lastObservedAt": 1791208140476
+          },
+          "resource": {
+            "state": "user_owned"
+          },
+          "nextAction": {
+            "kind": "none",
+            "argv": []
+          },
+          "attention": {
+            "categories": [
+              "root_completion"
+            ],
+            "requiresAction": false
+          }
+        }
+      },
+      {
+        "dispatchId": "ctx_90bfffaf9252",
+        "taskId": "task_0bd0234a0eec",
+        "runId": "run_840202cc5621",
+        "workerState": "succeeded",
+        "dispatchStatus": "completed",
+        "agentTerminalHandle": "term_b71b47d0-c93b-4393-a01e-a43fb1eba562",
+        "terminalState": "retained",
+        "resource": {
+          "id": "wtr_ddae05524f32",
+          "ownershipState": "user_owned",
+          "releaseState": "retained",
+          "retainedReason": "user_takeover",
+          "terminalHandle": "term_b71b47d0-c93b-4393-a01e-a43fb1eba562",
+          "worktreeId": "aaa97e0d-5026-4e5c-95f8-bb420dcb4c65::C:/Users/Administrator/orca/workspaces/AbilityKit/cooking-dot-skill-polish",
+          "endpointId": "ff0c5f2c-d341-4455-bc1c-c113650bdd60",
+          "endpointIncarnation": "aaa97e0d-5026-4e5c-95f8-bb420dcb4c65::C:/Users/Administrator/orca/workspaces/AbilityKit/cooking-dot-skill-polish@@69ab7d02:cc6f1b11-062d-4d75-a09c-f19216902660",
+          "originDispatchId": "ctx_90bfffaf9252",
+          "ownerDispatchId": "ctx_90bfffaf9252",
+          "releaseRequestedAt": null,
+          "releaseCompletedAt": null,
+          "releaseError": null,
+          "recoveryAttemptCount": 0,
+          "lastRecoveryAt": null,
+          "archive": {
+            "source": null,
+            "status": null
+          }
+        },
+        "projection": {
+          "id": "ctx_90bfffaf9252",
+          "dispatchId": "ctx_90bfffaf9252",
+          "taskId": "task_0bd0234a0eec",
+          "runId": "run_840202cc5621",
+          "role": "worker",
+          "parent": null,
+          "provider": {
+            "id": "codex",
+            "model": "gpt-6.1-sol"
+          },
+          "host": {
+            "kind": "local",
+            "id": "local"
+          },
+          "workspace": {
+            "id": "aaa97e0d-5026-4e5c-95f8-bb420dcb4c65::C:/Users/Administrator/orca/workspaces/AbilityKit/cooking-dot-skill-polish",
+            "kind": "folder_or_worktree"
+          },
+          "stage": {
+            "worker": "succeeded",
+            "dispatch": "completed",
+            "detail": "settled",
+            "activity": "unknown"
+          },
+          "outcome": "succeeded",
+          "liveness": {
+            "verdict": "unverifiable",
+            "reason": "stale_status",
+            "observedAt": 1791206937489
+          },
+          "evidence": {
+            "durable": true,
+            "liveStatus": "stale",
+            "lastObservedAt": 1791206937489
+          },
+          "resource": {
+            "state": "user_owned"
+          },
+          "nextAction": {
+            "kind": "none",
+            "argv": []
+          },
+          "attention": {
+            "categories": [
+              "stale",
+              "root_completion"
+            ],
+            "requiresAction": false
+          }
+        }
+      },
+      {
+        "dispatchId": "ctx_51d6193106de",
+        "taskId": "task_0658d87815e2",
+        "runId": "run_840202cc5621",
+        "workerState": "succeeded",
+        "dispatchStatus": "completed",
+        "agentTerminalHandle": "term_05f2d02e-37fa-44a3-9627-ef6375d69e08",
+        "terminalState": "retained",
+        "resource": {
+          "id": "wtr_eb5efd47881c",
+          "ownershipState": "owned",
+          "releaseState": "retained",
+          "retainedReason": "user_requested",
+          "terminalHandle": "term_05f2d02e-37fa-44a3-9627-ef6375d69e08",
+          "worktreeId": "aaa97e0d-5026-4e5c-95f8-bb420dcb4c65::C:/Users/Administrator/orca/workspaces/AbilityKit/cooking-dot-skill-polish",
+          "endpointId": "ff0c5f2c-d341-4455-bc1c-c113650bdd60",
+          "endpointIncarnation": "aaa97e0d-5026-4e5c-95f8-bb420dcb4c65::C:/Users/Administrator/orca/workspaces/AbilityKit/cooking-dot-skill-polish@@2381f81f:5b07c310-174a-4a4a-98d6-8d2e0970839f",
+          "originDispatchId": "ctx_51d6193106de",
+          "ownerDispatchId": "ctx_51d6193106de",
+          "releaseRequestedAt": null,
+          "releaseCompletedAt": null,
+          "releaseError": null,
+          "recoveryAttemptCount": 0,
+          "lastRecoveryAt": null,
+          "archive": {
+            "source": null,
+            "status": null
+          }
+        },
+        "projection": {
+          "id": "ctx_51d6193106de",
+          "dispatchId": "ctx_51d6193106de",
+          "taskId": "task_0658d87815e2",
+          "runId": "run_840202cc5621",
+          "role": "worker",
+          "parent": null,
+          "provider": {
+            "id": "codex",
+            "model": "gpt-6.1-sol"
+          },
+          "host": {
+            "kind": "local",
+            "id": "local"
+          },
+          "workspace": {
+            "id": "aaa97e0d-5026-4e5c-95f8-bb420dcb4c65::C:/Users/Administrator/orca/workspaces/AbilityKit/cooking-dot-skill-polish",
+            "kind": "folder_or_worktree"
+          },
+          "stage": {
+            "worker": "succeeded",
+            "dispatch": "completed",
+            "detail": "settled",
+            "activity": "unknown"
+          },
+          "outcome": "succeeded",
+          "liveness": {
+            "verdict": "unverifiable",
+            "reason": "stale_status",
+            "observedAt": 1791205833422
+          },
+          "evidence": {
+            "durable": true,
+            "liveStatus": "stale",
+            "lastObservedAt": 1791205833422
+          },
+          "resource": {
+            "state": "owned"
+          },
+          "nextAction": {
+            "kind": "release",
+            "argv": [
+              "orchestration",
+              "worker-release",
+              "--dispatch",
+              "ctx_51d6193106de"
+            ]
+          },
+          "attention": {
+            "categories": [
+              "stale",
+              "root_completion"
+            ],
+            "requiresAction": false
+          }
+        }
+      },
+      {
+        "dispatchId": "ctx_2ede5e596818",
+        "taskId": "task_b1846da24106",
+        "runId": "run_840202cc5621",
+        "workerState": "succeeded",
+        "dispatchStatus": "completed",
+        "agentTerminalHandle": "term_d82fab32-3780-4c17-8b2d-4fefaf8254eb",
+        "terminalState": "retained",
+        "resource": {
+          "id": "wtr_0b417187c16c",
+          "ownershipState": "owned",
+          "releaseState": "retained",
+          "retainedReason": "user_requested",
+          "terminalHandle": "term_d82fab32-3780-4c17-8b2d-4fefaf8254eb",
+          "worktreeId": "aaa97e0d-5026-4e5c-95f8-bb420dcb4c65::C:/Users/Administrator/orca/workspaces/AbilityKit/cooking-dot-skill-polish",
+          "endpointId": "ff0c5f2c-d341-4455-bc1c-c113650bdd60",
+          "endpointIncarnation": "aaa97e0d-5026-4e5c-95f8-bb420dcb4c65::C:/Users/Administrator/orca/workspaces/AbilityKit/cooking-dot-skill-polish@@c47c33aa:17a67672-8a46-4180-af99-eb599aefc504",
+          "originDispatchId": "ctx_2ede5e596818",
+          "ownerDispatchId": "ctx_2ede5e596818",
+          "releaseRequestedAt": null,
+          "releaseCompletedAt": null,
+          "releaseError": null,
+          "recoveryAttemptCount": 0,
+          "lastRecoveryAt": null,
+          "archive": {
+            "source": null,
+            "status": null
+          }
+        },
+        "projection": {
+          "id": "ctx_2ede5e596818",
+          "dispatchId": "ctx_2ede5e596818",
+          "taskId": "task_b1846da24106",
+          "runId": "run_840202cc5621",
+          "role": "worker",
+          "parent": null,
+          "provider": {
+            "id": "codex",
+            "model": "gpt-6.1-sol"
+          },
+          "host": {
+            "kind": "local",
+            "id": "local"
+          },
+          "workspace": {
+            "id": "aaa97e0d-5026-4e5c-95f8-bb420dcb4c65::C:/Users/Administrator/orca/workspaces/AbilityKit/cooking-dot-skill-polish",
+            "kind": "folder_or_worktree"
+          },
+          "stage": {
+            "worker": "succeeded",
+            "dispatch": "completed",
+            "detail": "settled",
+            "activity": "unknown"
+          },
+          "outcome": "succeeded",
+          "liveness": {
+            "verdict": "unverifiable",
+            "reason": "stale_status",
+            "observedAt": 1791204918655
+          },
+          "evidence": {
+            "durable": true,
+            "liveStatus": "stale",
+            "lastObservedAt": 1791204918655
+          },
+          "resource": {
+            "state": "owned"
+          },
+          "nextAction": {
+            "kind": "release",
+            "argv": [
+              "orchestration",
+              "worker-release",
+              "--dispatch",
+              "ctx_2ede5e596818"
+            ]
+          },
+          "attention": {
+            "categories": [
+              "stale",
+              "root_completion"
+            ],
+            "requiresAction": false
+          }
+        }
+      }
+    ],
+    "counts": {
+      "retained": 4
+    },
+    "page": {
+      "limit": 100,
+      "total": 4,
+      "hasMore": false,
+      "nextCursor": null
+    },
+    "scope": {
+      "run": "run_840202cc5621",
+      "source": "flag"
+    }
+  },
+  "_meta": {
+    "runtimeId": "ff0c5f2c-d341-4455-bc1c-c113650bdd60"
+  }
+}

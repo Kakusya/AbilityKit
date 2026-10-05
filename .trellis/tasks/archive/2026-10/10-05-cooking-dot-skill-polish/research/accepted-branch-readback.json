@@ -1,0 +1,11 @@
+{
+  "command": [
+    "git",
+    "ls-remote",
+    "origin",
+    "refs/heads/Kakusya/cooking-dot-skill-polish"
+  ],
+  "exit": 0,
+  "stdout": "d6b475b42e76c4f93b1d96b3965dda4e67d379b4\trefs/heads/Kakusya/cooking-dot-skill-polish\n",
+  "stderr": ""
+}

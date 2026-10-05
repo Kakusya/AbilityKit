@@ -59,3 +59,37 @@ Explicit-only Cooking skill delivered with dot technical authority and Orca work
 ### Status
 
 [OK] **Completed**
+
+
+## Session 3: Cooking dot skill polish accepted and branch pilot complete
+<!-- trellis-session: v=2 fp=f18235c250341454 -->
+
+**Date**: 2026-10-05
+**Task**: Cooking dot skill polish accepted and branch pilot complete
+**Branch**: `Kakusya/cooking-dot-skill-polish`
+
+### Summary
+
+Cooking dot skill accepted at ca077b3c42f9d86e8bd5dce76445e3d9b8534f75 after actual manual-load Orca document pilot; branch-only completion, no master merge. Source-bound controls190, independent contract93, docs46 Passed; original failures retained. Four workers settled/retained; normal exclusive takeover and empty-Run unknown-reconcile continuation remain Blocked, production/host autoactivation NotRun.
+
+### Main Changes
+
+- Short practical skill path, authoritative contracts/templates, same-flow binding repair and operator handoff example
+
+### Git Commits
+
+| Hash | Message |
+|------|---------|
+| `ca077b3c42f9d86e8bd5dce76445e3d9b8534f75` | docs(cooking): complete skill-guided operator pilot and candidate evidence |
+
+### Testing
+
+- [OK] 190 helper controls;93 main-executed independent contract checks;46 document assertions and original stock validator Passed within declared scope
+
+### Status
+
+[OK] **Completed**
+
+### Next Steps
+
+- No work remains in this branch-only task; deferred recovery candidates require separate approval

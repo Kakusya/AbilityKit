@@ -1,0 +1,7 @@
+[0;34m=== Validating Context Files ===[0m
+Target dir: C:\Users\Administrator\orca\workspaces\AbilityKit\cooking-dot-skill-polish\.trellis\tasks\archive\2026-10\10-05-cooking-dot-skill-polish
+
+  [0;32mimplement.jsonl: ✓ (6 entries)[0m
+  [0;32mcheck.jsonl: ✓ (6 entries)[0m
+
+[0;32m✓ All validations passed[0m

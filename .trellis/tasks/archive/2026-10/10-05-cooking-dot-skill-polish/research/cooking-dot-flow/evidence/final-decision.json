@@ -1,0 +1,46 @@
+{
+  "reply": {
+    "full": true,
+    "generating": false,
+    "decision": "accept-candidate",
+    "request_id": "AK-CDF-FINAL-01",
+    "flow_id": "a2c3dd65-4a91-43f6-9c33-ad891f7563c4",
+    "reviewed_sha": "ca077b3c42f9d86e8bd5dce76445e3d9b8534f75",
+    "conversation_id": "https://chatgpt.com/dots/01a10258-c084-74bb-8bcc-ec01958e5023",
+    "message_id": "3f12f99a2ea4819b8541c90bd4ea9e30~3f12f99a2ea4819b8541c90bd4ea9e30~CalpicoMessage~Sentinel_9db01c7901c4819183b2912acab5da60",
+    "after_request_verified": true,
+    "absent_at_prior_boundary": true,
+    "time_reliable": false,
+    "reply_posted_utc": null,
+    "timing_proof": {
+      "request_id": "AK-CDF-FINAL-01",
+      "flow_id": "a2c3dd65-4a91-43f6-9c33-ad891f7563c4",
+      "conversation_id": "https://chatgpt.com/dots/01a10258-c084-74bb-8bcc-ec01958e5023",
+      "message_id": "3f12f99a2ea4819b8541c90bd4ea9e30~3f12f99a2ea4819b8541c90bd4ea9e30~CalpicoMessage~Sentinel_9db01c7901c4819183b2912acab5da60",
+      "reviewed_sha": "ca077b3c42f9d86e8bd5dce76445e3d9b8534f75",
+      "prior_message_boundary": "3f12f99a2ea4819b8541c90bd4ea9e30~3f12f99a2ea4819b8541c90bd4ea9e30~CalpicoMessage~Sentinel_bb2d3d10e91481919840f33f4585542e",
+      "verified": true,
+      "full": true,
+      "generating": false,
+      "full_snapshot_ref": "evidence/final-observation-03.json",
+      "prior_snapshot_ref": "evidence/final-prior-02.json",
+      "observed_utc": "2026-10-05T14:04:29.246631Z",
+      "time_source": "original coordinator local UTC with monotonic budget consistency; supplementary complete snapshot shows message actions and no thinking status",
+      "clock_trusted": true,
+      "clock_jump": false,
+      "uncertainty_ms": 1000
+    }
+  },
+  "evaluation": {
+    "classification": "timely",
+    "timing_basis": "complete-observation-upper-bound",
+    "valid_resolution": true,
+    "pause_required": false,
+    "can_apply": true,
+    "preserve_pause": false
+  },
+  "elapsed_monotonic": 523.9489543000236,
+  "elapsed_utc": 523.948948,
+  "supplement_intents": 0,
+  "accepted_envelope": "manual project-path, verified original coordinator/existing Run, Cooking branch docs, local fault controls and safe stopped diagnostics"
+}

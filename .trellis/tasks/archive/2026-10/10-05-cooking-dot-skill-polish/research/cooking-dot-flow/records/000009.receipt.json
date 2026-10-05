@@ -1,0 +1,18 @@
+{
+  "version": 1,
+  "flow_id": "a2c3dd65-4a91-43f6-9c33-ad891f7563c4",
+  "seq": 9,
+  "op_id": "a2c3dd65-4a91-43f6-9c33-ad891f7563c4:000009",
+  "kind": "receipt",
+  "recorded_utc": "2026-10-05T13:57:33.391253Z",
+  "intent_hash": "8d9d46a94f294491bca589022883854cd4705018dee54a6698eedb6f02779134",
+  "outcome": "applied",
+  "raw_ref": "evidence/final-posted.json",
+  "result": {
+    "action": "dot-send",
+    "request_id": "AK-CDF-FINAL-01",
+    "candidate_sha": "ca077b3c42f9d86e8bd5dce76445e3d9b8534f75",
+    "run_id": "run_840202cc5621",
+    "posted_message_id": "e4a861c0-7a44-4c9a-bb71-be009f40d516"
+  }
+}

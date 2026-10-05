@@ -1,0 +1,22 @@
+{
+  "type": "final-review",
+  "request_id": "AK-CDF-FINAL-01",
+  "flow_id": "a2c3dd65-4a91-43f6-9c33-ad891f7563c4",
+  "candidate_sha": "ca077b3c42f9d86e8bd5dce76445e3d9b8534f75",
+  "parent_request_id": "AK-CDF-LIVE-PILOT-PLAN-01",
+  "conversation_id": "https://chatgpt.com/dots/01a10258-c084-74bb-8bcc-ec01958e5023",
+  "prior_message_boundary": "3f12f99a2ea4819b8541c90bd4ea9e30~3f12f99a2ea4819b8541c90bd4ea9e30~CalpicoMessage~Sentinel_bb2d3d10e91481919840f33f4585542e",
+  "request_message_id": "e4a861c0-7a44-4c9a-bb71-be009f40d516",
+  "wait_started_utc": "2026-10-05T13:57:30.498063Z",
+  "deadline_utc": "2026-10-05T14:27:30.498063Z",
+  "paused": false,
+  "wait_started_monotonic": 303107.2924922,
+  "poll_ordinal": 3,
+  "supplement_reserved": false,
+  "fingerprint": "5f95d47f88ed07327b9dfc0efc39d4992d529bf418d128bf5d67e97863d38c39",
+  "baseline_article_count": 46,
+  "status": "final-candidate-accepted",
+  "next_poll_utc": null,
+  "last_poll_utc": "2026-10-05T14:04:29.246631Z",
+  "decision_observed_utc": "2026-10-05T14:06:14.447011Z"
+}

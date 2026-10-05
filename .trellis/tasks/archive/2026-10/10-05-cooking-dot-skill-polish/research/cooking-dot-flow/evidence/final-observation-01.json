@@ -1,0 +1,11 @@
+{
+  "id": "73c9af78-122c-4132-a512-1e1e94dcb09a",
+  "ok": true,
+  "result": {
+    "result": "{\"url\":\"https://chatgpt.com/dots/01a10258-c084-74bb-8bcc-ec01958e5023\",\"count\":48,\"messages\":[{\"index\":47,\"messageId\":\"3f12f99a2ea4819b8541c90bd4ea9e30~3f12f99a2ea4819b8541c90bd4ea9e30~CalpicoMessage~Sentinel_ef61572a3b348191abfe2a4849ce9498\",\"text\":\"收到 AK-CDF-FINAL-01。我会读取精确候选、操作示例和原始证据，重点检查真实交付与停止恢复是否可操作，再给出明确验收结论。\"}],\"tail\":\"red supplemental question maximum apply. Current candidate acceptance/task completion/archive are pending.\\n\\n已读 21:57\\n\\n收到 AK-CDF-FINAL-01。我会读取精确候选、操作示例和原始证据，重点检查真实交付与停止恢复是否可操作，再给出明确验收结论。\\n\\n\\n\\n\\ndot\\n正在思考\\nNew reply from dot\\n发送\"}",
+    "origin": "https://chatgpt.com/dots/01a10258-c084-74bb-8bcc-ec01958e5023"
+  },
+  "_meta": {
+    "runtimeId": "ff0c5f2c-d341-4455-bc1c-c113650bdd60"
+  }
+}

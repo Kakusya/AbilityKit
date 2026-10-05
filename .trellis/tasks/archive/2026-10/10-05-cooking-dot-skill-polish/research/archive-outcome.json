@@ -1,0 +1,15 @@
+{
+  "command": [
+    "python",
+    ".trellis/scripts/task.py",
+    "archive",
+    "10-05-cooking-dot-skill-polish",
+    "--no-commit"
+  ],
+  "exit": 0,
+  "stdout": ".trellis/tasks/archive/2026-10/10-05-cooking-dot-skill-polish\r\n",
+  "stderr": "\u001b[0;32mArchived: 10-05-cooking-dot-skill-polish -> archive/2026-10/\u001b[0m\r\n",
+  "actual_archive_path": "C:\\Users\\Administrator\\orca\\workspaces\\AbilityKit\\cooking-dot-skill-polish\\.trellis\\tasks\\archive\\2026-10\\10-05-cooking-dot-skill-polish",
+  "original_binding_unchanged": true,
+  "archive_not_new_authority": true
+}

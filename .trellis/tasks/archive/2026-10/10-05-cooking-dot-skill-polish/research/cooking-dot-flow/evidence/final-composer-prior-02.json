@@ -1,0 +1,1002 @@
+{
+  "id": "ed56c1b5-f5a6-401e-bcea-e422809a6731",
+  "ok": true,
+  "result": {
+    "origin": "https://chatgpt.com/dots/01a10258-c084-74bb-8bcc-ec01958e5023",
+    "refs": {
+      "e1": {
+        "name": "跳转到内容",
+        "role": "link"
+      },
+      "e10": {
+        "name": "站点",
+        "role": "button"
+      },
+      "e100": {
+        "name": "",
+        "role": "generic"
+      },
+      "e101": {
+        "name": "",
+        "role": "generic"
+      },
+      "e102": {
+        "name": "",
+        "role": "generic"
+      },
+      "e103": {
+        "name": "",
+        "role": "generic"
+      },
+      "e104": {
+        "name": "",
+        "role": "generic"
+      },
+      "e105": {
+        "name": "",
+        "role": "generic"
+      },
+      "e106": {
+        "name": "",
+        "role": "generic"
+      },
+      "e107": {
+        "name": "",
+        "role": "generic"
+      },
+      "e108": {
+        "name": "",
+        "role": "generic"
+      },
+      "e109": {
+        "name": "",
+        "role": "generic"
+      },
+      "e11": {
+        "name": "首页",
+        "role": "navigation"
+      },
+      "e110": {
+        "name": "",
+        "role": "generic"
+      },
+      "e111": {
+        "name": "",
+        "role": "generic"
+      },
+      "e112": {
+        "name": "",
+        "role": "generic"
+      },
+      "e113": {
+        "name": "听写",
+        "role": "button"
+      },
+      "e114": {
+        "name": "docs: 固定当前 ET 架构合同与 AGENTS 规则 by Kakusya · Pull Request #10 · Kakusya/AbilityKit Issue #5 要求固定当前 ET 的真实架构合同，并让后续执行者明确状态归属、消息时序与迁移边界。本变更完成 A–E 文档和 AGENTS 规则；实际实现与目标提案分开，未实施运行时迁移。 Refs #5。交付 dot 审阅；不自动关闭 Issue，不解锁 #1–#4/#6–#9。 当前/目标树和十类状态族：writer、生命周期、索引、一致性组、旧入口退役、消费者及正负控制。 ... link",
+        "role": "link"
+      },
+      "e115": {
+        "name": "回复",
+        "role": "button"
+      },
+      "e116": {
+        "name": "回复",
+        "role": "button"
+      },
+      "e117": {
+        "name": "回复",
+        "role": "button"
+      },
+      "e118": {
+        "name": "打开 AGENTS.proposed.md",
+        "role": "button"
+      },
+      "e119": {
+        "name": "回复",
+        "role": "button"
+      },
+      "e12": {
+        "name": "你的 dot 操作",
+        "role": "button"
+      },
+      "e120": {
+        "name": "回复",
+        "role": "button"
+      },
+      "e121": {
+        "name": "回复",
+        "role": "button"
+      },
+      "e122": {
+        "name": "回复",
+        "role": "button"
+      },
+      "e123": {
+        "name": "回复",
+        "role": "button"
+      },
+      "e124": {
+        "name": "回复",
+        "role": "button"
+      },
+      "e125": {
+        "name": "回复",
+        "role": "button"
+      },
+      "e126": {
+        "name": "回复",
+        "role": "button"
+      },
+      "e127": {
+        "name": "回复",
+        "role": "button"
+      },
+      "e128": {
+        "name": "回复",
+        "role": "button"
+      },
+      "e129": {
+        "name": "回复",
+        "role": "button"
+      },
+      "e13": {
+        "name": "打开你的 dot的个人资料",
+        "role": "button"
+      },
+      "e130": {
+        "name": "回复",
+        "role": "button"
+      },
+      "e131": {
+        "name": "回复",
+        "role": "button"
+      },
+      "e132": {
+        "name": "[底座 P0] 固定当前 ET 架构契约并落实 AGENTS.md · Issue #5 · Kakusya/AbilityKit Orca reading guide 本 Issue 正文现已完整内嵌架构评估与 AGENTS 草案。本地 Orca 可直接从 GitHub 读取，不需要访问聊天附件。 #5 是当前唯一 orca-ready，仅按本 Issue 的已批准范围做架构合同、文档和 AGENTS 规则工作。 旧 #1–#4 与新 #6–#9 均为 blocked。可预读资料；只有后续明确批准、依赖满足并重新标记 ... link",
+        "role": "link"
+      },
+      "e133": {
+        "name": "回复",
+        "role": "button"
+      },
+      "e134": {
+        "name": "回复",
+        "role": "button"
+      },
+      "e135": {
+        "name": "回复",
+        "role": "button"
+      },
+      "e136": {
+        "name": "回复",
+        "role": "button"
+      },
+      "e137": {
+        "name": "回复",
+        "role": "button"
+      },
+      "e138": {
+        "name": "回复",
+        "role": "button"
+      },
+      "e139": {
+        "name": "回复",
+        "role": "button"
+      },
+      "e14": {
+        "name": "打开个人资料菜单",
+        "role": "button"
+      },
+      "e140": {
+        "name": "回复",
+        "role": "button"
+      },
+      "e141": {
+        "name": "回复",
+        "role": "button"
+      },
+      "e142": {
+        "name": "回复",
+        "role": "button"
+      },
+      "e143": {
+        "name": "回复",
+        "role": "button"
+      },
+      "e144": {
+        "name": "回复",
+        "role": "button"
+      },
+      "e145": {
+        "name": "回复",
+        "role": "button"
+      },
+      "e146": {
+        "name": "回复",
+        "role": "button"
+      },
+      "e147": {
+        "name": "回复",
+        "role": "button"
+      },
+      "e148": {
+        "name": "回复",
+        "role": "button"
+      },
+      "e149": {
+        "name": "回复",
+        "role": "button"
+      },
+      "e15": {
+        "name": "发起通话",
+        "role": "button"
+      },
+      "e150": {
+        "name": "回复",
+        "role": "button"
+      },
+      "e151": {
+        "name": "回复",
+        "role": "button"
+      },
+      "e152": {
+        "name": "回复",
+        "role": "button"
+      },
+      "e153": {
+        "name": "回复",
+        "role": "button"
+      },
+      "e154": {
+        "name": "回复",
+        "role": "button"
+      },
+      "e155": {
+        "name": "回复",
+        "role": "button"
+      },
+      "e156": {
+        "name": "回复",
+        "role": "button"
+      },
+      "e157": {
+        "name": "回复",
+        "role": "button"
+      },
+      "e158": {
+        "name": "回复",
+        "role": "button"
+      },
+      "e159": {
+        "name": "回复",
+        "role": "button"
+      },
+      "e16": {
+        "name": "显示/隐藏个人资料",
+        "role": "button"
+      },
+      "e160": {
+        "name": "回复",
+        "role": "button"
+      },
+      "e161": {
+        "name": "回复",
+        "role": "button"
+      },
+      "e162": {
+        "name": "回复",
+        "role": "button"
+      },
+      "e163": {
+        "name": "选择一个表情回应",
+        "role": "button"
+      },
+      "e164": {
+        "name": "选择一个表情回应",
+        "role": "button"
+      },
+      "e165": {
+        "name": "选择一个表情回应",
+        "role": "button"
+      },
+      "e166": {
+        "name": "打开 AbilityKit_Architecture_Assessment_2026-10-04.docx",
+        "role": "button"
+      },
+      "e167": {
+        "name": "选择一个表情回应",
+        "role": "button"
+      },
+      "e168": {
+        "name": "选择一个表情回应",
+        "role": "button"
+      },
+      "e169": {
+        "name": "选择一个表情回应",
+        "role": "button"
+      },
+      "e17": {
+        "name": "首页",
+        "role": "link"
+      },
+      "e170": {
+        "name": "选择一个表情回应",
+        "role": "button"
+      },
+      "e171": {
+        "name": "选择一个表情回应",
+        "role": "button"
+      },
+      "e172": {
+        "name": "选择一个表情回应",
+        "role": "button"
+      },
+      "e173": {
+        "name": "选择一个表情回应",
+        "role": "button"
+      },
+      "e174": {
+        "name": "选择一个表情回应",
+        "role": "button"
+      },
+      "e175": {
+        "name": "选择一个表情回应",
+        "role": "button"
+      },
+      "e176": {
+        "name": "选择一个表情回应",
+        "role": "button"
+      },
+      "e177": {
+        "name": "选择一个表情回应",
+        "role": "button"
+      },
+      "e178": {
+        "name": "选择一个表情回应",
+        "role": "button"
+      },
+      "e179": {
+        "name": "选择一个表情回应",
+        "role": "button"
+      },
+      "e18": {
+        "name": "查看活动",
+        "role": "button"
+      },
+      "e180": {
+        "name": "选择一个表情回应",
+        "role": "button"
+      },
+      "e181": {
+        "name": "选择一个表情回应",
+        "role": "button"
+      },
+      "e182": {
+        "name": "选择一个表情回应",
+        "role": "button"
+      },
+      "e183": {
+        "name": "选择一个表情回应",
+        "role": "button"
+      },
+      "e184": {
+        "name": "选择一个表情回应",
+        "role": "button"
+      },
+      "e185": {
+        "name": "选择一个表情回应",
+        "role": "button"
+      },
+      "e186": {
+        "name": "选择一个表情回应",
+        "role": "button"
+      },
+      "e187": {
+        "name": "选择一个表情回应",
+        "role": "button"
+      },
+      "e188": {
+        "name": "选择一个表情回应",
+        "role": "button"
+      },
+      "e189": {
+        "name": "选择一个表情回应",
+        "role": "button"
+      },
+      "e19": {
+        "name": "新聊天",
+        "role": "button"
+      },
+      "e190": {
+        "name": "选择一个表情回应",
+        "role": "button"
+      },
+      "e191": {
+        "name": "选择一个表情回应",
+        "role": "button"
+      },
+      "e192": {
+        "name": "选择一个表情回应",
+        "role": "button"
+      },
+      "e193": {
+        "name": "选择一个表情回应",
+        "role": "button"
+      },
+      "e194": {
+        "name": "选择一个表情回应",
+        "role": "button"
+      },
+      "e195": {
+        "name": "选择一个表情回应",
+        "role": "button"
+      },
+      "e196": {
+        "name": "选择一个表情回应",
+        "role": "button"
+      },
+      "e197": {
+        "name": "选择一个表情回应",
+        "role": "button"
+      },
+      "e198": {
+        "name": "选择一个表情回应",
+        "role": "button"
+      },
+      "e199": {
+        "name": "选择一个表情回应",
+        "role": "button"
+      },
+      "e2": {
+        "name": "",
+        "role": "separator"
+      },
+      "e20": {
+        "name": "你的 dot",
+        "role": "button"
+      },
+      "e200": {
+        "name": "选择一个表情回应",
+        "role": "button"
+      },
+      "e201": {
+        "name": "选择一个表情回应",
+        "role": "button"
+      },
+      "e202": {
+        "name": "选择一个表情回应",
+        "role": "button"
+      },
+      "e203": {
+        "name": "选择一个表情回应",
+        "role": "button"
+      },
+      "e204": {
+        "name": "选择一个表情回应",
+        "role": "button"
+      },
+      "e205": {
+        "name": "选择一个表情回应",
+        "role": "button"
+      },
+      "e206": {
+        "name": "选择一个表情回应",
+        "role": "button"
+      },
+      "e207": {
+        "name": "选择一个表情回应",
+        "role": "button"
+      },
+      "e208": {
+        "name": "选择一个表情回应",
+        "role": "button"
+      },
+      "e209": {
+        "name": "选择一个表情回应",
+        "role": "button"
+      },
+      "e21": {
+        "name": "搜索",
+        "role": "button"
+      },
+      "e210": {
+        "name": " #5 固定当前 ET 架构契约并落实 AGENTS.md",
+        "role": "link"
+      },
+      "e211": {
+        "name": "草稿 PR #10 (https://github.com/Kakusya/AbilityKit/pull/10)",
+        "role": "link"
+      },
+      "e212": {
+        "name": "PR #10",
+        "role": "link"
+      },
+      "e213": {
+        "name": "Issue #5",
+        "role": "link"
+      },
+      "e214": {
+        "name": "PR #10 (https://github.com/Kakusya/AbilityKit/pull/10)",
+        "role": "link"
+      },
+      "e215": {
+        "name": "最终 SHA 与验证回报 (https://github.com/Kakusya/AbilityKit/issues/5#issuecomment-5977438627)",
+        "role": "link"
+      },
+      "e216": {
+        "name": "https://github.com/Kakusya/AbilityKit/pull/10#pullrequestreview-5404506672",
+        "role": "link"
+      },
+      "e217": {
+        "name": "https://github.com/Kakusya/AbilityKit/pull/10#pullrequestreview-5404821934",
+        "role": "link"
+      },
+      "e218": {
+        "name": "https://github.com/Kakusya/AbilityKit/pull/10",
+        "role": "link"
+      },
+      "e219": {
+        "name": "https://github.com/Kakusya/AbilityKit/pull/10",
+        "role": "link"
+      },
+      "e22": {
+        "name": "显示/隐藏侧边栏",
+        "role": "button"
+      },
+      "e220": {
+        "name": "https://github.com/Kakusya/AbilityKit/issues/6",
+        "role": "link"
+      },
+      "e221": {
+        "name": "https://github.com/Kakusya/AbilityKit/pull/11",
+        "role": "link"
+      },
+      "e222": {
+        "name": "https://github.com/Kakusya/AbilityKit/pull/11#pullrequestreview-5405864745",
+        "role": "link"
+      },
+      "e223": {
+        "name": "https://learn.chatgpt.com/docs/dots#access",
+        "role": "link"
+      },
+      "e224": {
+        "name": "https://learn.chatgpt.com/docs/dots/computers-and-apps",
+        "role": "link"
+      },
+      "e225": {
+        "name": "https://github.com/Kakusya/AbilityKit/commit/86d44e8f8a6ac2ca958f4c453555817da7b1f15c",
+        "role": "link"
+      },
+      "e226": {
+        "name": "https://github.com/Kakusya/AbilityKit/blob/86d44e8f8a6ac2ca958f4c453555817da7b1f15c/.agents/skills/cooking-dot-workflow/SKILL.md",
+        "role": "link"
+      },
+      "e227": {
+        "name": "https://github.com/Kakusya/AbilityKit/blob/86d44e8f8a6ac2ca958f4c453555817da7b1f15c/.agents/skills/cooking-dot-workflow/agents/openai.yaml",
+        "role": "link"
+      },
+      "e228": {
+        "name": "https://github.com/Kakusya/AbilityKit/blob/86d44e8f8a6ac2ca958f4c453555817da7b1f15c/.agents/skills/cooking-dot-workflow/references/dot-dialogue.md",
+        "role": "link"
+      },
+      "e229": {
+        "name": "https://github.com/Kakusya/AbilityKit/blob/86d44e8f8a6ac2ca958f4c453555817da7b1f15c/.agents/skills/cooking-dot-workflow/references/recovery.md",
+        "role": "link"
+      },
+      "e23": {
+        "name": "项目",
+        "role": "button"
+      },
+      "e230": {
+        "name": "https://github.com/Kakusya/AbilityKit/blob/86d44e8f8a6ac2ca958f4c453555817da7b1f15c/.trellis/spec/abilitykit/supervised-issue-delivery.md",
+        "role": "link"
+      },
+      "e231": {
+        "name": "https://github.com/Kakusya/AbilityKit/blob/86d44e8f8a6ac2ca958f4c453555817da7b1f15c/AGENTS.md",
+        "role": "link"
+      },
+      "e232": {
+        "name": "https://github.com/Kakusya/AbilityKit/blob/86d44e8f8a6ac2ca958f4c453555817da7b1f15c/.trellis/tasks/archive/2026-10/10-05-cooking-dot-workflow/research/owner-decisions.md",
+        "role": "link"
+      },
+      "e233": {
+        "name": "https://github.com/Kakusya/AbilityKit/blob/86d44e8f8a6ac2ca958f4c453555817da7b1f15c/.agents/skills/cooking-dot-workflow/references/recovery.md#L3-L27",
+        "role": "link"
+      },
+      "e234": {
+        "name": "https://github.com/Kakusya/AbilityKit/blob/86d44e8f8a6ac2ca958f4c453555817da7b1f15c/.agents/skills/cooking-dot-workflow/references/dot-dialogue.md#L8-L28",
+        "role": "link"
+      },
+      "e235": {
+        "name": "https://github.com/Kakusya/AbilityKit/blob/86d44e8f8a6ac2ca958f4c453555817da7b1f15c/.trellis/scripts/common/task_store.py#L1317-L1457",
+        "role": "link"
+      },
+      "e236": {
+        "name": "https://github.com/Kakusya/AbilityKit/blob/86d44e8f8a6ac2ca958f4c453555817da7b1f15c/.agents/skills/cooking-dot-workflow/SKILL.md#L30-L34",
+        "role": "link"
+      },
+      "e237": {
+        "name": "https://github.com/Kakusya/AbilityKit/tree/4cf5b38bcb06b2f58d49fd73fc9de26e5cec02fe/.trellis/tasks/10-05-cooking-dot-skill-polish",
+        "role": "link"
+      },
+      "e238": {
+        "name": "https://github.com/Kakusya/AbilityKit/tree/32b400a5c6d375be366faa606e867ef68037cfa8/.agents/skills/cooking-dot-workflow",
+        "role": "link"
+      },
+      "e239": {
+        "name": "https://github.com/Kakusya/AbilityKit/tree/32b400a5c6d375be366faa606e867ef68037cfa8/.trellis/tasks/10-05-cooking-dot-skill-polish",
+        "role": "link"
+      },
+      "e24": {
+        "name": "最近",
+        "role": "button"
+      },
+      "e240": {
+        "name": "#5 架构契约与 AGENTS.md",
+        "role": "link"
+      },
+      "e241": {
+        "name": "#6 修正验收结果",
+        "role": "link"
+      },
+      "e242": {
+        "name": "#7 固定构建与检查流程",
+        "role": "link"
+      },
+      "e243": {
+        "name": "#8 第一块 ET 业务迁移",
+        "role": "link"
+      },
+      "e244": {
+        "name": "#9 协议与 protobuf 核验",
+        "role": "link"
+      },
+      "e245": {
+        "name": "#5 完整体检报告",
+        "role": "link"
+      },
+      "e246": {
+        "name": "#5 AGENTS.md 提案全文",
+        "role": "link"
+      },
+      "e247": {
+        "name": "#5 Orca 阅读顺序",
+        "role": "link"
+      },
+      "e25": {
+        "name": "项目侧边栏选项",
+        "role": "button"
+      },
+      "e26": {
+        "name": "添加新项目",
+        "role": "button"
+      },
+      "e27": {
+        "name": "聊天侧边栏选项",
+        "role": "button"
+      },
+      "e28": {
+        "name": "筛选聊天和工作",
+        "role": "button"
+      },
+      "e29": {
+        "name": "新聊天",
+        "role": "button"
+      },
+      "e3": {
+        "name": "应用导航",
+        "role": "navigation"
+      },
+      "e30": {
+        "name": "解释GitHub代码审查用量",
+        "role": "group"
+      },
+      "e31": {
+        "name": "介绍 Macro Deck软件",
+        "role": "group"
+      },
+      "e32": {
+        "name": "解释Git检查命令",
+        "role": "group"
+      },
+      "e33": {
+        "name": "解释登录提示",
+        "role": "group"
+      },
+      "e34": {
+        "name": "GPT身份验证器介绍",
+        "role": "group"
+      },
+      "e35": {
+        "name": "Dots使用指南",
+        "role": "group"
+      },
+      "e36": {
+        "name": "讨论正式菜品设计",
+        "role": "group"
+      },
+      "e37": {
+        "name": "广州燃气缴费方法",
+        "role": "group"
+      },
+      "e38": {
+        "name": "解释GitHub代码审查用量",
+        "role": "link"
+      },
+      "e39": {
+        "name": "介绍 Macro Deck软件",
+        "role": "link"
+      },
+      "e4": {
+        "name": "",
+        "role": "generic"
+      },
+      "e40": {
+        "name": "解释Git检查命令",
+        "role": "link"
+      },
+      "e41": {
+        "name": "解释登录提示",
+        "role": "link"
+      },
+      "e42": {
+        "name": "GPT身份验证器介绍",
+        "role": "link"
+      },
+      "e43": {
+        "name": "Dots使用指南",
+        "role": "link"
+      },
+      "e44": {
+        "name": "讨论正式菜品设计",
+        "role": "link"
+      },
+      "e45": {
+        "name": "广州燃气缴费方法",
+        "role": "link"
+      },
+      "e46": {
+        "name": "聊天操作",
+        "role": "button"
+      },
+      "e47": {
+        "name": "聊天操作",
+        "role": "button"
+      },
+      "e48": {
+        "name": "聊天操作",
+        "role": "button"
+      },
+      "e49": {
+        "name": "聊天操作",
+        "role": "button"
+      },
+      "e5": {
+        "name": "首页",
+        "role": "button"
+      },
+      "e50": {
+        "name": "聊天操作",
+        "role": "button"
+      },
+      "e51": {
+        "name": "聊天操作",
+        "role": "button"
+      },
+      "e52": {
+        "name": "聊天操作",
+        "role": "button"
+      },
+      "e53": {
+        "name": "聊天操作",
+        "role": "button"
+      },
+      "e54": {
+        "name": "置顶聊天",
+        "role": "button"
+      },
+      "e55": {
+        "name": "置顶聊天",
+        "role": "button"
+      },
+      "e56": {
+        "name": "置顶聊天",
+        "role": "button"
+      },
+      "e57": {
+        "name": "置顶聊天",
+        "role": "button"
+      },
+      "e58": {
+        "name": "置顶聊天",
+        "role": "button"
+      },
+      "e59": {
+        "name": "置顶聊天",
+        "role": "button"
+      },
+      "e6": {
+        "name": "空间",
+        "role": "button"
+      },
+      "e60": {
+        "name": "置顶聊天",
+        "role": "button"
+      },
+      "e61": {
+        "name": "置顶聊天",
+        "role": "button"
+      },
+      "e62": {
+        "name": "滚动到底部",
+        "role": "button"
+      },
+      "e63": {
+        "name": "消息",
+        "role": "textbox"
+      },
+      "e64": {
+        "name": "",
+        "role": "generic"
+      },
+      "e65": {
+        "name": "发送",
+        "role": "button"
+      },
+      "e66": {
+        "name": "添加文件等内容",
+        "role": "button"
+      },
+      "e67": {
+        "name": "",
+        "role": "generic"
+      },
+      "e68": {
+        "name": "",
+        "role": "generic"
+      },
+      "e69": {
+        "name": "",
+        "role": "generic"
+      },
+      "e7": {
+        "name": "任务",
+        "role": "button"
+      },
+      "e70": {
+        "name": "",
+        "role": "generic"
+      },
+      "e71": {
+        "name": "",
+        "role": "generic"
+      },
+      "e72": {
+        "name": "",
+        "role": "generic"
+      },
+      "e73": {
+        "name": "",
+        "role": "generic"
+      },
+      "e74": {
+        "name": "",
+        "role": "generic"
+      },
+      "e75": {
+        "name": "",
+        "role": "generic"
+      },
+      "e76": {
+        "name": "",
+        "role": "generic"
+      },
+      "e77": {
+        "name": "",
+        "role": "generic"
+      },
+      "e78": {
+        "name": "",
+        "role": "generic"
+      },
+      "e79": {
+        "name": "",
+        "role": "generic"
+      },
+      "e8": {
+        "name": "插件",
+        "role": "button"
+      },
+      "e80": {
+        "name": "",
+        "role": "generic"
+      },
+      "e81": {
+        "name": "",
+        "role": "generic"
+      },
+      "e82": {
+        "name": "",
+        "role": "generic"
+      },
+      "e83": {
+        "name": "",
+        "role": "generic"
+      },
+      "e84": {
+        "name": "",
+        "role": "generic"
+      },
+      "e85": {
+        "name": "",
+        "role": "generic"
+      },
+      "e86": {
+        "name": "",
+        "role": "generic"
+      },
+      "e87": {
+        "name": "",
+        "role": "generic"
+      },
+      "e88": {
+        "name": "",
+        "role": "generic"
+      },
+      "e89": {
+        "name": "",
+        "role": "generic"
+      },
+      "e9": {
+        "name": "探索",
+        "role": "button"
+      },
+      "e90": {
+        "name": "",
+        "role": "generic"
+      },
+      "e91": {
+        "name": "",
+        "role": "generic"
+      },
+      "e92": {
+        "name": "",
+        "role": "generic"
+      },
+      "e93": {
+        "name": "",
+        "role": "generic"
+      },
+      "e94": {
+        "name": "",
+        "role": "generic"
+      },
+      "e95": {
+        "name": "",
+        "role": "generic"
+      },
+      "e96": {
+        "name": "",
+        "role": "generic"
+      },
+      "e97": {
+        "name": "",
+        "role": "generic"
+      },
+      "e98": {
+        "name": "",
+        "role": "generic"
+      },
+      "e99": {
+        "name": "",
+        "role": "generic"
+      }
+    },
+    "snapshot": "- generic\n  - generic\n    - link \"跳转到内容\" [ref=e1]\n    - generic\n      - complementary\n        - navigation \"应用导航\" [ref=e3]\n          - button \"首页\" [expanded=false, ref=e5]\n            - StaticText \"首页\"\n          - button \"空间\" [expanded=false, ref=e6]\n            - StaticText \"空间\"\n          - button \"任务\" [expanded=false, ref=e7]\n            - StaticText \"任务\"\n          - button \"插件\" [expanded=false, ref=e8]\n            - StaticText \"插件\"\n          - button \"探索\" [expanded=false, ref=e9]\n            - StaticText \"探索\"\n          - button \"站点\" [expanded=false, ref=e10]\n            - StaticText \"站点\"\n          - button \"打开个人资料菜单\" [expanded=false, ref=e14]\n        - generic\n          - navigation \"首页\" [ref=e11]\n            - generic\n              - link \"首页\" [ref=e17]\n                - StaticText \"ChatGPT\"\n              - button \"查看活动\" [ref=e18]\n              - button \"搜索\" [ref=e21]\n              - button \"显示/隐藏侧边栏\" [expanded=true, ref=e22]\n              - button \"新聊天\" [ref=e19]\n                - StaticText \"新聊天\"\n              - button \"你的 dot\" [expanded=false, ref=e20]\n                - StaticText \"你的 dot\"\n            - generic\n              - generic\n                - button \"项目\" [expanded=true, ref=e23]\n                  - StaticText \"项目\"\n                - button \"项目侧边栏选项\" [expanded=false, ref=e25]\n                - button \"添加新项目\" [ref=e26]\n                  - image\n              - list\n                - listitem [level=1]\n                  - StaticText \"没有项目\"\n              - generic\n                - button \"最近\" [expanded=true, ref=e24]\n                  - StaticText \"最近\"\n                - button \"聊天侧边栏选项\" [expanded=false, ref=e27]\n                - button \"筛选聊天和工作\" [expanded=false, ref=e28]\n                  - image\n                - button \"新聊天\" [ref=e29]\n              - list\n                - listitem [level=1]\n                  - group \"解释GitHub代码审查用量\" [ref=e30] clickable [cursor:pointer, onclick]\n                    - link \"解释GitHub代码审查用量\" [ref=e38]\n                      - group\n                        - StaticText \"解释GitHub代码审查用量\"\n                    - generic\n                      - button \"聊天操作\" [expanded=false, ref=e46]\n                      - button \"置顶聊天\" [ref=e54]\n                - listitem [level=1]\n                  - group \"介绍 Macro Deck软件\" [ref=e31] clickable [cursor:pointer, onclick]\n                    - link \"介绍 Macro Deck软件\" [ref=e39]\n                      - group\n                        - StaticText \"介绍 Macro Deck软件\"\n                    - generic\n                      - button \"聊天操作\" [expanded=false, ref=e47]\n                      - button \"置顶聊天\" [ref=e55]\n                - listitem [level=1]\n                  - group \"解释Git检查命令\" [ref=e32] clickable [cursor:pointer, onclick]\n                    - link \"解释Git检查命令\" [ref=e40]\n                      - group\n                        - StaticText \"解释Git检查命令\"\n                    - generic\n                      - button \"聊天操作\" [expanded=false, ref=e48]\n                      - button \"置顶聊天\" [ref=e56]\n                - listitem [level=1]\n                  - group \"解释登录提示\" [ref=e33] clickable [cursor:pointer, onclick]\n                    - link \"解释登录提示\" [ref=e41]\n                      - group\n                        - StaticText \"解释登录提示\"\n                    - generic\n                      - button \"聊天操作\" [expanded=false, ref=e49]\n                      - button \"置顶聊天\" [ref=e57]\n                - listitem [level=1]\n                  - group \"GPT身份验证器介绍\" [ref=e34] clickable [cursor:pointer, onclick]\n                    - link \"GPT身份验证器介绍\" [ref=e42]\n                      - group\n                        - StaticText \"GPT身份验证器介绍\"\n                    - generic\n                      - button \"聊天操作\" [expanded=false, ref=e50]\n                      - button \"置顶聊天\" [ref=e58]\n                - listitem [level=1]\n                  - group \"Dots使用指南\" [ref=e35] clickable [cursor:pointer, onclick]\n                    - link \"Dots使用指南\" [ref=e43]\n                      - group\n                        - StaticText \"Dots使用指南\"\n                    - generic\n                      - button \"聊天操作\" [expanded=false, ref=e51]\n                      - button \"置顶聊天\" [ref=e59]\n                - listitem [level=1]\n                  - group \"讨论正式菜品设计\" [ref=e36] clickable [cursor:pointer, onclick]\n                    - link \"讨论正式菜品设计\" [ref=e44]\n                      - group\n                        - StaticText \"讨论正式菜品设计\"\n                    - generic\n                      - button \"聊天操作\" [expanded=false, ref=e52]\n                      - button \"置顶聊天\" [ref=e60]\n                - listitem [level=1]\n                  - group \"广州燃气缴费方法\" [ref=e37] clickable [cursor:pointer, onclick]\n                    - link \"广州燃气缴费方法\" [ref=e45]\n                      - group\n                        - StaticText \"广州燃气缴费方法\"\n                    - generic\n                      - button \"聊天操作\" [expanded=false, ref=e53]\n                      - button \"置顶聊天\" [ref=e61]\n          - generic\n        - separator [ref=e2] clickable [onclick]\n      - generic\n        - main\n          - sectionheader\n            - button \"你的 dot 操作\" [expanded=false, ref=e12]\n            - button \"发起通话\" [ref=e15]\n            - button \"显示/隐藏个人资料\" [ref=e16]\n          - generic [ref=e4] clickable [onclick]\n            - generic\n              - main\n                - generic\n                  - time\n                    - StaticText \"10月4日 12:09\"\n                  - article\n                    - generic [ref=e67] focusable [tabindex]\n                      - paragraph\n                        - StaticText \"那你的心得issue呢?\"\n                      - generic \"消息操作\"\n                        - button \"回复\" [ref=e115]\n                        - button \"选择一个表情回应\" [expanded=false, ref=e163]\n                  - article\n                    - generic [ref=e68] focusable [tabindex]\n                      - paragraph\n                        - StaticText \"新的架构改造 Issue 还没发布。刚才我先完成了体检和旧任务暂停，确实还差把结论变成 Orca 能领取的任务。\"\n                      - paragraph\n                        - StaticText \"我现在先发布第一条：固定当前 ET 版本、明确状态和消息契约，并把原则落实到 AGENTS.md。后续再拆验收机制修正和 ET 业务迁移，不让报告停留在建议上。\"\n                      - generic \"消息操作\"\n                        - button \"选择一个表情回应\" [expanded=false, ref=e164]\n                        - button \"回复\" [ref=e116]\n                  - article\n                    - generic [ref=e69] focusable [tabindex]\n                      - paragraph\n                        - StaticText \"第一条新 Issue 已发布：\"\n                        - link \" #5 固定当前 ET 架构契约并落实 AGENTS.md\" [ref=e210]\n                        - StaticText \"，已标记 orca-ready。\"\n                      - paragraph\n                        - StaticText \"它要求 Orca 整理实际树与目标树、状态归属、消息契约、事务边界，并真正修改 AGENTS.md；暂不搬动运行时代码。后续的验收机制修正、依赖治理和 ET 迁移任务正在逐条补齐。\"\n                      - generic \"消息操作\"\n                        - button \"选择一个表情回应\" [expanded=false, ref=e165]\n                        - button \"回复\" [ref=e117]\n                  - article\n                    - generic [ref=e70] focusable [tabindex]\n                      - generic\n                        - button \"打开 AbilityKit_Architecture_Assessment_2026-10-04.docx\" [ref=e166]\n                        - StaticText \"AbilityKit_Architecture_Assessment_2026-10-04.docx\"\n                      - generic\n                        - button \"打开 AGENTS.proposed.md\" [ref=e118]\n                        - StaticText \"AGENTS.proposed.md\"\n                      - paragraph\n                        - StaticText \"完整体检报告和 AGENTS.md 提案也准备好了，见附件。报告包含代码依据、当前 ET 的迁移路线，以及框架保留、复用和退役的建议。\"\n                      - paragraph\n                        - StaticText \"这些是给你和 Orca 审阅的材料；实际写入仓库由新建的 #5 任务负责。\"\n                      - generic \"消息操作\"\n                        - button \"选择一个表情回应\" [expanded=false, ref=e167]\n                        - button \"回复\" [ref=e119]\n                  - article\n                    - generic [ref=e71] focusable [tabindex]\n                      - paragraph\n                        - StaticText \"新的底座任务已经全部发布，共 5 条：\"\n                      - list\n                        - listitem [level=1]\n                          - ListMarker \"• \"\n                          - link \"#5 架构契约与 AGENTS.md\" [ref=e240]\n                          - StaticText \"：把当前 ET、状态归属和消息规则写清楚，已标 orca-ready。\"\n                        - listitem [level=1]\n                          - ListMarker \"• \"\n                          - link \"#6 修正验收结果\" [ref=e241]\n                          - StaticText \"：防止“没测过”被记成“通过”。\"\n                        - listitem [level=1]\n                          - ListMarker \"• \"\n                          - link \"#7 固定构建与检查流程\" [ref=e242]\n                          - StaticText \"：核实依赖、CI 和受限代码的发布防线。\"\n                        - listitem [level=1]\n                          - ListMarker \"• \"\n                          - link \"#8 第一块 ET 业务迁移\" [ref=e243]\n                          - StaticText \"：从物品、手持、容器及其一致性关系入手，先审设计再迁移。\"\n                        - listitem [level=1]\n                          - ListMarker \"• \"\n                          - link \"#9 协议与 protobuf 核验\" [ref=e244]\n                          - StaticText \"：补真实通信和版本兼容证据，不强制换协议。\"\n                      - paragraph\n                        - StaticText \"#6～#9 都标了 blocked，并写明解锁条件。现在让 Orca 先读 #5 即可；原来的 #1～#4 继续等待新的架构安排。\"\n                      - generic \"消息操作\"\n                        - button \"选择一个表情回应\" [expanded=false, ref=e168]\n                        - button \"回复\" [ref=e120]\n                  - article\n                    - generic [ref=e72] focusable [tabindex]\n                      - paragraph\n                        - StaticText \"但是你写了附件,我不知道orca如何读取到它们,什么时候读取.你可以写进issue或者作为附件添加么?\"\n                      - generic \"消息操作\"\n                        - button \"回复\" [ref=e121]\n                        - button \"选择一个表情回应\" [expanded=false, ref=e169]\n                  - article\n                    - generic [ref=e73] focusable [tabindex]\n                      - paragraph\n                        - StaticText \"可以，你指出的是交接中的一个缺口：聊天里的附件不会自动出现在 Orca 的任务上下文里。\"\n                      - paragraph\n                        - StaticText \"我会把 AGENTS.md 提案全文和体检报告的可读内容补进 GitHub Issue，并明确“领取时先读什么、实施前再读什么”。Orca 只靠 Issue 就能拿到材料，不必访问这段聊天。\"\n                      - generic \"消息操作\"\n                        - button \"选择一个表情回应\" [expanded=false, ref=e170]\n                        - button \"回复\" [ref=e122]\n                  - article\n                    - generic [ref=e74] focusable [tabindex]\n                      - paragraph\n                        - StaticText \"所以你写了吗?\"\n                      - generic \"消息操作\"\n                        - button \"回复\" [ref=e123]\n                        - button \"选择一个表情回应\" [expanded=false, ref=e171]\n                  - article\n                    - generic [ref=e75] focusable [tabindex]\n                      - paragraph\n                        - StaticText \"还没写回 GitHub，这一步还没完成。我已经整理好报告和规则全文，正在补进 #5；写入后会重新读取核对，再把具体位置发给你。\"\n                      - generic \"消息操作\"\n                        - button \"选择一个表情回应\" [expanded=false, ref=e172]\n                        - button \"回复\" [ref=e124]\n                  - article\n                    - generic [ref=e76] focusable [tabindex]\n                      - paragraph\n                        - StaticText \"现在已经写进 GitHub，并重新读取核对过了：\"\n                      - list\n                        - listitem [level=1]\n                          - ListMarker \"• \"\n                          - link \"#5 完整体检报告\" [ref=e245]\n                        - listitem [level=1]\n                          - ListMarker \"• \"\n                          - link \"#5 AGENTS.md 提案全文\" [ref=e246]\n                        - listitem [level=1]\n                          - ListMarker \"• \"\n                          - link \"#5 Orca 阅读顺序\" [ref=e247]\n                      - paragraph\n                        - StaticText \"#6～#9 也各自补了必读链接和阅读时机。Orca 领取 #5 后，应先读报告和规则全文，再修改文档；不再需要访问聊天附件。\"\n                      - generic \"消息操作\"\n                        - button \"选择一个表情回应\" [expanded=false, ref=e173]\n                        - button \"回复\" [ref=e125]\n                  - article\n                    - generic [ref=e77] focusable [tabindex]\n                      - paragraph\n                        - StaticText \"这是agent在执行的时候的思考过程\\\"Issue #5 已更新，正文现在内嵌了完整架构报告和 AGENTS 草案。我确认它仍是唯一获准实施的 issue，#1–#4 和 #6–#9 都保持 blocked。本次只整理架构合同与工程规则，不启动 ET 迁移或协议替换。\\\"它的意思是否是,issue要求它仅整理不执行,还是说暂时只整理.\"\n                      - generic \"消息操作\"\n                        - button \"回复\" [ref=e126]\n                        - button \"选择一个表情回应\" [expanded=false, ref=e174]\n                  - article\n                    - generic [ref=e78] focusable [tabindex]\n                      - paragraph\n                        - StaticText \"它的意思是“暂时先整理”，但具体到 Issue #5，本次交付确实只包括架构约定和工程规则的落地，例如明确 ET 树、事件与消息规则，并修改仓库里的 AGENTS.md 等文档。不是让它只思考、不提交成果。\"\n                      - paragraph\n                        - StaticText \"实际改代码放在后续 Issue：\"\n                      - list\n                        - listitem [level=1]\n                          - ListMarker \"• \"\n                          - StaticText \"#6：修复测试门禁的结果判定\"\n                        - listitem [level=1]\n                          - ListMarker \"• \"\n                          - StaticText \"#7：完善构建验证、CI 和发布防线\"\n                        - listitem [level=1]\n                          - ListMarker \"• \"\n                          - StaticText \"#8：开始将物品、手持、容器的状态管理迁入当前 ET\"\n                        - listitem [level=1]\n                          - ListMarker \"• \"\n                          - StaticText \"#9：核实协议与兼容性，再决定是否需要引入 protobuf\"\n                      - paragraph\n                        - StaticText \"这些目前标为 blocked，是为了先审阅 #5 的成果，把底座改造的规则定清楚，再按依赖逐项放行。你的“全面向 ET 重构”方向没有取消；现在执行的是第一步。\"\n                      - generic \"消息操作\"\n                        - button \"选择一个表情回应\" [expanded=false, ref=e175]\n                        - button \"回复\" [ref=e127]\n                  - time\n                    - StaticText \"10月4日 13:42\"\n                  - article\n                    - generic [ref=e79] focusable [tabindex]\n                      - paragraph\n                        - StaticText \"已完成 Issue #5 批准范围内的实施和验证，约用时 21 分钟。\"\n                      - list\n                        - listitem [level=1]\n                          - ListMarker \"• \"\n                          - StaticText \"完成 A–E 架构合同、精简 AGENTS、保留历史原文。\"\n                        - listitem [level=1]\n                          - ListMarker \"• \"\n                          - StaticText \"独立文档审查、151 个本地链接、编码和差异检查通过。\"\n                        - listitem [level=1]\n                          - ListMarker \"• \"\n                          - StaticText \"未改运行时代码；.NET/Unity 验收为 NotRun。\"\n                        - listitem [level=1]\n                          - ListMarker \"• \"\n                          - StaticText \"已提交并回报 Issue，工作树干净。\"\n                      - paragraph\n                        - StaticText \"交付在 \"\n                        - link \"草稿 PR #10 (https://github.com/Kakusya/AbilityKit/pull/10)\" [ref=e211]\n                        - StaticText \"，现在等待 dot 审阅；未合并主线、未关闭 Issue，也未解锁后续任务。\"\n                      - generic \"消息操作\"\n                        - button \"回复\" [ref=e128]\n                        - button \"选择一个表情回应\" [expanded=false, ref=e176]\n                  - article\n                    - generic [ref=e80] focusable [tabindex]\n                      - paragraph\n                        - StaticText \"收到，我现在审阅 PR #10，重点核对 A–E 交付、AGENTS 规则和 ET／事件契约是否完整一致，再判断 #5 能否验收，以及哪些后续任务具备放行条件。\"\n                      - generic \"消息操作\"\n                        - button \"选择一个表情回应\" [expanded=false, ref=e177]\n                        - button \"回复\" [ref=e129]\n                  - article\n                    - generic [ref=e81] focusable [tabindex]\n                      - paragraph\n                        - StaticText \"主体交付已经核对：范围守住了，历史原文也完整保留。不过我找到一处需要修正的业务规则：文档把“打烊后领取供应”列成了应拒绝的情况，而现有代码允许已批准的送货继续到达、领取，只停止新的订货。\"\n                      - paragraph\n                        - StaticText \"这点要先改准确，否则后续按文档重构，可能不知不觉改变玩法。我正在把它和另外两处小的验证表述问题整理成 Orca 可直接处理的审阅反馈。\"\n                      - generic \"消息操作\"\n                        - button \"选择一个表情回应\" [expanded=false, ref=e178]\n                        - button \"回复\" [ref=e130]\n                  - article\n                    - generic [ref=e82] focusable [tabindex]\n                      - paragraph\n                        - StaticText \"审阅意见已经写入 \"\n                        - link \"PR #10\" [ref=e212]\n                        - StaticText \"，也同步回 \"\n                        - link \"Issue #5\" [ref=e213]\n                        - StaticText \"，Orca 可以直接读取并修订。\"\n                      - paragraph\n                        - StaticText \"结论是：主体符合要求，先修正供应关闭规则，再补两处验证表述。修订仍只涉及文档；等它提交新版本，我再复审。后续任务暂不放行。\"\n                      - generic \"消息操作\"\n                        - button \"选择一个表情回应\" [expanded=false, ref=e179]\n                        - button \"回复\" [ref=e131]\n                  - time\n                    - StaticText \"10月4日 15:13\"\n                  - article\n                    - generic [ref=e83] focusable [tabindex]\n                      - generic\n                        - image \"正在加载图像附件\"\n                        - link \"[底座 P0] 固定当前 ET 架构契约并落实 AGENTS.md · Issue #5 · Kakusya/AbilityKit Orca reading guide 本 Issue 正文现已完整内嵌架构评估与 AGENTS 草案。本地 Orca 可直接从 GitHub 读取，不需要访问聊天附件。 #5 是当前唯一 orca-ready，仅按本 Issue 的已批准范围做架构合同、文档和 AGENTS 规则工作。 旧 #1–#4 与新 #6–#9 均为 blocked。可预读资料；只有后续明确批准、依赖满足并重新标记 ... link\" [ref=e132]\n                          - StaticText \"[底座 P0] 固定当前 ET 架构契约并落实 AGENTS.md · Issue #5 · Kakusya/AbilityKit\"\n                          - StaticText \"Orca reading guide 本 Issue 正文现已完整内嵌架构评估与 AGENTS 草案。本地 Orca 可直接从 GitHub 读取，不需要访问聊天附件。 #5 是当前唯一 orca-ready，仅按本 Issue 的已批准范围做架构合同、文档和 AGENTS 规则工作。 旧 #1–#4 与新 #6–#9 均为 blocked。可预读资料；只有后续明确批准、依赖满足并重新标记 ...\"\n                          - StaticText \"link\"\n                      - image \"正在加载图像附件\"\n                      - link \"docs: 固定当前 ET 架构合同与 AGENTS 规则 by Kakusya · Pull Request #10 · Kakusya/AbilityKit Issue #5 要求固定当前 ET 的真实架构合同，并让后续执行者明确状态归属、消息时序与迁移边界。本变更完成 A–E 文档和 AGENTS 规则；实际实现与目标提案分开，未实施运行时迁移。 Refs #5。交付 dot 审阅；不自动关闭 Issue，不解锁 #1–#4/#6–#9。 当前/目标树和十类状态族：writer、生命周期、索引、一致性组、旧入口退役、消费者及正负控制。 ... link\" [ref=e114]\n                        - StaticText \"docs: 固定当前 ET 架构合同与 AGENTS 规则 by Kakusya · Pull Request #10 · Kakusya/AbilityKit\"\n                        - StaticText \"Issue #5 要求固定当前 ET 的真实架构合同，并让后续执行者明确状态归属、消息时序与迁移边界。本变更完成 A–E 文档和 AGENTS 规则；实际实现与目标提案分开，未实施运行时迁移。 Refs #5。交付 dot 审阅；不自动关闭 Issue，不解锁 #1–#4/#6–#9。 当前/目标树和十类状态族：writer、生命周期、索引、一致性组、旧入口退役、消费者及正负控制。 ...\"\n                        - StaticText \"link\"\n                      - paragraph\n                        - StaticText \"1)已修订并推送 530609fd0，更新了 \"\n                        - link \"PR #10 (https://github.com/Kakusya/AbilityKit/pull/10)\" [ref=e214]\n                        - StaticText \"。\"\n                      - list\n                        - listitem [level=1]\n                          - ListMarker \"• \"\n                          - StaticText \"修正供应 Closing 规则，保留既有配送、重复请求及无限供应语义。\"\n                        - listitem [level=1]\n                          - ListMarker \"• \"\n                          - StaticText \"将零测试限制绑定到声明覆盖。\"\n                        - listitem [level=1]\n                          - ListMarker \"• \"\n                          - StaticText \"补跑最终提交 SHA 检查：20 份文档、152 个链接及三类 diff 检查通过。\"\n                      - paragraph\n                        - link \"最终 SHA 与验证回报 (https://github.com/Kakusya/AbilityKit/issues/5#issuecomment-5977438627)\" [ref=e215]\n                        - StaticText \" 已写入 Issue，等待复审。仅改文档；运行验收 NotRun，未合并或放行后续任务2)你以后写链接要在对应的链接后面写上括号比方说,\\\"PR #10\\\"写成\\\"PR #10(\"\n                        - link \"https://github.com/Kakusya/AbilityKit/pull/10#pullrequestreview-5404506672\" [ref=e216]\n                        - StaticText \")\\\"\"\n                      - generic \"消息操作\"\n                        - button \"回复\" [ref=e133]\n                        - button \"选择一个表情回应\" [expanded=false, ref=e180]\n                  - article\n                    - generic [ref=e84] focusable [tabindex]\n                      - paragraph\n                        - StaticText \"收到，我现在复审 530609fd0，核对三项修订和最终提交的验证记录。以后链接都按你说的格式写：名称后加括号，括号里显示完整、可点击的网址。\"\n                      - generic \"消息操作\"\n                        - button \"选择一个表情回应\" [expanded=false, ref=e181]\n                        - button \"回复\" [ref=e134]\n                  - article\n                    - generic [ref=e85] focusable [tabindex]\n                      - paragraph\n                        - StaticText \"复审通过，三项问题都已修正，Issue #5 的文档交付可以接受。\"\n                      - paragraph\n                        - StaticText \"复审意见(\"\n                        - link \"https://github.com/Kakusya/AbilityKit/pull/10#pullrequestreview-5404821934\" [ref=e217]\n                        - StaticText \")已写回 GitHub，并同步到 Issue #5。运行测试仍是 NotRun，没有把文档通过当成游戏验收通过。\"\n                      - paragraph\n                        - StaticText \"下一步建议将 PR #10(\"\n                        - link \"https://github.com/Kakusya/AbilityKit/pull/10\" [ref=e218]\n                        - StaticText \") 合并到 master，再让 Orca 先准备 #6 的实施计划和结果格式，交我审阅。你同意我合并这份文档 PR 吗？\"\n                      - generic \"消息操作\"\n                        - button \"选择一个表情回应\" [expanded=false, ref=e182]\n                        - button \"回复\" [ref=e135]\n                  - article\n                    - generic [ref=e86] focusable [tabindex]\n                      - paragraph\n                        - StaticText \"同意.\"\n                      - generic \"消息操作\"\n                        - button \"回复\" [ref=e136]\n                        - button \"选择一个表情回应\" [expanded=false, ref=e183]\n                  - article\n                    - generic [ref=e87] focusable [tabindex]\n                      - paragraph\n                        - StaticText \"收到，我会合并已审阅的文档版本，并核实 master 上的结果。随后安排 #6 先提交实施计划和结果格式，审议后再改代码。\"\n                      - generic \"消息操作\"\n                        - button \"选择一个表情回应\" [expanded=false, ref=e184]\n                        - button \"回复\" [ref=e137]\n                  - article\n                    - generic [ref=e88] focusable [tabindex]\n                      - paragraph\n                        - StaticText \"PR #10(\"\n                        - link \"https://github.com/Kakusya/AbilityKit/pull/10\" [ref=e219]\n                        - StaticText \") 已合并，合并提交是 f4aeff2。\"\n                      - paragraph\n                        - StaticText \"后续 Issue 调度更新被中断，重新核对后确认：#5 仍开放，#6 仍是 blocked。要继续关闭已完成的 #5，并仅放行 #6 的计划阶段吗？\"\n                      - generic \"消息操作\"\n                        - button \"选择一个表情回应\" [expanded=false, ref=e185]\n                        - button \"回复\" [ref=e138]\n                  - article\n                    - generic [ref=e89] focusable [tabindex]\n                      - paragraph\n                        - StaticText \"请问，你消耗了多少token，消耗我订阅中的token是多少，免费的token是多少。\"\n                      - generic \"消息操作\"\n                        - button \"回复\" [ref=e139]\n                        - button \"选择一个表情回应\" [expanded=false, ref=e186]\n                  - article\n                    - generic [ref=e90] focusable [tabindex]\n                      - paragraph\n                        - StaticText \"我目前看不到这段对话的完整 token 统计，也无法读取你的订阅扣量或免费额度账单，所以这三项都不能准确报数：\"\n                      - list\n                        - listitem [level=1]\n                          - ListMarker \"• \"\n                          - StaticText \"我累计消耗了多少 token：未知\"\n                        - listitem [level=1]\n                          - ListMarker \"• \"\n                          - StaticText \"其中扣了多少订阅额度：未知\"\n                        - listitem [level=1]\n                          - ListMarker \"• \"\n                          - StaticText \"其中多少属于免费用量：未知\"\n                      - paragraph\n                        - StaticText \"不能因为我能持续工作，就认定全部免费或不限量。你可以把账户用量页面的截图发给我，我帮你判断显示的是订阅额度、额外额度还是免费额度；但如果页面没有按对话拆分，也无法算出这段工作的准确扣量。\"\n                      - generic \"消息操作\"\n                        - button \"选择一个表情回应\" [expanded=false, ref=e187]\n                        - button \"回复\" [ref=e140]\n                  - article\n                    - generic [ref=e91] focusable [tabindex]\n                      - paragraph\n                        - StaticText \"请你审议 #6 的实施计划和结果 schema\"\n                      - generic \"消息操作\"\n                        - button \"回复\" [ref=e141]\n                        - button \"选择一个表情回应\" [expanded=false, ref=e188]\n                  - article\n                    - generic [ref=e92] focusable [tabindex]\n                      - paragraph\n                        - StaticText \"我来审议 #6 的最新计划和结果 schema，重点检查状态判定、必需覆盖、父子门禁汇总，以及旧结果被误认成新结果的防线。\"\n                      - generic \"消息操作\"\n                        - button \"选择一个表情回应\" [expanded=false, ref=e189]\n                        - button \"回复\" [ref=e142]\n                  - article\n                    - generic [ref=e93] focusable [tabindex]\n                      - paragraph\n                        - StaticText \"我核对了 GitHub，目前 #6 只有我之前写的任务要求，还没有 Orca 提交的实施计划或结果 schema：Issue 没有评论，也没有对应的新 PR。\"\n                      - paragraph\n                        - StaticText \"Issue #6(\"\n                        - link \"https://github.com/Kakusya/AbilityKit/issues/6\" [ref=e220]\n                        - StaticText \") 的方向没问题，但具体字段、状态汇总规则和兼容方案还不能算审议通过。\"\n                      - paragraph\n                        - StaticText \"这份计划是否还在你本地？如果已经写好，把内容或链接发给我；如果尚未写，我可以先放行“只提交计划和 schema”的阶段，让 Orca 写好后再审。\"\n                      - generic \"消息操作\"\n                        - button \"选择一个表情回应\" [expanded=false, ref=e190]\n                        - button \"回复\" [ref=e143]\n                  - time\n                    - StaticText \"10月4日 19:45\"\n                  - article\n                    - generic [ref=e94] focusable [tabindex]\n                      - paragraph\n                        - StaticText \"#6 的计划和 schema 现在已经提交到 PR #11(\"\n                        - link \"https://github.com/Kakusya/AbilityKit/pull/11\" [ref=e221]\n                        - StaticText \")，我继续审议这份具体方案，重点核对可选检查是否会掩盖失败、汇总结果是否有完整依据，以及现有脚本的兼容改动。\"\n                      - generic \"消息操作\"\n                        - button \"选择一个表情回应\" [expanded=false, ref=e191]\n                        - button \"回复\" [ref=e144]\n                  - article\n                    - generic [ref=e95] focusable [tabindex]\n                      - paragraph\n                        - StaticText \"#6 的首轮审议完成。三项大方向我认可，但还需要补齐计划，暂不进入实现。\"\n                      - paragraph\n                        - StaticText \"主要问题是：\"\n                      - list\n                        - listitem [level=1]\n                          - ListMarker \"• \"\n                          - StaticText \"示例写了“.NET 已通过”，却没有对应的成功子结果，汇总依据不完整。\"\n                        - listitem [level=1]\n                          - ListMarker \"• \"\n                          - StaticText \"路径检查漏了 Windows 反斜杠形式，可能把其他目录的旧报告混进来。\"\n                        - listitem [level=1]\n                          - ListMarker \"• \"\n                          - StaticText \"部分脚本的退出码、内部构建和固定日志路径，还需要明确如何接入新规则。\"\n                      - paragraph\n                        - StaticText \"详细意见已写回 PR #11(\"\n                        - link \"https://github.com/Kakusya/AbilityKit/pull/11#pullrequestreview-5405864745\" [ref=e222]\n                        - StaticText \") 和 Issue #6，Orca 可以据此修改同一份计划后再交我复审。\"\n                      - generic \"消息操作\"\n                        - button \"选择一个表情回应\" [expanded=false, ref=e192]\n                        - button \"回复\" [ref=e145]\n                  - time\n                    - StaticText \"10月5日 11:51\"\n                  - article\n                    - generic [ref=e96] focusable [tabindex]\n                      - paragraph\n                        - StaticText \"hi\"\n                      - generic \"消息操作\"\n                        - button \"回复\" [ref=e146]\n                        - button \"选择一个表情回应\" [expanded=false, ref=e193]\n                  - article\n                    - generic [ref=e97] focusable [tabindex]\n                      - paragraph\n                        - StaticText \"嗨，我在 🙂\"\n                      - generic \"消息操作\"\n                        - button \"选择一个表情回应\" [expanded=false, ref=e194]\n                        - button \"回复\" [ref=e147]\n                  - article\n                    - generic [ref=e98] focusable [tabindex]\n                      - paragraph\n                        - StaticText \"请你搜索dot相关资料,我让你把项目clone到你的云电脑,然后让你工作,请问这是否消耗额度.\"\n                      - generic \"消息操作\"\n                        - button \"回复\" [ref=e148]\n                        - button \"选择一个表情回应\" [expanded=false, ref=e195]\n                  - article\n                    - generic [ref=e99] focusable [tabindex]\n                      - paragraph\n                        - StaticText \"我查一下官方资料，重点区分：在 dot 的云电脑里克隆、分析项目，和另开 Codex 编程任务，分别是否占用订阅额度。\"\n                      - generic \"消息操作\"\n                        - button \"选择一个表情回应\" [expanded=false, ref=e196]\n                        - button \"回复\" [ref=e149]\n                  - article\n                    - generic [ref=e100] focusable [tabindex]\n                      - paragraph\n                        - StaticText \"查到官方说明了。结论是：不能因为项目放在 dot 自己的云电脑上，就认定后续工作不消耗额度。\"\n                      - paragraph\n                        - StaticText \"官方明确区分：\"\n                      - list\n                        - listitem [level=1]\n                          - ListMarker \"• \"\n                          - StaticText \"和 dot 对话：不计入 ChatGPT 的使用限额。\"\n                        - listitem [level=1]\n                          - ListMarker \"• \"\n                          - StaticText \"dot 启动或管理的 Work／Codex 任务：照常计入这些产品的使用限额。\"\n                        - listitem [level=1]\n                          - ListMarker \"• \"\n                          - StaticText \"套餐包含“更深入工作”的额度，发布首月有提高限额；这不是无限免费的承诺。\"\n                      - paragraph\n                        - StaticText \"来源：dot 官方说明(\"\n                        - link \"https://learn.chatgpt.com/docs/dots#access\" [ref=e223]\n                        - StaticText \")。\"\n                      - paragraph\n                        - StaticText \"你说的“直接 clone 到 dot 自有云电脑，然后在里面读代码、修改项目”，官方确认这台电脑能用于软件工作，但没有明确公布这种直接操作逐项如何扣额度。因此：如果另开 Work／Codex 编程任务，确定会计额；如果只在 dot 自有云电脑直接处理，我目前不能可靠保证不扣额度。电脑说明(\"\n                        - link \"https://learn.chatgpt.com/docs/dots/computers-and-apps\" [ref=e224]\n                        - StaticText \")。\"\n                      - paragraph\n                        - StaticText \"所以，“dot 对话不占 ChatGPT 限额”和“让 dot 无限写代码全部免费”，是两回事。\"\n                      - generic \"消息操作\"\n                        - button \"选择一个表情回应\" [expanded=false, ref=e197]\n                        - button \"回复\" [ref=e150]\n                  - time\n                    - StaticText \"10月5日 19:17\"\n                  - article\n                    - generic [ref=e101] focusable [tabindex]\n                      - paragraph\n                        - StaticText \"审阅请求 AK-CDF-REVIEW-20261005-01：请独立审阅 Cooking 工作流技能，先给结论和修改建议，不执行实施。\"\n                      - paragraph\n                        - StaticText \"Owner 原话：“我还是觉得这份skill不像一份打磨出来的skill.不过你可以先问一下.” 请认真质疑这份实现，不要因为我们曾做过内部静态审阅就替它背书。你只需要通过对话和读取 GitHub commit 完成技术审阅；不要启动 Work/Codex/云编程任务，不写 GitHub、不合并、不清理工作树。\"\n                      - paragraph\n                        - StaticText \"唯一审阅来源是 Kakusya/AbilityKit 的精确 commit：\"\n                        - LineBreak \"\\n\"\n                        - StaticText \"86d44e8f8a6ac2ca958f4c453555817da7b1f15c\"\n                        - LineBreak \"\\n\"\n                        - link \"https://github.com/Kakusya/AbilityKit/commit/86d44e8f8a6ac2ca958f4c453555817da7b1f15c\" [ref=e225]\n                        - LineBreak \"\\n\"\n                        - StaticText \"技能实现 commit 为 a2434830b5ab5a776a41e14e97533257002de073；最终 commit 包含归档证据，四份技能内容未改变。请读取该 commit 下的文件，而不是只看最后一次 commit 的 diff。\"\n                      - paragraph\n                        - StaticText \"核心文件：\"\n                        - LineBreak \"\\n\"\n                        - link \"https://github.com/Kakusya/AbilityKit/blob/86d44e8f8a6ac2ca958f4c453555817da7b1f15c/.agents/skills/cooking-dot-workflow/SKILL.md\" [ref=e226]\n                        - LineBreak \"\\n\"\n                        - link \"https://github.com/Kakusya/AbilityKit/blob/86d44e8f8a6ac2ca958f4c453555817da7b1f15c/.agents/skills/cooking-dot-workflow/agents/openai.yaml\" [ref=e227]\n                        - LineBreak \"\\n\"\n                        - link \"https://github.com/Kakusya/AbilityKit/blob/86d44e8f8a6ac2ca958f4c453555817da7b1f15c/.agents/skills/cooking-dot-workflow/references/dot-dialogue.md\" [ref=e228]\n                        - LineBreak \"\\n\"\n                        - link \"https://github.com/Kakusya/AbilityKit/blob/86d44e8f8a6ac2ca958f4c453555817da7b1f15c/.agents/skills/cooking-dot-workflow/references/recovery.md\" [ref=e229]\n                        - LineBreak \"\\n\"\n                        - link \"https://github.com/Kakusya/AbilityKit/blob/86d44e8f8a6ac2ca958f4c453555817da7b1f15c/.trellis/spec/abilitykit/supervised-issue-delivery.md\" [ref=e230]\n                        - LineBreak \"\\n\"\n                        - link \"https://github.com/Kakusya/AbilityKit/blob/86d44e8f8a6ac2ca958f4c453555817da7b1f15c/AGENTS.md\" [ref=e231]\n                        - LineBreak \"\\n\"\n                        - StaticText \"Owner 决定原始记录：\"\n                        - LineBreak \"\\n\"\n                        - link \"https://github.com/Kakusya/AbilityKit/blob/86d44e8f8a6ac2ca958f4c453555817da7b1f15c/.trellis/tasks/archive/2026-10/10-05-cooking-dot-workflow/research/owner-decisions.md\" [ref=e232]\n                      - paragraph\n                        - StaticText \"实际目标与已确定边界：显式调用项目技能，加载它的对话作为唯一调度者；Trellis 对齐需求并保存计划/证据，dot 主导技术思考、规划、拆分、代码审阅及最终技术裁决，Orca 受管 worktree worker 执行（默认一个，独立时最多两个）。Owner 批准需求和边界后委托技术规划；任务范围内允许推送、Issue/PR 写入，以及满足验收后的自动合并和关闭 Issue，发布和资源删除另批。dot 无回复则主控暂停新推进；已有 worker 只完成当前任务。最多等待 30 分钟，延长轮询、最多一次补问，仍失败则保存并停止。新对话加载时自动恢复唯一未完成流程，多候选让 Owner 选择；不能把失联当已退出、重复派发。只完成本次批准需求，其他发现作候选待办。只推进 Cooking；其他示例、Unity 未授权阶段及旧 Issue6 隔离不因本流程解锁。真实证据仍如实记录。\"\n                      - paragraph\n                        - StaticText \"请回答：\"\n                        - LineBreak \"\\n\"\n                        - StaticText \"1. 先列出你实际成功读取的文件和审阅 SHA；访问不了就明确说明，不凭上述摘要假装读过实现。\"\n                        - LineBreak \"\\n\"\n                        - StaticText \"2. 这是否已经是一份可交给新对话可靠执行、打磨成熟的 skill？请给明确判断，区分“文档有规则”和“流程真正可操作”。\"\n                        - LineBreak \"\\n\"\n                        - StaticText \"3. 哪些内容冗余、位置不对、过度保守或不足？从技能入口、渐进披露、已有 Trellis/Orca 复用、需求交接给 dot、Issue 到 worker 的流程、审阅与交付、中断重启等方面给实质意见。没有问题不必凑数。\"\n                        - LineBreak \"\\n\"\n                        - StaticText \"4. 对真实正常流程和中断流程，是否仍有执行者必须临场猜测、无法验证或无法恢复的缺口？给具体触发例和文件/行锚点，并明确哪些是已有机制、哪些只是未验证前提。\"\n                        - LineBreak \"\\n\"\n                        - StaticText \"5. 建议保留/删除/合并/重写哪些部分？给按优先级排序的最小修订方案和必要验收，不扩大到无关基础设施或其他示例。不直接实施。\"\n                      - paragraph\n                        - StaticText \"本轮不求你接受现有实现；我们需要你的真实技术结论。请在最终回复明确标注请求 AK-CDF-REVIEW-20261005-01 和审阅 SHA 86d44e8f8a6ac2ca958f4c453555817da7b1f15c。\"\n                      - generic \"消息操作\"\n                        - button \"回复\" [ref=e151]\n                        - button \"选择一个表情回应\" [expanded=false, ref=e198]\n                  - article\n                    - generic [ref=e102] focusable [tabindex]\n                      - paragraph\n                        - StaticText \"我会按指定 SHA 逐份读取实现和相关机制，独立检查正常交付与中断恢复是否真正可操作。结论会区分已有能力、未经验证的前提和必须靠执行者猜测的地方；本轮只读审阅，不写 GitHub 或启动编程任务。\"\n                      - generic \"消息操作\"\n                        - button \"选择一个表情回应\" [expanded=false, ref=e199]\n                        - button \"回复\" [ref=e152]\n                  - article\n                    - generic [ref=e103] focusable [tabindex]\n                      - paragraph\n                        - StaticText \"已经读到实现和底层 Trellis 代码。我的初步判断是：它的安全边界写得认真，但还不能算成熟的可恢复工作流。主要缺口不是规则少，而是几个关键步骤仍没有确定的操作约定，例如怎样识别同一流程的两份记录、主控崩溃后如何取得唯一调度权，以及超时后迟到的有效回复怎样处理。我会把这些与已有机制、未验证能力分开给出。\"\n                      - generic \"消息操作\"\n                        - button \"选择一个表情回应\" [expanded=false, ref=e200]\n                        - button \"回复\" [ref=e153]\n                  - article\n                    - generic [ref=e104] focusable [tabindex]\n                      - paragraph\n                        - StaticText \"请求：AK-CDF-REVIEW-20261005-01\"\n                        - LineBreak \"\\n\"\n                        - StaticText \"审阅 SHA：86d44e8f8a6ac2ca958f4c453555817da7b1f15c\"\n                      - paragraph\n                        - StaticText \"一、实际读取范围\"\n                      - paragraph\n                        - StaticText \"以下七份指定文件均已成功全文读取，全部固定在上述 commit，没有用最新分支或最后一次提交的 diff 代替正文：\"\n                      - list\n                        - listitem [level=1]\n                          - ListMarker \"1. \"\n                          - StaticText \".agents/skills/cooking-dot-workflow/SKILL.md\"\n                        - listitem [level=1]\n                          - ListMarker \"2. \"\n                          - StaticText \".agents/skills/cooking-dot-workflow/agents/openai.yaml\"\n                        - listitem [level=1]\n                          - ListMarker \"3. \"\n                          - StaticText \".agents/skills/cooking-dot-workflow/references/dot-dialogue.md\"\n                        - listitem [level=1]\n                          - ListMarker \"4. \"\n                          - StaticText \".agents/skills/cooking-dot-workflow/references/recovery.md\"\n                        - listitem [level=1]\n                          - ListMarker \"5. \"\n                          - StaticText \".trellis/spec/abilitykit/supervised-issue-delivery.md\"\n                        - listitem [level=1]\n                          - ListMarker \"6. \"\n                          - StaticText \"AGENTS.md\"\n                        - listitem [level=1]\n                          - ListMarker \"7. \"\n                          - StaticText \".trellis/tasks/archive/2026-10/10-05-cooking-dot-workflow/research/owner-decisions.md\"\n                      - paragraph\n                        - StaticText \"为核实“复用现有机制”而补充读取了：\"\n                      - list\n                        - listitem [level=1]\n                          - ListMarker \"• \"\n                          - StaticText \"同一归档任务的 prd.md、design.md、implement.md，以及 research/execution.md、independent-review.md、review-scenarios.md。\"\n                        - listitem [level=1]\n                          - ListMarker \"• \"\n                          - StaticText \".trellis/workflow.md。\"\n                        - listitem [level=1]\n                          - ListMarker \"• \"\n                          - StaticText \".agents/skills/ 下 trellis-start、trellis-continue、trellis-finish-work 的 SKILL.md。\"\n                        - listitem [level=1]\n                          - ListMarker \"• \"\n                          - StaticText \".trellis/scripts/common/active_task.py、io.py、task_store.py 的相关实现段落，重点核对会话绑定、原子写入和归档行为。\"\n                      - paragraph\n                        - StaticText \"没有从这个 commit 获得实际安装的 Orca live orchestration 手册；仓库内 .agents/skills/orca-cli/SKILL.md 路径不存在。这不证明机器上没有 Orca 技能，但意味着本轮不能确认普通 Run 的接管能力。\"\n                      - paragraph\n                        - StaticText \"二、明确结论\"\n                      - paragraph\n                        - StaticText \"还不是一份可以放心交给新对话，可靠完成自主交付和中断恢复的成熟 skill。\"\n                      - paragraph\n                        - StaticText \"更准确的定位是：一份边界认真、风险意识较好的工作流规范草案。它已经说明了很多“什么时候必须停”，但还没有把关键环节全部写成新执行者能够一致执行、核对和恢复的操作约定。\"\n                      - paragraph\n                        - StaticText \"问题不是“没有脚本，所以不算技能”，也不是一定要再造调度器。文档型 skill 完全可以成熟。但这份实现仍让执行者临场决定几件关键事情，而这些决定会影响重复执行、恢复和交付状态。\"\n                      - paragraph\n                        - StaticText \"此前“15/15 静态情景 Passed”证明的是：审阅者能依据规则推导出看起来合理的动作。它不证明新对话真的能恢复 Run、识别检查点或完成自动交付。归档记录自己也明确将这些路径标为 NotRun。\"\n                      - paragraph\n                        - StaticText \"三、实质问题与最小修改建议\"\n                      - list\n                        - listitem [level=1]\n                          - ListMarker \"1. \"\n                          - StaticText \"恢复记录有字段清单，却缺少确定的发现和读取约定\"\n                      - paragraph\n                        - StaticText \"位置：recovery.md 第3、11–18、22–23行。\"\n                      - paragraph\n                        - StaticText \"现在要求保存 recovery index、append-only 意图和回执，然后自动寻找唯一未完成流程。但没有固定：\"\n                      - list\n                        - listitem [level=1]\n                          - ListMarker \"• \"\n                          - StaticText \"索引文件名和版本。\"\n                        - listitem [level=1]\n                          - ListMarker \"• \"\n                          - StaticText \"稳定的流程 ID。\"\n                        - listitem [level=1]\n                          - ListMarker \"• \"\n                          - StaticText \"同一流程在多个 worktree 中出现时，怎样去重。\"\n                        - listitem [level=1]\n                          - ListMarker \"• \"\n                          - StaticText \"哪一份记录是权威。\"\n                        - listitem [level=1]\n                          - ListMarker \"• \"\n                          - StaticText \"意图文件已写入、索引尚未更新就崩溃时，怎样恢复。\"\n                      - paragraph\n                        - StaticText \"具体触发：两个 worktree 都包含同一个 task 的 research，一份较新、一份较旧。新会话到底应当识别为“一个流程的两份副本”，还是“两个待 Owner 选择的流程”？目前需要猜。\"\n                      - paragraph\n                        - StaticText \"已有机制：Trellis 的 io.py 第107–147行已有临时文件写入后替换的工具，可以复用。它不是整个工作流的事务系统，也不能据此宣称断电安全。\"\n                      - paragraph\n                        - StaticText \"最小修改：增加一个 task 内的检查点模板，固定入口、flow ID、操作序号、权威位置和写入顺序；明确以“进程崩溃”为最低恢复模型。不要改 task schema，也不要建设新的数据库或调度服务。\"\n                      - paragraph\n                        - StaticText \"依据：恢复记录与发现规则(\"\n                        - link \"https://github.com/Kakusya/AbilityKit/blob/86d44e8f8a6ac2ca958f4c453555817da7b1f15c/.agents/skills/cooking-dot-workflow/references/recovery.md#L3-L27\" [ref=e233]\n                        - StaticText \")。\"\n                      - list\n                        - listitem [level=1]\n                          - ListMarker \"2. \"\n                          - StaticText \"“唯一调度者”的恢复依赖尚未验证，不能只在出事时再发现\"\n                      - paragraph\n                        - StaticText \"位置：recovery.md 第25–27行。\"\n                      - paragraph\n                        - StaticText \"它要求证明旧主控已退出，再通过 Orca 支持的操作重新绑定。这是正确的安全要求。但是，当前实现没有证明实际 Orca 能完成这个动作。\"\n                      - paragraph\n                        - StaticText \"已有机制：Trellis 的 active_task.py 第732–758行保存的是“每个会话的活动 task 指针”，不是独占调度权。两个会话各自有指针，并不等于只有一个会话有派发权。\"\n                      - paragraph\n                        - StaticText \"具体触发：主控派发 worker 后崩溃。新对话能找到唯一流程，worker 仍在运行，但无法证明普通 Run 支持接管。此时技能只能安全停止，不能完成所期待的恢复。\"\n                      - paragraph\n                        - StaticText \"我不建议删掉这个停止条件；建议把能力核验提前：\"\n                      - list\n                        - listitem [level=1]\n                          - ListMarker \"• \"\n                          - StaticText \"首次派发前，确认正常 Run 的恢复方式。\"\n                        - listitem [level=1]\n                          - ListMarker \"• \"\n                          - StaticText \"记录用什么实际返回值证明唯一调度权。\"\n                        - listitem [level=1]\n                          - ListMarker \"• \"\n                          - StaticText \"确认两个恢复者同时进入时，谁会被拒绝。\"\n                        - listitem [level=1]\n                          - ListMarker \"• \"\n                          - StaticText \"若能力不存在，明确将本次流程标为“跨会话恢复受阻”，不要仍对外承诺自动恢复。\"\n                      - paragraph\n                        - StaticText \"这属于未验证前提，不是已经证明 Orca 没有该能力。安装记录第35行明确将真实 crash/rebind 标为 NotRun。\"\n                      - list\n                        - listitem [level=1]\n                          - ListMarker \"3. \"\n                          - StaticText \"dot 等待规则有两处容易产生不同执行结果的歧义\"\n                      - paragraph\n                        - StaticText \"位置：dot-dialogue.md 第10、15、24–28行；recovery.md 第27行。\"\n                      - paragraph\n                        - StaticText \"第一处：最多一次补问，是否包括“请明确确认”？\"\n                        - LineBreak \"\\n\"\n                        - StaticText \"第10行允许对含糊回复继续求确认；等待表只限制 reminder。执行者可能把第二次、第三次确认解释成“不是提醒”，从而绕过一次补问上限。\"\n                      - paragraph\n                        - StaticText \"第二处：超时后才看到有效回复，怎么办？\"\n                        - LineBreak \"\\n\"\n                        - StaticText \"例如主控第20分钟崩溃，第二天恢复，发现 dot 已经明确审阅同一个 SHA：\"\n                      - list\n                        - listitem [level=1]\n                          - ListMarker \"• \"\n                          - StaticText \"回复是在第25分钟发出，只是后来才看到。\"\n                        - listitem [level=1]\n                          - ListMarker \"• \"\n                          - StaticText \"回复是在第40分钟才发出。\"\n                        - listitem [level=1]\n                          - ListMarker \"• \"\n                          - StaticText \"页面不能可靠提供发出时间。\"\n                      - paragraph\n                        - StaticText \"“有效回复即可退出等待”和“过期立即暂停”没有说明这些情况的优先级。\"\n                      - paragraph\n                        - StaticText \"最小修改：\"\n                      - list\n                        - listitem [level=1]\n                          - ListMarker \"• \"\n                          - StaticText \"同一请求的提醒、追问、确认共用一次补问额度。\"\n                        - listitem [level=1]\n                          - ListMarker \"• \"\n                          - StaticText \"分开回复时间和观察时间。\"\n                        - listitem [level=1]\n                          - ListMarker \"• \"\n                          - StaticText \"明确及时回复但迟读、真正迟到回复、时间未知三种处置。\"\n                        - listitem [level=1]\n                          - ListMarker \"• \"\n                          - StaticText \"定义超时后的重新开启方式；若开启新请求，使用新 ID 并链接旧请求，保留旧超时，不能偷偷刷新原预算。\"\n                      - paragraph\n                        - StaticText \"依据：dot 回复与等待规则(\"\n                        - link \"https://github.com/Kakusya/AbilityKit/blob/86d44e8f8a6ac2ca958f4c453555817da7b1f15c/.agents/skills/cooking-dot-workflow/references/dot-dialogue.md#L8-L28\" [ref=e234]\n                        - StaticText \")。\"\n                      - list\n                        - listitem [level=1]\n                          - ListMarker \"4. \"\n                          - StaticText \"Trellis 的“结束会话”与本流程的“完成需求”需要明确隔离\"\n                      - paragraph\n                        - StaticText \"位置：SKILL.md 第17、33–34行；trellis-finish-work 的归档步骤。\"\n                      - paragraph\n                        - StaticText \"技能说复用 Trellis，这是对的。但现有 finish-work 会将当前任务送去归档；实际 task_store.py 第1317–1352行会设置 completed，第1428–1457行会清除会话绑定并移动任务。这个命令本身不会核验 dot 接受和合并后集成结果。\"\n                      - paragraph\n                        - StaticText \"具体触发：dot 超时，主控准备结束本次会话，顺手调用通用 finish-work。一个“等待审阅、应能恢复”的流程可能被当成完成任务归档。\"\n                      - paragraph\n                        - StaticText \"这不是已经发生的故障，而是新 skill 与已有收尾机制之间缺少明确适配。\"\n                      - paragraph\n                        - StaticText \"最小修改：在技能内增加几条具体调用条件：\"\n                      - list\n                        - listitem [level=1]\n                          - ListMarker \"• \"\n                          - StaticText \"暂停、待审、调度权未知、集成失败时，不调用完成/归档路径。\"\n                        - listitem [level=1]\n                          - ListMarker \"• \"\n                          - StaticText \"结束当前会话只保存交接，不完成需求。\"\n                        - listitem [level=1]\n                          - ListMarker \"• \"\n                          - StaticText \"只有记录中具备指定的接受、合并和集成证据，才允许进入 Trellis 归档。\"\n                        - listitem [level=1]\n                          - ListMarker \"• \"\n                          - StaticText \"复用现有命令，不修改通用 Trellis 框架。\"\n                      - paragraph\n                        - StaticText \"依据：实际归档实现(\"\n                        - link \"https://github.com/Kakusya/AbilityKit/blob/86d44e8f8a6ac2ca958f4c453555817da7b1f15c/.trellis/scripts/common/task_store.py#L1317-L1457\" [ref=e235]\n                        - StaticText \")。\"\n                      - list\n                        - listitem [level=1]\n                          - ListMarker \"5. \"\n                          - StaticText \"自动合并之后才关 Issue，缺少“防止合并顺带关单”的检查\"\n                      - paragraph\n                        - StaticText \"位置：SKILL.md 第32–33行。\"\n                      - paragraph\n                        - StaticText \"规则要求先合并，再在实际合并版本上做集成检查，成功后才关闭 Issue。这个顺序合理，但没有规定如何避免 PR 的自动关闭关联提前关单。\"\n                      - paragraph\n                        - StaticText \"具体触发：PR 使用了合并即关闭 Issue 的关联方式；合并完成后，集成检查失败，但 Issue 已被提前关闭。\"\n                      - paragraph\n                        - StaticText \"最小修改：\"\n                      - list\n                        - listitem [level=1]\n                          - ListMarker \"• \"\n                          - StaticText \"集成通过前使用不自动关单的关联方式。\"\n                        - listitem [level=1]\n                          - ListMarker \"• \"\n                          - StaticText \"合并前检查会触发自动关闭的 PR/提交关联。\"\n                        - listitem [level=1]\n                          - ListMarker \"• \"\n                          - StaticText \"如果无法在授权范围内排除提前关闭，暂停合并。\"\n                        - listitem [level=1]\n                          - ListMarker \"• \"\n                          - StaticText \"集成通过后显式关闭对应 Issue，并读取确认。\"\n                      - paragraph\n                        - StaticText \"这是一处缺失的协议检查，不是声称当前 PR 已配置了自动关闭。\"\n                      - paragraph\n                        - StaticText \"依据：合并与关闭顺序(\"\n                        - link \"https://github.com/Kakusya/AbilityKit/blob/86d44e8f8a6ac2ca958f4c453555817da7b1f15c/.agents/skills/cooking-dot-workflow/SKILL.md#L30-L34\" [ref=e236]\n                        - StaticText \")。\"\n                      - list\n                        - listitem [level=1]\n                          - ListMarker \"6. \"\n                          - StaticText \"正常流程需要一份真正能照着走的交接清单\"\n                      - paragraph\n                        - StaticText \"位置：SKILL.md 第15–25行，SOP 第22、30–35行。\"\n                      - paragraph\n                        - StaticText \"现在必要元素大多存在，但分散在多个段落。“读取每个 Issue”之后直接进入 dot 和 worker；新需求没有现成 Issue 时，创建、填充、绑定和派发的顺序不够明确。规划请求与最终接受请求也没有各自的最小示例。\"\n                      - paragraph\n                        - StaticText \"建议只补一条短的主路径：\"\n                      - paragraph\n                        - StaticText \"需求批准 → 提交可读的需求/源码 → dot 规划 → 保存并核对 Trellis 计划 → 创建或核对需要的 Issue → 进入执行状态 → Orca 派发 → 实际证据与独立审阅 → dot 精确 SHA 接受 → 合并前检查 → 合并后集成 → 关单和归档。\"\n                      - paragraph\n                        - StaticText \"同时给两份小模板：\"\n                      - list\n                        - listitem [level=1]\n                          - ListMarker \"• \"\n                          - StaticText \"请求模板：规划还是最终审阅、请求 ID、SHA、范围、问题、证据。\"\n                        - listitem [level=1]\n                          - ListMarker \"• \"\n                          - StaticText \"决策记录：已接受／需修改／被阻塞、阻塞项、接受的 SHA、下一步允许做什么。\"\n                      - paragraph\n                        - StaticText \"小任务仍可按 SOP 不开 Issue，不能为了填流程强制增加工单。技术规划已经受托，也不应再沿用通用技能的提示，反复让 Owner 批准相同需求。\"\n                      - paragraph\n                        - StaticText \"四、哪些应保留，哪些应精简\"\n                      - paragraph\n                        - StaticText \"建议保留：\"\n                      - list\n                        - listitem [level=1]\n                          - ListMarker \"• \"\n                          - StaticText \"显式调用和 allow_implicit_invocation: false。\"\n                        - listitem [level=1]\n                          - ListMarker \"• \"\n                          - StaticText \"主控唯一调度、dot 技术裁决、Orca 实施的分工。\"\n                        - listitem [level=1]\n                          - ListMarker \"• \"\n                          - StaticText \"Cooking 范围、真实证据优先于技术接受。\"\n                        - listitem [level=1]\n                          - ListMarker \"• \"\n                          - StaticText \"请求/SHA/Dispatch 身份核验。\"\n                        - listitem [level=1]\n                          - ListMarker \"• \"\n                          - StaticText \"不把失联当退出、不盲目重发、不通过清理解决状态不明。\"\n                        - listitem [level=1]\n                          - ListMarker \"• \"\n                          - StaticText \"30分钟原预算不因重启或提醒而重置。\"\n                        - listitem [level=1]\n                          - ListMarker \"• \"\n                          - StaticText \"默认一个、独立时最多两个 worker。\"\n                      - paragraph\n                        - StaticText \"我没有发现 AGENTS 与 SOP 存在必须重写的技术权威冲突：SOP 第7行明确覆盖默认流程，AGENTS 也有显式入口。openai.yaml 只有两行，不是缺陷；缺少装饰性的 UI 元数据也不影响本轮核心目标。\"\n                      - paragraph\n                        - StaticText \"建议合并、移位：\"\n                      - list\n                        - listitem [level=1]\n                          - ListMarker \"• \"\n                          - StaticText \"SOP 保留角色、授权、适用范围和技能链接；不要再复制完整轮询时序、等待细则与恢复细节。\"\n                        - listitem [level=1]\n                          - ListMarker \"• \"\n                          - StaticText \"dot-dialogue 作为等待规则唯一正文；recovery 作为恢复规则唯一正文。\"\n                        - listitem [level=1]\n                          - ListMarker \"• \"\n                          - StaticText \"SKILL 主体保留入口、正常路径、阶段出口和条件引用，减少重复的禁止句。\"\n                        - listitem [level=1]\n                          - ListMarker \"• \"\n                          - StaticText \"旧 #6 的具体隔离信息继续保留在当前约束/进度入口；技能引用该约束，避免多份正文长期重复维护同一个历史分支名。\"\n                      - paragraph\n                        - StaticText \"需要纠正的“过度保守”主要是：把所有未知都停下来，却没有说明如何解除。未知写入者必须停，这不是多余；但“暂停后提供什么证据、由谁做哪一步恢复”必须随停止条件一起写清。\"\n                      - paragraph\n                        - StaticText \"五、按优先级排序的最小修订与验收\"\n                      - paragraph\n                        - StaticText \"第一优先：让停止之后真的能恢复。\"\n                      - list\n                        - listitem [level=1]\n                          - ListMarker \"• \"\n                          - StaticText \"补稳定检查点模板、同流程副本识别、写入/读回步骤。\"\n                        - listitem [level=1]\n                          - ListMarker \"• \"\n                          - StaticText \"补普通 Run 恢复能力核验和独占权证据。\"\n                        - listitem [level=1]\n                          - ListMarker \"• \"\n                          - StaticText \"补迟到回复、补问计数和超时后重新开启规则。\"\n                      - paragraph\n                        - StaticText \"第二优先：封住错误完成的入口。\"\n                      - list\n                        - listitem [level=1]\n                          - ListMarker \"• \"\n                          - StaticText \"增加 Trellis finish/archive 适配条件。\"\n                        - listitem [level=1]\n                          - ListMarker \"• \"\n                          - StaticText \"增加合并前自动关单检查。\"\n                        - listitem [level=1]\n                          - ListMarker \"• \"\n                          - StaticText \"明确冻结的代码候选与后写的审阅回执/归档证据如何分开保存，避免把新提交误套旧接受。\"\n                      - paragraph\n                        - StaticText \"第三优先：打磨入口与渐进披露。\"\n                      - list\n                        - listitem [level=1]\n                          - ListMarker \"• \"\n                          - StaticText \"一份主路径清单、两份交接模板。\"\n                        - listitem [level=1]\n                          - ListMarker \"• \"\n                          - StaticText \"删除 SOP 与 references 的重复细则。\"\n                        - listitem [level=1]\n                          - ListMarker \"• \"\n                          - StaticText \"保留运行时动态发现 Orca 命令，不复制整本手册。\"\n                      - paragraph\n                        - StaticText \"必要验收应是可观察的操作结果，而不只是再做一次规则问答：\"\n                      - list\n                        - listitem [level=1]\n                          - ListMarker \"1. \"\n                          - StaticText \"全新对话处理一个已批准 Cooking 小需求：无重复需求审批；需要 Issue 时只创建一个；一个合法主控和有界 worker。\"\n                        - listitem [level=1]\n                          - ListMarker \"2. \"\n                          - StaticText \"发送成功但回执丢失：恢复后不重复发送或创建。\"\n                        - listitem [level=1]\n                          - ListMarker \"3. \"\n                          - StaticText \"检查点写入中断、索引落后、跨 worktree 副本：能确定恢复或明确阻塞，不重复副作用。\"\n                        - listitem [level=1]\n                          - ListMarker \"4. \"\n                          - StaticText \"两个新会话同时恢复一个孤立 Run：最多一个能取得派发权；能力不支持时不得宣称恢复成功。\"\n                        - listitem [level=1]\n                          - ListMarker \"5. \"\n                          - StaticText \"dot 超时、含糊回复、迟到回复、旧 SHA 回复：预算、补问次数和接受判断都符合明确规则。\"\n                        - listitem [level=1]\n                          - ListMarker \"6. \"\n                          - StaticText \"超时后结束会话再重新加载：任务仍未完成且可发现，不被通用归档误收尾。\"\n                        - listitem [level=1]\n                          - ListMarker \"7. \"\n                          - StaticText \"合并后集成失败：Issue 保持未完成，task 不归档；恢复后只执行未完成的后续步骤。\"\n                      - paragraph\n                        - StaticText \"这些应在另行批准的最小试跑或隔离场景中验证，不借机扩大到新调度平台、其他示例或 Unity。\"\n                      - paragraph\n                        - StaticText \"最终判断：保留现有骨架，重写少量操作约定并补真实流程验收，比继续堆更多原则更有价值。当前我不为“成熟、可可靠自动恢复交付”背书；我认可的是它已经建立了较好的安全边界和部分可复用基础。\"\n                      - paragraph\n                        - StaticText \"本次仅做指定 commit 的只读技术审阅，未执行实施、未启动 Work/Codex/云编程任务、未写 GitHub、未合并或清理工作树。\"\n                      - paragraph\n                        - StaticText \"AK-CDF-REVIEW-20261005-01\"\n                        - LineBreak \"\\n\"\n                        - StaticText \"审阅 SHA：86d44e8f8a6ac2ca958f4c453555817da7b1f15c\"\n                      - generic \"消息操作\"\n                        - button \"选择一个表情回应\" [expanded=false, ref=e201]\n                        - button \"回复\" [ref=e154]\n                  - time\n                    - StaticText \"10月5日 20:09\"\n                  - article\n                    - generic [ref=e105] focusable [tabindex]\n                      - paragraph\n                        - StaticText \"Request AK-CDF-POLISH-PLAN-01. Exact planning SHA 4cf5b38bcb06b2f58d49fd73fc9de26e5cec02fe.\"\n                        - LineBreak \"\\n\"\n                        - StaticText \"Owner now authorizes following your review, actively iterating until you explicitly accept, and a bounded actual skill workflow on a dedicated branch ONLY. Origin branch Kakusya/cooking-dot-skill-polish; no master merge or product/example/Unity changes. Main conversation remains sole coordinator; only Orca workers implement. Please reply in Chinese.\"\n                      - paragraph\n                        - StaticText \"Read full current task PRD/design/implement at \"\n                        - link \"https://github.com/Kakusya/AbilityKit/tree/4cf5b38bcb06b2f58d49fd73fc9de26e5cec02fe/.trellis/tasks/10-05-cooking-dot-skill-polish\" [ref=e237]\n                        - StaticText \" and your preserved prior review there under research/prior-dot-review.md. We propose fixing your six findings with minimal templates/operation contracts, then an actual skill-guided documentation delivery needed by this Cooking skill, e.g. a usable handoff/operator example. Skill is not in this host's refreshed catalog; explicitly loading SKILL.md by its project path is authorized for this pilot and must be reported as manual loading, not host auto-dispatch validation. No gameplay requirement is invented, and no Issue/PR is created solely for appearance. Branch-only acceptance has no merge authority, so real merge/postmerge checks remain NotRun.\"\n                      - paragraph\n                        - StaticText \"Live Orca is1.4.220. The documented normal run-use --id <run> [--from <handle>] exists; --takeover-legacy is only legacy. Help and current capabilities do NOT establish exclusive normal-Run rebinding. We will isolate any probe away from existing Runs and workers and never mislabel unsupported recovery as passed. Trellis session task pointers are not leases. Recommend a practical minimum supported recovery envelope; if normal run-use cannot prove sole ownership, stop that recovery action rather than invent a scheduler.\"\n                      - paragraph\n                        - StaticText \"Please resolve these planning points concretely: (1) smallest scoped revision and any necessary script versus templates; (2) a meaningful branch-only real pilot/fault-validation path under this Owner boundary, including what evidence you require before accepting maturity; (3) how to handle unverified normal-Run exclusive recovery while honestly improving this skill. Do not run code/cloud work, start Work/Codex, or write GitHub. Identify request ID and exact planning SHA. Give accept-plan/needs-change/blocked with blockers and permitted next action; no automatic final skill acceptance yet.\"\n                      - generic \"消息操作\"\n                        - button \"回复\" [ref=e155]\n                        - button \"选择一个表情回应\" [expanded=false, ref=e202]\n                  - article\n                    - generic [ref=e106] focusable [tabindex]\n                      - paragraph\n                        - StaticText \"我会读取这个精确提交中的完整计划和保留的前次审阅，重点确定最小修改范围、分支内真实试跑的验收，以及普通 Run 无法证明独占恢复时应停在哪里。本轮仍只读审议，不执行代码或写 GitHub。\"\n                      - generic \"消息操作\"\n                        - button \"选择一个表情回应\" [expanded=false, ref=e203]\n                        - button \"回复\" [ref=e156]\n                  - article\n                    - generic [ref=e107] focusable [tabindex]\n                      - paragraph\n                        - StaticText \"请求：AK-CDF-POLISH-PLAN-01\"\n                        - LineBreak \"\\n\"\n                        - StaticText \"精确 planning SHA：4cf5b38bcb06b2f58d49fd73fc9de26e5cec02fe\"\n                        - LineBreak \"\\n\"\n                        - StaticText \"裁决：accept-plan，按以下限定范围接受计划。\"\n                      - paragraph\n                        - StaticText \"我已全文读取该 SHA 下当前 task 的 prd.md、design.md、implement.md 和 research/prior-dot-review.md。这里接受的是“修改技能并完成分支内试跑的计划”，不是最终接受技能，也不是确认自动接管能力已成立。\"\n                      - paragraph\n                        - StaticText \"当前没有阻止这次限定实施的阻塞项。普通 Run 的跨主控独占恢复仍是一个明确受阻的能力，不必让它卡住安全的正常流程试跑。\"\n                      - paragraph\n                        - StaticText \"一、最小修改范围\"\n                      - paragraph\n                        - StaticText \"保留现有骨架，不另造调度器。\"\n                      - list\n                        - listitem [level=1]\n                          - ListMarker \"1. \"\n                          - StaticText \"SKILL.md：一条正常操作路径、每阶段的输入和完成条件、暂停与结束的区别。\"\n                        - listitem [level=1]\n                          - ListMarker \"2. \"\n                          - StaticText \"dot-dialogue.md：作为请求、回复、一次补问和30分钟预算的唯一规则正文。\"\n                        - listitem [level=1]\n                          - ListMarker \"3. \"\n                          - StaticText \"recovery.md：作为记录发现、回执核对、恢复边界的唯一正文。\"\n                        - listitem [level=1]\n                          - ListMarker \"4. \"\n                          - StaticText \"三份小模板：流程检查点／操作记录、dot 请求、dot 决策。请求模板用明确类型区分规划与最终审阅，不需要两套重复格式。\"\n                        - listitem [level=1]\n                          - ListMarker \"5. \"\n                          - StaticText \"SOP 只保留职责、授权、适用范围和引用。没有具体缺陷就不改 AGENTS 与 openai.yaml。\"\n                      - paragraph\n                        - StaticText \"建议允许一个小的技能内记录／校验 helper，配一组隔离测试。它只负责：\"\n                      - list\n                        - listitem [level=1]\n                          - ListMarker \"• \"\n                          - StaticText \"校验 flow ID、版本、操作序号、引用和候选身份。\"\n                        - listitem [level=1]\n                          - ListMarker \"• \"\n                          - StaticText \"安全写入记录、读回核对、从记录重建派生索引。\"\n                        - listitem [level=1]\n                          - ListMarker \"• \"\n                          - StaticText \"验证等待与交付条件的纯逻辑。\"\n                      - paragraph\n                        - StaticText \"它不得调用 Orca、GitHub、浏览器或承担派发，也不得实现锁服务、租约、后台轮询器。继续复用 Trellis 原子写入能力；它不能因此被当作独占权证明。\"\n                      - paragraph\n                        - StaticText \"记录约定必须固定：入口文件、稳定 flow ID、权威记录位置、同流程副本的识别规则。意图和回执按独立不可覆盖记录保存；索引是可重建的指针，不是第二份任务状态。意图写入并读回成功，才允许外部动作；没有回执必须先核对实际结果，不能重试猜测。\"\n                      - paragraph\n                        - StaticText \"二、本轮接受的最小恢复范围\"\n                      - paragraph\n                        - StaticText \"可以支持：\"\n                      - list\n                        - listitem [level=1]\n                          - ListMarker \"• \"\n                          - StaticText \"原有、身份和权限已核实的唯一主控继续正常工作。\"\n                        - listitem [level=1]\n                          - ListMarker \"• \"\n                          - StaticText \"暂停后保留完整记录。\"\n                        - listitem [level=1]\n                          - ListMarker \"• \"\n                          - StaticText \"新对话只读发现流程、核对副本和远端结果、识别最后可靠边界，并输出明确的恢复阻塞清单。\"\n                      - paragraph\n                        - StaticText \"暂不支持自动宣称：\"\n                      - list\n                        - listitem [level=1]\n                          - ListMarker \"• \"\n                          - StaticText \"新对话凭 run-use 成功就接管普通 Run。\"\n                        - listitem [level=1]\n                          - ListMarker \"• \"\n                          - StaticText \"凭 Trellis 活动 task、记录里的 owner 字段、静默或超时证明旧主控失去权限。\"\n                        - listitem [level=1]\n                          - ListMarker \"• \"\n                          - StaticText \"在旧 Run／worker 仍未核清时创建替代 Run，重新执行同一工作。\"\n                      - paragraph\n                        - StaticText \"特别注意：新对话尚未取得权威记录的写入资格时，也不能先覆盖共享索引“修复记录”。它可以只读计算重建结果；真正写回需要合法的记录所有权。\"\n                      - paragraph\n                        - StaticText \"如果独占重绑定不能证明，就停止接管动作，保留原 Run、Dispatch、未决操作及缺少的证据。这是有价值的“可诊断恢复并安全暂停”，但不是“跨会话自动继续执行”。\"\n                      - paragraph\n                        - StaticText \"不强制为本轮通过而探测接管能力。若探测，只能使用隔离、无业务 worker 的测试 Run，不触碰现有 Run。无法验证排他性时如实记 Blocked／NotRun，不建立替代调度机制。\"\n                      - paragraph\n                        - StaticText \"三、等待与重新开启，采用这套确定规则\"\n                      - list\n                        - listitem [level=1]\n                          - ListMarker \"• \"\n                          - StaticText \"同一请求的提醒、澄清和确认，共用一次补问额度。\"\n                        - listitem [level=1]\n                          - ListMarker \"• \"\n                          - StaticText \"可靠的回复发出时间用于判断是否及时；观察时间另记。\"\n                        - listitem [level=1]\n                          - ListMarker \"• \"\n                          - StaticText \"期限内发出、期限后才看到的有效回复，可以补记为该请求的有效答复，但不得抹掉此前暂停记录，也不自动恢复调度权。\"\n                        - listitem [level=1]\n                          - ListMarker \"• \"\n                          - StaticText \"真正迟到、发出时间无法核实、SHA 不匹配的回复，不自动恢复已过期请求。\"\n                        - listitem [level=1]\n                          - ListMarker \"• \"\n                          - StaticText \"到期后保存并停止。“主动迭代直到接受”不授权无限换请求刷新预算。\"\n                        - listitem [level=1]\n                          - ListMarker \"• \"\n                          - StaticText \"Owner 明确恢复／重开后，使用链接旧请求的新 ID 和新预算，保留旧超时事实。\"\n                        - listitem [level=1]\n                          - ListMarker \"• \"\n                          - StaticText \"正常收到“需修改”结论后，完成新候选并发起下一轮审阅，属于新请求；仍受各自30分钟预算约束。\"\n                      - paragraph\n                        - StaticText \"四、有意义的真实分支试跑\"\n                      - paragraph\n                        - StaticText \"我接受“为这个 Cooking 技能交付一份可实际使用的操作／交接示例”作为试跑需求。它不需要虚构玩法或创建装饰性 Issue／PR。\"\n                      - paragraph\n                        - StaticText \"建议顺序：\"\n                      - list\n                        - listitem [level=1]\n                          - ListMarker \"1. \"\n                          - StaticText \"Orca 实施 worker 完成技能修订、模板和必要 helper；主控独立核对。\"\n                        - listitem [level=1]\n                          - ListMarker \"2. \"\n                          - StaticText \"固定修订版 SHA，在主控中按项目路径显式加载 SKILL.md，记录为 manual loading。不得称宿主目录刷新或自动触发已验证。\"\n                        - listitem [level=1]\n                          - ListMarker \"3. \"\n                          - StaticText \"主控按修订技能派发一个有界 Orca worker，交付可用的操作／交接示例。派发给它需求、边界和验收，不在技能之外额外补一整套隐藏操作说明。\"\n                        - listitem [level=1]\n                          - ListMarker \"4. \"\n                          - StaticText \"记录实际输入被接受、turn 开始、交付物、worker_done、主控检查和资源记账。\"\n                        - listitem [level=1]\n                          - ListMarker \"5. \"\n                          - StaticText \"推送候选及可读证据，由我对精确 SHA 做最终审阅。\"\n                      - paragraph\n                        - StaticText \"所有提交和推送仅到 Kakusya/cooking-dot-skill-polish。不合并 master，不创建其他试跑分支，不修改产品、示例、Unity 或旧 #6。\"\n                      - paragraph\n                        - StaticText \"仅“修改了技能，再说已经使用过技能”不算通过。必须有按新入口实际推进、产生有用交付物的证据。\"\n                      - paragraph\n                        - StaticText \"五、必要故障验证\"\n                      - paragraph\n                        - StaticText \"以下可以使用隔离文件、受控时间和本地模拟动作，不需要破坏真实主控或 worker：\"\n                      - list\n                        - listitem [level=1]\n                          - ListMarker \"• \"\n                          - StaticText \"意图已落盘、动作未发生时中断。\"\n                        - listitem [level=1]\n                          - ListMarker \"• \"\n                          - StaticText \"动作已发生、回执未保存：通过唯一操作身份核对，不能执行第二次。\"\n                        - listitem [level=1]\n                          - ListMarker \"• \"\n                          - StaticText \"回执已落盘、索引未更新：能正确重建。\"\n                        - listitem [level=1]\n                          - ListMarker \"• \"\n                          - StaticText \"索引损坏、旧副本、冲突副本：确定恢复或明确阻塞。\"\n                        - listitem [level=1]\n                          - ListMarker \"• \"\n                          - StaticText \"含糊回复、旧 SHA、及时但迟读、真正迟到、时间未知、补问回执丢失。\"\n                        - listitem [level=1]\n                          - ListMarker \"• \"\n                          - StaticText \"暂停后尝试结束会话：不能进入 completed／archive。\"\n                        - listitem [level=1]\n                          - ListMarker \"• \"\n                          - StaticText \"缺乏独占权证明：恢复路径拒绝派发，也不擅自修改共享记录。\"\n                      - paragraph\n                        - StaticText \"需要实际运行这些校验并保存预期值与实际结果，而不只是写“情景 Passed”。\"\n                      - paragraph\n                        - StaticText \"若故障注入使用本地模拟适配器，就标为本地模拟验证，不能称真实 GitHub／Orca 的幂等性已经通过。中断可用隔离测试程序的预设失败点自行退出，不杀真实协调者或 worker。\"\n                      - paragraph\n                        - StaticText \"真实跨会话重新加载若未做，单独标 NotRun；用同一进程重新读文件不能冒充它。\"\n                      - paragraph\n                        - StaticText \"六、分支交付与最终接受条件\"\n                      - paragraph\n                        - StaticText \"请在计划中明确本轮是 branch-only 交付：\"\n                      - list\n                        - listitem [level=1]\n                          - ListMarker \"• \"\n                          - StaticText \"技能修订与实际文档试跑通过。\"\n                        - listitem [level=1]\n                          - ListMarker \"• \"\n                          - StaticText \"我明确接受指定候选 SHA 和已验证范围。\"\n                        - listitem [level=1]\n                          - ListMarker \"• \"\n                          - StaticText \"worker 已按授权记账。\"\n                        - listitem [level=1]\n                          - ListMarker \"• \"\n                          - StaticText \"才能将这次限定的技能／试跑任务完成或归档。\"\n                      - paragraph\n                        - StaticText \"不要因为没有 master 合并而永远无法结束这次分支任务；也不能将分支接受写成生产集成通过。真实 merge、postmerge 和 GitHub 自动关单行为保持 NotRun。\"\n                      - paragraph\n                        - StaticText \"我最终需要看到：\"\n                      - list\n                        - listitem [level=1]\n                          - ListMarker \"• \"\n                          - StaticText \"前六项发现逐项对应的修改。\"\n                        - listitem [level=1]\n                          - ListMarker \"• \"\n                          - StaticText \"冻结候选 SHA、技能文件哈希、最终 diff。\"\n                        - listitem [level=1]\n                          - ListMarker \"• \"\n                          - StaticText \"实际手动加载与 Orca Run／Task／Dispatch 的证据。\"\n                        - listitem [level=1]\n                          - ListMarker \"• \"\n                          - StaticText \"有用的试跑产物和独立检查结果。\"\n                        - listitem [level=1]\n                          - ListMarker \"• \"\n                          - StaticText \"故障控制的命令、结果、失败原件和限制。\"\n                        - listitem [level=1]\n                          - ListMarker \"• \"\n                          - StaticText \"支持范围清单：哪些实际通过，哪些只有隔离验证，哪些仍 Blocked／NotRun。\"\n                      - paragraph\n                        - StaticText \"后续回执／归档证据可单独提交，但必须列出它与已接受候选的差异，并证明交付文件未变；不得自动把旧接受扩展到新代码。\"\n                      - paragraph\n                        - StaticText \"七、实施前同步两处措辞\"\n                      - list\n                        - listitem [level=1]\n                          - ListMarker \"• \"\n                          - StaticText \"design.md 第13行的“移除服务器端自动关闭关联”改为“检查并按授权处理；无法安全排除则阻塞”。本轮无合并，不改 GitHub 设置；相关条件只做规则和隔离验证。\"\n                        - listitem [level=1]\n                          - ListMarker \"• \"\n                          - StaticText \"implement.md 第8行的 supported release 不等于获得释放许可。若该动作关闭终端或进程，不能据“命令受支持”越过本轮限制；默认按已有批准保留并记账，删除／关闭资源需相应授权。\"\n                      - paragraph\n                        - StaticText \"允许的下一步：主控把本回复作为技术裁决补入计划和 manifests，交一个 Orca worker 按上述范围修订，随后执行限定试跑和隔离控制，再提交精确候选供我审阅。无须为同一需求重复索取批准；遇到实际范围扩大、权限缺口或超时则按约定暂停。\"\n                      - paragraph\n                        - StaticText \"最终可争取的接受结论是：“手动加载、分支内文档交付经过实跑，记录与故障判断可验证，未证明独占接管时安全停止。”在没有相应证据前，我不会称它已具备完整跨主控自动恢复或生产自动交付成熟度。\"\n                      - paragraph\n                        - StaticText \"AK-CDF-POLISH-PLAN-01\"\n                        - LineBreak \"\\n\"\n                        - StaticText \"accept-plan\"\n                        - LineBreak \"\\n\"\n                        - StaticText \"Planning SHA：4cf5b38bcb06b2f58d49fd73fc9de26e5cec02fe\"\n                        - LineBreak \"\\n\"\n                        - StaticText \"本回复不构成最终 skill 接受；本轮我未运行代码、云工作或写 GitHub。\"\n                      - generic \"消息操作\"\n                        - button \"选择一个表情回应\" [expanded=false, ref=e204]\n                        - button \"回复\" [ref=e157]\n                  - article\n                    - generic [ref=e108] focusable [tabindex]\n                      - paragraph\n                        - StaticText \"Request AK-CDF-TIMING-CLARIFY-01, planning SHA4cf5b38bcb06b2f58d49fd73fc9de26e5cec02fe (the accepted plan, not a code review of unpushed implementation). Need one practical clarification before the real pilot/final review. You specified unknown posted time cannot reopen an expired request. In the current Orca dot browser, replies have no reliable full UTC posted timestamp available in the visible message. We can directly observe a complete matching request/SHA reply while its original budget is still active, after a saved baseline that lacked it. The implementation draft currently rejects every reply missing exact reliable posted UTC, even before deadline. That would block ordinary live acceptance or tempt timestamp fabrication.\"\n                      - paragraph\n                        - StaticText \"May we represent a reliable posted-time interval from the newly observed matching message and chronology: not before this request's posted boundary, no later than observed_utc, with observed_utc <= original deadline, and accept that as timely without inventing exact posted UTC? After expiry, missing posted timestamp remains unknown-time and cannot reopen; timely-late-read still requires genuine reliable evidence of timely posting. Please give an explicit rule and acceptable provenance/control cases. Existing worker may finish its approved assignment while waiting, then idle; no new dispatch/integration occurs. Identify request and exact planning SHA, and state approve-rule/needs-change/blocked. Read-only technical dialogue only, no code/cloud work/GitHub writes.\"\n                      - generic \"消息操作\"\n                        - button \"回复\" [ref=e158]\n                        - button \"选择一个表情回应\" [expanded=false, ref=e205]\n                  - article\n                    - generic [ref=e109] focusable [tabindex]\n                      - paragraph\n                        - StaticText \"请求：AK-CDF-TIMING-CLARIFY-01\"\n                        - LineBreak \"\\n\"\n                        - StaticText \"Planning SHA：4cf5b38bcb06b2f58d49fd73fc9de26e5cec02fe\"\n                        - LineBreak \"\\n\"\n                        - StaticText \"裁决：approve-rule。\"\n                      - paragraph\n                        - StaticText \"可以。若在原预算截止前，已经可靠观察到完整、匹配本请求与 SHA 的最终回复，就足以证明回复及时；不需要知道精确的服务器发布时间。你描述的“缺精确 posted UTC 就一律拒绝”，在期限内过于严格。\"\n                      - paragraph\n                        - StaticText \"明确规则：\"\n                      - list\n                        - listitem [level=1]\n                          - ListMarker \"1. \"\n                          - StaticText \"期限内直接观察\"\n                          - LineBreak \"\\n\"\n                          - StaticText \"同时满足以下条件，可以判定 timely：\"\n                          - list\n                            - listitem [level=2]\n                              - ListMarker \"◦ \"\n                              - StaticText \"已核实正确会话、请求身份及原始 deadline。\"\n                            - listitem [level=2]\n                              - ListMarker \"◦ \"\n                              - StaticText \"保存的此前消息边界中没有这条回复，当前回复确属本次请求，不是旧消息或另一轮结果。\"\n                            - listitem [level=2]\n                              - ListMarker \"◦ \"\n                              - StaticText \"已观察到完整最终回复，不能把流式片段或仅出现 SHA 当作完成。\"\n                            - listitem [level=2]\n                              - ListMarker \"◦ \"\n                              - StaticText \"可信的 observed_utc 不晚于原始 deadline；有时钟不确定性时，观察时间的最晚上界也必须不晚于 deadline。\"\n                      - paragraph\n                        - StaticText \"记录依据为“期限内直接观察”，posted_utc 保持 null。不要填写估计的精确发布时间。\"\n                      - list\n                        - listitem [level=1]\n                          - ListMarker \"2. \"\n                          - StaticText \"时间区间的表示\"\n                          - LineBreak \"\\n\"\n                          - StaticText \"可以保存保守区间，但必须区分因果顺序和精确 UTC。\"\n                          - list\n                            - listitem [level=2]\n                              - ListMarker \"◦ \"\n                              - StaticText \"回复上界可以取可靠的完整回复观察时间。\"\n                            - listitem [level=2]\n                              - ListMarker \"◦ \"\n                              - StaticText \"请求消息身份／顺序用于证明回复属于请求之后。\"\n                            - listitem [level=2]\n                              - ListMarker \"◦ \"\n                              - StaticText \"若需要 UTC 下界，可使用可信的请求发送前记录时间；不能把请求回执的本地接收时间，冒充服务器发布时间下界。\"\n                            - listitem [level=2]\n                              - ListMarker \"◦ \"\n                              - StaticText \"下界不能可靠确定时留空即可。期限内的可靠上界已经足够，不必为凑齐区间虚构时间。\"\n                        - listitem [level=1]\n                          - ListMarker \"3. \"\n                          - StaticText \"截止后首次观察\"\n                          - LineBreak \"\\n\"\n                          - StaticText \"没有可靠的及时发布证据，仍按 unknown-time 处理，不恢复过期请求。页面顺序、相对时间或“应该早就发了”都不足以补造及时性。\"\n                          - LineBreak \"\\n\"\n                          - StaticText \"若之前已经保存了期限内完整回复的可靠观察证据，恢复时可以核对并采用；但回复有效不等于新主控取得派发权。\"\n                      - paragraph\n                        - StaticText \"必要 provenance：\"\n                      - list\n                        - listitem [level=1]\n                          - ListMarker \"• \"\n                          - StaticText \"request ID、完整 SHA、会话身份及请求消息边界。\"\n                        - listitem [level=1]\n                          - ListMarker \"• \"\n                          - StaticText \"原始 wait_started_utc／deadline，不能重置。\"\n                        - listitem [level=1]\n                          - ListMarker \"• \"\n                          - StaticText \"先前观察与本次完整回复的原始快照或可追溯记录、消息身份、观察时间及时间来源。\"\n                        - listitem [level=1]\n                          - ListMarker \"• \"\n                          - StaticText \"完整／仍生成状态的判断依据。\"\n                        - listitem [level=1]\n                          - ListMarker \"• \"\n                          - StaticText \"timing_basis、posted_utc=null，以及实际使用的时间上界和不确定性。\"\n                      - paragraph\n                        - StaticText \"必要控制：\"\n                      - list\n                        - listitem [level=1]\n                          - ListMarker \"• \"\n                          - StaticText \"无 posted UTC、期限内首次看到完整匹配回复：接受及时性。\"\n                        - listitem [level=1]\n                          - ListMarker \"• \"\n                          - StaticText \"期限内只看到片段，完整回复在期限后才看到：不能沿用片段时间判通过。\"\n                        - listitem [level=1]\n                          - ListMarker \"• \"\n                          - StaticText \"期限前完整回复已有持久证据，期限后恢复：核对后可采用，仍单独核验调度权。\"\n                        - listitem [level=1]\n                          - ListMarker \"• \"\n                          - StaticText \"期限后首次看到、无可靠 posted UTC：保持过期／时间未知。\"\n                        - listitem [level=1]\n                          - ListMarker \"• \"\n                          - StaticText \"旧回复、错误 request/SHA、错误会话：拒绝，即使观察时间在期限内。\"\n                        - listitem [level=1]\n                          - ListMarker \"• \"\n                          - StaticText \"时钟跳变、观察时间区间跨过截止点、证据无法核实：不判及时。\"\n                      - paragraph\n                        - StaticText \"本规则不增加补问次数，也不刷新预算。它只澄清回复及时性，不构成对未推送实现或最终 skill 的接受。本轮未执行代码、云工作或 GitHub 写入。\"\n                      - generic \"消息操作\"\n                        - button \"选择一个表情回应\" [expanded=false, ref=e206]\n                        - button \"回复\" [ref=e159]\n                  - time\n                    - StaticText \"10月5日 21:08\"\n                  - article\n                    - generic\n                      - generic [ref=e110] focusable [tabindex]\n                        - paragraph\n                          - StaticText \"Type planning. Request AK-CDF-LIVE-PILOT-PLAN-01; flow a2c3dd65-4a91-43f6-9c33-ad891f7563c4; full published source SHA 32b400a5c6d375be366faa606e867ef68037cfa8.\"\n                          - LineBreak \"\\n\"\n                          - StaticText \"This is the actual manual-load branch-only Cooking documentation workflow using the newly frozen skill, not final acceptance. Owner already approved scope and your prior AK-CDF-POLISH-PLAN-01 approved this useful documentation pilot. No repeated Owner approval, master merge, product/examples/Unity changes, decorative Issue/PR or resource closing.\"\n                        - paragraph\n                          - StaticText \"Read the revised SKILL.md and conditional references/templates/helper at \"\n                          - link \"https://github.com/Kakusya/AbilityKit/tree/32b400a5c6d375be366faa606e867ef68037cfa8/.agents/skills/cooking-dot-workflow\" [ref=e238]\n                          - StaticText \" and current task at \"\n                          - link \"https://github.com/Kakusya/AbilityKit/tree/32b400a5c6d375be366faa606e867ef68037cfa8/.trellis/tasks/10-05-cooking-dot-skill-polish\" [ref=e239]\n                          - StaticText \" . Implementation report and controls-run-04 contain122 observable assertions/12 actual subprocess executions, plus source scopes and original failures. Original skill validator subsequently Passed using the same fixed-hash RAM-only YAML dependency without install. Independent Orca auditor is checking the frozen helper/contracts now.\"\n                        - paragraph\n                          - StaticText \"Main explicitly read frozen SKILL/recovery/dialogue/request instructions, initialized the stable canonical flow with this UUID under the existing verified original coordinator Run run_840202cc5621 generation1, recorded push intent/readback and successful exact-ref publication/receipt. First local prep mistakenly called old helper atomic API; failure preserved, no external effects at that point; same flow resumed with public API, no replacement UUID/Run. Cross-main exclusive takeover stays Blocked.\"\n                        - paragraph\n                          - StaticText \"Please give a compact practical technical plan for the useful operator/handoff example, rather than merely reconfirming previous scope: what normal branch-only checkpoint/handoff and stopped-recovery case should it show, how to demonstrate public record API use without cached identities granting authority, and what observable artifact acceptance matters? Worker may write references/operator-example.md, add one conditional discoverability link in SKILL.md, and save pilot-report.md; no other runner/helper changes. Main owns records, dispatch/checks and final candidate freeze/review. Real production merge/postmerge/auto-close and true coordinator crash/takeover remain NotRun/Blocked; mock controls are simulations.\"\n                        - paragraph\n                          - StaticText \"Reply with accept-plan/needs-revision/blocked, blockers and next allowed action, explicitly echo request ID, flow UUID and this full SHA. Scope/honest evidence prevail. Read commits/converse only, no code execution/cloud Work/Codex or GitHub writes. The original30-minute budget applies; one shared supplemental question maximum.\"\n                        - generic \"消息操作\"\n                          - button \"回复\" [ref=e160]\n                          - button \"选择一个表情回应\" [expanded=false, ref=e207]\n                      - status\n                        - generic\n                          - StaticText \"已读 21:08\"\n                  - article\n                    - generic [ref=e111] focusable [tabindex]\n                      - paragraph\n                        - StaticText \"我先读取这个冻结版本的技能、公开记录 API 和当前任务，再给出操作／交接示例的具体结构与验收要求。本轮只审议这次试跑，不把控制测试或仍在进行的审计当成最终接受。\"\n                      - generic \"消息操作\"\n                        - button \"选择一个表情回应\" [expanded=false, ref=e208]\n                        - button \"回复\" [ref=e161]\n                  - article\n                    - generic [ref=e112] focusable [tabindex]\n                      - paragraph\n                        - StaticText \"Type：planning\"\n                        - LineBreak \"\\n\"\n                        - StaticText \"Request：AK-CDF-LIVE-PILOT-PLAN-01\"\n                        - LineBreak \"\\n\"\n                        - StaticText \"Flow：a2c3dd65-4a91-43f6-9c33-ad891f7563c4\"\n                        - LineBreak \"\\n\"\n                        - StaticText \"审阅 SHA：32b400a5c6d375be366faa606e867ef68037cfa8\"\n                        - LineBreak \"\\n\"\n                        - StaticText \"裁决：accept-plan。\"\n                      - paragraph\n                        - StaticText \"已读取该 SHA 的 SKILL、recovery、dialogue、三份模板、records.py，以及当前 PRD/design/implement、pilot brief/approval 和实施报告、controls-run-04 控制台记录。122项断言是已读取的执行记录，不是我重新运行的结果。\"\n                      - paragraph\n                        - StaticText \"当前没有阻止这份有界示例编写的阻塞项。按以下内容交给 worker，不需要重新批准需求。\"\n                      - paragraph\n                        - StaticText \"一、operator-example.md 只做一个完整案例、一个停止案例\"\n                      - paragraph\n                        - StaticText \"正常案例：原主控下的 branch-only 文档交付。\"\n                      - list\n                        - listitem [level=1]\n                          - ListMarker \"• \"\n                          - StaticText \"开头列清“实际观察”“示例输入”“尚未执行”，三者不可混写。\"\n                        - listitem [level=1]\n                          - ListMarker \"• \"\n                          - StaticText \"从本 flow 的已存在检查点开始：找到 canonical root、确认 branch-only、读取 effective_run_id、last_seq、unresolved。\"\n                        - listitem [level=1]\n                          - ListMarker \"• \"\n                          - StaticText \"原主控重新核实现场身份和记录写入资格，再进行有界派发；历史 Run ID、generation1、session/terminal 字符串只是核对对象，不是授权凭据。\"\n                        - listitem [level=1]\n                          - ListMarker \"• \"\n                          - StaticText \"展示派发意图、实际接受与 turn-start 回执、worker 完成报告、独立检查、候选冻结及等待最终审阅的顺序。\"\n                        - listitem [level=1]\n                          - ListMarker \"• \"\n                          - StaticText \"明确“派发已应用”只证明启动动作发生，不能提前代表 worker 成功或文档已接受。\"\n                        - listitem [level=1]\n                          - ListMarker \"• \"\n                          - StaticText \"本次示例的真实结束点应是“产物已完成，等待最终候选接受”。不得预填 dot 已接受、任务已归档。\"\n                      - paragraph\n                        - StaticText \"停止案例：另一个对话读到同一 flow，但普通 Run 独占移交未经证明。\"\n                      - list\n                        - listitem [level=1]\n                          - ListMarker \"• \"\n                          - StaticText \"可读取并在内存中 reconstruct；列出最后可靠操作、未决回执、worker 身份及待核实状态。\"\n                        - listitem [level=1]\n                          - ListMarker \"• \"\n                          - StaticText \"不修 canonical index、不 append、不 run-use 接管、不派发替代 worker、不新建 UUID／Run。\"\n                        - listitem [level=1]\n                          - ListMarker \"• \"\n                          - StaticText \"输出明确交接：原主控需要重新证明什么；哪些外部结果需要只读核对；若仍无法证明，保持 Blocked。\"\n                        - listitem [level=1]\n                          - ListMarker \"• \"\n                          - StaticText \"会话结束不等于需求完成；不得进入 finish/archive。\"\n                      - paragraph\n                        - StaticText \"二、公开 API 要展示“怎么用”，也要展示“何时不能用”\"\n                      - paragraph\n                        - StaticText \"示例使用当前真实签名：initialize、append、fingerprint、write_index、reconstruct，以及只读 inspect/copies。\"\n                      - paragraph\n                        - StaticText \"写入顺序写清：有效证据已经存在 → 原主控取得并核实 WriteAuthority 所描述的资格 → append 意图并读回 → 主控执行获准动作 → append 实际回执并读回 → 更新派生索引。\"\n                      - paragraph\n                        - StaticText \"特别约束：\"\n                      - list\n                        - listitem [level=1]\n                          - ListMarker \"• \"\n                          - StaticText \"initialize 只解释新流程首次建立；本 flow 已初始化，不能为了演示重新初始化或更换身份。\"\n                        - listitem [level=1]\n                          - ListMarker \"• \"\n                          - StaticText \"不调用私有 _atomic，不把旧接口失败删掉。\"\n                        - listitem [level=1]\n                          - ListMarker \"• \"\n                          - StaticText \"不提供“从 flow.json 抄 session，再把两个权限布尔值设成 true”这样的伪授权示例。WriteAuthority 只是调用者对已核实事实的声明，helper 不会替调用者取得权限。\"\n                        - listitem [level=1]\n                          - ListMarker \"• \"\n                          - StaticText \"无回执必须先核对效果；unknown 回执的后续解决使用新的 reconcile 操作对，不覆盖旧回执。\"\n                        - listitem [level=1]\n                          - ListMarker \"• \"\n                          - StaticText \"worker 只编写三个获准文件。真实 canonical 记录、派发、回执和索引由主控管理；文档中的教学数据不得写入真实记录目录。\"\n                      - paragraph\n                        - StaticText \"三、可观察的产物验收\"\n                      - paragraph\n                        - StaticText \"主控验收时，应能仅凭示例回答并找到证据：\"\n                      - list\n                        - listitem [level=1]\n                          - ListMarker \"1. \"\n                          - StaticText \"哪个目录是权威，哪个是副本？\"\n                        - listitem [level=1]\n                          - ListMarker \"2. \"\n                          - StaticText \"当前 flow／候选／Run／Task／Dispatch 如何对应？\"\n                        - listitem [level=1]\n                          - ListMarker \"3. \"\n                          - StaticText \"最后一项已证明完成的动作是什么？哪些仍未知？\"\n                        - listitem [level=1]\n                          - ListMarker \"4. \"\n                          - StaticText \"此刻只允许读取，还是具备写入资格？依据在哪里？\"\n                        - listitem [level=1]\n                          - ListMarker \"5. \"\n                          - StaticText \"下一步具体需要什么证据，而不是泛泛“等待恢复”？\"\n                        - listitem [level=1]\n                          - ListMarker \"6. \"\n                          - StaticText \"为什么现在不能归档或声称生产交付完成？\"\n                      - paragraph\n                        - StaticText \"代码片段应与公开 API、模板字段和回执哈希算法一致；不能靠读者补一个隐藏字段才能理解。教学占位符要明确标注不可直接作为现场身份使用。\"\n                      - paragraph\n                        - StaticText \"SKILL.md 只加一个条件链接，例如“首次交接或需要完整案例时阅读 operator-example”。不要把整份示例塞回入口。\"\n                      - paragraph\n                        - StaticText \"四、pilot-report.md 要留下什么\"\n                      - paragraph\n                        - StaticText \"记录实际加载的技能 SHA／文件哈希、manual loading、三个文件的改动范围、真正的派发与开始／完成证据、实际检查命令和结果，以及主控独立发现的问题。\"\n                      - paragraph\n                        - StaticText \"分别报告：\"\n                      - list\n                        - listitem [level=1]\n                          - ListMarker \"• \"\n                          - StaticText \"真实发生：手动加载、当前原主控下的 Orca 文档派发、交付物及检查。\"\n                        - listitem [level=1]\n                          - ListMarker \"• \"\n                          - StaticText \"隔离／模拟：helper 故障控制和停止案例演示。\"\n                        - listitem [level=1]\n                          - ListMarker \"• \"\n                          - StaticText \"未验证：宿主自动调用、真实主控崩溃／独占接管、生产合并／postmerge／自动关单。\"\n                      - paragraph\n                        - StaticText \"不要为增加“真实度”故意中断现有主控、制造新的远端副作用或关闭资源。\"\n                      - paragraph\n                        - StaticText \"下一步允许：本请求完成并被主控按原预算记录后，确认与独立 auditor 没有文件写入冲突，再派发一个 worker，仅写 operator-example.md、SKILL 的单个链接和 pilot-report.md。完成后主控检查、冻结并推送新候选，提交 final-review。\"\n                      - paragraph\n                        - StaticText \"若 auditor 发现会影响本次实际操作的阻塞缺陷，暂停受影响步骤并回报；worker 不得借写示例修改 helper 或其他运行规则。\"\n                      - paragraph\n                        - StaticText \"这是 AK-CDF-LIVE-PILOT-PLAN-01 在上述 flow 与完整 SHA 上的计划接受，不是 accept-candidate，也不是最终 skill 成熟度接受。本轮未执行代码、云任务或 GitHub 写入。\"\n                      - generic \"消息操作\"\n                        - button \"选择一个表情回应\" [expanded=false, ref=e209]\n                        - button \"回复\" [ref=e162]\n                  - status\n                - generic\n                  - button \"滚动到底部\" [ref=e62]\n                  - generic\n                    - generic\n                      - generic\n                        - button \"添加文件等内容\" [expanded=false, ref=e66]\n                        - textbox \"消息\" [ref=e63]: \n\n                          - paragraph\n                            - StaticText \"发送消息\"\n                            - LineBreak \"\\n\"\n                        - generic [ref=e64] clickable [onclick]\n                          - button \"听写\" [ref=e113]\n                            - image\n                        - button \"发送\" [disabled, ref=e65]\n        - status\n        - generic\n          - button \"打开你的 dot的个人资料\" [expanded=false, ref=e13]\n          - generic\n            - generic\n            - StaticText \"dot\"\n  - status\n  - status\n  - status\n    - StaticText \"New reply from dot\"",
+    "browserPageId": "77075ca3-7da4-4890-8bd5-002b9ef6a07e"
+  },
+  "_meta": {
+    "runtimeId": "ff0c5f2c-d341-4455-bc1c-c113650bdd60"
+  }
+}
