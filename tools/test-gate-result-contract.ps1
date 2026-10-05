@@ -106,12 +106,17 @@ function Assert-GateInputs {
 }
 
 function Save-GateFiles {
-    param($Result, [string]$RunRoot, [string[]]$Paths, [string]$Role)
+    param($Result, [string]$RunRoot, [string[]]$Paths, [string]$Role, [string[]]$HashOnlyConfigPaths=@())
     $entries = @(); $index = 0
     foreach ($path in @($Paths | Sort-Object -Unique)) {
         $full = [IO.Path]::GetFullPath($path)
         Assert-GateNoReparse $full
         if (-not [IO.File]::Exists($full)) { throw "Missing $Role input: $full" }
+        if ($full -iin $HashOnlyConfigPaths) {
+            $entries += [pscustomobject]@{path=$full; bytes=(Get-Item -LiteralPath $full).Length; sha256=Get-GateHash $full; artifact=$null; proofKind='EffectiveNuGetConfigHashOnly'}
+            continue
+        }
+        if ([IO.Path]::GetFileName($full) -ieq 'NuGet.Config') { throw 'NuGet config was not bound by SDK discovery; content archive forbidden.' }
         $destination = Join-Path (Get-GateNodeRoot $RunRoot $Result.resultId) ('f'+$Result.artifacts.Count+'-'+$index+[IO.Path]::GetExtension($full))
         $index++
         Copy-Item -LiteralPath $full -Destination $destination
@@ -331,7 +336,21 @@ function Get-GateProjectClosure {
         $evaluated=Get-Content -LiteralPath $native.stdoutPath -Raw -Encoding UTF8 | ConvertFrom-Json
         if (-not $evaluated.Properties.TargetFramework -or -not $evaluated.Properties.TargetPath -or -not $evaluated.Properties.ProjectAssetsFile -or $evaluated.Properties.MSBuildProjectFullPath -ine $path) { throw 'Incomplete evaluated project identity.' }
         $properties=$evaluated.Properties
-        $projects+=[pscustomobject]@{project=$path; tfm=[string]$properties.TargetFramework; targetPath=[IO.Path]::GetFullPath($properties.TargetPath); assetsPath=[IO.Path]::GetFullPath($properties.ProjectAssetsFile); assemblyName=[string]$properties.AssemblyName; packageRoot=[string]$properties.NuGetPackageRoot}
+        $settingsArgs=@('msbuild',$path,'-nologo',('-p:Configuration='+$Context.configuration),'-target:_GetRestoreProjectStyle,_GetRestoreSettings','-getProperty:MSBuildProjectFullPath,TargetFramework,TargetFrameworks,_OutputConfigFilePaths,ProjectAssetsFile,MSBuildProjectExtensionsPath,RestoreTaskAssemblyFile,NuGetRestoreTargets')
+        $settingsNative=Invoke-GateTool $Context $Result $settingsArgs ($stem+'-settings')
+        $settings=(Get-Content -LiteralPath $settingsNative.stdoutPath -Raw -Encoding UTF8 | ConvertFrom-Json).Properties
+        if ($settings.MSBuildProjectFullPath -ine $path -or -not $settings.MSBuildProjectExtensionsPath -or $settings.ProjectAssetsFile -ine $properties.ProjectAssetsFile) { throw 'Incomplete restore settings identity.' }
+        $frameworks=@($(if ($settings.TargetFrameworks) { $settings.TargetFrameworks } else { $settings.TargetFramework }).Split(';') | Where-Object { $_ } | Sort-Object -Unique)
+        if (-not $frameworks.Count -or $properties.TargetFramework -cnotin $frameworks) { throw 'Configured/evaluated restore framework mismatch.' }
+        $configPaths=@(([string]$settings._OutputConfigFilePaths).Split(';') | Where-Object { $_ } | ForEach-Object { [IO.Path]::GetFullPath($_) } | Sort-Object -Unique)
+        if (-not $configPaths.Count) { throw 'Effective NuGet configuration discovery absent.' }
+        $restoreToolInputs=Get-GateRestoreToolInputs ([string]$settings.RestoreTaskAssemblyFile) ([string]$settings.NuGetRestoreTargets)
+        $inputs+= $configPaths+$restoreToolInputs
+        $extensionRoot=[IO.Path]::GetFullPath($settings.MSBuildProjectExtensionsPath)
+        $products=@([IO.Path]::GetFullPath($properties.ProjectAssetsFile),(Join-Path $extensionRoot ((Split-Path $path -Leaf)+'.nuget.g.props')),(Join-Path $extensionRoot ((Split-Path $path -Leaf)+'.nuget.g.targets')))
+        $settingsArtifact=@($Result.artifacts | Where-Object { $_.path -ceq ([IO.Path]::GetFileName($settingsNative.stdoutPath)) })
+        if ($settingsArtifact.Count -ne 1) { throw 'Restore discovery archive absent.' }
+        $projects+=[pscustomobject]@{project=$path; tfm=[string]$properties.TargetFramework; frameworks=$frameworks; configuration=$Context.configuration; targetPath=[IO.Path]::GetFullPath($properties.TargetPath); assetsPath=[IO.Path]::GetFullPath($properties.ProjectAssetsFile); assemblyName=[string]$properties.AssemblyName; packageRoot=[string]$properties.NuGetPackageRoot; configPaths=$configPaths; restoreToolInputs=$restoreToolInputs; restoreOutputs=$products; settingsArtifact=$settingsArtifact[0]; settingsStartedAt=$settingsNative.startedAt}
         $inputs+=$path
         foreach ($import in ([string]$properties.MSBuildAllProjects).Split(';')) { if ($import -and [IO.File]::Exists($import)) { $inputs+=[IO.Path]::GetFullPath($import) } }
         # /pp expands the actual SDK/conditional imports. Hash every existing file named
@@ -372,7 +391,103 @@ function Get-GateProjectClosure {
     }
     if ($projects[0].tfm -cne $Result.configuration.tfm) { throw 'Configured/evaluated TFM mismatch.' }
     $inputs+=@($Context.implementationInputs)+@($Context.sdkInputPaths)
-    return [pscustomobject]@{projects=$projects; inputPaths=@($inputs | Sort-Object -Unique)}
+    return [pscustomobject]@{projects=$projects; inputPaths=@($inputs | Sort-Object -Unique); configPaths=@($projects.configPaths | Sort-Object -Unique); restoreOutputs=@($projects.restoreOutputs | Sort-Object -Unique)}
+}
+
+function Get-GateRestoreToolInputs {
+    param([string]$TaskAssembly, [string]$RestoreTargets)
+    # Use the current SDK's own runtime dependency manifest, not a filename or
+    # extension whitelist and not an independent package/configuration resolver.
+    if (-not [IO.Path]::IsPathRooted($RestoreTargets) -or -not [IO.File]::Exists($RestoreTargets)) { throw 'SDK restore registration target absent.' }
+    Assert-GateNoReparse $RestoreTargets
+    # MSBuild resolves UsingTask AssemblyFile relative to the importing target.
+    # The SDK returns that actual target via NuGetRestoreTargets, not cwd/search.
+    if (-not [IO.Path]::IsPathRooted($TaskAssembly)) { $TaskAssembly=[IO.Path]::GetFullPath((Join-Path (Split-Path $RestoreTargets) $TaskAssembly)) }
+    if (-not [IO.File]::Exists($TaskAssembly)) { throw 'SDK restore task assembly absent.' }
+    $sdkRoot=Split-Path ([IO.Path]::GetFullPath($TaskAssembly))
+    $manifest=Join-Path $sdkRoot 'MSBuild.deps.json'
+    $metadata=Get-Content -LiteralPath $manifest -Raw -Encoding UTF8 | ConvertFrom-Json
+    $targets=@($metadata.targets.PSObject.Properties)
+    if ($targets.Count -ne 1) { throw 'Ambiguous SDK runtime dependency target.' }
+    $libraries=$targets[0].Value
+    $roots=@($libraries.PSObject.Properties.Name | Where-Object { $_.StartsWith(([IO.Path]::GetFileNameWithoutExtension($TaskAssembly))+'/',[StringComparison]::Ordinal) })
+    if ($roots.Count -ne 1) { throw 'SDK task dependency root absent/ambiguous.' }
+    $queue=New-Object 'System.Collections.Generic.Queue[string]';$queue.Enqueue($roots[0]);$seen=@{};$inputs=@($TaskAssembly,$manifest,$RestoreTargets)
+    while ($queue.Count) {
+        $key=$queue.Dequeue();if ($seen.ContainsKey($key)) { continue };$seen[$key]=$true
+        $library=$libraries.PSObject.Properties[$key].Value
+        if (-not $library) { throw 'SDK dependency declaration absent.' }
+        foreach ($runtime in @($library.runtime.PSObject.Properties)) {
+            if ($null -eq $runtime) { continue }
+            # This locked SDK flattens its declared managed runtime assets beside
+            # MSBuild.dll. Reject missing/ambiguous layouts rather than guessing.
+            $file=Join-Path $sdkRoot ([IO.Path]::GetFileName($runtime.Name))
+            if (-not [IO.File]::Exists($file)) { throw 'Declared SDK restore runtime asset absent.' }
+            $inputs+=$file
+        }
+        foreach ($dependency in @($library.dependencies.PSObject.Properties)) { if ($null -ne $dependency) { $queue.Enqueue($dependency.Name+'/'+$dependency.Value) } }
+    }
+    return ,@($inputs | Sort-Object -Unique)
+}
+
+function Assert-GateRestoreDiscovery {
+    param([object[]]$Graph, $Result, $Context)
+    if (-not $Graph.Count -or @($Graph.project | Sort-Object -Unique).Count -ne $Graph.Count -or $Graph[0].project -ine $Result.configuration.project -or $Result.configuration.tfm -cnotin $Graph[0].frameworks) { throw 'Restore graph identity/framework contradiction.' }
+    foreach ($project in $Graph) {
+        if ($project.configuration -cne $Result.configuration.configuration) { throw 'Restore graph Configuration mismatch.' }
+        $file=Assert-GateArtifact $project.settingsArtifact $Result $Context.runRoot
+        $suffix=[IO.Path]::DirectorySeparatorChar+$Result.resultId.Replace('-','').Substring(0,12)+[IO.Path]::DirectorySeparatorChar+$project.settingsArtifact.path.Replace('/',[IO.Path]::DirectorySeparatorChar)
+        $native=@($Result.provenance.invocations | Where-Object { $_.startedAt -ceq $project.settingsStartedAt -and $_.stdoutPath.EndsWith($suffix,[StringComparison]::OrdinalIgnoreCase) })
+        $expected=@('msbuild',$project.project,'-nologo',('-p:Configuration='+$Result.configuration.configuration),'-target:_GetRestoreProjectStyle,_GetRestoreSettings','-getProperty:MSBuildProjectFullPath,TargetFramework,TargetFrameworks,_OutputConfigFilePaths,ProjectAssetsFile,MSBuildProjectExtensionsPath,RestoreTaskAssemblyFile,NuGetRestoreTargets')
+        if ($native.Count -ne 1 -or $native[0].processExitCode -ne 0 -or -not $native[0].exitConfirmed) { throw 'Restore discovery native receipt absent.' }
+        Assert-GateEqual @($native[0].toolArguments) $expected 'restore discovery argv'
+        $properties=(Get-Content -LiteralPath $file -Raw -Encoding UTF8 | ConvertFrom-Json).Properties
+        $frameworks=@($(if ($properties.TargetFrameworks) { $properties.TargetFrameworks } else { $properties.TargetFramework }).Split(';') | Where-Object { $_ } | Sort-Object -Unique)
+        $configs=@(([string]$properties._OutputConfigFilePaths).Split(';') | Where-Object { $_ } | ForEach-Object { [IO.Path]::GetFullPath($_) } | Sort-Object -Unique)
+        $extensions=[IO.Path]::GetFullPath($properties.MSBuildProjectExtensionsPath)
+        $outputs=@([IO.Path]::GetFullPath($properties.ProjectAssetsFile),(Join-Path $extensions ((Split-Path $project.project -Leaf)+'.nuget.g.props')),(Join-Path $extensions ((Split-Path $project.project -Leaf)+'.nuget.g.targets')))
+        if ($properties.MSBuildProjectFullPath -ine $project.project -or $project.assetsPath -ine $properties.ProjectAssetsFile -or $project.tfm -cnotin $frameworks -or -not $configs.Count) { throw 'Restore discovery project/TFM/config contradiction.' }
+        Assert-GateEqual @($project.frameworks) $frameworks 'declared restore frameworks'
+        Assert-GateEqual @($project.configPaths) $configs 'effective config paths'
+        Assert-GateEqual @($project.restoreToolInputs) (Get-GateRestoreToolInputs ([string]$properties.RestoreTaskAssemblyFile) ([string]$properties.NuGetRestoreTargets)) 'SDK restore task dependency inputs'
+        Assert-GateEqual @($project.restoreOutputs) $outputs 'SDK restore output locations'
+    }
+}
+
+function Assert-GateConfigProof {
+    param($Entry, [string[]]$ConfigPaths)
+    $keys=@($Entry.PSObject.Properties.Name | Sort-Object)
+    Assert-GateEqual $keys @('artifact','bytes','path','proofKind','sha256') 'hash-only configuration proof shape'
+    if ($Entry.proofKind -cne 'EffectiveNuGetConfigHashOnly' -or $Entry.artifact -ne $null -or $Entry.path -inotin $ConfigPaths -or -not [IO.Path]::IsPathRooted($Entry.path) -or [IO.Path]::GetFullPath($Entry.path) -cne $Entry.path -or $Entry.sha256 -cnotmatch '^[0-9a-f]{64}$' -or ($Entry.bytes -isnot [int] -and $Entry.bytes -isnot [long]) -or $Entry.bytes -le 0) { throw 'Invalid effective configuration hash-only proof.' }
+    Assert-GateInputs @($Entry)
+}
+
+function Assert-GateRestoreGraph {
+    param($Stage, $Result, $Context)
+    Assert-GateRestoreDiscovery $Stage.graph $Result $Context
+    $configs=@($Stage.graph.configPaths | Sort-Object -Unique)
+    foreach ($config in $configs) {
+        $entries=@($Stage.inputs | Where-Object { $_.path -ieq $config })
+        if ($entries.Count -ne 1) { throw 'Effective config omitted from restore inputs.' }
+        Assert-GateConfigProof $entries[0] $configs
+    }
+    $expectedOutputs=@($Stage.graph.restoreOutputs | Sort-Object -Unique)
+    Assert-GateEqual @($Stage.outputs.path | Sort-Object -Unique) $expectedOutputs 'complete SDK restore outputs'
+    foreach ($project in $Stage.graph) {
+        $entry=@($Stage.outputs | Where-Object { $_.path -ieq $project.assetsPath })
+        if ($entry.Count -ne 1) { throw 'Referenced project assets absent.' }
+        $assets=Get-Content -LiteralPath (Assert-GateArtifact $entry[0].artifact $Result $Context.runRoot) -Raw -Encoding UTF8 | ConvertFrom-Json
+        if ($assets.project.restore.projectPath -ine $project.project -or $assets.project.restore.projectUniqueName -ine $project.project) { throw 'Restore assets project identity mismatch.' }
+        Assert-GateEqual @($assets.project.restore.originalTargetFrameworks | Sort-Object -Unique) @($project.frameworks | Sort-Object -Unique) 'restored graph original TFM'
+        Assert-GateEqual @($assets.project.frameworks.PSObject.Properties.Name | Sort-Object -Unique) @($project.frameworks | Sort-Object -Unique) 'restored graph frameworks'
+        foreach ($tfm in $project.frameworks) { if ($tfm -cnotin @($assets.targets.PSObject.Properties.Name | ForEach-Object { $_.Split('/')[0] } | Sort-Object -Unique)) { throw 'Referenced restored target missing.' } }
+        Assert-GateEqual @($assets.project.restore.configFilePaths | ForEach-Object { [IO.Path]::GetFullPath($_) } | Sort-Object -Unique) @($project.configPaths) 'assets effective config discovery'
+    }
+    foreach ($prior in @($Stage.priorOutputs)) {
+        if ($prior.path -inotin $expectedOutputs) { throw 'Undeclared prior restore output.' }
+        $null=Assert-GateArtifact $prior.artifact $Result $Context.runRoot
+        if ($prior.sha256 -cne $prior.artifact.sha256 -or $prior.bytes -ne $prior.artifact.bytes) { throw 'Prior restore output archive mismatch.' }
+    }
 }
 
 function Get-GatePackageInputs {
@@ -403,8 +518,8 @@ function Get-GatePackageInputs {
 }
 
 function New-GateStage {
-    param([string]$Name, $Native, [object[]]$Inputs, [object[]]$Outputs, $Result)
-    return [pscustomobject][ordered]@{name=$Name; mode='Executed'; runId=$Result.runId; resultId=$Result.resultId; command=$Native.command; startedAt=$Native.startedAt; endedAt=$Native.endedAt; processExitCode=$Native.processExitCode; inputs=@($Inputs); inputFingerprint=Get-GateFingerprint $Inputs; outputs=@($Outputs); outputFingerprint=Get-GateFingerprint $Outputs; reuse=$null}
+    param([string]$Name, $Native, [object[]]$Inputs, [object[]]$Outputs, $Result, [object[]]$Graph=@(), [object[]]$PriorOutputs=@())
+    return [pscustomobject][ordered]@{name=$Name; mode='Executed'; runId=$Result.runId; resultId=$Result.resultId; command=$Native.command; startedAt=$Native.startedAt; endedAt=$Native.endedAt; processExitCode=$Native.processExitCode; inputs=@($Inputs); inputFingerprint=Get-GateFingerprint $Inputs; outputs=@($Outputs); outputFingerprint=Get-GateFingerprint $Outputs; graph=@($Graph); priorOutputs=@($PriorOutputs); reuse=$null}
 }
 
 function Assert-GateStage {
@@ -431,12 +546,9 @@ function Assert-GateStage {
     }
     if ($argv[0] -cne $Name -or $argv[1] -ine $Result.configuration.project) { throw 'Stage command project mismatch.' }
     if ($Name -ceq 'restore') {
-        foreach ($binding in @(@('Configuration',$Result.configuration.configuration),@('TargetFramework',$Result.configuration.tfm))) {
-            $prefix='-p:'+$binding[0]+'='
-            $values=@($argv | Where-Object { $_.StartsWith($prefix,[StringComparison]::OrdinalIgnoreCase) })
-            if ($values.Count -ne 1 -or $values[0] -cne $prefix+$binding[1]) { throw 'Restore Configuration/TFM argv mismatch.' }
-        }
-        if (@($argv | Where-Object { $_ -match '^/(p|property):|^--(configuration|framework)$|^-[cf]$' }).Count) { throw 'Ambiguous restore dimension argv.' }
+        $values=@($argv | Where-Object { $_.StartsWith('-p:Configuration=',[StringComparison]::OrdinalIgnoreCase) })
+        if ($values.Count -ne 1 -or $values[0] -cne '-p:Configuration='+$Result.configuration.configuration) { throw 'Restore Configuration argv mismatch.' }
+        if (@($argv | Where-Object { $_ -match '(?i)TargetFramework|^/(p|property):|^--(configuration|framework)$|^-[cf]$' }).Count) { throw 'Restore must preserve per-project frameworks; global TFM forbidden.' }
     }
     if ($Name -cne 'restore') {
         $index=[Array]::IndexOf($argv,'-c')
@@ -465,11 +577,27 @@ function Assert-GateStage {
         $seen=@{}
         foreach ($entry in $entries) {
             if ($seen.ContainsKey($entry.path)) { throw 'Duplicate stage path.' }; $seen[$entry.path]=$true
-            $null=Assert-GateArtifact $entry.artifact $Result $Context.runRoot
-            if ($entry.sha256 -cne $entry.artifact.sha256 -or $entry.bytes -ne $entry.artifact.bytes) { throw 'Stage archive contradiction.' }
+            $configs=@($Result.provenance.closure.configPaths | Sort-Object -Unique)
+            if ($entry.proofKind) {
+                if ($set -cne 'inputs') { throw 'Hash-only output forbidden.' }
+                Assert-GateConfigProof $entry $configs
+            } else {
+                if ($entry.path -iin $configs) { throw 'Effective config must use hash-only proof.' }
+                $null=Assert-GateArtifact $entry.artifact $Result $Context.runRoot
+                if ($entry.sha256 -cne $entry.artifact.sha256 -or $entry.bytes -ne $entry.artifact.bytes) { throw 'Stage archive contradiction.' }
+            }
         }
         if ((Get-GateFingerprint $entries) -cne $Stage.($set.Substring(0,$set.Length-1)+'Fingerprint')) { throw 'Forged stage fingerprint.' }
     }
+    if ($Name -ceq 'restore') { Assert-GateRestoreGraph $Stage $Result $Context }
+    if ($Name -ceq 'build') {
+        foreach ($config in @($Result.provenance.closure.configPaths | Sort-Object -Unique)) {
+            $entry=@($Stage.inputs | Where-Object { $_.path -ieq $config })
+            if ($entry.Count -ne 1) { throw 'Effective config omitted from build inputs.' }
+            Assert-GateConfigProof $entry[0] @($Result.provenance.closure.configPaths)
+        }
+    }
+
 }
 
 function Assert-GateProvenance {
@@ -501,6 +629,16 @@ function Assert-GateProvenance {
     }
     $sdkReceipt=@($p.invocations | Where-Object { $_.toolArguments.Count -eq 1 -and $_.toolArguments[0] -ceq '--version' })
     if ($sdkReceipt.Count -ne 1 -or $sdkReceipt[0].processExitCode -ne 0 -or ([IO.File]::ReadAllText($sdkReceipt[0].stdoutPath)).Trim() -cne $p.sdk) { throw 'SDK receipt mismatch.' }
+    Assert-GateRestoreDiscovery $p.closure $Result $Context
+    if (-not $p.sourceBeforeRestore -or @($p.sourceBeforeRestore.inputs.path | Sort-Object -Unique).Count -ne $p.sourceBeforeRestore.inputs.Count -or $p.sourceBeforeRestore.sha -cne $Result.source.before.sha -or (Get-GateFingerprint $p.sourceBeforeRestore.inputs) -cne $p.sourceBeforeRestore.inputFingerprint) { throw 'Pre-restore source proof absent/forged.' }
+    Assert-GateInputs $p.sourceBeforeRestore.inputs
+    foreach ($entry in $p.sourceBeforeRestore.inputs) {
+        $current=@($Result.source.before.inputs | Where-Object { $_.path -ieq $entry.path })
+        if ($current.Count -ne 1 -or $current[0].sha256 -cne $entry.sha256 -or $current[0].bytes -ne $entry.bytes) { throw 'Authored/SDK/config source changed across restore.' }
+    }
+    foreach ($config in @($p.closure.configPaths | Sort-Object -Unique)) {
+        foreach ($source in @($p.sourceBeforeRestore,$Result.source.before,$Result.source.after)) { if (@($source.inputs | Where-Object { $_.path -ieq $config }).Count -ne 1) { throw 'Effective config omitted from source proof.' } }
+    }
     Assert-GateInputs $Result.source.after.inputs
     Assert-GateStage $p.restore $Result $Context 'restore'
     Assert-GateStage $p.build $Result $Context 'build'
@@ -517,8 +655,10 @@ function Assert-GateProvenance {
     foreach ($entry in $p.compilerInputs) {
         $match=@($traced | Where-Object { $_.path -ieq $entry.path })
         if (-not $match.Count -or @($match | Where-Object { $_.sha256 -cne $entry.sha256 }).Count) { throw 'Compiler input trace/hash mismatch.' }
-        $null=Assert-GateArtifact $entry.artifact $Result $Context.runRoot
-        if ($entry.artifact.sha256 -cne $entry.sha256) { throw 'Compiler input archive mismatch.' }
+        if ($entry.proofKind) { Assert-GateConfigProof $entry @($p.closure.configPaths) } else {
+            $null=Assert-GateArtifact $entry.artifact $Result $Context.runRoot
+            if ($entry.artifact.sha256 -cne $entry.sha256) { throw 'Compiler input archive mismatch.' }
+        }
     }
     if (@($traced.path | Sort-Object -Unique).Count -ne $p.compilerInputs.Count) { throw 'Incomplete actual compiler closure.' }
     Assert-GateInputs $p.compilerInputs
@@ -612,6 +752,7 @@ function Use-GateReuse {
     if ((Get-GateHash $path) -cne $entry.sha256 -or (Get-Item -LiteralPath $path).Length -ne $entry.bytes) { throw 'Corrupt reuse receipt.' }
     $prior=Get-Content -LiteralPath $path -Raw -Encoding UTF8 | ConvertFrom-Json
     if ($prior.schemaVersion -ne 1 -or ($prior.example -and -not $Context.allowExample) -or $prior.sdk -cne $Sdk -or $prior.source.sha -cne $Result.source.before.sha -or $prior.configSha256 -cne $Result.configuration.configSha256 -or $prior.project -ine $Result.configuration.project -or $prior.tfm -cne $Result.configuration.tfm -or $prior.configuration -cne $Context.configuration) { throw 'Reuse source/config/TFM/SDK mismatch.' }
+    Assert-GateRestoreDiscovery $Result.provenance.closure $Result $Context
     Assert-GateInputs $prior.source.inputs
     if ($prior.source.inputFingerprint -cne (Get-GateFingerprint $prior.source.inputs)) { throw 'Corrupt reuse input fingerprint.' }
     # Validate original receipts against their actual old-owned archive, then make
@@ -630,9 +771,9 @@ function Use-GateReuse {
         if (-not $oldStage -or $oldStage.mode -cne 'Executed') { throw 'Reuse requires an original executed receipt.' }
         Assert-GateStage $oldStage $oldResult $oldContext $name
         Assert-GateInputs $oldStage.inputs; Assert-GateInputs $oldStage.outputs
-        $inputs=Save-GateFiles $Result $Context.runRoot @($oldStage.inputs.path) ('reuse-'+$name+'-inputs')
+        $inputs=Save-GateFiles $Result $Context.runRoot @($oldStage.inputs.path) ('reuse-'+$name+'-inputs') @($Result.provenance.closure.configPaths)
         $outputs=Save-GateFiles $Result $Context.runRoot @($oldStage.outputs.path) ('reuse-'+$name+'-outputs')
-        $reused[$name]=[pscustomobject]@{name=$name; mode='Reused'; runId=$Result.runId; resultId=$Result.resultId; command=$null; startedAt=$null; endedAt=$null; processExitCode=$null; inputs=$inputs; inputFingerprint=Get-GateFingerprint $inputs; outputs=$outputs; outputFingerprint=Get-GateFingerprint $outputs; reuse=[pscustomobject]@{manifestArtifact=$manifestArtifact; originalRunId=$oldStage.runId; originalResultId=$oldStage.resultId; receipt=$oldStage}}
+        $reused[$name]=[pscustomobject]@{name=$name; mode='Reused'; runId=$Result.runId; resultId=$Result.resultId; command=$null; startedAt=$null; endedAt=$null; processExitCode=$null; inputs=$inputs; inputFingerprint=Get-GateFingerprint $inputs; outputs=$outputs; outputFingerprint=Get-GateFingerprint $outputs; graph=@($Result.provenance.closure); priorOutputs=@(); reuse=[pscustomobject]@{manifestArtifact=$manifestArtifact; originalRunId=$oldStage.runId; originalResultId=$oldStage.resultId; receipt=$oldStage}}
     }
     if ($NeedBuild) {
         if (-not $prior.compilerTraceArtifact -or -not $prior.compilerInputs.Count) { throw 'Reuse compiler trace missing.' }
@@ -641,7 +782,7 @@ function Use-GateReuse {
         Copy-Item -LiteralPath $priorTrace -Destination $currentTrace
         $reused.compilerTraceArtifact=Add-GateArtifact $Result $Context.runRoot $currentTrace 'compiler-trace'
         Assert-GateInputs $prior.compilerInputs
-        $reused.compilerInputs=Save-GateFiles $Result $Context.runRoot @($prior.compilerInputs.path) 'compiler-input'
+        $reused.compilerInputs=Save-GateFiles $Result $Context.runRoot @($prior.compilerInputs.path) 'compiler-input' @($Result.provenance.closure.configPaths)
     }
     return [pscustomobject]$reused
 }
@@ -689,7 +830,7 @@ function Invoke-GateDotNet {
         Set-GateTerminal $Result $(if ($Step.skipPolicy -ceq 'MissingTool' -and $Step.required -eq $false) { 'Skipped' } else { 'Blocked' }) 'MissingTool'
         return
     }
-    $Result.provenance=[pscustomobject][ordered]@{schemaVersion=1; example=[bool]$Context.allowExample; project=$Result.configuration.project; tfm=$Result.configuration.tfm; configuration=$Context.configuration; configSha256=$Result.configuration.configSha256; sdk=$null; source=$null; closure=@(); invocations=@(); restore=$null; build=$null; test=$null; assembly=$null; compilerTraceArtifact=$null; compilerInputs=@(); loadedBefore=@(); loadedAfter=@(); trxBinding=$null}
+    $Result.provenance=[pscustomobject][ordered]@{schemaVersion=1; example=[bool]$Context.allowExample; project=$Result.configuration.project; tfm=$Result.configuration.tfm; configuration=$Context.configuration; configSha256=$Result.configuration.configSha256; sdk=$null; source=$null; sourceBeforeRestore=$null; closure=@(); invocations=@(); restore=$null; build=$null; test=$null; assembly=$null; compilerTraceArtifact=$null; compilerInputs=@(); loadedBefore=@(); loadedAfter=@(); trxBinding=$null}
     $nodeRoot=Get-GateNodeRoot $Context.runRoot $Result.resultId
     try {
         $sdkInvocation=Invoke-GateTool $Context $Result @('--version') 'sdk'
@@ -713,29 +854,34 @@ function Invoke-GateDotNet {
         $Context.sdkInputPaths+= @(Get-ChildItem -LiteralPath $compilerRoot -File -Recurse | ForEach-Object { $_.FullName })
         $Result.tools=@([pscustomobject]@{name='dotnet'; version=$sdk; executable=$Context.dotnetPath; sha256=$(if ($Context.dotnetPath) { Get-GateHash $Context.dotnetPath } else { Get-GateHash $Context.control.executor }); synthetic=[bool]$Context.control},[pscustomobject]@{name='PowerShell'; version=$PSVersionTable.PSVersion.ToString(); host=[Environment]::Version.ToString(); os=[Environment]::OSVersion.VersionString})
         $closure=Get-GateProjectClosure $Context $Result $Result.configuration.project 'before'
-        $before=Get-GateSource $Context.repoRoot $closure.inputPaths $Context.exclusions
+        $authoredPaths=@($closure.inputPaths | Where-Object { $_ -inotin $closure.restoreOutputs })
+        $before=Get-GateSource $Context.repoRoot $authoredPaths $Context.exclusions
+        $Result.provenance.sourceBeforeRestore=$before; $Result.provenance.closure=$closure.projects
         $Result.source=[pscustomobject]@{before=$before; after=$null}
-        $initialInputs=Save-GateFiles $Result $Context.runRoot $closure.inputPaths 'input'
+        $initialInputs=Save-GateFiles $Result $Context.runRoot $authoredPaths 'input' $closure.configPaths
+        $priorOutputs=Save-GateFiles $Result $Context.runRoot @($closure.restoreOutputs | Where-Object { [IO.File]::Exists($_) }) 'prior-restore-output'
         $skipBuild=[bool]$NoBuild -and $Result.kind -ceq 'dotnet-test'
         $reused=$null
         if ($NoRestore -or $skipBuild) { $reused=Use-GateReuse $Context $Result $ReuseManifestPath $sdk $skipBuild }
-        $restoreArgs=@('restore',$Result.configuration.project,('-p:Configuration='+$Context.configuration),('-p:TargetFramework='+$Result.configuration.tfm),'--nologo')
+        $restoreArgs=@('restore',$Result.configuration.project,('-p:Configuration='+$Context.configuration),'--nologo')
         if ($NoRestore -or $skipBuild) { $Result.provenance.restore=$reused.restore }
         else {
             $native=Invoke-GateTool $Context $Result $restoreArgs 'restore'
             Assert-GateInputs $before.inputs
-            $assets=Save-GateFiles $Result $Context.runRoot @($closure.projects.assetsPath) 'assets'
-            $Result.provenance.restore=New-GateStage 'restore' $native $initialInputs $assets $Result
+            $assets=Save-GateFiles $Result $Context.runRoot $closure.restoreOutputs 'assets'
+            $Result.provenance.restore=New-GateStage 'restore' $native $initialInputs $assets $Result $closure.projects $priorOutputs
+            Assert-GateStage $Result.provenance.restore $Result $Context 'restore'
         }
         # Restore can introduce package imports/analyzers. Freeze the resulting
         # evaluated source plus the exact package resolution before building.
         $restored=Get-GateProjectClosure $Context $Result $Result.configuration.project 'restored'
+        Assert-GateEqual @($restored.projects.project) @($closure.projects.project) 'restore evaluated project graph'
         $packagePaths=Get-GatePackageInputs $restored.projects
         $inputPaths=@($restored.inputPaths+$packagePaths | Sort-Object -Unique)
         Assert-GateInputs $before.inputs
         $source=Get-GateSource $Context.repoRoot $inputPaths $Context.exclusions
         $Result.source.before=$source; $Result.provenance.source=$source; $Result.provenance.closure=$restored.projects
-        $buildInputs=Save-GateFiles $Result $Context.runRoot @($inputPaths+$restored.projects.assetsPath | Sort-Object -Unique) 'build-input'
+        $buildInputs=Save-GateFiles $Result $Context.runRoot @($inputPaths+$restored.projects.assetsPath | Sort-Object -Unique) 'build-input' $restored.configPaths
         $assembly=$restored.projects[0].targetPath; $Result.provenance.assembly=$assembly
         if ($skipBuild) {
             $Result.provenance.build=$reused.build
@@ -751,7 +897,7 @@ function Invoke-GateDotNet {
             Assert-GateInputs $source.inputs; Assert-GateInputs $Result.provenance.restore.outputs
             $traced=Get-GateCompilerTrace $tracePath
             $Result.provenance.compilerTraceArtifact=Add-GateArtifact $Result $Context.runRoot $tracePath 'compiler-trace'
-            $Result.provenance.compilerInputs=Save-GateFiles $Result $Context.runRoot @($traced.path) 'compiler-input'
+            $Result.provenance.compilerInputs=Save-GateFiles $Result $Context.runRoot @($traced.path) 'compiler-input' $restored.configPaths
             foreach ($entry in $traced) {
                 if ((Get-GateHash $entry.path) -cne $entry.sha256) { throw 'Compiler input changed since compile.' }
             }

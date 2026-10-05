@@ -1,4 +1,4 @@
-param([string]$ArtifactRoot=('local/Artifacts/issue6-cooking-slice1-'+[guid]::NewGuid().ToString('N').Substring(0,8)))
+param([string]$ArtifactRoot=('local/Artifacts/issue6-cooking-slice1-'+[guid]::NewGuid().ToString('N').Substring(0,8)),[switch]$RestoreGraphOnly)
 $ErrorActionPreference='Stop'
 $repoRoot=[IO.Path]::GetFullPath((Join-Path $PSScriptRoot '../..'))
 . (Join-Path $repoRoot 'tools/test-gate-result-contract.ps1')
@@ -48,10 +48,10 @@ function Save-ControlReceipt {
     $widthRecords=@($cases | Where-Object { $_.group -ceq 'native-streams' })
     $widthEvidence=@($widthRecords | ForEach-Object { $_.evidence.width })
     $widthStatus=Get-ControlWidthStatus $widthRecords
-    $receipt=[pscustomobject]@{schemaVersion=1; example=$true; acceptance='IsolatedContractControlsOnly'; sourceBefore=$sourceBefore; sourceAfter=$(if ($Final) { Get-GateSource $repoRoot $sourceInputs $sourceBefore.evidenceExclusions } else { $null }); tool=[pscustomobject]@{powershell=$PSVersionTable.PSVersion.ToString(); host=[Environment]::Version.ToString(); os=[Environment]::OSVersion.VersionString}; command=@('powershell','-NoProfile','-ExecutionPolicy','Bypass','-File',$PSCommandPath,'-ArtifactRoot',$ArtifactRoot); status=$(if ($Final -and $failed -eq 0) { 'Passed' } else { 'Failed' }); total=$cases.Count; executed=$cases.Count; passed=$cases.Count-$failed; failed=$failed; fullControlSuiteAccepted=($Final -and $failed -eq 0); cases=@($cases.ToArray()); realDotNet='NotRun'; unity='NotRun'; issueAcceptance='NotRun'}
+    $receipt=[pscustomobject]@{schemaVersion=1; example=$true; acceptance=$(if ($RestoreGraphOnly) { 'IsolatedAffectedRestoreGraphControlsOnly' } else { 'IsolatedContractControlsOnly' }); sourceBefore=$sourceBefore; sourceAfter=$(if ($Final) { Get-GateSource $repoRoot $sourceInputs $sourceBefore.evidenceExclusions } else { $null }); tool=[pscustomobject]@{powershell=$PSVersionTable.PSVersion.ToString(); host=[Environment]::Version.ToString(); os=[Environment]::OSVersion.VersionString}; command=@('powershell','-NoProfile','-ExecutionPolicy','Bypass','-File',$PSCommandPath,'-ArtifactRoot',$ArtifactRoot); status=$(if ($Final -and $failed -eq 0) { 'Passed' } else { 'Failed' }); total=$cases.Count; executed=$cases.Count; passed=$cases.Count-$failed; failed=$failed; fullControlSuiteAccepted=($Final -and $failed -eq 0 -and -not $RestoreGraphOnly); cases=@($cases.ToArray()); realDotNet='NotRun'; unity='NotRun'; issueAcceptance='NotRun'}
     $receipt | Add-Member -NotePropertyName consoleWidthCoverage -NotePropertyValue ([pscustomobject]@{status=$widthStatus; dimension=$widthDimension; requested=$requiredWidths; observations=$widthEvidence})
     $receipt | Add-Member -NotePropertyName contractControlsAccepted -NotePropertyValue ($Final -and $failed -eq 0)
-    if ($Final -and $failed -eq 0 -and $widthStatus -cne 'Passed') { $receipt.status=$widthStatus; $receipt.fullControlSuiteAccepted=$false }
+    if ($Final -and $failed -eq 0 -and -not $RestoreGraphOnly -and $widthStatus -cne 'Passed') { $receipt.status=$widthStatus; $receipt.fullControlSuiteAccepted=$false }
     [IO.File]::WriteAllText((Join-Path $artifactRootFull 'controls.json'),(ConvertTo-GateJson $receipt),[Text.UTF8Encoding]::new($false))
 }
 
@@ -118,6 +118,118 @@ function Test-ControlPreprocessedImportRetention {
         }
     }
     return $true
+}
+
+
+# Cooking mixed graph and effective settings regressions use actual runner receipts.
+$mixed=Runner-Case 'restore-graph' 'mixed-own-TFMs-and-hash-only-config-positive' 'valid' 0 'Passed' 'mixed' -Verify {
+    param($r)
+    foreach ($leaf in $r.summary.children) {
+        if (@($leaf.provenance.restore.command.arguments[-1] | ConvertFrom-Json | Where-Object { $_ -like '-p:TargetFramework=*' }).Count) { return $false }
+        foreach ($stage in @($leaf.provenance.restore,$leaf.provenance.build)) {
+            $proof=@($stage.inputs | Where-Object proofKind -ceq 'EffectiveNuGetConfigHashOnly')
+            if ($proof.Count -ne 1 -or $proof[0].artifact -ne $null -or $proof[0].sha256 -cne (Get-GateHash $proof[0].path)) { return $false }
+        }
+        foreach ($project in $leaf.provenance.restore.graph) {
+            $entry=@($leaf.provenance.restore.outputs | Where-Object path -ieq $project.assetsPath)[0]
+            $assets=Get-Content -LiteralPath (Assert-GateArtifact $entry.artifact $leaf $r.runRoot) -Raw -Encoding UTF8 | ConvertFrom-Json
+            if ($project.tfm -cnotin @($assets.project.frameworks.PSObject.Properties.Name)) { return $false }
+        }
+    }
+    return $r.summary.children[0].configuration.tfm -ceq 'netstandard2.0'
+}
+$null=Runner-Case 'restore-graph' 'relative-sdk-task-registration-positive' 'valid' 0 'Passed' 'build' -Verify {
+    param($r)
+    $leaf=$r.summary.children[0];$project=$leaf.provenance.closure[0]
+    $raw=Assert-GateArtifact $project.settingsArtifact $leaf $r.runRoot
+    $properties=(Get-Content -LiteralPath $raw -Raw -Encoding UTF8 | ConvertFrom-Json).Properties
+    $task=[IO.Path]::GetFullPath((Join-Path (Split-Path $properties.NuGetRestoreTargets) $properties.RestoreTaskAssemblyFile))
+    return -not [IO.Path]::IsPathRooted($properties.RestoreTaskAssemblyFile) -and $task -iin $project.restoreToolInputs -and $properties.NuGetRestoreTargets -iin $project.restoreToolInputs -and @($leaf.source.before.inputs | Where-Object { $_.path -ieq $task -and $_.sha256 -ceq (Get-GateHash $task) }).Count -eq 1
+}
+foreach ($mode in @('settings-task-missing','settings-target-missing')) {
+    $null=Runner-Case 'restore-graph' $mode $mode 1 'Failed' 'build' -Verify { param($r) @($r.launches | Where-Object { $_.stage -cin @('restore','build','test') }).Count -eq 0 -and $r.summary.children[0].provenance.invocations.Count -gt 0 }
+}
+foreach ($mode in @('restore-wrong-reference-tfm','restore-missing-reference','config-change-restore','config-change-build','source-change-restore','sdk-change-restore','sdk-nuget-change-restore')) {
+    $null=Runner-Case 'restore-graph' $mode $mode 1 'Failed' 'test' -Verify { param($r) @($r.launches | Where-Object stage -ceq 'test').Count -eq 0 }
+}
+$null=Runner-Case 'restore-graph' 'recorded-generated-transition-is-not-authored-source-change' 'valid' 0 'Passed' 'build' -Configure {
+    param($f)
+    $p=$f.data[0];$null=New-Item -ItemType Directory -Path $p.extensionsPath -Force
+    foreach ($ext in @('.nuget.g.props','.nuget.g.targets')) { [IO.File]::WriteAllText((Join-Path $p.extensionsPath ((Split-Path $p.project -Leaf)+$ext)),'<Project><!-- prior SDK restore output --></Project>') }
+} -Verify { param($r) $stage=$r.summary.children[0].provenance.restore; $stage.priorOutputs.Count -eq 2 -and $stage.outputs.Count -eq 3 }
+# JSON roundtrip mutations retain the trusted assigned plan and actual raw archives.
+foreach ($mutation in @('omitted-config','forged-config-hash','forged-config-size','extra-proof-field','wrong-proof-kind','hash-only-authored-source','config-archive','missing-graph','forged-reference-TFM','missing-source-config')) {
+    $directory=New-ControlDirectory
+    $candidate=ConvertTo-GateJson $mixed.summary | ConvertFrom-Json
+    $leaf=$candidate.children[1];$stage=$leaf.provenance.restore
+    $proof=@($stage.inputs | Where-Object proofKind -ceq 'EffectiveNuGetConfigHashOnly')[0]
+    switch ($mutation) {
+        'omitted-config' { $stage.inputs=@($stage.inputs | Where-Object { $_.path -ine $proof.path }); $stage.inputFingerprint=Get-GateFingerprint $stage.inputs }
+        'forged-config-hash' { $proof.sha256='0'*64; $stage.inputFingerprint=Get-GateFingerprint $stage.inputs }
+        'forged-config-size' { $proof.bytes++; $stage.inputFingerprint=Get-GateFingerprint $stage.inputs }
+        'extra-proof-field' { $proof | Add-Member -NotePropertyName bypass -NotePropertyValue $true }
+        'wrong-proof-kind' { $proof.proofKind='SourceHashOnly' }
+        'hash-only-authored-source' { $proof.path=$leaf.provenance.closure[0].project; $proof.bytes=(Get-Item $proof.path).Length; $proof.sha256=Get-GateHash $proof.path; $stage.inputFingerprint=Get-GateFingerprint $stage.inputs }
+        'config-archive' { $proof.artifact=$stage.outputs[0].artifact }
+        'missing-graph' { $stage.graph=@() }
+        'forged-reference-TFM' { $stage.graph[1].frameworks=@('net9.0') }
+        'missing-source-config' { $leaf.source.before.inputs=@($leaf.source.before.inputs | Where-Object { $_.path -ine $proof.path }); $leaf.source.before.inputFingerprint=Get-GateFingerprint $leaf.source.before.inputs; $leaf.provenance.source=$leaf.source.before }
+    }
+    [IO.File]::WriteAllText((Join-Path $directory 'candidate.json'),(ConvertTo-GateJson $candidate))
+    $candidate=Get-Content -LiteralPath (Join-Path $directory 'candidate.json') -Raw -Encoding UTF8 | ConvertFrom-Json
+    $ctx=[pscustomobject]@{runRoot=$mixed.runRoot;allowExample=$true;control=$null;abortStatus=$null}
+    # Control identity remains the exact fixture that generated this accepted baseline.
+    $ctx.control=Get-Content -LiteralPath (Join-Path $mixed.fixtureRoot 'context.json') -Raw -Encoding UTF8 | ConvertFrom-Json
+    $accepted=$false;$reason=$null
+    try { $null=Assert-GateResult $candidate $mixed.summary $ctx; $accepted=$true } catch { $reason=$_.Exception.Message }
+    Record-Control 'restore-graph-json' ('reject-'+$mutation) $false $accepted $directory @('Assert-GateResult','candidate.json','trusted-assigned-plan') $null $reason
+}
+# Reused effective configuration is never copied and cannot change after the seed.
+$configReuseFixture=New-GateControlFixture $executor 'valid' 'test'
+$configReuseDirectory=New-ControlDirectory;$configReuse=Invoke-ControlRunner $configReuseFixture $configReuseDirectory
+Record-Control 'restore-graph-reuse' 'config-hash-only-reuse-seed' 0 $configReuse.native.processExitCode $configReuseDirectory $configReuse.native.command $configReuse.native.processExitCode $configReuse.path
+foreach ($flag in @('-NoBuild','-NoRestore')) {
+    $directory=New-ControlDirectory;$r=Invoke-ControlRunner $configReuseFixture $directory @($flag,'-ReuseManifestPath',(Join-Path $configReuse.runRoot 'reuse-manifest.json'))
+    $proof=@($r.summary.children[0].provenance.restore.inputs | Where-Object proofKind -ceq 'EffectiveNuGetConfigHashOnly')
+    Record-Control 'restore-graph-reuse' ($flag+'-valid-effective-config-hash-only') $true ($r.native.processExitCode -eq 0 -and $proof.Count -eq 1 -and $proof[0].artifact -eq $null) $directory $r.native.command $r.native.processExitCode $r.path
+}
+
+$directory=New-ControlDirectory;$copyRoot=Join-Path $directory 'forged-prior'
+Copy-Item -LiteralPath $configReuse.runRoot -Destination $copyRoot -Recurse
+$copyIndexPath=Join-Path $copyRoot 'reuse-manifest.json'
+$index=Get-Content -LiteralPath $copyIndexPath -Raw -Encoding UTF8 | ConvertFrom-Json
+$entry=$index.receipts[0];$receiptPath=Join-Path $copyRoot $entry.path
+$prior=Get-Content -LiteralPath $receiptPath -Raw -Encoding UTF8 | ConvertFrom-Json
+foreach ($invocation in $prior.invocations) {
+    $invocation.stdoutPath=$invocation.stdoutPath.Replace($configReuse.runRoot,$copyRoot)
+    $invocation.stderrPath=$invocation.stderrPath.Replace($configReuse.runRoot,$copyRoot)
+}
+$prior.restore.inputs=@($prior.restore.inputs | Where-Object { $_.proofKind -cne 'EffectiveNuGetConfigHashOnly' })
+$prior.restore.inputFingerprint=Get-GateFingerprint $prior.restore.inputs
+[IO.File]::WriteAllText($receiptPath,(ConvertTo-GateJson $prior))
+$entry.bytes=(Get-Item $receiptPath).Length;$entry.sha256=Get-GateHash $receiptPath
+[IO.File]::WriteAllText($copyIndexPath,(ConvertTo-GateJson $index))
+$r=Invoke-ControlRunner $configReuseFixture $directory @('-NoRestore','-ReuseManifestPath',$copyIndexPath)
+Record-Control 'restore-graph-reuse' 'omitted-effective-config-in-rehashed-reuse-receipt-refused' $true ($r.native.processExitCode -eq 1 -and $r.summary.children[0].reason -ceq 'Effective config omitted from restore inputs.') $directory $r.native.command $r.native.processExitCode $r.path
+$null=Runner-Case 'restore-graph' 'authored-generated-name-lookalike-is-not-exempt' 'source-change-restore' 1 'Failed' 'build' -Configure {
+    param($f)
+    $path=Join-Path (Split-Path $f.data[0].project) 'Authored.nuget.g.targets'
+    [IO.File]::WriteAllText($path,'authored linked input with a generated-looking filename')
+    $f.data[0].compile[0]=$path
+} -Verify { param($r) $r.summary.children[0].reason -like 'Source/assets/binary changed:*Authored.nuget.g.targets' }
+[IO.File]::AppendAllText($configReuseFixture.data[0].configPaths[0],'changed config after seed')
+foreach ($flag in @('-NoBuild','-NoRestore')) {
+    $directory=New-ControlDirectory;$r=Invoke-ControlRunner $configReuseFixture $directory @($flag,'-ReuseManifestPath',(Join-Path $configReuse.runRoot 'reuse-manifest.json'))
+    Record-Control 'restore-graph-reuse' ($flag+'-changed-effective-config-refused') 1 $r.native.processExitCode $directory $r.native.command $r.native.processExitCode $r.path
+}
+if ($RestoreGraphOnly) {
+    $after=Get-GateSource $repoRoot $sourceInputs $sourceBefore.evidenceExclusions
+    $directory=New-ControlDirectory
+    Record-Control 'freeze' 'affected-inputs-before-after-identical' $true ($sourceBefore.sha -ceq $after.sha -and $sourceBefore.inputFingerprint -ceq $after.inputFingerprint) $directory @('Get-GateSource','sourceInputs') $null ([pscustomobject]@{before=$sourceBefore;after=$after})
+    Save-ControlReceipt $true
+    $failed=@($cases | Where-Object status -ceq 'Failed').Count
+    Write-Output ('Affected restore graph controls: {0} executed, {1} failed. Receipt: {2}' -f $cases.Count,$failed,(Join-Path $artifactRootFull 'controls.json'))
+    exit $(if ($failed) { 1 } else { 0 })
 }
 
 $null=Runner-Case 'imports' 'mixed-sdk-comments-retain-spaces-unicode-nonstandard-imports' 'valid' 0 'Passed' -Configure { param($f) Set-ControlPreprocessedImports $f } -Verify { param($r) Test-ControlPreprocessedImportRetention $r }
@@ -300,7 +412,9 @@ foreach ($identityCase in @('build-tfm','test-tfm','restore-tfm','restore-config
         $arguments=[string[]]($stage.command.arguments[-1] | ConvertFrom-Json)
         if ($stageName -ceq 'restore') {
             $prefix=if ($identityCase -ceq 'restore-tfm') { '-p:TargetFramework=' } else { '-p:Configuration=' }
-            for ($i=0; $i -lt $arguments.Count; $i++) { if ($arguments[$i].StartsWith($prefix)) { $arguments[$i]=$prefix+$(if ($identityCase -ceq 'restore-tfm') { 'net9.0' } else { 'Release' }) } }
+            if ($identityCase -ceq 'restore-tfm') { $arguments+=('-p:TargetFramework=net9.0') } else {
+                for ($i=0; $i -lt $arguments.Count; $i++) { if ($arguments[$i].StartsWith($prefix)) { $arguments[$i]=$prefix+'Release' } }
+            }
         } else {
             $flag=if ($identityCase.EndsWith('tfm')) { '-f' } else { '-c' }
             $arguments[[Array]::IndexOf($arguments,$flag)+1]=$(if ($flag -ceq '-f') { 'net9.0' } else { 'Release' })

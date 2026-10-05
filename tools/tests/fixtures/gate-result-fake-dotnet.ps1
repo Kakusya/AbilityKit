@@ -13,11 +13,16 @@ $project=@($context.projectData | Where-Object { $_.project -ieq $argv[1] })
 if ($project.Count -ne 1) { [Console]::Error.WriteLine('No isolated project data.'); exit 12 }
 $p=$project[0]
 if ($stage -ceq 'msbuild') {
+    if (@($argv | Where-Object { $_ -like '-target:*_GetRestoreSettings*' }).Count) {
+        $value=[pscustomobject]@{Properties=[pscustomobject]@{MSBuildProjectFullPath=$p.project; TargetFramework=$p.tfm; TargetFrameworks=''; _OutputConfigFilePaths=($p.configPaths -join ';'); ProjectAssetsFile=$p.assetsPath; MSBuildProjectExtensionsPath=$p.extensionsPath; RestoreTaskAssemblyFile=$(if ($context.mode -ceq 'settings-task-missing') { 'Absent.Build.Tasks.dll' } else { 'NuGet.Build.Tasks.dll' }); NuGetRestoreTargets=$(if ($context.mode -ceq 'settings-target-missing') { Join-Path $context.fixtureRoot 'sdk/10.0.300/Absent.targets' } else { Join-Path $context.fixtureRoot 'sdk/10.0.300/NuGet.targets' })}}
+        [Console]::Out.WriteLine((ConvertTo-Json -InputObject $value -Depth 30 -Compress)); exit 0
+    }
+    $generatedImports=@(foreach ($name in @('.nuget.g.props','.nuget.g.targets')) { $file=Join-Path $p.extensionsPath ((Split-Path $p.project -Leaf)+$name); if ([IO.File]::Exists($file)) { $file } })
     $preprocess=@($argv | Where-Object { $_ -like '-preprocess:*' })
     if ($preprocess.Count) {
         $path=$preprocess[0].Substring('-preprocess:'.Length)
         $commentLines=@('<Import Project="Sdk.props" Sdk="Microsoft.NET.Sdk">', 'This import was added implicitly because the Project element''s Sdk attribute specified "Microsoft.NET.Sdk".', '<Import Project="$(AlternateCommonProps)" Condition="''$(AlternateCommonProps)'' != ''''" />')
-        $commentLines+=@($p.imports)+@($p.preprocessedOnlyImports)
+        $commentLines+=@($p.imports)+@($p.preprocessedOnlyImports)+$generatedImports
         [IO.File]::WriteAllText($path,('<Project><!--'+"`n"+($commentLines -join "`n")+"`n"+'--></Project>'))
         exit 0
     }
@@ -26,15 +31,25 @@ if ($stage -ceq 'msbuild') {
     $items.Compile=@(foreach ($file in $p.compile) { [pscustomobject]@{Identity=$file; FullPath=$file} })
     $items.ProjectReference=@(foreach ($file in $p.references) { [pscustomobject]@{Identity=$file; FullPath=$file} })
     $tfm=if ($context.mode -ceq 'evaluated-tfm') { 'net9.0' } else { $p.tfm }
-    $value=[pscustomobject]@{Properties=[pscustomobject]@{MSBuildProjectFullPath=$p.project; MSBuildAllProjects=($p.imports -join ';'); TargetFramework=$tfm; TargetPath=$p.targetPath; ProjectAssetsFile=$p.assetsPath; AssemblyName=$p.assemblyName; NuGetPackageRoot=$p.packageRoot}; Items=[pscustomobject]$items}
+    $value=[pscustomobject]@{Properties=[pscustomobject]@{MSBuildProjectFullPath=$p.project; MSBuildAllProjects=(@($p.imports)+$generatedImports -join ';'); TargetFramework=$tfm; TargetPath=$p.targetPath; ProjectAssetsFile=$p.assetsPath; AssemblyName=$p.assemblyName; NuGetPackageRoot=$p.packageRoot}; Items=[pscustomobject]$items}
     [Console]::Out.WriteLine((ConvertTo-Json -InputObject $value -Depth 30 -Compress)); exit 0
 }
 if ($stage -ceq 'restore') {
+    $globalTfm=@($argv | Where-Object { $_ -like '-p:TargetFramework=*' })
     foreach ($item in $context.projectData) {
         $null=New-Item -ItemType Directory -Path (Split-Path $item.assetsPath) -Force
-        $value=[pscustomobject]@{version=3; targets=[pscustomobject]@{'net10.0'=[pscustomobject]@{}}; project=[pscustomobject]@{restore=[pscustomobject]@{projectUniqueName=$item.project}}; libraries=[pscustomobject]@{'Fixture/1.0.0'=[pscustomobject]@{type='package'; path='fixture/1.0.0'; files=@('tool.opaque')}}; packageFolders=[pscustomobject]@{($item.packageRoot)=[pscustomobject]@{}}}
-        [IO.File]::WriteAllText($item.assetsPath,(ConvertTo-Json -InputObject $value -Depth 30 -Compress))
+        $tfm=if ($globalTfm.Count) { $globalTfm[0].Substring('-p:TargetFramework='.Length) } else { $item.tfm }
+        if ($context.mode -ceq 'restore-wrong-reference-tfm' -and $item.project -ine $p.project) { $tfm='net9.0' }
+        $frameworks=[pscustomobject]@{($tfm)=[pscustomobject]@{}}
+        $restore=[pscustomobject]@{projectUniqueName=$item.project; projectPath=$item.project; originalTargetFrameworks=@($tfm); configFilePaths=@($item.configPaths)}
+        $value=[pscustomobject]@{version=3; targets=$frameworks; project=[pscustomobject]@{restore=$restore; frameworks=$frameworks}; libraries=[pscustomobject]@{'Fixture/1.0.0'=[pscustomobject]@{type='package'; path='fixture/1.0.0'; files=@('tool.opaque')}}; packageFolders=[pscustomobject]@{($item.packageRoot)=[pscustomobject]@{}}}
+        if ($context.mode -cne 'restore-missing-reference' -or $item.project -ieq $p.project) { [IO.File]::WriteAllText($item.assetsPath,(ConvertTo-Json -InputObject $value -Depth 30 -Compress)) }
+        foreach ($extension in @('.nuget.g.props','.nuget.g.targets')) { [IO.File]::WriteAllText((Join-Path $item.extensionsPath ((Split-Path $item.project -Leaf)+$extension)),('<Project><!-- recorded restore output '+$tfm+' --></Project>')) }
     }
+    if ($context.mode -ceq 'config-change-restore') { [IO.File]::AppendAllText($p.configPaths[0],'changed effective config') }
+    if ($context.mode -ceq 'source-change-restore') { [IO.File]::AppendAllText($p.compile[0],'changed source during restore') }
+    if ($context.mode -ceq 'sdk-nuget-change-restore') { [IO.File]::AppendAllText((Join-Path $context.fixtureRoot 'sdk/10.0.300/NuGet.Configuration.dll'),'changed NuGet settings tool') }
+    if ($context.mode -ceq 'sdk-change-restore') { [IO.File]::AppendAllText((Join-Path $context.fixtureRoot 'sdk/10.0.300/MSBuild.dll'),'changed SDK') }
     [Console]::Out.WriteLine('restore evidence'); exit 0
 }
 if ($stage -ceq 'build') {
@@ -42,6 +57,10 @@ if ($stage -ceq 'build') {
     $builds=@(Get-Content -LiteralPath $context.launchesPath | ForEach-Object { $_ | ConvertFrom-Json } | Where-Object { $_.stage -ceq 'build' }).Count
     if ($context.mode -ceq 'build-fail' -or ($context.mode -ceq 'build-fail-once' -and $builds -eq 1)) { [Console]::Error.WriteLine('intentional build failure'); exit 7 }
     if ($context.mode -ceq 'build-warning-zero') { [Console]::Error.WriteLine('WARNING: required evidence unavailable; skipping'); exit 0 }
+    if ([IO.File]::Exists($p.assetsPath)) {
+        $assets=Get-Content -LiteralPath $p.assetsPath -Raw -Encoding UTF8 | ConvertFrom-Json
+        if ($p.tfm -cnotin @($assets.project.frameworks.PSObject.Properties.Name)) { [Console]::Error.WriteLine('NETSDK1005: own project TFM missing from synthetic restore assets'); exit 1 }
+    }
     foreach ($item in $context.projectData) {
         $null=New-Item -ItemType Directory -Path (Split-Path $item.targetPath) -Force
         [IO.File]::WriteAllText($item.targetPath,'SYNTHETIC BINARY '+$item.assemblyName)
@@ -55,6 +74,7 @@ if ($stage -ceq 'build') {
     $traceInputs=@($generated,$p.project)+@($p.compile)+@($p.imports)
     $trace=@(foreach ($file in $traceInputs) { $file+'|'+(Get-FileHash -LiteralPath $file -Algorithm SHA256).Hash }) -join "`n"
     [IO.File]::WriteAllText($tracePath,$trace)
+    if ($context.mode -ceq 'config-change-build') { [IO.File]::AppendAllText($p.configPaths[0],'changed config during build') }
     if ($context.mode -ceq 'source-change') { [IO.File]::AppendAllText($p.compile[0],'changed') }
     if ($context.mode -ceq 'import-change') { [IO.File]::AppendAllText($p.preprocessedOnlyImports[0],'changed import') }
     exit 0

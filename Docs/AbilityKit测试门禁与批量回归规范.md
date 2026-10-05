@@ -389,6 +389,12 @@ powershell -NoProfile -ExecutionPolicy Bypass -File tools/run_test_gate.ps1 -Gat
 
 每次 build 另在本 run 拥有的目录写入临时 compiler target，通过命令参数导入；不修改项目文件。该 target 在每个项目的 CoreCompile 前使用 MSBuild 自带 [GetFileHash](https://learn.microsoft.com/en-us/visualstudio/msbuild/getfilehash-task) 记录最终 Compile、ReferencePath、Analyzer、AdditionalFiles、EmbeddedResource 与导入的实际路径/hash，包括 target 加入的生成文件。runner 归档此 trace 与输入副本，执行后逐项复验；SDK 的 MSBuild 与 Roslyn 工具输入也归档。普通评估和实际编译 trace 各自保留，不能用评估的静态 Compile 列表冒充完整编译输入。
 
+Cooking 的 restore 使用项目自身的 TFM 图：实际 argv 只绑定根项目与 Configuration，不设置会传递到引用项目的全局 TargetFramework；build/test 仍显式绑定所选根 TFM。当前 SDK 的 NuGet.targets `_GetRestoreProjectStyle,_GetRestoreSettings` 目标只查询项目身份、TargetFramework(s)、`_OutputConfigFilePaths`、assets 与 MSBuildProjectExtensionsPath，记录实际命令和独立原生回执；RestoreTaskAssemblyFile 按 SDK 查询的 NuGetRestoreTargets 所在目录解析相对 UsingTask 文件，注册 targets 及当前 SDK 的 MSBuild.deps.json 所声明的该任务托管运行时依赖也进入输入 hash 闭包，不按扩展名推断。复制历史回执保留原始命令/目录，配置发现归档核对原节点相对身份和 hash，当前执行仍强制本 run 完整路径。恢复后逐项目核对 assets 的项目身份、完整声明 TFM、实际 targets 和 configFilePaths；引用的 netstandard2.0 分析器不能被根 net10.0 重新定向。
+
+有效 NuGet 配置进入源码及 restore/build/reuse 输入账本，但内容不复制、不输出。仅 `EffectiveNuGetConfigHashOnly` 证明可令 artifact=null：字段严格限制为 proofKind/path/bytes/sha256/artifact，路径须由当前 SDK 查询回执证明，存在且无 reparse，长度/hash 在阶段前后及复用时重验。普通源码、assets、二进制仍须归档；不能用此类型豁免任意 authored 输入。缺失、遗漏、变更或伪造配置证明均 Failed，不因原生 exit0 放行。
+
+恢复前冻结 authored/SDK/config 输入，同时单独归档已存在的恢复产物。只有 SDK 评估给出的每个项目 assets 与项目扩展目录中的 NuGet props/targets，且由本次有原生回执的 restore 产生并经完整项目/TFM/config 图验证，才作为阶段输出及后续图输入；保留变化前后身份，不靠文件名豁免，也不重新基线掩盖 authored/SDK/config 变化。当前有界修复只验隔离控制与真实 Cooking 图 restore；真实 build/test 门禁及最终验收须在提交候选上独立派发。
+
 每个阶段的输入、restore assets、build/test 程序集和依赖二进制归档进本 run 独立目录，记录路径/长度/SHA-256/所属 run/result，执行前后核对。artifact 只允许节点拥有的相对路径，拒绝逃逸、reparse/junction、旧身份和替换 DLL。stdout/stderr 直接从两个原生流保存为独立文件，允许空日志；不经过 ErrorRecord 排版，也不宣称两条流的合并顺序是真实时序。
 
 TRX 按实际 UnitTestResult、Execution、UnitTest/TestMethod 程序集与 summary/counters 解析并绑定当前调用、源 SHA 和 filter argv。total=resultEntries=passed+failed+skipped+notExecuted；executed=passed+failed。TRX 的其它 outcome counters 按本身语义核对，不再相加；例如 VSTest 的 [TestRunSummary](https://source.dot.net/Microsoft.VisualStudio.TestPlatform.Extensions.Trx.TestLogger/ObjectModel/TestRunSummary.cs.html) 将普通 Passed 测试的 completed 写为 0，它不是 executed 的别名。失败却 native0、零实际执行、错误程序集/执行身份、旧时间/旧 run/错 SHA、覆盖二进制和计数矛盾均拒绝。
