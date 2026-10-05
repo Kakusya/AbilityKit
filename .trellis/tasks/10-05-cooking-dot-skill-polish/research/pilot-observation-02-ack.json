@@ -1,0 +1,21 @@
+{
+  "id": "fef78291-9806-4e4b-ace8-831c30758d52",
+  "ok": true,
+  "result": {
+    "runId": "run_840202cc5621",
+    "deliveryId": null,
+    "messages": [],
+    "count": 0,
+    "acknowledged": "delivery_8eb8fe8ddae4",
+    "timedOut": false,
+    "cancelled": false,
+    "connectionLost": false,
+    "mutation": {
+      "requestId": "8fa823ce-15e3-4272-89cd-9797ed9ec50f",
+      "replayed": false
+    }
+  },
+  "_meta": {
+    "runtimeId": "ff0c5f2c-d341-4455-bc1c-c113650bdd60"
+  }
+}

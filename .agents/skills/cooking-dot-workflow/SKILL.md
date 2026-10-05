@@ -19,6 +19,8 @@ Trellis owns plans/status/evidence. Record invocation/Owner approval provenance,
 
 Use [checkpoint/operation](assets/checkpoint-operation.md), [request](assets/dot-request.md) and [decision](assets/dot-decision.md) templates. [Dialogue](references/dot-dialogue.md) is the sole request/wait rule; [recovery](references/recovery.md) is the sole record/reconciliation rule. Persist/read back intent before external effects and receipt afterwards.
 
+For a first operator handoff or a complete worked example, read [operator example](references/operator-example.md).
+
 | Stage | Input and action | Exit required to continue |
 | --- | --- | --- |
 | Requirement | Approved scope/observable acceptance, task/source and declared delivery mode | Durable binding and verified original coordinator/write authority; no conflicting flow/effect |

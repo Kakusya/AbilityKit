@@ -1,0 +1,18 @@
+{
+  "observed_utc": "2026-10-05T13:41:29.570298+00:00",
+  "candidate_sha": "4a4f36e6435f1315ddcec1d462c924e16b44ec5f",
+  "raw_file": "repair-controls-run-01/controls-output.json",
+  "raw_sha256": "cfea76889d544661d9a9f6ed06d04a1eb4a59aa8eda8e577560e00fc45cd5cc5",
+  "actual_assertions": 190,
+  "actual_passed": 190,
+  "actual_failed": 0,
+  "actual_subprocesses": 12,
+  "expected_self_fault_exit_codes": [
+    71,
+    72,
+    73,
+    74
+  ],
+  "status": "Passed",
+  "scope": "Readback audit of actual expanded simulator outputs, not an extra test run or production proof"
+}

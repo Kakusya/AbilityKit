@@ -1,0 +1,7 @@
+{
+  "exit": 0,
+  "status": "Passed",
+  "skill_sha256": "6923716ce2e64cd4c45bd3526882bf79fe911eece9342d721daaebad9c35eabc",
+  "mode": "original unchanged validator; pinned PyYAML6.0.3 RAM-only, no install",
+  "prior_worker_missing_yaml_failure_preserved": true
+}

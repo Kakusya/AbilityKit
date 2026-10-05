@@ -1,0 +1,57 @@
+{
+  "status": "Passed",
+  "actual_commands": "main inline Python artifact inspection and isolated extraction/execution of two actual document snippets; git cat-file -e for pinned links",
+  "native_exit": 0,
+  "observed_binding_matches_live_immutable_binding": true,
+  "teaching_index_last_seq": 1,
+  "teaching_unresolved": [],
+  "stopped_snippet_leaves_fixture_bytes_unchanged": true,
+  "document_links": [
+    {
+      "target": "recovery.md",
+      "status": "Passed"
+    },
+    {
+      "target": "dot-dialogue.md",
+      "status": "Passed"
+    },
+    {
+      "target": "../assets/checkpoint-operation.md",
+      "status": "Passed"
+    },
+    {
+      "target": "../assets/dot-request.md",
+      "status": "Passed"
+    },
+    {
+      "target": "../assets/dot-decision.md",
+      "status": "Passed"
+    },
+    {
+      "target": "https://github.com/Kakusya/AbilityKit/blob/4a4f36e6435f1315ddcec1d462c924e16b44ec5f/.trellis/tasks/10-05-cooking-dot-skill-polish/research/dot-pilot-plan.md",
+      "status": "Passed",
+      "coverage": "local immutable Git object exists"
+    },
+    {
+      "target": "https://github.com/Kakusya/AbilityKit/blob/4a4f36e6435f1315ddcec1d462c924e16b44ec5f/.trellis/tasks/10-05-cooking-dot-skill-polish/research/cooking-dot-flow/flow.json",
+      "status": "Passed",
+      "coverage": "local immutable Git object exists"
+    },
+    {
+      "target": "https://github.com/Kakusya/AbilityKit/blob/4a4f36e6435f1315ddcec1d462c924e16b44ec5f/.trellis/tasks/10-05-cooking-dot-skill-polish/research/pilot-init-failure.json",
+      "status": "Passed",
+      "coverage": "local immutable Git object exists"
+    },
+    {
+      "target": "https://github.com/Kakusya/AbilityKit/blob/4a4f36e6435f1315ddcec1d462c924e16b44ec5f/.trellis/tasks/10-05-cooking-dot-skill-polish/research/cooking-dot-flow/records/000003.receipt.json",
+      "status": "Passed",
+      "coverage": "local immutable Git object exists"
+    }
+  ],
+  "scope": "Main independent artifact inspection, separate from worker 46 assertions; simulation does not prove real crash/takeover",
+  "source_sha": "4a4f36e6435f1315ddcec1d462c924e16b44ec5f",
+  "delivered_working_hashes": {
+    ".agents/skills/cooking-dot-workflow/references/operator-example.md": "fe18cbd47c948267de18943f9a10ea59c2948e84f4b5cfa4c9c1994bae4578f1",
+    ".agents/skills/cooking-dot-workflow/SKILL.md": "6923716ce2e64cd4c45bd3526882bf79fe911eece9342d721daaebad9c35eabc"
+  }
+}

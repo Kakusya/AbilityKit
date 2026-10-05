@@ -1,0 +1,54 @@
+{
+  "request": {
+    "request_id": "req-independent",
+    "flow_id": "b2ea381e-761d-4fc8-8d1c-9d34cab28d83",
+    "type": "final-review",
+    "candidate_sha": "4a4f36e6435f1315ddcec1d462c924e16b44ec5f",
+    "paused": false,
+    "conversation_id": "conversation-independent",
+    "prior_message_boundary": "prior-message",
+    "request_message_id": "request-message",
+    "wait_started_utc": "2026-10-05T00:00:00Z",
+    "deadline_utc": "2026-10-05T00:30:00Z"
+  },
+  "reply": {
+    "full": true,
+    "generating": false,
+    "decision": "accept-candidate",
+    "request_id": "req-independent",
+    "flow_id": "b2ea381e-761d-4fc8-8d1c-9d34cab28d83",
+    "reviewed_sha": "4a4f36e6435f1315ddcec1d462c924e16b44ec5f",
+    "conversation_id": "conversation-independent",
+    "message_id": "reply-message",
+    "after_request_verified": true,
+    "absent_at_prior_boundary": true,
+    "time_reliable": false,
+    "reply_posted_utc": null,
+    "timing_proof": {
+      "request_id": "req-independent",
+      "flow_id": "b2ea381e-761d-4fc8-8d1c-9d34cab28d83",
+      "conversation_id": "conversation-independent",
+      "message_id": "reply-message",
+      "reviewed_sha": "4a4f36e6435f1315ddcec1d462c924e16b44ec5f",
+      "verified": true,
+      "clock_trusted": true,
+      "clock_jump": false,
+      "full": true,
+      "generating": false,
+      "prior_message_boundary": "prior-message",
+      "full_snapshot_ref": "evidence/full.txt",
+      "prior_snapshot_ref": "evidence/prior.txt",
+      "time_source": "controlled UTC",
+      "uncertainty_ms": 0,
+      "observed_utc": "2026-10-05T00:29:59Z"
+    }
+  },
+  "late_read_actual": {
+    "classification": "timely-late-read",
+    "timing_basis": "complete-observation-upper-bound",
+    "valid_resolution": true,
+    "pause_required": true,
+    "can_apply": false,
+    "preserve_pause": true
+  }
+}

@@ -1,0 +1,95 @@
+{
+  "candidate_sha": "4a4f36e6435f1315ddcec1d462c924e16b44ec5f",
+  "head": "4a4f36e6435f1315ddcec1d462c924e16b44ec5f",
+  "branch": "Kakusya/cooking-dot-skill-polish",
+  "dirty_before": "?? .agents/skills/cooking-dot-workflow/scripts/__pycache__/\n?? .trellis/tasks/10-05-cooking-dot-skill-polish/research/independent-controls-repair.py\n?? .trellis/tasks/10-05-cooking-dot-skill-polish/research/repair-freeze-receipt.json\n",
+  "python": "3.14.8 (tags/v3.14.8:8e6e75d, Sep 30 2026, 18:19:33) [MSC v.1944 64 bit (AMD64)]",
+  "executable": "C:\\Python314\\python.exe",
+  "executable_sha256": "434b361fe0c5960d404974feed493db47f2603a1ace2574312104fbed0182c6f",
+  "script_sha256": "320152d0168430f79f13cfbae87bb4dfcbc802862ada46919b6aeb516a8254bb",
+  "files": {
+    ".agents/skills/cooking-dot-workflow/agents/openai.yaml": {
+      "blob": "a1499d95abd8447558c535fe5554adcc3c9b988a0a39264a6283d430effe1e94",
+      "local_before": "a1499d95abd8447558c535fe5554adcc3c9b988a0a39264a6283d430effe1e94",
+      "expected_blob": "a1499d95abd8447558c535fe5554adcc3c9b988a0a39264a6283d430effe1e94",
+      "expected_local": "a1499d95abd8447558c535fe5554adcc3c9b988a0a39264a6283d430effe1e94",
+      "local_after": "a1499d95abd8447558c535fe5554adcc3c9b988a0a39264a6283d430effe1e94"
+    },
+    ".agents/skills/cooking-dot-workflow/assets/checkpoint-operation.md": {
+      "blob": "05394909dab19b81c2b3580253c497b3bc862659990d40726364e434763c32f0",
+      "local_before": "05394909dab19b81c2b3580253c497b3bc862659990d40726364e434763c32f0",
+      "expected_blob": "05394909dab19b81c2b3580253c497b3bc862659990d40726364e434763c32f0",
+      "expected_local": "05394909dab19b81c2b3580253c497b3bc862659990d40726364e434763c32f0",
+      "local_after": "05394909dab19b81c2b3580253c497b3bc862659990d40726364e434763c32f0"
+    },
+    ".agents/skills/cooking-dot-workflow/assets/dot-decision.md": {
+      "blob": "12d17eaca9ec7f768e4b1f4308a33051923d8480207360bbab2198069229910f",
+      "local_before": "12d17eaca9ec7f768e4b1f4308a33051923d8480207360bbab2198069229910f",
+      "expected_blob": "12d17eaca9ec7f768e4b1f4308a33051923d8480207360bbab2198069229910f",
+      "expected_local": "12d17eaca9ec7f768e4b1f4308a33051923d8480207360bbab2198069229910f",
+      "local_after": "12d17eaca9ec7f768e4b1f4308a33051923d8480207360bbab2198069229910f"
+    },
+    ".agents/skills/cooking-dot-workflow/assets/dot-request.md": {
+      "blob": "d180334a7b678099941a72854be35ecfff9dab2a786d1ccf465c4b297e7d3be8",
+      "local_before": "d180334a7b678099941a72854be35ecfff9dab2a786d1ccf465c4b297e7d3be8",
+      "expected_blob": "d180334a7b678099941a72854be35ecfff9dab2a786d1ccf465c4b297e7d3be8",
+      "expected_local": "d180334a7b678099941a72854be35ecfff9dab2a786d1ccf465c4b297e7d3be8",
+      "local_after": "d180334a7b678099941a72854be35ecfff9dab2a786d1ccf465c4b297e7d3be8"
+    },
+    ".agents/skills/cooking-dot-workflow/references/dot-dialogue.md": {
+      "blob": "c5f3c244676c3ec92e0adacda531bf9fe999f222a1f4d2b4eba96b02227a2fd8",
+      "local_before": "c5f3c244676c3ec92e0adacda531bf9fe999f222a1f4d2b4eba96b02227a2fd8",
+      "expected_blob": "c5f3c244676c3ec92e0adacda531bf9fe999f222a1f4d2b4eba96b02227a2fd8",
+      "expected_local": "c5f3c244676c3ec92e0adacda531bf9fe999f222a1f4d2b4eba96b02227a2fd8",
+      "local_after": "c5f3c244676c3ec92e0adacda531bf9fe999f222a1f4d2b4eba96b02227a2fd8"
+    },
+    ".agents/skills/cooking-dot-workflow/references/recovery.md": {
+      "blob": "04dc2272e7eb380a2d7ec943c14e9528c23ad604dd923fd5ea9cf47ce654f384",
+      "local_before": "04dc2272e7eb380a2d7ec943c14e9528c23ad604dd923fd5ea9cf47ce654f384",
+      "expected_blob": "04dc2272e7eb380a2d7ec943c14e9528c23ad604dd923fd5ea9cf47ce654f384",
+      "expected_local": "04dc2272e7eb380a2d7ec943c14e9528c23ad604dd923fd5ea9cf47ce654f384",
+      "local_after": "04dc2272e7eb380a2d7ec943c14e9528c23ad604dd923fd5ea9cf47ce654f384"
+    },
+    ".agents/skills/cooking-dot-workflow/scripts/records.py": {
+      "blob": "4c186d749daafe8c62505d455fcc7660d0ca550d9b779e67d889fce8c1fcb3c0",
+      "local_before": "4c186d749daafe8c62505d455fcc7660d0ca550d9b779e67d889fce8c1fcb3c0",
+      "expected_blob": "4c186d749daafe8c62505d455fcc7660d0ca550d9b779e67d889fce8c1fcb3c0",
+      "expected_local": "4c186d749daafe8c62505d455fcc7660d0ca550d9b779e67d889fce8c1fcb3c0",
+      "local_after": "4c186d749daafe8c62505d455fcc7660d0ca550d9b779e67d889fce8c1fcb3c0"
+    },
+    ".agents/skills/cooking-dot-workflow/scripts/test_controls.py": {
+      "blob": "98b200440c0b0b851a0de76b5131aff6d665b3fa36b2a1c8eacd20061d0bb90c",
+      "local_before": "98b200440c0b0b851a0de76b5131aff6d665b3fa36b2a1c8eacd20061d0bb90c",
+      "expected_blob": "98b200440c0b0b851a0de76b5131aff6d665b3fa36b2a1c8eacd20061d0bb90c",
+      "expected_local": "98b200440c0b0b851a0de76b5131aff6d665b3fa36b2a1c8eacd20061d0bb90c",
+      "local_after": "98b200440c0b0b851a0de76b5131aff6d665b3fa36b2a1c8eacd20061d0bb90c"
+    },
+    ".agents/skills/cooking-dot-workflow/SKILL.md": {
+      "blob": "e1e37dbac50e1eab475126f5cca7e33f2e9fa765c4eb4a31caff1aebdac7b8c5",
+      "local_before": "e1e37dbac50e1eab475126f5cca7e33f2e9fa765c4eb4a31caff1aebdac7b8c5",
+      "expected_blob": "e1e37dbac50e1eab475126f5cca7e33f2e9fa765c4eb4a31caff1aebdac7b8c5",
+      "expected_local": "e1e37dbac50e1eab475126f5cca7e33f2e9fa765c4eb4a31caff1aebdac7b8c5",
+      "local_after": "e1e37dbac50e1eab475126f5cca7e33f2e9fa765c4eb4a31caff1aebdac7b8c5"
+    },
+    ".trellis/spec/abilitykit/supervised-issue-delivery.md": {
+      "blob": "0ca9fe386845801288b46d0df053f4ba7e7de9d768f7a094f99d011eaeb2157c",
+      "local_before": "0ca9fe386845801288b46d0df053f4ba7e7de9d768f7a094f99d011eaeb2157c",
+      "expected_blob": "0ca9fe386845801288b46d0df053f4ba7e7de9d768f7a094f99d011eaeb2157c",
+      "expected_local": "0ca9fe386845801288b46d0df053f4ba7e7de9d768f7a094f99d011eaeb2157c",
+      "local_after": "0ca9fe386845801288b46d0df053f4ba7e7de9d768f7a094f99d011eaeb2157c"
+    }
+  },
+  "diagnostic_cli": {
+    "argv": [
+      "C:\\Python314\\python.exe",
+      "-B",
+      "C:\\Users\\Administrator\\orca\\workspaces\\AbilityKit\\cooking-dot-skill-polish\\.agents\\skills\\cooking-dot-workflow\\scripts\\records.py",
+      "inspect",
+      "C:\\Users\\Administrator\\orca\\workspaces\\AbilityKit\\cooking-dot-skill-polish\\.trellis\\tasks\\10-05-cooking-dot-skill-polish\\research\\independent-control-repair-01\\canonical"
+    ],
+    "exit": 0,
+    "stdout": "{\n  \"version\": 1,\n  \"flow_id\": \"b2ea381e-761d-4fc8-8d1c-9d34cab28d83\",\n  \"effective_run_id\": \"run-sim\",\n  \"last_seq\": 2,\n  \"unresolved\": [],\n  \"record_hashes\": {\n    \"000001.intent.json\": \"df8012f4d8e2c677e313343bb913e8de543b557619ed1eb9e79c6c7e0174d891\",\n    \"000001.receipt.json\": \"f3937f4e30047e5d56787deb03815805660dfdea0cadecb38a146d1e14f6f083\",\n    \"000002.intent.json\": \"d9e4f1901a28a95e9c394c75743a9e50769e2bc3e0e57c363565688dd2417405\",\n    \"000002.receipt.json\": \"872a11632c719924bbebd2b8f62a6b9b9b6dc8b97a512fc2701fe962b54e26c8\"\n  }\n}\n",
+    "stderr": ""
+  },
+  "dirty_after": "?? .agents/skills/cooking-dot-workflow/scripts/__pycache__/\n?? .trellis/tasks/10-05-cooking-dot-skill-polish/research/independent-control-repair-01/\n?? .trellis/tasks/10-05-cooking-dot-skill-polish/research/independent-controls-repair.py\n?? .trellis/tasks/10-05-cooking-dot-skill-polish/research/repair-freeze-receipt.json\n"
+}

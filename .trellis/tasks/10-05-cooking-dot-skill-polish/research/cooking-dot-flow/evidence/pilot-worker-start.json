@@ -1,0 +1,86 @@
+{
+  "id": "fd5ce06b-2748-4238-8bfd-c808502b3b47",
+  "ok": true,
+  "result": {
+    "runId": "run_840202cc5621",
+    "taskId": "task_0e2318dcd203",
+    "dispatchId": "ctx_31a62bbd882d",
+    "state": "ready",
+    "stage": "input_accepted",
+    "turnStart": "observed",
+    "setup": {
+      "requested": "not_applicable",
+      "effective": "not_applicable",
+      "source": "existing_worktree",
+      "hookFound": false,
+      "startupPolicy": "start-immediately",
+      "state": "not_applicable"
+    },
+    "launch": {
+      "requested": {
+        "agent": "codex",
+        "model": null,
+        "effort": null
+      },
+      "effective": {
+        "agent": "codex",
+        "model": null,
+        "effort": null
+      }
+    },
+    "mode": {
+      "mode": "terminal",
+      "preferred": "terminal",
+      "reason": "user_default",
+      "detail": "Started a terminal agent worker, the default for new agent tabs in your settings."
+    },
+    "timeoutMs": 60000,
+    "effects": [
+      {
+        "kind": "worktree",
+        "action": "reused",
+        "id": "aaa97e0d-5026-4e5c-95f8-bb420dcb4c65::C:/Users/Administrator/orca/workspaces/AbilityKit/cooking-dot-skill-polish"
+      },
+      {
+        "kind": "setup",
+        "action": "not_applicable",
+        "state": "not_applicable"
+      },
+      {
+        "kind": "terminal",
+        "role": "agent",
+        "action": "created",
+        "id": "term_04f2f37b-9f35-46d6-81cc-b26500d3c821",
+        "surface": "visible"
+      },
+      {
+        "kind": "dispatch_input",
+        "role": "agent",
+        "id": "term_04f2f37b-9f35-46d6-81cc-b26500d3c821",
+        "state": "accepted"
+      }
+    ],
+    "prompt": {
+      "requestId": "88a54b5f-f7fb-4c2d-bad7-1fd200d3986a",
+      "stages": [
+        "input_accepted",
+        "turn_started"
+      ],
+      "provider": "codex",
+      "observation": "supported",
+      "processIncarnation": "d4fbf1b2-bf3d-4d60-92db-9e8d65abf165",
+      "generation": 26,
+      "baselineWorkingSequence": 1,
+      "baselineExplicitWorkingStartedAt": null,
+      "baselinePermissionSequence": 0
+    },
+    "residualResources": [],
+    "mutation": {
+      "requestId": "88a54b5f-f7fb-4c2d-bad7-1fd200d3986a",
+      "replayed": false
+    }
+  },
+  "_meta": {
+    "runtimeId": "ff0c5f2c-d341-4455-bc1c-c113650bdd60"
+  }
+}

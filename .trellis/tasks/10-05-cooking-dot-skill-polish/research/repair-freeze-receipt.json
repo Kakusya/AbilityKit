@@ -1,0 +1,28 @@
+{
+  "candidate_sha": "4a4f36e6435f1315ddcec1d462c924e16b44ec5f",
+  "frozen_working_sha256": {
+    ".agents/skills/cooking-dot-workflow/agents/openai.yaml": "a1499d95abd8447558c535fe5554adcc3c9b988a0a39264a6283d430effe1e94",
+    ".agents/skills/cooking-dot-workflow/assets/checkpoint-operation.md": "05394909dab19b81c2b3580253c497b3bc862659990d40726364e434763c32f0",
+    ".agents/skills/cooking-dot-workflow/assets/dot-decision.md": "12d17eaca9ec7f768e4b1f4308a33051923d8480207360bbab2198069229910f",
+    ".agents/skills/cooking-dot-workflow/assets/dot-request.md": "d180334a7b678099941a72854be35ecfff9dab2a786d1ccf465c4b297e7d3be8",
+    ".agents/skills/cooking-dot-workflow/references/dot-dialogue.md": "c5f3c244676c3ec92e0adacda531bf9fe999f222a1f4d2b4eba96b02227a2fd8",
+    ".agents/skills/cooking-dot-workflow/references/recovery.md": "04dc2272e7eb380a2d7ec943c14e9528c23ad604dd923fd5ea9cf47ce654f384",
+    ".agents/skills/cooking-dot-workflow/scripts/records.py": "4c186d749daafe8c62505d455fcc7660d0ca550d9b779e67d889fce8c1fcb3c0",
+    ".agents/skills/cooking-dot-workflow/scripts/test_controls.py": "98b200440c0b0b851a0de76b5131aff6d665b3fa36b2a1c8eacd20061d0bb90c",
+    ".agents/skills/cooking-dot-workflow/SKILL.md": "e1e37dbac50e1eab475126f5cca7e33f2e9fa765c4eb4a31caff1aebdac7b8c5",
+    ".trellis/spec/abilitykit/supervised-issue-delivery.md": "0ca9fe386845801288b46d0df053f4ba7e7de9d768f7a094f99d011eaeb2157c"
+  },
+  "git_blob_sha256": {
+    ".agents/skills/cooking-dot-workflow/agents/openai.yaml": "a1499d95abd8447558c535fe5554adcc3c9b988a0a39264a6283d430effe1e94",
+    ".agents/skills/cooking-dot-workflow/assets/checkpoint-operation.md": "05394909dab19b81c2b3580253c497b3bc862659990d40726364e434763c32f0",
+    ".agents/skills/cooking-dot-workflow/assets/dot-decision.md": "12d17eaca9ec7f768e4b1f4308a33051923d8480207360bbab2198069229910f",
+    ".agents/skills/cooking-dot-workflow/assets/dot-request.md": "d180334a7b678099941a72854be35ecfff9dab2a786d1ccf465c4b297e7d3be8",
+    ".agents/skills/cooking-dot-workflow/references/dot-dialogue.md": "c5f3c244676c3ec92e0adacda531bf9fe999f222a1f4d2b4eba96b02227a2fd8",
+    ".agents/skills/cooking-dot-workflow/references/recovery.md": "04dc2272e7eb380a2d7ec943c14e9528c23ad604dd923fd5ea9cf47ce654f384",
+    ".agents/skills/cooking-dot-workflow/scripts/records.py": "4c186d749daafe8c62505d455fcc7660d0ca550d9b779e67d889fce8c1fcb3c0",
+    ".agents/skills/cooking-dot-workflow/scripts/test_controls.py": "98b200440c0b0b851a0de76b5131aff6d665b3fa36b2a1c8eacd20061d0bb90c",
+    ".agents/skills/cooking-dot-workflow/SKILL.md": "e1e37dbac50e1eab475126f5cca7e33f2e9fa765c4eb4a31caff1aebdac7b8c5",
+    ".trellis/spec/abilitykit/supervised-issue-delivery.md": "0ca9fe386845801288b46d0df053f4ba7e7de9d768f7a094f99d011eaeb2157c"
+  },
+  "purpose": "Repaired core exact-source freeze, before useful operator pilot; acceptance pending."
+}

@@ -1,0 +1,12 @@
+{
+  "version": 1,
+  "flow_id": "b2ea381e-761d-4fc8-8d1c-9d34cab28d83",
+  "seq": 1,
+  "op_id": "b2ea381e-761d-4fc8-8d1c-9d34cab28d83:000001",
+  "kind": "receipt",
+  "recorded_utc": "2026-10-05T00:02:00Z",
+  "intent_hash": "18ed191460adb3f580165962544400555ed91c6936b83f5a57085ffe269bf828",
+  "outcome": "unknown",
+  "raw_ref": "evidence/raw.txt",
+  "result": {}
+}

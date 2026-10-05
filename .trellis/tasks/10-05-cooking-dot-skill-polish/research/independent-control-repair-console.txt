@@ -1,0 +1,7 @@
+{
+  "source_sha": "4a4f36e6435f1315ddcec1d462c924e16b44ec5f",
+  "envelope": "isolated local simulation and read-only actual subprocess diagnostic",
+  "count": 93,
+  "passed": 93,
+  "failed": 0
+}

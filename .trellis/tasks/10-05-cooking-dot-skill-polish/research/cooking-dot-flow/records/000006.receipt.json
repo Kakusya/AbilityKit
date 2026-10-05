@@ -1,0 +1,19 @@
+{
+  "version": 1,
+  "flow_id": "a2c3dd65-4a91-43f6-9c33-ad891f7563c4",
+  "seq": 6,
+  "op_id": "a2c3dd65-4a91-43f6-9c33-ad891f7563c4:000006",
+  "kind": "receipt",
+  "recorded_utc": "2026-10-05T13:33:32.355161Z",
+  "intent_hash": "5642715c0c65c83e792ba4d8334049f2e3e8259066074ca9e116fef32637e3ea",
+  "outcome": "applied",
+  "raw_ref": "evidence/pilot-worker-start.json",
+  "result": {
+    "action": "worker-start",
+    "run_id": "run_840202cc5621",
+    "task_id": "task_0e2318dcd203",
+    "dispatch_id": "ctx_31a62bbd882d",
+    "input_accepted": true,
+    "turn_started": true
+  }
+}

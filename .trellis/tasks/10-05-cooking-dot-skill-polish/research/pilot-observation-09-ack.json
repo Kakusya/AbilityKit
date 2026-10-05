@@ -1,0 +1,38 @@
+{
+  "id": "d351a3a8-8f5c-4f52-a848-f94c528d97b2",
+  "ok": true,
+  "result": {
+    "runId": "run_840202cc5621",
+    "deliveryId": "delivery_b24fceba76a5",
+    "messages": [
+      {
+        "id": "msg_b3c6ff6c9784",
+        "run_id": "run_840202cc5621",
+        "delivery_contract": "current_delivery",
+        "from_handle": "term_04f2f37b-9f35-46d6-81cc-b26500d3c821",
+        "to_handle": "run:run_840202cc5621",
+        "subject": "Cooking operator documentation pilot complete",
+        "body": "Completed the three owned documentation files with one observed branch-only handoff and one explicitly hypothetical stopped recovery, following the full dot plan and repaired source. Final document validation passed 46 assertions and two isolated CLI subprocesses while preserving prior failures and two corrected harness failures; the generic skill validator remains blocked by missing yaml. Artifacts await main completion observation, independent inspection, new candidate freeze and exact-SHA final review, with no commits, canonical writes, archive or production acceptance claimed.",
+        "type": "worker_done",
+        "priority": "normal",
+        "thread_id": null,
+        "payload": "{\"taskId\":\"task_0e2318dcd203\",\"dispatchId\":\"ctx_31a62bbd882d\",\"outcome\":\"succeeded\",\"filesModified\":[\".agents/skills/cooking-dot-workflow/references/operator-example.md\",\".agents/skills/cooking-dot-workflow/SKILL.md\",\".trellis/tasks/10-05-cooking-dot-skill-polish/research/pilot-report.md\"],\"reportPath\":\".trellis/tasks/10-05-cooking-dot-skill-polish/research/pilot-report.md\"}",
+        "created_at": "2026-10-05T13:48:54Z",
+        "delivered_at": null
+      }
+    ],
+    "count": 1,
+    "replayed": false,
+    "acknowledged": "delivery_8fd1b37f8db9",
+    "timedOut": false,
+    "cancelled": false,
+    "connectionLost": false,
+    "mutation": {
+      "requestId": "7294ff09-0d75-49ee-9751-edaccdaaf5da",
+      "replayed": false
+    }
+  },
+  "_meta": {
+    "runtimeId": "ff0c5f2c-d341-4455-bc1c-c113650bdd60"
+  }
+}

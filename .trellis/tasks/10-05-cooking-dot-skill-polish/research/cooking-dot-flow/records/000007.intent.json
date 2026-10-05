@@ -1,0 +1,17 @@
+{
+  "version": 1,
+  "flow_id": "a2c3dd65-4a91-43f6-9c33-ad891f7563c4",
+  "seq": 7,
+  "op_id": "a2c3dd65-4a91-43f6-9c33-ad891f7563c4:000007",
+  "kind": "intent",
+  "recorded_utc": "2026-10-05T13:51:11.919209Z",
+  "action": "worker-retain",
+  "target": "ctx_31a62bbd882d",
+  "authorization_ref": "evidence/approval.md",
+  "payload_ref": "evidence/pilot-retention-payload.json",
+  "preconditions": {
+    "run_id": "run_840202cc5621",
+    "task_id": "task_0e2318dcd203",
+    "dispatch_id": "ctx_31a62bbd882d"
+  }
+}

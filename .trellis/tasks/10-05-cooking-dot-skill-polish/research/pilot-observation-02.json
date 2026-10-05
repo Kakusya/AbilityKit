@@ -1,0 +1,53 @@
+{
+  "id": "24a46fd9-475b-41de-baa6-2e85f461bfae",
+  "ok": true,
+  "result": {
+    "runId": "run_840202cc5621",
+    "deliveryId": "delivery_8eb8fe8ddae4",
+    "messages": [
+      {
+        "id": "msg_716cbcc96766",
+        "run_id": "run_840202cc5621",
+        "delivery_contract": "current_delivery",
+        "from_handle": "term_04f2f37b-9f35-46d6-81cc-b26500d3c821",
+        "to_handle": "run:run_840202cc5621",
+        "subject": "alive",
+        "body": "",
+        "type": "heartbeat",
+        "priority": "normal",
+        "thread_id": null,
+        "payload": "{\"taskId\":\"task_0e2318dcd203\",\"dispatchId\":\"ctx_31a62bbd882d\",\"phase\":\"investigating\"}",
+        "created_at": "2026-10-05T13:35:16Z",
+        "delivered_at": null
+      },
+      {
+        "id": "msg_2c45b677c098",
+        "run_id": "run_840202cc5621",
+        "delivery_contract": "current_delivery",
+        "from_handle": "term_04f2f37b-9f35-46d6-81cc-b26500d3c821",
+        "to_handle": "run:run_840202cc5621",
+        "subject": "alive",
+        "body": "",
+        "type": "heartbeat",
+        "priority": "normal",
+        "thread_id": null,
+        "payload": "{\"taskId\":\"task_0e2318dcd203\",\"dispatchId\":\"ctx_31a62bbd882d\",\"phase\":\"implementing\"}",
+        "created_at": "2026-10-05T13:36:34Z",
+        "delivered_at": null
+      }
+    ],
+    "count": 2,
+    "replayed": false,
+    "acknowledged": null,
+    "timedOut": false,
+    "cancelled": false,
+    "connectionLost": false,
+    "mutation": {
+      "requestId": "f42370fb-42cb-4ecf-b543-262d8b1ab582",
+      "replayed": false
+    }
+  },
+  "_meta": {
+    "runtimeId": "ff0c5f2c-d341-4455-bc1c-c113650bdd60"
+  }
+}

@@ -1,0 +1,18 @@
+{
+  "version": 1,
+  "flow_id": "a2c3dd65-4a91-43f6-9c33-ad891f7563c4",
+  "seq": 6,
+  "op_id": "a2c3dd65-4a91-43f6-9c33-ad891f7563c4:000006",
+  "kind": "intent",
+  "recorded_utc": "2026-10-05T13:33:16.356125Z",
+  "action": "worker-start",
+  "target": "aaa97e0d-5026-4e5c-95f8-bb420dcb4c65::C:/Users/Administrator/orca/workspaces/AbilityKit/cooking-dot-skill-polish",
+  "authorization_ref": "evidence/approval.md",
+  "payload_ref": "evidence/pilot-worker-spec.txt",
+  "preconditions": {
+    "run_id": "run_840202cc5621",
+    "candidate_sha": "4a4f36e6435f1315ddcec1d462c924e16b44ec5f",
+    "plan_request_id": "AK-CDF-LIVE-PILOT-PLAN-01",
+    "independent_checks_passed": true
+  }
+}

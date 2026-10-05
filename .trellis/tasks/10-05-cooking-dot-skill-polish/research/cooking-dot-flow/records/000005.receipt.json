@@ -1,0 +1,18 @@
+{
+  "version": 1,
+  "flow_id": "a2c3dd65-4a91-43f6-9c33-ad891f7563c4",
+  "seq": 5,
+  "op_id": "a2c3dd65-4a91-43f6-9c33-ad891f7563c4:000005",
+  "kind": "receipt",
+  "recorded_utc": "2026-10-05T13:33:16.333232Z",
+  "intent_hash": "e284a3ffb615335501ccdb264526ad622eae13ff6e3d2a423b0aab721196227c",
+  "outcome": "applied",
+  "raw_ref": "evidence/publish-repair-recovery.json",
+  "result": {
+    "action": "git-push",
+    "candidate_sha": "4a4f36e6435f1315ddcec1d462c924e16b44ec5f",
+    "run_id": "run_840202cc5621",
+    "exact_ref_verified": true,
+    "recovered_missing_receipt": true
+  }
+}

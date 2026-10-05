@@ -1,0 +1,13 @@
+{
+  "command": [
+    "git",
+    "ls-remote",
+    "origin",
+    "refs/heads/Kakusya/cooking-dot-skill-polish"
+  ],
+  "exit": 0,
+  "stdout": "4a4f36e6435f1315ddcec1d462c924e16b44ec5f\trefs/heads/Kakusya/cooking-dot-skill-polish\n",
+  "stderr": "",
+  "prior_raw": "evidence/publish-repair-raw.json",
+  "interpretation": "Push itself exited0; immediate readback exited128, no receipt had been written. This read-only lookup confirms exact applied ref without repushing. Earlier verify stderr was not captured in durable raw; diagnostic unknown."
+}
