@@ -1,0 +1,240 @@
+{
+  "failure": {
+    "id": "53d86dc7-5184-40f6-b7ef-75200cbf15c1",
+    "ok": false,
+    "error": {
+      "code": "agent_unconfigured",
+      "message": "Terminal term_d82fab32-3780-4c17-8b2d-4fefaf8254eb is not running a recognized agent. Orchestration mutation request ID: 0b03bb39-49e6-4538-a6e7-1bebe4a67bf6.",
+      "data": {
+        "orchestrationRequestId": "0b03bb39-49e6-4538-a6e7-1bebe4a67bf6",
+        "originalCommand": [
+          "orca",
+          "orchestration",
+          "worker-start",
+          "--run",
+          "run_840202cc5621",
+          "--spec",
+          "You are the Orca implementation worker for a bounded repair on branch Kakusya/cooking-dot-skill-polish, current child worktree only. You are not alone; preserve other edits. Main is sole coordinator; auditor owns independent* reports/tests. Owner approved this skill polish; dot approved immutable flow binding in research/dot-plan.md, and current pilot plan in research/dot-pilot-plan.md explicitly stops for audit blockers. This is a separate repair, not the operator-example pilot.\nOwnership ONLY .agents/skills/cooking-dot-workflow/scripts/records.py and test_controls.py; new research/repair-report.md, repair-controls outputs and repair-file-hashes.json. No other source/plans/canonical-flow edits, commit/push, GitHub/browser writes, tools installation, new Run/worktree, nested agents, cleanup, product/Unity/example changes. Read applicable Trellis/skill-creator guidance and original contracts. Do not broaden scope.\nFrozen source 32b400a5c6d375be366faa606e867ef68037cfa8 has a real independent failure: research/independent-control-run-01/results.json (92 controls,91 pass,1 fail) and independent-controls.py. records.copies accepts two separately self-canonical roots with SAME flow_id but DIFFERENT immutable binding, grouping them. Require full immutable binding equality across every entry grouped under the same flow UUID, not merely each copy versus its own declared canonical. Reject root/host/other immutable differences. Preserve valid equal and old-subset copies, and legitimate separate UUID groups; no canonical election/lock/lease/schema change. Add meaningful negative and positive regression controls, rerun existing helper controls on repaired bytes, preserve old failed raw output. Record actual commands/exits/counts/tool/source dirty/hash identities and simulator/subprocess limitations. No claim of real takeover or production tests.\nSend valid worker_done only for this bounded repair with evidence paths; then idle. Terminal retained under existing Owner approval. Questions/escalations through injected Orca orchestration, no local user TUI. Main will freeze and ask independent auditor to verify repaired exact source before any actual pilot.",
+          "--task-title",
+          "Cooking skill immutable binding repair",
+          "--worktree",
+          "id:aaa97e0d-5026-4e5c-95f8-bb420dcb4c65::C:/Users/Administrator/orca/workspaces/AbilityKit/cooking-dot-skill-polish",
+          "--terminal",
+          "term_d82fab32-3780-4c17-8b2d-4fefaf8254eb",
+          "--json"
+        ]
+      }
+    },
+    "_meta": {
+      "runtimeId": "ff0c5f2c-d341-4455-bc1c-c113650bdd60"
+    }
+  },
+  "request_receipt": {
+    "id": "6646e091-c583-4405-a08f-1101d9c11093",
+    "ok": true,
+    "result": {
+      "requestId": "0b03bb39-49e6-4538-a6e7-1bebe4a67bf6",
+      "state": "absent",
+      "interpretation": "No receipt for request 0b03bb39-49e6-4538-a6e7-1bebe4a67bf6 under this caller identity. It never reached this Orca runtime, failed before recording anything, or its receipt was pruned. Absent is not proof that nothing happened."
+    },
+    "_meta": {
+      "runtimeId": "ff0c5f2c-d341-4455-bc1c-c113650bdd60"
+    }
+  },
+  "inventory": {
+    "id": "4e40778e-c0a4-4d55-9d31-518fe9205583",
+    "ok": true,
+    "result": {
+      "workers": [
+        {
+          "dispatchId": "ctx_51d6193106de",
+          "taskId": "task_0658d87815e2",
+          "runId": "run_840202cc5621",
+          "workerState": "succeeded",
+          "dispatchStatus": "completed",
+          "agentTerminalHandle": "term_05f2d02e-37fa-44a3-9627-ef6375d69e08",
+          "terminalState": "reclaimable",
+          "resource": {
+            "id": "wtr_eb5efd47881c",
+            "ownershipState": "owned",
+            "releaseState": "not_requested",
+            "retainedReason": null,
+            "terminalHandle": "term_05f2d02e-37fa-44a3-9627-ef6375d69e08",
+            "worktreeId": "aaa97e0d-5026-4e5c-95f8-bb420dcb4c65::C:/Users/Administrator/orca/workspaces/AbilityKit/cooking-dot-skill-polish",
+            "endpointId": "ff0c5f2c-d341-4455-bc1c-c113650bdd60",
+            "endpointIncarnation": "aaa97e0d-5026-4e5c-95f8-bb420dcb4c65::C:/Users/Administrator/orca/workspaces/AbilityKit/cooking-dot-skill-polish@@2381f81f:5b07c310-174a-4a4a-98d6-8d2e0970839f",
+            "originDispatchId": "ctx_51d6193106de",
+            "ownerDispatchId": "ctx_51d6193106de",
+            "releaseRequestedAt": null,
+            "releaseCompletedAt": null,
+            "releaseError": null,
+            "recoveryAttemptCount": 0,
+            "lastRecoveryAt": null,
+            "archive": {
+              "source": null,
+              "status": null
+            }
+          },
+          "projection": {
+            "id": "ctx_51d6193106de",
+            "dispatchId": "ctx_51d6193106de",
+            "taskId": "task_0658d87815e2",
+            "runId": "run_840202cc5621",
+            "role": "worker",
+            "parent": null,
+            "provider": {
+              "id": "codex",
+              "model": "gpt-6.1-sol"
+            },
+            "host": {
+              "kind": "local",
+              "id": "local"
+            },
+            "workspace": {
+              "id": "aaa97e0d-5026-4e5c-95f8-bb420dcb4c65::C:/Users/Administrator/orca/workspaces/AbilityKit/cooking-dot-skill-polish",
+              "kind": "folder_or_worktree"
+            },
+            "stage": {
+              "worker": "succeeded",
+              "dispatch": "completed",
+              "detail": "settled",
+              "activity": "done"
+            },
+            "outcome": "succeeded",
+            "liveness": {
+              "verdict": "live",
+              "observedAt": 1791205833422,
+              "source": "agent_status"
+            },
+            "evidence": {
+              "durable": true,
+              "liveStatus": "fresh",
+              "lastObservedAt": 1791205833422
+            },
+            "resource": {
+              "state": "owned"
+            },
+            "nextAction": {
+              "kind": "release",
+              "argv": [
+                "orchestration",
+                "worker-release",
+                "--dispatch",
+                "ctx_51d6193106de"
+              ]
+            },
+            "attention": {
+              "categories": [
+                "root_completion"
+              ],
+              "requiresAction": false
+            }
+          }
+        },
+        {
+          "dispatchId": "ctx_2ede5e596818",
+          "taskId": "task_b1846da24106",
+          "runId": "run_840202cc5621",
+          "workerState": "succeeded",
+          "dispatchStatus": "completed",
+          "agentTerminalHandle": "term_d82fab32-3780-4c17-8b2d-4fefaf8254eb",
+          "terminalState": "retained",
+          "resource": {
+            "id": "wtr_0b417187c16c",
+            "ownershipState": "owned",
+            "releaseState": "retained",
+            "retainedReason": "user_requested",
+            "terminalHandle": "term_d82fab32-3780-4c17-8b2d-4fefaf8254eb",
+            "worktreeId": "aaa97e0d-5026-4e5c-95f8-bb420dcb4c65::C:/Users/Administrator/orca/workspaces/AbilityKit/cooking-dot-skill-polish",
+            "endpointId": "ff0c5f2c-d341-4455-bc1c-c113650bdd60",
+            "endpointIncarnation": "aaa97e0d-5026-4e5c-95f8-bb420dcb4c65::C:/Users/Administrator/orca/workspaces/AbilityKit/cooking-dot-skill-polish@@c47c33aa:17a67672-8a46-4180-af99-eb599aefc504",
+            "originDispatchId": "ctx_2ede5e596818",
+            "ownerDispatchId": "ctx_2ede5e596818",
+            "releaseRequestedAt": null,
+            "releaseCompletedAt": null,
+            "releaseError": null,
+            "recoveryAttemptCount": 0,
+            "lastRecoveryAt": null,
+            "archive": {
+              "source": null,
+              "status": null
+            }
+          },
+          "projection": {
+            "id": "ctx_2ede5e596818",
+            "dispatchId": "ctx_2ede5e596818",
+            "taskId": "task_b1846da24106",
+            "runId": "run_840202cc5621",
+            "role": "worker",
+            "parent": null,
+            "provider": {
+              "id": "codex",
+              "model": "gpt-6.1-sol"
+            },
+            "host": {
+              "kind": "local",
+              "id": "local"
+            },
+            "workspace": {
+              "id": "aaa97e0d-5026-4e5c-95f8-bb420dcb4c65::C:/Users/Administrator/orca/workspaces/AbilityKit/cooking-dot-skill-polish",
+              "kind": "folder_or_worktree"
+            },
+            "stage": {
+              "worker": "succeeded",
+              "dispatch": "completed",
+              "detail": "settled",
+              "activity": "done"
+            },
+            "outcome": "succeeded",
+            "liveness": {
+              "verdict": "live",
+              "observedAt": 1791204918655,
+              "source": "agent_status"
+            },
+            "evidence": {
+              "durable": true,
+              "liveStatus": "fresh",
+              "lastObservedAt": 1791204918655
+            },
+            "resource": {
+              "state": "owned"
+            },
+            "nextAction": {
+              "kind": "release",
+              "argv": [
+                "orchestration",
+                "worker-release",
+                "--dispatch",
+                "ctx_2ede5e596818"
+              ]
+            },
+            "attention": {
+              "categories": [
+                "root_completion"
+              ],
+              "requiresAction": false
+            }
+          }
+        }
+      ],
+      "counts": {
+        "reclaimable": 1,
+        "retained": 1
+      },
+      "page": {
+        "limit": 100,
+        "total": 2,
+        "hasMore": false,
+        "nextCursor": null
+      },
+      "scope": {
+        "run": "run_840202cc5621",
+        "source": "flag"
+      }
+    },
+    "_meta": {
+      "runtimeId": "ff0c5f2c-d341-4455-bc1c-c113650bdd60"
+    }
+  },
+  "interpretation": "Preflight rejected unrecognized terminal; no added Dispatch or running repair in complete Run inventory. Absent request receipt alone is not proof. Combined observed preflight and complete inventory classify this rejected launch as not-applied. Old terminals retained."
+}

@@ -1,0 +1,18 @@
+{
+  "type": "planning",
+  "request_id": "AK-CDF-LIVE-PILOT-PLAN-01",
+  "flow_id": "a2c3dd65-4a91-43f6-9c33-ad891f7563c4",
+  "candidate_sha": "32b400a5c6d375be366faa606e867ef68037cfa8",
+  "conversation_id": "https://chatgpt.com/dots/01a10258-c084-74bb-8bcc-ec01958e5023",
+  "prior_message_boundary": "3f12f99a2ea4819b8541c90bd4ea9e30~3f12f99a2ea4819b8541c90bd4ea9e30~CalpicoMessage~Sentinel_4a5061c3639c8191ad1577c6b3112670",
+  "request_message_id": null,
+  "wait_started_utc": "2026-10-05T13:07:54.386249Z",
+  "deadline_utc": "2026-10-05T13:37:54.386249Z",
+  "paused": false,
+  "wait_started_monotonic": 300131.180691,
+  "poll_ordinal": 0,
+  "supplement_reserved": false,
+  "fingerprint": "9cc7c13242eb23ab3786eddc315f53192dbce7cea201ac31cd29a8597f176cf6",
+  "baseline_article_count": 43,
+  "status": "intent-persisted"
+}

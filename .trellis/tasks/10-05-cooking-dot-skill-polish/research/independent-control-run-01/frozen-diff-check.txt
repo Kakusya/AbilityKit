@@ -1,0 +1,42 @@
+.agents/skills/cooking-dot-workflow/assets/dot-decision.md:3: trailing whitespace.
++Flow ID / request ID / type:  
+.agents/skills/cooking-dot-workflow/assets/dot-decision.md:4: trailing whitespace.
++Conversation/reply identity/raw full reply reference:  
+.agents/skills/cooking-dot-workflow/assets/dot-decision.md:5: trailing whitespace.
++Reviewed full SHA / decision: accept-plan | accept-candidate | needs-revision | blocked | ambiguous  
+.agents/skills/cooking-dot-workflow/assets/dot-decision.md:6: trailing whitespace.
++reply_posted_utc (null if unknown) / reliability + source / observed_utc:  
+.agents/skills/cooking-dot-workflow/assets/dot-decision.md:7: trailing whitespace.
++timing_basis / trusted upper UTC + uncertainty / time source / optional lower UTC:  
+.agents/skills/cooking-dot-workflow/assets/dot-decision.md:8: trailing whitespace.
++Complete/not-generating proof / full+prior raw snapshots / verified request boundary:  
+.agents/skills/cooking-dot-workflow/assets/dot-decision.md:9: trailing whitespace.
++Timing: timely | timely-late-read | late | unknown-time  
+.agents/skills/cooking-dot-workflow/assets/dot-decision.md:10: trailing whitespace.
++Original deadline / supplement intent+receipt / prior timeout+pause refs:  
+.agents/skills/cooking-dot-workflow/assets/dot-decision.md:11: trailing whitespace.
++Accepted scope/delivered hashes (final acceptance) / blockers/conflicts:  
+.agents/skills/cooking-dot-workflow/assets/dot-decision.md:12: trailing whitespace.
++Main scope/evidence finding / next allowed action/required authority:  
+.agents/skills/cooking-dot-workflow/assets/dot-request.md:3: trailing whitespace.
++Type: planning | final-review  
+.agents/skills/cooking-dot-workflow/assets/dot-request.md:4: trailing whitespace.
++Flow ID / request ID:  
+.agents/skills/cooking-dot-workflow/assets/dot-request.md:5: trailing whitespace.
++Parent request + reopening/revision authority (or none):  
+.agents/skills/cooking-dot-workflow/assets/dot-request.md:6: trailing whitespace.
++Verified repository / full published SHA / commit link:  
+.agents/skills/cooking-dot-workflow/assets/dot-request.md:7: trailing whitespace.
++Approved Cooking scope/consumers/delivery mode/excluded exits:  
+.agents/skills/cooking-dot-workflow/assets/dot-request.md:8: trailing whitespace.
++Desired explicit decision / conflicts/alternatives:  
+.agents/skills/cooking-dot-workflow/assets/dot-request.md:9: trailing whitespace.
++Readable plans/raw evidence/validation envelope/delivered hashes:  
+.agents/skills/cooking-dot-workflow/assets/dot-request.md:10: trailing whitespace.
++Conversation identity/prior-message boundary/raw prior snapshot/payload fingerprint:  
+.agents/skills/cooking-dot-workflow/assets/dot-request.md:11: trailing whitespace.
++Posted request message identity (receipt evidence; unknown until reconciled):  
+.agents/skills/cooking-dot-workflow/assets/dot-request.md:12: trailing whitespace.
++wait_started_utc / deadline_utc (start + 30 minutes):  
+.agents/skills/cooking-dot-workflow/assets/dot-request.md:13: trailing whitespace.
++Explicit paused fact / immutable timeout or resume provenance:  

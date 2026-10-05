@@ -1,0 +1,1718 @@
+{
+  "status": "Passed",
+  "passed": 190,
+  "failed": 0,
+  "observed_utc": "2026-10-05T13:25:33.370235+00:00",
+  "python": "3.14.8 (tags/v3.14.8:8e6e75d, Sep 30 2026, 18:19:33) [MSC v.1944 64 bit (AMD64)]",
+  "simulation": "local mock effect reconciliation; no GitHub/Orca idempotency claim",
+  "fault_model": "process-crash only",
+  "events": [
+    {
+      "control": "subprocess exit 1",
+      "expected": 71,
+      "actual": 71,
+      "status": "Passed"
+    },
+    {
+      "control": "subprocess exit 2",
+      "expected": 0,
+      "actual": 0,
+      "status": "Passed"
+    },
+    {
+      "control": "pre-effect: actual subprocess read last_seq",
+      "expected": 1,
+      "actual": 1,
+      "status": "Passed"
+    },
+    {
+      "control": "pre-effect: unresolved before reconciliation",
+      "expected": 1,
+      "actual": 1,
+      "status": "Passed"
+    },
+    {
+      "control": "pre-effect: persisted stale index",
+      "expected": 0,
+      "actual": 0,
+      "status": "Passed"
+    },
+    {
+      "control": "subprocess exit 3",
+      "expected": 0,
+      "actual": 0,
+      "status": "Passed"
+    },
+    {
+      "control": "pre-effect: no duplicate effect invocation",
+      "expected": 0,
+      "actual": 0,
+      "status": "Passed"
+    },
+    {
+      "control": "pre-effect: resolved after actual subprocess reconciliation",
+      "expected": [],
+      "actual": [],
+      "status": "Passed"
+    },
+    {
+      "control": "subprocess exit 4",
+      "expected": 72,
+      "actual": 72,
+      "status": "Passed"
+    },
+    {
+      "control": "subprocess exit 5",
+      "expected": 0,
+      "actual": 0,
+      "status": "Passed"
+    },
+    {
+      "control": "lost-receipt: actual subprocess read last_seq",
+      "expected": 1,
+      "actual": 1,
+      "status": "Passed"
+    },
+    {
+      "control": "lost-receipt: unresolved before reconciliation",
+      "expected": 1,
+      "actual": 1,
+      "status": "Passed"
+    },
+    {
+      "control": "lost-receipt: persisted stale index",
+      "expected": 0,
+      "actual": 0,
+      "status": "Passed"
+    },
+    {
+      "control": "subprocess exit 6",
+      "expected": 0,
+      "actual": 0,
+      "status": "Passed"
+    },
+    {
+      "control": "lost-receipt: no duplicate effect invocation",
+      "expected": 1,
+      "actual": 1,
+      "status": "Passed"
+    },
+    {
+      "control": "lost-receipt: resolved after actual subprocess reconciliation",
+      "expected": [],
+      "actual": [],
+      "status": "Passed"
+    },
+    {
+      "control": "subprocess exit 7",
+      "expected": 73,
+      "actual": 73,
+      "status": "Passed"
+    },
+    {
+      "control": "subprocess exit 8",
+      "expected": 0,
+      "actual": 0,
+      "status": "Passed"
+    },
+    {
+      "control": "stale-index: actual subprocess read last_seq",
+      "expected": 1,
+      "actual": 1,
+      "status": "Passed"
+    },
+    {
+      "control": "stale-index: unresolved before reconciliation",
+      "expected": 0,
+      "actual": 0,
+      "status": "Passed"
+    },
+    {
+      "control": "stale-index: persisted stale index",
+      "expected": 0,
+      "actual": 0,
+      "status": "Passed"
+    },
+    {
+      "control": "subprocess exit 9",
+      "expected": 0,
+      "actual": 0,
+      "status": "Passed"
+    },
+    {
+      "control": "stale-index: no duplicate effect invocation",
+      "expected": 1,
+      "actual": 1,
+      "status": "Passed"
+    },
+    {
+      "control": "stale-index: resolved after actual subprocess reconciliation",
+      "expected": [],
+      "actual": [],
+      "status": "Passed"
+    },
+    {
+      "diagnostic": "unresolved effect blocks subsequent intent"
+    },
+    {
+      "control": "unknown receipt blocks subsequent external intent",
+      "expected": true,
+      "actual": true,
+      "status": "Passed"
+    },
+    {
+      "diagnostic": "immutable record conflict"
+    },
+    {
+      "control": "immutable unknown receipt cannot be overwritten",
+      "expected": true,
+      "actual": true,
+      "status": "Passed"
+    },
+    {
+      "control": "rejected overwrite preserves receipt bytes",
+      "expected": true,
+      "actual": true,
+      "status": "Passed"
+    },
+    {
+      "control": "new reconciliation pair resolves prior uncertainty",
+      "expected": [],
+      "actual": [],
+      "status": "Passed"
+    },
+    {
+      "control": "subprocess exit 10",
+      "expected": 0,
+      "actual": 0,
+      "status": "Passed"
+    },
+    {
+      "control": "corrupt index ignored by actual subprocess read",
+      "expected": 2,
+      "actual": 2,
+      "status": "Passed"
+    },
+    {
+      "control": "read-only reconstruction does not repair shared index",
+      "expected": true,
+      "actual": true,
+      "status": "Passed"
+    },
+    {
+      "control": "authorized index repair matches immutable records",
+      "expected": {
+        "version": 1,
+        "flow_id": "6b1d785f-ed6a-441e-9eb5-f052ad85f8b3",
+        "effective_run_id": "simulation-run",
+        "last_seq": 2,
+        "unresolved": [],
+        "record_hashes": {
+          "000001.intent.json": "e95f70e63ef518338bf5040aca92d00b197bf071d80d7ec89905bfa26f835ca1",
+          "000001.receipt.json": "6fc7637e4452c1d0eca3d624a5bf485c2d5282d2968e06fec5ebd88316ef3d86",
+          "000002.intent.json": "864d9132f192351a656d35e1c121b32f4e04fac7921e8c0cf3072d92f0cde52d",
+          "000002.receipt.json": "7ad5e714a78c5385b53eda21dbc8e2767b8f4d4f8acef48e91886190561c0ca1"
+        }
+      },
+      "actual": {
+        "version": 1,
+        "flow_id": "6b1d785f-ed6a-441e-9eb5-f052ad85f8b3",
+        "effective_run_id": "simulation-run",
+        "last_seq": 2,
+        "unresolved": [],
+        "record_hashes": {
+          "000001.intent.json": "e95f70e63ef518338bf5040aca92d00b197bf071d80d7ec89905bfa26f835ca1",
+          "000001.receipt.json": "6fc7637e4452c1d0eca3d624a5bf485c2d5282d2968e06fec5ebd88316ef3d86",
+          "000002.intent.json": "864d9132f192351a656d35e1c121b32f4e04fac7921e8c0cf3072d92f0cde52d",
+          "000002.receipt.json": "7ad5e714a78c5385b53eda21dbc8e2767b8f4d4f8acef48e91886190561c0ca1"
+        }
+      },
+      "status": "Passed"
+    },
+    {
+      "control": "same flow copies dedup",
+      "expected": 1,
+      "actual": 1,
+      "status": "Passed"
+    },
+    {
+      "control": "old copy recognized against canonical",
+      "expected": "old-subset",
+      "actual": "old-subset",
+      "status": "Passed"
+    },
+    {
+      "diagnostic": "copy is read-only"
+    },
+    {
+      "control": "old copy cannot write index",
+      "expected": true,
+      "actual": true,
+      "status": "Passed"
+    },
+    {
+      "diagnostic": "conflicting/newer copy records"
+    },
+    {
+      "control": "conflicting valid copies refuse election",
+      "expected": true,
+      "actual": true,
+      "status": "Passed"
+    },
+    {
+      "diagnostic": "sequence gap"
+    },
+    {
+      "control": "sequence gap rejected",
+      "expected": true,
+      "actual": true,
+      "status": "Passed"
+    },
+    {
+      "diagnostic": "record identity/version mismatch"
+    },
+    {
+      "control": "invalid record version rejected",
+      "expected": true,
+      "actual": true,
+      "status": "Passed"
+    },
+    {
+      "diagnostic": "record identity/version mismatch"
+    },
+    {
+      "control": "invalid record flow_id rejected",
+      "expected": true,
+      "actual": true,
+      "status": "Passed"
+    },
+    {
+      "diagnostic": "record identity/version mismatch"
+    },
+    {
+      "control": "invalid record op_id rejected",
+      "expected": true,
+      "actual": true,
+      "status": "Passed"
+    },
+    {
+      "diagnostic": "invalid evidence reference"
+    },
+    {
+      "control": "invalid record payload_ref rejected",
+      "expected": true,
+      "actual": true,
+      "status": "Passed"
+    },
+    {
+      "control": "effective Run derived from immutable receipt",
+      "expected": "simulation-derived-run",
+      "actual": "simulation-derived-run",
+      "status": "Passed"
+    },
+    {
+      "control": "flow binding remains immutable",
+      "expected": true,
+      "actual": true,
+      "status": "Passed"
+    },
+    {
+      "diagnostic": "operation Run identity mismatch/unbound"
+    },
+    {
+      "control": "mismatched operation Run refused",
+      "expected": true,
+      "actual": true,
+      "status": "Passed"
+    },
+    {
+      "diagnostic": "conflicting/missing Run binding"
+    },
+    {
+      "control": "conflicting effective Run refused",
+      "expected": true,
+      "actual": true,
+      "status": "Passed"
+    },
+    {
+      "control": "new main refuses dispatch predicate",
+      "expected": false,
+      "actual": false,
+      "status": "Passed"
+    },
+    {
+      "diagnostic": "Blocked: exclusive original coordinator/record-write authority"
+    },
+    {
+      "control": "new main refuses canonical record write",
+      "expected": true,
+      "actual": true,
+      "status": "Passed"
+    },
+    {
+      "diagnostic": "Blocked: exclusive original coordinator/record-write authority"
+    },
+    {
+      "control": "new main refuses index write",
+      "expected": true,
+      "actual": true,
+      "status": "Passed"
+    },
+    {
+      "control": "unproven sole authority refuses dispatch predicate",
+      "expected": false,
+      "actual": false,
+      "status": "Passed"
+    },
+    {
+      "diagnostic": "Blocked: exclusive original coordinator/record-write authority"
+    },
+    {
+      "control": "unproven sole authority refuses canonical record write",
+      "expected": true,
+      "actual": true,
+      "status": "Passed"
+    },
+    {
+      "diagnostic": "Blocked: exclusive original coordinator/record-write authority"
+    },
+    {
+      "control": "unproven sole authority refuses index write",
+      "expected": true,
+      "actual": true,
+      "status": "Passed"
+    },
+    {
+      "control": "record write unapproved refuses dispatch predicate",
+      "expected": false,
+      "actual": false,
+      "status": "Passed"
+    },
+    {
+      "diagnostic": "Blocked: exclusive original coordinator/record-write authority"
+    },
+    {
+      "control": "record write unapproved refuses canonical record write",
+      "expected": true,
+      "actual": true,
+      "status": "Passed"
+    },
+    {
+      "diagnostic": "Blocked: exclusive original coordinator/record-write authority"
+    },
+    {
+      "control": "record write unapproved refuses index write",
+      "expected": true,
+      "actual": true,
+      "status": "Passed"
+    },
+    {
+      "control": "denied recovery leaves all shared files unchanged",
+      "expected": true,
+      "actual": true,
+      "status": "Passed"
+    },
+    {
+      "diagnostic": "receipt action mismatch"
+    },
+    {
+      "control": "mismatched receipt action rejected",
+      "expected": true,
+      "actual": true,
+      "status": "Passed"
+    },
+    {
+      "diagnostic": "receipt request_id mismatch"
+    },
+    {
+      "control": "mismatched receipt request_id rejected",
+      "expected": true,
+      "actual": true,
+      "status": "Passed"
+    },
+    {
+      "diagnostic": "receipt dispatch_id mismatch"
+    },
+    {
+      "control": "mismatched receipt dispatch_id rejected",
+      "expected": true,
+      "actual": true,
+      "status": "Passed"
+    },
+    {
+      "control": "equal bindings and records remain one flow",
+      "expected": [
+        {
+          "root": "C:\\Users\\Administrator\\AppData\\Local\\Temp\\cooking-flow-controls-t610u90x\\copy-binding-canonical",
+          "copy": "equal"
+        },
+        {
+          "root": "C:\\Users\\Administrator\\AppData\\Local\\Temp\\cooking-flow-controls-t610u90x\\copy-binding-current",
+          "copy": "equal"
+        }
+      ],
+      "actual": [
+        {
+          "root": "C:\\Users\\Administrator\\AppData\\Local\\Temp\\cooking-flow-controls-t610u90x\\copy-binding-canonical",
+          "copy": "equal"
+        },
+        {
+          "root": "C:\\Users\\Administrator\\AppData\\Local\\Temp\\cooking-flow-controls-t610u90x\\copy-binding-current",
+          "copy": "equal"
+        }
+      ],
+      "status": "Passed"
+    },
+    {
+      "control": "equal binding old subset remains evidence",
+      "expected": [
+        {
+          "root": "C:\\Users\\Administrator\\AppData\\Local\\Temp\\cooking-flow-controls-t610u90x\\copy-binding-old",
+          "copy": "old-subset"
+        },
+        {
+          "root": "C:\\Users\\Administrator\\AppData\\Local\\Temp\\cooking-flow-controls-t610u90x\\copy-binding-canonical",
+          "copy": "equal"
+        }
+      ],
+      "actual": [
+        {
+          "root": "C:\\Users\\Administrator\\AppData\\Local\\Temp\\cooking-flow-controls-t610u90x\\copy-binding-old",
+          "copy": "old-subset"
+        },
+        {
+          "root": "C:\\Users\\Administrator\\AppData\\Local\\Temp\\cooking-flow-controls-t610u90x\\copy-binding-canonical",
+          "copy": "equal"
+        }
+      ],
+      "status": "Passed"
+    },
+    {
+      "control": "legitimate separate UUIDs remain separate groups",
+      "expected": [
+        "7cc3671a-5298-46cc-bbcb-701e7d986c33",
+        "e6bd8cd3-8ed0-4bc9-b0b6-634a52105cb6"
+      ],
+      "actual": [
+        "7cc3671a-5298-46cc-bbcb-701e7d986c33",
+        "e6bd8cd3-8ed0-4bc9-b0b6-634a52105cb6"
+      ],
+      "status": "Passed"
+    },
+    {
+      "control": "self-canonical canonical_root fixture is individually valid",
+      "expected": [
+        {
+          "root": "C:\\Users\\Administrator\\AppData\\Local\\Temp\\cooking-flow-controls-t610u90x\\copy-binding-conflict-canonical_root",
+          "copy": "equal"
+        }
+      ],
+      "actual": [
+        {
+          "root": "C:\\Users\\Administrator\\AppData\\Local\\Temp\\cooking-flow-controls-t610u90x\\copy-binding-conflict-canonical_root",
+          "copy": "equal"
+        }
+      ],
+      "status": "Passed"
+    },
+    {
+      "diagnostic": "conflicting immutable bindings for same flow_id"
+    },
+    {
+      "control": "same UUID conflicting immutable canonical_root rejected forward",
+      "expected": true,
+      "actual": true,
+      "status": "Passed"
+    },
+    {
+      "diagnostic": "conflicting immutable bindings for same flow_id"
+    },
+    {
+      "control": "same UUID conflicting immutable canonical_root rejected reverse",
+      "expected": true,
+      "actual": true,
+      "status": "Passed"
+    },
+    {
+      "diagnostic": "conflicting immutable bindings for same flow_id"
+    },
+    {
+      "control": "same UUID conflicting immutable canonical_root rejected third entry",
+      "expected": true,
+      "actual": true,
+      "status": "Passed"
+    },
+    {
+      "control": "conflicting canonical_root discovery leaves all inputs unchanged",
+      "expected": true,
+      "actual": true,
+      "status": "Passed"
+    },
+    {
+      "control": "self-canonical execution_host fixture is individually valid",
+      "expected": [
+        {
+          "root": "C:\\Users\\Administrator\\AppData\\Local\\Temp\\cooking-flow-controls-t610u90x\\copy-binding-conflict-execution_host",
+          "copy": "equal"
+        }
+      ],
+      "actual": [
+        {
+          "root": "C:\\Users\\Administrator\\AppData\\Local\\Temp\\cooking-flow-controls-t610u90x\\copy-binding-conflict-execution_host",
+          "copy": "equal"
+        }
+      ],
+      "status": "Passed"
+    },
+    {
+      "diagnostic": "conflicting immutable bindings for same flow_id"
+    },
+    {
+      "control": "same UUID conflicting immutable execution_host rejected forward",
+      "expected": true,
+      "actual": true,
+      "status": "Passed"
+    },
+    {
+      "diagnostic": "conflicting immutable bindings for same flow_id"
+    },
+    {
+      "control": "same UUID conflicting immutable execution_host rejected reverse",
+      "expected": true,
+      "actual": true,
+      "status": "Passed"
+    },
+    {
+      "diagnostic": "conflicting immutable bindings for same flow_id"
+    },
+    {
+      "control": "same UUID conflicting immutable execution_host rejected third entry",
+      "expected": true,
+      "actual": true,
+      "status": "Passed"
+    },
+    {
+      "control": "conflicting execution_host discovery leaves all inputs unchanged",
+      "expected": true,
+      "actual": true,
+      "status": "Passed"
+    },
+    {
+      "control": "self-canonical worktree_id fixture is individually valid",
+      "expected": [
+        {
+          "root": "C:\\Users\\Administrator\\AppData\\Local\\Temp\\cooking-flow-controls-t610u90x\\copy-binding-conflict-worktree_id",
+          "copy": "equal"
+        }
+      ],
+      "actual": [
+        {
+          "root": "C:\\Users\\Administrator\\AppData\\Local\\Temp\\cooking-flow-controls-t610u90x\\copy-binding-conflict-worktree_id",
+          "copy": "equal"
+        }
+      ],
+      "status": "Passed"
+    },
+    {
+      "diagnostic": "conflicting immutable bindings for same flow_id"
+    },
+    {
+      "control": "same UUID conflicting immutable worktree_id rejected forward",
+      "expected": true,
+      "actual": true,
+      "status": "Passed"
+    },
+    {
+      "diagnostic": "conflicting immutable bindings for same flow_id"
+    },
+    {
+      "control": "same UUID conflicting immutable worktree_id rejected reverse",
+      "expected": true,
+      "actual": true,
+      "status": "Passed"
+    },
+    {
+      "diagnostic": "conflicting immutable bindings for same flow_id"
+    },
+    {
+      "control": "same UUID conflicting immutable worktree_id rejected third entry",
+      "expected": true,
+      "actual": true,
+      "status": "Passed"
+    },
+    {
+      "control": "conflicting worktree_id discovery leaves all inputs unchanged",
+      "expected": true,
+      "actual": true,
+      "status": "Passed"
+    },
+    {
+      "control": "self-canonical task_path fixture is individually valid",
+      "expected": [
+        {
+          "root": "C:\\Users\\Administrator\\AppData\\Local\\Temp\\cooking-flow-controls-t610u90x\\copy-binding-conflict-task_path",
+          "copy": "equal"
+        }
+      ],
+      "actual": [
+        {
+          "root": "C:\\Users\\Administrator\\AppData\\Local\\Temp\\cooking-flow-controls-t610u90x\\copy-binding-conflict-task_path",
+          "copy": "equal"
+        }
+      ],
+      "status": "Passed"
+    },
+    {
+      "diagnostic": "conflicting immutable bindings for same flow_id"
+    },
+    {
+      "control": "same UUID conflicting immutable task_path rejected forward",
+      "expected": true,
+      "actual": true,
+      "status": "Passed"
+    },
+    {
+      "diagnostic": "conflicting immutable bindings for same flow_id"
+    },
+    {
+      "control": "same UUID conflicting immutable task_path rejected reverse",
+      "expected": true,
+      "actual": true,
+      "status": "Passed"
+    },
+    {
+      "diagnostic": "conflicting immutable bindings for same flow_id"
+    },
+    {
+      "control": "same UUID conflicting immutable task_path rejected third entry",
+      "expected": true,
+      "actual": true,
+      "status": "Passed"
+    },
+    {
+      "control": "conflicting task_path discovery leaves all inputs unchanged",
+      "expected": true,
+      "actual": true,
+      "status": "Passed"
+    },
+    {
+      "control": "self-canonical repository fixture is individually valid",
+      "expected": [
+        {
+          "root": "C:\\Users\\Administrator\\AppData\\Local\\Temp\\cooking-flow-controls-t610u90x\\copy-binding-conflict-repository",
+          "copy": "equal"
+        }
+      ],
+      "actual": [
+        {
+          "root": "C:\\Users\\Administrator\\AppData\\Local\\Temp\\cooking-flow-controls-t610u90x\\copy-binding-conflict-repository",
+          "copy": "equal"
+        }
+      ],
+      "status": "Passed"
+    },
+    {
+      "diagnostic": "conflicting immutable bindings for same flow_id"
+    },
+    {
+      "control": "same UUID conflicting immutable repository rejected forward",
+      "expected": true,
+      "actual": true,
+      "status": "Passed"
+    },
+    {
+      "diagnostic": "conflicting immutable bindings for same flow_id"
+    },
+    {
+      "control": "same UUID conflicting immutable repository rejected reverse",
+      "expected": true,
+      "actual": true,
+      "status": "Passed"
+    },
+    {
+      "diagnostic": "conflicting immutable bindings for same flow_id"
+    },
+    {
+      "control": "same UUID conflicting immutable repository rejected third entry",
+      "expected": true,
+      "actual": true,
+      "status": "Passed"
+    },
+    {
+      "control": "conflicting repository discovery leaves all inputs unchanged",
+      "expected": true,
+      "actual": true,
+      "status": "Passed"
+    },
+    {
+      "control": "self-canonical branch fixture is individually valid",
+      "expected": [
+        {
+          "root": "C:\\Users\\Administrator\\AppData\\Local\\Temp\\cooking-flow-controls-t610u90x\\copy-binding-conflict-branch",
+          "copy": "equal"
+        }
+      ],
+      "actual": [
+        {
+          "root": "C:\\Users\\Administrator\\AppData\\Local\\Temp\\cooking-flow-controls-t610u90x\\copy-binding-conflict-branch",
+          "copy": "equal"
+        }
+      ],
+      "status": "Passed"
+    },
+    {
+      "diagnostic": "conflicting immutable bindings for same flow_id"
+    },
+    {
+      "control": "same UUID conflicting immutable branch rejected forward",
+      "expected": true,
+      "actual": true,
+      "status": "Passed"
+    },
+    {
+      "diagnostic": "conflicting immutable bindings for same flow_id"
+    },
+    {
+      "control": "same UUID conflicting immutable branch rejected reverse",
+      "expected": true,
+      "actual": true,
+      "status": "Passed"
+    },
+    {
+      "diagnostic": "conflicting immutable bindings for same flow_id"
+    },
+    {
+      "control": "same UUID conflicting immutable branch rejected third entry",
+      "expected": true,
+      "actual": true,
+      "status": "Passed"
+    },
+    {
+      "control": "conflicting branch discovery leaves all inputs unchanged",
+      "expected": true,
+      "actual": true,
+      "status": "Passed"
+    },
+    {
+      "control": "self-canonical target_branch fixture is individually valid",
+      "expected": [
+        {
+          "root": "C:\\Users\\Administrator\\AppData\\Local\\Temp\\cooking-flow-controls-t610u90x\\copy-binding-conflict-target_branch",
+          "copy": "equal"
+        }
+      ],
+      "actual": [
+        {
+          "root": "C:\\Users\\Administrator\\AppData\\Local\\Temp\\cooking-flow-controls-t610u90x\\copy-binding-conflict-target_branch",
+          "copy": "equal"
+        }
+      ],
+      "status": "Passed"
+    },
+    {
+      "diagnostic": "conflicting immutable bindings for same flow_id"
+    },
+    {
+      "control": "same UUID conflicting immutable target_branch rejected forward",
+      "expected": true,
+      "actual": true,
+      "status": "Passed"
+    },
+    {
+      "diagnostic": "conflicting immutable bindings for same flow_id"
+    },
+    {
+      "control": "same UUID conflicting immutable target_branch rejected reverse",
+      "expected": true,
+      "actual": true,
+      "status": "Passed"
+    },
+    {
+      "diagnostic": "conflicting immutable bindings for same flow_id"
+    },
+    {
+      "control": "same UUID conflicting immutable target_branch rejected third entry",
+      "expected": true,
+      "actual": true,
+      "status": "Passed"
+    },
+    {
+      "control": "conflicting target_branch discovery leaves all inputs unchanged",
+      "expected": true,
+      "actual": true,
+      "status": "Passed"
+    },
+    {
+      "control": "self-canonical delivery_mode fixture is individually valid",
+      "expected": [
+        {
+          "root": "C:\\Users\\Administrator\\AppData\\Local\\Temp\\cooking-flow-controls-t610u90x\\copy-binding-conflict-delivery_mode",
+          "copy": "equal"
+        }
+      ],
+      "actual": [
+        {
+          "root": "C:\\Users\\Administrator\\AppData\\Local\\Temp\\cooking-flow-controls-t610u90x\\copy-binding-conflict-delivery_mode",
+          "copy": "equal"
+        }
+      ],
+      "status": "Passed"
+    },
+    {
+      "diagnostic": "conflicting immutable bindings for same flow_id"
+    },
+    {
+      "control": "same UUID conflicting immutable delivery_mode rejected forward",
+      "expected": true,
+      "actual": true,
+      "status": "Passed"
+    },
+    {
+      "diagnostic": "conflicting immutable bindings for same flow_id"
+    },
+    {
+      "control": "same UUID conflicting immutable delivery_mode rejected reverse",
+      "expected": true,
+      "actual": true,
+      "status": "Passed"
+    },
+    {
+      "diagnostic": "conflicting immutable bindings for same flow_id"
+    },
+    {
+      "control": "same UUID conflicting immutable delivery_mode rejected third entry",
+      "expected": true,
+      "actual": true,
+      "status": "Passed"
+    },
+    {
+      "control": "conflicting delivery_mode discovery leaves all inputs unchanged",
+      "expected": true,
+      "actual": true,
+      "status": "Passed"
+    },
+    {
+      "control": "self-canonical original_session fixture is individually valid",
+      "expected": [
+        {
+          "root": "C:\\Users\\Administrator\\AppData\\Local\\Temp\\cooking-flow-controls-t610u90x\\copy-binding-conflict-original_session",
+          "copy": "equal"
+        }
+      ],
+      "actual": [
+        {
+          "root": "C:\\Users\\Administrator\\AppData\\Local\\Temp\\cooking-flow-controls-t610u90x\\copy-binding-conflict-original_session",
+          "copy": "equal"
+        }
+      ],
+      "status": "Passed"
+    },
+    {
+      "diagnostic": "conflicting immutable bindings for same flow_id"
+    },
+    {
+      "control": "same UUID conflicting immutable original_session rejected forward",
+      "expected": true,
+      "actual": true,
+      "status": "Passed"
+    },
+    {
+      "diagnostic": "conflicting immutable bindings for same flow_id"
+    },
+    {
+      "control": "same UUID conflicting immutable original_session rejected reverse",
+      "expected": true,
+      "actual": true,
+      "status": "Passed"
+    },
+    {
+      "diagnostic": "conflicting immutable bindings for same flow_id"
+    },
+    {
+      "control": "same UUID conflicting immutable original_session rejected third entry",
+      "expected": true,
+      "actual": true,
+      "status": "Passed"
+    },
+    {
+      "control": "conflicting original_session discovery leaves all inputs unchanged",
+      "expected": true,
+      "actual": true,
+      "status": "Passed"
+    },
+    {
+      "control": "self-canonical original_terminal fixture is individually valid",
+      "expected": [
+        {
+          "root": "C:\\Users\\Administrator\\AppData\\Local\\Temp\\cooking-flow-controls-t610u90x\\copy-binding-conflict-original_terminal",
+          "copy": "equal"
+        }
+      ],
+      "actual": [
+        {
+          "root": "C:\\Users\\Administrator\\AppData\\Local\\Temp\\cooking-flow-controls-t610u90x\\copy-binding-conflict-original_terminal",
+          "copy": "equal"
+        }
+      ],
+      "status": "Passed"
+    },
+    {
+      "diagnostic": "conflicting immutable bindings for same flow_id"
+    },
+    {
+      "control": "same UUID conflicting immutable original_terminal rejected forward",
+      "expected": true,
+      "actual": true,
+      "status": "Passed"
+    },
+    {
+      "diagnostic": "conflicting immutable bindings for same flow_id"
+    },
+    {
+      "control": "same UUID conflicting immutable original_terminal rejected reverse",
+      "expected": true,
+      "actual": true,
+      "status": "Passed"
+    },
+    {
+      "diagnostic": "conflicting immutable bindings for same flow_id"
+    },
+    {
+      "control": "same UUID conflicting immutable original_terminal rejected third entry",
+      "expected": true,
+      "actual": true,
+      "status": "Passed"
+    },
+    {
+      "control": "conflicting original_terminal discovery leaves all inputs unchanged",
+      "expected": true,
+      "actual": true,
+      "status": "Passed"
+    },
+    {
+      "control": "self-canonical run_id fixture is individually valid",
+      "expected": [
+        {
+          "root": "C:\\Users\\Administrator\\AppData\\Local\\Temp\\cooking-flow-controls-t610u90x\\copy-binding-conflict-run_id",
+          "copy": "equal"
+        }
+      ],
+      "actual": [
+        {
+          "root": "C:\\Users\\Administrator\\AppData\\Local\\Temp\\cooking-flow-controls-t610u90x\\copy-binding-conflict-run_id",
+          "copy": "equal"
+        }
+      ],
+      "status": "Passed"
+    },
+    {
+      "diagnostic": "conflicting immutable bindings for same flow_id"
+    },
+    {
+      "control": "same UUID conflicting immutable run_id rejected forward",
+      "expected": true,
+      "actual": true,
+      "status": "Passed"
+    },
+    {
+      "diagnostic": "conflicting immutable bindings for same flow_id"
+    },
+    {
+      "control": "same UUID conflicting immutable run_id rejected reverse",
+      "expected": true,
+      "actual": true,
+      "status": "Passed"
+    },
+    {
+      "diagnostic": "conflicting immutable bindings for same flow_id"
+    },
+    {
+      "control": "same UUID conflicting immutable run_id rejected third entry",
+      "expected": true,
+      "actual": true,
+      "status": "Passed"
+    },
+    {
+      "control": "conflicting run_id discovery leaves all inputs unchanged",
+      "expected": true,
+      "actual": true,
+      "status": "Passed"
+    },
+    {
+      "control": "self-canonical approval_ref fixture is individually valid",
+      "expected": [
+        {
+          "root": "C:\\Users\\Administrator\\AppData\\Local\\Temp\\cooking-flow-controls-t610u90x\\copy-binding-conflict-approval_ref",
+          "copy": "equal"
+        }
+      ],
+      "actual": [
+        {
+          "root": "C:\\Users\\Administrator\\AppData\\Local\\Temp\\cooking-flow-controls-t610u90x\\copy-binding-conflict-approval_ref",
+          "copy": "equal"
+        }
+      ],
+      "status": "Passed"
+    },
+    {
+      "diagnostic": "conflicting immutable bindings for same flow_id"
+    },
+    {
+      "control": "same UUID conflicting immutable approval_ref rejected forward",
+      "expected": true,
+      "actual": true,
+      "status": "Passed"
+    },
+    {
+      "diagnostic": "conflicting immutable bindings for same flow_id"
+    },
+    {
+      "control": "same UUID conflicting immutable approval_ref rejected reverse",
+      "expected": true,
+      "actual": true,
+      "status": "Passed"
+    },
+    {
+      "diagnostic": "conflicting immutable bindings for same flow_id"
+    },
+    {
+      "control": "same UUID conflicting immutable approval_ref rejected third entry",
+      "expected": true,
+      "actual": true,
+      "status": "Passed"
+    },
+    {
+      "control": "conflicting approval_ref discovery leaves all inputs unchanged",
+      "expected": true,
+      "actual": true,
+      "status": "Passed"
+    },
+    {
+      "control": "self-canonical created_utc fixture is individually valid",
+      "expected": [
+        {
+          "root": "C:\\Users\\Administrator\\AppData\\Local\\Temp\\cooking-flow-controls-t610u90x\\copy-binding-conflict-created_utc",
+          "copy": "equal"
+        }
+      ],
+      "actual": [
+        {
+          "root": "C:\\Users\\Administrator\\AppData\\Local\\Temp\\cooking-flow-controls-t610u90x\\copy-binding-conflict-created_utc",
+          "copy": "equal"
+        }
+      ],
+      "status": "Passed"
+    },
+    {
+      "diagnostic": "conflicting immutable bindings for same flow_id"
+    },
+    {
+      "control": "same UUID conflicting immutable created_utc rejected forward",
+      "expected": true,
+      "actual": true,
+      "status": "Passed"
+    },
+    {
+      "diagnostic": "conflicting immutable bindings for same flow_id"
+    },
+    {
+      "control": "same UUID conflicting immutable created_utc rejected reverse",
+      "expected": true,
+      "actual": true,
+      "status": "Passed"
+    },
+    {
+      "diagnostic": "conflicting immutable bindings for same flow_id"
+    },
+    {
+      "control": "same UUID conflicting immutable created_utc rejected third entry",
+      "expected": true,
+      "actual": true,
+      "status": "Passed"
+    },
+    {
+      "control": "conflicting created_utc discovery leaves all inputs unchanged",
+      "expected": true,
+      "actual": true,
+      "status": "Passed"
+    },
+    {
+      "control": "reply timely classification",
+      "expected": "timely",
+      "actual": "timely",
+      "status": "Passed"
+    },
+    {
+      "control": "reply timely valid",
+      "expected": true,
+      "actual": true,
+      "status": "Passed"
+    },
+    {
+      "control": "reply ambiguous classification",
+      "expected": "ambiguous",
+      "actual": "ambiguous",
+      "status": "Passed"
+    },
+    {
+      "control": "reply ambiguous valid",
+      "expected": false,
+      "actual": false,
+      "status": "Passed"
+    },
+    {
+      "control": "reply old SHA classification",
+      "expected": "wrong-SHA",
+      "actual": "wrong-SHA",
+      "status": "Passed"
+    },
+    {
+      "control": "reply old SHA valid",
+      "expected": false,
+      "actual": false,
+      "status": "Passed"
+    },
+    {
+      "control": "reply old request classification",
+      "expected": "wrong-request",
+      "actual": "wrong-request",
+      "status": "Passed"
+    },
+    {
+      "control": "reply old request valid",
+      "expected": false,
+      "actual": false,
+      "status": "Passed"
+    },
+    {
+      "control": "reply late-read timely classification",
+      "expected": "timely-late-read",
+      "actual": "timely-late-read",
+      "status": "Passed"
+    },
+    {
+      "control": "reply late-read timely valid",
+      "expected": true,
+      "actual": true,
+      "status": "Passed"
+    },
+    {
+      "control": "reply late classification",
+      "expected": "late",
+      "actual": "late",
+      "status": "Passed"
+    },
+    {
+      "control": "reply late valid",
+      "expected": false,
+      "actual": false,
+      "status": "Passed"
+    },
+    {
+      "control": "reply unknown time classification",
+      "expected": "unknown-time",
+      "actual": "unknown-time",
+      "status": "Passed"
+    },
+    {
+      "control": "reply unknown time valid",
+      "expected": false,
+      "actual": false,
+      "status": "Passed"
+    },
+    {
+      "control": "timely late-read preserves prior pause",
+      "expected": [
+        true,
+        false
+      ],
+      "actual": [
+        true,
+        false
+      ],
+      "status": "Passed"
+    },
+    {
+      "control": "expired deadline stale paused=false retains technical reply validity",
+      "expected": true,
+      "actual": true,
+      "status": "Passed"
+    },
+    {
+      "control": "expired deadline stale paused=false refuses automatic apply/continue",
+      "expected": [
+        false,
+        true,
+        true
+      ],
+      "actual": [
+        false,
+        true,
+        true
+      ],
+      "status": "Passed"
+    },
+    {
+      "control": "late read cannot enable dispatch/shared-write eligibility even for original main",
+      "expected": false,
+      "actual": false,
+      "status": "Passed"
+    },
+    {
+      "control": "null posted UTC full observed in budget is timely",
+      "expected": "timely",
+      "actual": "timely",
+      "status": "Passed"
+    },
+    {
+      "control": "observation timing basis explicit",
+      "expected": "complete-observation-upper-bound",
+      "actual": "complete-observation-upper-bound",
+      "status": "Passed"
+    },
+    {
+      "control": "observation proof does not fabricate posted UTC",
+      "expected": null,
+      "actual": null,
+      "status": "Passed"
+    },
+    {
+      "control": "observation refuses fragment before deadline full first seen later",
+      "expected": false,
+      "actual": false,
+      "status": "Passed"
+    },
+    {
+      "control": "observation refuses full first seen after deadline",
+      "expected": false,
+      "actual": false,
+      "status": "Passed"
+    },
+    {
+      "control": "observation refuses clock interval crosses deadline",
+      "expected": false,
+      "actual": false,
+      "status": "Passed"
+    },
+    {
+      "control": "observation refuses clock jump",
+      "expected": false,
+      "actual": false,
+      "status": "Passed"
+    },
+    {
+      "control": "observation refuses unverifiable raw proof",
+      "expected": false,
+      "actual": false,
+      "status": "Passed"
+    },
+    {
+      "control": "timely observation rejects wrong conversation",
+      "expected": false,
+      "actual": false,
+      "status": "Passed"
+    },
+    {
+      "control": "timely observation rejects wrong request",
+      "expected": false,
+      "actual": false,
+      "status": "Passed"
+    },
+    {
+      "control": "timely observation rejects wrong SHA",
+      "expected": false,
+      "actual": false,
+      "status": "Passed"
+    },
+    {
+      "control": "timely observation rejects old reply at boundary",
+      "expected": false,
+      "actual": false,
+      "status": "Passed"
+    },
+    {
+      "control": "durable earlier full observation adopted on restore",
+      "expected": true,
+      "actual": true,
+      "status": "Passed"
+    },
+    {
+      "control": "restored earlier full proof retains pause/no authority",
+      "expected": [
+        false,
+        true
+      ],
+      "actual": [
+        false,
+        true
+      ],
+      "status": "Passed"
+    },
+    {
+      "control": "subprocess exit 11",
+      "expected": 0,
+      "actual": 0,
+      "status": "Passed"
+    },
+    {
+      "control": "actual subprocess reads durable prior full timing proof",
+      "expected": true,
+      "actual": true,
+      "status": "Passed"
+    },
+    {
+      "control": "actual subprocess timing read does not enable continuation",
+      "expected": false,
+      "actual": false,
+      "status": "Passed"
+    },
+    {
+      "control": "observation rule does not change original deadline",
+      "expected": "2026-10-05T00:30:00Z",
+      "actual": "2026-10-05T00:30:00Z",
+      "status": "Passed"
+    },
+    {
+      "control": "one supplement available within budget",
+      "expected": true,
+      "actual": true,
+      "status": "Passed"
+    },
+    {
+      "control": "subprocess exit 12",
+      "expected": 74,
+      "actual": 74,
+      "status": "Passed"
+    },
+    {
+      "control": "supplement intent persisted despite actual subprocess exit",
+      "expected": 1,
+      "actual": 1,
+      "status": "Passed"
+    },
+    {
+      "control": "lost supplement receipt still consumes quota",
+      "expected": false,
+      "actual": false,
+      "status": "Passed"
+    },
+    {
+      "control": "supplement refused generating",
+      "expected": false,
+      "actual": false,
+      "status": "Passed"
+    },
+    {
+      "control": "supplement refused unknown generation",
+      "expected": false,
+      "actual": false,
+      "status": "Passed"
+    },
+    {
+      "control": "supplement refused deadline",
+      "expected": false,
+      "actual": false,
+      "status": "Passed"
+    },
+    {
+      "control": "timeout does not grant fresh budget",
+      "expected": false,
+      "actual": false,
+      "status": "Passed"
+    },
+    {
+      "control": "explicit Owner reopening permits new linked request",
+      "expected": true,
+      "actual": true,
+      "status": "Passed"
+    },
+    {
+      "control": "valid revision permits later candidate request",
+      "expected": true,
+      "actual": true,
+      "status": "Passed"
+    },
+    {
+      "control": "late-read revision stale pause flag cannot refresh budget",
+      "expected": false,
+      "actual": false,
+      "status": "Passed"
+    },
+    {
+      "control": "old timeout/pause retained",
+      "expected": true,
+      "actual": true,
+      "status": "Passed"
+    },
+    {
+      "control": "complete declared branch-only delivery eligible",
+      "expected": true,
+      "actual": true,
+      "status": "Passed"
+    },
+    {
+      "control": "paused session rejects complete/archive",
+      "expected": false,
+      "actual": false,
+      "status": "Passed"
+    },
+    {
+      "control": "branch delivery refuses missing required_pilot_passed",
+      "expected": false,
+      "actual": false,
+      "status": "Passed"
+    },
+    {
+      "control": "branch delivery refuses missing accepted_sha",
+      "expected": false,
+      "actual": false,
+      "status": "Passed"
+    },
+    {
+      "control": "branch delivery refuses missing hashes_unchanged",
+      "expected": false,
+      "actual": false,
+      "status": "Passed"
+    },
+    {
+      "control": "branch delivery refuses missing workers_accounted",
+      "expected": false,
+      "actual": false,
+      "status": "Passed"
+    },
+    {
+      "control": "branch delivery refuses missing effects_reconciled",
+      "expected": false,
+      "actual": false,
+      "status": "Passed"
+    },
+    {
+      "control": "simulated postmerge failure rejects archive/close completion",
+      "expected": false,
+      "actual": false,
+      "status": "Passed"
+    },
+    {
+      "control": "pure production delivery with all evidence eligible",
+      "expected": true,
+      "actual": true,
+      "status": "Passed"
+    },
+    {
+      "control": "pure production optional Issue is N/A",
+      "expected": true,
+      "actual": true,
+      "status": "Passed"
+    },
+    {
+      "control": "pure production unverified Issue close refused",
+      "expected": false,
+      "actual": false,
+      "status": "Passed"
+    },
+    {
+      "control": "pure premerge all conditions",
+      "expected": true,
+      "actual": true,
+      "status": "Passed"
+    },
+    {
+      "control": "branch-only mode always refuses merge",
+      "expected": false,
+      "actual": false,
+      "status": "Passed"
+    },
+    {
+      "control": "pure premerge refuses automatic close association",
+      "expected": false,
+      "actual": false,
+      "status": "Passed"
+    },
+    {
+      "control": "pure premerge refuses unknown server associations",
+      "expected": false,
+      "actual": false,
+      "status": "Passed"
+    },
+    {
+      "control": "pure premerge refuses missing authority",
+      "expected": false,
+      "actual": false,
+      "status": "Passed"
+    }
+  ],
+  "subprocesses": [
+    {
+      "command": [
+        "C:\\Python314\\python.exe",
+        "-B",
+        "C:\\Users\\Administrator\\orca\\workspaces\\AbilityKit\\cooking-dot-skill-polish\\.agents\\skills\\cooking-dot-workflow\\scripts\\test_controls.py",
+        "--child",
+        "pre-effect",
+        "--root",
+        "C:\\Users\\ADMINI~1\\AppData\\Local\\Temp\\cooking-flow-controls-t610u90x\\pre-effect"
+      ],
+      "exit": 71,
+      "expected_exit": 71,
+      "stdout": "{\"simulation\": true, \"stage\": \"intent-read-back\", \"op_id\": \"38e55b8f-28fa-464c-a677-fcaacb45d6d6:000001\"}\n",
+      "stderr": ""
+    },
+    {
+      "command": [
+        "C:\\Python314\\python.exe",
+        "-B",
+        "C:\\Users\\Administrator\\orca\\workspaces\\AbilityKit\\cooking-dot-skill-polish\\.agents\\skills\\cooking-dot-workflow\\scripts\\records.py",
+        "inspect",
+        "C:\\Users\\ADMINI~1\\AppData\\Local\\Temp\\cooking-flow-controls-t610u90x\\pre-effect"
+      ],
+      "exit": 0,
+      "expected_exit": 0,
+      "stdout": "{\n  \"version\": 1,\n  \"flow_id\": \"38e55b8f-28fa-464c-a677-fcaacb45d6d6\",\n  \"effective_run_id\": \"simulation-run\",\n  \"last_seq\": 1,\n  \"unresolved\": [\n    \"38e55b8f-28fa-464c-a677-fcaacb45d6d6:000001\"\n  ],\n  \"record_hashes\": {\n    \"000001.intent.json\": \"6ff428d760e9e6763dd526b0e0b9531f81ad1b43ff5c8b8f38d6bb5070b00321\"\n  }\n}\n",
+      "stderr": ""
+    },
+    {
+      "command": [
+        "C:\\Python314\\python.exe",
+        "-B",
+        "C:\\Users\\Administrator\\orca\\workspaces\\AbilityKit\\cooking-dot-skill-polish\\.agents\\skills\\cooking-dot-workflow\\scripts\\test_controls.py",
+        "--child",
+        "recover",
+        "--root",
+        "C:\\Users\\ADMINI~1\\AppData\\Local\\Temp\\cooking-flow-controls-t610u90x\\pre-effect"
+      ],
+      "exit": 0,
+      "expected_exit": 0,
+      "stdout": "{\"simulation\": true, \"ledger\": {}, \"index\": {\"version\": 1, \"flow_id\": \"38e55b8f-28fa-464c-a677-fcaacb45d6d6\", \"effective_run_id\": \"simulation-run\", \"last_seq\": 1, \"unresolved\": [], \"record_hashes\": {\"000001.intent.json\": \"6ff428d760e9e6763dd526b0e0b9531f81ad1b43ff5c8b8f38d6bb5070b00321\", \"000001.receipt.json\": \"50e2508a4e1c91b0b59888f7f3eb0b63703c77fe629157d13d39e910435115a5\"}}}\n",
+      "stderr": ""
+    },
+    {
+      "command": [
+        "C:\\Python314\\python.exe",
+        "-B",
+        "C:\\Users\\Administrator\\orca\\workspaces\\AbilityKit\\cooking-dot-skill-polish\\.agents\\skills\\cooking-dot-workflow\\scripts\\test_controls.py",
+        "--child",
+        "lost-receipt",
+        "--root",
+        "C:\\Users\\ADMINI~1\\AppData\\Local\\Temp\\cooking-flow-controls-t610u90x\\lost-receipt"
+      ],
+      "exit": 72,
+      "expected_exit": 72,
+      "stdout": "{\"simulation\": true, \"stage\": \"intent-read-back\", \"op_id\": \"dccd5fb8-a133-48d1-b0d6-6e07943b4b01:000001\"}\n{\"simulation\": true, \"stage\": \"effect-applied\", \"invocations\": 1}\n",
+      "stderr": ""
+    },
+    {
+      "command": [
+        "C:\\Python314\\python.exe",
+        "-B",
+        "C:\\Users\\Administrator\\orca\\workspaces\\AbilityKit\\cooking-dot-skill-polish\\.agents\\skills\\cooking-dot-workflow\\scripts\\records.py",
+        "inspect",
+        "C:\\Users\\ADMINI~1\\AppData\\Local\\Temp\\cooking-flow-controls-t610u90x\\lost-receipt"
+      ],
+      "exit": 0,
+      "expected_exit": 0,
+      "stdout": "{\n  \"version\": 1,\n  \"flow_id\": \"dccd5fb8-a133-48d1-b0d6-6e07943b4b01\",\n  \"effective_run_id\": \"simulation-run\",\n  \"last_seq\": 1,\n  \"unresolved\": [\n    \"dccd5fb8-a133-48d1-b0d6-6e07943b4b01:000001\"\n  ],\n  \"record_hashes\": {\n    \"000001.intent.json\": \"6c2ca5cd95665721745a9bd48170f9f9d86c14dd0629982d7609078bb82ab472\"\n  }\n}\n",
+      "stderr": ""
+    },
+    {
+      "command": [
+        "C:\\Python314\\python.exe",
+        "-B",
+        "C:\\Users\\Administrator\\orca\\workspaces\\AbilityKit\\cooking-dot-skill-polish\\.agents\\skills\\cooking-dot-workflow\\scripts\\test_controls.py",
+        "--child",
+        "recover",
+        "--root",
+        "C:\\Users\\ADMINI~1\\AppData\\Local\\Temp\\cooking-flow-controls-t610u90x\\lost-receipt"
+      ],
+      "exit": 0,
+      "expected_exit": 0,
+      "stdout": "{\"simulation\": true, \"ledger\": {\"dccd5fb8-a133-48d1-b0d6-6e07943b4b01:000001\": 1}, \"index\": {\"version\": 1, \"flow_id\": \"dccd5fb8-a133-48d1-b0d6-6e07943b4b01\", \"effective_run_id\": \"simulation-run\", \"last_seq\": 1, \"unresolved\": [], \"record_hashes\": {\"000001.intent.json\": \"6c2ca5cd95665721745a9bd48170f9f9d86c14dd0629982d7609078bb82ab472\", \"000001.receipt.json\": \"c23340e14c74aca40d6b1850c5ffe4b83469c1f455f25cecdb23f3790edb9a9d\"}}}\n",
+      "stderr": ""
+    },
+    {
+      "command": [
+        "C:\\Python314\\python.exe",
+        "-B",
+        "C:\\Users\\Administrator\\orca\\workspaces\\AbilityKit\\cooking-dot-skill-polish\\.agents\\skills\\cooking-dot-workflow\\scripts\\test_controls.py",
+        "--child",
+        "stale-index",
+        "--root",
+        "C:\\Users\\ADMINI~1\\AppData\\Local\\Temp\\cooking-flow-controls-t610u90x\\stale-index"
+      ],
+      "exit": 73,
+      "expected_exit": 73,
+      "stdout": "{\"simulation\": true, \"stage\": \"intent-read-back\", \"op_id\": \"0cc70fcb-9cc7-4f19-abcf-365d16a2be55:000001\"}\n{\"simulation\": true, \"stage\": \"effect-applied\", \"invocations\": 1}\n{\"simulation\": true, \"stage\": \"receipt-read-back\"}\n",
+      "stderr": ""
+    },
+    {
+      "command": [
+        "C:\\Python314\\python.exe",
+        "-B",
+        "C:\\Users\\Administrator\\orca\\workspaces\\AbilityKit\\cooking-dot-skill-polish\\.agents\\skills\\cooking-dot-workflow\\scripts\\records.py",
+        "inspect",
+        "C:\\Users\\ADMINI~1\\AppData\\Local\\Temp\\cooking-flow-controls-t610u90x\\stale-index"
+      ],
+      "exit": 0,
+      "expected_exit": 0,
+      "stdout": "{\n  \"version\": 1,\n  \"flow_id\": \"0cc70fcb-9cc7-4f19-abcf-365d16a2be55\",\n  \"effective_run_id\": \"simulation-run\",\n  \"last_seq\": 1,\n  \"unresolved\": [],\n  \"record_hashes\": {\n    \"000001.intent.json\": \"14b426f811d3ef87bb4502444f70aeead445d9fff7e9d652a865d1c892a828ee\",\n    \"000001.receipt.json\": \"44e9ab4e84b2d23e097ef941a79803c37ce2e095c78552bcc17f3290427f9915\"\n  }\n}\n",
+      "stderr": ""
+    },
+    {
+      "command": [
+        "C:\\Python314\\python.exe",
+        "-B",
+        "C:\\Users\\Administrator\\orca\\workspaces\\AbilityKit\\cooking-dot-skill-polish\\.agents\\skills\\cooking-dot-workflow\\scripts\\test_controls.py",
+        "--child",
+        "recover",
+        "--root",
+        "C:\\Users\\ADMINI~1\\AppData\\Local\\Temp\\cooking-flow-controls-t610u90x\\stale-index"
+      ],
+      "exit": 0,
+      "expected_exit": 0,
+      "stdout": "{\"simulation\": true, \"ledger\": {\"0cc70fcb-9cc7-4f19-abcf-365d16a2be55:000001\": 1}, \"index\": {\"version\": 1, \"flow_id\": \"0cc70fcb-9cc7-4f19-abcf-365d16a2be55\", \"effective_run_id\": \"simulation-run\", \"last_seq\": 1, \"unresolved\": [], \"record_hashes\": {\"000001.intent.json\": \"14b426f811d3ef87bb4502444f70aeead445d9fff7e9d652a865d1c892a828ee\", \"000001.receipt.json\": \"44e9ab4e84b2d23e097ef941a79803c37ce2e095c78552bcc17f3290427f9915\"}}}\n",
+      "stderr": ""
+    },
+    {
+      "command": [
+        "C:\\Python314\\python.exe",
+        "-B",
+        "C:\\Users\\Administrator\\orca\\workspaces\\AbilityKit\\cooking-dot-skill-polish\\.agents\\skills\\cooking-dot-workflow\\scripts\\records.py",
+        "inspect",
+        "C:\\Users\\ADMINI~1\\AppData\\Local\\Temp\\cooking-flow-controls-t610u90x\\records"
+      ],
+      "exit": 0,
+      "expected_exit": 0,
+      "stdout": "{\n  \"version\": 1,\n  \"flow_id\": \"6b1d785f-ed6a-441e-9eb5-f052ad85f8b3\",\n  \"effective_run_id\": \"simulation-run\",\n  \"last_seq\": 2,\n  \"unresolved\": [],\n  \"record_hashes\": {\n    \"000001.intent.json\": \"e95f70e63ef518338bf5040aca92d00b197bf071d80d7ec89905bfa26f835ca1\",\n    \"000001.receipt.json\": \"6fc7637e4452c1d0eca3d624a5bf485c2d5282d2968e06fec5ebd88316ef3d86\",\n    \"000002.intent.json\": \"864d9132f192351a656d35e1c121b32f4e04fac7921e8c0cf3072d92f0cde52d\",\n    \"000002.receipt.json\": \"7ad5e714a78c5385b53eda21dbc8e2767b8f4d4f8acef48e91886190561c0ca1\"\n  }\n}\n",
+      "stderr": ""
+    },
+    {
+      "command": [
+        "C:\\Python314\\python.exe",
+        "-B",
+        "C:\\Users\\Administrator\\orca\\workspaces\\AbilityKit\\cooking-dot-skill-polish\\.agents\\skills\\cooking-dot-workflow\\scripts\\test_controls.py",
+        "--child",
+        "timing-read",
+        "--root",
+        "C:\\Users\\ADMINI~1\\AppData\\Local\\Temp\\cooking-flow-controls-t610u90x\\supplement"
+      ],
+      "exit": 0,
+      "expected_exit": 0,
+      "stdout": "{\"classification\": \"timely-late-read\", \"timing_basis\": \"complete-observation-upper-bound\", \"valid_resolution\": true, \"pause_required\": true, \"can_apply\": false, \"preserve_pause\": true}\n",
+      "stderr": ""
+    },
+    {
+      "command": [
+        "C:\\Python314\\python.exe",
+        "-B",
+        "C:\\Users\\Administrator\\orca\\workspaces\\AbilityKit\\cooking-dot-skill-polish\\.agents\\skills\\cooking-dot-workflow\\scripts\\test_controls.py",
+        "--child",
+        "supplement-intent",
+        "--root",
+        "C:\\Users\\ADMINI~1\\AppData\\Local\\Temp\\cooking-flow-controls-t610u90x\\supplement"
+      ],
+      "exit": 74,
+      "expected_exit": 74,
+      "stdout": "{\"simulation\": true, \"stage\": \"supplement-intent-read-back-no-receipt\"}\n",
+      "stderr": ""
+    }
+  ]
+}

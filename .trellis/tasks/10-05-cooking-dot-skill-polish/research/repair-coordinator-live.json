@@ -1,0 +1,18 @@
+{
+  "id": "bb777a03-5b95-4a63-950b-28a0ef0154f2",
+  "ok": true,
+  "result": {
+    "run": {
+      "id": "run_840202cc5621",
+      "objective": "Cooking workflow skill polish and bounded branch-only pilot; dot accepted planning SHA4cf5b38; one main coordinator, Orca workers only",
+      "coordinator_handle": "term_4d2338db-ef10-45a0-9316-90733d30e4cb",
+      "consumer_generation": 1,
+      "legacy": 0,
+      "created_at": "2026-10-05T12:16:04Z",
+      "updated_at": "2026-10-05T12:16:04Z"
+    }
+  },
+  "_meta": {
+    "runtimeId": "ff0c5f2c-d341-4455-bc1c-c113650bdd60"
+  }
+}

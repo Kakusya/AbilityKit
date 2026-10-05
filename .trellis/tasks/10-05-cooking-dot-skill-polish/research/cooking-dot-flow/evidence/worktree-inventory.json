@@ -1,0 +1,205 @@
+{
+    "id":  "15802c16-286a-4c3a-b29c-364052f148ec",
+    "ok":  true,
+    "result":  {
+                   "worktrees":  [
+                                     {
+                                         "id":  "aaa97e0d-5026-4e5c-95f8-bb420dcb4c65::D:/MyWorkTree/AbilityKit",
+                                         "identity":  {
+                                                          "key":  "wt2:local:d1bfa4bf-fd73-4fda-aa71-58d7e64561ce",
+                                                          "executionHostId":  "local",
+                                                          "instanceId":  "d1bfa4bf-fd73-4fda-aa71-58d7e64561ce"
+                                                      },
+                                         "instanceId":  "d1bfa4bf-fd73-4fda-aa71-58d7e64561ce",
+                                         "repoId":  "aaa97e0d-5026-4e5c-95f8-bb420dcb4c65",
+                                         "projectId":  "github:hobobo/abilitykit",
+                                         "hostId":  "local",
+                                         "projectHostSetupId":  "aaa97e0d-5026-4e5c-95f8-bb420dcb4c65",
+                                         "path":  "D:/MyWorkTree/AbilityKit",
+                                         "head":  "86d44e8f8a6ac2ca958f4c453555817da7b1f15c",
+                                         "branch":  "refs/heads/docs/supervised-issue-sop",
+                                         "isBare":  false,
+                                         "isMainWorktree":  true,
+                                         "displayName":  "docs/supervised-issue-sop",
+                                         "displayNameMode":  "automatic",
+                                         "comment":  "",
+                                         "linkedIssue":  null,
+                                         "linkedPR":  null,
+                                         "linkedLinearIssue":  null,
+                                         "linkedLinearIssueWorkspaceId":  null,
+                                         "linkedLinearIssueOrganizationUrlKey":  null,
+                                         "linkedGitLabMR":  null,
+                                         "linkedGitLabIssue":  null,
+                                         "linkedBitbucketPR":  null,
+                                         "linkedAzureDevOpsPR":  null,
+                                         "linkedGiteaPR":  null,
+                                         "linkedWorkItem":  null,
+                                         "linkedTaskSourceContext":  null,
+                                         "isArchived":  false,
+                                         "isUnread":  false,
+                                         "isPinned":  false,
+                                         "sortOrder":  1791202596208,
+                                         "lastActivityAt":  1791199904042,
+                                         "workspaceStatus":  "in-progress",
+                                         "parentWorktreeId":  null,
+                                         "childWorktreeIds":  [
+                                                                  "aaa97e0d-5026-4e5c-95f8-bb420dcb4c65::C:/Users/Administrator/orca/workspaces/AbilityKit/cooking-dot-skill-polish"
+                                                              ],
+                                         "lineage":  null,
+                                         "git":  {
+                                                     "path":  "D:/MyWorkTree/AbilityKit",
+                                                     "head":  "86d44e8f8a6ac2ca958f4c453555817da7b1f15c",
+                                                     "branch":  "refs/heads/docs/supervised-issue-sop",
+                                                     "isBare":  false,
+                                                     "isMainWorktree":  true
+                                                 }
+                                     },
+                                     {
+                                         "id":  "aaa97e0d-5026-4e5c-95f8-bb420dcb4c65::C:/Users/Administrator/orca/workspaces/AbilityKit/cooking-dot-skill-polish",
+                                         "identity":  {
+                                                          "key":  "wt2:local:887e0c5b-6658-42b8-8f44-bd0b7b09ca9c",
+                                                          "executionHostId":  "local",
+                                                          "instanceId":  "887e0c5b-6658-42b8-8f44-bd0b7b09ca9c"
+                                                      },
+                                         "instanceId":  "887e0c5b-6658-42b8-8f44-bd0b7b09ca9c",
+                                         "repoId":  "aaa97e0d-5026-4e5c-95f8-bb420dcb4c65",
+                                         "projectId":  "github:hobobo/abilitykit",
+                                         "hostId":  "local",
+                                         "projectHostSetupId":  "aaa97e0d-5026-4e5c-95f8-bb420dcb4c65",
+                                         "creatorProvenance":  {
+                                                                   "kind":  "host"
+                                                               },
+                                         "path":  "C:/Users/Administrator/orca/workspaces/AbilityKit/cooking-dot-skill-polish",
+                                         "head":  "32b400a5c6d375be366faa606e867ef68037cfa8",
+                                         "branch":  "refs/heads/Kakusya/cooking-dot-skill-polish",
+                                         "isBare":  false,
+                                         "isMainWorktree":  false,
+                                         "displayName":  "cooking-dot-skill-polish",
+                                         "displayNameMode":  "fixed",
+                                         "comment":  "Cooking workflow skill polish and bounded pilot; branch-only, no master merge",
+                                         "linkedIssue":  null,
+                                         "linkedPR":  null,
+                                         "linkedLinearIssue":  null,
+                                         "linkedLinearIssueWorkspaceId":  null,
+                                         "linkedLinearIssueOrganizationUrlKey":  null,
+                                         "linkedGitLabMR":  null,
+                                         "linkedGitLabIssue":  null,
+                                         "linkedBitbucketPR":  null,
+                                         "linkedAzureDevOpsPR":  null,
+                                         "linkedGiteaPR":  null,
+                                         "linkedWorkItem":  null,
+                                         "linkedTaskSourceContext":  null,
+                                         "isArchived":  false,
+                                         "isUnread":  true,
+                                         "isPinned":  false,
+                                         "sortOrder":  1791202597208,
+                                         "lastActivityAt":  1791204920213,
+                                         "createdAt":  1791201995538,
+                                         "cliProvenance":  {
+                                                               "kind":  "created-by-cli",
+                                                               "createdAt":  1791201985925,
+                                                               "callerTerminalHandle":  "term_4d2338db-ef10-45a0-9316-90733d30e4cb"
+                                                           },
+                                         "baseRef":  "86d44e8f8a6ac2ca958f4c453555817da7b1f15c",
+                                         "workspaceStatus":  "in-progress",
+                                         "parentWorktreeId":  "aaa97e0d-5026-4e5c-95f8-bb420dcb4c65::D:/MyWorkTree/AbilityKit",
+                                         "childWorktreeIds":  [
+
+                                                              ],
+                                         "lineage":  {
+                                                         "worktreeId":  "aaa97e0d-5026-4e5c-95f8-bb420dcb4c65::C:/Users/Administrator/orca/workspaces/AbilityKit/cooking-dot-skill-polish",
+                                                         "worktreeInstanceId":  "887e0c5b-6658-42b8-8f44-bd0b7b09ca9c",
+                                                         "parentWorktreeId":  "aaa97e0d-5026-4e5c-95f8-bb420dcb4c65::D:/MyWorkTree/AbilityKit",
+                                                         "parentWorktreeInstanceId":  "d1bfa4bf-fd73-4fda-aa71-58d7e64561ce",
+                                                         "origin":  "cli",
+                                                         "capture":  {
+                                                                         "source":  "explicit-cli-flag",
+                                                                         "confidence":  "explicit"
+                                                                     },
+                                                         "createdAt":  1791201995538
+                                                     },
+                                         "git":  {
+                                                     "path":  "C:/Users/Administrator/orca/workspaces/AbilityKit/cooking-dot-skill-polish",
+                                                     "head":  "32b400a5c6d375be366faa606e867ef68037cfa8",
+                                                     "branch":  "refs/heads/Kakusya/cooking-dot-skill-polish",
+                                                     "isBare":  false,
+                                                     "isMainWorktree":  false
+                                                 }
+                                     },
+                                     {
+                                         "id":  "aaa97e0d-5026-4e5c-95f8-bb420dcb4c65::C:/Users/Administrator/orca/workspaces/AbilityKit/issue6-test-gate-results",
+                                         "identity":  {
+                                                          "key":  "wt2:local:26d32d7c-da9b-4342-8c98-1cff54769b01",
+                                                          "executionHostId":  "local",
+                                                          "instanceId":  "26d32d7c-da9b-4342-8c98-1cff54769b01"
+                                                      },
+                                         "instanceId":  "26d32d7c-da9b-4342-8c98-1cff54769b01",
+                                         "repoId":  "aaa97e0d-5026-4e5c-95f8-bb420dcb4c65",
+                                         "projectId":  "github:hobobo/abilitykit",
+                                         "hostId":  "local",
+                                         "projectHostSetupId":  "aaa97e0d-5026-4e5c-95f8-bb420dcb4c65",
+                                         "creatorProvenance":  {
+                                                                   "kind":  "host"
+                                                               },
+                                         "path":  "C:/Users/Administrator/orca/workspaces/AbilityKit/issue6-test-gate-results",
+                                         "head":  "15e79fefd5ba1d9294491122c91df286ef94e2f8",
+                                         "branch":  "refs/heads/Kakusya/issue6-test-gate-results",
+                                         "isBare":  false,
+                                         "isMainWorktree":  false,
+                                         "displayName":  "issue6-test-gate-results",
+                                         "displayNameMode":  "fixed",
+                                         "comment":  "STOPPED: Owner Cooking-only scope; example changes isolated, no merge; scope correction recorded",
+                                         "linkedIssue":  6,
+                                         "linkedPR":  null,
+                                         "linkedLinearIssue":  null,
+                                         "linkedLinearIssueWorkspaceId":  null,
+                                         "linkedLinearIssueOrganizationUrlKey":  null,
+                                         "linkedGitLabMR":  null,
+                                         "linkedGitLabIssue":  null,
+                                         "linkedBitbucketPR":  null,
+                                         "linkedAzureDevOpsPR":  null,
+                                         "linkedGiteaPR":  null,
+                                         "linkedWorkItem":  null,
+                                         "linkedTaskSourceContext":  null,
+                                         "isArchived":  false,
+                                         "isUnread":  false,
+                                         "isPinned":  false,
+                                         "sortOrder":  1791202595208,
+                                         "lastActivityAt":  1791174131126,
+                                         "createdAt":  1791113358454,
+                                         "cliProvenance":  {
+                                                               "kind":  "created-by-cli",
+                                                               "createdAt":  1791113348409,
+                                                               "callerTerminalHandle":  "term_29382007-4b1b-498d-8055-4069cb004694"
+                                                           },
+                                         "baseRef":  "refs/remotes/origin/master",
+                                         "workspaceStatus":  "in-review",
+                                         "parentWorktreeId":  null,
+                                         "childWorktreeIds":  [
+
+                                                              ],
+                                         "lineage":  null,
+                                         "git":  {
+                                                     "path":  "C:/Users/Administrator/orca/workspaces/AbilityKit/issue6-test-gate-results",
+                                                     "head":  "15e79fefd5ba1d9294491122c91df286ef94e2f8",
+                                                     "branch":  "refs/heads/Kakusya/issue6-test-gate-results",
+                                                     "isBare":  false,
+                                                     "isMainWorktree":  false
+                                                 }
+                                     }
+                                 ],
+                   "hostScope":  {
+                                     "hostIds":  [
+                                                     "local"
+                                                 ],
+                                     "omittedHostIds":  [
+
+                                                        ]
+                                 },
+                   "totalCount":  3,
+                   "truncated":  false
+               },
+    "_meta":  {
+                  "runtimeId":  "ff0c5f2c-d341-4455-bc1c-c113650bdd60"
+              }
+}

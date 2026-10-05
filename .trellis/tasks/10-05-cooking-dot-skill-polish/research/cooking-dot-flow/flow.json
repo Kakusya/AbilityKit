@@ -1,0 +1,18 @@
+{
+  "version": 1,
+  "skill": "cooking-dot-workflow",
+  "flow_id": "a2c3dd65-4a91-43f6-9c33-ad891f7563c4",
+  "canonical_root": "C:\\Users\\Administrator\\orca\\workspaces\\AbilityKit\\cooking-dot-skill-polish\\.trellis\\tasks\\10-05-cooking-dot-skill-polish\\research\\cooking-dot-flow",
+  "execution_host": "local",
+  "worktree_id": "aaa97e0d-5026-4e5c-95f8-bb420dcb4c65::C:/Users/Administrator/orca/workspaces/AbilityKit/cooking-dot-skill-polish",
+  "task_path": ".trellis/tasks/10-05-cooking-dot-skill-polish",
+  "repository": "https://github.com/Kakusya/AbilityKit",
+  "branch": "Kakusya/cooking-dot-skill-polish",
+  "target_branch": "Kakusya/cooking-dot-skill-polish",
+  "delivery_mode": "branch-only",
+  "original_session": "codex_01a10a3d-c893-70a3-af86-173caf5351a8",
+  "original_terminal": "term_4d2338db-ef10-45a0-9316-90733d30e4cb",
+  "run_id": "run_840202cc5621",
+  "approval_ref": "evidence/approval.md",
+  "created_utc": "2026-10-05T13:01:19.886030Z"
+}

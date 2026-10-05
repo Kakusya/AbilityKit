@@ -1,0 +1,20 @@
+{
+  "version": 1,
+  "flow_id": "a2c3dd65-4a91-43f6-9c33-ad891f7563c4",
+  "seq": 4,
+  "op_id": "a2c3dd65-4a91-43f6-9c33-ad891f7563c4:000004",
+  "kind": "receipt",
+  "recorded_utc": "2026-10-05T13:21:37.919105Z",
+  "intent_hash": "4976854f16e99f25c1ae5aca9db112d719cea8e4e126954a40aa1b3e15043069",
+  "outcome": "applied",
+  "raw_ref": "evidence/repair-fresh-worker-start.json",
+  "result": {
+    "action": "worker-start",
+    "run_id": "run_840202cc5621",
+    "task_id": "task_0bd0234a0eec",
+    "dispatch_id": "ctx_90bfffaf9252",
+    "terminal": "term_b71b47d0-c93b-4393-a01e-a43fb1eba562",
+    "input_accepted": true,
+    "turn_started": true
+  }
+}

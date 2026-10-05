@@ -1,0 +1,210 @@
+{
+  "id": "36a0c54f-4015-4e82-ae0e-534fb91bd4fe",
+  "ok": true,
+  "result": {
+    "dispatch": {
+      "id": "ctx_90bfffaf9252",
+      "runId": "run_840202cc5621",
+      "taskId": "task_0bd0234a0eec",
+      "task_id": "task_0bd0234a0eec",
+      "contractVersion": 1,
+      "assigneeHandle": "term_b71b47d0-c93b-4393-a01e-a43fb1eba562",
+      "assigneePaneKey": "dbe25873-f440-4af7-8587-2b0978085883:72ae38e2-2305-480c-99eb-75dcdb3a03e9",
+      "processIncarnation": "aaa97e0d-5026-4e5c-95f8-bb420dcb4c65::C:/Users/Administrator/orca/workspaces/AbilityKit/cooking-dot-skill-polish@@69ab7d02:cc6f1b11-062d-4d75-a09c-f19216902660",
+      "capabilityRevokedAt": null,
+      "retryOfDispatchId": null,
+      "creatorDispatchId": null,
+      "hostScope": {
+        "kind": "local",
+        "hostId": "local"
+      },
+      "status": "dispatched",
+      "failureCount": 0,
+      "lastFailure": null,
+      "terminationReason": null,
+      "depth": 1,
+      "dispatchedAt": "2026-10-05 13:20:50",
+      "completedAt": null,
+      "createdAt": "2026-10-05 13:20:50",
+      "lastHeartbeatAt": "2026-10-05T13:22:52Z"
+    },
+    "worker": {
+      "dispatchId": "ctx_90bfffaf9252",
+      "runtimeEpoch": "ff0c5f2c-d341-4455-bc1c-c113650bdd60",
+      "state": "ready",
+      "stage": "input_accepted",
+      "worktreeId": "aaa97e0d-5026-4e5c-95f8-bb420dcb4c65::C:/Users/Administrator/orca/workspaces/AbilityKit/cooking-dot-skill-polish",
+      "agentTerminalHandle": "term_b71b47d0-c93b-4393-a01e-a43fb1eba562",
+      "setupState": "not_applicable",
+      "effects": [
+        {
+          "kind": "worktree",
+          "action": "reused",
+          "id": "aaa97e0d-5026-4e5c-95f8-bb420dcb4c65::C:/Users/Administrator/orca/workspaces/AbilityKit/cooking-dot-skill-polish"
+        },
+        {
+          "kind": "setup",
+          "action": "not_applicable",
+          "state": "not_applicable"
+        },
+        {
+          "kind": "terminal",
+          "role": "agent",
+          "action": "created",
+          "id": "term_b71b47d0-c93b-4393-a01e-a43fb1eba562",
+          "surface": "visible"
+        },
+        {
+          "kind": "dispatch_input",
+          "role": "agent",
+          "id": "term_b71b47d0-c93b-4393-a01e-a43fb1eba562",
+          "state": "accepted"
+        }
+      ],
+      "residualResources": [
+        {
+          "kind": "terminal",
+          "role": "agent",
+          "action": "created",
+          "id": "term_b71b47d0-c93b-4393-a01e-a43fb1eba562",
+          "surface": "visible"
+        }
+      ],
+      "startOptions": {
+        "worktree": "id:aaa97e0d-5026-4e5c-95f8-bb420dcb4c65::C:/Users/Administrator/orca/workspaces/AbilityKit/cooking-dot-skill-polish",
+        "mode": {
+          "mode": "terminal",
+          "preferred": "terminal",
+          "reason": "user_default",
+          "detail": "Started a terminal agent worker, the default for new agent tabs in your settings."
+        },
+        "resolvedWorktreeId": "aaa97e0d-5026-4e5c-95f8-bb420dcb4c65::C:/Users/Administrator/orca/workspaces/AbilityKit/cooking-dot-skill-polish",
+        "name": null,
+        "repo": null,
+        "baseBranch": null,
+        "terminal": null,
+        "agent": "codex",
+        "launch": {
+          "requested": {
+            "agent": "codex",
+            "model": null,
+            "effort": null
+          },
+          "effective": {
+            "agent": "codex",
+            "model": null,
+            "effort": null
+          }
+        },
+        "timeoutMs": 60000,
+        "setup": "not_applicable",
+        "setupSource": "existing_worktree"
+      },
+      "lastError": null,
+      "createdAt": "2026-10-05 13:20:50",
+      "updatedAt": "2026-10-05 13:21:00"
+    },
+    "projection": {
+      "id": "ctx_90bfffaf9252",
+      "dispatchId": "ctx_90bfffaf9252",
+      "taskId": "task_0bd0234a0eec",
+      "runId": "run_840202cc5621",
+      "role": "worker",
+      "parent": null,
+      "provider": {
+        "id": "codex",
+        "model": "gpt-6.1-sol"
+      },
+      "host": {
+        "kind": "local",
+        "id": "local"
+      },
+      "workspace": {
+        "id": "aaa97e0d-5026-4e5c-95f8-bb420dcb4c65::C:/Users/Administrator/orca/workspaces/AbilityKit/cooking-dot-skill-polish",
+        "kind": "folder_or_worktree"
+      },
+      "stage": {
+        "worker": "ready",
+        "dispatch": "dispatched",
+        "detail": "input_accepted",
+        "activity": "working"
+      },
+      "outcome": "in_progress",
+      "liveness": {
+        "verdict": "live",
+        "observedAt": 1791206692835,
+        "source": "agent_status"
+      },
+      "evidence": {
+        "durable": true,
+        "liveStatus": "fresh",
+        "lastObservedAt": 1791206692835
+      },
+      "resource": {
+        "state": "owned",
+        "id": "wtr_ddae05524f32",
+        "ownerDispatchId": "ctx_90bfffaf9252",
+        "releaseState": "not_requested",
+        "terminalState": "active"
+      },
+      "nextAction": {
+        "kind": "none",
+        "argv": []
+      },
+      "attention": {
+        "categories": [],
+        "requiresAction": false
+      }
+    },
+    "terminal": {
+      "handle": "term_b71b47d0-c93b-4393-a01e-a43fb1eba562",
+      "ptyId": "aaa97e0d-5026-4e5c-95f8-bb420dcb4c65::C:/Users/Administrator/orca/workspaces/AbilityKit/cooking-dot-skill-polish@@69ab7d02",
+      "incarnationId": "cc6f1b11-062d-4d75-a09c-f19216902660",
+      "orphaned": false,
+      "worktreeId": "aaa97e0d-5026-4e5c-95f8-bb420dcb4c65::C:/Users/Administrator/orca/workspaces/AbilityKit/cooking-dot-skill-polish",
+      "worktreePath": "C:/Users/Administrator/orca/workspaces/AbilityKit/cooking-dot-skill-polish",
+      "branch": "refs/heads/Kakusya/cooking-dot-skill-polish",
+      "tabId": "dbe25873-f440-4af7-8587-2b0978085883",
+      "leafId": "72ae38e2-2305-480c-99eb-75dcdb3a03e9",
+      "title": "⠧ Report task outcome | cooking-dot-skill-polish",
+      "connected": true,
+      "writable": true,
+      "lastOutputAt": 1791206716764,
+      "preview": "m 09s • esc to interrupt)\n⚠ weekly limit: 24% left · /status\n› Ask Codex to do anything\nGPT-6.1-Sol high · ~\\orca\\workspaces\\AbilityKit\\cooking-dot-skill-polish · Report task outcome\n? for shortcuts                                                                              ⚠ 1 warning · f2 to view",
+      "executionHostId": "local",
+      "agentIdentity": "codex",
+      "paneRuntimeId": -1,
+      "rendererGraphEpoch": 0,
+      "agentWait": null
+    },
+    "observation": {
+      "status": "live",
+      "exactWorker": true,
+      "agentWait": null
+    },
+    "terminalResource": {
+      "id": "wtr_ddae05524f32",
+      "ownershipState": "owned",
+      "releaseState": "not_requested",
+      "retainedReason": null,
+      "terminalHandle": "term_b71b47d0-c93b-4393-a01e-a43fb1eba562",
+      "worktreeId": "aaa97e0d-5026-4e5c-95f8-bb420dcb4c65::C:/Users/Administrator/orca/workspaces/AbilityKit/cooking-dot-skill-polish",
+      "endpointId": "ff0c5f2c-d341-4455-bc1c-c113650bdd60",
+      "endpointIncarnation": "aaa97e0d-5026-4e5c-95f8-bb420dcb4c65::C:/Users/Administrator/orca/workspaces/AbilityKit/cooking-dot-skill-polish@@69ab7d02:cc6f1b11-062d-4d75-a09c-f19216902660",
+      "originDispatchId": "ctx_90bfffaf9252",
+      "ownerDispatchId": "ctx_90bfffaf9252",
+      "releaseRequestedAt": null,
+      "releaseCompletedAt": null,
+      "releaseError": null,
+      "recoveryAttemptCount": 0,
+      "lastRecoveryAt": null,
+      "archive": {
+        "source": null,
+        "status": null
+      }
+    }
+  },
+  "_meta": {
+    "runtimeId": "ff0c5f2c-d341-4455-bc1c-c113650bdd60"
+  }
+}

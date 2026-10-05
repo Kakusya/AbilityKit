@@ -1,0 +1,20 @@
+{
+  "mode": "explicit manual project-path loading under Owner-approved pilot",
+  "skill_source_sha": "32b400a5c6d375be366faa606e867ef68037cfa8",
+  "skill_file_sha256": "e1e37dbac50e1eab475126f5cca7e33f2e9fa765c4eb4a31caff1aebdac7b8c5",
+  "flow_id": "a2c3dd65-4a91-43f6-9c33-ad891f7563c4",
+  "refs_read_current": "Full frozen recovery/dialogue/request template reread after caller API error; no source changes",
+  "host_catalog_refresh": "NotRun",
+  "existing_run_reused": "Original same coordinator binding generation1; no run-use/takeover",
+  "cross_main_takeover": "Blocked",
+  "initial_index": {
+    "version": 1,
+    "flow_id": "a2c3dd65-4a91-43f6-9c33-ad891f7563c4",
+    "effective_run_id": "run_840202cc5621",
+    "last_seq": 0,
+    "unresolved": [],
+    "record_hashes": {}
+  },
+  "observed_utc": "2026-10-05T13:03:28.188320Z",
+  "prior_failure_ref": "pilot-init-failure.json"
+}

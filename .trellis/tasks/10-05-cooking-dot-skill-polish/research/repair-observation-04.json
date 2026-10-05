@@ -1,0 +1,38 @@
+{
+  "id": "9021cead-28ed-4f73-b4ad-fbf32970b06d",
+  "ok": true,
+  "result": {
+    "runId": "run_840202cc5621",
+    "deliveryId": "delivery_ee3e77d4a98c",
+    "messages": [
+      {
+        "id": "msg_c4f06ea5d5b8",
+        "run_id": "run_840202cc5621",
+        "delivery_contract": "current_delivery",
+        "from_handle": "term_b71b47d0-c93b-4393-a01e-a43fb1eba562",
+        "to_handle": "run:run_840202cc5621",
+        "subject": "Bounded binding repair verified locally",
+        "body": "Repaired same-flow immutable binding equality in records.py, added regression controls, and removed trailing-space hard breaks in the two owned templates. Repaired dirty bytes at HEAD 32b400a5c6d375be366faa606e867ef68037cfa8 passed 190 helper controls, 6 final readback checks and both diff checks with exit 0, while original B1/E1 failures and all earlier evidence remained unchanged. Main still needs to freeze the repaired candidate and obtain independent exact-source verification before the pilot; no real takeover or production tests were claimed and this terminal remains retained.",
+        "type": "worker_done",
+        "priority": "normal",
+        "thread_id": null,
+        "payload": "{\"taskId\":\"task_0bd0234a0eec\",\"dispatchId\":\"ctx_90bfffaf9252\",\"outcome\":\"succeeded\",\"filesModified\":[\".agents/skills/cooking-dot-workflow/scripts/records.py\",\".agents/skills/cooking-dot-workflow/scripts/test_controls.py\",\".agents/skills/cooking-dot-workflow/assets/dot-request.md\",\".agents/skills/cooking-dot-workflow/assets/dot-decision.md\",\".trellis/tasks/10-05-cooking-dot-skill-polish/research/repair-report.md\",\".trellis/tasks/10-05-cooking-dot-skill-polish/research/repair-file-hashes.json\",\".trellis/tasks/10-05-cooking-dot-skill-polish/research/repair-controls-baseline-01-console.txt\",\".trellis/tasks/10-05-cooking-dot-skill-polish/research/repair-controls-baseline-01\",\".trellis/tasks/10-05-cooking-dot-skill-polish/research/repair-controls-baseline-02\",\".trellis/tasks/10-05-cooking-dot-skill-polish/research/repair-controls-run-01\"],\"reportPath\":\".trellis/tasks/10-05-cooking-dot-skill-polish/research/repair-report.md\"}",
+        "created_at": "2026-10-05T13:28:51Z",
+        "delivered_at": null
+      }
+    ],
+    "count": 1,
+    "replayed": false,
+    "acknowledged": null,
+    "timedOut": false,
+    "cancelled": false,
+    "connectionLost": false,
+    "mutation": {
+      "requestId": "769fdace-276f-49a2-af55-1fec29c104d4",
+      "replayed": false
+    }
+  },
+  "_meta": {
+    "runtimeId": "ff0c5f2c-d341-4455-bc1c-c113650bdd60"
+  }
+}

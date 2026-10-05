@@ -264,11 +264,8 @@ def write_index(root, authority):
 def copies(roots):
     """Dedup against reachable declared canonical authority; never elect/repair."""
     groups = {}
-    bindings = {}
     for root in roots:
         flow = binding(root)
-        require(bindings.setdefault(flow["flow_id"], flow) == flow,
-                "conflicting immutable bindings for same flow_id")
         canonical = Path(flow["canonical_root"])
         require(binding(canonical) == flow, "conflicting/missing canonical binding")
         actual = reconstruct(root)

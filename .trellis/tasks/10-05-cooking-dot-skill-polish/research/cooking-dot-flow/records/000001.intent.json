@@ -1,0 +1,17 @@
+{
+  "version": 1,
+  "flow_id": "a2c3dd65-4a91-43f6-9c33-ad891f7563c4",
+  "seq": 1,
+  "op_id": "a2c3dd65-4a91-43f6-9c33-ad891f7563c4:000001",
+  "kind": "intent",
+  "recorded_utc": "2026-10-05T13:05:29.084025Z",
+  "action": "git-push",
+  "target": "https://github.com/Kakusya/AbilityKit/refs/heads/Kakusya/cooking-dot-skill-polish",
+  "authorization_ref": "evidence/approval.md",
+  "payload_ref": "evidence/publish-01-payload.json",
+  "preconditions": {
+    "run_id": "run_840202cc5621",
+    "candidate_sha": "32b400a5c6d375be366faa606e867ef68037cfa8",
+    "branch": "Kakusya/cooking-dot-skill-polish"
+  }
+}

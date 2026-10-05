@@ -1,0 +1,35 @@
+{
+  "candidate_sha": "32b400a5c6d375be366faa606e867ef68037cfa8",
+  "utc": "2026-10-05T12:59:07.148519+00:00",
+  "branch": "Kakusya/cooking-dot-skill-polish",
+  "frozen_working_sha256": {
+    ".agents/skills/cooking-dot-workflow/agents/openai.yaml": "a1499d95abd8447558c535fe5554adcc3c9b988a0a39264a6283d430effe1e94",
+    ".agents/skills/cooking-dot-workflow/assets/checkpoint-operation.md": "05394909dab19b81c2b3580253c497b3bc862659990d40726364e434763c32f0",
+    ".agents/skills/cooking-dot-workflow/assets/dot-decision.md": "1aa113fdaa6c9f5d8fb53973beb058027286caf132886ae3abecd17360a83a8d",
+    ".agents/skills/cooking-dot-workflow/assets/dot-request.md": "a4083c29f0dadb92e548c5864ebd95623aa58e5a168cdf3cf15afda29b6aed00",
+    ".agents/skills/cooking-dot-workflow/references/dot-dialogue.md": "c5f3c244676c3ec92e0adacda531bf9fe999f222a1f4d2b4eba96b02227a2fd8",
+    ".agents/skills/cooking-dot-workflow/references/recovery.md": "04dc2272e7eb380a2d7ec943c14e9528c23ad604dd923fd5ea9cf47ce654f384",
+    ".agents/skills/cooking-dot-workflow/scripts/records.py": "d42f5d5c0306c0fe888fad451aeeff497ee2a85a1ea50fe27e5f3c52ae40e362",
+    ".agents/skills/cooking-dot-workflow/scripts/test_controls.py": "05424093d4a6ceaaa4b0483116944b46ae58cc2ab7efcfc0be4d31972a072856",
+    ".agents/skills/cooking-dot-workflow/SKILL.md": "e1e37dbac50e1eab475126f5cca7e33f2e9fa765c4eb4a31caff1aebdac7b8c5",
+    ".trellis/spec/abilitykit/supervised-issue-delivery.md": "0ca9fe386845801288b46d0df053f4ba7e7de9d768f7a094f99d011eaeb2157c"
+  },
+  "git_blob_sha256": {
+    ".agents/skills/cooking-dot-workflow/agents/openai.yaml": "a1499d95abd8447558c535fe5554adcc3c9b988a0a39264a6283d430effe1e94",
+    ".agents/skills/cooking-dot-workflow/assets/checkpoint-operation.md": "05394909dab19b81c2b3580253c497b3bc862659990d40726364e434763c32f0",
+    ".agents/skills/cooking-dot-workflow/assets/dot-decision.md": "1aa113fdaa6c9f5d8fb53973beb058027286caf132886ae3abecd17360a83a8d",
+    ".agents/skills/cooking-dot-workflow/assets/dot-request.md": "a4083c29f0dadb92e548c5864ebd95623aa58e5a168cdf3cf15afda29b6aed00",
+    ".agents/skills/cooking-dot-workflow/references/dot-dialogue.md": "c5f3c244676c3ec92e0adacda531bf9fe999f222a1f4d2b4eba96b02227a2fd8",
+    ".agents/skills/cooking-dot-workflow/references/recovery.md": "04dc2272e7eb380a2d7ec943c14e9528c23ad604dd923fd5ea9cf47ce654f384",
+    ".agents/skills/cooking-dot-workflow/scripts/records.py": "d42f5d5c0306c0fe888fad451aeeff497ee2a85a1ea50fe27e5f3c52ae40e362",
+    ".agents/skills/cooking-dot-workflow/scripts/test_controls.py": "05424093d4a6ceaaa4b0483116944b46ae58cc2ab7efcfc0be4d31972a072856",
+    ".agents/skills/cooking-dot-workflow/SKILL.md": "e1e37dbac50e1eab475126f5cca7e33f2e9fa765c4eb4a31caff1aebdac7b8c5",
+    ".trellis/spec/abilitykit/supervised-issue-delivery.md": "0ca9fe386845801288b46d0df053f4ba7e7de9d768f7a094f99d011eaeb2157c"
+  },
+  "tests_bound_by_exact_helper_test_working_bytes": true,
+  "implementation_dispatch": "ctx_2ede5e596818",
+  "retention_receipt": "implementation-retain.json",
+  "stock_validator_resolved": "original-validator-ram-result.json",
+  "pilot": "NotRun yet",
+  "final_acceptance": "Pending dot"
+}

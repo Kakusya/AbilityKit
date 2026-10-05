@@ -1,0 +1,17 @@
+{
+  "version": 1,
+  "flow_id": "a2c3dd65-4a91-43f6-9c33-ad891f7563c4",
+  "seq": 3,
+  "op_id": "a2c3dd65-4a91-43f6-9c33-ad891f7563c4:000003",
+  "kind": "receipt",
+  "recorded_utc": "2026-10-05T13:20:49.950265Z",
+  "intent_hash": "326cfd785dacb31a33655334670b44ccb04741f9765ccc5e8c7777c2b7657896",
+  "outcome": "not-applied",
+  "raw_ref": "evidence/repair-start-reconciliation.json",
+  "result": {
+    "action": "worker-start",
+    "run_id": "run_840202cc5621",
+    "preflight_error": "agent_unconfigured",
+    "added_dispatch_observed": false
+  }
+}

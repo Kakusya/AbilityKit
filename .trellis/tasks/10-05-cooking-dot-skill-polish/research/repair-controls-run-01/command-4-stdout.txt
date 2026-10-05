@@ -1,0 +1,4 @@
+.agents/skills/cooking-dot-workflow/assets/dot-decision.md
+.agents/skills/cooking-dot-workflow/assets/dot-request.md
+.agents/skills/cooking-dot-workflow/scripts/records.py
+.agents/skills/cooking-dot-workflow/scripts/test_controls.py

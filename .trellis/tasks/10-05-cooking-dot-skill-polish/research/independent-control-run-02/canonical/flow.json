@@ -1,0 +1,18 @@
+{
+  "version": 1,
+  "skill": "cooking-dot-workflow",
+  "flow_id": "b2ea381e-761d-4fc8-8d1c-9d34cab28d83",
+  "canonical_root": "C:\\Users\\Administrator\\orca\\workspaces\\AbilityKit\\cooking-dot-skill-polish\\.trellis\\tasks\\10-05-cooking-dot-skill-polish\\research\\independent-control-run-02\\canonical",
+  "execution_host": "local-sim",
+  "worktree_id": "local-sim",
+  "task_path": ".trellis/tasks/independent-fixture",
+  "repository": "local-sim",
+  "branch": "local-sim",
+  "target_branch": "local-sim",
+  "delivery_mode": "branch-only",
+  "original_session": "original",
+  "original_terminal": "original-terminal",
+  "run_id": "run-sim",
+  "approval_ref": "evidence/approval.txt",
+  "created_utc": "2026-10-05T00:00:00Z"
+}

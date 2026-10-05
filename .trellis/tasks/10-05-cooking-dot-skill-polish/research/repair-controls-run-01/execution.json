@@ -1,0 +1,74 @@
+{
+  "observed_utc": "2026-10-05T13:25:33.550918+00:00",
+  "commands": [
+    {
+      "command": [
+        "C:\\Python314\\python.exe",
+        "-B",
+        ".agents\\skills\\cooking-dot-workflow\\scripts\\test_controls.py",
+        "--output-dir",
+        ".trellis\\tasks\\10-05-cooking-dot-skill-polish\\research\\repair-controls-run-01"
+      ],
+      "exit": 0,
+      "stdout": "command-1-stdout.txt",
+      "stderr": "command-1-stderr.txt"
+    },
+    {
+      "command": [
+        "git",
+        "diff",
+        "--check",
+        "4cf5b38bcb06b2f58d49fd73fc9de26e5cec02fe",
+        "--",
+        ".agents/skills/cooking-dot-workflow",
+        ".trellis/spec/abilitykit/supervised-issue-delivery.md"
+      ],
+      "exit": 0,
+      "stdout": "command-2-stdout.txt",
+      "stderr": "command-2-stderr.txt"
+    },
+    {
+      "command": [
+        "git",
+        "diff",
+        "--check",
+        "HEAD"
+      ],
+      "exit": 0,
+      "stdout": "command-3-stdout.txt",
+      "stderr": "command-3-stderr.txt"
+    },
+    {
+      "command": [
+        "git",
+        "diff",
+        "--name-only",
+        "HEAD"
+      ],
+      "exit": 0,
+      "stdout": "command-4-stdout.txt",
+      "stderr": "command-4-stderr.txt"
+    }
+  ],
+  "identity": {
+    "head": "32b400a5c6d375be366faa606e867ef68037cfa8",
+    "dirty": " M .agents/skills/cooking-dot-workflow/assets/dot-decision.md\n M .agents/skills/cooking-dot-workflow/assets/dot-request.md\n M .agents/skills/cooking-dot-workflow/scripts/records.py\n M .agents/skills/cooking-dot-workflow/scripts/test_controls.py\n?? .agents/skills/cooking-dot-workflow/scripts/__pycache__/\n?? .trellis/tasks/10-05-cooking-dot-skill-polish/research/cooking-dot-flow/\n?? .trellis/tasks/10-05-cooking-dot-skill-polish/research/delivery-c3e5ced0e2a1.json\n?? .trellis/tasks/10-05-cooking-dot-skill-polish/research/dot-pilot-plan.md\n?? .trellis/tasks/10-05-cooking-dot-skill-polish/research/implementation-freeze-receipt.json\n?? .trellis/tasks/10-05-cooking-dot-skill-polish/research/independent-control-run-01/\n?? .trellis/tasks/10-05-cooking-dot-skill-polish/research/independent-control-run-02/\n?? .trellis/tasks/10-05-cooking-dot-skill-polish/research/independent-controls.py\n?? .trellis/tasks/10-05-cooking-dot-skill-polish/research/independent-review-ack.json\n?? .trellis/tasks/10-05-cooking-dot-skill-polish/research/independent-review-delivery.json\n?? .trellis/tasks/10-05-cooking-dot-skill-polish/research/independent-review-retain.json\n?? .trellis/tasks/10-05-cooking-dot-skill-polish/research/independent-review.md\n?? .trellis/tasks/10-05-cooking-dot-skill-polish/research/pilot-accepted-brief.txt\n?? .trellis/tasks/10-05-cooking-dot-skill-polish/research/pilot-init-failure.json\n?? .trellis/tasks/10-05-cooking-dot-skill-polish/research/pilot-live-run-proof.json\n?? .trellis/tasks/10-05-cooking-dot-skill-polish/research/pilot-manual-loading.json\n?? .trellis/tasks/10-05-cooking-dot-skill-polish/research/pilot-plan-snapshot-02.json\n?? .trellis/tasks/10-05-cooking-dot-skill-polish/research/pilot-plan-wait.json\n?? .trellis/tasks/10-05-cooking-dot-skill-polish/research/pilot-worktree-inventory.json\n?? .trellis/tasks/10-05-cooking-dot-skill-polish/research/repair-controls-baseline-01-console.txt\n?? .trellis/tasks/10-05-cooking-dot-skill-polish/research/repair-controls-baseline-01/\n?? .trellis/tasks/10-05-cooking-dot-skill-polish/research/repair-controls-baseline-02/\n?? .trellis/tasks/10-05-cooking-dot-skill-polish/research/repair-coordinator-live.json\n?? .trellis/tasks/10-05-cooking-dot-skill-polish/research/repair-failed-request-show.json\n?? .trellis/tasks/10-05-cooking-dot-skill-polish/research/repair-fresh-worker-spec.txt\n?? .trellis/tasks/10-05-cooking-dot-skill-polish/research/repair-fresh-worker-start.json\n?? .trellis/tasks/10-05-cooking-dot-skill-polish/research/repair-heartbeat-ack.json\n?? .trellis/tasks/10-05-cooking-dot-skill-polish/research/repair-heartbeat-delivery.json\n?? .trellis/tasks/10-05-cooking-dot-skill-polish/research/repair-live-observation-02.json\n?? .trellis/tasks/10-05-cooking-dot-skill-polish/research/repair-observation-01-stderr.txt\n?? .trellis/tasks/10-05-cooking-dot-skill-polish/research/repair-observation-01.json\n?? .trellis/tasks/10-05-cooking-dot-skill-polish/research/repair-original-worker-show.json\n?? .trellis/tasks/10-05-cooking-dot-skill-polish/research/repair-prestart-inventory.json\n?? .trellis/tasks/10-05-cooking-dot-skill-polish/research/repair-worker-spec.txt\n?? .trellis/tasks/10-05-cooking-dot-skill-polish/research/repair-worker-start.json\n",
+    "python": "3.14.8 (tags/v3.14.8:8e6e75d, Sep 30 2026, 18:19:33) [MSC v.1944 64 bit (AMD64)]",
+    "executable": "C:\\Python314\\python.exe",
+    "executable_sha256": "434b361fe0c5960d404974feed493db47f2603a1ace2574312104fbed0182c6f",
+    "files_before": {
+      ".agents\\skills\\cooking-dot-workflow\\scripts\\records.py": "4c186d749daafe8c62505d455fcc7660d0ca550d9b779e67d889fce8c1fcb3c0",
+      ".agents\\skills\\cooking-dot-workflow\\scripts\\test_controls.py": "98b200440c0b0b851a0de76b5131aff6d665b3fa36b2a1c8eacd20061d0bb90c",
+      ".agents\\skills\\cooking-dot-workflow\\assets\\dot-request.md": "d180334a7b678099941a72854be35ecfff9dab2a786d1ccf465c4b297e7d3be8",
+      ".agents\\skills\\cooking-dot-workflow\\assets\\dot-decision.md": "12d17eaca9ec7f768e4b1f4308a33051923d8480207360bbab2198069229910f"
+    },
+    "git": "git version 2.56.0.windows.1",
+    "files_after": {
+      ".agents\\skills\\cooking-dot-workflow\\scripts\\records.py": "4c186d749daafe8c62505d455fcc7660d0ca550d9b779e67d889fce8c1fcb3c0",
+      ".agents\\skills\\cooking-dot-workflow\\scripts\\test_controls.py": "98b200440c0b0b851a0de76b5131aff6d665b3fa36b2a1c8eacd20061d0bb90c",
+      ".agents\\skills\\cooking-dot-workflow\\assets\\dot-request.md": "d180334a7b678099941a72854be35ecfff9dab2a786d1ccf465c4b297e7d3be8",
+      ".agents\\skills\\cooking-dot-workflow\\assets\\dot-decision.md": "12d17eaca9ec7f768e4b1f4308a33051923d8480207360bbab2198069229910f"
+    },
+    "dirty_after": " M .agents/skills/cooking-dot-workflow/assets/dot-decision.md\n M .agents/skills/cooking-dot-workflow/assets/dot-request.md\n M .agents/skills/cooking-dot-workflow/scripts/records.py\n M .agents/skills/cooking-dot-workflow/scripts/test_controls.py\n?? .agents/skills/cooking-dot-workflow/scripts/__pycache__/\n?? .trellis/tasks/10-05-cooking-dot-skill-polish/research/cooking-dot-flow/\n?? .trellis/tasks/10-05-cooking-dot-skill-polish/research/delivery-c3e5ced0e2a1.json\n?? .trellis/tasks/10-05-cooking-dot-skill-polish/research/dot-pilot-plan.md\n?? .trellis/tasks/10-05-cooking-dot-skill-polish/research/implementation-freeze-receipt.json\n?? .trellis/tasks/10-05-cooking-dot-skill-polish/research/independent-control-run-01/\n?? .trellis/tasks/10-05-cooking-dot-skill-polish/research/independent-control-run-02/\n?? .trellis/tasks/10-05-cooking-dot-skill-polish/research/independent-controls.py\n?? .trellis/tasks/10-05-cooking-dot-skill-polish/research/independent-review-ack.json\n?? .trellis/tasks/10-05-cooking-dot-skill-polish/research/independent-review-delivery.json\n?? .trellis/tasks/10-05-cooking-dot-skill-polish/research/independent-review-retain.json\n?? .trellis/tasks/10-05-cooking-dot-skill-polish/research/independent-review.md\n?? .trellis/tasks/10-05-cooking-dot-skill-polish/research/pilot-accepted-brief.txt\n?? .trellis/tasks/10-05-cooking-dot-skill-polish/research/pilot-init-failure.json\n?? .trellis/tasks/10-05-cooking-dot-skill-polish/research/pilot-live-run-proof.json\n?? .trellis/tasks/10-05-cooking-dot-skill-polish/research/pilot-manual-loading.json\n?? .trellis/tasks/10-05-cooking-dot-skill-polish/research/pilot-plan-snapshot-02.json\n?? .trellis/tasks/10-05-cooking-dot-skill-polish/research/pilot-plan-wait.json\n?? .trellis/tasks/10-05-cooking-dot-skill-polish/research/pilot-worktree-inventory.json\n?? .trellis/tasks/10-05-cooking-dot-skill-polish/research/repair-controls-baseline-01-console.txt\n?? .trellis/tasks/10-05-cooking-dot-skill-polish/research/repair-controls-baseline-01/\n?? .trellis/tasks/10-05-cooking-dot-skill-polish/research/repair-controls-baseline-02/\n?? .trellis/tasks/10-05-cooking-dot-skill-polish/research/repair-controls-run-01/\n?? .trellis/tasks/10-05-cooking-dot-skill-polish/research/repair-coordinator-live.json\n?? .trellis/tasks/10-05-cooking-dot-skill-polish/research/repair-failed-request-show.json\n?? .trellis/tasks/10-05-cooking-dot-skill-polish/research/repair-fresh-worker-spec.txt\n?? .trellis/tasks/10-05-cooking-dot-skill-polish/research/repair-fresh-worker-start.json\n?? .trellis/tasks/10-05-cooking-dot-skill-polish/research/repair-heartbeat-ack.json\n?? .trellis/tasks/10-05-cooking-dot-skill-polish/research/repair-heartbeat-delivery.json\n?? .trellis/tasks/10-05-cooking-dot-skill-polish/research/repair-live-observation-02.json\n?? .trellis/tasks/10-05-cooking-dot-skill-polish/research/repair-observation-01-stderr.txt\n?? .trellis/tasks/10-05-cooking-dot-skill-polish/research/repair-observation-01.json\n?? .trellis/tasks/10-05-cooking-dot-skill-polish/research/repair-original-worker-show.json\n?? .trellis/tasks/10-05-cooking-dot-skill-polish/research/repair-prestart-inventory.json\n?? .trellis/tasks/10-05-cooking-dot-skill-polish/research/repair-worker-spec.txt\n?? .trellis/tasks/10-05-cooking-dot-skill-polish/research/repair-worker-start.json\n"
+  }
+}

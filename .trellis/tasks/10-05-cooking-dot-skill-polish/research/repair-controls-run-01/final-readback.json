@@ -1,0 +1,111 @@
+{
+  "observed_utc": "2026-10-05T13:27:59.415879+00:00",
+  "command": "PowerShell here-string | python -B - (source/evidence and template readback)",
+  "checks": [
+    {
+      "check": "dot-request.md fields/text unchanged",
+      "expected": [
+        "# Dot request",
+        "Type: planning | final-review",
+        "Flow ID / request ID:",
+        "Parent request + reopening/revision authority (or none):",
+        "Verified repository / full published SHA / commit link:",
+        "Approved Cooking scope/consumers/delivery mode/excluded exits:",
+        "Desired explicit decision / conflicts/alternatives:",
+        "Readable plans/raw evidence/validation envelope/delivered hashes:",
+        "Conversation identity/prior-message boundary/raw prior snapshot/payload fingerprint:",
+        "Posted request message identity (receipt evidence; unknown until reconciled):",
+        "wait_started_utc / deadline_utc (start + 30 minutes):",
+        "Explicit paused fact / immutable timeout or resume provenance:",
+        "Supplement intent reference (none initially; one shared quota):",
+        "Identify this request/full reviewed SHA explicitly. Planning: accept plan or state blockers/permitted next action. Final review: accept candidate/stated validation scope or specify revisions. Converse/read commits only; no code/cloud work/GitHub writes. [Dialogue](../references/dot-dialogue.md) owns timing/reopening."
+      ],
+      "actual": [
+        "# Dot request",
+        "Type: planning | final-review",
+        "Flow ID / request ID:",
+        "Parent request + reopening/revision authority (or none):",
+        "Verified repository / full published SHA / commit link:",
+        "Approved Cooking scope/consumers/delivery mode/excluded exits:",
+        "Desired explicit decision / conflicts/alternatives:",
+        "Readable plans/raw evidence/validation envelope/delivered hashes:",
+        "Conversation identity/prior-message boundary/raw prior snapshot/payload fingerprint:",
+        "Posted request message identity (receipt evidence; unknown until reconciled):",
+        "wait_started_utc / deadline_utc (start + 30 minutes):",
+        "Explicit paused fact / immutable timeout or resume provenance:",
+        "Supplement intent reference (none initially; one shared quota):",
+        "Identify this request/full reviewed SHA explicitly. Planning: accept plan or state blockers/permitted next action. Final review: accept candidate/stated validation scope or specify revisions. Converse/read commits only; no code/cloud work/GitHub writes. [Dialogue](../references/dot-dialogue.md) owns timing/reopening."
+      ],
+      "status": "Passed"
+    },
+    {
+      "check": "dot-decision.md fields/text unchanged",
+      "expected": [
+        "# Dot decision",
+        "Flow ID / request ID / type:",
+        "Conversation/reply identity/raw full reply reference:",
+        "Reviewed full SHA / decision: accept-plan | accept-candidate | needs-revision | blocked | ambiguous",
+        "reply_posted_utc (null if unknown) / reliability + source / observed_utc:",
+        "timing_basis / trusted upper UTC + uncertainty / time source / optional lower UTC:",
+        "Complete/not-generating proof / full+prior raw snapshots / verified request boundary:",
+        "Timing: timely | timely-late-read | late | unknown-time",
+        "Original deadline / supplement intent+receipt / prior timeout+pause refs:",
+        "Accepted scope/delivered hashes (final acceptance) / blockers/conflicts:",
+        "Main scope/evidence finding / next allowed action/required authority:",
+        "New linked request ID + Owner reopening or valid revision provenance (if needed):",
+        "Reliable complete observation within deadline proves timeliness without invented posted UTC. Late/unknown-time/wrong-SHA replies do not reopen expired requests. Timely late-read preserves/enters pause even if old pause flag was stale, and does not restore dispatch/write rights. Evidence commits list diff from frozen accepted candidate and prove hashes unchanged. [Dialogue](../references/dot-dialogue.md) owns these rules."
+      ],
+      "actual": [
+        "# Dot decision",
+        "Flow ID / request ID / type:",
+        "Conversation/reply identity/raw full reply reference:",
+        "Reviewed full SHA / decision: accept-plan | accept-candidate | needs-revision | blocked | ambiguous",
+        "reply_posted_utc (null if unknown) / reliability + source / observed_utc:",
+        "timing_basis / trusted upper UTC + uncertainty / time source / optional lower UTC:",
+        "Complete/not-generating proof / full+prior raw snapshots / verified request boundary:",
+        "Timing: timely | timely-late-read | late | unknown-time",
+        "Original deadline / supplement intent+receipt / prior timeout+pause refs:",
+        "Accepted scope/delivered hashes (final acceptance) / blockers/conflicts:",
+        "Main scope/evidence finding / next allowed action/required authority:",
+        "New linked request ID + Owner reopening or valid revision provenance (if needed):",
+        "Reliable complete observation within deadline proves timeliness without invented posted UTC. Late/unknown-time/wrong-SHA replies do not reopen expired requests. Timely late-read preserves/enters pause even if old pause flag was stale, and does not restore dispatch/write rights. Evidence commits list diff from frozen accepted candidate and prove hashes unchanged. [Dialogue](../references/dot-dialogue.md) owns these rules."
+      ],
+      "status": "Passed"
+    },
+    {
+      "check": "only four owned tracked source files changed",
+      "expected": [
+        ".agents/skills/cooking-dot-workflow/assets/dot-decision.md",
+        ".agents/skills/cooking-dot-workflow/assets/dot-request.md",
+        ".agents/skills/cooking-dot-workflow/scripts/records.py",
+        ".agents/skills/cooking-dot-workflow/scripts/test_controls.py"
+      ],
+      "actual": [
+        ".agents/skills/cooking-dot-workflow/assets/dot-decision.md",
+        ".agents/skills/cooking-dot-workflow/assets/dot-request.md",
+        ".agents/skills/cooking-dot-workflow/scripts/records.py",
+        ".agents/skills/cooking-dot-workflow/scripts/test_controls.py"
+      ],
+      "status": "Passed"
+    },
+    {
+      "check": "baseline02 helper was exact frozen original",
+      "expected": "d42f5d5c0306c0fe888fad451aeeff497ee2a85a1ea50fe27e5f3c52ae40e362",
+      "actual": "d42f5d5c0306c0fe888fad451aeeff497ee2a85a1ea50fe27e5f3c52ae40e362",
+      "status": "Passed"
+    },
+    {
+      "check": "delivered hashes still match",
+      "expected": "manifest hashes",
+      "actual": "identical",
+      "status": "Passed"
+    },
+    {
+      "check": "all original evidence hashes still match",
+      "expected": "manifest hashes",
+      "actual": "identical",
+      "status": "Passed"
+    }
+  ],
+  "exit": 0
+}

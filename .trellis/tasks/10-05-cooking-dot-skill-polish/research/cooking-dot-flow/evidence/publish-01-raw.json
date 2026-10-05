@@ -1,0 +1,22 @@
+{
+  "command": [
+    "git",
+    "push",
+    "origin",
+    "32b400a5c6d375be366faa606e867ef68037cfa8:refs/heads/Kakusya/cooking-dot-skill-polish"
+  ],
+  "exit_code": 0,
+  "stdout": "",
+  "stderr": "To https://github.com/Kakusya/AbilityKit\n   4cf5b38bc..32b400a5c  32b400a5c6d375be366faa606e867ef68037cfa8 -> Kakusya/cooking-dot-skill-polish\n",
+  "verify_command": [
+    "git",
+    "ls-remote",
+    "--heads",
+    "origin",
+    "refs/heads/Kakusya/cooking-dot-skill-polish"
+  ],
+  "verify_exit": 0,
+  "verify_stdout": "32b400a5c6d375be366faa606e867ef68037cfa8\trefs/heads/Kakusya/cooking-dot-skill-polish\n",
+  "verify_stderr": "",
+  "verified": true
+}

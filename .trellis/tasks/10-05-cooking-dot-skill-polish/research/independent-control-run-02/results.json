@@ -1,0 +1,653 @@
+{
+  "source_sha": "32b400a5c6d375be366faa606e867ef68037cfa8",
+  "envelope": "isolated local simulation and read-only actual subprocess diagnostic",
+  "count": 93,
+  "passed": 92,
+  "failed": 1,
+  "results": [
+    {
+      "name": "announced frozen identity",
+      "expected": "32b400a5c6d375be366faa606e867ef68037cfa8",
+      "actual": "32b400a5c6d375be366faa606e867ef68037cfa8",
+      "status": "Passed"
+    },
+    {
+      "name": "frozen blob .agents/skills/cooking-dot-workflow/agents/openai.yaml",
+      "expected": "a1499d95abd8447558c535fe5554adcc3c9b988a0a39264a6283d430effe1e94",
+      "actual": "a1499d95abd8447558c535fe5554adcc3c9b988a0a39264a6283d430effe1e94",
+      "status": "Passed"
+    },
+    {
+      "name": "working bytes .agents/skills/cooking-dot-workflow/agents/openai.yaml",
+      "expected": "a1499d95abd8447558c535fe5554adcc3c9b988a0a39264a6283d430effe1e94",
+      "actual": "a1499d95abd8447558c535fe5554adcc3c9b988a0a39264a6283d430effe1e94",
+      "status": "Passed"
+    },
+    {
+      "name": "frozen blob .agents/skills/cooking-dot-workflow/assets/checkpoint-operation.md",
+      "expected": "05394909dab19b81c2b3580253c497b3bc862659990d40726364e434763c32f0",
+      "actual": "05394909dab19b81c2b3580253c497b3bc862659990d40726364e434763c32f0",
+      "status": "Passed"
+    },
+    {
+      "name": "working bytes .agents/skills/cooking-dot-workflow/assets/checkpoint-operation.md",
+      "expected": "05394909dab19b81c2b3580253c497b3bc862659990d40726364e434763c32f0",
+      "actual": "05394909dab19b81c2b3580253c497b3bc862659990d40726364e434763c32f0",
+      "status": "Passed"
+    },
+    {
+      "name": "frozen blob .agents/skills/cooking-dot-workflow/assets/dot-decision.md",
+      "expected": "1aa113fdaa6c9f5d8fb53973beb058027286caf132886ae3abecd17360a83a8d",
+      "actual": "1aa113fdaa6c9f5d8fb53973beb058027286caf132886ae3abecd17360a83a8d",
+      "status": "Passed"
+    },
+    {
+      "name": "working bytes .agents/skills/cooking-dot-workflow/assets/dot-decision.md",
+      "expected": "1aa113fdaa6c9f5d8fb53973beb058027286caf132886ae3abecd17360a83a8d",
+      "actual": "1aa113fdaa6c9f5d8fb53973beb058027286caf132886ae3abecd17360a83a8d",
+      "status": "Passed"
+    },
+    {
+      "name": "frozen blob .agents/skills/cooking-dot-workflow/assets/dot-request.md",
+      "expected": "a4083c29f0dadb92e548c5864ebd95623aa58e5a168cdf3cf15afda29b6aed00",
+      "actual": "a4083c29f0dadb92e548c5864ebd95623aa58e5a168cdf3cf15afda29b6aed00",
+      "status": "Passed"
+    },
+    {
+      "name": "working bytes .agents/skills/cooking-dot-workflow/assets/dot-request.md",
+      "expected": "a4083c29f0dadb92e548c5864ebd95623aa58e5a168cdf3cf15afda29b6aed00",
+      "actual": "a4083c29f0dadb92e548c5864ebd95623aa58e5a168cdf3cf15afda29b6aed00",
+      "status": "Passed"
+    },
+    {
+      "name": "frozen blob .agents/skills/cooking-dot-workflow/references/dot-dialogue.md",
+      "expected": "c5f3c244676c3ec92e0adacda531bf9fe999f222a1f4d2b4eba96b02227a2fd8",
+      "actual": "c5f3c244676c3ec92e0adacda531bf9fe999f222a1f4d2b4eba96b02227a2fd8",
+      "status": "Passed"
+    },
+    {
+      "name": "working bytes .agents/skills/cooking-dot-workflow/references/dot-dialogue.md",
+      "expected": "c5f3c244676c3ec92e0adacda531bf9fe999f222a1f4d2b4eba96b02227a2fd8",
+      "actual": "c5f3c244676c3ec92e0adacda531bf9fe999f222a1f4d2b4eba96b02227a2fd8",
+      "status": "Passed"
+    },
+    {
+      "name": "frozen blob .agents/skills/cooking-dot-workflow/references/recovery.md",
+      "expected": "04dc2272e7eb380a2d7ec943c14e9528c23ad604dd923fd5ea9cf47ce654f384",
+      "actual": "04dc2272e7eb380a2d7ec943c14e9528c23ad604dd923fd5ea9cf47ce654f384",
+      "status": "Passed"
+    },
+    {
+      "name": "working bytes .agents/skills/cooking-dot-workflow/references/recovery.md",
+      "expected": "04dc2272e7eb380a2d7ec943c14e9528c23ad604dd923fd5ea9cf47ce654f384",
+      "actual": "04dc2272e7eb380a2d7ec943c14e9528c23ad604dd923fd5ea9cf47ce654f384",
+      "status": "Passed"
+    },
+    {
+      "name": "frozen blob .agents/skills/cooking-dot-workflow/scripts/records.py",
+      "expected": "d42f5d5c0306c0fe888fad451aeeff497ee2a85a1ea50fe27e5f3c52ae40e362",
+      "actual": "d42f5d5c0306c0fe888fad451aeeff497ee2a85a1ea50fe27e5f3c52ae40e362",
+      "status": "Passed"
+    },
+    {
+      "name": "working bytes .agents/skills/cooking-dot-workflow/scripts/records.py",
+      "expected": "d42f5d5c0306c0fe888fad451aeeff497ee2a85a1ea50fe27e5f3c52ae40e362",
+      "actual": "d42f5d5c0306c0fe888fad451aeeff497ee2a85a1ea50fe27e5f3c52ae40e362",
+      "status": "Passed"
+    },
+    {
+      "name": "frozen blob .agents/skills/cooking-dot-workflow/scripts/test_controls.py",
+      "expected": "05424093d4a6ceaaa4b0483116944b46ae58cc2ab7efcfc0be4d31972a072856",
+      "actual": "05424093d4a6ceaaa4b0483116944b46ae58cc2ab7efcfc0be4d31972a072856",
+      "status": "Passed"
+    },
+    {
+      "name": "working bytes .agents/skills/cooking-dot-workflow/scripts/test_controls.py",
+      "expected": "05424093d4a6ceaaa4b0483116944b46ae58cc2ab7efcfc0be4d31972a072856",
+      "actual": "05424093d4a6ceaaa4b0483116944b46ae58cc2ab7efcfc0be4d31972a072856",
+      "status": "Passed"
+    },
+    {
+      "name": "frozen blob .agents/skills/cooking-dot-workflow/SKILL.md",
+      "expected": "e1e37dbac50e1eab475126f5cca7e33f2e9fa765c4eb4a31caff1aebdac7b8c5",
+      "actual": "e1e37dbac50e1eab475126f5cca7e33f2e9fa765c4eb4a31caff1aebdac7b8c5",
+      "status": "Passed"
+    },
+    {
+      "name": "working bytes .agents/skills/cooking-dot-workflow/SKILL.md",
+      "expected": "e1e37dbac50e1eab475126f5cca7e33f2e9fa765c4eb4a31caff1aebdac7b8c5",
+      "actual": "e1e37dbac50e1eab475126f5cca7e33f2e9fa765c4eb4a31caff1aebdac7b8c5",
+      "status": "Passed"
+    },
+    {
+      "name": "frozen blob .trellis/spec/abilitykit/supervised-issue-delivery.md",
+      "expected": "0ca9fe386845801288b46d0df053f4ba7e7de9d768f7a094f99d011eaeb2157c",
+      "actual": "0ca9fe386845801288b46d0df053f4ba7e7de9d768f7a094f99d011eaeb2157c",
+      "status": "Passed"
+    },
+    {
+      "name": "working bytes .trellis/spec/abilitykit/supervised-issue-delivery.md",
+      "expected": "0ca9fe386845801288b46d0df053f4ba7e7de9d768f7a094f99d011eaeb2157c",
+      "actual": "0ca9fe386845801288b46d0df053f4ba7e7de9d768f7a094f99d011eaeb2157c",
+      "status": "Passed"
+    },
+    {
+      "name": "intent absent from index still unresolved",
+      "expected": [
+        "b2ea381e-761d-4fc8-8d1c-9d34cab28d83:000001"
+      ],
+      "actual": [
+        "b2ea381e-761d-4fc8-8d1c-9d34cab28d83:000001"
+      ],
+      "status": "Passed"
+    },
+    {
+      "name": "unresolved effect prevents later external effect",
+      "expected": "Blocked",
+      "actual": "Blocked",
+      "status": "Passed",
+      "reason": "unresolved effect blocks subsequent intent"
+    },
+    {
+      "name": "receipt rejects wrong action",
+      "expected": "Blocked",
+      "actual": "Blocked",
+      "status": "Passed",
+      "reason": "receipt action mismatch"
+    },
+    {
+      "name": "receipt rejects wrong task_id",
+      "expected": "Blocked",
+      "actual": "Blocked",
+      "status": "Passed",
+      "reason": "receipt task_id mismatch"
+    },
+    {
+      "name": "receipt rejects wrong dispatch_id",
+      "expected": "Blocked",
+      "actual": "Blocked",
+      "status": "Passed",
+      "reason": "receipt dispatch_id mismatch"
+    },
+    {
+      "name": "receipt rejects wrong run_id",
+      "expected": "Blocked",
+      "actual": "Blocked",
+      "status": "Passed",
+      "reason": "receipt run_id mismatch"
+    },
+    {
+      "name": "unknown receipt cannot be overwritten",
+      "expected": "Blocked",
+      "actual": "Blocked",
+      "status": "Passed",
+      "reason": "immutable record conflict"
+    },
+    {
+      "name": "reconcile must correlate unresolved identity",
+      "expected": "Blocked",
+      "actual": "Blocked",
+      "status": "Passed",
+      "reason": "reconciliation receipt reference mismatch"
+    },
+    {
+      "name": "reconciliation leaves no unresolved effect",
+      "expected": [],
+      "actual": [],
+      "status": "Passed"
+    },
+    {
+      "name": "stale index ignored",
+      "expected": 2,
+      "actual": 2,
+      "status": "Passed"
+    },
+    {
+      "name": "read-only reconstruction keeps bytes",
+      "expected": {
+        "flow.json": "8afb966567a17489cd943ce0071dc1154c171af4f959f6d177bfbac285abbba5",
+        "index.json": "cea72ab7ead4742110bffcd9e740771da109c1469b27ece18d03c101917e1359",
+        "evidence\\approval.txt": "00751200f77a79c6427d1f07b7f993a9d3ce4013c3a06611583b25c9edd9e3cd",
+        "evidence\\authority.txt": "99efbcfc34114b616d1fb12499ab630df6925f11a89cfe40e39b4f599d2a8836",
+        "evidence\\payload.txt": "5b1c3825bd81e3e51cc19054d472cde4f65c0dd086cb5079c92cacbacf7ec60e",
+        "evidence\\raw.txt": "dd3c159d2c64de765caa668b394e2e567ff6a244b77fca10a972ddf0e270a8e2",
+        "records\\000001.intent.json": "19f9fa358372c8130cc6894bfe3b18eaf609c01e2be19097a0d7543dba10c7fd",
+        "records\\000001.receipt.json": "60f24591304553bbd358bfd4596d447a4521eb7cb529a3d2c0c975a6ab30fcba",
+        "records\\000002.intent.json": "b074276357e480a54736662727d3c3f2cbde0ca73c51275e02218dd1398d7240",
+        "records\\000002.receipt.json": "e5cd10d163d51eb54997191ff917b729f791deab9cd3366144212ddcda1f81a7"
+      },
+      "actual": {
+        "flow.json": "8afb966567a17489cd943ce0071dc1154c171af4f959f6d177bfbac285abbba5",
+        "index.json": "cea72ab7ead4742110bffcd9e740771da109c1469b27ece18d03c101917e1359",
+        "evidence\\approval.txt": "00751200f77a79c6427d1f07b7f993a9d3ce4013c3a06611583b25c9edd9e3cd",
+        "evidence\\authority.txt": "99efbcfc34114b616d1fb12499ab630df6925f11a89cfe40e39b4f599d2a8836",
+        "evidence\\payload.txt": "5b1c3825bd81e3e51cc19054d472cde4f65c0dd086cb5079c92cacbacf7ec60e",
+        "evidence\\raw.txt": "dd3c159d2c64de765caa668b394e2e567ff6a244b77fca10a972ddf0e270a8e2",
+        "records\\000001.intent.json": "19f9fa358372c8130cc6894bfe3b18eaf609c01e2be19097a0d7543dba10c7fd",
+        "records\\000001.receipt.json": "60f24591304553bbd358bfd4596d447a4521eb7cb529a3d2c0c975a6ab30fcba",
+        "records\\000002.intent.json": "b074276357e480a54736662727d3c3f2cbde0ca73c51275e02218dd1398d7240",
+        "records\\000002.receipt.json": "e5cd10d163d51eb54997191ff917b729f791deab9cd3366144212ddcda1f81a7"
+      },
+      "status": "Passed"
+    },
+    {
+      "name": "new-session cannot index-repair",
+      "expected": "Blocked",
+      "actual": "Blocked",
+      "status": "Passed",
+      "reason": "Blocked: exclusive original coordinator/record-write authority"
+    },
+    {
+      "name": "new-session cannot append",
+      "expected": "Blocked",
+      "actual": "Blocked",
+      "status": "Passed",
+      "reason": "Blocked: exclusive original coordinator/record-write authority"
+    },
+    {
+      "name": "unverified cannot index-repair",
+      "expected": "Blocked",
+      "actual": "Blocked",
+      "status": "Passed",
+      "reason": "Blocked: exclusive original coordinator/record-write authority"
+    },
+    {
+      "name": "unverified cannot append",
+      "expected": "Blocked",
+      "actual": "Blocked",
+      "status": "Passed",
+      "reason": "Blocked: exclusive original coordinator/record-write authority"
+    },
+    {
+      "name": "no-record-permission cannot index-repair",
+      "expected": "Blocked",
+      "actual": "Blocked",
+      "status": "Passed",
+      "reason": "Blocked: exclusive original coordinator/record-write authority"
+    },
+    {
+      "name": "no-record-permission cannot append",
+      "expected": "Blocked",
+      "actual": "Blocked",
+      "status": "Passed",
+      "reason": "Blocked: exclusive original coordinator/record-write authority"
+    },
+    {
+      "name": "denied mutation preserves canonical bytes",
+      "expected": {
+        "flow.json": "8afb966567a17489cd943ce0071dc1154c171af4f959f6d177bfbac285abbba5",
+        "index.json": "cea72ab7ead4742110bffcd9e740771da109c1469b27ece18d03c101917e1359",
+        "evidence\\approval.txt": "00751200f77a79c6427d1f07b7f993a9d3ce4013c3a06611583b25c9edd9e3cd",
+        "evidence\\authority.txt": "99efbcfc34114b616d1fb12499ab630df6925f11a89cfe40e39b4f599d2a8836",
+        "evidence\\payload.txt": "5b1c3825bd81e3e51cc19054d472cde4f65c0dd086cb5079c92cacbacf7ec60e",
+        "evidence\\raw.txt": "dd3c159d2c64de765caa668b394e2e567ff6a244b77fca10a972ddf0e270a8e2",
+        "records\\000001.intent.json": "19f9fa358372c8130cc6894bfe3b18eaf609c01e2be19097a0d7543dba10c7fd",
+        "records\\000001.receipt.json": "60f24591304553bbd358bfd4596d447a4521eb7cb529a3d2c0c975a6ab30fcba",
+        "records\\000002.intent.json": "b074276357e480a54736662727d3c3f2cbde0ca73c51275e02218dd1398d7240",
+        "records\\000002.receipt.json": "e5cd10d163d51eb54997191ff917b729f791deab9cd3366144212ddcda1f81a7"
+      },
+      "actual": {
+        "flow.json": "8afb966567a17489cd943ce0071dc1154c171af4f959f6d177bfbac285abbba5",
+        "index.json": "cea72ab7ead4742110bffcd9e740771da109c1469b27ece18d03c101917e1359",
+        "evidence\\approval.txt": "00751200f77a79c6427d1f07b7f993a9d3ce4013c3a06611583b25c9edd9e3cd",
+        "evidence\\authority.txt": "99efbcfc34114b616d1fb12499ab630df6925f11a89cfe40e39b4f599d2a8836",
+        "evidence\\payload.txt": "5b1c3825bd81e3e51cc19054d472cde4f65c0dd086cb5079c92cacbacf7ec60e",
+        "evidence\\raw.txt": "dd3c159d2c64de765caa668b394e2e567ff6a244b77fca10a972ddf0e270a8e2",
+        "records\\000001.intent.json": "19f9fa358372c8130cc6894bfe3b18eaf609c01e2be19097a0d7543dba10c7fd",
+        "records\\000001.receipt.json": "60f24591304553bbd358bfd4596d447a4521eb7cb529a3d2c0c975a6ab30fcba",
+        "records\\000002.intent.json": "b074276357e480a54736662727d3c3f2cbde0ca73c51275e02218dd1398d7240",
+        "records\\000002.receipt.json": "e5cd10d163d51eb54997191ff917b729f791deab9cd3366144212ddcda1f81a7"
+      },
+      "status": "Passed"
+    },
+    {
+      "name": "old subset is evidence",
+      "expected": "old-subset",
+      "actual": "old-subset",
+      "status": "Passed"
+    },
+    {
+      "name": "copied owner identity cannot write index",
+      "expected": "Blocked",
+      "actual": "Blocked",
+      "status": "Passed",
+      "reason": "copy is read-only"
+    },
+    {
+      "name": "conflicting copy is internally valid",
+      "expected": 1,
+      "actual": 1,
+      "status": "Passed"
+    },
+    {
+      "name": "conflicting copy blocks authority election",
+      "expected": "Blocked",
+      "actual": "Blocked",
+      "status": "Passed",
+      "reason": "conflicting/newer copy records"
+    },
+    {
+      "name": "same flow cannot declare two canonical authorities",
+      "expected": "Blocked",
+      "actual": "Allowed",
+      "status": "Failed"
+    },
+    {
+      "name": "missing canonical does not promote copy",
+      "expected": "Blocked",
+      "actual": "Blocked",
+      "status": "Passed",
+      "reason": "cannot read C:\\Users\\Administrator\\orca\\workspaces\\AbilityKit\\cooking-dot-skill-polish\\.trellis\\tasks\\10-05-cooking-dot-skill-polish\\research\\independent-control-run-02\\absent-authority\\flow.json: [Errno 2] No such file or directory: 'C:\\\\Users\\\\Administrator\\\\orca\\\\workspaces\\\\AbilityKit\\\\cooking-dot-skill-polish\\\\.trellis\\\\tasks\\\\10-05-cooking-dot-skill-polish\\\\research\\\\independent-control-run-02\\\\absent-authority\\\\flow.json'"
+    },
+    {
+      "name": "complete observation without posted time is timely",
+      "expected": true,
+      "actual": true,
+      "status": "Passed"
+    },
+    {
+      "name": "fragment cannot accept",
+      "expected": false,
+      "actual": false,
+      "status": "Passed"
+    },
+    {
+      "name": "generating cannot accept",
+      "expected": false,
+      "actual": false,
+      "status": "Passed"
+    },
+    {
+      "name": "wrong-conversation cannot accept",
+      "expected": false,
+      "actual": false,
+      "status": "Passed"
+    },
+    {
+      "name": "wrong-request cannot accept",
+      "expected": false,
+      "actual": false,
+      "status": "Passed"
+    },
+    {
+      "name": "wrong-sha cannot accept",
+      "expected": false,
+      "actual": false,
+      "status": "Passed"
+    },
+    {
+      "name": "old-boundary cannot accept",
+      "expected": false,
+      "actual": false,
+      "status": "Passed"
+    },
+    {
+      "name": "clock-crosses-deadline cannot prove timely",
+      "expected": false,
+      "actual": false,
+      "status": "Passed"
+    },
+    {
+      "name": "clock-jump cannot prove timely",
+      "expected": false,
+      "actual": false,
+      "status": "Passed"
+    },
+    {
+      "name": "unverified-proof cannot prove timely",
+      "expected": false,
+      "actual": false,
+      "status": "Passed"
+    },
+    {
+      "name": "fragment-proof cannot prove timely",
+      "expected": false,
+      "actual": false,
+      "status": "Passed"
+    },
+    {
+      "name": "other-message-proof cannot prove timely",
+      "expected": false,
+      "actual": false,
+      "status": "Passed"
+    },
+    {
+      "name": "other-boundary cannot prove timely",
+      "expected": false,
+      "actual": false,
+      "status": "Passed"
+    },
+    {
+      "name": "fragment-before/full-after cannot borrow earlier time",
+      "expected": false,
+      "actual": false,
+      "status": "Passed"
+    },
+    {
+      "name": "durable earlier complete reply remains technically valid",
+      "expected": true,
+      "actual": true,
+      "status": "Passed"
+    },
+    {
+      "name": "expired unsaved pause cannot auto apply",
+      "expected": false,
+      "actual": false,
+      "status": "Passed"
+    },
+    {
+      "name": "expired unsaved pause must be saved",
+      "expected": true,
+      "actual": true,
+      "status": "Passed"
+    },
+    {
+      "name": "expired unsaved pause preserved",
+      "expected": true,
+      "actual": true,
+      "status": "Passed"
+    },
+    {
+      "name": "timely posted but late read cannot apply",
+      "expected": false,
+      "actual": false,
+      "status": "Passed"
+    },
+    {
+      "name": "genuinely late reply invalid",
+      "expected": false,
+      "actual": false,
+      "status": "Passed"
+    },
+    {
+      "name": "first full after deadline with unknown posted time invalid",
+      "expected": false,
+      "actual": false,
+      "status": "Passed"
+    },
+    {
+      "name": "unused supplement eligible",
+      "expected": true,
+      "actual": true,
+      "status": "Passed"
+    },
+    {
+      "name": "lost supplement receipt still consumes quota",
+      "expected": false,
+      "actual": false,
+      "status": "Passed"
+    },
+    {
+      "name": "unknown generation refuses supplement",
+      "expected": false,
+      "actual": false,
+      "status": "Passed"
+    },
+    {
+      "name": "late-read revision cannot refresh original budget",
+      "expected": false,
+      "actual": false,
+      "status": "Passed"
+    },
+    {
+      "name": "explicit owner reopening permits linked new budget",
+      "expected": true,
+      "actual": true,
+      "status": "Passed"
+    },
+    {
+      "name": "bounded branch completion without merge",
+      "expected": true,
+      "actual": true,
+      "status": "Passed"
+    },
+    {
+      "name": "completion refuses paused",
+      "expected": false,
+      "actual": false,
+      "status": "Passed"
+    },
+    {
+      "name": "completion refuses accepted_sha",
+      "expected": false,
+      "actual": false,
+      "status": "Passed"
+    },
+    {
+      "name": "completion refuses required_pilot_passed",
+      "expected": false,
+      "actual": false,
+      "status": "Passed"
+    },
+    {
+      "name": "completion refuses workers_accounted",
+      "expected": false,
+      "actual": false,
+      "status": "Passed"
+    },
+    {
+      "name": "completion refuses effects_reconciled",
+      "expected": false,
+      "actual": false,
+      "status": "Passed"
+    },
+    {
+      "name": "completion refuses required_checks_passed",
+      "expected": false,
+      "actual": false,
+      "status": "Passed"
+    },
+    {
+      "name": "production premerge clear simulation",
+      "expected": true,
+      "actual": true,
+      "status": "Passed"
+    },
+    {
+      "name": "merge refuses mode=branch-only",
+      "expected": false,
+      "actual": false,
+      "status": "Passed"
+    },
+    {
+      "name": "merge refuses closing_links_clear=False",
+      "expected": false,
+      "actual": false,
+      "status": "Passed"
+    },
+    {
+      "name": "merge refuses closing_links_clear=None",
+      "expected": false,
+      "actual": false,
+      "status": "Passed"
+    },
+    {
+      "name": "merge refuses closing_links_inspected=False",
+      "expected": false,
+      "actual": false,
+      "status": "Passed"
+    },
+    {
+      "name": "merge refuses authorized=False",
+      "expected": false,
+      "actual": false,
+      "status": "Passed"
+    },
+    {
+      "name": "merge refuses effects_reconciled=False",
+      "expected": false,
+      "actual": false,
+      "status": "Passed"
+    },
+    {
+      "name": "production complete simulation",
+      "expected": true,
+      "actual": true,
+      "status": "Passed"
+    },
+    {
+      "name": "production incomplete integration_passed",
+      "expected": false,
+      "actual": false,
+      "status": "Passed"
+    },
+    {
+      "name": "production incomplete merge_verified",
+      "expected": false,
+      "actual": false,
+      "status": "Passed"
+    },
+    {
+      "name": "production incomplete premerge_verified",
+      "expected": false,
+      "actual": false,
+      "status": "Passed"
+    },
+    {
+      "name": "production incomplete issue_close_verified",
+      "expected": false,
+      "actual": false,
+      "status": "Passed"
+    },
+    {
+      "name": "actual read-only diagnostic CLI exit",
+      "expected": 0,
+      "actual": 0,
+      "status": "Passed"
+    },
+    {
+      "name": "actual read-only diagnostic CLI unresolved",
+      "expected": [],
+      "actual": [],
+      "status": "Passed"
+    },
+    {
+      "name": "CLI preserves stale canonical index",
+      "expected": {
+        "flow.json": "8afb966567a17489cd943ce0071dc1154c171af4f959f6d177bfbac285abbba5",
+        "index.json": "cea72ab7ead4742110bffcd9e740771da109c1469b27ece18d03c101917e1359",
+        "evidence\\approval.txt": "00751200f77a79c6427d1f07b7f993a9d3ce4013c3a06611583b25c9edd9e3cd",
+        "evidence\\authority.txt": "99efbcfc34114b616d1fb12499ab630df6925f11a89cfe40e39b4f599d2a8836",
+        "evidence\\payload.txt": "5b1c3825bd81e3e51cc19054d472cde4f65c0dd086cb5079c92cacbacf7ec60e",
+        "evidence\\raw.txt": "dd3c159d2c64de765caa668b394e2e567ff6a244b77fca10a972ddf0e270a8e2",
+        "records\\000001.intent.json": "19f9fa358372c8130cc6894bfe3b18eaf609c01e2be19097a0d7543dba10c7fd",
+        "records\\000001.receipt.json": "60f24591304553bbd358bfd4596d447a4521eb7cb529a3d2c0c975a6ab30fcba",
+        "records\\000002.intent.json": "b074276357e480a54736662727d3c3f2cbde0ca73c51275e02218dd1398d7240",
+        "records\\000002.receipt.json": "e5cd10d163d51eb54997191ff917b729f791deab9cd3366144212ddcda1f81a7"
+      },
+      "actual": {
+        "flow.json": "8afb966567a17489cd943ce0071dc1154c171af4f959f6d177bfbac285abbba5",
+        "index.json": "cea72ab7ead4742110bffcd9e740771da109c1469b27ece18d03c101917e1359",
+        "evidence\\approval.txt": "00751200f77a79c6427d1f07b7f993a9d3ce4013c3a06611583b25c9edd9e3cd",
+        "evidence\\authority.txt": "99efbcfc34114b616d1fb12499ab630df6925f11a89cfe40e39b4f599d2a8836",
+        "evidence\\payload.txt": "5b1c3825bd81e3e51cc19054d472cde4f65c0dd086cb5079c92cacbacf7ec60e",
+        "evidence\\raw.txt": "dd3c159d2c64de765caa668b394e2e567ff6a244b77fca10a972ddf0e270a8e2",
+        "records\\000001.intent.json": "19f9fa358372c8130cc6894bfe3b18eaf609c01e2be19097a0d7543dba10c7fd",
+        "records\\000001.receipt.json": "60f24591304553bbd358bfd4596d447a4521eb7cb529a3d2c0c975a6ab30fcba",
+        "records\\000002.intent.json": "b074276357e480a54736662727d3c3f2cbde0ca73c51275e02218dd1398d7240",
+        "records\\000002.receipt.json": "e5cd10d163d51eb54997191ff917b729f791deab9cd3366144212ddcda1f81a7"
+      },
+      "status": "Passed"
+    }
+  ]
+}

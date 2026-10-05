@@ -1,0 +1,19 @@
+{
+  "status": "Failed",
+  "exit_code": 1,
+  "phase": "pilot local initialization evidence write",
+  "error": "AttributeError: module 'records' has no attribute 'atomic'",
+  "caller_mistake": "Used preliminary helper API instead of frozen documented API; no skill source defect claimed",
+  "postcondition": "flow.json and zero-operation index already persisted; no external effects or duplicate flow",
+  "flow_id": "a2c3dd65-4a91-43f6-9c33-ad891f7563c4",
+  "original_checkpoint": {
+    "version": 1,
+    "flow_id": "a2c3dd65-4a91-43f6-9c33-ad891f7563c4",
+    "effective_run_id": "run_840202cc5621",
+    "last_seq": 0,
+    "unresolved": [],
+    "record_hashes": {}
+  },
+  "correction": "Reread frozen recovery/dialogue/template and use public initialize/append/write_index; ordinary authorized evidence writes use existing Trellis io utility",
+  "recovery_type": "Same live original coordinator, local preparation correction; not cross-main takeover"
+}

@@ -1,0 +1,44 @@
+{
+  "reply": {
+    "full": true,
+    "generating": false,
+    "decision": "accept-plan",
+    "request_id": "AK-CDF-LIVE-PILOT-PLAN-01",
+    "flow_id": "a2c3dd65-4a91-43f6-9c33-ad891f7563c4",
+    "reviewed_sha": "32b400a5c6d375be366faa606e867ef68037cfa8",
+    "conversation_id": "https://chatgpt.com/dots/01a10258-c084-74bb-8bcc-ec01958e5023",
+    "message_id": "3f12f99a2ea4819b8541c90bd4ea9e30~3f12f99a2ea4819b8541c90bd4ea9e30~CalpicoMessage~Sentinel_bb2d3d10e91481919840f33f4585542e",
+    "after_request_verified": true,
+    "absent_at_prior_boundary": true,
+    "time_reliable": false,
+    "reply_posted_utc": null,
+    "timing_proof": {
+      "request_id": "AK-CDF-LIVE-PILOT-PLAN-01",
+      "flow_id": "a2c3dd65-4a91-43f6-9c33-ad891f7563c4",
+      "conversation_id": "https://chatgpt.com/dots/01a10258-c084-74bb-8bcc-ec01958e5023",
+      "message_id": "3f12f99a2ea4819b8541c90bd4ea9e30~3f12f99a2ea4819b8541c90bd4ea9e30~CalpicoMessage~Sentinel_bb2d3d10e91481919840f33f4585542e",
+      "reviewed_sha": "32b400a5c6d375be366faa606e867ef68037cfa8",
+      "prior_message_boundary": "3f12f99a2ea4819b8541c90bd4ea9e30~3f12f99a2ea4819b8541c90bd4ea9e30~CalpicoMessage~Sentinel_4a5061c3639c8191ad1577c6b3112670",
+      "verified": true,
+      "full": true,
+      "generating": false,
+      "full_snapshot_ref": "evidence/pilot-plan-observation-03.json",
+      "prior_snapshot_ref": "evidence/pilot-plan-prior.json",
+      "observed_utc": "2026-10-05T13:17:56.746282Z",
+      "time_source": "original coordinator local UTC; monotonic elapsed compared",
+      "clock_trusted": true,
+      "clock_jump": false,
+      "uncertainty_ms": 1000
+    }
+  },
+  "evaluation": {
+    "classification": "timely",
+    "timing_basis": "complete-observation-upper-bound",
+    "valid_resolution": true,
+    "pause_required": false,
+    "can_apply": true,
+    "preserve_pause": false
+  },
+  "elapsed_monotonic": 676.2177948000026,
+  "elapsed_utc": 676.217817
+}

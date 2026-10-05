@@ -1,0 +1,29 @@
+{
+  "id": "local",
+  "ok": false,
+  "error": {
+    "code": "invalid_argument",
+    "message": "Unknown flag --js for command: eval",
+    "data": {
+      "validFlags": [
+        "environment",
+        "expression",
+        "help",
+        "json",
+        "page",
+        "pairing-code",
+        "worktree"
+      ],
+      "suggestions": [
+        "json"
+      ],
+      "nextSteps": [
+        "Did you mean: --json",
+        "Valid flags: --environment, --expression, --help, --json, --page, --pairing-code, --worktree"
+      ]
+    }
+  },
+  "_meta": {
+    "runtimeId": null
+  }
+}

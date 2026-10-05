@@ -1,0 +1,18 @@
+{
+  "version": 1,
+  "flow_id": "a2c3dd65-4a91-43f6-9c33-ad891f7563c4",
+  "seq": 1,
+  "op_id": "a2c3dd65-4a91-43f6-9c33-ad891f7563c4:000001",
+  "kind": "receipt",
+  "recorded_utc": "2026-10-05T13:05:33.513210Z",
+  "intent_hash": "ddb02598c0befb1a18df2ddedeb3dbbeda27cb372a0fb4336e0c7acff0593c8b",
+  "outcome": "applied",
+  "raw_ref": "evidence/publish-01-raw.json",
+  "result": {
+    "action": "git-push",
+    "run_id": "run_840202cc5621",
+    "candidate_sha": "32b400a5c6d375be366faa606e867ef68037cfa8",
+    "command_exit": 0,
+    "branch_verified": true
+  }
+}

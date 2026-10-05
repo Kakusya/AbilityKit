@@ -1,0 +1,11 @@
+# Bounded pilot approval and provenance
+
+Owner request in main conversation 2026-10-05: follow dot guidance and refine until explicit satisfaction; actually use a skill to run the workflow; all work/pushes on one origin branch until complete. This is the approved invocation authority for manually loading the revised project-path cooking-dot-workflow as a bounded Cooking documentation pilot, not host-catalog/automatic-trigger validation.
+
+Sole main coordinator remains original Orca terminal term_4d2338db-ef10-45a0-9316-90733d30e4cb, Trellis session context codex_01a10a3d-c893-70a3-af86-173caf5351a8. Its existing Run creation receipt is research/run-create-receipt.json, run_840202cc5621 generation1. Current live binding must be reread before effects; this note alone does NOT prove authority.
+
+Approved output: a usable Cooking workflow operator/handoff example under the skill references plus a conditional discoverability link and actual pilot evidence. Cooking consumers: coordinators handing off this workflow and bounded Orca documentation workers. No product/examples/Unity/ET/generic Trellis runtime changes; no master integration, artificial Issue/PR, extra pilot branch, resource closing/deletion or unsupported takeover. Delivery mode branch-only on Kakusya/cooking-dot-skill-polish, verified origin Kakusya/AbilityKit.
+
+Prior dot plan AK-CDF-POLISH-PLAN-01 accepted exact4cf5b38 and explicitly approved this useful documentation pilot and its acceptance envelope. Timing clarification AK-CDF-TIMING-CLARIFY-01 approved direct full-before-deadline observation without fabricated posted UTC. Retain settled terminals under existing Owner paused/awaiting-review retention and account individually; no release/closure is authorized here.
+
+Required exits: actual manual read of frozen skill, checkpoint/intent/readback, accepted and started bounded Orca dispatch, useful artifact plus real worker_done, independent source/contract inspection and required scoped controls, explicit exact final-SHA dot acceptance, branch push verification and worker accounting. Merge/postmerge/real GitHub auto-close and normal-Run cross-main exclusive takeover are NotRun/Blocked. Mock fault controls are local simulation; fresh test subprocesses are not coordinator recovery. Report exact scope and remaining limits.

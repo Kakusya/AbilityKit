@@ -1,0 +1,24 @@
+{
+  "observed_utc": "2026-10-05T13:24:36.228638+00:00",
+  "command": [
+    "C:\\Python314\\python.exe",
+    "-B",
+    ".agents\\skills\\cooking-dot-workflow\\scripts\\test_controls.py",
+    "--output-dir",
+    ".trellis\\tasks\\10-05-cooking-dot-skill-polish\\research\\repair-controls-baseline-02"
+  ],
+  "exit": 1,
+  "identity": {
+    "head": "32b400a5c6d375be366faa606e867ef68037cfa8",
+    "dirty": " M .agents/skills/cooking-dot-workflow/scripts/test_controls.py\n?? .agents/skills/cooking-dot-workflow/scripts/__pycache__/\n?? .trellis/tasks/10-05-cooking-dot-skill-polish/research/cooking-dot-flow/\n?? .trellis/tasks/10-05-cooking-dot-skill-polish/research/delivery-c3e5ced0e2a1.json\n?? .trellis/tasks/10-05-cooking-dot-skill-polish/research/dot-pilot-plan.md\n?? .trellis/tasks/10-05-cooking-dot-skill-polish/research/implementation-freeze-receipt.json\n?? .trellis/tasks/10-05-cooking-dot-skill-polish/research/independent-control-run-01/\n?? .trellis/tasks/10-05-cooking-dot-skill-polish/research/independent-control-run-02/\n?? .trellis/tasks/10-05-cooking-dot-skill-polish/research/independent-controls.py\n?? .trellis/tasks/10-05-cooking-dot-skill-polish/research/independent-review-ack.json\n?? .trellis/tasks/10-05-cooking-dot-skill-polish/research/independent-review-delivery.json\n?? .trellis/tasks/10-05-cooking-dot-skill-polish/research/independent-review-retain.json\n?? .trellis/tasks/10-05-cooking-dot-skill-polish/research/independent-review.md\n?? .trellis/tasks/10-05-cooking-dot-skill-polish/research/pilot-accepted-brief.txt\n?? .trellis/tasks/10-05-cooking-dot-skill-polish/research/pilot-init-failure.json\n?? .trellis/tasks/10-05-cooking-dot-skill-polish/research/pilot-live-run-proof.json\n?? .trellis/tasks/10-05-cooking-dot-skill-polish/research/pilot-manual-loading.json\n?? .trellis/tasks/10-05-cooking-dot-skill-polish/research/pilot-plan-snapshot-02.json\n?? .trellis/tasks/10-05-cooking-dot-skill-polish/research/pilot-plan-wait.json\n?? .trellis/tasks/10-05-cooking-dot-skill-polish/research/pilot-worktree-inventory.json\n?? .trellis/tasks/10-05-cooking-dot-skill-polish/research/repair-controls-baseline-01-console.txt\n?? .trellis/tasks/10-05-cooking-dot-skill-polish/research/repair-controls-baseline-01/\n?? .trellis/tasks/10-05-cooking-dot-skill-polish/research/repair-coordinator-live.json\n?? .trellis/tasks/10-05-cooking-dot-skill-polish/research/repair-failed-request-show.json\n?? .trellis/tasks/10-05-cooking-dot-skill-polish/research/repair-fresh-worker-spec.txt\n?? .trellis/tasks/10-05-cooking-dot-skill-polish/research/repair-fresh-worker-start.json\n?? .trellis/tasks/10-05-cooking-dot-skill-polish/research/repair-heartbeat-ack.json\n?? .trellis/tasks/10-05-cooking-dot-skill-polish/research/repair-heartbeat-delivery.json\n?? .trellis/tasks/10-05-cooking-dot-skill-polish/research/repair-observation-01-stderr.txt\n?? .trellis/tasks/10-05-cooking-dot-skill-polish/research/repair-observation-01.json\n?? .trellis/tasks/10-05-cooking-dot-skill-polish/research/repair-original-worker-show.json\n?? .trellis/tasks/10-05-cooking-dot-skill-polish/research/repair-prestart-inventory.json\n?? .trellis/tasks/10-05-cooking-dot-skill-polish/research/repair-worker-spec.txt\n?? .trellis/tasks/10-05-cooking-dot-skill-polish/research/repair-worker-start.json\n",
+    "python": "3.14.8 (tags/v3.14.8:8e6e75d, Sep 30 2026, 18:19:33) [MSC v.1944 64 bit (AMD64)]",
+    "executable": "C:\\Python314\\python.exe",
+    "executable_sha256": "434b361fe0c5960d404974feed493db47f2603a1ace2574312104fbed0182c6f",
+    "files": {
+      ".agents\\skills\\cooking-dot-workflow\\scripts\\records.py": "d42f5d5c0306c0fe888fad451aeeff497ee2a85a1ea50fe27e5f3c52ae40e362",
+      ".agents\\skills\\cooking-dot-workflow\\scripts\\test_controls.py": "98b200440c0b0b851a0de76b5131aff6d665b3fa36b2a1c8eacd20061d0bb90c",
+      ".agents\\skills\\cooking-dot-workflow\\assets\\dot-request.md": "a4083c29f0dadb92e548c5864ebd95623aa58e5a168cdf3cf15afda29b6aed00",
+      ".agents\\skills\\cooking-dot-workflow\\assets\\dot-decision.md": "1aa113fdaa6c9f5d8fb53973beb058027286caf132886ae3abecd17360a83a8d"
+    }
+  }
+}

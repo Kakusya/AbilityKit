@@ -1,0 +1,334 @@
+{
+  "checks": [
+    {
+      "name": "reported assertions with raw expected/actual",
+      "expected": 122,
+      "actual": 122,
+      "status": "Passed"
+    },
+    {
+      "name": "all raw expectations actually equal",
+      "expected": true,
+      "actual": true,
+      "status": "Passed"
+    },
+    {
+      "name": "raw subprocess count",
+      "expected": 12,
+      "actual": 12,
+      "status": "Passed"
+    },
+    {
+      "name": "raw subprocess actual equals prescribed exit",
+      "expected": true,
+      "actual": true,
+      "status": "Passed"
+    },
+    {
+      "name": "intentional fault exits",
+      "expected": [
+        71,
+        72,
+        73,
+        74
+      ],
+      "actual": [
+        71,
+        72,
+        73,
+        74
+      ],
+      "status": "Passed"
+    },
+    {
+      "name": "lost-receipt persisted unique invocation",
+      "expected": 1,
+      "actual": 1,
+      "status": "Passed"
+    },
+    {
+      "name": "lost-receipt persisted operation identity count",
+      "expected": 1,
+      "actual": 1,
+      "status": "Passed"
+    },
+    {
+      "name": "stale-index persisted unique invocation",
+      "expected": 1,
+      "actual": 1,
+      "status": "Passed"
+    },
+    {
+      "name": "stale-index persisted operation identity count",
+      "expected": 1,
+      "actual": 1,
+      "status": "Passed"
+    },
+    {
+      "name": "pre-effect recovered durable boundary",
+      "expected": [],
+      "actual": [],
+      "status": "Passed"
+    },
+    {
+      "name": "pre-effect recovery invocation count",
+      "expected": 0,
+      "actual": 0,
+      "status": "Passed"
+    },
+    {
+      "name": "lost-receipt recovered durable boundary",
+      "expected": [],
+      "actual": [],
+      "status": "Passed"
+    },
+    {
+      "name": "lost-receipt recovery invocation count",
+      "expected": 1,
+      "actual": 1,
+      "status": "Passed"
+    },
+    {
+      "name": "stale-index recovered durable boundary",
+      "expected": [],
+      "actual": [],
+      "status": "Passed"
+    },
+    {
+      "name": "stale-index recovery invocation count",
+      "expected": 1,
+      "actual": 1,
+      "status": "Passed"
+    },
+    {
+      "name": "raw restore cannot auto apply",
+      "expected": false,
+      "actual": false,
+      "status": "Passed"
+    },
+    {
+      "name": "raw restore preserves pause",
+      "expected": true,
+      "actual": true,
+      "status": "Passed"
+    },
+    {
+      "name": "original manifest versus freeze bytes",
+      "expected": {
+        ".agents/skills/cooking-dot-workflow/agents/openai.yaml": "a1499d95abd8447558c535fe5554adcc3c9b988a0a39264a6283d430effe1e94",
+        ".agents/skills/cooking-dot-workflow/assets/checkpoint-operation.md": "05394909dab19b81c2b3580253c497b3bc862659990d40726364e434763c32f0",
+        ".agents/skills/cooking-dot-workflow/assets/dot-decision.md": "1aa113fdaa6c9f5d8fb53973beb058027286caf132886ae3abecd17360a83a8d",
+        ".agents/skills/cooking-dot-workflow/assets/dot-request.md": "a4083c29f0dadb92e548c5864ebd95623aa58e5a168cdf3cf15afda29b6aed00",
+        ".agents/skills/cooking-dot-workflow/references/dot-dialogue.md": "c5f3c244676c3ec92e0adacda531bf9fe999f222a1f4d2b4eba96b02227a2fd8",
+        ".agents/skills/cooking-dot-workflow/references/recovery.md": "04dc2272e7eb380a2d7ec943c14e9528c23ad604dd923fd5ea9cf47ce654f384",
+        ".agents/skills/cooking-dot-workflow/scripts/records.py": "d42f5d5c0306c0fe888fad451aeeff497ee2a85a1ea50fe27e5f3c52ae40e362",
+        ".agents/skills/cooking-dot-workflow/scripts/test_controls.py": "05424093d4a6ceaaa4b0483116944b46ae58cc2ab7efcfc0be4d31972a072856",
+        ".agents/skills/cooking-dot-workflow/SKILL.md": "e1e37dbac50e1eab475126f5cca7e33f2e9fa765c4eb4a31caff1aebdac7b8c5",
+        ".trellis/spec/abilitykit/supervised-issue-delivery.md": "0ca9fe386845801288b46d0df053f4ba7e7de9d768f7a094f99d011eaeb2157c"
+      },
+      "actual": {
+        ".agents/skills/cooking-dot-workflow/agents/openai.yaml": "a1499d95abd8447558c535fe5554adcc3c9b988a0a39264a6283d430effe1e94",
+        ".agents/skills/cooking-dot-workflow/assets/checkpoint-operation.md": "05394909dab19b81c2b3580253c497b3bc862659990d40726364e434763c32f0",
+        ".agents/skills/cooking-dot-workflow/assets/dot-decision.md": "1aa113fdaa6c9f5d8fb53973beb058027286caf132886ae3abecd17360a83a8d",
+        ".agents/skills/cooking-dot-workflow/assets/dot-request.md": "a4083c29f0dadb92e548c5864ebd95623aa58e5a168cdf3cf15afda29b6aed00",
+        ".agents/skills/cooking-dot-workflow/references/dot-dialogue.md": "c5f3c244676c3ec92e0adacda531bf9fe999f222a1f4d2b4eba96b02227a2fd8",
+        ".agents/skills/cooking-dot-workflow/references/recovery.md": "04dc2272e7eb380a2d7ec943c14e9528c23ad604dd923fd5ea9cf47ce654f384",
+        ".agents/skills/cooking-dot-workflow/scripts/records.py": "d42f5d5c0306c0fe888fad451aeeff497ee2a85a1ea50fe27e5f3c52ae40e362",
+        ".agents/skills/cooking-dot-workflow/scripts/test_controls.py": "05424093d4a6ceaaa4b0483116944b46ae58cc2ab7efcfc0be4d31972a072856",
+        ".agents/skills/cooking-dot-workflow/SKILL.md": "e1e37dbac50e1eab475126f5cca7e33f2e9fa765c4eb4a31caff1aebdac7b8c5",
+        ".trellis/spec/abilitykit/supervised-issue-delivery.md": "0ca9fe386845801288b46d0df053f4ba7e7de9d768f7a094f99d011eaeb2157c"
+      },
+      "status": "Passed"
+    },
+    {
+      "name": "original stock validator raw success",
+      "expected": true,
+      "actual": true,
+      "status": "Passed"
+    },
+    {
+      "name": "original dependency failure retained",
+      "expected": true,
+      "actual": true,
+      "status": "Passed"
+    },
+    {
+      "name": "frozen local link destinations exist",
+      "expected": true,
+      "actual": true,
+      "status": "Passed"
+    }
+  ],
+  "links": [
+    {
+      "source": ".agents/skills/cooking-dot-workflow/assets/checkpoint-operation.md",
+      "target": "../references/recovery.md",
+      "resolved": ".agents/skills/cooking-dot-workflow/references/recovery.md",
+      "exit": 0
+    },
+    {
+      "source": ".agents/skills/cooking-dot-workflow/assets/dot-decision.md",
+      "target": "../references/dot-dialogue.md",
+      "resolved": ".agents/skills/cooking-dot-workflow/references/dot-dialogue.md",
+      "exit": 0
+    },
+    {
+      "source": ".agents/skills/cooking-dot-workflow/assets/dot-request.md",
+      "target": "../references/dot-dialogue.md",
+      "resolved": ".agents/skills/cooking-dot-workflow/references/dot-dialogue.md",
+      "exit": 0
+    },
+    {
+      "source": ".agents/skills/cooking-dot-workflow/references/dot-dialogue.md",
+      "target": "recovery.md",
+      "resolved": ".agents/skills/cooking-dot-workflow/references/recovery.md",
+      "exit": 0
+    },
+    {
+      "source": ".agents/skills/cooking-dot-workflow/references/dot-dialogue.md",
+      "target": "../assets/dot-request.md",
+      "resolved": ".agents/skills/cooking-dot-workflow/assets/dot-request.md",
+      "exit": 0
+    },
+    {
+      "source": ".agents/skills/cooking-dot-workflow/references/dot-dialogue.md",
+      "target": "../assets/dot-decision.md",
+      "resolved": ".agents/skills/cooking-dot-workflow/assets/dot-decision.md",
+      "exit": 0
+    },
+    {
+      "source": ".agents/skills/cooking-dot-workflow/references/recovery.md",
+      "target": "../assets/checkpoint-operation.md",
+      "resolved": ".agents/skills/cooking-dot-workflow/assets/checkpoint-operation.md",
+      "exit": 0
+    },
+    {
+      "source": ".agents/skills/cooking-dot-workflow/references/recovery.md",
+      "target": "../scripts/records.py",
+      "resolved": ".agents/skills/cooking-dot-workflow/scripts/records.py",
+      "exit": 0
+    },
+    {
+      "source": ".agents/skills/cooking-dot-workflow/SKILL.md",
+      "target": "../../../AGENTS.md",
+      "resolved": "AGENTS.md",
+      "exit": 0
+    },
+    {
+      "source": ".agents/skills/cooking-dot-workflow/SKILL.md",
+      "target": "../../../Docs/design/CookingGame/progress.md",
+      "resolved": "Docs/design/CookingGame/progress.md",
+      "exit": 0
+    },
+    {
+      "source": ".agents/skills/cooking-dot-workflow/SKILL.md",
+      "target": "../../../.trellis/spec/cooking/index.md",
+      "resolved": ".trellis/spec/cooking/index.md",
+      "exit": 0
+    },
+    {
+      "source": ".agents/skills/cooking-dot-workflow/SKILL.md",
+      "target": "../../../.trellis/spec/abilitykit/supervised-issue-delivery.md",
+      "resolved": ".trellis/spec/abilitykit/supervised-issue-delivery.md",
+      "exit": 0
+    },
+    {
+      "source": ".agents/skills/cooking-dot-workflow/SKILL.md",
+      "target": "references/recovery.md",
+      "resolved": ".agents/skills/cooking-dot-workflow/references/recovery.md",
+      "exit": 0
+    },
+    {
+      "source": ".agents/skills/cooking-dot-workflow/SKILL.md",
+      "target": "assets/checkpoint-operation.md",
+      "resolved": ".agents/skills/cooking-dot-workflow/assets/checkpoint-operation.md",
+      "exit": 0
+    },
+    {
+      "source": ".agents/skills/cooking-dot-workflow/SKILL.md",
+      "target": "assets/dot-request.md",
+      "resolved": ".agents/skills/cooking-dot-workflow/assets/dot-request.md",
+      "exit": 0
+    },
+    {
+      "source": ".agents/skills/cooking-dot-workflow/SKILL.md",
+      "target": "assets/dot-decision.md",
+      "resolved": ".agents/skills/cooking-dot-workflow/assets/dot-decision.md",
+      "exit": 0
+    },
+    {
+      "source": ".agents/skills/cooking-dot-workflow/SKILL.md",
+      "target": "references/dot-dialogue.md",
+      "resolved": ".agents/skills/cooking-dot-workflow/references/dot-dialogue.md",
+      "exit": 0
+    },
+    {
+      "source": ".agents/skills/cooking-dot-workflow/SKILL.md",
+      "target": "references/recovery.md",
+      "resolved": ".agents/skills/cooking-dot-workflow/references/recovery.md",
+      "exit": 0
+    },
+    {
+      "source": ".agents/skills/cooking-dot-workflow/SKILL.md",
+      "target": "references/recovery.md#production-merge-and-close",
+      "resolved": ".agents/skills/cooking-dot-workflow/references/recovery.md",
+      "exit": 0
+    },
+    {
+      "source": ".trellis/spec/abilitykit/supervised-issue-delivery.md",
+      "target": "../../workflow.md",
+      "resolved": ".trellis/workflow.md",
+      "exit": 0
+    },
+    {
+      "source": ".trellis/spec/abilitykit/supervised-issue-delivery.md",
+      "target": "../../../.agents/skills/cooking-dot-workflow/SKILL.md",
+      "resolved": ".agents/skills/cooking-dot-workflow/SKILL.md",
+      "exit": 0
+    },
+    {
+      "source": ".trellis/spec/abilitykit/supervised-issue-delivery.md",
+      "target": "../../../.agents/skills/cooking-dot-workflow/SKILL.md",
+      "resolved": ".agents/skills/cooking-dot-workflow/SKILL.md",
+      "exit": 0
+    },
+    {
+      "source": ".trellis/spec/abilitykit/supervised-issue-delivery.md",
+      "target": "../../../.agents/skills/cooking-dot-workflow/references/dot-dialogue.md",
+      "resolved": ".agents/skills/cooking-dot-workflow/references/dot-dialogue.md",
+      "exit": 0
+    },
+    {
+      "source": ".trellis/spec/abilitykit/supervised-issue-delivery.md",
+      "target": "../../../.agents/skills/cooking-dot-workflow/references/recovery.md",
+      "resolved": ".agents/skills/cooking-dot-workflow/references/recovery.md",
+      "exit": 0
+    },
+    {
+      "source": ".trellis/spec/abilitykit/supervised-issue-delivery.md",
+      "target": "../../../AGENTS.md",
+      "resolved": "AGENTS.md",
+      "exit": 0
+    }
+  ],
+  "counts": {
+    "checks": 21,
+    "passed": 21,
+    "failed": 0,
+    "links": 25,
+    "original_assertions": 122,
+    "original_subprocesses": 12
+  },
+  "diff_check": {
+    "exit": 2,
+    "raw": "frozen-diff-check.txt",
+    "interpretation": "Markdown hard breaks in two new templates; dirty diff claim did not cover untracked files"
+  },
+  "raw_source_sha256": {
+    "controls-run-04/controls-output.json": "4a7f716899e8fac3005f8ee6d43604dbaffdc9b9195f85ef0609b9842a4d9413",
+    "controls-run-04/controls-fixtures.json": "25f5e0dfed638388f081ba04e6f905904aad3c7d5ccc8b85773f5b6a978b7755",
+    "implementation-file-hashes.json": "7640a10cda063a21a4485a4dac0f1822f0091629e25a48144c265a9a50d0b787",
+    "original-validator-ram-stdout.txt": "520c626befa058330eabaca06e6165620bffeb3028d70815caa19045add789ef",
+    "quick-validate-output.txt": "d3574801fdc1a401c5c6fa1fc1e16e304d730b9ee38ffc3079521857934368c1"
+  }
+}

@@ -1,0 +1,191 @@
+{"control": "subprocess exit 1", "expected": 71, "actual": 71, "status": "Passed"}
+{"control": "subprocess exit 2", "expected": 0, "actual": 0, "status": "Passed"}
+{"control": "pre-effect: actual subprocess read last_seq", "expected": 1, "actual": 1, "status": "Passed"}
+{"control": "pre-effect: unresolved before reconciliation", "expected": 1, "actual": 1, "status": "Passed"}
+{"control": "pre-effect: persisted stale index", "expected": 0, "actual": 0, "status": "Passed"}
+{"control": "subprocess exit 3", "expected": 0, "actual": 0, "status": "Passed"}
+{"control": "pre-effect: no duplicate effect invocation", "expected": 0, "actual": 0, "status": "Passed"}
+{"control": "pre-effect: resolved after actual subprocess reconciliation", "expected": [], "actual": [], "status": "Passed"}
+{"control": "subprocess exit 4", "expected": 72, "actual": 72, "status": "Passed"}
+{"control": "subprocess exit 5", "expected": 0, "actual": 0, "status": "Passed"}
+{"control": "lost-receipt: actual subprocess read last_seq", "expected": 1, "actual": 1, "status": "Passed"}
+{"control": "lost-receipt: unresolved before reconciliation", "expected": 1, "actual": 1, "status": "Passed"}
+{"control": "lost-receipt: persisted stale index", "expected": 0, "actual": 0, "status": "Passed"}
+{"control": "subprocess exit 6", "expected": 0, "actual": 0, "status": "Passed"}
+{"control": "lost-receipt: no duplicate effect invocation", "expected": 1, "actual": 1, "status": "Passed"}
+{"control": "lost-receipt: resolved after actual subprocess reconciliation", "expected": [], "actual": [], "status": "Passed"}
+{"control": "subprocess exit 7", "expected": 73, "actual": 73, "status": "Passed"}
+{"control": "subprocess exit 8", "expected": 0, "actual": 0, "status": "Passed"}
+{"control": "stale-index: actual subprocess read last_seq", "expected": 1, "actual": 1, "status": "Passed"}
+{"control": "stale-index: unresolved before reconciliation", "expected": 0, "actual": 0, "status": "Passed"}
+{"control": "stale-index: persisted stale index", "expected": 0, "actual": 0, "status": "Passed"}
+{"control": "subprocess exit 9", "expected": 0, "actual": 0, "status": "Passed"}
+{"control": "stale-index: no duplicate effect invocation", "expected": 1, "actual": 1, "status": "Passed"}
+{"control": "stale-index: resolved after actual subprocess reconciliation", "expected": [], "actual": [], "status": "Passed"}
+{"control": "unknown receipt blocks subsequent external intent", "expected": true, "actual": true, "status": "Passed"}
+{"control": "immutable unknown receipt cannot be overwritten", "expected": true, "actual": true, "status": "Passed"}
+{"control": "rejected overwrite preserves receipt bytes", "expected": true, "actual": true, "status": "Passed"}
+{"control": "new reconciliation pair resolves prior uncertainty", "expected": [], "actual": [], "status": "Passed"}
+{"control": "subprocess exit 10", "expected": 0, "actual": 0, "status": "Passed"}
+{"control": "corrupt index ignored by actual subprocess read", "expected": 2, "actual": 2, "status": "Passed"}
+{"control": "read-only reconstruction does not repair shared index", "expected": true, "actual": true, "status": "Passed"}
+{"control": "authorized index repair matches immutable records", "expected": {"version": 1, "flow_id": "2b4cfe8c-785f-4fe4-9fa3-b9fabc2be0b6", "effective_run_id": "simulation-run", "last_seq": 2, "unresolved": [], "record_hashes": {"000001.intent.json": "260c9aa3fb60e7ddfcc0f8c2c4dc2e5d8223abbfc29de35c114367e153ec746d", "000001.receipt.json": "500f0dac484e46412dff46fb75f2a971fb4a63119b409f4b8dfb1d8629a75264", "000002.intent.json": "7e916d1961080a6847d60f18f2cc98cd0833369b0a486b18cd31efdee684026d", "000002.receipt.json": "12b60aeafa296fb70d955b17bae950b350b2a4c6a064fae77e18a9ea5605badd"}}, "actual": {"version": 1, "flow_id": "2b4cfe8c-785f-4fe4-9fa3-b9fabc2be0b6", "effective_run_id": "simulation-run", "last_seq": 2, "unresolved": [], "record_hashes": {"000001.intent.json": "260c9aa3fb60e7ddfcc0f8c2c4dc2e5d8223abbfc29de35c114367e153ec746d", "000001.receipt.json": "500f0dac484e46412dff46fb75f2a971fb4a63119b409f4b8dfb1d8629a75264", "000002.intent.json": "7e916d1961080a6847d60f18f2cc98cd0833369b0a486b18cd31efdee684026d", "000002.receipt.json": "12b60aeafa296fb70d955b17bae950b350b2a4c6a064fae77e18a9ea5605badd"}}, "status": "Passed"}
+{"control": "same flow copies dedup", "expected": 1, "actual": 1, "status": "Passed"}
+{"control": "old copy recognized against canonical", "expected": "old-subset", "actual": "old-subset", "status": "Passed"}
+{"control": "old copy cannot write index", "expected": true, "actual": true, "status": "Passed"}
+{"control": "conflicting valid copies refuse election", "expected": true, "actual": true, "status": "Passed"}
+{"control": "sequence gap rejected", "expected": true, "actual": true, "status": "Passed"}
+{"control": "invalid record version rejected", "expected": true, "actual": true, "status": "Passed"}
+{"control": "invalid record flow_id rejected", "expected": true, "actual": true, "status": "Passed"}
+{"control": "invalid record op_id rejected", "expected": true, "actual": true, "status": "Passed"}
+{"control": "invalid record payload_ref rejected", "expected": true, "actual": true, "status": "Passed"}
+{"control": "effective Run derived from immutable receipt", "expected": "simulation-derived-run", "actual": "simulation-derived-run", "status": "Passed"}
+{"control": "flow binding remains immutable", "expected": true, "actual": true, "status": "Passed"}
+{"control": "mismatched operation Run refused", "expected": true, "actual": true, "status": "Passed"}
+{"control": "conflicting effective Run refused", "expected": true, "actual": true, "status": "Passed"}
+{"control": "new main refuses dispatch predicate", "expected": false, "actual": false, "status": "Passed"}
+{"control": "new main refuses canonical record write", "expected": true, "actual": true, "status": "Passed"}
+{"control": "new main refuses index write", "expected": true, "actual": true, "status": "Passed"}
+{"control": "unproven sole authority refuses dispatch predicate", "expected": false, "actual": false, "status": "Passed"}
+{"control": "unproven sole authority refuses canonical record write", "expected": true, "actual": true, "status": "Passed"}
+{"control": "unproven sole authority refuses index write", "expected": true, "actual": true, "status": "Passed"}
+{"control": "record write unapproved refuses dispatch predicate", "expected": false, "actual": false, "status": "Passed"}
+{"control": "record write unapproved refuses canonical record write", "expected": true, "actual": true, "status": "Passed"}
+{"control": "record write unapproved refuses index write", "expected": true, "actual": true, "status": "Passed"}
+{"control": "denied recovery leaves all shared files unchanged", "expected": true, "actual": true, "status": "Passed"}
+{"control": "mismatched receipt action rejected", "expected": true, "actual": true, "status": "Passed"}
+{"control": "mismatched receipt request_id rejected", "expected": true, "actual": true, "status": "Passed"}
+{"control": "mismatched receipt dispatch_id rejected", "expected": true, "actual": true, "status": "Passed"}
+{"control": "equal bindings and records remain one flow", "expected": [{"root": "C:\\Users\\Administrator\\AppData\\Local\\Temp\\cooking-flow-controls-6dasnowk\\copy-binding-canonical", "copy": "equal"}, {"root": "C:\\Users\\Administrator\\AppData\\Local\\Temp\\cooking-flow-controls-6dasnowk\\copy-binding-current", "copy": "equal"}], "actual": [{"root": "C:\\Users\\Administrator\\AppData\\Local\\Temp\\cooking-flow-controls-6dasnowk\\copy-binding-canonical", "copy": "equal"}, {"root": "C:\\Users\\Administrator\\AppData\\Local\\Temp\\cooking-flow-controls-6dasnowk\\copy-binding-current", "copy": "equal"}], "status": "Passed"}
+{"control": "equal binding old subset remains evidence", "expected": [{"root": "C:\\Users\\Administrator\\AppData\\Local\\Temp\\cooking-flow-controls-6dasnowk\\copy-binding-old", "copy": "old-subset"}, {"root": "C:\\Users\\Administrator\\AppData\\Local\\Temp\\cooking-flow-controls-6dasnowk\\copy-binding-canonical", "copy": "equal"}], "actual": [{"root": "C:\\Users\\Administrator\\AppData\\Local\\Temp\\cooking-flow-controls-6dasnowk\\copy-binding-old", "copy": "old-subset"}, {"root": "C:\\Users\\Administrator\\AppData\\Local\\Temp\\cooking-flow-controls-6dasnowk\\copy-binding-canonical", "copy": "equal"}], "status": "Passed"}
+{"control": "legitimate separate UUIDs remain separate groups", "expected": ["1afe1a45-5d17-4530-b823-edb538935094", "5553dd5b-d182-4fb6-a8e4-346bbc5ca971"], "actual": ["1afe1a45-5d17-4530-b823-edb538935094", "5553dd5b-d182-4fb6-a8e4-346bbc5ca971"], "status": "Passed"}
+{"control": "self-canonical canonical_root fixture is individually valid", "expected": [{"root": "C:\\Users\\Administrator\\AppData\\Local\\Temp\\cooking-flow-controls-6dasnowk\\copy-binding-conflict-canonical_root", "copy": "equal"}], "actual": [{"root": "C:\\Users\\Administrator\\AppData\\Local\\Temp\\cooking-flow-controls-6dasnowk\\copy-binding-conflict-canonical_root", "copy": "equal"}], "status": "Passed"}
+{"control": "same UUID conflicting immutable canonical_root rejected forward", "expected": true, "actual": false, "status": "Failed"}
+{"control": "same UUID conflicting immutable canonical_root rejected reverse", "expected": true, "actual": false, "status": "Failed"}
+{"control": "same UUID conflicting immutable canonical_root rejected third entry", "expected": true, "actual": false, "status": "Failed"}
+{"control": "conflicting canonical_root discovery leaves all inputs unchanged", "expected": true, "actual": true, "status": "Passed"}
+{"control": "self-canonical execution_host fixture is individually valid", "expected": [{"root": "C:\\Users\\Administrator\\AppData\\Local\\Temp\\cooking-flow-controls-6dasnowk\\copy-binding-conflict-execution_host", "copy": "equal"}], "actual": [{"root": "C:\\Users\\Administrator\\AppData\\Local\\Temp\\cooking-flow-controls-6dasnowk\\copy-binding-conflict-execution_host", "copy": "equal"}], "status": "Passed"}
+{"control": "same UUID conflicting immutable execution_host rejected forward", "expected": true, "actual": false, "status": "Failed"}
+{"control": "same UUID conflicting immutable execution_host rejected reverse", "expected": true, "actual": false, "status": "Failed"}
+{"control": "same UUID conflicting immutable execution_host rejected third entry", "expected": true, "actual": false, "status": "Failed"}
+{"control": "conflicting execution_host discovery leaves all inputs unchanged", "expected": true, "actual": true, "status": "Passed"}
+{"control": "self-canonical worktree_id fixture is individually valid", "expected": [{"root": "C:\\Users\\Administrator\\AppData\\Local\\Temp\\cooking-flow-controls-6dasnowk\\copy-binding-conflict-worktree_id", "copy": "equal"}], "actual": [{"root": "C:\\Users\\Administrator\\AppData\\Local\\Temp\\cooking-flow-controls-6dasnowk\\copy-binding-conflict-worktree_id", "copy": "equal"}], "status": "Passed"}
+{"control": "same UUID conflicting immutable worktree_id rejected forward", "expected": true, "actual": false, "status": "Failed"}
+{"control": "same UUID conflicting immutable worktree_id rejected reverse", "expected": true, "actual": false, "status": "Failed"}
+{"control": "same UUID conflicting immutable worktree_id rejected third entry", "expected": true, "actual": false, "status": "Failed"}
+{"control": "conflicting worktree_id discovery leaves all inputs unchanged", "expected": true, "actual": true, "status": "Passed"}
+{"control": "self-canonical task_path fixture is individually valid", "expected": [{"root": "C:\\Users\\Administrator\\AppData\\Local\\Temp\\cooking-flow-controls-6dasnowk\\copy-binding-conflict-task_path", "copy": "equal"}], "actual": [{"root": "C:\\Users\\Administrator\\AppData\\Local\\Temp\\cooking-flow-controls-6dasnowk\\copy-binding-conflict-task_path", "copy": "equal"}], "status": "Passed"}
+{"control": "same UUID conflicting immutable task_path rejected forward", "expected": true, "actual": false, "status": "Failed"}
+{"control": "same UUID conflicting immutable task_path rejected reverse", "expected": true, "actual": false, "status": "Failed"}
+{"control": "same UUID conflicting immutable task_path rejected third entry", "expected": true, "actual": false, "status": "Failed"}
+{"control": "conflicting task_path discovery leaves all inputs unchanged", "expected": true, "actual": true, "status": "Passed"}
+{"control": "self-canonical repository fixture is individually valid", "expected": [{"root": "C:\\Users\\Administrator\\AppData\\Local\\Temp\\cooking-flow-controls-6dasnowk\\copy-binding-conflict-repository", "copy": "equal"}], "actual": [{"root": "C:\\Users\\Administrator\\AppData\\Local\\Temp\\cooking-flow-controls-6dasnowk\\copy-binding-conflict-repository", "copy": "equal"}], "status": "Passed"}
+{"control": "same UUID conflicting immutable repository rejected forward", "expected": true, "actual": false, "status": "Failed"}
+{"control": "same UUID conflicting immutable repository rejected reverse", "expected": true, "actual": false, "status": "Failed"}
+{"control": "same UUID conflicting immutable repository rejected third entry", "expected": true, "actual": false, "status": "Failed"}
+{"control": "conflicting repository discovery leaves all inputs unchanged", "expected": true, "actual": true, "status": "Passed"}
+{"control": "self-canonical branch fixture is individually valid", "expected": [{"root": "C:\\Users\\Administrator\\AppData\\Local\\Temp\\cooking-flow-controls-6dasnowk\\copy-binding-conflict-branch", "copy": "equal"}], "actual": [{"root": "C:\\Users\\Administrator\\AppData\\Local\\Temp\\cooking-flow-controls-6dasnowk\\copy-binding-conflict-branch", "copy": "equal"}], "status": "Passed"}
+{"control": "same UUID conflicting immutable branch rejected forward", "expected": true, "actual": false, "status": "Failed"}
+{"control": "same UUID conflicting immutable branch rejected reverse", "expected": true, "actual": false, "status": "Failed"}
+{"control": "same UUID conflicting immutable branch rejected third entry", "expected": true, "actual": false, "status": "Failed"}
+{"control": "conflicting branch discovery leaves all inputs unchanged", "expected": true, "actual": true, "status": "Passed"}
+{"control": "self-canonical target_branch fixture is individually valid", "expected": [{"root": "C:\\Users\\Administrator\\AppData\\Local\\Temp\\cooking-flow-controls-6dasnowk\\copy-binding-conflict-target_branch", "copy": "equal"}], "actual": [{"root": "C:\\Users\\Administrator\\AppData\\Local\\Temp\\cooking-flow-controls-6dasnowk\\copy-binding-conflict-target_branch", "copy": "equal"}], "status": "Passed"}
+{"control": "same UUID conflicting immutable target_branch rejected forward", "expected": true, "actual": false, "status": "Failed"}
+{"control": "same UUID conflicting immutable target_branch rejected reverse", "expected": true, "actual": false, "status": "Failed"}
+{"control": "same UUID conflicting immutable target_branch rejected third entry", "expected": true, "actual": false, "status": "Failed"}
+{"control": "conflicting target_branch discovery leaves all inputs unchanged", "expected": true, "actual": true, "status": "Passed"}
+{"control": "self-canonical delivery_mode fixture is individually valid", "expected": [{"root": "C:\\Users\\Administrator\\AppData\\Local\\Temp\\cooking-flow-controls-6dasnowk\\copy-binding-conflict-delivery_mode", "copy": "equal"}], "actual": [{"root": "C:\\Users\\Administrator\\AppData\\Local\\Temp\\cooking-flow-controls-6dasnowk\\copy-binding-conflict-delivery_mode", "copy": "equal"}], "status": "Passed"}
+{"control": "same UUID conflicting immutable delivery_mode rejected forward", "expected": true, "actual": false, "status": "Failed"}
+{"control": "same UUID conflicting immutable delivery_mode rejected reverse", "expected": true, "actual": false, "status": "Failed"}
+{"control": "same UUID conflicting immutable delivery_mode rejected third entry", "expected": true, "actual": false, "status": "Failed"}
+{"control": "conflicting delivery_mode discovery leaves all inputs unchanged", "expected": true, "actual": true, "status": "Passed"}
+{"control": "self-canonical original_session fixture is individually valid", "expected": [{"root": "C:\\Users\\Administrator\\AppData\\Local\\Temp\\cooking-flow-controls-6dasnowk\\copy-binding-conflict-original_session", "copy": "equal"}], "actual": [{"root": "C:\\Users\\Administrator\\AppData\\Local\\Temp\\cooking-flow-controls-6dasnowk\\copy-binding-conflict-original_session", "copy": "equal"}], "status": "Passed"}
+{"control": "same UUID conflicting immutable original_session rejected forward", "expected": true, "actual": false, "status": "Failed"}
+{"control": "same UUID conflicting immutable original_session rejected reverse", "expected": true, "actual": false, "status": "Failed"}
+{"control": "same UUID conflicting immutable original_session rejected third entry", "expected": true, "actual": false, "status": "Failed"}
+{"control": "conflicting original_session discovery leaves all inputs unchanged", "expected": true, "actual": true, "status": "Passed"}
+{"control": "self-canonical original_terminal fixture is individually valid", "expected": [{"root": "C:\\Users\\Administrator\\AppData\\Local\\Temp\\cooking-flow-controls-6dasnowk\\copy-binding-conflict-original_terminal", "copy": "equal"}], "actual": [{"root": "C:\\Users\\Administrator\\AppData\\Local\\Temp\\cooking-flow-controls-6dasnowk\\copy-binding-conflict-original_terminal", "copy": "equal"}], "status": "Passed"}
+{"control": "same UUID conflicting immutable original_terminal rejected forward", "expected": true, "actual": false, "status": "Failed"}
+{"control": "same UUID conflicting immutable original_terminal rejected reverse", "expected": true, "actual": false, "status": "Failed"}
+{"control": "same UUID conflicting immutable original_terminal rejected third entry", "expected": true, "actual": false, "status": "Failed"}
+{"control": "conflicting original_terminal discovery leaves all inputs unchanged", "expected": true, "actual": true, "status": "Passed"}
+{"control": "self-canonical run_id fixture is individually valid", "expected": [{"root": "C:\\Users\\Administrator\\AppData\\Local\\Temp\\cooking-flow-controls-6dasnowk\\copy-binding-conflict-run_id", "copy": "equal"}], "actual": [{"root": "C:\\Users\\Administrator\\AppData\\Local\\Temp\\cooking-flow-controls-6dasnowk\\copy-binding-conflict-run_id", "copy": "equal"}], "status": "Passed"}
+{"control": "same UUID conflicting immutable run_id rejected forward", "expected": true, "actual": false, "status": "Failed"}
+{"control": "same UUID conflicting immutable run_id rejected reverse", "expected": true, "actual": false, "status": "Failed"}
+{"control": "same UUID conflicting immutable run_id rejected third entry", "expected": true, "actual": false, "status": "Failed"}
+{"control": "conflicting run_id discovery leaves all inputs unchanged", "expected": true, "actual": true, "status": "Passed"}
+{"control": "self-canonical approval_ref fixture is individually valid", "expected": [{"root": "C:\\Users\\Administrator\\AppData\\Local\\Temp\\cooking-flow-controls-6dasnowk\\copy-binding-conflict-approval_ref", "copy": "equal"}], "actual": [{"root": "C:\\Users\\Administrator\\AppData\\Local\\Temp\\cooking-flow-controls-6dasnowk\\copy-binding-conflict-approval_ref", "copy": "equal"}], "status": "Passed"}
+{"control": "same UUID conflicting immutable approval_ref rejected forward", "expected": true, "actual": false, "status": "Failed"}
+{"control": "same UUID conflicting immutable approval_ref rejected reverse", "expected": true, "actual": false, "status": "Failed"}
+{"control": "same UUID conflicting immutable approval_ref rejected third entry", "expected": true, "actual": false, "status": "Failed"}
+{"control": "conflicting approval_ref discovery leaves all inputs unchanged", "expected": true, "actual": true, "status": "Passed"}
+{"control": "self-canonical created_utc fixture is individually valid", "expected": [{"root": "C:\\Users\\Administrator\\AppData\\Local\\Temp\\cooking-flow-controls-6dasnowk\\copy-binding-conflict-created_utc", "copy": "equal"}], "actual": [{"root": "C:\\Users\\Administrator\\AppData\\Local\\Temp\\cooking-flow-controls-6dasnowk\\copy-binding-conflict-created_utc", "copy": "equal"}], "status": "Passed"}
+{"control": "same UUID conflicting immutable created_utc rejected forward", "expected": true, "actual": false, "status": "Failed"}
+{"control": "same UUID conflicting immutable created_utc rejected reverse", "expected": true, "actual": false, "status": "Failed"}
+{"control": "same UUID conflicting immutable created_utc rejected third entry", "expected": true, "actual": false, "status": "Failed"}
+{"control": "conflicting created_utc discovery leaves all inputs unchanged", "expected": true, "actual": true, "status": "Passed"}
+{"control": "reply timely classification", "expected": "timely", "actual": "timely", "status": "Passed"}
+{"control": "reply timely valid", "expected": true, "actual": true, "status": "Passed"}
+{"control": "reply ambiguous classification", "expected": "ambiguous", "actual": "ambiguous", "status": "Passed"}
+{"control": "reply ambiguous valid", "expected": false, "actual": false, "status": "Passed"}
+{"control": "reply old SHA classification", "expected": "wrong-SHA", "actual": "wrong-SHA", "status": "Passed"}
+{"control": "reply old SHA valid", "expected": false, "actual": false, "status": "Passed"}
+{"control": "reply old request classification", "expected": "wrong-request", "actual": "wrong-request", "status": "Passed"}
+{"control": "reply old request valid", "expected": false, "actual": false, "status": "Passed"}
+{"control": "reply late-read timely classification", "expected": "timely-late-read", "actual": "timely-late-read", "status": "Passed"}
+{"control": "reply late-read timely valid", "expected": true, "actual": true, "status": "Passed"}
+{"control": "reply late classification", "expected": "late", "actual": "late", "status": "Passed"}
+{"control": "reply late valid", "expected": false, "actual": false, "status": "Passed"}
+{"control": "reply unknown time classification", "expected": "unknown-time", "actual": "unknown-time", "status": "Passed"}
+{"control": "reply unknown time valid", "expected": false, "actual": false, "status": "Passed"}
+{"control": "timely late-read preserves prior pause", "expected": [true, false], "actual": [true, false], "status": "Passed"}
+{"control": "expired deadline stale paused=false retains technical reply validity", "expected": true, "actual": true, "status": "Passed"}
+{"control": "expired deadline stale paused=false refuses automatic apply/continue", "expected": [false, true, true], "actual": [false, true, true], "status": "Passed"}
+{"control": "late read cannot enable dispatch/shared-write eligibility even for original main", "expected": false, "actual": false, "status": "Passed"}
+{"control": "null posted UTC full observed in budget is timely", "expected": "timely", "actual": "timely", "status": "Passed"}
+{"control": "observation timing basis explicit", "expected": "complete-observation-upper-bound", "actual": "complete-observation-upper-bound", "status": "Passed"}
+{"control": "observation proof does not fabricate posted UTC", "expected": null, "actual": null, "status": "Passed"}
+{"control": "observation refuses fragment before deadline full first seen later", "expected": false, "actual": false, "status": "Passed"}
+{"control": "observation refuses full first seen after deadline", "expected": false, "actual": false, "status": "Passed"}
+{"control": "observation refuses clock interval crosses deadline", "expected": false, "actual": false, "status": "Passed"}
+{"control": "observation refuses clock jump", "expected": false, "actual": false, "status": "Passed"}
+{"control": "observation refuses unverifiable raw proof", "expected": false, "actual": false, "status": "Passed"}
+{"control": "timely observation rejects wrong conversation", "expected": false, "actual": false, "status": "Passed"}
+{"control": "timely observation rejects wrong request", "expected": false, "actual": false, "status": "Passed"}
+{"control": "timely observation rejects wrong SHA", "expected": false, "actual": false, "status": "Passed"}
+{"control": "timely observation rejects old reply at boundary", "expected": false, "actual": false, "status": "Passed"}
+{"control": "durable earlier full observation adopted on restore", "expected": true, "actual": true, "status": "Passed"}
+{"control": "restored earlier full proof retains pause/no authority", "expected": [false, true], "actual": [false, true], "status": "Passed"}
+{"control": "subprocess exit 11", "expected": 0, "actual": 0, "status": "Passed"}
+{"control": "actual subprocess reads durable prior full timing proof", "expected": true, "actual": true, "status": "Passed"}
+{"control": "actual subprocess timing read does not enable continuation", "expected": false, "actual": false, "status": "Passed"}
+{"control": "observation rule does not change original deadline", "expected": "2026-10-05T00:30:00Z", "actual": "2026-10-05T00:30:00Z", "status": "Passed"}
+{"control": "one supplement available within budget", "expected": true, "actual": true, "status": "Passed"}
+{"control": "subprocess exit 12", "expected": 74, "actual": 74, "status": "Passed"}
+{"control": "supplement intent persisted despite actual subprocess exit", "expected": 1, "actual": 1, "status": "Passed"}
+{"control": "lost supplement receipt still consumes quota", "expected": false, "actual": false, "status": "Passed"}
+{"control": "supplement refused generating", "expected": false, "actual": false, "status": "Passed"}
+{"control": "supplement refused unknown generation", "expected": false, "actual": false, "status": "Passed"}
+{"control": "supplement refused deadline", "expected": false, "actual": false, "status": "Passed"}
+{"control": "timeout does not grant fresh budget", "expected": false, "actual": false, "status": "Passed"}
+{"control": "explicit Owner reopening permits new linked request", "expected": true, "actual": true, "status": "Passed"}
+{"control": "valid revision permits later candidate request", "expected": true, "actual": true, "status": "Passed"}
+{"control": "late-read revision stale pause flag cannot refresh budget", "expected": false, "actual": false, "status": "Passed"}
+{"control": "old timeout/pause retained", "expected": true, "actual": true, "status": "Passed"}
+{"control": "complete declared branch-only delivery eligible", "expected": true, "actual": true, "status": "Passed"}
+{"control": "paused session rejects complete/archive", "expected": false, "actual": false, "status": "Passed"}
+{"control": "branch delivery refuses missing required_pilot_passed", "expected": false, "actual": false, "status": "Passed"}
+{"control": "branch delivery refuses missing accepted_sha", "expected": false, "actual": false, "status": "Passed"}
+{"control": "branch delivery refuses missing hashes_unchanged", "expected": false, "actual": false, "status": "Passed"}
+{"control": "branch delivery refuses missing workers_accounted", "expected": false, "actual": false, "status": "Passed"}
+{"control": "branch delivery refuses missing effects_reconciled", "expected": false, "actual": false, "status": "Passed"}
+{"control": "simulated postmerge failure rejects archive/close completion", "expected": false, "actual": false, "status": "Passed"}
+{"control": "pure production delivery with all evidence eligible", "expected": true, "actual": true, "status": "Passed"}
+{"control": "pure production optional Issue is N/A", "expected": true, "actual": true, "status": "Passed"}
+{"control": "pure production unverified Issue close refused", "expected": false, "actual": false, "status": "Passed"}
+{"control": "pure premerge all conditions", "expected": true, "actual": true, "status": "Passed"}
+{"control": "branch-only mode always refuses merge", "expected": false, "actual": false, "status": "Passed"}
+{"control": "pure premerge refuses automatic close association", "expected": false, "actual": false, "status": "Passed"}
+{"control": "pure premerge refuses unknown server associations", "expected": false, "actual": false, "status": "Passed"}
+{"control": "pure premerge refuses missing authority", "expected": false, "actual": false, "status": "Passed"}
+{"status": "Failed", "passed": 151, "failed": 39, "simulation": "local mock effect reconciliation; no GitHub/Orca idempotency claim"}

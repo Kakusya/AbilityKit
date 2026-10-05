@@ -1,0 +1,20 @@
+{
+  "version": 1,
+  "flow_id": "a2c3dd65-4a91-43f6-9c33-ad891f7563c4",
+  "seq": 2,
+  "op_id": "a2c3dd65-4a91-43f6-9c33-ad891f7563c4:000002",
+  "kind": "intent",
+  "recorded_utc": "2026-10-05T13:07:54.386249Z",
+  "action": "dot-send",
+  "target": "https://chatgpt.com/dots/01a10258-c084-74bb-8bcc-ec01958e5023",
+  "authorization_ref": "evidence/approval.md",
+  "payload_ref": "evidence/pilot-plan-request.md",
+  "preconditions": {
+    "run_id": "run_840202cc5621",
+    "request_id": "AK-CDF-LIVE-PILOT-PLAN-01",
+    "candidate_sha": "32b400a5c6d375be366faa606e867ef68037cfa8",
+    "wait_started_utc": "2026-10-05T13:07:54.386249Z",
+    "deadline_utc": "2026-10-05T13:37:54.386249Z",
+    "prior_message_boundary": "3f12f99a2ea4819b8541c90bd4ea9e30~3f12f99a2ea4819b8541c90bd4ea9e30~CalpicoMessage~Sentinel_4a5061c3639c8191ad1577c6b3112670"
+  }
+}

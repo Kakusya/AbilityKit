@@ -1,0 +1,12 @@
+{
+  "command": [
+    "git",
+    "push",
+    "origin",
+    "32b400a5c6d375be366faa606e867ef68037cfa8:refs/heads/Kakusya/cooking-dot-skill-polish"
+  ],
+  "repository": "https://github.com/Kakusya/AbilityKit",
+  "sha": "32b400a5c6d375be366faa606e867ef68037cfa8",
+  "target": "refs/heads/Kakusya/cooking-dot-skill-polish",
+  "scope": "Frozen skill revision for real branch-only planning/pilot; no master merge"
+}

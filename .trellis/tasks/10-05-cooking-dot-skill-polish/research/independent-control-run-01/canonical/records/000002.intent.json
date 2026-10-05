@@ -1,0 +1,15 @@
+{
+  "version": 1,
+  "flow_id": "b2ea381e-761d-4fc8-8d1c-9d34cab28d83",
+  "seq": 2,
+  "op_id": "b2ea381e-761d-4fc8-8d1c-9d34cab28d83:000002",
+  "kind": "intent",
+  "recorded_utc": "2026-10-05T00:01:00Z",
+  "action": "reconcile",
+  "target": "local-simulation",
+  "authorization_ref": "evidence/approval.txt",
+  "payload_ref": "evidence/payload.txt",
+  "preconditions": {
+    "resolves": "b2ea381e-761d-4fc8-8d1c-9d34cab28d83:000001"
+  }
+}
