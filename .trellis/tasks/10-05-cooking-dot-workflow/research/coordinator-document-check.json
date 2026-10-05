@@ -1,0 +1,22 @@
+{
+  "check": "coordinator local file/link/scope format inspection",
+  "status": "Passed",
+  "head": "0ca6d2d2df4af789948857f1f960be285313936b",
+  "dirty": [
+    " M .trellis/spec/abilitykit/supervised-issue-delivery.md",
+    " M AGENTS.md",
+    "?? .agents/skills/cooking-dot-workflow/",
+    "?? .trellis/tasks/10-05-cooking-dot-workflow/"
+  ],
+  "files": 6,
+  "local_links_checked": 30,
+  "sha256": {
+    ".agents/skills/cooking-dot-workflow/agents/openai.yaml": "a1499d95abd8447558c535fe5554adcc3c9b988a0a39264a6283d430effe1e94",
+    ".agents/skills/cooking-dot-workflow/references/dot-dialogue.md": "abaf6b77ede1b01303c6260db74f9a13c4e14a2208684625247db9febef964d9",
+    ".agents/skills/cooking-dot-workflow/references/recovery.md": "8dd16325e0f9e6eaeb41ec13c835a90bd4c4b6f0acab5c46367dce755b1e051f",
+    ".agents/skills/cooking-dot-workflow/SKILL.md": "bc8e32ef48bb11dcade21a2417cdfe618165e0fc35c4751ff99eb798caaf9131",
+    "AGENTS.md": "7bdb10e865c3f2d21eb939a84a4a68c193dab2d76e747073e1041e6eb5f58d6f",
+    ".trellis/spec/abilitykit/supervised-issue-delivery.md": "46c4086993d49397dfe67112b7ee74b23473efe97a35edab0dcafb13a40ce410"
+  },
+  "errors": []
+}
