@@ -1,0 +1,24 @@
+{
+  "deliveryId": "delivery_a479f874d3bf",
+  "heartbeatMessageId": "msg_303cd0531548",
+  "questionMessageId": "msg_e64eb47f3b29",
+  "taskId": "task_a94217d9d800",
+  "dispatchId": "ctx_32b2fa6ebafa",
+  "outcome": "Passed",
+  "sdk": "10.0.300",
+  "msbuild": "18.6.3",
+  "commands": [
+    "dotnet build _slice11_feasibility_20261007_01/Reader/Reader.csproj -c Release --nologo -p:RestoreIgnoreFailedSources=true",
+    "dotnet build _slice11_feasibility_20261007_01/Fixture/App/App.csproj -c Release --nologo -m:2 -bl:_slice11_feasibility_20261007_01/fixture.binlog -p:RestoreIgnoreFailedSources=true",
+    "dotnet Reader.dll fixture.binlog"
+  ],
+  "nativeExits": [0, 0, 0],
+  "structuredEventCount": 1256,
+  "projectStartedFinished": "15/15",
+  "coreCompileStartedFinished": "2/2",
+  "cscStartedFinished": "2/2",
+  "correlation": ["SubmissionId", "NodeId", "ProjectInstanceId", "ProjectContextId", "TargetId", "TaskId", "project path"],
+  "compilerInputsObserved": ["Sources", "References", "Analyzers"],
+  "newDependencyRequired": false,
+  "genuineCookingGateRun": false
+}

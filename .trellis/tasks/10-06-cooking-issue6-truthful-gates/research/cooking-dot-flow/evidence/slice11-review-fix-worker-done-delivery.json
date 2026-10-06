@@ -1,0 +1,27 @@
+{
+  "runId": "run_5ba664a5f016",
+  "deliveryId": "delivery_bf78df34b4d6",
+  "message": {
+    "id": "msg_0afbf41a893d",
+    "type": "worker_done",
+    "from": "term_e29771ea-e991-4107-adfb-89a0f306608f",
+    "taskId": "task_1faea9aa39ee",
+    "dispatchId": "ctx_32416f343a63",
+    "outcome": "succeeded",
+    "subject": "Slice 11 bidirectional completeness repair Passed",
+    "reportedControls": {
+      "red": "28/29 Passed; one expected pre-fix failure",
+      "focused": "33/33 Passed",
+      "final": "289/289 Passed",
+      "originalNamesRetained": 249,
+      "duplicates": 0
+    },
+    "reportedRemaining": "Both genuine Cooking gates remain NotRun for committed-source verification."
+  },
+  "coordinatorReview": {
+    "settlementAccepted": true,
+    "implementationAccepted": false,
+    "reason": "Independent diff and raw receipt review is pending before implementation acceptance.",
+    "retentionRequired": true
+  }
+}

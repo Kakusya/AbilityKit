@@ -1,0 +1,49 @@
+{
+    "textExitCode":  0,
+    "text":  {
+                 "id":  "7736ca38-136b-46c7-b46f-f482774ce9d7",
+                 "ok":  true,
+                 "result":  {
+                                "send":  {
+                                             "handle":  "term_f3030f57-7206-45ad-9887-bd7eab37bb27",
+                                             "accepted":  true,
+                                             "bytesWritten":  1
+                                         }
+                            },
+                 "_meta":  {
+                               "runtimeId":  "cfc0b549-ef00-4305-82a8-e90569f2eae4"
+                           }
+             },
+    "enterExitCode":  0,
+    "enter":  {
+                  "id":  "6f5f5265-2627-4137-aaa6-4f0ee3f5ef8d",
+                  "ok":  true,
+                  "result":  {
+                                 "send":  {
+                                              "handle":  "term_f3030f57-7206-45ad-9887-bd7eab37bb27",
+                                              "accepted":  true,
+                                              "bytesWritten":  1
+                                          }
+                             },
+                  "_meta":  {
+                                "runtimeId":  "cfc0b549-ef00-4305-82a8-e90569f2eae4"
+                            }
+              },
+    "waitExitCode":  0,
+    "wait":  {
+                 "id":  "073ffded-d297-44d8-97e7-b60cb6b8261b",
+                 "ok":  true,
+                 "result":  {
+                                "wait":  {
+                                             "handle":  "term_f3030f57-7206-45ad-9887-bd7eab37bb27",
+                                             "condition":  "tui-idle",
+                                             "satisfied":  true,
+                                             "status":  "running",
+                                             "exitCode":  null
+                                         }
+                            },
+                 "_meta":  {
+                               "runtimeId":  "cfc0b549-ef00-4305-82a8-e90569f2eae4"
+                           }
+             }
+}

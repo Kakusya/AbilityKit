@@ -1,0 +1,21 @@
+{
+  "version": 1,
+  "flow_id": "6d3174fd-2b01-4136-8ea5-0b0cd0e2845d",
+  "seq": 176,
+  "op_id": "6d3174fd-2b01-4136-8ea5-0b0cd0e2845d:000176",
+  "kind": "intent",
+  "recorded_utc": "2026-10-06T17:32:36.089743Z",
+  "action": "acknowledge-observed-worker-batch",
+  "target": "delivery_a479f874d3bf",
+  "authorization_ref": "evidence/approval.md",
+  "payload_ref": "evidence/slice11-feasibility-delivery.json",
+  "preconditions": {
+    "processedMessageIds": [
+      "msg_303cd0531548",
+      "msg_e64eb47f3b29"
+    ],
+    "questionAnswered": true,
+    "replyMessageId": "msg_0960abdaf24c",
+    "run_id": "run_5ba664a5f016"
+  }
+}

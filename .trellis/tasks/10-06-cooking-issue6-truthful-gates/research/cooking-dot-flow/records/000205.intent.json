@@ -1,0 +1,17 @@
+{
+  "version": 1,
+  "flow_id": "6d3174fd-2b01-4136-8ea5-0b0cd0e2845d",
+  "seq": 205,
+  "op_id": "6d3174fd-2b01-4136-8ea5-0b0cd0e2845d:000205",
+  "kind": "intent",
+  "recorded_utc": "2026-10-06T20:56:37.208651Z",
+  "action": "orchestration-ack",
+  "target": "delivery_fdd1f771f6b5",
+  "authorization_ref": "evidence/approval.md",
+  "payload_ref": "evidence/slice13-worker-done-consumed.json",
+  "preconditions": {
+    "run_id": "run_5ba664a5f016",
+    "dispatch_id": "ctx_b0735a8376ba",
+    "retained": true
+  }
+}

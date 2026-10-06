@@ -1,0 +1,22 @@
+{
+  "version": 1,
+  "flow_id": "6d3174fd-2b01-4136-8ea5-0b0cd0e2845d",
+  "seq": 169,
+  "op_id": "6d3174fd-2b01-4136-8ea5-0b0cd0e2845d:000169",
+  "kind": "receipt",
+  "recorded_utc": "2026-10-06T17:06:18.709802Z",
+  "intent_hash": "df0221cc82a576e5e3549789b5947778158de4fa724a1c3f5125e5ee68e4c5f0",
+  "outcome": "applied",
+  "raw_ref": "evidence/slice11-fresh-task-create-raw.json",
+  "result": {
+    "ok": true,
+    "requestId": "0a466a22-854f-4c63-9007-13620fe1a078",
+    "replayed": false,
+    "runId": "run_5ba664a5f016",
+    "taskId": "task_207ca73de2de",
+    "status": "ready",
+    "createdByTerminal": "term_a345586c-d76c-4d68-afdf-f3a58f9686c1",
+    "taskTitle": "Issue 6 compiler trace repair via fresh cc-switch worker",
+    "specRef": "evidence/slice11-compiler-trace-repair-spec.md"
+  }
+}

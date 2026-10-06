@@ -1,0 +1,21 @@
+{
+  "id": "7c00ea2e-c7aa-4e03-aba3-05f81aec077b",
+  "ok": true,
+  "result": {
+    "runId": "run_5ba664a5f016",
+    "deliveryId": null,
+    "messages": [],
+    "count": 0,
+    "acknowledged": "delivery_fdd1f771f6b5",
+    "timedOut": false,
+    "cancelled": false,
+    "connectionLost": false,
+    "mutation": {
+      "requestId": "55c96ba2-5fdb-49f5-beae-307e66221b4f",
+      "replayed": false
+    }
+  },
+  "_meta": {
+    "runtimeId": "cfc0b549-ef00-4305-82a8-e90569f2eae4"
+  }
+}

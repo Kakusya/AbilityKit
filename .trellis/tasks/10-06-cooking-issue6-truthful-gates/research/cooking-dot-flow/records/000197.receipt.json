@@ -1,0 +1,29 @@
+{
+  "version": 1,
+  "flow_id": "6d3174fd-2b01-4136-8ea5-0b0cd0e2845d",
+  "seq": 197,
+  "op_id": "6d3174fd-2b01-4136-8ea5-0b0cd0e2845d:000197",
+  "kind": "receipt",
+  "recorded_utc": "2026-10-06T20:29:08.578251Z",
+  "intent_hash": "d163b214674ccdc3ed6269287fc6e2d344fd5a11de65082c3493fad50e8efb7a",
+  "outcome": "applied",
+  "raw_ref": "evidence/slice12-retain-raw.json",
+  "result": {
+    "id": "93270a3f-79dc-4ba6-b7c2-dd7fc7e28874",
+    "ok": true,
+    "result": {
+      "dispatchId": "ctx_914b85e40183",
+      "state": "retained",
+      "reason": "no_owned_resource",
+      "processAction": "none",
+      "archive": null,
+      "mutation": {
+        "requestId": "6c6b5618-8791-46ab-a87e-8566ce4c97eb",
+        "replayed": false
+      }
+    },
+    "_meta": {
+      "runtimeId": "cfc0b549-ef00-4305-82a8-e90569f2eae4"
+    }
+  }
+}

@@ -875,7 +875,9 @@ function Save-GateCompilerTarget {
       Items = Files;
     ]]></Code></Task>
   </UsingTask>
-  <Target Name="AbilityKitCaptureCompilerInputs" BeforeTargets="CoreCompile" DependsOnTargets="AddGlobalAnalyzerConfigForPackage_MicrosoftCodeAnalysisNetAnalyzers;AddGlobalAnalyzerConfigForPackage_MicrosoftCodeAnalysisCSharpCodeStyle;GenerateMSBuildEditorConfigFile" Condition="'$(AbilityKitCompilerCaptureDisabled)' != 'true'">
+  <Target Name="AbilityKitCaptureCompilerInputsNetAnalyzers" BeforeTargets="AbilityKitCaptureCompilerInputs" DependsOnTargets="AddGlobalAnalyzerConfigForPackage_MicrosoftCodeAnalysisNetAnalyzers" Condition="'$(EnableNETAnalyzers)' == 'true'" />
+  <Target Name="AbilityKitCaptureCompilerInputsCodeStyle" BeforeTargets="AbilityKitCaptureCompilerInputs" DependsOnTargets="AddGlobalAnalyzerConfigForPackage_MicrosoftCodeAnalysisCSharpCodeStyle" Condition="'$(EnforceCodeStyleInBuild)' == 'true'" />
+  <Target Name="AbilityKitCaptureCompilerInputs" BeforeTargets="CoreCompile" DependsOnTargets="GenerateMSBuildEditorConfigFile" Condition="'$(AbilityKitCompilerCaptureDisabled)' != 'true'">
     <PropertyGroup>
       <AbilityKitCompilerCaptureId>$([System.Guid]::NewGuid().ToString('D'))</AbilityKitCompilerCaptureId>
       <AbilityKitCompilerCaptureTemp>$(AbilityKitCompilerCaptureRoot)\pending\$(AbilityKitCompilerCaptureId).tmp</AbilityKitCompilerCaptureTemp>

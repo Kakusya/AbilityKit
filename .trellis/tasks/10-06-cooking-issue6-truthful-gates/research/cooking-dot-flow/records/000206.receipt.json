@@ -1,0 +1,64 @@
+{
+  "version": 1,
+  "flow_id": "6d3174fd-2b01-4136-8ea5-0b0cd0e2845d",
+  "seq": 206,
+  "op_id": "6d3174fd-2b01-4136-8ea5-0b0cd0e2845d:000206",
+  "kind": "receipt",
+  "recorded_utc": "2026-10-06T20:59:51.607552Z",
+  "intent_hash": "50676c3ceb3a6089d9dc1f9636d1d53643a15525a3d99084a04e8bebc7e46ff0",
+  "outcome": "applied",
+  "raw_ref": "evidence/slice14-worktree-create-raw.json",
+  "result": {
+    "id": "dacffd5a-e3b5-45b0-9cf8-276301d4d4a5",
+    "ok": true,
+    "result": {
+      "worktree": {
+        "id": "aaa97e0d-5026-4e5c-95f8-bb420dcb4c65::D:/MyWorkTree/AbilityKit/issue6-compiler-target-compat-repair-ccswitch",
+        "identity": {
+          "key": "wt2:local:3bfa620e-3094-478f-b8c6-7965cf66fae8",
+          "executionHostId": "local",
+          "instanceId": "3bfa620e-3094-478f-b8c6-7965cf66fae8"
+        },
+        "instanceId": "3bfa620e-3094-478f-b8c6-7965cf66fae8",
+        "repoId": "aaa97e0d-5026-4e5c-95f8-bb420dcb4c65",
+        "projectId": "github:hobobo/abilitykit",
+        "hostId": "local",
+        "path": "D:/MyWorkTree/AbilityKit/issue6-compiler-target-compat-repair-ccswitch",
+        "head": "2b258b6ea2a40a9ac354b51847c749722564e8ba",
+        "branch": "refs/heads/Kakusya/issue6-compiler-target-compat-repair-ccswitch",
+        "isBare": false,
+        "isMainWorktree": false,
+        "displayName": "issue6-compiler-target-compat-repair-ccswitch",
+        "comment": "Issue6 Cooking compiler target compatibility repair via cc-switch custom relay",
+        "baseRef": "2b258b6ea2a40a9ac354b51847c749722564e8ba",
+        "workspaceStatus": "in-progress",
+        "parentWorktreeId": "aaa97e0d-5026-4e5c-95f8-bb420dcb4c65::C:/Users/Administrator/orca/workspaces/AbilityKit/issue6-cooking-truthful-gates",
+        "cliProvenance": {
+          "kind": "created-by-cli",
+          "createdAt": 1791320349775,
+          "callerTerminalHandle": "term_a345586c-d76c-4d68-afdf-f3a58f9686c1"
+        }
+      },
+      "lineage": {
+        "worktreeId": "aaa97e0d-5026-4e5c-95f8-bb420dcb4c65::D:/MyWorkTree/AbilityKit/issue6-compiler-target-compat-repair-ccswitch",
+        "worktreeInstanceId": "3bfa620e-3094-478f-b8c6-7965cf66fae8",
+        "parentWorktreeId": "aaa97e0d-5026-4e5c-95f8-bb420dcb4c65::C:/Users/Administrator/orca/workspaces/AbilityKit/issue6-cooking-truthful-gates",
+        "parentWorktreeInstanceId": "bf4f9d02-9346-4b96-a139-30dec2c378fa",
+        "origin": "cli",
+        "capture": {
+          "source": "explicit-cli-flag",
+          "confidence": "explicit"
+        },
+        "createdAt": 1791320355365
+      },
+      "warnings": [],
+      "catalogVersion": {
+        "epoch": "58b822c0-94d4-4d7e-befc-89675ee21dff",
+        "sequence": 44
+      }
+    },
+    "_meta": {
+      "runtimeId": "cfc0b549-ef00-4305-82a8-e90569f2eae4"
+    }
+  }
+}

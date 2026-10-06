@@ -1,0 +1,46 @@
+{
+    "text":  {
+                 "id":  "92f8b0c7-2f06-4485-ae7d-68a1ee593a02",
+                 "ok":  true,
+                 "result":  {
+                                "send":  {
+                                             "handle":  "term_eee5d482-3e51-4a52-9c80-a4573450c973",
+                                             "accepted":  true,
+                                             "bytesWritten":  1
+                                         }
+                            },
+                 "_meta":  {
+                               "runtimeId":  "cfc0b549-ef00-4305-82a8-e90569f2eae4"
+                           }
+             },
+    "enter":  {
+                  "id":  "aa111d9a-bd14-44fc-9e9f-261b8510bc38",
+                  "ok":  true,
+                  "result":  {
+                                 "send":  {
+                                              "handle":  "term_eee5d482-3e51-4a52-9c80-a4573450c973",
+                                              "accepted":  true,
+                                              "bytesWritten":  1
+                                          }
+                             },
+                  "_meta":  {
+                                "runtimeId":  "cfc0b549-ef00-4305-82a8-e90569f2eae4"
+                            }
+              },
+    "wait":  {
+                 "id":  "6d266e35-c2a7-42bf-be6f-a3a96884632c",
+                 "ok":  true,
+                 "result":  {
+                                "wait":  {
+                                             "handle":  "term_eee5d482-3e51-4a52-9c80-a4573450c973",
+                                             "condition":  "tui-idle",
+                                             "satisfied":  true,
+                                             "status":  "running",
+                                             "exitCode":  null
+                                         }
+                            },
+                 "_meta":  {
+                               "runtimeId":  "cfc0b549-ef00-4305-82a8-e90569f2eae4"
+                           }
+             }
+}

@@ -1,0 +1,13 @@
+{
+  "sendRequestId": "68ade0ed-c775-49db-8796-cad8fd77170f",
+  "inputAccepted": true,
+  "bytesWritten": 1,
+  "waitRequestId": "140c8e91-6f99-4a8a-a717-40c76b9b94fe",
+  "tuiIdle": true,
+  "terminalStatus": "running",
+  "terminal": "term_d33e94ef-cdd0-4dd1-8421-263cb73f9274",
+  "effectiveModel": "GPT-5.6-Sol",
+  "effectiveEffort": "high",
+  "worktree": "D:\\MyWorkTree\\AbilityKit\\issue6-compiler-trace-repair-ccswitch",
+  "taskTurnStarted": false
+}

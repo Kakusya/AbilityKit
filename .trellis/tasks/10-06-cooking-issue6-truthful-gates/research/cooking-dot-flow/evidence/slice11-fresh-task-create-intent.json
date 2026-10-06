@@ -1,0 +1,10 @@
+{
+  "operation": "orchestration-task-create",
+  "runId": "run_5ba664a5f016",
+  "title": "Issue 6 compiler trace repair via fresh cc-switch worker",
+  "specRef": "evidence/slice11-compiler-trace-repair-spec.md",
+  "newTaskRequired": true,
+  "retryOldTask": false,
+  "oldTaskId": "task_0c3ccf539029",
+  "oldDispatchId": "ctx_27690ccb2ec6"
+}

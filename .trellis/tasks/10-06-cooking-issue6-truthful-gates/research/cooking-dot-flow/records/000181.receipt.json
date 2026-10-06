@@ -1,0 +1,41 @@
+{
+  "version": 1,
+  "flow_id": "6d3174fd-2b01-4136-8ea5-0b0cd0e2845d",
+  "seq": 181,
+  "op_id": "6d3174fd-2b01-4136-8ea5-0b0cd0e2845d:000181",
+  "kind": "receipt",
+  "recorded_utc": "2026-10-06T19:14:19.468694Z",
+  "intent_hash": "5e2ff21a5dbe9df60a395dc18f186546daeb618684f42b8ba701824cd27374f5",
+  "outcome": "applied",
+  "raw_ref": "evidence/slice11-review-fix-task-create-raw.json",
+  "result": {
+    "id": "0bd8b675-1d2e-4297-8818-457fa93d4e1f",
+    "ok": true,
+    "result": {
+      "task": {
+        "id": "task_1faea9aa39ee",
+        "run_id": "run_5ba664a5f016",
+        "parent_id": null,
+        "created_by_terminal_handle": "term_a345586c-d76c-4d68-afdf-f3a58f9686c1",
+        "created_by_pane_key": "c7c2707b-c337-40a6-835c-d0db787ce9af:b4640822-995e-46b5-a63e-db04e94565fa",
+        "created_by_process_incarnation": "aaa97e0d-5026-4e5c-95f8-bb420dcb4c65::D:/MyWorkTree/AbilityKit@@454b2342:753afb7a-f7c3-433b-b372-88c707ccf23d",
+        "created_by_run_generation": 2,
+        "task_title": "Issue 6 Slice 11 bidirectional completeness review fixes",
+        "display_name": "Issue6 Slice11 review fixes",
+        "spec": "# Slice 11 bidirectional completeness review fix\n\nThe first repair worker settled successfully and its external terminal remains retained. A fresh cc-switch Codex worker must work in `D:/MyWorkTree/AbilityKit/issue6-compiler-trace-repair-ccswitch`; it must not reuse or send input to the settled terminal.\n\n## Owned files\n\n- `tools/test-gate-result-contract.ps1`\n- `tools/tests/test-gate-result-contract.tests.ps1`\n- `.trellis/tasks/10-06-cooking-issue6-truthful-gates/research/slice11-compiler-trace-repair-report.md`\n\nThe worker may read the other three already modified Slice 11 files but may not change them unless a directly caused compilation failure makes that necessary and it escalates first. No business, example, Unity, gate declaration, dependency, SDK, package, or non-Cooking file is in scope.\n\n## Required fixes\n\n1. Replace the permissive `Generated.opaque` `Count -ge 1` assertion in the existing `current-build-test-JSON-roundtrip` control with an exact nonzero cardinality tied to that leaf's `compilerEvidence.instances`. Preserve the original control name and expectation.\n2. Make `Complete-GateCompilerEvidence` bidirectional across structured events and captures. Every CoreCompile event must have exactly one matching capture/message/completion. A `Finished` successful CoreCompile must have exactly one successful Csc event; a `Skipped` CoreCompile must have zero Csc events. Every Csc must still have exactly one CoreCompile and capture. Project/context mismatches and missing, extra, or ambiguous relationships must fail closed.\n3. Add a real native MSBuild negative control that first creates valid outputs, then performs the incremental build while deliberately bypassing the capture hook for another real project instance. Native build exit remains 0, CoreCompile contains skipped instances, and aggregation must reject because CoreCompile count exceeds capture coverage. This must not be simulated solely by fake-dotnet or a candidate JSON mutation.\n4. Update the Slice 11 report with the new control and final exact accounting. Preserve the earlier raw failure and passing evidence.\n\n## Acceptance\n\n- Run the compiler-trace-focused controls after the fix.\n- Run the complete isolated suite and preserve all 249 original control names with no duplicates.\n- Require all controls Passed, source-before/source-after identical, and console-width coverage Passed.\n- Do not run either genuine Cooking gate; the later distinct verifier owns those commands.\n- Do not commit or push. Send exactly one `worker_done` with Task and Dispatch IDs after checking the inbox.\n",
+        "status": "ready",
+        "deps": "[]",
+        "result": null,
+        "created_at": "2026-10-06 19:14:08",
+        "completed_at": null
+      },
+      "mutation": {
+        "requestId": "6e5ac271-2cfe-4486-8997-0c82f43ad47e",
+        "replayed": false
+      }
+    },
+    "_meta": {
+      "runtimeId": "cfc0b549-ef00-4305-82a8-e90569f2eae4"
+    }
+  }
+}

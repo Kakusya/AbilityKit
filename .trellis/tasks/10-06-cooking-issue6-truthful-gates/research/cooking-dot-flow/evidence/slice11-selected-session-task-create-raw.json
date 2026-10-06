@@ -1,0 +1,11 @@
+{
+  "ok": true,
+  "requestId": "1e937b30-2088-41f4-9b26-c14264eadb25",
+  "replayed": false,
+  "runId": "run_5ba664a5f016",
+  "taskId": "task_a94217d9d800",
+  "status": "ready",
+  "createdByTerminal": "term_a345586c-d76c-4d68-afdf-f3a58f9686c1",
+  "taskTitle": "Issue 6 compiler trace repair after cc-switch model selection",
+  "specRef": "evidence/slice11-compiler-trace-repair-spec.md"
+}

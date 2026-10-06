@@ -1,0 +1,36 @@
+{
+  "version": 1,
+  "flow_id": "6d3174fd-2b01-4136-8ea5-0b0cd0e2845d",
+  "seq": 209,
+  "op_id": "6d3174fd-2b01-4136-8ea5-0b0cd0e2845d:000209",
+  "kind": "receipt",
+  "recorded_utc": "2026-10-06T21:03:12.491846Z",
+  "intent_hash": "300b667369cd300280463e43f41f1842c85e42b04b6bd8708138c07b780cb4b4",
+  "outcome": "applied",
+  "raw_ref": "evidence/slice14-task-create-raw.json",
+  "result": {
+    "id": "68eb8667-9de3-4c30-b04d-2b04285f18d0",
+    "ok": true,
+    "result": {
+      "task": {
+        "id": "task_ffb7a4aa1c78",
+        "run_id": "run_5ba664a5f016",
+        "created_by_terminal_handle": "term_a345586c-d76c-4d68-afdf-f3a58f9686c1",
+        "created_by_run_generation": 2,
+        "task_title": "Issue 6 compiler target compatibility repair",
+        "display_name": "Issue6 Slice14 target compatibility",
+        "spec_ref": "evidence/slice14-compiler-target-compat-repair-spec.md",
+        "status": "ready",
+        "deps": "[]",
+        "created_at": "2026-10-06 21:02:52"
+      },
+      "mutation": {
+        "requestId": "29425c09-5f71-4e77-8622-f68ff6def037",
+        "replayed": false
+      }
+    },
+    "_meta": {
+      "runtimeId": "cfc0b549-ef00-4305-82a8-e90569f2eae4"
+    }
+  }
+}

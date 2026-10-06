@@ -1,0 +1,8 @@
+git : To https://github.com/Kakusya/AbilityKit
+所在位置 行:2 字符: 8
++ $text=(git push origin HEAD:refs/heads/Kakusya/issue6-cooking-truthfu ...
++        ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
+    + CategoryInfo          : NotSpecified: (To https://github.com/Kakusya/AbilityKit:String) [], RemoteException
+    + FullyQualifiedErrorId : NativeCommandError
+ 
+   df9d83a49..2b258b6ea  HEAD -> Kakusya/issue6-cooking-truthful-gates

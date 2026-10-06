@@ -1,0 +1,22 @@
+{
+  "version": 1,
+  "flow_id": "6d3174fd-2b01-4136-8ea5-0b0cd0e2845d",
+  "seq": 172,
+  "op_id": "6d3174fd-2b01-4136-8ea5-0b0cd0e2845d:000172",
+  "kind": "receipt",
+  "recorded_utc": "2026-10-06T17:10:24.217841Z",
+  "intent_hash": "214fbf1794e23041e7a4f08bcacd28bc20f3d152eb9ceac734b9ed32258deff1",
+  "outcome": "applied",
+  "raw_ref": "evidence/slice11-selected-session-task-create-raw.json",
+  "result": {
+    "ok": true,
+    "requestId": "1e937b30-2088-41f4-9b26-c14264eadb25",
+    "replayed": false,
+    "runId": "run_5ba664a5f016",
+    "taskId": "task_a94217d9d800",
+    "status": "ready",
+    "createdByTerminal": "term_a345586c-d76c-4d68-afdf-f3a58f9686c1",
+    "taskTitle": "Issue 6 compiler trace repair after cc-switch model selection",
+    "specRef": "evidence/slice11-compiler-trace-repair-spec.md"
+  }
+}

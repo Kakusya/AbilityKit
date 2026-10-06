@@ -1,0 +1,49 @@
+{
+  "version": 1,
+  "flow_id": "6d3174fd-2b01-4136-8ea5-0b0cd0e2845d",
+  "seq": 210,
+  "op_id": "6d3174fd-2b01-4136-8ea5-0b0cd0e2845d:000210",
+  "kind": "receipt",
+  "recorded_utc": "2026-10-06T21:04:05.420764Z",
+  "intent_hash": "b5fbeb38bb62b835b84fd61cb72422b3ea809415d5ddbc944bd01edad876c4a9",
+  "outcome": "applied",
+  "raw_ref": "evidence/slice14-dispatch-raw.json",
+  "result": {
+    "id": "6ca46a80-4b0e-44f1-85e4-6fe2d525f33e",
+    "ok": true,
+    "result": {
+      "dispatch": {
+        "id": "ctx_c81b86041c54",
+        "run_id": "run_5ba664a5f016",
+        "task_id": "task_ffb7a4aa1c78",
+        "contract_version": 1,
+        "assignee_handle": "term_c29e1321-2b80-4a84-a6d1-463d4eaa3d4a",
+        "assignee_pane_key": "1d55c3df-d32a-41a6-bd58-abc9c212fa93:e85d6cc7-1c41-4062-aee1-28da37d750f6",
+        "process_incarnation": "aaa97e0d-5026-4e5c-95f8-bb420dcb4c65::D:/MyWorkTree/AbilityKit/issue6-compiler-target-compat-repair-ccswitch@@3f4468a9:d5b3af18-0575-4fd9-9e24-92e4f25c3f35",
+        "creator_handle": "term_a345586c-d76c-4d68-afdf-f3a58f9686c1",
+        "status": "dispatched",
+        "depth": 1,
+        "dispatched_at": "2026-10-06 21:03:39"
+      },
+      "injected": true,
+      "prompt": {
+        "requestId": "0cbb783a-9608-4bb0-9261-856a83e7b130",
+        "stages": [
+          "input_accepted"
+        ],
+        "provider": "codex",
+        "observation": "supported",
+        "processIncarnation": "d5b3af18-0575-4fd9-9e24-92e4f25c3f35",
+        "generation": 28,
+        "baselineWorkingSequence": 1
+      },
+      "mutation": {
+        "requestId": "0cbb783a-9608-4bb0-9261-856a83e7b130",
+        "replayed": false
+      }
+    },
+    "_meta": {
+      "runtimeId": "cfc0b549-ef00-4305-82a8-e90569f2eae4"
+    }
+  }
+}

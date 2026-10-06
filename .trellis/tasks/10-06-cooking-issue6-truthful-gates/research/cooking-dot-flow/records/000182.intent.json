@@ -1,0 +1,15 @@
+{
+  "version": 1,
+  "flow_id": "6d3174fd-2b01-4136-8ea5-0b0cd0e2845d",
+  "seq": 182,
+  "op_id": "6d3174fd-2b01-4136-8ea5-0b0cd0e2845d:000182",
+  "kind": "intent",
+  "recorded_utc": "2026-10-06T19:14:41.703207Z",
+  "action": "orchestration-dispatch",
+  "target": "task_1faea9aa39ee:term_e29771ea-e991-4107-adfb-89a0f306608f",
+  "authorization_ref": "evidence/approval.md",
+  "payload_ref": "evidence/slice11-review-fix-dispatch-intent.json",
+  "preconditions": {
+    "run_id": "run_5ba664a5f016"
+  }
+}

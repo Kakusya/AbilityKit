@@ -1,0 +1,11 @@
+{
+  "ok": true,
+  "requestId": "0a466a22-854f-4c63-9007-13620fe1a078",
+  "replayed": false,
+  "runId": "run_5ba664a5f016",
+  "taskId": "task_207ca73de2de",
+  "status": "ready",
+  "createdByTerminal": "term_a345586c-d76c-4d68-afdf-f3a58f9686c1",
+  "taskTitle": "Issue 6 compiler trace repair via fresh cc-switch worker",
+  "specRef": "evidence/slice11-compiler-trace-repair-spec.md"
+}

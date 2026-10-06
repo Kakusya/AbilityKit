@@ -1,0 +1,23 @@
+{
+  "version": 1,
+  "flow_id": "6d3174fd-2b01-4136-8ea5-0b0cd0e2845d",
+  "seq": 174,
+  "op_id": "6d3174fd-2b01-4136-8ea5-0b0cd0e2845d:000174",
+  "kind": "receipt",
+  "recorded_utc": "2026-10-06T17:25:30.634650Z",
+  "intent_hash": "ccc551c36b128063d57dee013468567230c6ef8f9fd34eb1c44fdd269375bdb0",
+  "outcome": "applied",
+  "raw_ref": "evidence/slice11-feasibility-checkpoint-followup-raw.json",
+  "result": {
+    "ok": true,
+    "requestId": "89246fa9-e899-4ac0-b821-9ab90d80a3ac",
+    "replayed": false,
+    "messageId": "msg_764621804ed9",
+    "runId": "run_5ba664a5f016",
+    "from": "term_a345586c-d76c-4d68-afdf-f3a58f9686c1",
+    "to": "dispatch:ctx_32b2fa6ebafa",
+    "subject": "Required feasibility checkpoint before second source file",
+    "bodyRef": "evidence/slice11-feasibility-checkpoint-followup.txt",
+    "deliveredAt": null
+  }
+}

@@ -1,0 +1,8 @@
+{
+  "operation": "terminal-input",
+  "terminal": "term_f3030f57-7206-45ad-9887-bd7eab37bb27",
+  "observedPrompt": "codex-model-migration-prompt",
+  "selection": "2. Use existing model",
+  "reason": "retain gpt-5.6-sol on the custom cc-switch provider",
+  "oldTerminalReused": false
+}

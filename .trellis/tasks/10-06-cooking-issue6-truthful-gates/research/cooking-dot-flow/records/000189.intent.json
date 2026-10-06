@@ -1,0 +1,15 @@
+{
+  "version": 1,
+  "flow_id": "6d3174fd-2b01-4136-8ea5-0b0cd0e2845d",
+  "seq": 189,
+  "op_id": "6d3174fd-2b01-4136-8ea5-0b0cd0e2845d:000189",
+  "kind": "intent",
+  "recorded_utc": "2026-10-06T20:17:09.274814Z",
+  "action": "worker-retain",
+  "target": "ctx_f04ae1ad0e53",
+  "authorization_ref": "evidence/approval.md",
+  "payload_ref": "evidence/slice11-exact-instance-cardinality-fix-spec.md",
+  "preconditions": {
+    "run_id": "run_5ba664a5f016"
+  }
+}

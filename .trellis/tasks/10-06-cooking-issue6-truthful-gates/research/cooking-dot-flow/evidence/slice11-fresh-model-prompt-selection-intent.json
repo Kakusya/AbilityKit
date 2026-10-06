@@ -1,0 +1,13 @@
+{
+  "operation": "terminal-input",
+  "terminal": "term_d33e94ef-cdd0-4dd1-8421-263cb73f9274",
+  "prompt": "codex-model-migration-prompt",
+  "selectedOption": "2. Use existing model",
+  "ownerAuthorization": "2026-10-07 user message: 你没办法选一下么?",
+  "scope": "fresh worker terminal only",
+  "excludedOldTerminals": [
+    "term_08a896e7-f2ff-477d-85c0-1962eb3a8136",
+    "term_a1a61c7c-aef6-4cd0-8c46-27a90632617b",
+    "term_401024fc-a381-4adf-a831-fcde113232d2"
+  ]
+}

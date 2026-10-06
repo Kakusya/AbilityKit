@@ -1,0 +1,67 @@
+{
+  "version": 1,
+  "flow_id": "6d3174fd-2b01-4136-8ea5-0b0cd0e2845d",
+  "seq": 208,
+  "op_id": "6d3174fd-2b01-4136-8ea5-0b0cd0e2845d:000208",
+  "kind": "receipt",
+  "recorded_utc": "2026-10-06T21:02:30.483920Z",
+  "intent_hash": "661851992c2cc4d36b721f2976bafec30510e3823c43eaa30ce25ebf736779ac",
+  "outcome": "applied",
+  "raw_ref": "evidence/slice14-model-selection-raw.json",
+  "result": {
+    "selection": "2. Use existing model",
+    "combinedSendAttempts": [
+      {
+        "id": "a0234665-848e-4733-94c3-4d7a16cfda23",
+        "ok": false,
+        "error": {
+          "code": "agent_prompt_blocked",
+          "orchestrationRequestId": "af25c93e-afa4-41ad-a690-8ccfa6d45288"
+        }
+      },
+      {
+        "id": "bf4bc339-96b2-4c34-9b13-41216cc4f08b",
+        "ok": false,
+        "error": {
+          "code": "agent_prompt_blocked",
+          "orchestrationRequestId": "af25c93e-afa4-41ad-a690-8ccfa6d45288"
+        }
+      }
+    ],
+    "text": {
+      "id": "430b5c33-b515-47e1-8e8f-521c7ec9964e",
+      "ok": true,
+      "result": {
+        "send": {
+          "handle": "term_c29e1321-2b80-4a84-a6d1-463d4eaa3d4a",
+          "accepted": true,
+          "bytesWritten": 1
+        }
+      }
+    },
+    "enter": {
+      "id": "1a925563-7d07-43f2-b100-2b1b7e1dd2d8",
+      "ok": true,
+      "result": {
+        "send": {
+          "handle": "term_c29e1321-2b80-4a84-a6d1-463d4eaa3d4a",
+          "accepted": true,
+          "bytesWritten": 1
+        }
+      }
+    },
+    "wait": {
+      "id": "92f87b95-0388-4a6a-bccd-d88194d5c0dc",
+      "ok": true,
+      "result": {
+        "wait": {
+          "handle": "term_c29e1321-2b80-4a84-a6d1-463d4eaa3d4a",
+          "condition": "tui-idle",
+          "satisfied": true,
+          "status": "running",
+          "exitCode": null
+        }
+      }
+    }
+  }
+}

@@ -1,0 +1,15 @@
+{
+  "version": 1,
+  "flow_id": "6d3174fd-2b01-4136-8ea5-0b0cd0e2845d",
+  "seq": 188,
+  "op_id": "6d3174fd-2b01-4136-8ea5-0b0cd0e2845d:000188",
+  "kind": "intent",
+  "recorded_utc": "2026-10-06T19:58:32.592384Z",
+  "action": "orchestration-dispatch",
+  "target": "task_487cc6e56eb2:term_f3030f57-7206-45ad-9887-bd7eab37bb27",
+  "authorization_ref": "evidence/approval.md",
+  "payload_ref": "evidence/slice11-exact-instance-cardinality-fix-spec.md",
+  "preconditions": {
+    "run_id": "run_5ba664a5f016"
+  }
+}

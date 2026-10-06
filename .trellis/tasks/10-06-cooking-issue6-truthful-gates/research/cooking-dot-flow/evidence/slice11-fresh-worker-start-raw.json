@@ -1,0 +1,21 @@
+{
+  "cliExitCode": 1,
+  "ok": true,
+  "requestId": "68ad6ef0-02f3-472b-b839-61a7ecff3bd0",
+  "replayed": false,
+  "runId": "run_5ba664a5f016",
+  "taskId": "task_207ca73de2de",
+  "dispatchId": "ctx_fbe738e466ae",
+  "state": "failed",
+  "failedStage": "agent_readiness",
+  "lastError": "Agent startup blocked: codex-model-migration-prompt",
+  "worktreeId": "aaa97e0d-5026-4e5c-95f8-bb420dcb4c65::D:/MyWorkTree/AbilityKit/issue6-compiler-trace-repair-ccswitch",
+  "terminal": "term_d33e94ef-cdd0-4dd1-8421-263cb73f9274",
+  "taskTurnStarted": false,
+  "sourceFilesChanged": false,
+  "launch": {
+    "requested": { "agent": "codex", "model": "gpt-5.6-sol", "effort": "high" },
+    "effective": { "agent": "codex", "model": "gpt-5.6-sol", "effort": "high" }
+  },
+  "resourceAction": "retained; no terminal input, stop, release, close, or delete"
+}

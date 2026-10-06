@@ -1,0 +1,12 @@
+{
+  "operation": "orchestration-task-create",
+  "runId": "run_5ba664a5f016",
+  "title": "Issue 6 compiler trace repair after cc-switch model selection",
+  "specRef": "evidence/slice11-compiler-trace-repair-spec.md",
+  "terminal": "term_d33e94ef-cdd0-4dd1-8421-263cb73f9274",
+  "worktree": "D:\\MyWorkTree\\AbilityKit\\issue6-compiler-trace-repair-ccswitch",
+  "newTaskRequired": true,
+  "retryFailedTask": false,
+  "failedTaskId": "task_207ca73de2de",
+  "failedDispatchId": "ctx_fbe738e466ae"
+}

@@ -1,0 +1,14 @@
+{
+  "operation": "orchestration-task-create",
+  "runId": "run_5ba664a5f016",
+  "title": "Issue 6 Slice 11 bidirectional completeness review fixes",
+  "specRef": "evidence/slice11-bidirectional-review-fix-spec.md",
+  "worktree": "D:\\MyWorkTree\\AbilityKit\\issue6-compiler-trace-repair-ccswitch",
+  "ownedFiles": [
+    "tools/test-gate-result-contract.ps1",
+    "tools/tests/test-gate-result-contract.tests.ps1",
+    ".trellis/tasks/10-06-cooking-issue6-truthful-gates/research/slice11-compiler-trace-repair-report.md"
+  ],
+  "expectedControls": 285,
+  "genuineCookingGates": "NotRun"
+}

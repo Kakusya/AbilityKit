@@ -1,0 +1,67 @@
+{
+  "version": 1,
+  "flow_id": "6d3174fd-2b01-4136-8ea5-0b0cd0e2845d",
+  "seq": 196,
+  "op_id": "6d3174fd-2b01-4136-8ea5-0b0cd0e2845d:000196",
+  "kind": "receipt",
+  "recorded_utc": "2026-10-06T20:25:56.465964Z",
+  "intent_hash": "926fa3637e44396cbd3aa8ba96c11b0bee68b36ace66e449f280b4ab9a26a111",
+  "outcome": "applied",
+  "raw_ref": "evidence/slice12-dispatch-raw.json",
+  "result": {
+    "id": "07ab560c-1394-4350-9cf7-ec9eb9a2c259",
+    "ok": true,
+    "result": {
+      "dispatch": {
+        "id": "ctx_914b85e40183",
+        "run_id": "run_5ba664a5f016",
+        "task_id": "task_e4e0fe21491f",
+        "contract_version": 1,
+        "launch_token_hash": null,
+        "assignee_handle": "term_d5b3f7fc-4ced-4b87-8bd8-4bcbc5d31ae5",
+        "assignee_pane_key": "585453d3-6620-4c29-9ce3-acb9107f7229:091bae66-7a41-4b75-88ea-b4c99b7d367f",
+        "assignee_orca_session_id": null,
+        "capability_hash": null,
+        "process_incarnation": "aaa97e0d-5026-4e5c-95f8-bb420dcb4c65::D:/MyWorkTree/AbilityKit/issue6-final-verifier-ccswitch@@c62985e4:b3c2e709-7cf8-416d-b2da-f2ce16429b14",
+        "capability_revoked_at": null,
+        "retry_of_dispatch_id": null,
+        "creator_dispatch_id": null,
+        "creator_handle": "term_a345586c-d76c-4d68-afdf-f3a58f9686c1",
+        "creator_pane_key": "c7c2707b-c337-40a6-835c-d0db787ce9af:b4640822-995e-46b5-a63e-db04e94565fa",
+        "creator_orca_session_id": null,
+        "host_scope": null,
+        "status": "dispatched",
+        "failure_count": 0,
+        "last_failure": null,
+        "termination_reason": null,
+        "depth": 1,
+        "consumer_generation": 0,
+        "dispatched_at": "2026-10-06 20:25:43",
+        "completed_at": null,
+        "created_at": "2026-10-06 20:25:43",
+        "last_heartbeat_at": null
+      },
+      "injected": true,
+      "prompt": {
+        "requestId": "35d2f137-f6f6-4e2d-9f2e-a5d820688a4b",
+        "stages": [
+          "input_accepted"
+        ],
+        "provider": "codex",
+        "observation": "supported",
+        "processIncarnation": "b3c2e709-7cf8-416d-b2da-f2ce16429b14",
+        "generation": 24,
+        "baselineWorkingSequence": 1,
+        "baselineExplicitWorkingStartedAt": null,
+        "baselinePermissionSequence": 1
+      },
+      "mutation": {
+        "requestId": "35d2f137-f6f6-4e2d-9f2e-a5d820688a4b",
+        "replayed": false
+      }
+    },
+    "_meta": {
+      "runtimeId": "cfc0b549-ef00-4305-82a8-e90569f2eae4"
+    }
+  }
+}

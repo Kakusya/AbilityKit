@@ -1,0 +1,18 @@
+{
+  "version": 1,
+  "flow_id": "6d3174fd-2b01-4136-8ea5-0b0cd0e2845d",
+  "seq": 177,
+  "op_id": "6d3174fd-2b01-4136-8ea5-0b0cd0e2845d:000177",
+  "kind": "intent",
+  "recorded_utc": "2026-10-06T17:50:17.104877Z",
+  "action": "coordinator-followup",
+  "target": "dispatch:ctx_32b2fa6ebafa",
+  "authorization_ref": "evidence/approval.md",
+  "payload_ref": "evidence/slice11-main-review-followup.txt",
+  "preconditions": {
+    "taskId": "task_a94217d9d800",
+    "dispatchId": "ctx_32b2fa6ebafa",
+    "reason": "exact-cardinality-review",
+    "run_id": "run_5ba664a5f016"
+  }
+}

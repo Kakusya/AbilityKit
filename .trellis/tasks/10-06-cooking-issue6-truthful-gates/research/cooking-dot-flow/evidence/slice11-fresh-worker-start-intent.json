@@ -1,0 +1,14 @@
+{
+  "operation": "orchestration-worker-start",
+  "runId": "run_5ba664a5f016",
+  "taskId": "task_207ca73de2de",
+  "worktree": "new-child",
+  "name": "issue6-compiler-trace-repair-ccswitch",
+  "baseCommit": "df9d83a4923ebbb996d636d37ab8f6ff5f48e07a",
+  "agent": "codex",
+  "model": "gpt-5.6-sol",
+  "effort": "high",
+  "providerProofRef": "evidence/slice11-ccswitch-provider-preflight.json",
+  "retryOf": null,
+  "oldTaskOrDispatchReused": false
+}

@@ -1,0 +1,12 @@
+{
+  "operation": "terminal-input",
+  "terminal": "term_e29771ea-e991-4107-adfb-89a0f306608f",
+  "observedPrompt": "codex-model-migration-prompt",
+  "selection": "2. Use existing model",
+  "reason": "keep the explicitly configured gpt-5.6-sol custom cc-switch provider for this fresh worker",
+  "steps": [
+    "send raw text 2",
+    "send raw Enter"
+  ],
+  "oldTerminalReused": false
+}

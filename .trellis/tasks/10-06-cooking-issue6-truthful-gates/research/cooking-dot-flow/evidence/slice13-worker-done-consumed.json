@@ -1,0 +1,24 @@
+{
+  "runId": "run_5ba664a5f016",
+  "deliveryId": "delivery_fdd1f771f6b5",
+  "message": {
+    "id": "msg_fac560603b9d",
+    "from_handle": "term_eee5d482-3e51-4a52-9c80-a4573450c973",
+    "type": "worker_done",
+    "subject": "Slice 13 exact-SHA verification recorded",
+    "body": "Verified target SHA and clean preflight, ran the 289-case controls successfully, and preserved their receipt with exact timestamps, hashes, IDs, versions, coverage, and source fingerprints. The first genuine Cooking gate cooking-et-level-runtime failed CLI 1 at its ET relation analyzer build with MSB4057; its three downstream leaves were NotRun and cooking-kitchen-loop was intentionally not launched under the stop-after-failure rule. Wrote the owned report at .trellis/tasks/10-06-cooking-issue6-truthful-gates/research/slice13-exact-sha-verification-report.md; git diff --check passed and only that report is modified, while the genuine gate result remains failed and Issue acceptance is not established.",
+    "payload": {
+      "taskId": "task_4cd508b98f86",
+      "dispatchId": "ctx_b0735a8376ba",
+      "outcome": "failed",
+      "filesModified": [
+        ".trellis/tasks/10-06-cooking-issue6-truthful-gates/research/slice13-exact-sha-verification-report.md"
+      ]
+    },
+    "created_at": "2026-10-06T20:53:10Z"
+  },
+  "report": {
+    "path": ".trellis/tasks/10-06-cooking-issue6-truthful-gates/research/slice13-exact-sha-verification-report.md",
+    "sha256": "1D866382FC1E935F6F41AD4E034382C7AF5C2771C4B5FFFF1A27F17487BD3357"
+  }
+}

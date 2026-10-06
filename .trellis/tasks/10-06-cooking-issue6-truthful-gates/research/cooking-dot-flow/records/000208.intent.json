@@ -1,0 +1,17 @@
+{
+  "version": 1,
+  "flow_id": "6d3174fd-2b01-4136-8ea5-0b0cd0e2845d",
+  "seq": 208,
+  "op_id": "6d3174fd-2b01-4136-8ea5-0b0cd0e2845d:000208",
+  "kind": "intent",
+  "recorded_utc": "2026-10-06T21:01:13.443840Z",
+  "action": "terminal-input",
+  "target": "term_c29e1321-2b80-4a84-a6d1-463d4eaa3d4a",
+  "authorization_ref": "evidence/approval.md",
+  "payload_ref": "evidence/slice14-terminal-create-intent.json",
+  "preconditions": {
+    "run_id": "run_5ba664a5f016",
+    "prompt": "codex-model-migration-prompt",
+    "selection": "option-2-existing-model"
+  }
+}

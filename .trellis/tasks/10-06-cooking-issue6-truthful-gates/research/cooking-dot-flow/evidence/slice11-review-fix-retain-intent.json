@@ -1,0 +1,8 @@
+{
+  "operation": "worker-retain",
+  "runId": "run_5ba664a5f016",
+  "taskId": "task_1faea9aa39ee",
+  "dispatchId": "ctx_32416f343a63",
+  "terminal": "term_e29771ea-e991-4107-adfb-89a0f306608f",
+  "reason": "Owner requires all worker resources retained; no cleanup or reuse of settled sessions."
+}

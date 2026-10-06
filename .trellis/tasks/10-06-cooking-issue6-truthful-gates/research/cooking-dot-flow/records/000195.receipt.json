@@ -1,0 +1,41 @@
+{
+  "version": 1,
+  "flow_id": "6d3174fd-2b01-4136-8ea5-0b0cd0e2845d",
+  "seq": 195,
+  "op_id": "6d3174fd-2b01-4136-8ea5-0b0cd0e2845d:000195",
+  "kind": "receipt",
+  "recorded_utc": "2026-10-06T20:25:17.450356Z",
+  "intent_hash": "ccebfa80cb979f23c376e4e39c72c557af6b0619fcd72a26f68a7f42f45f0c94",
+  "outcome": "applied",
+  "raw_ref": "evidence/slice12-task-create-raw.json",
+  "result": {
+    "id": "dd2d2a46-bb64-4144-9de1-49af7e61136b",
+    "ok": true,
+    "result": {
+      "task": {
+        "id": "task_e4e0fe21491f",
+        "run_id": "run_5ba664a5f016",
+        "parent_id": null,
+        "created_by_terminal_handle": "term_a345586c-d76c-4d68-afdf-f3a58f9686c1",
+        "created_by_pane_key": "c7c2707b-c337-40a6-835c-d0db787ce9af:b4640822-995e-46b5-a63e-db04e94565fa",
+        "created_by_process_incarnation": "aaa97e0d-5026-4e5c-95f8-bb420dcb4c65::D:/MyWorkTree/AbilityKit@@454b2342:753afb7a-f7c3-433b-b372-88c707ccf23d",
+        "created_by_run_generation": 2,
+        "task_title": "Verify Issue6 exact SHA",
+        "display_name": "Issue6 exact-SHA Cooking verifier",
+        "spec": "# Slice 12 exact-SHA verifier\n\nTarget commit: `2b258b6ea2a40a9ac354b51847c749722564e8ba`.\n\nThis is a Cooking-only verification assignment. You are not alone in the repository. Preserve every existing edit and do not modify or revert implementation, gate configuration, Cooking business code, tests, dependencies, SDK settings, Unity, Shooter, MOBA, Orleans, or any other example. Do not commit, push, merge, write GitHub, contact dot, create another worker, or clean resources.\n\nOwnership is limited to one new report:\n\n- `.trellis/tasks/10-06-cooking-issue6-truthful-gates/research/slice12-exact-sha-verification-report.md`\n\nBefore running anything, require `git rev-parse HEAD` to equal the target commit and require `git status --porcelain` to be empty. If either check fails, stop and report failure without changing source.\n\nRun these checks serially, never concurrently:\n\n1. `powershell -NoProfile -ExecutionPolicy Bypass -File tools/tests/test-gate-result-contract.tests.ps1 -ArtifactRoot local/Artifacts/issue6-cooking-slice12-controls`\n2. `powershell -NoProfile -ExecutionPolicy Bypass -File tools/run_test_gate.ps1 -Gate cooking-et-level-runtime -Configuration Debug -CI`\n3. `powershell -NoProfile -ExecutionPolicy Bypass -File tools/run_test_gate.ps1 -Gate cooking-kitchen-loop -Configuration Debug -CI`\n\nPreserve every original failure and stop after any required check fails. Do not rerun a failed gate to conceal it and do not repair product or tooling. The controls must execute exactly 289 cases with 289 Passed, zero Failed, `fullControlSuiteAccepted=true`, `contractControlsAccepted=true`, `realDotNet=Executed`, console-width Passed, all original 249 names present, no duplicate names, and source-before/source-after SHA and fingerprints equal. The two genuine gates must each finish Passed/CLI 0 with actual nonzero TRX execution and complete required leaves; record actual counts rather than historical values.\n\nFor each command, record exact argv, start/end UTC, process exit, receipt or summary path and SHA-256, run/result IDs, source SHA/dirty state, SDK/MSBuild/PowerShell versions, declared and actual coverage, TRX counts, build/test binary identities, and any limitation. Explicitly distinguish Passed, Failed, Blocked, Skipped, NotRun, and N/A.\n\nAfter checks, write the owned report, run PowerShell parsing for the changed scripts if applicable, run `git diff --check`, and verify `git status --porcelain` contains only the owned report. Before completion, check the orchestration inbox and send exactly one `worker_done` for the assigned Task and Dispatch with explicit outcome, report path, and files modified.\n",
+        "status": "ready",
+        "deps": "[]",
+        "result": null,
+        "created_at": "2026-10-06 20:25:05",
+        "completed_at": null
+      },
+      "mutation": {
+        "requestId": "aa482f9e-9932-4a06-8725-ba73335caa82",
+        "replayed": false
+      }
+    },
+    "_meta": {
+      "runtimeId": "cfc0b549-ef00-4305-82a8-e90569f2eae4"
+    }
+  }
+}

@@ -1,0 +1,32 @@
+{
+  "version": 1,
+  "flow_id": "6d3174fd-2b01-4136-8ea5-0b0cd0e2845d",
+  "seq": 178,
+  "op_id": "6d3174fd-2b01-4136-8ea5-0b0cd0e2845d:000178",
+  "kind": "receipt",
+  "recorded_utc": "2026-10-06T19:07:55.535183Z",
+  "intent_hash": "1fef64a9c006fe22b0303b6b63db3127b69abcd584bfa635012c14cf51feb5ce",
+  "outcome": "applied",
+  "raw_ref": "evidence/slice11-worker-done-ack.json",
+  "result": {
+    "id": "d03fac89-ba5a-4eb7-af07-846d945ea99c",
+    "ok": true,
+    "result": {
+      "runId": "run_5ba664a5f016",
+      "deliveryId": null,
+      "messages": [],
+      "count": 0,
+      "acknowledged": "delivery_7968d088b11b",
+      "timedOut": false,
+      "cancelled": false,
+      "connectionLost": false,
+      "mutation": {
+        "requestId": "5d641b12-73e5-4b62-b407-d2a705b3d5bc",
+        "replayed": false
+      }
+    },
+    "_meta": {
+      "runtimeId": "cfc0b549-ef00-4305-82a8-e90569f2eae4"
+    }
+  }
+}

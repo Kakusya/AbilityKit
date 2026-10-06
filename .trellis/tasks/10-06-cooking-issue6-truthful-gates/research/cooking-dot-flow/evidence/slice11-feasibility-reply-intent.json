@@ -1,0 +1,9 @@
+{
+  "operation": "orchestration-reply",
+  "runId": "run_5ba664a5f016",
+  "taskId": "task_a94217d9d800",
+  "dispatchId": "ctx_32b2fa6ebafa",
+  "messageId": "msg_e64eb47f3b29",
+  "bodyRef": "evidence/slice11-feasibility-reply.txt",
+  "decision": "acknowledged-resume"
+}

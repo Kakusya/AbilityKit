@@ -1,0 +1,17 @@
+{
+  "operation": "orchestration-dispatch-inject",
+  "runId": "run_5ba664a5f016",
+  "taskId": "task_1faea9aa39ee",
+  "terminal": "term_e29771ea-e991-4107-adfb-89a0f306608f",
+  "worktree": "D:\\MyWorkTree\\AbilityKit\\issue6-compiler-trace-repair-ccswitch",
+  "modelProvider": "custom",
+  "model": "gpt-5.6-sol",
+  "effort": "high",
+  "freshTerminal": true,
+  "specRef": "evidence/slice11-bidirectional-review-fix-spec.md",
+  "expectedControls": 285,
+  "doNotRun": [
+    "cooking-et-level-runtime",
+    "cooking-kitchen-loop"
+  ]
+}

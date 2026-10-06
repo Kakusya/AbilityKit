@@ -1,0 +1,32 @@
+{
+  "version": 1,
+  "flow_id": "6d3174fd-2b01-4136-8ea5-0b0cd0e2845d",
+  "seq": 190,
+  "op_id": "6d3174fd-2b01-4136-8ea5-0b0cd0e2845d:000190",
+  "kind": "receipt",
+  "recorded_utc": "2026-10-06T20:18:29.702088Z",
+  "intent_hash": "900a5dd716108ba7b101869d080eb31367630923736f582ef23aadb790220524",
+  "outcome": "applied",
+  "raw_ref": "evidence/slice11-exact-cardinality-worker-done-ack.json",
+  "result": {
+    "id": "2c36d9bc-d908-4af7-a429-fd8efa46e3c7",
+    "ok": true,
+    "result": {
+      "runId": "run_5ba664a5f016",
+      "deliveryId": null,
+      "messages": [],
+      "count": 0,
+      "acknowledged": "delivery_95991bb61649",
+      "timedOut": false,
+      "cancelled": false,
+      "connectionLost": false,
+      "mutation": {
+        "requestId": "2cb8e40e-52d6-439b-a964-1fcff1b9084e",
+        "replayed": false
+      }
+    },
+    "_meta": {
+      "runtimeId": "cfc0b549-ef00-4305-82a8-e90569f2eae4"
+    }
+  }
+}

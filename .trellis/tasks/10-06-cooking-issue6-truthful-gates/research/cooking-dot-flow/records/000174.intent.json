@@ -1,0 +1,15 @@
+{
+  "version": 1,
+  "flow_id": "6d3174fd-2b01-4136-8ea5-0b0cd0e2845d",
+  "seq": 174,
+  "op_id": "6d3174fd-2b01-4136-8ea5-0b0cd0e2845d:000174",
+  "kind": "intent",
+  "recorded_utc": "2026-10-06T17:25:03.390688Z",
+  "action": "orchestration-send",
+  "target": "dispatch:ctx_32b2fa6ebafa",
+  "authorization_ref": "evidence/approval.md",
+  "payload_ref": "evidence/slice11-feasibility-checkpoint-followup-intent.json",
+  "preconditions": {
+    "run_id": "run_5ba664a5f016"
+  }
+}

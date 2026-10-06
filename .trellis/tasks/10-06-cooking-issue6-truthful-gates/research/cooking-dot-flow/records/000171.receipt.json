@@ -1,0 +1,24 @@
+{
+  "version": 1,
+  "flow_id": "6d3174fd-2b01-4136-8ea5-0b0cd0e2845d",
+  "seq": 171,
+  "op_id": "6d3174fd-2b01-4136-8ea5-0b0cd0e2845d:000171",
+  "kind": "receipt",
+  "recorded_utc": "2026-10-06T17:09:16.946142Z",
+  "intent_hash": "c5120afdf954706a712d3664ec55bf36a217c099c344d61224b4668f27f034e4",
+  "outcome": "applied",
+  "raw_ref": "evidence/slice11-fresh-model-prompt-selection-raw.json",
+  "result": {
+    "sendRequestId": "68ade0ed-c775-49db-8796-cad8fd77170f",
+    "inputAccepted": true,
+    "bytesWritten": 1,
+    "waitRequestId": "140c8e91-6f99-4a8a-a717-40c76b9b94fe",
+    "tuiIdle": true,
+    "terminalStatus": "running",
+    "terminal": "term_d33e94ef-cdd0-4dd1-8421-263cb73f9274",
+    "effectiveModel": "GPT-5.6-Sol",
+    "effectiveEffort": "high",
+    "worktree": "D:\\MyWorkTree\\AbilityKit\\issue6-compiler-trace-repair-ccswitch",
+    "taskTurnStarted": false
+  }
+}

@@ -1,0 +1,22 @@
+{
+  "runId": "run_5ba664a5f016",
+  "deliveryId": "delivery_6219c20b0aa7",
+  "message": {
+    "id": "msg_ae7834ed4832",
+    "from_handle": "term_c29e1321-2b80-4a84-a6d1-463d4eaa3d4a",
+    "subject": "Slice 14 compiler target compatibility repair complete",
+    "type": "worker_done",
+    "created_at": "2026-10-06T21:32:21Z",
+    "payload": {
+      "taskId": "task_ffb7a4aa1c78",
+      "dispatchId": "ctx_c81b86041c54",
+      "outcome": "succeeded",
+      "filesModified": [
+        "tools/test-gate-result-contract.ps1",
+        "tools/tests/test-gate-result-contract.tests.ps1",
+        ".trellis/tasks/10-06-cooking-issue6-truthful-gates/research/slice14-compiler-target-compat-repair-report.md"
+      ],
+      "reportPath": ".trellis/tasks/10-06-cooking-issue6-truthful-gates/research/slice14-compiler-target-compat-repair-report.md"
+    }
+  }
+}

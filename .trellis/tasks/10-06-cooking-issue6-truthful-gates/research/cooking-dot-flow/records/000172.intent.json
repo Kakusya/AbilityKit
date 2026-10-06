@@ -1,0 +1,15 @@
+{
+  "version": 1,
+  "flow_id": "6d3174fd-2b01-4136-8ea5-0b0cd0e2845d",
+  "seq": 172,
+  "op_id": "6d3174fd-2b01-4136-8ea5-0b0cd0e2845d:000172",
+  "kind": "intent",
+  "recorded_utc": "2026-10-06T17:09:43.566698Z",
+  "action": "orchestration-task-create",
+  "target": "run_5ba664a5f016:slice11-selected-session",
+  "authorization_ref": "evidence/approval.md",
+  "payload_ref": "evidence/slice11-selected-session-task-create-intent.json",
+  "preconditions": {
+    "run_id": "run_5ba664a5f016"
+  }
+}

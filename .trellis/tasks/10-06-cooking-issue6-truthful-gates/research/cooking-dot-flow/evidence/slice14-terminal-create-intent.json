@@ -1,0 +1,8 @@
+{
+  "worktree": "D:/MyWorkTree/AbilityKit/issue6-compiler-target-compat-repair-ccswitch",
+  "purpose": "fresh cc-switch Codex worker for the Slice 14 compiler target compatibility repair",
+  "command": "codex --dangerously-bypass-approvals-and-sandbox -m gpt-5.6-sol -c model_provider=custom -c model_reasoning_effort=high",
+  "providerProofRef": "evidence/slice11-ccswitch-provider-preflight.json",
+  "baseSha": "2b258b6ea2a40a9ac354b51847c749722564e8ba",
+  "existingSessionPolicy": "Do not communicate with or reuse any existing worker session."
+}

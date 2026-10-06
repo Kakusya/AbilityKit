@@ -1,0 +1,9 @@
+{
+  "operation": "orchestration-send",
+  "runId": "run_5ba664a5f016",
+  "taskId": "task_a94217d9d800",
+  "dispatchId": "ctx_32b2fa6ebafa",
+  "subject": "Required feasibility checkpoint before second source file",
+  "bodyRef": "evidence/slice11-feasibility-checkpoint-followup.txt",
+  "scope": "fresh cc-switch worker only"
+}

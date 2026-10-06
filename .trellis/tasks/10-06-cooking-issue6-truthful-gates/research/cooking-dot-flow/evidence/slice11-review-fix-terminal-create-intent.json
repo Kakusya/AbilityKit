@@ -1,0 +1,15 @@
+{
+  "operation": "terminal-create",
+  "runId": "run_5ba664a5f016",
+  "worktree": "D:\\MyWorkTree\\AbilityKit\\issue6-compiler-trace-repair-ccswitch",
+  "purpose": "fresh cc-switch Codex worker for Slice 11 bidirectional completeness review fixes",
+  "command": "codex --dangerously-bypass-approvals-and-sandbox -m gpt-5.6-sol -c model_provider=custom -c model_reasoning_effort=high",
+  "providerProofRef": "evidence/slice11-ccswitch-provider-preflight.json",
+  "oldTerminalReused": false,
+  "excludedTerminals": [
+    "term_08a896e7-f2ff-477d-85c0-1962eb3a8136",
+    "term_a1a61c7c-aef6-4cd0-8c46-27a90632617b",
+    "term_401024fc-a381-4adf-a831-fcde113232d2",
+    "term_d33e94ef-cdd0-4dd1-8421-263cb73f9274"
+  ]
+}

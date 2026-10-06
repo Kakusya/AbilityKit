@@ -1,0 +1,30 @@
+{
+  "version": 1,
+  "flow_id": "6d3174fd-2b01-4136-8ea5-0b0cd0e2845d",
+  "seq": 200,
+  "op_id": "6d3174fd-2b01-4136-8ea5-0b0cd0e2845d:000200",
+  "kind": "receipt",
+  "recorded_utc": "2026-10-06T20:30:51.111313Z",
+  "intent_hash": "cbcac4c9dffb658b636633b785159db2cbd6708a37c9f85cf65c655c13232dbd",
+  "outcome": "applied",
+  "raw_ref": "evidence/slice13-terminal-create-raw.json",
+  "result": {
+    "id": "439fcaef-1ea2-4342-b358-884e0b06333f",
+    "ok": true,
+    "result": {
+      "terminal": {
+        "handle": "term_eee5d482-3e51-4a52-9c80-a4573450c973",
+        "tabId": "ddaff93c-f674-4b06-8f78-93ba6ccef3b5",
+        "worktreeId": "aaa97e0d-5026-4e5c-95f8-bb420dcb4c65::D:/MyWorkTree/AbilityKit/issue6-final-verifier2-ccswitch",
+        "title": "Issue6 corrected exact-SHA verifier cc-switch",
+        "executionHostId": "local",
+        "incarnationId": "c285cfc0-cfa7-46dc-8905-61487bfde2d4",
+        "hostPlatform": "win32",
+        "surface": "visible"
+      }
+    },
+    "_meta": {
+      "runtimeId": "cfc0b549-ef00-4305-82a8-e90569f2eae4"
+    }
+  }
+}

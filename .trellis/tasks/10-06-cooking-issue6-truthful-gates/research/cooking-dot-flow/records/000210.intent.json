@@ -1,0 +1,20 @@
+{
+  "version": 1,
+  "flow_id": "6d3174fd-2b01-4136-8ea5-0b0cd0e2845d",
+  "seq": 210,
+  "op_id": "6d3174fd-2b01-4136-8ea5-0b0cd0e2845d:000210",
+  "kind": "intent",
+  "recorded_utc": "2026-10-06T21:03:31.887525Z",
+  "action": "orchestration-dispatch",
+  "target": "task_ffb7a4aa1c78:term_c29e1321-2b80-4a84-a6d1-463d4eaa3d4a",
+  "authorization_ref": "evidence/approval.md",
+  "payload_ref": "evidence/slice14-compiler-target-compat-repair-spec.md",
+  "preconditions": {
+    "run_id": "run_5ba664a5f016",
+    "head": "2b258b6ea2a40a9ac354b51847c749722564e8ba",
+    "dirty": false,
+    "model": "gpt-5.6-sol",
+    "provider": "custom",
+    "effort": "high"
+  }
+}

@@ -1,0 +1,15 @@
+{
+  "version": 1,
+  "flow_id": "6d3174fd-2b01-4136-8ea5-0b0cd0e2845d",
+  "seq": 169,
+  "op_id": "6d3174fd-2b01-4136-8ea5-0b0cd0e2845d:000169",
+  "kind": "intent",
+  "recorded_utc": "2026-10-06T17:05:42.765789Z",
+  "action": "orchestration-task-create",
+  "target": "run_5ba664a5f016:slice11-fresh-ccswitch",
+  "authorization_ref": "evidence/approval.md",
+  "payload_ref": "evidence/slice11-fresh-task-create-intent.json",
+  "preconditions": {
+    "run_id": "run_5ba664a5f016"
+  }
+}

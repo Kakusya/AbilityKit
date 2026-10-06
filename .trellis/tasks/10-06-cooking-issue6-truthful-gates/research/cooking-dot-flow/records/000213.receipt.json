@@ -1,0 +1,16 @@
+{
+  "version": 1,
+  "flow_id": "6d3174fd-2b01-4136-8ea5-0b0cd0e2845d",
+  "seq": 213,
+  "op_id": "6d3174fd-2b01-4136-8ea5-0b0cd0e2845d:000213",
+  "kind": "receipt",
+  "recorded_utc": "2026-10-06T21:36:09.480731Z",
+  "intent_hash": "a49a1fef93d8b07cfb3d786eef22c9a119a00a739cbfc5f55f9696dfc0a15879",
+  "outcome": "not-applied",
+  "raw_ref": "evidence/noop-audit-not-applied.json",
+  "result": {
+    "ok": true,
+    "applied": false,
+    "reason": "The audit placeholder was created accidentally during a read-only review batch; no external effect was attempted."
+  }
+}

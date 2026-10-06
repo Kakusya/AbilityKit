@@ -1,0 +1,5 @@
+{
+  "ok": true,
+  "applied": false,
+  "reason": "The audit placeholder was created accidentally during a read-only review batch; no external effect was attempted."
+}

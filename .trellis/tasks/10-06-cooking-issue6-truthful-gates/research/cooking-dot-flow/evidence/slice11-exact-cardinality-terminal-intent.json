@@ -1,0 +1,8 @@
+{
+  "operation": "terminal-create",
+  "runId": "run_5ba664a5f016",
+  "worktree": "D:\\MyWorkTree\\AbilityKit\\issue6-compiler-trace-repair-ccswitch",
+  "purpose": "fresh cc-switch worker for literal instance cardinality assertion",
+  "command": "codex --dangerously-bypass-approvals-and-sandbox -m gpt-5.6-sol -c model_provider=custom -c model_reasoning_effort=high",
+  "oldTerminalReused": false
+}

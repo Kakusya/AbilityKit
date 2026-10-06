@@ -1,0 +1,38 @@
+{
+  "id": "4b62e7b1-6ab5-4249-82ed-d5a7aa2eb8b1",
+  "ok": true,
+  "result": {
+    "runId": "run_5ba664a5f016",
+    "deliveryId": "delivery_c0a3fdd5c90c",
+    "messages": [
+      {
+        "id": "msg_db48dd66f96f",
+        "run_id": "run_5ba664a5f016",
+        "delivery_contract": "current_delivery",
+        "from_handle": "term_d5b3f7fc-4ced-4b87-8bd8-4bcbc5d31ae5",
+        "to_handle": "run:run_5ba664a5f016",
+        "subject": "Slice 12 exact-SHA verification complete",
+        "body": "Validated the target SHA and clean preconditions, ran the controls check once, preserved its original exit-1 failure, and wrote the owned verification report. The controls aborted because the fresh issue6-cooking-slice1 output tree was missing, so both genuine Cooking gates were correctly left NotRun; no source or tooling was changed. Final diff-check passed and the worktree contains only the new report; no further verification remains for this dispatch.",
+        "type": "worker_done",
+        "priority": "normal",
+        "thread_id": null,
+        "payload": "{\"taskId\":\"task_e4e0fe21491f\",\"dispatchId\":\"ctx_914b85e40183\",\"outcome\":\"succeeded\",\"filesModified\":[\".trellis/tasks/10-06-cooking-issue6-truthful-gates/research/slice12-exact-sha-verification-report.md\"],\"reportPath\":\".trellis/tasks/10-06-cooking-issue6-truthful-gates/research/slice12-exact-sha-verification-report.md\"}",
+        "created_at": "2026-10-06T20:28:23Z",
+        "delivered_at": null
+      }
+    ],
+    "count": 1,
+    "replayed": false,
+    "acknowledged": null,
+    "timedOut": false,
+    "cancelled": false,
+    "connectionLost": false,
+    "mutation": {
+      "requestId": "87f861b5-6f3a-44d6-864d-28139232797e",
+      "replayed": false
+    }
+  },
+  "_meta": {
+    "runtimeId": "cfc0b549-ef00-4305-82a8-e90569f2eae4"
+  }
+}

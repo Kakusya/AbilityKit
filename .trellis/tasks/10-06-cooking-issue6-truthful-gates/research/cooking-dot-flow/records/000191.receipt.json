@@ -1,0 +1,25 @@
+{
+  "version": 1,
+  "flow_id": "6d3174fd-2b01-4136-8ea5-0b0cd0e2845d",
+  "seq": 191,
+  "op_id": "6d3174fd-2b01-4136-8ea5-0b0cd0e2845d:000191",
+  "kind": "receipt",
+  "recorded_utc": "2026-10-06T20:21:01.321040Z",
+  "intent_hash": "3d5d4086fba716024f69236c504af5ed35c56f7b96e01999dba37cc4f987ee52",
+  "outcome": "applied",
+  "raw_ref": "evidence/push-2b258b6-raw.txt",
+  "result": {
+    "remoteSha": "2b258b6ea2a40a9ac354b51847c749722564e8ba",
+    "localSha": "2b258b6ea2a40a9ac354b51847c749722564e8ba",
+    "pr": {
+      "baseRefName": "master",
+      "headRefName": "Kakusya/issue6-cooking-truthful-gates",
+      "headRefOid": "2b258b6ea2a40a9ac354b51847c749722564e8ba",
+      "isDraft": true,
+      "mergeStateStatus": "UNKNOWN",
+      "mergeable": "UNKNOWN",
+      "state": "OPEN",
+      "url": "https://github.com/Kakusya/AbilityKit/pull/12"
+    }
+  }
+}

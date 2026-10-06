@@ -1,0 +1,15 @@
+{
+  "version": 1,
+  "flow_id": "6d3174fd-2b01-4136-8ea5-0b0cd0e2845d",
+  "seq": 190,
+  "op_id": "6d3174fd-2b01-4136-8ea5-0b0cd0e2845d:000190",
+  "kind": "intent",
+  "recorded_utc": "2026-10-06T20:18:12.506023Z",
+  "action": "orchestration-ack",
+  "target": "delivery_95991bb61649",
+  "authorization_ref": "evidence/approval.md",
+  "payload_ref": "evidence/slice11-exact-cardinality-worker-done-consumed.json",
+  "preconditions": {
+    "run_id": "run_5ba664a5f016"
+  }
+}

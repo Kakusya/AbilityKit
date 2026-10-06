@@ -1,0 +1,19 @@
+{
+  "id": "9a845451-2d1f-434b-8dda-6818c75ffb42",
+  "ok": true,
+  "result": {
+    "terminal": {
+      "handle": "term_f3030f57-7206-45ad-9887-bd7eab37bb27",
+      "tabId": "e021e240-ca7d-4f77-b5ed-59177c4dd0c6",
+      "worktreeId": "aaa97e0d-5026-4e5c-95f8-bb420dcb4c65::D:/MyWorkTree/AbilityKit/issue6-compiler-trace-repair-ccswitch",
+      "title": "Issue6 Slice11 exact cardinality cc-switch",
+      "executionHostId": "local",
+      "incarnationId": "ce1c22c0-8eed-4023-9363-8ba21b2dc4fa",
+      "hostPlatform": "win32",
+      "surface": "visible"
+    }
+  },
+  "_meta": {
+    "runtimeId": "cfc0b549-ef00-4305-82a8-e90569f2eae4"
+  }
+}

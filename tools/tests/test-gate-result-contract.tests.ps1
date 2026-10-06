@@ -168,6 +168,45 @@ function Invoke-RealCompilerControlBuild {
     return [pscustomobject]@{fixture=$Fixture;context=$context;result=$result;invocation=$invocation;target=$target;eventLog=$eventLog;barrierRoot=$barrierRoot;native=$native;completed=$completed;reason=$reason;manifest=$manifest;sdkVersion=$sdkVersion}
 }
 
+function New-GateMissingOptionalCompilerTargetFixture {
+    param([string]$Root)
+    $Root=[IO.Path]::GetFullPath($Root)
+    if (Test-Path -LiteralPath $Root) { throw 'Compiler compatibility fixture root must be new.' }
+    $null=New-Item -ItemType Directory -Path $Root
+    $project=@'
+<Project Sdk="Microsoft.NET.Sdk">
+  <PropertyGroup>
+    <TargetFramework>net10.0</TargetFramework>
+    <EnableNETAnalyzers>false</EnableNETAnalyzers>
+    <AnalysisLevel>none</AnalysisLevel>
+    <DefaultItemExcludes>$(DefaultItemExcludes);obj/**;bin/**</DefaultItemExcludes>
+  </PropertyGroup>
+</Project>
+'@
+    [IO.File]::WriteAllText((Join-Path $Root 'Compat.csproj'),$project,[Text.UTF8Encoding]::new($false))
+    [IO.File]::WriteAllText((Join-Path $Root 'Compat.cs'),'namespace CompilerCompatibility; public static class CompatValue { public static int Value => 1; }',[Text.UTF8Encoding]::new($false))
+    return [pscustomobject]@{root=$Root;project=(Join-Path $Root 'Compat.csproj')}
+}
+
+function Invoke-PreRepairCompilerTargetBuild {
+    param([string]$Directory,$Fixture)
+    $dotnet=(Get-Command dotnet -CommandType Application).Source
+    $sdkVersion=(& $dotnet --version).Trim()
+    $sdkRoot=Join-Path (Split-Path $dotnet) ('sdk/'+$sdkVersion)
+    $runRoot=Join-Path $Directory 'run';$null=New-Item -ItemType Directory -Path $runRoot
+    $resultId=[guid]::NewGuid().ToString();$runId=[guid]::NewGuid().ToString();$invocationId=[guid]::NewGuid().ToString()
+    $nodeRoot=Get-GateNodeRoot $runRoot $resultId;$invocationRoot=Join-Path (Join-Path $nodeRoot 'bi') $invocationId.Replace('-','').Substring(0,12)
+    $null=New-Item -ItemType Directory -Path $invocationRoot
+    $target=Join-Path $invocationRoot 'compiler.targets';Save-GateCompilerTarget $target
+    $targetText=[IO.File]::ReadAllText($target)
+    $targetText=$targetText.Replace('DependsOnTargets="GenerateMSBuildEditorConfigFile" Condition=', 'DependsOnTargets="AddGlobalAnalyzerConfigForPackage_MicrosoftCodeAnalysisNetAnalyzers;AddGlobalAnalyzerConfigForPackage_MicrosoftCodeAnalysisCSharpCodeStyle;GenerateMSBuildEditorConfigFile" Condition=')
+    [IO.File]::WriteAllText($target,$targetText,[Text.UTF8Encoding]::new($false))
+    $eventLog=Join-Path $invocationRoot 'build.binlog'
+    $args=@('msbuild',$Fixture.project,'-t:Build','--nologo','-p:Configuration=Debug',('-bl:'+$eventLog+';ProjectImports=None'),('-p:CustomAfterMicrosoftCommonTargets='+$target),('-p:AbilityKitCompilerCaptureRoot='+$invocationRoot),('-p:AbilityKitCompilerRunId='+$runId),('-p:AbilityKitCompilerResultId='+$resultId),('-p:AbilityKitCompilerInvocationId='+$invocationId))
+    $native=Invoke-GateNative $dotnet $args $invocationRoot 'native' $Fixture.root 120 $null
+    return [pscustomobject]@{target=$target;native=$native;stderr=[IO.File]::ReadAllText($native.stderrPath);stdout=[IO.File]::ReadAllText($native.stdoutPath);sdkVersion=$sdkVersion}
+}
+
 function Record-CompilerBoolean {
     param([string]$Name,[bool]$Actual,$Evidence,$Native)
     $directory=New-ControlDirectory
@@ -194,6 +233,17 @@ foreach ($instance in $realInstances) {
     if ([IO.Path]::GetFullPath($instance.project) -cne $instance.project -or [IO.Path]::GetFullPath($instance.target.path) -cne $instance.target.path -or (ConvertTo-GateJson @($instance.inputs.path)) -cne (ConvertTo-GateJson @($instance.inputs.path | Sort-Object))) { $orderedAndNormalized=$false }
 }
 Record-CompilerBoolean 'deterministic-order-and-normalized-full-paths' $orderedAndNormalized ([pscustomobject]@{instances=$realInstances.Count;inputFingerprint=$realSeed.completed.evidence.inputFingerprint}) $realSeed.native
+
+$compatibilityDirectory=New-ControlDirectory
+$compatibilityFixture=New-GateMissingOptionalCompilerTargetFixture (Join-Path $compatibilityDirectory 'fixture')
+$compatibilityDotnet=(Get-Command dotnet -CommandType Application).Source
+$compatibilityRestoreDirectory=Join-Path $compatibilityDirectory 'restore';$null=New-Item -ItemType Directory -Path $compatibilityRestoreDirectory
+$compatibilityRestore=Invoke-GateNative $compatibilityDotnet @('restore',$compatibilityFixture.project,'--nologo') $compatibilityRestoreDirectory 'native' $compatibilityFixture.root 120 $null
+$preRepair=Invoke-PreRepairCompilerTargetBuild (Join-Path $compatibilityDirectory 'pre-repair') $compatibilityFixture
+$repaired=Invoke-RealCompilerControlBuild (Join-Path $compatibilityDirectory 'repaired') $compatibilityFixture -NoBarrier
+$compatibilityManifest=$repaired.manifest
+$compatibilityPassed=$compatibilityRestore.exitConfirmed -and $compatibilityRestore.processExitCode -eq 0 -and $preRepair.native.exitConfirmed -and $preRepair.native.processExitCode -ne 0 -and ($preRepair.stdout -match 'MSB4057' -or $preRepair.stderr -match 'MSB4057') -and $repaired.native.exitConfirmed -and $repaired.native.processExitCode -eq 0 -and -not $repaired.reason -and $repaired.completed -and @($compatibilityManifest.coreCompile).Count -eq 1 -and @($compatibilityManifest.csc).Count -eq 1 -and @($compatibilityManifest.captures).Count -eq 1
+Record-Control 'compiler-trace-real' 'missing-optional-analyzer-targets-native-regression' $true ([bool]$compatibilityPassed) $compatibilityDirectory $repaired.native.command $repaired.native.processExitCode ([pscustomobject]@{restoreExit=$compatibilityRestore.processExitCode;restoreExitConfirmed=$compatibilityRestore.exitConfirmed;preRepairExit=$preRepair.native.processExitCode;preRepairExitConfirmed=$preRepair.native.exitConfirmed;preRepairErrorMatched=[bool]($preRepair.stdout -match 'MSB4057' -or $preRepair.stderr -match 'MSB4057');preRepairStdout=$preRepair.stdout;preRepairStderr=$preRepair.stderr;repairedExit=$repaired.native.processExitCode;repairedExitConfirmed=$repaired.native.exitConfirmed;coreCompile=@($compatibilityManifest.coreCompile).Count;csc=@($compatibilityManifest.csc).Count;captures=@($compatibilityManifest.captures).Count;reason=$repaired.reason;eventLog=$repaired.eventLog})
 
 $legacyDirectory=New-ControlDirectory
 $legacyFixture=New-GateRealCompilerFixture (Join-Path $legacyDirectory 'fixture')

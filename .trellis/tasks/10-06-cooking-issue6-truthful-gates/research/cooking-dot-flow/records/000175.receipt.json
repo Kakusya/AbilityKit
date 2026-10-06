@@ -1,0 +1,22 @@
+{
+  "version": 1,
+  "flow_id": "6d3174fd-2b01-4136-8ea5-0b0cd0e2845d",
+  "seq": 175,
+  "op_id": "6d3174fd-2b01-4136-8ea5-0b0cd0e2845d:000175",
+  "kind": "receipt",
+  "recorded_utc": "2026-10-06T17:31:36.780295Z",
+  "intent_hash": "7e9ddd3c33d49421329a48521ad2134bb4dc340ba9f7721fce83734cced91e3e",
+  "outcome": "applied",
+  "raw_ref": "evidence/slice11-feasibility-reply-raw.json",
+  "result": {
+    "ok": true,
+    "requestId": "6b8e603c-dd51-4c6e-8e4d-345919b50d05",
+    "replayed": false,
+    "questionMessageId": "msg_e64eb47f3b29",
+    "answerMessageId": "msg_0960abdaf24c",
+    "questionStatus": "answered",
+    "dispatchId": "ctx_32b2fa6ebafa",
+    "decision": "acknowledged-resume",
+    "bodyRef": "evidence/slice11-feasibility-reply.txt"
+  }
+}

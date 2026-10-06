@@ -1,0 +1,31 @@
+{
+  "version": 1,
+  "flow_id": "6d3174fd-2b01-4136-8ea5-0b0cd0e2845d",
+  "seq": 173,
+  "op_id": "6d3174fd-2b01-4136-8ea5-0b0cd0e2845d:000173",
+  "kind": "receipt",
+  "recorded_utc": "2026-10-06T17:11:19.233168Z",
+  "intent_hash": "804323c5d5b68a287ad4414dddeeafda872aa161ef1da4fb427f93c56b52c286",
+  "outcome": "applied",
+  "raw_ref": "evidence/slice11-selected-session-worker-start-raw.json",
+  "result": {
+    "cliExitCode": 0,
+    "ok": true,
+    "requestId": "8dd371ff-4b78-4664-9f49-bada6e69410b",
+    "replayed": false,
+    "runId": "run_5ba664a5f016",
+    "taskId": "task_a94217d9d800",
+    "dispatchId": "ctx_32b2fa6ebafa",
+    "state": "ready",
+    "stage": "input_accepted",
+    "turnStart": "observed",
+    "terminal": "term_d33e94ef-cdd0-4dd1-8421-263cb73f9274",
+    "worktreeId": "aaa97e0d-5026-4e5c-95f8-bb420dcb4c65::D:/MyWorkTree/AbilityKit/issue6-compiler-trace-repair-ccswitch",
+    "processIncarnation": "7afd320d-10a5-42dc-95b8-850b509b2f07",
+    "promptStages": [
+      "input_accepted",
+      "turn_started"
+    ],
+    "residualResources": []
+  }
+}

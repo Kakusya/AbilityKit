@@ -1,0 +1,30 @@
+{
+  "id": "d2032f92-80e7-47ce-a57a-d8f71c06fe91",
+  "ok": true,
+  "result": {
+    "task": {
+      "id": "task_487cc6e56eb2",
+      "run_id": "run_5ba664a5f016",
+      "parent_id": null,
+      "created_by_terminal_handle": "term_a345586c-d76c-4d68-afdf-f3a58f9686c1",
+      "created_by_pane_key": "c7c2707b-c337-40a6-835c-d0db787ce9af:b4640822-995e-46b5-a63e-db04e94565fa",
+      "created_by_process_incarnation": "aaa97e0d-5026-4e5c-95f8-bb420dcb4c65::D:/MyWorkTree/AbilityKit@@454b2342:753afb7a-f7c3-433b-b372-88c707ccf23d",
+      "created_by_run_generation": 2,
+      "task_title": "Issue 6 Slice 11 exact instance cardinality",
+      "display_name": "Issue6 Slice11 cardinality",
+      "spec": "# Slice 11 exact instance cardinality final review fix\n\nUse a fresh cc-switch Codex session in `D:/MyWorkTree/AbilityKit/issue6-compiler-trace-repair-ccswitch`. Do not communicate with or reuse any settled terminal.\n\n## Scope\n\nOwn only:\n\n- `tools/tests/test-gate-result-contract.tests.ps1`\n- `.trellis/tasks/10-06-cooking-issue6-truthful-gates/research/slice11-compiler-trace-repair-report.md`\n\nRead other Slice 11 files and receipts as needed; do not modify them. Cooking only. Do not modify examples, Unity, projects, dependencies, gates, SDKs, packages, or business code. Preserve all existing edits.\n\n## Required fix\n\nIn the unchanged `current-build-test-JSON-roundtrip` control, require the nonzero unique `Generated.opaque` identity count derived from `compilerEvidence.instances` to equal `compilerEvidence.instances.Count`, as well as equal the aggregate `compilerInputs` count with the existing path/length/SHA-256 bijection. This explicitly proves every instance contributes exactly one matching `Generated.opaque`; the current fixture's observed counts are Tests leaf `2 instances / 2 instance opaque / 2 aggregate opaque` and Build leaf `1 / 1 / 1`.\n\nUpdate the report to state the literal instance cardinality condition and record final receipts. Preserve prior red and green evidence.\n\n## Acceptance\n\n- Parse checks and `git diff --check` pass.\n- Compiler-trace-focused controls pass.\n- Complete isolated suite passes exactly `289/289`, retains all 249 original names with no duplicates, source-before/source-after equal, console width Passed.\n- Both genuine Cooking gates remain NotRun.\n- Do not commit or push.\n- Check the inbox, then send exactly one `worker_done` with Task and Dispatch IDs.\n",
+      "status": "ready",
+      "deps": "[]",
+      "result": null,
+      "created_at": "2026-10-06 19:58:21",
+      "completed_at": null
+    },
+    "mutation": {
+      "requestId": "f961b491-d078-4813-b71e-cd5f1380924d",
+      "replayed": false
+    }
+  },
+  "_meta": {
+    "runtimeId": "cfc0b549-ef00-4305-82a8-e90569f2eae4"
+  }
+}

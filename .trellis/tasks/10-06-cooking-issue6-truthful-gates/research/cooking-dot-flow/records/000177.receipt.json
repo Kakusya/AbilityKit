@@ -1,0 +1,39 @@
+{
+  "version": 1,
+  "flow_id": "6d3174fd-2b01-4136-8ea5-0b0cd0e2845d",
+  "seq": 177,
+  "op_id": "6d3174fd-2b01-4136-8ea5-0b0cd0e2845d:000177",
+  "kind": "receipt",
+  "recorded_utc": "2026-10-06T17:50:38.363511Z",
+  "intent_hash": "7aded61047ac555923bfa55918752b605802bb0c99fcbbb4144c477c5965e7b8",
+  "outcome": "applied",
+  "raw_ref": "evidence/slice11-main-review-followup-raw.json",
+  "result": {
+    "id": "ebe460fe-cdce-4452-adcd-f7e38c8c4423",
+    "ok": true,
+    "result": {
+      "message": {
+        "id": "msg_d4443f378843",
+        "run_id": "run_5ba664a5f016",
+        "delivery_contract": "current_delivery",
+        "from_handle": "term_a345586c-d76c-4d68-afdf-f3a58f9686c1",
+        "to_handle": "dispatch:ctx_32b2fa6ebafa",
+        "subject": "Slice11 exact-cardinality review",
+        "body": "Main read-only review checkpoint: do not weaken `current-build-test-JSON-roundtrip` to `Generated.opaque >= 1`; that would let one real compiler instance disappear while the control still passes. Keep the existing control name and positive expectation, but bind its generated-input count to the independently observed `compilerEvidence.instances` (or another exact expected cardinality) so every preserved instance is represented. Also retain the required real-MSBuild negative case where one real CoreCompile instance deliberately bypasses the capture hook and the structured event log rejects the omission. Continue only within the approved six-file/report boundary, delete the feasibility probe directory before final scope audit, run the complete `249 + N` controls plus the genuine concurrent fixture, do not run the two real Cooking gates, then send exactly one worker_done.\n",
+        "type": "status",
+        "priority": "normal",
+        "thread_id": null,
+        "payload": "{\"taskId\":\"task_a94217d9d800\",\"dispatchId\":\"ctx_32b2fa6ebafa\"}",
+        "created_at": "2026-10-06T17:50:28Z",
+        "delivered_at": null
+      },
+      "mutation": {
+        "requestId": "13be72dd-4eca-4dcb-bb26-4c06fad7340b",
+        "replayed": false
+      }
+    },
+    "_meta": {
+      "runtimeId": "cfc0b549-ef00-4305-82a8-e90569f2eae4"
+    }
+  }
+}

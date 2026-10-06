@@ -1,0 +1,17 @@
+{
+  "version": 1,
+  "flow_id": "6d3174fd-2b01-4136-8ea5-0b0cd0e2845d",
+  "seq": 204,
+  "op_id": "6d3174fd-2b01-4136-8ea5-0b0cd0e2845d:000204",
+  "kind": "intent",
+  "recorded_utc": "2026-10-06T20:55:41.757606Z",
+  "action": "worker-retain",
+  "target": "ctx_b0735a8376ba",
+  "authorization_ref": "evidence/approval.md",
+  "payload_ref": "evidence/slice13-worker-done-consumed.json",
+  "preconditions": {
+    "run_id": "run_5ba664a5f016",
+    "task_id": "task_4cd508b98f86",
+    "outcome": "failed"
+  }
+}

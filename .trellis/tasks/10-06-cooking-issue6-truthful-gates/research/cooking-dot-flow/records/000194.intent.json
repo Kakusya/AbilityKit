@@ -1,0 +1,15 @@
+{
+  "version": 1,
+  "flow_id": "6d3174fd-2b01-4136-8ea5-0b0cd0e2845d",
+  "seq": 194,
+  "op_id": "6d3174fd-2b01-4136-8ea5-0b0cd0e2845d:000194",
+  "kind": "intent",
+  "recorded_utc": "2026-10-06T20:23:44.581398Z",
+  "action": "terminal-input",
+  "target": "term_d5b3f7fc-4ced-4b87-8bd8-4bcbc5d31ae5",
+  "authorization_ref": "evidence/approval.md",
+  "payload_ref": "evidence/slice12-exact-sha-verifier-spec.md",
+  "preconditions": {
+    "run_id": "run_5ba664a5f016"
+  }
+}

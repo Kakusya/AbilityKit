@@ -1,0 +1,15 @@
+{
+  "version": 1,
+  "flow_id": "6d3174fd-2b01-4136-8ea5-0b0cd0e2845d",
+  "seq": 179,
+  "op_id": "6d3174fd-2b01-4136-8ea5-0b0cd0e2845d:000179",
+  "kind": "intent",
+  "recorded_utc": "2026-10-06T19:12:20.276484Z",
+  "action": "terminal-create",
+  "target": "worktree:issue6-compiler-trace-repair-ccswitch",
+  "authorization_ref": "evidence/approval.md",
+  "payload_ref": "evidence/slice11-review-fix-terminal-create-intent.json",
+  "preconditions": {
+    "run_id": "run_5ba664a5f016"
+  }
+}

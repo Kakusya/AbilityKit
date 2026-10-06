@@ -1,0 +1,17 @@
+{
+  "version": 1,
+  "flow_id": "6d3174fd-2b01-4136-8ea5-0b0cd0e2845d",
+  "seq": 209,
+  "op_id": "6d3174fd-2b01-4136-8ea5-0b0cd0e2845d:000209",
+  "kind": "intent",
+  "recorded_utc": "2026-10-06T21:02:42.956503Z",
+  "action": "orchestration-task-create",
+  "target": "run_5ba664a5f016",
+  "authorization_ref": "evidence/approval.md",
+  "payload_ref": "evidence/slice14-compiler-target-compat-repair-spec.md",
+  "preconditions": {
+    "run_id": "run_5ba664a5f016",
+    "worker_terminal": "term_c29e1321-2b80-4a84-a6d1-463d4eaa3d4a",
+    "base_sha": "2b258b6ea2a40a9ac354b51847c749722564e8ba"
+  }
+}
