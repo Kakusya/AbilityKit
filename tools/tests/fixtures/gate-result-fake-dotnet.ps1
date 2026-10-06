@@ -66,14 +66,54 @@ if ($stage -ceq 'build') {
         [IO.File]::WriteAllText($item.targetPath,'SYNTHETIC BINARY '+$item.assemblyName)
         [IO.File]::WriteAllText((Join-Path (Split-Path $item.targetPath) 'dependency.dll'),'SYNTHETIC DEPENDENCY')
     }
-    $traceArg=@($argv | Where-Object { $_ -like '-p:AbilityKitCompilerTracePath=*' })
-    if ($traceArg.Count -ne 1) { throw 'Fake compile requires explicit trace output.' }
-    $tracePath=$traceArg[0].Substring('-p:AbilityKitCompilerTracePath='.Length)
+    function GetBuildProperty([string]$Name) {
+        $values=@($argv | Where-Object { $_ -like ('-p:'+$Name+'=*') })
+        if ($values.Count -ne 1) { throw ('Fake compile requires '+$Name+'.') }
+        return $values[0].Substring(('-p:'+$Name+'=').Length)
+    }
+    function GetFakeHash([string]$Path) { return (Get-FileHash -LiteralPath $Path -Algorithm SHA256).Hash.ToLowerInvariant() }
+    function GetFakeTextHash([string]$Text) {
+        $hash=[Security.Cryptography.SHA256]::Create()
+        try { return ([BitConverter]::ToString($hash.ComputeHash([Text.Encoding]::UTF8.GetBytes($Text)))).Replace('-','').ToLowerInvariant() }
+        finally { $hash.Dispose() }
+    }
+    $captureRoot=GetBuildProperty 'AbilityKitCompilerCaptureRoot'
+    $runId=GetBuildProperty 'AbilityKitCompilerRunId'; $resultId=GetBuildProperty 'AbilityKitCompilerResultId'; $invocationId=GetBuildProperty 'AbilityKitCompilerInvocationId'
+    $binlogArgs=@($argv | Where-Object { $_ -like '-bl:*' })
+    if ($binlogArgs.Count -ne 1) { throw 'Fake compile requires one structured event log.' }
+    $binlogPath=($binlogArgs[0].Substring(4).Split(';'))[0]
     $generated=Join-Path (Split-Path $p.assetsPath) 'Generated.opaque'
     [IO.File]::WriteAllText($generated,'generated actual compiler input')
-    $traceInputs=@($generated,$p.project)+@($p.compile)+@($p.imports)
-    $trace=@(foreach ($file in $traceInputs) { $file+'|'+(Get-FileHash -LiteralPath $file -Algorithm SHA256).Hash }) -join "`n"
-    [IO.File]::WriteAllText($tracePath,$trace)
+    $projectSet=@($p)
+    foreach ($reference in @($p.references)) {
+        $matching=@($context.projectData | Where-Object project -ieq $reference)
+        if ($matching.Count -eq 1) { $projectSet+=$matching[0] }
+    }
+    $projects=@(); $targets=@(); $tasks=@(); $captures=@(); $projectContext=100
+    foreach ($item in $projectSet) {
+        $projectContext++; $targetId=$projectContext+1000; $taskId=$projectContext+2000; $captureId=[guid]::NewGuid().ToString()
+        $itemGenerated=Join-Path (Split-Path $item.assetsPath) 'Generated.opaque'
+        if (-not [IO.File]::Exists($itemGenerated)) { [IO.File]::WriteAllText($itemGenerated,'generated actual compiler input '+$item.assemblyName) }
+        $inputs=@($itemGenerated,$item.project)+@($item.compile)+@($item.imports) | Sort-Object -Unique
+        $records=@('AKCT|1',('owner|'+$runId+'|'+$resultId+'|'+$invocationId+'|'+$captureId),('project|'+[Uri]::EscapeDataString([IO.Path]::GetFullPath($item.project))),('dimensions|'+[Uri]::EscapeDataString($item.tfm)+'|'+[Uri]::EscapeDataString('Debug')+'|'+[Uri]::EscapeDataString('AnyCPU')+'|'+[Uri]::EscapeDataString('')),('target|'+[Uri]::EscapeDataString([IO.Path]::GetFullPath($item.targetPath))))
+        $identities=@()
+        foreach ($file in $inputs) {
+            $full=[IO.Path]::GetFullPath($file); $length=(Get-Item -LiteralPath $full).Length; $sha=GetFakeHash $full
+            $records+=('input|'+[Uri]::EscapeDataString($full)+'|'+$length+'|'+$sha)
+            $identities+=[pscustomobject]@{path=$full;bytes=$length;sha256=$sha}
+        }
+        $temp=Join-Path $captureRoot ('pending/'+$captureId+'.tmp'); $complete=Join-Path $captureRoot ('completed/'+$captureId+'.complete')
+        [IO.File]::WriteAllLines($temp,$records,[Text.UTF8Encoding]::new($false)); $null=GetFakeHash $temp; [IO.File]::Move($temp,$complete)
+        $eventContext=[pscustomobject]@{submissionId=1;nodeId=1;projectInstanceId=$projectContext;projectContextId=$projectContext;targetId=$targetId;taskId=$taskId;evaluationId=$projectContext}
+        $propertyFingerprint=GetFakeTextHash ('Configuration' + [char]0 + (GetFakeTextHash 'Debug') + "`n" + 'TargetFramework' + [char]0 + (GetFakeTextHash $item.tfm))
+        $projects+=[pscustomobject]@{context=$eventContext;project=[IO.Path]::GetFullPath($item.project);globalProperties=@();propertiesFingerprint=$propertyFingerprint}
+        $targets+=[pscustomobject]@{context=$eventContext;project=[IO.Path]::GetFullPath($item.project);state='Finished';succeeded=$true}
+        $tasks+=[pscustomobject]@{context=$eventContext;project=[IO.Path]::GetFullPath($item.project);succeeded=$true;inputs=$identities}
+        $captures+=[pscustomobject]@{runId=$runId;resultId=$resultId;invocationId=$invocationId;captureId=$captureId;project=[IO.Path]::GetFullPath($item.project);tfm=$item.tfm;configuration='Debug';platform='AnyCPU';runtimeIdentifier='';context=$eventContext}
+    }
+    if ($context.mode -ceq 'compiler-evidence-fail-zero') { $captures=@($captures | Select-Object -Skip 1) }
+    $eventLog=[pscustomobject]@{schemaVersion=1;runId=$runId;resultId=$resultId;invocationId=$invocationId;complete=$true;buildStarted=1;buildFinished=1;projects=$projects;coreCompile=$targets;csc=$tasks;captures=$captures;errors=@()}
+    [IO.File]::WriteAllText($binlogPath,(ConvertTo-Json -InputObject $eventLog -Depth 20 -Compress),[Text.UTF8Encoding]::new($false))
     if ($context.mode -ceq 'config-change-build') { [IO.File]::AppendAllText($p.configPaths[0],'changed config during build') }
     if ($context.mode -ceq 'source-change') { [IO.File]::AppendAllText($p.compile[0],'changed') }
     if ($context.mode -ceq 'import-change') { [IO.File]::AppendAllText($p.preprocessedOnlyImports[0],'changed import') }

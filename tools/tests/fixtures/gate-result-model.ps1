@@ -70,3 +70,84 @@ function Save-GateControlFixture {
     [IO.File]::WriteAllText($Fixture.contextPath,(ConvertTo-GateJson $Fixture.context))
     [IO.File]::WriteAllText($Fixture.configPath,(ConvertTo-GateJson $Fixture.config))
 }
+
+function New-GateRealCompilerFixture {
+    param([string]$Root)
+    $Root=[IO.Path]::GetFullPath($Root)
+    if (Test-Path -LiteralPath $Root) { throw 'Real compiler fixture root must be new.' }
+    $null=New-Item -ItemType Directory -Path $Root
+    foreach ($name in @('Shared','Left','Right')) { $null=New-Item -ItemType Directory -Path (Join-Path $Root $name) }
+    $shared=@'
+<Project Sdk="Microsoft.NET.Sdk">
+  <PropertyGroup><TargetFramework>net10.0</TargetFramework><Flavor Condition="'$(Flavor)' == ''">Default</Flavor><AssemblyName>Shared.$(Flavor)</AssemblyName><DefaultItemExcludes>$(DefaultItemExcludes);obj/**;bin/**</DefaultItemExcludes></PropertyGroup>
+</Project>
+'@
+    $props=@'
+<Project>
+  <PropertyGroup Condition="'$(MSBuildProjectName)' == 'Shared'">
+    <BaseOutputPath>bin/$(Flavor)/</BaseOutputPath>
+    <BaseIntermediateOutputPath>obj/$(Flavor)/</BaseIntermediateOutputPath>
+    <MSBuildProjectExtensionsPath>obj/$(Flavor)/</MSBuildProjectExtensionsPath>
+  </PropertyGroup>
+</Project>
+'@
+    $side=@'
+<Project Sdk="Microsoft.NET.Sdk">
+  <PropertyGroup><TargetFramework>net10.0</TargetFramework><Flavor>__SIDE__</Flavor></PropertyGroup>
+  <ItemGroup><ProjectReference Include="../Shared/Shared.csproj" AdditionalProperties="Flavor=__SIDE__" /></ItemGroup>
+</Project>
+'@
+    $rootProject=@'
+<Project>
+  <ItemGroup>
+    <BuildProject Include="Left/Left.csproj"><AdditionalProperties>Flavor=Left</AdditionalProperties></BuildProject>
+    <BuildProject Include="Right/Right.csproj"><AdditionalProperties>Flavor=Right;AbilityKitCompilerCaptureDisabled=$(BypassSecondCapture)</AdditionalProperties></BuildProject>
+  </ItemGroup>
+  <Target Name="Restore" Condition="'$(SkipFixtureRestore)' != 'true'"><MSBuild Projects="@(BuildProject)" Targets="Restore" BuildInParallel="true" Properties="Configuration=$(Configuration)" /></Target>
+  <Target Name="Build" DependsOnTargets="Restore"><MSBuild Projects="@(BuildProject)" Targets="Build" BuildInParallel="true" Properties="Configuration=$(Configuration)" /></Target>
+</Project>
+'@
+    $generated=@'
+<Project>
+  <Target Name="AbilityKitGenerateFixtureInput" BeforeTargets="AbilityKitCaptureCompilerInputs">
+    <MakeDir Directories="$(IntermediateOutputPath)" />
+    <WriteLinesToFile File="$(IntermediateOutputPath)Generated.$(MSBuildProjectName).$(Flavor).g.cs" Lines="namespace CompilerFixture { internal static class Generated_$(MSBuildProjectName)_$(Flavor) { } }" Overwrite="true" Encoding="UTF-8" Condition="!Exists('$(IntermediateOutputPath)Generated.$(MSBuildProjectName).$(Flavor).g.cs')" />
+    <ItemGroup><Compile Include="$(IntermediateOutputPath)Generated.$(MSBuildProjectName).$(Flavor).g.cs" /></ItemGroup>
+  </Target>
+</Project>
+'@
+    $barrier=@'
+param([string]$Root,[string]$CaptureId,[string]$Project,[string]$Mode)
+$ErrorActionPreference='Stop'
+$null=New-Item -ItemType Directory -Path $Root -Force
+[IO.File]::WriteAllText((Join-Path $Root ($CaptureId+'.ready')),$Project)
+$deadline=[DateTime]::UtcNow.AddSeconds(12)
+while (@(Get-ChildItem -LiteralPath $Root -Filter '*.ready').Count -lt 2) {
+    if ([DateTime]::UtcNow -gt $deadline) { throw 'BarrierTimeout' }
+    Start-Sleep -Milliseconds 25
+}
+if ($Mode -ceq 'OldSharedAppend') {
+    $leader=Join-Path $Root 'leader'
+    try { $claim=[IO.File]::Open($leader,[IO.FileMode]::CreateNew,[IO.FileAccess]::Write,[IO.FileShare]::None); $claim.Dispose(); $isLeader=$true } catch [IO.IOException] { $isLeader=$false }
+    $locked=Join-Path $Root 'locked'; $shared=Join-Path $Root 'legacy-shared.txt'
+    if ($isLeader) {
+        $stream=[IO.File]::Open($shared,[IO.FileMode]::OpenOrCreate,[IO.FileAccess]::Write,[IO.FileShare]::None)
+        try { [IO.File]::WriteAllText($locked,'locked'); Start-Sleep -Seconds 3 } finally { $stream.Dispose() }
+    } else {
+        while (-not [IO.File]::Exists($locked)) { if ([DateTime]::UtcNow -gt $deadline) { throw 'LegacyLockTimeout' }; Start-Sleep -Milliseconds 20 }
+        [IO.File]::AppendAllText($shared,$CaptureId)
+    }
+}
+'@
+    [IO.File]::WriteAllText((Join-Path $Root 'Root.proj'),$rootProject,[Text.UTF8Encoding]::new($false))
+    [IO.File]::WriteAllText((Join-Path $Root 'Directory.Build.props'),$props,[Text.UTF8Encoding]::new($false))
+    [IO.File]::WriteAllText((Join-Path $Root 'Directory.Build.targets'),$generated,[Text.UTF8Encoding]::new($false))
+    [IO.File]::WriteAllText((Join-Path $Root 'barrier.ps1'),$barrier,[Text.UTF8Encoding]::new($false))
+    [IO.File]::WriteAllText((Join-Path $Root 'Shared/Shared.csproj'),$shared,[Text.UTF8Encoding]::new($false))
+    [IO.File]::WriteAllText((Join-Path $Root 'Shared/Shared.cs'),'namespace CompilerFixture; public static class SharedValue { public static int Value => 1; }',[Text.UTF8Encoding]::new($false))
+    foreach ($name in @('Left','Right')) {
+        [IO.File]::WriteAllText((Join-Path $Root ($name+'/'+$name+'.csproj')),$side.Replace('__SIDE__',$name),[Text.UTF8Encoding]::new($false))
+        [IO.File]::WriteAllText((Join-Path $Root ($name+'/'+$name+'.cs')),('namespace CompilerFixture; public static class '+$name+'Value { public static int Value => SharedValue.Value; }'),[Text.UTF8Encoding]::new($false))
+    }
+    return [pscustomobject]@{root=$Root;project=(Join-Path $Root 'Root.proj');barrier=(Join-Path $Root 'barrier.ps1')}
+}
