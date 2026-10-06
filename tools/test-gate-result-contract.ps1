@@ -660,6 +660,7 @@ function Assert-GateProducerMembership {
     # cannot choose another owned, valid receipt with a smaller output set.
     if ($build.mode -ceq 'Reused') { Assert-GateEqual $p.build.reuse $build.reuse 'trusted reused producer origin' }
     Assert-GateBinaryIdentitySet $build.outputs $p.build.outputs $Result $Context 'independent producer -> build.outputs'
+    Assert-GateEqual $p.compilerEvidence $producer.compilerEvidence 'trusted compiler evidence source'
 }
 
 function Assert-GateProvenance {
@@ -712,18 +713,7 @@ function Assert-GateProvenance {
     if ($p.restore.mode -ceq 'Executed' -and $p.build.mode -ceq 'Executed' -and [DateTimeOffset]$p.build.startedAt -lt [DateTimeOffset]$p.restore.endedAt) { throw 'Restore/build order contradiction.' }
     Assert-GateInputs $p.restore.outputs
     Assert-GateInputs $p.build.outputs
-    if (-not $p.compilerInputs -or -not $p.compilerTraceArtifact) { throw 'Actual compiler input trace absent.' }
-    $trace=Assert-GateArtifact $p.compilerTraceArtifact $Result $Context.runRoot
-    $traced=Get-GateCompilerTrace $trace
-    foreach ($entry in $p.compilerInputs) {
-        $match=@($traced | Where-Object { $_.path -ieq $entry.path })
-        if (-not $match.Count -or @($match | Where-Object { $_.sha256 -cne $entry.sha256 }).Count) { throw 'Compiler input trace/hash mismatch.' }
-        if ($entry.proofKind) { Assert-GateConfigProof $entry @($p.closure.configPaths) } else {
-            $null=Assert-GateArtifact $entry.artifact $Result $Context.runRoot
-            if ($entry.artifact.sha256 -cne $entry.sha256) { throw 'Compiler input archive mismatch.' }
-        }
-    }
-    if (@($traced.path | Sort-Object -Unique).Count -ne $p.compilerInputs.Count) { throw 'Incomplete actual compiler closure.' }
+    Assert-GateCompilerEvidence $Result $Context
     Assert-GateInputs $p.compilerInputs
     $assembly=@($p.build.outputs | Where-Object { [IO.Path]::GetFullPath($_.path) -ieq [IO.Path]::GetFullPath($p.assembly) })
     if ($assembly.Count -ne 1) { throw 'Build target binary absent.' }
@@ -799,6 +789,32 @@ function Assert-GateResult {
     return $root
 }
 
+function Copy-GateCompilerEvidence {
+    param($Prior,$OldResult,[string]$PriorRoot,$Result,$Context)
+    if (-not $Prior.compilerEvidence -or -not $Prior.compilerInputs.Count) { throw 'Reuse compiler evidence missing.' }
+    Assert-GateCompilerEvidence $OldResult ([pscustomobject]@{runRoot=$PriorRoot})
+    $copy=ConvertTo-GateJson $Prior.compilerEvidence | ConvertFrom-Json
+    $copy.mode='Reused'; $copy.runId=$Result.runId; $copy.resultId=$Result.resultId
+    $copy.origin=[pscustomobject]@{runId=$Prior.compilerEvidence.runId;resultId=$Prior.compilerEvidence.resultId;invocationId=$Prior.compilerEvidence.invocationId;aggregateSha256=$Prior.compilerEvidence.aggregateArtifact.sha256}
+    function Copy-CompilerArtifact($artifact,[string]$label) {
+        $source=Assert-GateArtifact $artifact $OldResult $PriorRoot
+        $extension=[IO.Path]::GetExtension($source); if (-not $extension) { $extension='.bin' }
+        $destination=Join-Path (Get-GateNodeRoot $Context.runRoot $Result.resultId) ('reuse-compiler-'+$Result.artifacts.Count+$extension)
+        Copy-Item -LiteralPath $source -Destination $destination
+        return Add-GateArtifact $Result $Context.runRoot $destination $label
+    }
+    $copy.targetArtifact=Copy-CompilerArtifact $Prior.compilerEvidence.targetArtifact 'reused-compiler-target'
+    $copy.eventLogArtifact=Copy-CompilerArtifact $Prior.compilerEvidence.eventLogArtifact 'reused-compiler-event-log'
+    $copy.eventManifestArtifact=Copy-CompilerArtifact $Prior.compilerEvidence.eventManifestArtifact 'reused-compiler-event-manifest'
+    $reader=@(); foreach ($artifact in @($Prior.compilerEvidence.readerArtifacts)) { $reader+=Copy-CompilerArtifact $artifact 'reused-compiler-reader' }; $copy.readerArtifacts=$reader
+    $captures=@(); foreach ($artifact in @($Prior.compilerEvidence.captureArtifacts)) { $captures+=Copy-CompilerArtifact $artifact 'reused-compiler-capture' }; $copy.captureArtifacts=$captures
+    $copy.aggregateArtifact=$null
+    $aggregatePath=Join-Path (Get-GateNodeRoot $Context.runRoot $Result.resultId) ('reused-compiler-evidence-'+$Result.artifacts.Count+'.json')
+    [IO.File]::WriteAllText($aggregatePath,(ConvertTo-GateJson $copy),[Text.UTF8Encoding]::new($false))
+    $copy.aggregateArtifact=Add-GateArtifact $Result $Context.runRoot $aggregatePath 'reused-compiler-evidence'
+    return $copy
+}
+
 function Use-GateReuse {
     param($Context, $Result, [string]$ManifestPath, [string]$Sdk, [bool]$NeedBuild)
     if (-not $ManifestPath -or -not [IO.File]::Exists($ManifestPath)) { throw 'Blocked:MissingReuseManifest' }
@@ -841,50 +857,317 @@ function Use-GateReuse {
         $reused[$name]=[pscustomobject]@{name=$name; mode='Reused'; runId=$Result.runId; resultId=$Result.resultId; command=$null; startedAt=$null; endedAt=$null; processExitCode=$null; inputs=$inputs; inputFingerprint=Get-GateFingerprint $inputs; outputs=$outputs; outputFingerprint=Get-GateFingerprint $outputs; graph=@($Result.provenance.closure); priorOutputs=@(); reuse=[pscustomobject]@{manifestArtifact=$manifestArtifact; originalRunId=$oldStage.runId; originalResultId=$oldStage.resultId; receipt=$oldStage}}
     }
     if ($NeedBuild) {
-        if (-not $prior.compilerTraceArtifact -or -not $prior.compilerInputs.Count) { throw 'Reuse compiler trace missing.' }
-        $priorTrace=Assert-GateArtifact $prior.compilerTraceArtifact $oldResult $priorRoot
-        $currentTrace=Join-Path (Get-GateNodeRoot $Context.runRoot $Result.resultId) 'reused-compiler.txt'
-        Copy-Item -LiteralPath $priorTrace -Destination $currentTrace
-        $reused.compilerTraceArtifact=Add-GateArtifact $Result $Context.runRoot $currentTrace 'compiler-trace'
         Assert-GateInputs $prior.compilerInputs
         $reused.compilerInputs=Save-GateFiles $Result $Context.runRoot @($prior.compilerInputs.path) 'compiler-input' @($Result.provenance.closure.configPaths)
+        $reused.compilerEvidence=Copy-GateCompilerEvidence $prior $oldResult $priorRoot $Result $Context
     }
     return [pscustomobject]$reused
 }
 
-function Get-GateCompilerTrace {
-    param([string]$Path)
-    if (-not [IO.File]::Exists($Path)) { throw 'Missing compiler input trace.' }
-    $entries=@()
-    foreach ($line in [IO.File]::ReadAllLines($Path)) {
-        if (-not $line.Trim()) { continue }
-        $parts=$line.Split('|')
-        if ($parts.Count -ne 2 -or $parts[1] -notmatch '^[0-9A-Fa-f]{64}$' -or -not [IO.Path]::IsPathRooted($parts[0])) { throw 'Malformed compiler input trace.' }
-        $entries+=[pscustomobject]@{path=[IO.Path]::GetFullPath($parts[0]); sha256=$parts[1].ToLowerInvariant()}
-    }
-    if (-not $entries.Count) { throw 'Empty compiler input trace.' }
-    return ,$entries
-}
-
 function Save-GateCompilerTarget {
     param([string]$Path)
-    # MSBuild's built-in GetFileHash runs immediately before each CoreCompile,
-    # including referenced projects. No extra SDK, package or repository target.
     $text=@'
 <Project>
-  <Target Name="AbilityKitCaptureCompilerInputs" BeforeTargets="CoreCompile">
+  <UsingTask TaskName="AbilityKitSetCompilerInputLengths" TaskFactory="RoslynCodeTaskFactory" AssemblyFile="$(MSBuildToolsPath)\Microsoft.Build.Tasks.Core.dll">
+    <ParameterGroup><Files ParameterType="Microsoft.Build.Framework.ITaskItem[]" Required="true" /><Items ParameterType="Microsoft.Build.Framework.ITaskItem[]" Output="true" /></ParameterGroup>
+    <Task><Using Namespace="System.IO" /><Code Type="Fragment" Language="cs"><![CDATA[
+      foreach (var file in Files) { file.SetMetadata("AbilityKitByteLength", new FileInfo(file.ItemSpec).Length.ToString(System.Globalization.CultureInfo.InvariantCulture)); }
+      Items = Files;
+    ]]></Code></Task>
+  </UsingTask>
+  <Target Name="AbilityKitCaptureCompilerInputs" BeforeTargets="CoreCompile" DependsOnTargets="AddGlobalAnalyzerConfigForPackage_MicrosoftCodeAnalysisNetAnalyzers;AddGlobalAnalyzerConfigForPackage_MicrosoftCodeAnalysisCSharpCodeStyle;GenerateMSBuildEditorConfigFile" Condition="'$(AbilityKitCompilerCaptureDisabled)' != 'true'">
+    <PropertyGroup>
+      <AbilityKitCompilerCaptureId>$([System.Guid]::NewGuid().ToString('D'))</AbilityKitCompilerCaptureId>
+      <AbilityKitCompilerCaptureTemp>$(AbilityKitCompilerCaptureRoot)\pending\$(AbilityKitCompilerCaptureId).tmp</AbilityKitCompilerCaptureTemp>
+      <AbilityKitCompilerCaptureComplete>$(AbilityKitCompilerCaptureRoot)\completed\$(AbilityKitCompilerCaptureId).complete</AbilityKitCompilerCaptureComplete>
+    </PropertyGroup>
+    <Error Condition="'$(AbilityKitCompilerCaptureRoot)' == '' Or '$(AbilityKitCompilerRunId)' == '' Or '$(AbilityKitCompilerResultId)' == '' Or '$(AbilityKitCompilerInvocationId)' == ''" Text="Compiler capture ownership is incomplete." />
+    <Error Condition="Exists('$(AbilityKitCompilerCaptureTemp)') Or Exists('$(AbilityKitCompilerCaptureComplete)')" Text="Compiler capture collision." />
+    <Exec Condition="'$(AbilityKitCompilerBarrierScript)' != ''" Command="powershell -NoProfile -ExecutionPolicy Bypass -File &quot;$(AbilityKitCompilerBarrierScript)&quot; -Root &quot;$(AbilityKitCompilerBarrierRoot)&quot; -CaptureId &quot;$(AbilityKitCompilerCaptureId)&quot; -Project &quot;$(MSBuildProjectName)&quot; -Mode &quot;$(AbilityKitCompilerBarrierMode)&quot;" />
     <ItemGroup>
-      <AbilityKitCompilerInput Include="$(MSBuildProjectFullPath);$(MSBuildAllProjects);@(Compile->'%(FullPath)');@(ReferencePath->'%(FullPath)');@(Analyzer->'%(FullPath)');@(AdditionalFiles->'%(FullPath)');@(EmbeddedResource->'%(FullPath)')" />
+      <AbilityKitCompilerInput Include="$(MSBuildProjectFullPath);$(MSBuildAllProjects);@(Compile->'%(FullPath)');@(ReferencePathWithRefAssemblies->'%(FullPath)');@(ReferencePath->'%(FullPath)');@(Analyzer->'%(FullPath)');@(AdditionalFiles->'%(FullPath)');@(EmbeddedResource->'%(FullPath)');@(EditorConfigFiles->'%(FullPath)');@(GlobalAnalyzerConfigFiles->'%(FullPath)');@(_GlobalAnalyzerConfigFiles->'%(FullPath)');$(GeneratedMSBuildEditorConfigFile);$(ApplicationIcon);$(AppConfigForTargetPath);$(Win32Resource);$(Win32Manifest);$(CodeAnalysisRuleSet);$(KeyOriginatorFile)" />
       <AbilityKitCompilerInput Remove="@(AbilityKitCompilerInput)" Condition="!Exists('%(Identity)')" />
     </ItemGroup>
-    <GetFileHash Files="@(AbilityKitCompilerInput)" Algorithm="SHA256">
+    <RemoveDuplicates Inputs="@(AbilityKitCompilerInput)">
+      <Output TaskParameter="Filtered" ItemName="AbilityKitUniqueCompilerInput" />
+    </RemoveDuplicates>
+    <ItemGroup>
+      <AbilityKitUniqueCompilerInput>
+        <AbilityKitEncodedPath>$([System.Uri]::EscapeDataString('%(FullPath)'))</AbilityKitEncodedPath>
+      </AbilityKitUniqueCompilerInput>
+    </ItemGroup>
+    <AbilityKitSetCompilerInputLengths Files="@(AbilityKitUniqueCompilerInput)">
+      <Output TaskParameter="Items" ItemName="AbilityKitSizedCompilerInput" />
+    </AbilityKitSetCompilerInputLengths>
+    <GetFileHash Files="@(AbilityKitSizedCompilerInput)" Algorithm="SHA256">
       <Output TaskParameter="Items" ItemName="AbilityKitHashedCompilerInput" />
     </GetFileHash>
-    <WriteLinesToFile File="$(AbilityKitCompilerTracePath)" Lines="@(AbilityKitHashedCompilerInput->'%(FullPath)|%(FileHash)')" Overwrite="false" Encoding="UTF-8" />
+    <ItemGroup>
+      <AbilityKitCompilerRecord Include="AKCT|1" />
+      <AbilityKitCompilerRecord Include="owner|$(AbilityKitCompilerRunId)|$(AbilityKitCompilerResultId)|$(AbilityKitCompilerInvocationId)|$(AbilityKitCompilerCaptureId)" />
+      <AbilityKitCompilerRecord Include="project|$([System.Uri]::EscapeDataString('$(MSBuildProjectFullPath)'))" />
+      <AbilityKitCompilerRecord Include="dimensions|$([System.Uri]::EscapeDataString('$(TargetFramework)'))|$([System.Uri]::EscapeDataString('$(Configuration)'))|$([System.Uri]::EscapeDataString('$(Platform)'))|$([System.Uri]::EscapeDataString('$(RuntimeIdentifier)'))" />
+      <AbilityKitCompilerRecord Include="target|$([System.Uri]::EscapeDataString('$(TargetPath)'))" />
+      <AbilityKitCompilerRecord Include="@(AbilityKitHashedCompilerInput->'input|%(AbilityKitEncodedPath)|%(AbilityKitByteLength)|%(FileHash)')" />
+    </ItemGroup>
+    <WriteLinesToFile File="$(AbilityKitCompilerCaptureTemp)" Lines="@(AbilityKitCompilerRecord)" Overwrite="true" Encoding="UTF-8" />
+    <GetFileHash Files="$(AbilityKitCompilerCaptureTemp)" Algorithm="SHA256">
+      <Output TaskParameter="Items" ItemName="AbilityKitCompilerRecordHash" />
+    </GetFileHash>
+    <Error Condition="!Exists('$(AbilityKitCompilerCaptureTemp)') Or '@(AbilityKitCompilerRecordHash)' == ''" Text="Compiler capture temporary record was not closed and verified." />
+    <Move SourceFiles="$(AbilityKitCompilerCaptureTemp)" DestinationFiles="$(AbilityKitCompilerCaptureComplete)" />
+    <Error Condition="Exists('$(AbilityKitCompilerCaptureTemp)') Or !Exists('$(AbilityKitCompilerCaptureComplete)')" Text="Compiler capture atomic publication failed." />
+    <Message Importance="High" Text="ABILITYKIT_CAPTURE|$(AbilityKitCompilerRunId)|$(AbilityKitCompilerResultId)|$(AbilityKitCompilerInvocationId)|$(AbilityKitCompilerCaptureId)|$(MSBuildProjectFullPath)|$(TargetFramework)|$(Configuration)|$(Platform)|$(RuntimeIdentifier)" />
   </Target>
 </Project>
 '@
     [IO.File]::WriteAllText($Path,$text,[Text.UTF8Encoding]::new($false))
+}
+
+function ConvertFrom-GateBase64 {
+    param([string]$Value)
+    try { return [Uri]::UnescapeDataString($Value) }
+    catch { throw 'Malformed compiler capture encoding.' }
+}
+
+function Get-GateCompilerCapture {
+    param([string]$Path, [string]$RunId, [string]$ResultId, [string]$InvocationId, [DateTimeOffset]$StartedAt, [DateTimeOffset]$EndedAt)
+    Assert-GateNoReparse $Path
+    $stream=$null
+    try {
+        $stream=[IO.File]::Open($Path,[IO.FileMode]::Open,[IO.FileAccess]::Read,[IO.FileShare]::None)
+        $bytes=New-Object byte[] $stream.Length
+        $offset=0
+        while ($offset -lt $bytes.Length) { $read=$stream.Read($bytes,$offset,$bytes.Length-$offset); if ($read -le 0) { throw 'Partial compiler capture read.' }; $offset+=$read }
+    } catch { throw 'Compiler completion record is missing, partial, or locked.' }
+    finally { if ($stream) { $stream.Dispose() } }
+    try { $text=[Text.UTF8Encoding]::new($false,$true).GetString($bytes) } catch { throw 'Malformed compiler capture UTF-8.' }
+    $lines=@($text -split "`r?`n" | Where-Object { $_ -cne '' })
+    if ($lines.Count -lt 6 -or $lines[0] -cne 'AKCT|1') { throw 'Malformed compiler completion record.' }
+    $owner=$lines[1].Split('|'); $project=$lines[2].Split('|'); $dimensions=$lines[3].Split('|'); $target=$lines[4].Split('|')
+    if ($owner.Count -ne 5 -or $owner[0] -cne 'owner' -or $owner[1] -cne $RunId -or $owner[2] -cne $ResultId -or $owner[3] -cne $InvocationId -or $owner[4] -notmatch '^[0-9a-fA-F-]{36}$') { throw 'Compiler completion owner mismatch.' }
+    if ($project.Count -ne 2 -or $project[0] -cne 'project' -or $dimensions.Count -ne 5 -or $dimensions[0] -cne 'dimensions' -or $target.Count -ne 2 -or $target[0] -cne 'target') { throw 'Malformed compiler completion identity.' }
+    $captureId=$owner[4]
+    if ([IO.Path]::GetFileNameWithoutExtension($Path) -cne $captureId) { throw 'Compiler completion filename/capture identity mismatch.' }
+    $projectPath=[IO.Path]::GetFullPath((ConvertFrom-GateBase64 $project[1])); $targetPath=[IO.Path]::GetFullPath((ConvertFrom-GateBase64 $target[1]))
+    $inputs=@(); $seen=New-Object 'System.Collections.Generic.Dictionary[string,object]' ([StringComparer]::OrdinalIgnoreCase)
+    foreach ($line in $lines[5..($lines.Count-1)]) {
+        $parts=$line.Split('|')
+        if ($parts.Count -ne 4 -or $parts[0] -cne 'input' -or $parts[2] -notmatch '^\d+$' -or $parts[3] -notmatch '^[0-9A-Fa-f]{64}$') { throw 'Malformed compiler input record.' }
+        $inputPath=[IO.Path]::GetFullPath((ConvertFrom-GateBase64 $parts[1])); $length=[long]$parts[2]; $hash=$parts[3].ToLowerInvariant()
+        Assert-GateNoReparse $inputPath
+        if (-not [IO.File]::Exists($inputPath) -or (Get-Item -LiteralPath $inputPath).Length -ne $length -or (Get-GateHash $inputPath) -cne $hash) { throw 'Compiler input changed since capture.' }
+        if ($seen.ContainsKey($inputPath)) {
+            $prior=$seen[$inputPath]
+            if ($prior.bytes -ne $length -or $prior.sha256 -cne $hash) { throw 'Conflicting duplicate compiler input path in one capture.' }
+            continue
+        }
+        $entry=[pscustomobject]@{path=$inputPath;bytes=$length;sha256=$hash}; $seen.Add($inputPath,$entry); $inputs+=$entry
+    }
+    if (-not $inputs.Count) { throw 'Empty compiler input capture.' }
+    $written=(Get-Item -LiteralPath $Path).LastWriteTimeUtc
+    $freshLower=$StartedAt.UtcDateTime.AddSeconds(-2); $freshUpper=$EndedAt.UtcDateTime.AddSeconds(2)
+    if ($written -lt $freshLower -or $written -gt $freshUpper) { throw ('Stale compiler completion record: '+$written.ToString('o')+' outside '+$freshLower.ToString('o')+'..'+$freshUpper.ToString('o')) }
+    return [pscustomobject][ordered]@{runId=$owner[1];resultId=$owner[2];invocationId=$owner[3];captureId=$captureId;project=$projectPath;tfm=ConvertFrom-GateBase64 $dimensions[1];configuration=ConvertFrom-GateBase64 $dimensions[2];platform=ConvertFrom-GateBase64 $dimensions[3];runtimeIdentifier=ConvertFrom-GateBase64 $dimensions[4];targetPath=$targetPath;inputs=$inputs}
+}
+
+function Add-GateCompilerNativeReceipt {
+    param($Context,$Result,$Native,[string[]]$ToolArguments,[string]$Stem)
+    $null=Add-GateArtifact $Result $Context.runRoot $Native.stdoutPath ($Stem+'-stdout')
+    $null=Add-GateArtifact $Result $Context.runRoot $Native.stderrPath ($Stem+'-stderr')
+    $Native | Add-Member -NotePropertyName toolArguments -NotePropertyValue @($ToolArguments)
+    $Result.provenance.invocations+= $Native
+}
+
+function New-GateCompilerInvocation {
+    param($Context,$Result,[string]$SdkRoot)
+    $nodeRoot=Get-GateNodeRoot $Context.runRoot $Result.resultId
+    $parent=Join-Path $nodeRoot 'bi'
+    if (-not [IO.Directory]::Exists($parent)) { $null=New-Item -ItemType Directory -Path $parent }
+    Assert-GateNoReparse $parent
+    $invocationId=[guid]::NewGuid().ToString()
+    $root=Join-Path $parent ($invocationId.Replace('-','').Substring(0,12))
+    if (Test-Path -LiteralPath $root) { throw 'Compiler invocation directory collision.' }
+    $null=New-Item -ItemType Directory -Path $root
+    $pending=Join-Path $root 'pending'; $completed=Join-Path $root 'completed'
+    $null=New-Item -ItemType Directory -Path $pending
+    $null=New-Item -ItemType Directory -Path $completed
+    Assert-GateNoReparse $root
+    $readerArtifacts=@(); $readerDll=$null
+    if (-not $Context.control) {
+        $readerRoot=Join-Path $root 'reader'; $output=Join-Path $readerRoot 'out'
+        $null=New-Item -ItemType Directory -Path $readerRoot
+        $source=Join-Path $Context.repoRoot 'tools/test-gate-compiler-events.cs'
+        if (-not [IO.File]::Exists($source)) { throw 'Blocked:CompilerEventReaderSourceMissing' }
+        $sourceCopy=Join-Path $readerRoot 'Program.cs'; Copy-Item -LiteralPath $source -Destination $sourceCopy
+        $project=Join-Path $readerRoot 'compiler-events.csproj'
+        $buildAssembly=[Security.SecurityElement]::Escape((Join-Path $SdkRoot 'Microsoft.Build.dll'))
+        $frameworkAssembly=[Security.SecurityElement]::Escape((Join-Path $SdkRoot 'Microsoft.Build.Framework.dll'))
+        $projectText=@"
+<Project Sdk="Microsoft.NET.Sdk">
+  <PropertyGroup><OutputType>Exe</OutputType><TargetFramework>net10.0</TargetFramework><ImplicitUsings>enable</ImplicitUsings><Nullable>enable</Nullable><RestoreSources></RestoreSources><RestoreIgnoreFailedSources>true</RestoreIgnoreFailedSources></PropertyGroup>
+  <ItemGroup><Reference Include="Microsoft.Build"><HintPath>$buildAssembly</HintPath><Private>true</Private></Reference><Reference Include="Microsoft.Build.Framework"><HintPath>$frameworkAssembly</HintPath><Private>true</Private></Reference></ItemGroup>
+</Project>
+"@
+        [IO.File]::WriteAllText($project,$projectText,[Text.UTF8Encoding]::new($false))
+        $readerArtifacts+=Add-GateArtifact $Result $Context.runRoot $sourceCopy 'compiler-event-reader-source'
+        $readerArtifacts+=Add-GateArtifact $Result $Context.runRoot $project 'compiler-event-reader-project'
+        $arguments=@('build',$project,'-c','Release','--nologo','-o',$output)
+        $native=Invoke-GateNative $Context.dotnetPath $arguments $root 'reader-build' $Context.repoRoot $Context.timeoutSeconds $Context.cancelSignalPath
+        Add-GateCompilerNativeReceipt $Context $Result $native @('compiler-event-reader-build') 'compiler-event-reader-build'
+        if ($native.reason -or -not $native.exitConfirmed -or $native.processExitCode -ne 0) { throw 'Blocked:CompilerEventReaderBuildFailed' }
+        $readerDll=Join-Path $output 'compiler-events.dll'
+        if (-not [IO.File]::Exists($readerDll)) { throw 'Blocked:CompilerEventReaderOutputMissing' }
+        foreach ($file in Get-ChildItem -LiteralPath $output -File | Sort-Object Name) { $readerArtifacts+=Add-GateArtifact $Result $Context.runRoot $file.FullName 'compiler-event-reader-output' }
+    }
+    return [pscustomobject][ordered]@{invocationId=$invocationId;root=$root;pending=$pending;completed=$completed;readerDll=$readerDll;readerArtifacts=@($readerArtifacts)}
+}
+
+function Get-GateEventContextKey {
+    param($Context)
+    foreach ($field in @('submissionId','nodeId','projectInstanceId','projectContextId')) {
+        if ($null -eq $Context.$field -or [int]$Context.$field -lt 0) { throw "Compiler event context is incomplete: $field" }
+    }
+    return ([string]$Context.submissionId)+'|'+([string]$Context.nodeId)+'|'+([string]$Context.projectInstanceId)+'|'+([string]$Context.projectContextId)
+}
+
+function Invoke-GateCompilerEventReader {
+    param($Context,$Result,$Invocation,[string]$EventLogPath)
+    $manifestPath=Join-Path $Invocation.root 'events.json'
+    if ([IO.File]::Exists($manifestPath)) { throw 'Compiler event manifest collision.' }
+    if ($Context.control) {
+        $raw=Get-Content -LiteralPath $EventLogPath -Raw -Encoding UTF8 | ConvertFrom-Json
+        [IO.File]::WriteAllText($manifestPath,(ConvertTo-GateJson $raw),[Text.UTF8Encoding]::new($false))
+    } else {
+        $arguments=@($Invocation.readerDll,$EventLogPath,$manifestPath,$Result.runId,$Result.resultId,$Invocation.invocationId)
+        $native=Invoke-GateNative $Context.dotnetPath $arguments $Invocation.root 'reader-run' $Context.repoRoot $Context.timeoutSeconds $Context.cancelSignalPath
+        Add-GateCompilerNativeReceipt $Context $Result $native @('compiler-event-reader-replay') 'compiler-event-reader-replay'
+        if ($native.reason -or -not $native.exitConfirmed -or $native.processExitCode -ne 0) { throw 'Compiler event log is malformed or incomplete.' }
+    }
+    if (-not [IO.File]::Exists($manifestPath)) { throw 'Compiler event manifest missing.' }
+    return $manifestPath
+}
+
+function Complete-GateCompilerEvidence {
+    param($Context,$Result,$Invocation,$Native,[string]$TargetPath,[string]$EventLogPath)
+    if (-not $Native.exitConfirmed -or $Native.processExitCode -ne 0) { throw 'Native build was not successfully closed before compiler aggregation.' }
+    $targetArtifact=Add-GateArtifact $Result $Context.runRoot $TargetPath 'compiler-target'
+    $eventLogArtifact=Add-GateArtifact $Result $Context.runRoot $EventLogPath 'compiler-event-log'
+    $manifestPath=Invoke-GateCompilerEventReader $Context $Result $Invocation $EventLogPath
+    $eventManifestArtifact=Add-GateArtifact $Result $Context.runRoot $manifestPath 'compiler-event-manifest'
+    $manifest=Get-Content -LiteralPath $manifestPath -Raw -Encoding UTF8 | ConvertFrom-Json
+    if ($manifest.schemaVersion -ne 1 -or -not $manifest.complete -or $manifest.runId -cne $Result.runId -or $manifest.resultId -cne $Result.resultId -or $manifest.invocationId -cne $Invocation.invocationId -or $manifest.buildStarted -ne 1 -or $manifest.buildFinished -ne 1 -or @($manifest.errors).Count) { throw 'Compiler event manifest ownership/completeness mismatch.' }
+    Assert-GateNoReparse $Invocation.root; Assert-GateNoReparse $Invocation.pending; Assert-GateNoReparse $Invocation.completed
+    if (@(Get-ChildItem -LiteralPath $Invocation.pending -Force).Count) { throw 'Partial compiler capture remained unpublished.' }
+    $completionEntries=@(Get-ChildItem -LiteralPath $Invocation.completed -Force)
+    if (@($completionEntries | Where-Object PSIsContainer).Count) { throw 'Extra compiler completion material.' }
+    $files=@($completionEntries | Where-Object { -not $_.PSIsContainer })
+    if (-not $files.Count -or @($files | Where-Object { $_.Name -cnotmatch '^[0-9a-fA-F-]{36}\.complete$' }).Count) { throw 'Missing or extra compiler completion record.' }
+    $captures=@(); $captureArtifacts=@(); $captureIds=@{}
+    foreach ($file in $files) {
+        $capture=Get-GateCompilerCapture $file.FullName $Result.runId $Result.resultId $Invocation.invocationId ([DateTimeOffset]$Native.startedAt) ([DateTimeOffset]$Native.endedAt)
+        if ($captureIds.ContainsKey($capture.captureId)) { throw 'Duplicate compiler capture ID.' }
+        $captureIds[$capture.captureId]=$true; $captures+=$capture
+        $captureArtifacts+=Add-GateArtifact $Result $Context.runRoot $file.FullName 'compiler-capture'
+    }
+    $messages=@($manifest.captures)
+    if ($messages.Count -ne $captures.Count -or @($messages.captureId | Sort-Object -Unique).Count -ne $messages.Count) { throw 'Compiler capture message/completion cardinality mismatch.' }
+    $compileTargets=@($manifest.coreCompile)
+    $compilerTasks=@($manifest.csc)
+    foreach ($compileTarget in $compileTargets) {
+        $contextKey=Get-GateEventContextKey $compileTarget.context
+        $matchingMessages=@($messages | Where-Object { (Get-GateEventContextKey $_.context) -ceq $contextKey })
+        if ($matchingMessages.Count -ne 1) { throw 'CoreCompile event missing exact capture coverage.' }
+        if ([IO.Path]::GetFullPath($compileTarget.project) -ine [IO.Path]::GetFullPath($matchingMessages[0].project)) { throw 'CoreCompile/capture project identity mismatch.' }
+        $matchingTasks=@($compilerTasks | Where-Object { (Get-GateEventContextKey $_.context) -ceq $contextKey })
+        if ($compileTarget.state -ceq 'Finished') {
+            if (-not $compileTarget.succeeded -or $matchingTasks.Count -ne 1 -or -not $matchingTasks[0].succeeded) { throw 'Finished CoreCompile requires exactly one successful Csc execution.' }
+            if ([IO.Path]::GetFullPath($matchingTasks[0].project) -ine [IO.Path]::GetFullPath($compileTarget.project)) { throw 'CoreCompile/Csc project identity mismatch.' }
+        } elseif ($compileTarget.state -ceq 'Skipped') {
+            if ($matchingTasks.Count) { throw 'Skipped CoreCompile must not have a Csc execution.' }
+        } else { throw 'CoreCompile event state is invalid.' }
+    }
+    $actualInputs=New-Object 'System.Collections.Generic.Dictionary[string,object]' ([StringComparer]::OrdinalIgnoreCase)
+    $instances=@()
+    foreach ($message in $messages) {
+        $capture=@($captures | Where-Object captureId -ceq $message.captureId)
+        if ($capture.Count -ne 1) { throw 'Compiler capture message lacks one completion record.' }
+        $capture=$capture[0]
+        foreach ($field in @('runId','resultId','invocationId','captureId','tfm','configuration','platform','runtimeIdentifier')) { if ([string]$capture.$field -cne [string]$message.$field) { throw "Compiler capture identity mismatch: $field" } }
+        if ([IO.Path]::GetFullPath($capture.project) -ine [IO.Path]::GetFullPath($message.project)) { throw 'Compiler capture project substitution.' }
+        $contextKey=Get-GateEventContextKey $message.context
+        $projects=@($manifest.projects | Where-Object { (Get-GateEventContextKey $_.context) -ceq $contextKey -and $_.project -ieq $capture.project })
+        if ($projects.Count -ne 1 -or -not $projects[0].propertiesFingerprint) { throw 'Compiler project instance identity missing/ambiguous.' }
+        $matchingTasks=@($compilerTasks | Where-Object { (Get-GateEventContextKey $_.context) -ceq $contextKey })
+        $matchingTargets=@($compileTargets | Where-Object { (Get-GateEventContextKey $_.context) -ceq $contextKey })
+        if ($matchingTargets.Count -ne 1) { throw 'Capture lacks exactly one current CoreCompile engine event.' }
+        $compileTarget=$matchingTargets[0]
+        if ([IO.Path]::GetFullPath($compileTarget.project) -ine [IO.Path]::GetFullPath($capture.project)) { throw 'Compiler capture/CoreCompile project identity mismatch.' }
+        $kind=if ($compileTarget.state -ceq 'Finished') { 'Executed' } elseif ($compileTarget.state -ceq 'Skipped') { 'IncrementalSkip' } else { throw 'CoreCompile event state is invalid.' }
+        if ($kind -ceq 'Executed') {
+            if (-not $compileTarget.succeeded -or $matchingTasks.Count -ne 1 -or -not $matchingTasks[0].succeeded -or -not @($matchingTasks[0].inputs).Count) { throw 'Csc execution inputs absent, unsuccessful, or ambiguous.' }
+            if ([IO.Path]::GetFullPath($matchingTasks[0].project) -ine [IO.Path]::GetFullPath($capture.project)) { throw 'Compiler capture/Csc project identity mismatch.' }
+            foreach ($input in @($matchingTasks[0].inputs)) {
+                $match=@($capture.inputs | Where-Object path -ieq $input.path)
+                if ($match.Count -ne 1 -or $match[0].bytes -ne $input.bytes -or $match[0].sha256 -cne $input.sha256) { throw ('Csc event input is unexplained by its completion record: '+$input.path) }
+            }
+        } elseif ($matchingTasks.Count) { throw 'Skipped CoreCompile must not have a Csc execution.' }
+        if (-not [IO.File]::Exists($capture.targetPath)) { throw 'Compiler instance output identity missing.' }
+        $target=[pscustomobject]@{path=[IO.Path]::GetFullPath($capture.targetPath);bytes=(Get-Item -LiteralPath $capture.targetPath).Length;sha256=Get-GateHash $capture.targetPath}
+        foreach ($input in $capture.inputs) {
+            if ($actualInputs.ContainsKey($input.path)) {
+                $prior=$actualInputs[$input.path]
+                if ($prior.bytes -ne $input.bytes -or $prior.sha256 -cne $input.sha256) { throw 'Conflicting compiler content for one normalized path.' }
+            } else { $actualInputs.Add($input.path,$input) }
+        }
+        $instances+=[pscustomobject][ordered]@{captureId=$capture.captureId;project=$capture.project;tfm=$capture.tfm;configuration=$capture.configuration;platform=$capture.platform;runtimeIdentifier=$capture.runtimeIdentifier;context=$message.context;propertiesFingerprint=$projects[0].propertiesFingerprint;kind=$kind;target=$target;inputs=@($capture.inputs | Sort-Object path)}
+    }
+    foreach ($task in $compilerTasks) {
+        $key=Get-GateEventContextKey $task.context
+        $matchingTargets=@($compileTargets | Where-Object { (Get-GateEventContextKey $_.context) -ceq $key })
+        $matchingMessages=@($messages | Where-Object { (Get-GateEventContextKey $_.context) -ceq $key })
+        if ($matchingTargets.Count -ne 1 -or $matchingMessages.Count -ne 1) { throw 'Csc execution missing exact CoreCompile/capture coverage.' }
+        if ($matchingTargets[0].state -cne 'Finished' -or -not $matchingTargets[0].succeeded -or -not $task.succeeded) { throw 'Csc execution is not owned by one successful finished CoreCompile.' }
+        if ([IO.Path]::GetFullPath($task.project) -ine [IO.Path]::GetFullPath($matchingTargets[0].project) -or [IO.Path]::GetFullPath($task.project) -ine [IO.Path]::GetFullPath($matchingMessages[0].project)) { throw 'Csc/CoreCompile/capture project identity mismatch.' }
+    }
+    $compilerInputs=Save-GateFiles $Result $Context.runRoot @($actualInputs.Keys | Sort-Object) 'compiler-input' @($Result.provenance.closure.configPaths)
+    $evidence=[pscustomobject][ordered]@{schemaVersion=2;mode='Executed';runId=$Result.runId;resultId=$Result.resultId;invocationId=$Invocation.invocationId;origin=$null;targetArtifact=$targetArtifact;eventLogArtifact=$eventLogArtifact;eventManifestArtifact=$eventManifestArtifact;readerArtifacts=@($Invocation.readerArtifacts);captureArtifacts=@($captureArtifacts);instances=@($instances | Sort-Object project,tfm,captureId);inputFingerprint=Get-GateFingerprint @($actualInputs.Values);aggregateArtifact=$null}
+    $aggregatePath=Join-Path $Invocation.root 'compiler-evidence.json'
+    [IO.File]::WriteAllText($aggregatePath,(ConvertTo-GateJson $evidence),[Text.UTF8Encoding]::new($false))
+    $evidence.aggregateArtifact=Add-GateArtifact $Result $Context.runRoot $aggregatePath 'compiler-evidence'
+    return [pscustomobject]@{evidence=$evidence;inputs=$compilerInputs}
+}
+
+function Assert-GateCompilerEvidence {
+    param($Result,$Context)
+    $evidence=$Result.provenance.compilerEvidence
+    if (-not $evidence -or $evidence.schemaVersion -ne 2 -or $evidence.mode -cnotin @('Executed','Reused') -or $evidence.runId -cne $Result.runId -or $evidence.resultId -cne $Result.resultId -or -not $evidence.instances.Count -or -not $evidence.captureArtifacts.Count) { throw 'Compiler evidence absent or invalid.' }
+    foreach ($artifact in @($evidence.targetArtifact,$evidence.eventLogArtifact,$evidence.eventManifestArtifact)+@($evidence.readerArtifacts)+@($evidence.captureArtifacts)) { $null=Assert-GateArtifact $artifact $Result $Context.runRoot }
+    $aggregatePath=Assert-GateArtifact $evidence.aggregateArtifact $Result $Context.runRoot
+    $aggregate=Get-Content -LiteralPath $aggregatePath -Raw -Encoding UTF8 | ConvertFrom-Json
+    $candidate=ConvertTo-GateJson $evidence | ConvertFrom-Json; $candidate.aggregateArtifact=$null
+    Assert-GateEqual $candidate $aggregate 'compiler aggregate receipt'
+    $deduplicated=New-Object 'System.Collections.Generic.Dictionary[string,object]' ([StringComparer]::OrdinalIgnoreCase)
+    foreach ($instance in $evidence.instances) {
+        if (-not $instance.captureId -or -not $instance.propertiesFingerprint -or $instance.kind -cnotin @('Executed','IncrementalSkip') -or -not [IO.Path]::IsPathRooted($instance.project) -or -not [IO.Path]::IsPathRooted($instance.target.path)) { throw 'Compiler instance manifest invalid.' }
+        $output=@($Result.provenance.build.outputs | Where-Object { [IO.Path]::GetFullPath($_.path) -ieq [IO.Path]::GetFullPath($instance.target.path) })
+        if ($output.Count -ne 1 -or $output[0].bytes -ne $instance.target.bytes -or $output[0].sha256 -cne $instance.target.sha256) { throw 'Compiler instance output is not in the build producer set.' }
+        foreach ($input in $instance.inputs) {
+            if ($deduplicated.ContainsKey($input.path)) {
+                $prior=$deduplicated[$input.path]
+                if ($prior.bytes -ne $input.bytes -or $prior.sha256 -cne $input.sha256) { throw 'Conflicting compiler input identity.' }
+            } else { $deduplicated.Add($input.path,$input) }
+        }
+    }
+    if ((Get-GateFingerprint @($deduplicated.Values)) -cne $evidence.inputFingerprint) { throw 'Compiler evidence input fingerprint mismatch.' }
+    $inputs=@($Result.provenance.compilerInputs)
+    if ($inputs.Count -ne $deduplicated.Count) { throw 'Incomplete compiler input archive membership.' }
+    foreach ($entry in $inputs) {
+        if (-not $deduplicated.ContainsKey($entry.path) -or $deduplicated[$entry.path].bytes -ne $entry.bytes -or $deduplicated[$entry.path].sha256 -cne $entry.sha256) { throw 'Compiler input archive identity mismatch.' }
+        if ($entry.proofKind) { Assert-GateConfigProof $entry @($Result.provenance.closure.configPaths) } else { $null=Assert-GateArtifact $entry.artifact $Result $Context.runRoot }
+    }
+    if ($evidence.mode -ceq 'Executed' -and ($Result.provenance.build.mode -cne 'Executed' -or $evidence.origin -ne $null)) { throw 'Executed compiler evidence mode contradiction.' }
+    if ($evidence.mode -ceq 'Reused' -and ($Result.provenance.build.mode -cne 'Reused' -or -not $evidence.origin)) { throw 'Reused compiler evidence origin missing.' }
 }
 
 function Invoke-GateDotNet {
@@ -895,7 +1178,7 @@ function Invoke-GateDotNet {
         Set-GateTerminal $Result $(if ($Step.skipPolicy -ceq 'MissingTool' -and $Step.required -eq $false) { 'Skipped' } else { 'Blocked' }) 'MissingTool'
         return
     }
-    $Result.provenance=[pscustomobject][ordered]@{schemaVersion=1; example=[bool]$Context.allowExample; project=$Result.configuration.project; tfm=$Result.configuration.tfm; configuration=$Context.configuration; configSha256=$Result.configuration.configSha256; sdk=$null; source=$null; sourceBeforeRestore=$null; closure=@(); invocations=@(); restore=$null; build=$null; test=$null; assembly=$null; compilerTraceArtifact=$null; compilerInputs=@(); loadedBefore=@(); loadedAfter=@(); trxBinding=$null}
+    $Result.provenance=[pscustomobject][ordered]@{schemaVersion=1; example=[bool]$Context.allowExample; project=$Result.configuration.project; tfm=$Result.configuration.tfm; configuration=$Context.configuration; configSha256=$Result.configuration.configSha256; sdk=$null; source=$null; sourceBeforeRestore=$null; closure=@(); invocations=@(); restore=$null; build=$null; test=$null; assembly=$null; compilerEvidence=$null; compilerInputs=@(); loadedBefore=@(); loadedAfter=@(); trxBinding=$null}
     $nodeRoot=Get-GateNodeRoot $Context.runRoot $Result.resultId
     try {
         $sdkInvocation=Invoke-GateTool $Context $Result @('--version') 'sdk'
@@ -951,21 +1234,20 @@ function Invoke-GateDotNet {
         if ($skipBuild) {
             $Result.provenance.build=$reused.build
             $Result.provenance.compilerInputs=$reused.compilerInputs
-            $Result.provenance.compilerTraceArtifact=$reused.compilerTraceArtifact
+            $Result.provenance.compilerEvidence=$reused.compilerEvidence
         }
         else {
-            $targetPath=Join-Path $nodeRoot 'compiler.targets'; $tracePath=Join-Path $nodeRoot 'compiler.txt'
+            $compilerInvocation=New-GateCompilerInvocation $Context $Result $sdkRoot
+            $targetPath=Join-Path $compilerInvocation.root 'compiler.targets'; $eventLogPath=Join-Path $compilerInvocation.root 'build.binlog'
             Save-GateCompilerTarget $targetPath
-            $null=Add-GateArtifact $Result $Context.runRoot $targetPath 'compiler-target'
-            $args=@('build',$Result.configuration.project,'-c',$Context.configuration,'-f',$Result.configuration.tfm,'--no-restore','--nologo',('-p:CustomAfterMicrosoftCommonTargets='+$targetPath),('-p:AbilityKitCompilerTracePath='+$tracePath))
+            $args=@('build',$Result.configuration.project,'-c',$Context.configuration,'-f',$Result.configuration.tfm,'--no-restore','--nologo',('-m'),('-bl:'+$eventLogPath+';ProjectImports=None'),('-p:CustomAfterMicrosoftCommonTargets='+$targetPath),('-p:AbilityKitCompilerCaptureRoot='+$compilerInvocation.root),('-p:AbilityKitCompilerRunId='+$Result.runId),('-p:AbilityKitCompilerResultId='+$Result.resultId),('-p:AbilityKitCompilerInvocationId='+$compilerInvocation.invocationId))
             $native=Invoke-GateTool $Context $Result $args 'build'
+            $Result.command=$native.command; $Result.processExitCode=$native.processExitCode
+            $Result.times.executionStartedAt=$native.startedAt; $Result.times.executionEndedAt=$native.endedAt
             Assert-GateInputs $source.inputs; Assert-GateInputs $Result.provenance.restore.outputs
-            $traced=Get-GateCompilerTrace $tracePath
-            $Result.provenance.compilerTraceArtifact=Add-GateArtifact $Result $Context.runRoot $tracePath 'compiler-trace'
-            $Result.provenance.compilerInputs=Save-GateFiles $Result $Context.runRoot @($traced.path) 'compiler-input' $restored.configPaths
-            foreach ($entry in $traced) {
-                if ((Get-GateHash $entry.path) -cne $entry.sha256) { throw 'Compiler input changed since compile.' }
-            }
+            $compiler=Complete-GateCompilerEvidence $Context $Result $compilerInvocation $native $targetPath $eventLogPath
+            $Result.provenance.compilerEvidence=$compiler.evidence
+            $Result.provenance.compilerInputs=$compiler.inputs
             $binaryPaths=@(foreach ($item in $restored.projects) {
                 if (-not [IO.File]::Exists($item.targetPath)) { throw 'Expected project binary absent.' }
                 $item.targetPath
@@ -994,9 +1276,8 @@ function Invoke-GateDotNet {
             Assert-GateInputs $Result.provenance.loadedBefore
             $Result.provenance.loadedAfter=$Result.provenance.loadedBefore
         } else {
-            $native=$Result.provenance.invocations | Where-Object { $_.stdoutPath -like '*build.stdout.txt' } | Select-Object -Last 1
-            $Result.command=$native.command; $Result.processExitCode=$native.processExitCode
-            $Result.times.executionStartedAt=$native.startedAt; $Result.times.executionEndedAt=$native.endedAt
+            $Result.command=$Result.provenance.build.command; $Result.processExitCode=$Result.provenance.build.processExitCode
+            $Result.times.executionStartedAt=$Result.provenance.build.startedAt; $Result.times.executionEndedAt=$Result.provenance.build.endedAt
         }
         $afterClosure=Get-GateProjectClosure $Context $Result $Result.configuration.project 'after'
         $afterPaths=@($afterClosure.inputPaths+(Get-GatePackageInputs $afterClosure.projects) | Sort-Object -Unique)
@@ -1009,11 +1290,12 @@ function Invoke-GateDotNet {
     } catch {
         $message=$_.Exception.Message
         $last=$Result.provenance.invocations | Select-Object -Last 1
-        if ($last -and -not $message.StartsWith('Blocked:')) {
+        $blocked=$message.StartsWith('Blocked:') -or $message.StartsWith('UnknownWriter')
+        if ($last -and -not $blocked -and -not $Result.command) {
             $Result.command=$last.command; $Result.processExitCode=$last.processExitCode
             $Result.times.executionStartedAt=$last.startedAt; $Result.times.executionEndedAt=$last.endedAt
         }
-        Set-GateTerminal $Result $(if ($message.StartsWith('Blocked:')) { 'Blocked' } else { 'Failed' }) $message
+        Set-GateTerminal $Result $(if ($blocked) { 'Blocked' } else { 'Failed' }) $message
     } finally {
         # Failed build attempts keep valid independent restore receipts for NoRestore.
         if ($Result.provenance.restore) {
