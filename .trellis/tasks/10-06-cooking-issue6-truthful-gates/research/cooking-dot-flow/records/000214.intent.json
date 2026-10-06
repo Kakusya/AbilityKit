@@ -1,0 +1,20 @@
+{
+  "version": 1,
+  "flow_id": "6d3174fd-2b01-4136-8ea5-0b0cd0e2845d",
+  "seq": 214,
+  "op_id": "6d3174fd-2b01-4136-8ea5-0b0cd0e2845d:000214",
+  "kind": "intent",
+  "recorded_utc": "2026-10-06T21:42:28.010775Z",
+  "action": "git-push",
+  "target": "origin/Kakusya/issue6-cooking-truthful-gates",
+  "authorization_ref": "evidence/approval.md",
+  "payload_ref": "evidence/slice14-compiler-target-compat-repair-spec.md",
+  "preconditions": {
+    "local_sha": "8497d3a673bd84be079d99a58df97b96676dea88",
+    "remote_before": "2b258b6ea2a40a9ac354b51847c749722564e8ba",
+    "pr": 12,
+    "repository": "Kakusya/AbilityKit",
+    "expected_ref": "refs/heads/Kakusya/issue6-cooking-truthful-gates",
+    "run_id": "run_5ba664a5f016"
+  }
+}

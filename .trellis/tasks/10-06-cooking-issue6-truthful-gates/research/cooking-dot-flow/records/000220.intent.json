@@ -1,0 +1,15 @@
+{
+  "version": 1,
+  "flow_id": "6d3174fd-2b01-4136-8ea5-0b0cd0e2845d",
+  "seq": 220,
+  "op_id": "6d3174fd-2b01-4136-8ea5-0b0cd0e2845d:000220",
+  "kind": "intent",
+  "recorded_utc": "2026-10-06T23:25:57.062997Z",
+  "action": "orchestration-worker-retain",
+  "target": "ctx_705bac462252",
+  "authorization_ref": "evidence/approval.md",
+  "payload_ref": "evidence/slice15-worker-done-delivery.json",
+  "preconditions": {
+    "run_id": "run_5ba664a5f016"
+  }
+}

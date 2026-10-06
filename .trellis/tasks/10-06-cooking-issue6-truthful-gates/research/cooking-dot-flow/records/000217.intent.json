@@ -1,0 +1,20 @@
+{
+  "version": 1,
+  "flow_id": "6d3174fd-2b01-4136-8ea5-0b0cd0e2845d",
+  "seq": 217,
+  "op_id": "6d3174fd-2b01-4136-8ea5-0b0cd0e2845d:000217",
+  "kind": "intent",
+  "recorded_utc": "2026-10-06T21:46:45.955418Z",
+  "action": "codex-model-selection",
+  "target": "term_57f1b0c1-a574-4628-aebf-3767ced8bfbd",
+  "authorization_ref": "evidence/approval.md",
+  "payload_ref": "evidence/slice15-exact-sha-verifier-spec.md",
+  "preconditions": {
+    "prompt_observed": true,
+    "selection": "2. Use existing model",
+    "requested_model": "gpt-5.6-sol",
+    "model_provider": "custom",
+    "worktree_head": "8497d3a673bd84be079d99a58df97b96676dea88",
+    "run_id": "run_5ba664a5f016"
+  }
+}

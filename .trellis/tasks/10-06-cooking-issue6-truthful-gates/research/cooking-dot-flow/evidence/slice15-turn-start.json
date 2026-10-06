@@ -1,0 +1,15 @@
+{
+  "recorded_utc": "2026-10-06T21:49:05Z",
+  "task_id": "task_f2c0e4cd89f8",
+  "dispatch_id": "ctx_705bac462252",
+  "terminal": "term_57f1b0c1-a574-4628-aebf-3767ced8bfbd",
+  "candidate_sha": "8497d3a673bd84be079d99a58df97b96676dea88",
+  "input_accepted": true,
+  "actual_turn_started": true,
+  "liveness": "live",
+  "activity": "working",
+  "provider": "codex",
+  "model": "gpt-5.6-sol",
+  "screen_evidence_id": "15be97fa-27b9-4494-8ffb-6bf0033c9a02",
+  "worker_show_evidence_id": "ae48f64e-24d2-49c3-9467-f7bb82df862a"
+}

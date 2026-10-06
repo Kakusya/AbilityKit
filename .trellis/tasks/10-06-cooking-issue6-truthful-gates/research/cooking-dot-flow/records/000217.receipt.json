@@ -1,0 +1,60 @@
+{
+  "version": 1,
+  "flow_id": "6d3174fd-2b01-4136-8ea5-0b0cd0e2845d",
+  "seq": 217,
+  "op_id": "6d3174fd-2b01-4136-8ea5-0b0cd0e2845d:000217",
+  "kind": "receipt",
+  "recorded_utc": "2026-10-06T21:47:27.499310Z",
+  "intent_hash": "82c19a8c0b6ac056fcb8350be81fd2e1756b6034ed93c5fc91fee1d279928bcc",
+  "outcome": "applied",
+  "raw_ref": "evidence/slice15-model-selection-raw.json",
+  "result": {
+    "selection": "2. Use existing model",
+    "terminal": "term_57f1b0c1-a574-4628-aebf-3767ced8bfbd",
+    "text": {
+      "id": "e16725ae-7770-42dc-95da-8d1652e7df3f",
+      "ok": true,
+      "result": {
+        "send": {
+          "handle": "term_57f1b0c1-a574-4628-aebf-3767ced8bfbd",
+          "accepted": true,
+          "bytesWritten": 1
+        }
+      }
+    },
+    "enter": {
+      "id": "b8edbe0b-afa3-49f6-8173-95aeb0bc368b",
+      "ok": true,
+      "result": {
+        "send": {
+          "handle": "term_57f1b0c1-a574-4628-aebf-3767ced8bfbd",
+          "accepted": true,
+          "bytesWritten": 1
+        }
+      }
+    },
+    "wait": {
+      "id": "439fe799-c506-437b-afe2-91247edaecc7",
+      "ok": true,
+      "result": {
+        "wait": {
+          "handle": "term_57f1b0c1-a574-4628-aebf-3767ced8bfbd",
+          "condition": "tui-idle",
+          "satisfied": true,
+          "status": "running",
+          "exitCode": null
+        }
+      }
+    },
+    "screen_proof": {
+      "id": "3a8fc2f3-732f-4b17-844e-a26b3a33dbe1",
+      "status": "running",
+      "codex_version": "0.160.1",
+      "model_banner": "GPT-5.6-Sol high",
+      "working_directory": "D:/MyWorkTree/AbilityKit/issue6-final-verifier3-ccswitch"
+    },
+    "_meta": {
+      "runtimeId": "cfc0b549-ef00-4305-82a8-e90569f2eae4"
+    }
+  }
+}

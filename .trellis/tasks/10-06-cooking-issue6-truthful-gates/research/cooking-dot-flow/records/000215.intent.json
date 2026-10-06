@@ -1,0 +1,19 @@
+{
+  "version": 1,
+  "flow_id": "6d3174fd-2b01-4136-8ea5-0b0cd0e2845d",
+  "seq": 215,
+  "op_id": "6d3174fd-2b01-4136-8ea5-0b0cd0e2845d:000215",
+  "kind": "intent",
+  "recorded_utc": "2026-10-06T21:44:27.607149Z",
+  "action": "orca-worktree-create",
+  "target": "repo:aaa97e0d-5026-4e5c-95f8-bb420dcb4c65:name:issue6-final-verifier3-ccswitch",
+  "authorization_ref": "evidence/approval.md",
+  "payload_ref": "evidence/slice15-exact-sha-verifier-spec.md",
+  "preconditions": {
+    "base_sha": "8497d3a673bd84be079d99a58df97b96676dea88",
+    "repo_id": "aaa97e0d-5026-4e5c-95f8-bb420dcb4c65",
+    "parent": "issue6-cooking-truthful-gates",
+    "name_absent": true,
+    "run_id": "run_5ba664a5f016"
+  }
+}

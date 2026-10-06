@@ -1,0 +1,21 @@
+{
+  "deliveryId": "delivery_09bda32e5b8c",
+  "message": {
+    "id": "msg_35580cc405ef",
+    "run_id": "run_5ba664a5f016",
+    "from_handle": "term_57f1b0c1-a574-4628-aebf-3767ced8bfbd",
+    "subject": "Slice 15 exact-SHA verification passed",
+    "body": "I ran the 290-case contract suite and both required Cooking gates serially at exact commit 8497d3a673bd84be079d99a58df97b96676dea88, preserving raw and structured evidence. Controls passed 290/290, cooking-et-level-runtime passed all 4 leaves with 867 and 328 tests, and cooking-kitchen-loop passed all 5 leaves with 644, 867, and 328 tests; git diff --check passed and only the owned report is untracked. Nothing remains in this dispatch; merge, Issue closure, Unity, physical LAN, and post-merge verification remain outside this worker's scope.",
+    "type": "worker_done",
+    "payload": {
+      "taskId": "task_f2c0e4cd89f8",
+      "dispatchId": "ctx_705bac462252",
+      "outcome": "succeeded",
+      "filesModified": [
+        ".trellis/tasks/10-06-cooking-issue6-truthful-gates/research/slice15-exact-sha-verification-report.md"
+      ],
+      "reportPath": ".trellis/tasks/10-06-cooking-issue6-truthful-gates/research/slice15-exact-sha-verification-report.md"
+    },
+    "created_at": "2026-10-06T23:24:33Z"
+  }
+}

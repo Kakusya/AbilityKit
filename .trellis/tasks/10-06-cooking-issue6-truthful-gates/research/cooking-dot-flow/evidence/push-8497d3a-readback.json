@@ -1,0 +1,23 @@
+{
+  "recorded_utc": "2026-10-06T21:43:30Z",
+  "repository": "Kakusya/AbilityKit",
+  "remote_ref": {
+    "name": "refs/heads/Kakusya/issue6-cooking-truthful-gates",
+    "sha": "8497d3a673bd84be079d99a58df97b96676dea88"
+  },
+  "pull_request": {
+    "number": 12,
+    "state": "OPEN",
+    "is_draft": true,
+    "base_ref_name": "master",
+    "head_ref_name": "Kakusya/issue6-cooking-truthful-gates",
+    "head_ref_oid": "8497d3a673bd84be079d99a58df97b96676dea88",
+    "status_checks": []
+  },
+  "commit": {
+    "sha": "8497d3a673bd84be079d99a58df97b96676dea88",
+    "tree_sha": "0fd812c13afb5bb0cb45d1def7c8129b2fac2bb4",
+    "message": "fix(cooking): support optional compiler analyzer targets",
+    "url": "https://github.com/Kakusya/AbilityKit/commit/8497d3a673bd84be079d99a58df97b96676dea88"
+  }
+}

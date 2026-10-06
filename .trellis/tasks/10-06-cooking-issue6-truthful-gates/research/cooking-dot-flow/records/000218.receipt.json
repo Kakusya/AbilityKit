@@ -1,0 +1,41 @@
+{
+  "version": 1,
+  "flow_id": "6d3174fd-2b01-4136-8ea5-0b0cd0e2845d",
+  "seq": 218,
+  "op_id": "6d3174fd-2b01-4136-8ea5-0b0cd0e2845d:000218",
+  "kind": "receipt",
+  "recorded_utc": "2026-10-06T21:48:13.515983Z",
+  "intent_hash": "4d94bd6fcea65f72f00c0ca22a23caee5155549b5d166770df8f9392d43e1d3d",
+  "outcome": "applied",
+  "raw_ref": "evidence/slice15-task-create-raw.json",
+  "result": {
+    "id": "8228605d-88f4-4722-bfaf-1a902c2220e0",
+    "ok": true,
+    "result": {
+      "task": {
+        "id": "task_f2c0e4cd89f8",
+        "run_id": "run_5ba664a5f016",
+        "parent_id": null,
+        "created_by_terminal_handle": "term_a345586c-d76c-4d68-afdf-f3a58f9686c1",
+        "created_by_pane_key": "c7c2707b-c337-40a6-835c-d0db787ce9af:b4640822-995e-46b5-a63e-db04e94565fa",
+        "created_by_process_incarnation": "aaa97e0d-5026-4e5c-95f8-bb420dcb4c65::D:/MyWorkTree/AbilityKit@@454b2342:753afb7a-f7c3-433b-b372-88c707ccf23d",
+        "created_by_run_generation": 2,
+        "task_title": "Issue 6 repaired exact-SHA Cooking verification",
+        "display_name": "Issue6 Slice15 exact-SHA verifier",
+        "spec_ref": "evidence/slice15-exact-sha-verifier-spec.md",
+        "status": "ready",
+        "deps": "[]",
+        "result": null,
+        "created_at": "2026-10-06 21:47:46",
+        "completed_at": null
+      },
+      "mutation": {
+        "requestId": "920ea395-4b28-48d4-ab61-13321866248a",
+        "replayed": false
+      }
+    },
+    "_meta": {
+      "runtimeId": "cfc0b549-ef00-4305-82a8-e90569f2eae4"
+    }
+  }
+}

@@ -1,0 +1,19 @@
+{
+  "id": "8fbc6a6f-bf26-45ed-8a9d-1dbcc430720b",
+  "ok": true,
+  "result": {
+    "terminal": {
+      "handle": "term_57f1b0c1-a574-4628-aebf-3767ced8bfbd",
+      "tabId": "63fdf955-dfe4-4714-bc30-e80ab7a5135c",
+      "worktreeId": "aaa97e0d-5026-4e5c-95f8-bb420dcb4c65::D:/MyWorkTree/AbilityKit/issue6-final-verifier3-ccswitch",
+      "title": "Issue6 repaired exact-SHA verifier cc-switch",
+      "executionHostId": "local",
+      "incarnationId": "b56208a2-8259-4ccc-bdcc-5d47142c357f",
+      "hostPlatform": "win32",
+      "surface": "visible"
+    }
+  },
+  "_meta": {
+    "runtimeId": "cfc0b549-ef00-4305-82a8-e90569f2eae4"
+  }
+}

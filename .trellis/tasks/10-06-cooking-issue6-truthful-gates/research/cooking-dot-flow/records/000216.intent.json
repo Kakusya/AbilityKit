@@ -1,0 +1,20 @@
+{
+  "version": 1,
+  "flow_id": "6d3174fd-2b01-4136-8ea5-0b0cd0e2845d",
+  "seq": 216,
+  "op_id": "6d3174fd-2b01-4136-8ea5-0b0cd0e2845d:000216",
+  "kind": "intent",
+  "recorded_utc": "2026-10-06T21:45:59.122008Z",
+  "action": "orca-terminal-create",
+  "target": "worktree:issue6-final-verifier3-ccswitch",
+  "authorization_ref": "evidence/approval.md",
+  "payload_ref": "evidence/slice15-exact-sha-verifier-spec.md",
+  "preconditions": {
+    "worktree_head": "8497d3a673bd84be079d99a58df97b96676dea88",
+    "model": "gpt-5.6-sol",
+    "model_provider": "custom",
+    "reasoning_effort": "high",
+    "provider_proof": "evidence/slice11-ccswitch-provider-preflight.json",
+    "run_id": "run_5ba664a5f016"
+  }
+}
