@@ -352,16 +352,69 @@ foreach ($target in @('assets','source','DLL','package-tool')) {
 $baseline=$seed.summary
 $validationContext=[pscustomobject]@{runRoot=$seed.runRoot; allowExample=$true; control=$reuseFixture.context; abortStatus=$null}
 function Validator-Case {
-    param([string]$Name,[scriptblock]$Mutation,[bool]$AllowExample=$true)
+    param([string]$Name,[scriptblock]$Mutation,[bool]$AllowExample=$true,[bool]$ExpectedAccepted=$false,$BaselineRun=$null)
     $directory=New-ControlDirectory
-    $candidate=ConvertTo-GateJson $baseline | ConvertFrom-Json
+    $trusted=if ($BaselineRun) { $BaselineRun.summary } else { $baseline }
+    $runRoot=if ($BaselineRun) { $BaselineRun.runRoot } else { $seed.runRoot }
+    $control=if ($BaselineRun) { Get-Content -LiteralPath (Join-Path $BaselineRun.fixtureRoot 'context.json') -Raw -Encoding UTF8 | ConvertFrom-Json } else { $reuseFixture.context }
+    $candidate=ConvertTo-GateJson $trusted | ConvertFrom-Json
     & $Mutation $candidate
     [IO.File]::WriteAllText((Join-Path $directory 'candidate.json'),(ConvertTo-GateJson $candidate))
-    $ctx=[pscustomobject]@{runRoot=$seed.runRoot; allowExample=$AllowExample; control=$reuseFixture.context; abortStatus=$null}
+    $candidate=Get-Content -LiteralPath (Join-Path $directory 'candidate.json') -Raw -Encoding UTF8 | ConvertFrom-Json
+    $ctx=[pscustomobject]@{runRoot=$runRoot; allowExample=$AllowExample; control=$control; abortStatus=$null}
     $accepted=$false; $reason=$null
-    try { $null=Assert-GateResult $candidate $baseline $ctx; $accepted=$true } catch { $reason=$_.Exception.Message }
-    Record-Control 'validator' $Name $false $accepted $directory @('Assert-GateResult','candidate.json','unchanged-assigned-plan') $null $reason
+    try { $null=Assert-GateResult $candidate $trusted $ctx; $accepted=$true } catch { $reason=$_.Exception.Message }
+    Record-Control 'validator' $Name $ExpectedAccepted $accepted $directory @('Assert-GateResult','candidate.json','unchanged-assigned-plan') $null $reason
 }
+# Each mutation keeps its unchanged assigned plan and real fixture archives.
+# Recomputed fingerprints make these association controls independent of scalar
+# fingerprint rejection. Source replacements are separately valid archived files.
+foreach ($binding in @('build-omit-primary','loaded-omit-primary','test-input-omit-primary','coherent-omit-primary','test-input-substitute-source','coherent-substitute-source','loaded-after-omit-primary','loaded-omit-dependency','test-input-omit-dependency','test-input-substitute-dependency','loaded-duplicate-normalized-path','test-input-duplicate-normalized-path','loaded-hash-contradiction','loaded-size-contradiction')) {
+    Validator-Case ('binding-'+$binding) {
+        param($r)
+        $p=$r.children[0].provenance;$primary=$p.assembly
+        $dependencyPath=Join-Path (Split-Path $primary) 'dependency.dll'
+        $dependency=@($p.build.outputs | Where-Object path -ieq $dependencyPath)
+        $replacement=@($p.build.inputs | Where-Object path -like '*.cs')[0]
+        if ($dependency.Count -ne 1 -or -not $replacement) { throw 'Nonempty valid dependency/source binding fixture required.' }
+        switch ($binding) {
+            'build-omit-primary' { $p.build.outputs=@($p.build.outputs | Where-Object path -ine $primary) }
+            'loaded-omit-primary' { $p.loadedBefore=@($p.loadedBefore | Where-Object path -ine $primary);$p.loadedAfter=$p.loadedBefore }
+            'test-input-omit-primary' { $p.test.inputs=@($p.test.inputs | Where-Object path -ine $primary) }
+            'coherent-omit-primary' { $p.build.outputs=@($p.build.outputs | Where-Object path -ine $primary);$p.loadedBefore=@($p.loadedBefore | Where-Object path -ine $primary);$p.loadedAfter=$p.loadedBefore;$p.test.inputs=$p.loadedBefore }
+            'test-input-substitute-source' { $p.test.inputs=@($p.test.inputs | Where-Object path -ine $primary)+@($replacement) }
+            'coherent-substitute-source' { $p.build.outputs=@($p.build.outputs | Where-Object path -ine $primary)+@($replacement);$p.loadedBefore=@($p.loadedBefore | Where-Object path -ine $primary)+@($replacement);$p.loadedAfter=$p.loadedBefore;$p.test.inputs=$p.loadedBefore }
+            'loaded-after-omit-primary' { $p.loadedAfter=@($p.loadedAfter | Where-Object path -ine $primary) }
+            'loaded-omit-dependency' { $p.loadedBefore=@($p.loadedBefore | Where-Object path -ine $dependency[0].path);$p.loadedAfter=$p.loadedBefore }
+            'test-input-omit-dependency' { $p.test.inputs=@($p.test.inputs | Where-Object path -ine $dependency[0].path) }
+            'test-input-substitute-dependency' { $p.test.inputs=@($p.test.inputs | Where-Object path -ine $dependency[0].path)+@($replacement) }
+            'loaded-duplicate-normalized-path' { $alias=ConvertTo-GateJson $p.loadedBefore[0] | ConvertFrom-Json;$alias.path=$alias.path.ToUpperInvariant().Replace('\','/');$p.loadedBefore+=@($alias);$p.loadedAfter=$p.loadedBefore }
+            'test-input-duplicate-normalized-path' { $alias=ConvertTo-GateJson $p.test.inputs[0] | ConvertFrom-Json;$alias.path=$alias.path.ToUpperInvariant().Replace('\','/');$p.test.inputs+=@($alias) }
+            'loaded-hash-contradiction' { $p.loadedBefore[0].sha256='0'*64;$p.loadedAfter=$p.loadedBefore }
+            'loaded-size-contradiction' { $p.loadedBefore[0].bytes++;$p.loadedAfter=$p.loadedBefore }
+        }
+        $p.build.outputFingerprint=Get-GateFingerprint $p.build.outputs
+        $p.test.inputFingerprint=Get-GateFingerprint $p.test.inputs
+    }
+}
+foreach ($bindingPositive in @('distinct-archive-locations','reordered-identities','alternate-valid-archives-and-roles','normalized-windows-paths')) {
+    Validator-Case ('binding-positive-'+$bindingPositive) {
+        param($r)
+        $p=$r.children[0].provenance
+        if ($p.build.outputs.Count -lt 2 -or $p.build.outputs[0].artifact.path -ceq $p.loadedBefore[0].artifact.path) { throw 'Distinct build/loaded archive locations required.' }
+        switch ($bindingPositive) {
+            'reordered-identities' { $p.loadedBefore=@($p.loadedBefore | Sort-Object path -Descending);$p.loadedAfter=@($p.loadedAfter | Sort-Object path);$p.test.inputs=@($p.test.inputs | Sort-Object path -Descending) }
+            'alternate-valid-archives-and-roles' { $p.loadedAfter=@($p.build.outputs);$p.test.inputs=@($p.build.outputs) }
+            'normalized-windows-paths' { foreach ($entry in $p.loadedBefore+$p.loadedAfter+$p.test.inputs) { $entry.path=$entry.path.ToUpperInvariant().Replace('\','/') } }
+        }
+        $p.test.inputFingerprint=Get-GateFingerprint $p.test.inputs
+    } -ExpectedAccepted $true
+}
+# Existing actual NoBuild execution re-archives verified build outputs. The
+# same set check applies without claiming that this run executed its reused build.
+Validator-Case 'binding-reused-build-positive' { param($r) if ($r.children[1].provenance.build.mode -cne 'Reused' -or $r.children[1].provenance.build.command -ne $null) { throw 'Actual reused build required.' } } -ExpectedAccepted $true -BaselineRun $explicit
+Validator-Case 'binding-reused-build-test-input-omission' { param($r) $p=$r.children[1].provenance;$p.test.inputs=@($p.test.inputs | Where-Object path -ine $p.assembly);$p.test.inputFingerprint=Get-GateFingerprint $p.test.inputs } -BaselineRun $explicit
+Validator-Case 'binding-reused-build-loaded-omission' { param($r) $p=$r.children[1].provenance;$p.loadedBefore=@($p.loadedBefore | Where-Object path -ine $p.assembly);$p.loadedAfter=$p.loadedBefore } -BaselineRun $explicit
 Validator-Case 'strict-lowercase-status' { param($r) $r.children[0].status='passed' }
 Validator-Case 'strict-CLI-map' { param($r) $r.children[0].cliExitCode=2 }
 Validator-Case 'native2-cannot-claim-Passed' { param($r) $r.children[0].processExitCode=2 }

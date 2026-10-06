@@ -600,6 +600,30 @@ function Assert-GateStage {
 
 }
 
+function Assert-GateBinaryIdentitySet {
+    param([object[]]$Expected, [object[]]$Actual, $Result, $Context, [string]$Label)
+    # Archive paths/roles and enumeration order can differ across stages. The
+    # complete consumed binary identities cannot: Windows path + length + hash.
+    $sets=@()
+    foreach ($entries in @(@{entries=$Expected},@{entries=$Actual})) {
+        if (-not $entries.entries.Count) { throw "Empty binary identity set: $Label" }
+        $identities=New-Object 'System.Collections.Generic.Dictionary[string,object]' ([StringComparer]::OrdinalIgnoreCase)
+        foreach ($entry in $entries.entries) {
+            if (-not [IO.Path]::IsPathRooted($entry.path) -or $entry.sha256 -cnotmatch '^[0-9a-f]{64}$' -or ($entry.bytes -isnot [int] -and $entry.bytes -isnot [long]) -or $entry.bytes -le 0) { throw "Invalid binary identity: $Label" }
+            $path=[IO.Path]::GetFullPath($entry.path)
+            if ($identities.ContainsKey($path)) { throw "Duplicate binary identity: $Label" }
+            $null=Assert-GateArtifact $entry.artifact $Result $Context.runRoot
+            if ($entry.sha256 -cne $entry.artifact.sha256 -or $entry.bytes -ne $entry.artifact.bytes) { throw "Binary archive contradiction: $Label" }
+            $identities.Add($path,$entry)
+        }
+        $sets+=,$identities
+    }
+    if ($sets[0].Count -ne $sets[1].Count) { throw "Binary identity membership mismatch: $Label" }
+    foreach ($path in $sets[0].Keys) {
+        if (-not $sets[1].ContainsKey($path) -or $sets[0][$path].bytes -ne $sets[1][$path].bytes -or $sets[0][$path].sha256 -cne $sets[1][$path].sha256) { throw "Binary identity mismatch: $Label" }
+    }
+}
+
 function Assert-GateProvenance {
     param($Result, $Context)
     $p=$Result.provenance
@@ -667,7 +691,9 @@ function Assert-GateProvenance {
     if ($Result.kind -ceq 'dotnet-test') {
         Assert-GateStage $p.test $Result $Context 'test'
         if ($p.build.mode -ceq 'Executed' -and [DateTimeOffset]$p.test.startedAt -lt [DateTimeOffset]$p.build.endedAt) { throw 'Build/test order contradiction.' }
-        Assert-GateEqual $p.loadedBefore $p.loadedAfter 'loaded binary stability'
+        Assert-GateBinaryIdentitySet $p.build.outputs $p.loadedBefore $Result $Context 'build.outputs -> loadedBefore'
+        Assert-GateBinaryIdentitySet $p.loadedBefore $p.loadedAfter $Result $Context 'loadedBefore -> loadedAfter'
+        Assert-GateBinaryIdentitySet $p.loadedBefore $p.test.inputs $Result $Context 'loadedBefore -> test.inputs'
         Assert-GateInputs $p.loadedAfter
         $trx=@($Result.artifacts | Where-Object { $_.role -ceq 'trx' })
         if ($trx.Count -ne 1) { throw 'TRX artifact missing/duplicate.' }
