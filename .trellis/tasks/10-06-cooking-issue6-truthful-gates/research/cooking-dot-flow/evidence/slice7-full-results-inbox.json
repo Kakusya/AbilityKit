@@ -1,0 +1,29 @@
+{
+  "id": "79ccc18d-7322-44aa-8c6a-8394dc53aa51",
+  "ok": true,
+  "result": {
+    "runId": "run_5ba664a5f016",
+    "messages": [
+      {
+        "id": "msg_19938fc59f94",
+        "run_id": "run_5ba664a5f016",
+        "delivery_contract": "current_delivery",
+        "from_handle": "term_a1a61c7c-aef6-4cd0-8c46-27a90632617b",
+        "to_handle": "run:run_5ba664a5f016",
+        "subject": "full216 Passed; scoped finalization",
+        "body": "Final full default suite216/216 native0, all195 old cases/expected values retained,21 new binding controls passed and actual WindowSize40/80/120 Passed. Both final affected receipts22/22 and21/21 native0; frozen inputs,6241 prior Failed files and both positive68 run trees unchanged. Final scoped parse/whitespace/all32 config comparison and zero-writer checks Passed; preparing only the authorized three-file commit and report.",
+        "type": "heartbeat",
+        "priority": "normal",
+        "thread_id": null,
+        "payload": "{\"taskId\":\"task_f9cd55629781\",\"dispatchId\":\"ctx_00994ffacdae\",\"phase\":\"reviewing\"}",
+        "created_at": "2026-10-06T00:22:39Z",
+        "delivered_at": null
+      }
+    ],
+    "count": 1,
+    "acknowledged": null
+  },
+  "_meta": {
+    "runtimeId": "ff0c5f2c-d341-4455-bc1c-c113650bdd60"
+  }
+}

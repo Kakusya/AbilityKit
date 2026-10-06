@@ -1,0 +1,15 @@
+{
+  "version": 1,
+  "flow_id": "6d3174fd-2b01-4136-8ea5-0b0cd0e2845d",
+  "seq": 16,
+  "op_id": "6d3174fd-2b01-4136-8ea5-0b0cd0e2845d:000016",
+  "kind": "intent",
+  "recorded_utc": "2026-10-05T18:11:25.488645Z",
+  "action": "inbox-ack",
+  "target": "delivery_d64ff578206b",
+  "authorization_ref": "evidence/approval.md",
+  "payload_ref": "evidence/delivery-stage-binding-confirmed.json",
+  "preconditions": {
+    "run_id": "run_5ba664a5f016"
+  }
+}

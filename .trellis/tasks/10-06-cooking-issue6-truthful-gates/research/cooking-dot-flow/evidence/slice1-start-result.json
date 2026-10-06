@@ -1,0 +1,14 @@
+{
+  "run_id": "run_5ba664a5f016",
+  "task_id": "task_c2b5e42b2e23",
+  "dispatch_id": "ctx_c1d5fbd7ef56",
+  "request_id": "2a2d5eaf-8c5e-4810-8052-402c8414267c",
+  "input_accepted": true,
+  "turn_started": true,
+  "command": "orca orchestration worker-start --spec task-owned-spec --worktree exact --agent codex --run run_5ba664a5f016 --from original-main --json",
+  "exit_code": 0,
+  "effective_model": null,
+  "effective_effort": null,
+  "model_effort_truth": "unknown in launch receipt; configured defaults used",
+  "terminal_handle": "term_a1a61c7c-aef6-4cd0-8c46-27a90632617b"
+}

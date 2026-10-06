@@ -1,0 +1,36 @@
+{
+  "recordedUtc": "2026-10-05T19:27:41.996415+00:00",
+  "review": "provisional main independent control-evidence inspection; worker not yet settled",
+  "raw": "local\\Artifacts\\issue6-cooking-slice1-window-full02\\controls.json",
+  "rawSha256": "cc0d452095be6828ffb15edb9e52814b3cc5ded3308771e54c0bc550cc2eaa39",
+  "status": "Passed",
+  "total": 164,
+  "passed": 164,
+  "failed": 0,
+  "fullControlSuiteAccepted": true,
+  "inputFingerprintStable": true,
+  "testedSha": "b1644ec4e0418df99641a5db7e7e65010fc5f24a",
+  "testedDirty": true,
+  "actualWidths": [
+    {
+      "requested": 40,
+      "observed": 40,
+      "dimension": "RawUI.WindowSize.Width",
+      "setterSucceeded": true
+    },
+    {
+      "requested": 80,
+      "observed": 80,
+      "dimension": "RawUI.WindowSize.Width",
+      "setterSucceeded": true
+    },
+    {
+      "requested": 120,
+      "observed": 120,
+      "dimension": "RawUI.WindowSize.Width",
+      "setterSucceeded": true
+    }
+  ],
+  "realCooking": "NotRun",
+  "commitScope": "pending frozen commit and matching worker_done"
+}

@@ -1,0 +1,12 @@
+{
+  "run_id": "run_5ba664a5f016",
+  "task_id": "task_c9384f689b07",
+  "dispatch_id": "ctx_f42f62847f04",
+  "terminal": "term_a1a61c7c-aef6-4cd0-8c46-27a90632617b",
+  "input_accepted": true,
+  "turn_started": true,
+  "reuse_of_dispatch": "ctx_c1d5fbd7ef56",
+  "candidate_sha": "b1644ec4e0418df99641a5db7e7e65010fc5f24a",
+  "command_exit_code": 0,
+  "scope": "Three production files limited to probe/harness/native-width documentation plus new report; actual window widths."
+}

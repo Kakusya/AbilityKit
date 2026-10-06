@@ -1,0 +1,38 @@
+{
+  "id": "18393e8a-839b-4b32-9257-bea8f7542fce",
+  "ok": true,
+  "result": {
+    "runId": "run_5ba664a5f016",
+    "deliveryId": "delivery_e02b4ec76b1b",
+    "messages": [
+      {
+        "id": "msg_2963e01b4f81",
+        "run_id": "run_5ba664a5f016",
+        "delivery_contract": "current_delivery",
+        "from_handle": "term_a1a61c7c-aef6-4cd0-8c46-27a90632617b",
+        "to_handle": "run:run_5ba664a5f016",
+        "subject": "Slice8 both genuine Cooking gates Passed",
+        "body": "I verified both exact Cooking gates serially on b8c53e8153b9c6f015e75040b9561b3078f05e5f and wrote the report with complete native, TRX, closure and hash receipts in fresh ignored evidence. Both Passed CLI0/native0 with4/4 and5/5 required leaves and actual867/328 and644/867/328 counts, zero failed/skipped/unexecuted items, eight stable source pins and71490 stable input/binary entries; two read-only metadata errors are preserved and corrected. Main independent final acceptance, dot exact-SHA review and integration/Issue delivery remain NotRun.",
+        "type": "worker_done",
+        "priority": "normal",
+        "thread_id": null,
+        "payload": "{\"taskId\":\"task_8285f2c0421e\",\"dispatchId\":\"ctx_a4e2695b308e\",\"outcome\":\"succeeded\",\"filesModified\":[\".trellis/tasks/10-06-cooking-issue6-truthful-gates/research/slice8-real-verification-report.md\"],\"reportPath\":\".trellis/tasks/10-06-cooking-issue6-truthful-gates/research/slice8-real-verification-report.md\"}",
+        "created_at": "2026-10-06T02:00:52Z",
+        "delivered_at": null
+      }
+    ],
+    "count": 1,
+    "replayed": false,
+    "acknowledged": null,
+    "timedOut": false,
+    "cancelled": false,
+    "connectionLost": false,
+    "mutation": {
+      "requestId": "a8bdb58d-e7be-47db-b06e-b510257d45ea",
+      "replayed": false
+    }
+  },
+  "_meta": {
+    "runtimeId": "ff0c5f2c-d341-4455-bc1c-c113650bdd60"
+  }
+}

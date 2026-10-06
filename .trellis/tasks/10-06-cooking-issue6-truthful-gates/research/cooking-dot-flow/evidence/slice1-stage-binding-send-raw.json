@@ -1,0 +1,28 @@
+{
+  "id": "763e8472-aff5-4ce9-8dcf-8f79f2c0739f",
+  "ok": true,
+  "result": {
+    "message": {
+      "id": "msg_25e5ce1ee88e",
+      "run_id": "run_5ba664a5f016",
+      "delivery_contract": "current_delivery",
+      "from_handle": "term_08a896e7-f2ff-477d-85c0-1962eb3a8136",
+      "to_handle": "dispatch:ctx_c1d5fbd7ef56",
+      "subject": "Slice1 stage identity review hypothesis",
+      "body": "At the next natural checkpoint, check a read-only main review hypothesis against the current source: Assert-GateStage appeared to bind stage project and non-restore Configuration/filter, but not actual -f/TargetFramework argv, and restore Configuration argv was not bound. The accepted dot plan requires actual stage argv to match project/TFM/Configuration. Please independently confirm or refute with a mutation control that changes both stage command and its matching native invocation, preserving assigned configuration; if valid, repair only the approved helper/fixtures/harness and preserve the red result. This is the existing contract, not new scope or permission for real dotnet. Rerun affected controls and the full suite after all implementation changes; freeze a scoped checkpoint/report then worker_done and idle. Main remains read-only for your owned source.",
+      "type": "status",
+      "priority": "normal",
+      "thread_id": null,
+      "payload": null,
+      "created_at": "2026-10-05T18:03:16Z",
+      "delivered_at": null
+    },
+    "mutation": {
+      "requestId": "b7246979-773b-472e-8fa4-401a0371f0bc",
+      "replayed": false
+    }
+  },
+  "_meta": {
+    "runtimeId": "ff0c5f2c-d341-4455-bc1c-c113650bdd60"
+  }
+}

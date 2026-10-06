@@ -1,0 +1,36 @@
+{
+  "at": "2026-10-05T20:43:16.561161+00:00",
+  "head": "79bf9642b04a696880a1c393ca5d11171a4b078a",
+  "implementationHashesMatch": true,
+  "mainTaskDirty": true,
+  "trackedDirtyPaths": [
+    ".trellis/tasks/10-06-cooking-issue6-truthful-gates/check.jsonl",
+    ".trellis/tasks/10-06-cooking-issue6-truthful-gates/implement.jsonl",
+    ".trellis/tasks/10-06-cooking-issue6-truthful-gates/implement.md",
+    ".trellis/tasks/10-06-cooking-issue6-truthful-gates/research/cooking-dot-flow/index.json",
+    ".trellis/tasks/10-06-cooking-issue6-truthful-gates/research/record-operation.py"
+  ],
+  "reportSha256": "97ea9acddbaeca2d75336e45a45900a772fcf489da7dd555ace331dcf5fca091",
+  "runs": [
+    {
+      "runId": "6fec830e-8bfd-45f6-bd0e-abcf0bd7d32e",
+      "status": "Failed",
+      "summarySha256": "ffc9b2f5c0a2613698119430d3a5eb65648cc247b2e5e48c610db3d6d1f3df46",
+      "leaves": 4,
+      "notRunTestLeaves": 2,
+      "genuineTestLaunches": 0
+    },
+    {
+      "runId": "ae803d09-ddcd-4f15-a4b7-ef9eb0ac7619",
+      "status": "Failed",
+      "summarySha256": "9304a6999b3466642d994e213596cad6ddcfc5143fcfa0a348c5944217b9d6fb",
+      "leaves": 5,
+      "notRunTestLeaves": 3,
+      "genuineTestLaunches": 0
+    }
+  ],
+  "independentFindings": "real-restore-main-findings01.json",
+  "result": "Failed",
+  "nextAllowedScope": "restore-graph-repair-spec.md",
+  "settlementRequiredBeforeDispatch": true
+}

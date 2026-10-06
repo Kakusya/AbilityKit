@@ -1,0 +1,12 @@
+{
+  "version": 1,
+  "flow_id": "6d3174fd-2b01-4136-8ea5-0b0cd0e2845d",
+  "seq": 71,
+  "op_id": "6d3174fd-2b01-4136-8ea5-0b0cd0e2845d:000071",
+  "kind": "receipt",
+  "recorded_utc": "2026-10-05T22:28:28.594860Z",
+  "intent_hash": "78e77af5e0fb92a57ef75fbf0ada03f4cb14bc34484c3d0f2d59d22b74142f33",
+  "outcome": "applied",
+  "raw_ref": "evidence/slice6-config-interpretation-guidance-raw.json",
+  "result": {}
+}

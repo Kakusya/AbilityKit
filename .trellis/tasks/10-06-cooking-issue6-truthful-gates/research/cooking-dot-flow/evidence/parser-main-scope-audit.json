@@ -1,0 +1,60 @@
+{
+  "candidateSha": "79bf9642b04a696880a1c393ca5d11171a4b078a",
+  "scopeFiles": [
+    ".trellis/tasks/10-06-cooking-issue6-truthful-gates/research/slice3-import-parser-repair-report.md",
+    "tools/test-gate-result-contract.ps1",
+    "tools/tests/fixtures/gate-result-fake-dotnet.ps1",
+    "tools/tests/test-gate-result-contract.tests.ps1"
+  ],
+  "implementationDirty": false,
+  "mainTaskDirty": true,
+  "fullFrozenControls": {
+    "passed": 166,
+    "failed": 0,
+    "nativeExit": 0,
+    "raw": "local\\Artifacts\\issue6-cooking-slice1-import-full01\\controls.json",
+    "sha256": "5461c6589f118bec8fb28fc23e7650731a59caa1ff24e761ea787be8abdc7722",
+    "executedAtBaseDirty": true
+  },
+  "testedInputsMatchCurrentCommit": true,
+  "inputs": [
+    {
+      "path": "C:\\Users\\Administrator\\orca\\workspaces\\AbilityKit\\issue6-cooking-truthful-gates\\tools\\run_test_gate.ps1",
+      "bytes": 15192,
+      "sha256": "575469c4238e29cf41b5826a43748d38c9c81578793261835b6e51dc3a886e8f"
+    },
+    {
+      "path": "C:\\Users\\Administrator\\orca\\workspaces\\AbilityKit\\issue6-cooking-truthful-gates\\tools\\test-gate-result-contract.ps1",
+      "bytes": 60352,
+      "sha256": "cba29bf243ffc325923ca3984e44891fe86e6e0c4021269c0846e3f856d0eef9"
+    },
+    {
+      "path": "C:\\Users\\Administrator\\orca\\workspaces\\AbilityKit\\issue6-cooking-truthful-gates\\tools\\test-gates.json",
+      "bytes": 63749,
+      "sha256": "85111d00c4a3a61c87f61da3e43d159da60e07d058406f7049e17495e7e520a1"
+    },
+    {
+      "path": "C:\\Users\\Administrator\\orca\\workspaces\\AbilityKit\\issue6-cooking-truthful-gates\\tools\\tests\\fixtures\\gate-result-fake-dotnet.ps1",
+      "bytes": 8333,
+      "sha256": "503b2e4a555cf559d909c99e34e1cd3658e3598cd273842b69c481967d1f2cd1"
+    },
+    {
+      "path": "C:\\Users\\Administrator\\orca\\workspaces\\AbilityKit\\issue6-cooking-truthful-gates\\tools\\tests\\fixtures\\gate-result-model.ps1",
+      "bytes": 5255,
+      "sha256": "fb7cf4c82af3c78c2f825317b9573a92abe28f0135d26d5e09f6cb8c1ffe5a35"
+    },
+    {
+      "path": "C:\\Users\\Administrator\\orca\\workspaces\\AbilityKit\\issue6-cooking-truthful-gates\\tools\\tests\\fixtures\\gate-result-native-probe.ps1",
+      "bytes": 5534,
+      "sha256": "f3a1a95a96cb42f1c1c3dbc2cf77fb6df66d13855543a6332c576f56bd355bfe"
+    },
+    {
+      "path": "C:\\Users\\Administrator\\orca\\workspaces\\AbilityKit\\issue6-cooking-truthful-gates\\tools\\tests\\test-gate-result-contract.tests.ps1",
+      "bytes": 37482,
+      "sha256": "55b7a64962c44f8132713f20c499b349671e511726be80d76210cd666260cf87"
+    }
+  ],
+  "settlement": "matching worker_done msg_a28fed52381b, settled/revoked/tui-idle",
+  "realCooking": "NotRun on this new candidate",
+  "independentAffectedControls": "next required main check"
+}

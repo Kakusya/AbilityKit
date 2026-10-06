@@ -1,0 +1,20 @@
+{
+  "version": 1,
+  "flow_id": "6d3174fd-2b01-4136-8ea5-0b0cd0e2845d",
+  "seq": 30,
+  "op_id": "6d3174fd-2b01-4136-8ea5-0b0cd0e2845d:000030",
+  "kind": "receipt",
+  "recorded_utc": "2026-10-05T19:32:16.538147Z",
+  "intent_hash": "48e45100dc2b2934020ba3353a9a6413c36e9920710e863c3de139ba446f37f2",
+  "outcome": "unknown",
+  "raw_ref": "evidence/slice2-start-raw.json",
+  "result": {
+    "run_id": "run_5ba664a5f016",
+    "task_id": "task_b85eae037475",
+    "dispatch_id": "ctx_2127fab8d0af",
+    "input_accepted": true,
+    "turn_started": false,
+    "stage": "turn_start_unobserved",
+    "replay_ref": "evidence/slice2-start-replay-raw.json"
+  }
+}

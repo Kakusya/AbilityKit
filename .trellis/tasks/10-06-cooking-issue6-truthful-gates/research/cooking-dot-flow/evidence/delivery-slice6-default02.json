@@ -1,0 +1,53 @@
+﻿{
+  "id": "fd4026a0-7152-4ee2-ad20-30f9513a08b0",
+  "ok": true,
+  "result": {
+    "runId": "run_5ba664a5f016",
+    "deliveryId": "delivery_e5bc4c374348",
+    "messages": [
+      {
+        "id": "msg_d5538ddd1daf",
+        "run_id": "run_5ba664a5f016",
+        "delivery_contract": "current_delivery",
+        "from_handle": "term_a1a61c7c-aef6-4cd0-8c46-27a90632617b",
+        "to_handle": "run:run_5ba664a5f016",
+        "subject": "alive",
+        "body": "",
+        "type": "heartbeat",
+        "priority": "normal",
+        "thread_id": null,
+        "payload": "{\"taskId\":\"task_31fd1c2368df\",\"dispatchId\":\"ctx_4c94250ae711\",\"phase\":\"reviewing\"}",
+        "created_at": "2026-10-05T22:15:54Z",
+        "delivered_at": null
+      },
+      {
+        "id": "msg_cce8d18b5c0c",
+        "run_id": "run_5ba664a5f016",
+        "delivery_contract": "current_delivery",
+        "from_handle": "term_a1a61c7c-aef6-4cd0-8c46-27a90632617b",
+        "to_handle": "run:run_5ba664a5f016",
+        "subject": "Slice6 genuine tests underway",
+        "body": "Freeze68 and all eight working/blob pins verified with implementation clean and main-only task dirt; zero active .NET writers before launch. First gate explicit analyzer/runtime restore/build all native0; actual runtime archived assets retain analyzer netstandard2.0 and the full Cooking TRX has now been produced. Gate1 postchecks and ET tests remain underway, then the second exact gate will run serially.",
+        "type": "status",
+        "priority": "normal",
+        "thread_id": null,
+        "payload": "{\"taskId\":\"task_31fd1c2368df\",\"dispatchId\":\"ctx_4c94250ae711\"}",
+        "created_at": "2026-10-05T22:19:39Z",
+        "delivered_at": null
+      }
+    ],
+    "count": 2,
+    "replayed": false,
+    "acknowledged": null,
+    "timedOut": false,
+    "cancelled": false,
+    "connectionLost": false,
+    "mutation": {
+      "requestId": "c13ab525-c09f-481a-a757-8b12507ab8e5",
+      "replayed": false
+    }
+  },
+  "_meta": {
+    "runtimeId": "ff0c5f2c-d341-4455-bc1c-c113650bdd60"
+  }
+}

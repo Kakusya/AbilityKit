@@ -1,0 +1,9 @@
+{
+  "run_id": "run_5ba664a5f016",
+  "task_id": "task_0330e4b97a9b",
+  "dispatch_id": "ctx_e989de325df7",
+  "input_accepted": true,
+  "turn_started": false,
+  "state": "outcome_unknown",
+  "actualSpecRef": "evidence/parser-repair-dispatched-spec.md"
+}

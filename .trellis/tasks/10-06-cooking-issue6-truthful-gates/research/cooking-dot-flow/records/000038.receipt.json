@@ -1,0 +1,22 @@
+{
+  "version": 1,
+  "flow_id": "6d3174fd-2b01-4136-8ea5-0b0cd0e2845d",
+  "seq": 38,
+  "op_id": "6d3174fd-2b01-4136-8ea5-0b0cd0e2845d:000038",
+  "recorded_utc": "2026-10-05T20:00:13.358343Z",
+  "kind": "receipt",
+  "intent_hash": "21dc374782500de4f93df8e0d5001d59cb0ab3f14ec92f8f90045c6b5ac4028f",
+  "outcome": "applied",
+  "raw_ref": "evidence/parser-start-composer01.json",
+  "result": {
+    "resolves": "6d3174fd-2b01-4136-8ea5-0b0cd0e2845d:000037",
+    "effect": "known exact dispatch creation and queued prompt; live terminal is at composer with previous turn completed, no new turn observed",
+    "task_id": "task_0330e4b97a9b",
+    "dispatch_id": "ctx_e989de325df7",
+    "run_id": "run_5ba664a5f016",
+    "input_accepted": true,
+    "turn_started": false,
+    "readiness": "Blocked until actual fresh turn proof",
+    "next_bounded_action": "Enter only on existing queued prompt, no text resend or replacement dispatch"
+  }
+}

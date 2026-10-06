@@ -1,0 +1,17 @@
+﻿{
+    "command":  {
+                    "executable":  "C:\\Python314\\python.exe",
+                    "arguments":  [
+                                      "local/Artifacts/issue6-cooking-slice8-verification-640lwkzs/cross-gate-stability.py"
+                                  ],
+                    "workingDirectory":  "C:\\Users\\Administrator\\orca\\workspaces\\AbilityKit\\issue6-cooking-truthful-gates"
+                },
+    "startedAt":  "2026-10-06T01:55:41.4995148+00:00",
+    "endedAt":  "2026-10-06T01:56:07.5522590+00:00",
+    "processExitCode":  0,
+    "reason":  null,
+    "ownedProcessId":  80408,
+    "exitConfirmed":  true,
+    "stdoutPath":  "C:\\Users\\Administrator\\orca\\workspaces\\AbilityKit\\issue6-cooking-truthful-gates\\local\\Artifacts\\issue6-cooking-slice8-verification-640lwkzs\\cross-gate-stability.stdout.txt",
+    "stderrPath":  "C:\\Users\\Administrator\\orca\\workspaces\\AbilityKit\\issue6-cooking-truthful-gates\\local\\Artifacts\\issue6-cooking-slice8-verification-640lwkzs\\cross-gate-stability.stderr.txt"
+}

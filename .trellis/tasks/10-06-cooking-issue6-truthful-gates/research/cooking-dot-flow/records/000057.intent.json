@@ -1,0 +1,15 @@
+{
+  "version": 1,
+  "flow_id": "6d3174fd-2b01-4136-8ea5-0b0cd0e2845d",
+  "seq": 57,
+  "op_id": "6d3174fd-2b01-4136-8ea5-0b0cd0e2845d:000057",
+  "kind": "intent",
+  "recorded_utc": "2026-10-05T21:32:02.741926Z",
+  "action": "worker-guidance",
+  "target": "dispatch:ctx_f4b36cbac369",
+  "authorization_ref": "evidence/approval.md",
+  "payload_ref": "evidence/restore-sdk-smoke-guidance.md",
+  "preconditions": {
+    "run_id": "run_5ba664a5f016"
+  }
+}

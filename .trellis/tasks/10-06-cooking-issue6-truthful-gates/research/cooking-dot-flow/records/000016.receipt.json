@@ -1,0 +1,12 @@
+{
+  "version": 1,
+  "flow_id": "6d3174fd-2b01-4136-8ea5-0b0cd0e2845d",
+  "seq": 16,
+  "op_id": "6d3174fd-2b01-4136-8ea5-0b0cd0e2845d:000016",
+  "kind": "receipt",
+  "recorded_utc": "2026-10-05T18:11:25.753694Z",
+  "intent_hash": "8afcb30e70100878abeedb7030ff3a2e1201849824304ca04e5a2a98a57fbba9",
+  "outcome": "applied",
+  "raw_ref": "evidence/ack-stage-binding-confirmed.json",
+  "result": {}
+}

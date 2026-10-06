@@ -1,0 +1,53 @@
+﻿{
+  "id": "895fec38-0725-41a1-a858-d52622ef70b2",
+  "ok": true,
+  "result": {
+    "runId": "run_5ba664a5f016",
+    "deliveryId": "delivery_a39b236bfc9b",
+    "messages": [
+      {
+        "id": "msg_c2e4a1a2f980",
+        "run_id": "run_5ba664a5f016",
+        "delivery_contract": "current_delivery",
+        "from_handle": "term_a1a61c7c-aef6-4cd0-8c46-27a90632617b",
+        "to_handle": "run:run_5ba664a5f016",
+        "subject": "Urgent amendment: ET producer already ended naturally",
+        "body": "ET native test already completed naturally with exit0/TRX328 executed328 passed0 failures before clarification read; no live ET testhost/vstest/test producer is present. Four leaves have complete native0 receipts and the saved provisional summary is Passed4/4, but gate1 PowerShell PID77560 is still in validator/JSON roundtrip and is not an authorized cancellation target. I am reading the complete amendment now and will apply gate2 bounds after confirmed gate1 parent exit; no process has been stopped.",
+        "type": "status",
+        "priority": "normal",
+        "thread_id": null,
+        "payload": "{\"taskId\":\"task_31fd1c2368df\",\"dispatchId\":\"ctx_4c94250ae711\"}",
+        "created_at": "2026-10-05T22:42:14Z",
+        "delivered_at": null
+      },
+      {
+        "id": "msg_b9164a970f3a",
+        "run_id": "run_5ba664a5f016",
+        "delivery_contract": "current_delivery",
+        "from_handle": "term_a1a61c7c-aef6-4cd0-8c46-27a90632617b",
+        "to_handle": "run:run_5ba664a5f016",
+        "subject": "Gate1 final Passed native0, gate2 pending launch",
+        "body": "Gate1 parent exited naturally at22:44:09.4136978Z with exit0 and final Passed/fullGateAccepted=true4/4 required; genuine Cooking867/867 and ET328/328 have no failures/skips. ET test producer77060 already exited0 at22:33:35.8573901Z, before clarificationT0; no cancellation occurred, and the later live CPU belonged to JSON validator77560. Before gate2 all eight freeze pins match68, historical6241 files unchanged, zero remaining .NET writers; independent audit1 is finishing before second serial launch with external45min/15min observation bounds.",
+        "type": "status",
+        "priority": "normal",
+        "thread_id": null,
+        "payload": "{\"taskId\":\"task_31fd1c2368df\",\"dispatchId\":\"ctx_4c94250ae711\"}",
+        "created_at": "2026-10-05T22:45:08Z",
+        "delivered_at": null
+      }
+    ],
+    "count": 2,
+    "replayed": false,
+    "acknowledged": null,
+    "timedOut": false,
+    "cancelled": false,
+    "connectionLost": false,
+    "mutation": {
+      "requestId": "7e276e26-430d-4f14-b91d-f6d5edb0bfd8",
+      "replayed": false
+    }
+  },
+  "_meta": {
+    "runtimeId": "ff0c5f2c-d341-4455-bc1c-c113650bdd60"
+  }
+}

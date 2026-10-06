@@ -1,0 +1,1592 @@
+{
+  "utc": "2026-10-06T00:21:00.632133+00:00",
+  "originalRetained": [
+    {
+      "group": "restore-graph",
+      "name": "mixed-own-TFMs-and-hash-only-config-positive",
+      "status": "Passed"
+    },
+    {
+      "group": "restore-graph",
+      "name": "relative-sdk-task-registration-positive",
+      "status": "Passed"
+    },
+    {
+      "group": "restore-graph",
+      "name": "settings-task-missing",
+      "status": "Passed"
+    },
+    {
+      "group": "restore-graph",
+      "name": "settings-target-missing",
+      "status": "Passed"
+    },
+    {
+      "group": "restore-graph",
+      "name": "restore-wrong-reference-tfm",
+      "status": "Passed"
+    },
+    {
+      "group": "restore-graph",
+      "name": "restore-missing-reference",
+      "status": "Passed"
+    },
+    {
+      "group": "restore-graph",
+      "name": "config-change-restore",
+      "status": "Passed"
+    },
+    {
+      "group": "restore-graph",
+      "name": "config-change-build",
+      "status": "Passed"
+    },
+    {
+      "group": "restore-graph",
+      "name": "source-change-restore",
+      "status": "Passed"
+    },
+    {
+      "group": "restore-graph",
+      "name": "sdk-change-restore",
+      "status": "Passed"
+    },
+    {
+      "group": "restore-graph",
+      "name": "sdk-nuget-change-restore",
+      "status": "Passed"
+    },
+    {
+      "group": "restore-graph",
+      "name": "recorded-generated-transition-is-not-authored-source-change",
+      "status": "Passed"
+    },
+    {
+      "group": "restore-graph-json",
+      "name": "reject-omitted-config",
+      "status": "Passed"
+    },
+    {
+      "group": "restore-graph-json",
+      "name": "reject-forged-config-hash",
+      "status": "Passed"
+    },
+    {
+      "group": "restore-graph-json",
+      "name": "reject-forged-config-size",
+      "status": "Passed"
+    },
+    {
+      "group": "restore-graph-json",
+      "name": "reject-extra-proof-field",
+      "status": "Passed"
+    },
+    {
+      "group": "restore-graph-json",
+      "name": "reject-wrong-proof-kind",
+      "status": "Passed"
+    },
+    {
+      "group": "restore-graph-json",
+      "name": "reject-hash-only-authored-source",
+      "status": "Passed"
+    },
+    {
+      "group": "restore-graph-json",
+      "name": "reject-config-archive",
+      "status": "Passed"
+    },
+    {
+      "group": "restore-graph-json",
+      "name": "reject-missing-graph",
+      "status": "Passed"
+    },
+    {
+      "group": "restore-graph-json",
+      "name": "reject-forged-reference-TFM",
+      "status": "Passed"
+    },
+    {
+      "group": "restore-graph-json",
+      "name": "reject-missing-source-config",
+      "status": "Passed"
+    },
+    {
+      "group": "restore-graph-reuse",
+      "name": "config-hash-only-reuse-seed",
+      "status": "Passed"
+    },
+    {
+      "group": "restore-graph-reuse",
+      "name": "-NoBuild-valid-effective-config-hash-only",
+      "status": "Passed"
+    },
+    {
+      "group": "restore-graph-reuse",
+      "name": "-NoRestore-valid-effective-config-hash-only",
+      "status": "Passed"
+    },
+    {
+      "group": "restore-graph-reuse",
+      "name": "omitted-effective-config-in-rehashed-reuse-receipt-refused",
+      "status": "Passed"
+    },
+    {
+      "group": "restore-graph",
+      "name": "authored-generated-name-lookalike-is-not-exempt",
+      "status": "Passed"
+    },
+    {
+      "group": "restore-graph-reuse",
+      "name": "-NoBuild-changed-effective-config-refused",
+      "status": "Passed"
+    },
+    {
+      "group": "restore-graph-reuse",
+      "name": "-NoRestore-changed-effective-config-refused",
+      "status": "Passed"
+    },
+    {
+      "group": "imports",
+      "name": "mixed-sdk-comments-retain-spaces-unicode-nonstandard-imports",
+      "status": "Passed"
+    },
+    {
+      "group": "imports",
+      "name": "changed-preprocessed-only-import-refused",
+      "status": "Passed"
+    },
+    {
+      "group": "valid",
+      "name": "current-build-test-JSON-roundtrip",
+      "status": "Passed"
+    },
+    {
+      "group": "valid",
+      "name": "current-build-only-tests-null",
+      "status": "Passed"
+    },
+    {
+      "group": "original-red",
+      "name": "warning-native-zero-refused-for-no-build-evidence",
+      "status": "Passed"
+    },
+    {
+      "group": "trx",
+      "name": "test-missing",
+      "status": "Passed"
+    },
+    {
+      "group": "trx",
+      "name": "test-empty",
+      "status": "Passed"
+    },
+    {
+      "group": "trx",
+      "name": "test-malformed",
+      "status": "Passed"
+    },
+    {
+      "group": "trx",
+      "name": "test-zero",
+      "status": "Passed"
+    },
+    {
+      "group": "trx",
+      "name": "test-no-entries",
+      "status": "Passed"
+    },
+    {
+      "group": "trx",
+      "name": "test-failed-zero",
+      "status": "Passed"
+    },
+    {
+      "group": "trx",
+      "name": "test-counter",
+      "status": "Passed"
+    },
+    {
+      "group": "trx",
+      "name": "test-completed-counter",
+      "status": "Passed"
+    },
+    {
+      "group": "trx",
+      "name": "test-lowercase",
+      "status": "Passed"
+    },
+    {
+      "group": "trx",
+      "name": "test-wrong-assembly",
+      "status": "Passed"
+    },
+    {
+      "group": "trx",
+      "name": "test-stale",
+      "status": "Passed"
+    },
+    {
+      "group": "trx",
+      "name": "test-duplicate",
+      "status": "Passed"
+    },
+    {
+      "group": "trx",
+      "name": "test-no-definition",
+      "status": "Passed"
+    },
+    {
+      "group": "trx",
+      "name": "test-skipped",
+      "status": "Passed"
+    },
+    {
+      "group": "trx",
+      "name": "test-replaced-dll",
+      "status": "Passed"
+    },
+    {
+      "group": "trx",
+      "name": "test-native-fail",
+      "status": "Passed"
+    },
+    {
+      "group": "environment",
+      "name": "missing-tool-no-launch",
+      "status": "Passed"
+    },
+    {
+      "group": "failure",
+      "name": "required-native7-failure-later-NotRun",
+      "status": "Passed"
+    },
+    {
+      "group": "source",
+      "name": "source-change-fails",
+      "status": "Passed"
+    },
+    {
+      "group": "source",
+      "name": "evaluated-TFM-mismatch",
+      "status": "Passed"
+    },
+    {
+      "group": "timeout-cancel",
+      "name": "timeout-owned-child-exit-confirmed",
+      "status": "Passed"
+    },
+    {
+      "group": "timeout-cancel",
+      "name": "started-cancellation-owned-exit-confirmed",
+      "status": "Passed"
+    },
+    {
+      "group": "coverage",
+      "name": "nested-complete",
+      "status": "Passed"
+    },
+    {
+      "group": "coverage",
+      "name": "repeated-nested-unique-node-directory-bindings",
+      "status": "Passed"
+    },
+    {
+      "group": "coverage",
+      "name": "StepName-positive-parent-partial-NotRun4",
+      "status": "Passed"
+    },
+    {
+      "group": "coverage",
+      "name": "nested-focus-partial",
+      "status": "Passed"
+    },
+    {
+      "group": "selector",
+      "name": "missing-selector-zero-launches",
+      "status": "Passed"
+    },
+    {
+      "group": "selector",
+      "name": "ambiguous-selector-zero-launches",
+      "status": "Passed"
+    },
+    {
+      "group": "coverage",
+      "name": "optional-declared-missing-tool-skip",
+      "status": "Passed"
+    },
+    {
+      "group": "coverage",
+      "name": "optional-real-failure-not-laundered",
+      "status": "Passed"
+    },
+    {
+      "group": "unsupported",
+      "name": "producer-powershell-script-blocked-before-launch",
+      "status": "Passed"
+    },
+    {
+      "group": "unsupported",
+      "name": "producer-unity-editmode-test-blocked-before-launch",
+      "status": "Passed"
+    },
+    {
+      "group": "unsupported",
+      "name": "producer-unity-playmode-test-blocked-before-launch",
+      "status": "Passed"
+    },
+    {
+      "group": "unsupported",
+      "name": "producer-unity-execute-method-blocked-before-launch",
+      "status": "Passed"
+    },
+    {
+      "group": "unsupported",
+      "name": "missing-explicit-coverage-before-launch",
+      "status": "Passed"
+    },
+    {
+      "group": "config",
+      "name": "duplicate-gate-fails-before-launch",
+      "status": "Passed"
+    },
+    {
+      "group": "config",
+      "name": "unknown-kind-fails-before-launch",
+      "status": "Passed"
+    },
+    {
+      "group": "config",
+      "name": "empty-tree-fails-before-launch",
+      "status": "Passed"
+    },
+    {
+      "group": "config",
+      "name": "throw-before-execution-complete-NotRun-tree",
+      "status": "Passed"
+    },
+    {
+      "group": "config",
+      "name": "unrelated-unadapted-entry-does-not-stop-selected-tree",
+      "status": "Passed"
+    },
+    {
+      "group": "identity",
+      "name": "same-second-same-directory-UUID-isolation",
+      "status": "Passed"
+    },
+    {
+      "group": "reuse",
+      "name": "seed-current-original-receipts",
+      "status": "Passed"
+    },
+    {
+      "group": "reuse",
+      "name": "-NoBuild-valid-proof-no-new-stage-credit",
+      "status": "Passed"
+    },
+    {
+      "group": "reuse",
+      "name": "-NoRestore-valid-proof-no-new-stage-credit",
+      "status": "Passed"
+    },
+    {
+      "group": "reuse",
+      "name": "-NoBuild-missing-proof-blocked",
+      "status": "Passed"
+    },
+    {
+      "group": "reuse",
+      "name": "-NoRestore-missing-proof-blocked",
+      "status": "Passed"
+    },
+    {
+      "group": "reuse",
+      "name": "explicit-build-seed",
+      "status": "Passed"
+    },
+    {
+      "group": "reuse",
+      "name": "NoBuild-preserves-explicit-build-step",
+      "status": "Passed"
+    },
+    {
+      "group": "reuse",
+      "name": "failed-build-retains-independent-restore",
+      "status": "Passed"
+    },
+    {
+      "group": "reuse",
+      "name": "NoRestore-accepts-restore-alone-after-failed-build",
+      "status": "Passed"
+    },
+    {
+      "group": "reuse",
+      "name": "corrupt-proof-configuration",
+      "status": "Passed"
+    },
+    {
+      "group": "reuse",
+      "name": "NoRestore-proof-configuration",
+      "status": "Passed"
+    },
+    {
+      "group": "reuse",
+      "name": "corrupt-proof-tfm",
+      "status": "Passed"
+    },
+    {
+      "group": "reuse",
+      "name": "NoRestore-proof-tfm",
+      "status": "Passed"
+    },
+    {
+      "group": "reuse",
+      "name": "corrupt-proof-sdk",
+      "status": "Passed"
+    },
+    {
+      "group": "reuse",
+      "name": "NoRestore-proof-sdk",
+      "status": "Passed"
+    },
+    {
+      "group": "reuse",
+      "name": "corrupt-proof-configSha256",
+      "status": "Passed"
+    },
+    {
+      "group": "reuse",
+      "name": "NoRestore-proof-configSha256",
+      "status": "Passed"
+    },
+    {
+      "group": "reuse",
+      "name": "corrupt-proof-sourceSha",
+      "status": "Passed"
+    },
+    {
+      "group": "reuse",
+      "name": "NoRestore-proof-sourceSha",
+      "status": "Passed"
+    },
+    {
+      "group": "reuse",
+      "name": "corrupt-proof-restoreNative",
+      "status": "Passed"
+    },
+    {
+      "group": "reuse",
+      "name": "NoRestore-proof-restoreNative",
+      "status": "Passed"
+    },
+    {
+      "group": "reuse",
+      "name": "corrupt-proof-buildNative",
+      "status": "Passed"
+    },
+    {
+      "group": "reuse",
+      "name": "NoRestore-proof-buildNative",
+      "status": "Passed"
+    },
+    {
+      "group": "reuse",
+      "name": "corrupt-proof-emptyOutputs",
+      "status": "Passed"
+    },
+    {
+      "group": "reuse",
+      "name": "NoRestore-proof-emptyOutputs",
+      "status": "Passed"
+    },
+    {
+      "group": "reuse",
+      "name": "changed-assets-proof-refused",
+      "status": "Passed"
+    },
+    {
+      "group": "reuse",
+      "name": "changed-source-proof-refused",
+      "status": "Passed"
+    },
+    {
+      "group": "reuse",
+      "name": "changed-DLL-proof-refused",
+      "status": "Passed"
+    },
+    {
+      "group": "reuse",
+      "name": "changed-package-tool-proof-refused",
+      "status": "Passed"
+    },
+    {
+      "group": "validator",
+      "name": "strict-lowercase-status",
+      "status": "Passed"
+    },
+    {
+      "group": "validator",
+      "name": "strict-CLI-map",
+      "status": "Passed"
+    },
+    {
+      "group": "validator",
+      "name": "native2-cannot-claim-Passed",
+      "status": "Passed"
+    },
+    {
+      "group": "validator",
+      "name": "old-run-result",
+      "status": "Passed"
+    },
+    {
+      "group": "validator",
+      "name": "duplicate-result-ID",
+      "status": "Passed"
+    },
+    {
+      "group": "validator",
+      "name": "wrong-parent-ID",
+      "status": "Passed"
+    },
+    {
+      "group": "validator",
+      "name": "missing-child",
+      "status": "Passed"
+    },
+    {
+      "group": "validator",
+      "name": "empty-serialized-bindings",
+      "status": "Passed"
+    },
+    {
+      "group": "validator",
+      "name": "forged-descendant",
+      "status": "Passed"
+    },
+    {
+      "group": "validator",
+      "name": "duplicate-binding",
+      "status": "Passed"
+    },
+    {
+      "group": "validator",
+      "name": "forged-completion-summary",
+      "status": "Passed"
+    },
+    {
+      "group": "validator",
+      "name": "forged-missing-summary",
+      "status": "Passed"
+    },
+    {
+      "group": "validator",
+      "name": "forged-full-acceptance",
+      "status": "Passed"
+    },
+    {
+      "group": "validator",
+      "name": "leaf-claims-full-acceptance",
+      "status": "Passed"
+    },
+    {
+      "group": "validator",
+      "name": "leaf-claims-children",
+      "status": "Passed"
+    },
+    {
+      "group": "validator",
+      "name": "old-SHA-TRX-binding",
+      "status": "Passed"
+    },
+    {
+      "group": "validator",
+      "name": "wrong-run-TRX-binding",
+      "status": "Passed"
+    },
+    {
+      "group": "validator",
+      "name": "wrong-filter-binding",
+      "status": "Passed"
+    },
+    {
+      "group": "validator",
+      "name": "wrong-filter-command",
+      "status": "Passed"
+    },
+    {
+      "group": "validator",
+      "name": "duplicate-filter-stage-and-native-command",
+      "status": "Passed"
+    },
+    {
+      "group": "validator",
+      "name": "forged-leaf-summary-command",
+      "status": "Passed"
+    },
+    {
+      "group": "validator",
+      "name": "forged-leaf-summary-time",
+      "status": "Passed"
+    },
+    {
+      "group": "validator",
+      "name": "native-tool-argv-contradiction",
+      "status": "Passed"
+    },
+    {
+      "group": "validator",
+      "name": "native-executable-contradiction",
+      "status": "Passed"
+    },
+    {
+      "group": "validator",
+      "name": "native-stream-other-node-path",
+      "status": "Passed"
+    },
+    {
+      "group": "validator",
+      "name": "contradictory-test-counts",
+      "status": "Passed"
+    },
+    {
+      "group": "validator",
+      "name": "wrong-test-definition",
+      "status": "Passed"
+    },
+    {
+      "group": "validator",
+      "name": "source-after-mismatch",
+      "status": "Passed"
+    },
+    {
+      "group": "validator",
+      "name": "SDK-provenance-mismatch",
+      "status": "Passed"
+    },
+    {
+      "group": "validator",
+      "name": "native-stage-time-forgery",
+      "status": "Passed"
+    },
+    {
+      "group": "validator",
+      "name": "stage-and-native-build-tfm-mismatch",
+      "status": "Passed"
+    },
+    {
+      "group": "validator",
+      "name": "stage-and-native-test-tfm-mismatch",
+      "status": "Passed"
+    },
+    {
+      "group": "validator",
+      "name": "stage-and-native-restore-tfm-mismatch",
+      "status": "Passed"
+    },
+    {
+      "group": "validator",
+      "name": "stage-and-native-restore-configuration-mismatch",
+      "status": "Passed"
+    },
+    {
+      "group": "validator",
+      "name": "stage-and-native-build-configuration-mismatch",
+      "status": "Passed"
+    },
+    {
+      "group": "validator",
+      "name": "stage-and-native-test-configuration-mismatch",
+      "status": "Passed"
+    },
+    {
+      "group": "validator",
+      "name": "forged-entire-source-SHA-rejected-by-parent",
+      "status": "Passed"
+    },
+    {
+      "group": "validator",
+      "name": "compiler-input-closure-empty",
+      "status": "Passed"
+    },
+    {
+      "group": "validator",
+      "name": "compiler-input-hash-forgery",
+      "status": "Passed"
+    },
+    {
+      "group": "validator",
+      "name": "artifact-path-escape",
+      "status": "Passed"
+    },
+    {
+      "group": "validator",
+      "name": "artifact-absolute-path",
+      "status": "Passed"
+    },
+    {
+      "group": "validator",
+      "name": "artifact-backslash-path",
+      "status": "Passed"
+    },
+    {
+      "group": "validator",
+      "name": "artifact-other-run-owner",
+      "status": "Passed"
+    },
+    {
+      "group": "validator",
+      "name": "artifact-other-result-owner",
+      "status": "Passed"
+    },
+    {
+      "group": "validator",
+      "name": "artifact-length-forgery",
+      "status": "Passed"
+    },
+    {
+      "group": "validator",
+      "name": "artifact-hash-forgery",
+      "status": "Passed"
+    },
+    {
+      "group": "validator",
+      "name": "duplicate-artifact",
+      "status": "Passed"
+    },
+    {
+      "group": "validator",
+      "name": "undeclared-optional-skip",
+      "status": "Passed"
+    },
+    {
+      "group": "validator",
+      "name": "synthetic-production-refusal",
+      "status": "Passed"
+    },
+    {
+      "group": "production",
+      "name": "synthetic-config-refused-before-any-dotnet-launch",
+      "status": "Passed"
+    },
+    {
+      "group": "compatibility",
+      "name": "repository-preflight-precheck",
+      "status": "Passed"
+    },
+    {
+      "group": "compatibility",
+      "name": "repository-preflight-moba-codegen",
+      "status": "Passed"
+    },
+    {
+      "group": "compatibility",
+      "name": "repository-preflight-moba-console-smoke",
+      "status": "Passed"
+    },
+    {
+      "group": "compatibility",
+      "name": "repository-preflight-runtime-contracts",
+      "status": "Passed"
+    },
+    {
+      "group": "compatibility",
+      "name": "repository-preflight-moba-network-options",
+      "status": "Passed"
+    },
+    {
+      "group": "compatibility",
+      "name": "repository-preflight-moba-acceptance-dotnet",
+      "status": "Passed"
+    },
+    {
+      "group": "compatibility",
+      "name": "repository-preflight-cooking-et-level-runtime",
+      "status": "Passed"
+    },
+    {
+      "group": "compatibility",
+      "name": "repository-preflight-cooking-kitchen-loop",
+      "status": "Passed"
+    },
+    {
+      "group": "compatibility",
+      "name": "repository-preflight-network-sdk",
+      "status": "Passed"
+    },
+    {
+      "group": "compatibility",
+      "name": "repository-preflight-core-stability",
+      "status": "Passed"
+    },
+    {
+      "group": "compatibility",
+      "name": "repository-preflight-foundation-units",
+      "status": "Passed"
+    },
+    {
+      "group": "compatibility",
+      "name": "repository-preflight-regression",
+      "status": "Passed"
+    },
+    {
+      "group": "compatibility",
+      "name": "repository-preflight-moba-content-contracts",
+      "status": "Passed"
+    },
+    {
+      "group": "compatibility",
+      "name": "repository-preflight-moba-xiaoqiao-unity",
+      "status": "Passed"
+    },
+    {
+      "group": "compatibility",
+      "name": "repository-preflight-moba-lianpo-unity",
+      "status": "Passed"
+    },
+    {
+      "group": "compatibility",
+      "name": "repository-preflight-moba-zhaoyun-unity",
+      "status": "Passed"
+    },
+    {
+      "group": "compatibility",
+      "name": "repository-preflight-moba-mozi-unity",
+      "status": "Passed"
+    },
+    {
+      "group": "compatibility",
+      "name": "repository-preflight-moba-daji-unity",
+      "status": "Passed"
+    },
+    {
+      "group": "compatibility",
+      "name": "repository-preflight-moba-yingzheng-unity",
+      "status": "Passed"
+    },
+    {
+      "group": "compatibility",
+      "name": "repository-preflight-moba-config-sync",
+      "status": "Passed"
+    },
+    {
+      "group": "compatibility",
+      "name": "repository-preflight-shooter-fast",
+      "status": "Passed"
+    },
+    {
+      "group": "compatibility",
+      "name": "repository-preflight-shooter-integration",
+      "status": "Passed"
+    },
+    {
+      "group": "compatibility",
+      "name": "repository-preflight-shooter-unity-playmode",
+      "status": "Passed"
+    },
+    {
+      "group": "compatibility",
+      "name": "repository-preflight-shooter-multiprocess",
+      "status": "Passed"
+    },
+    {
+      "group": "compatibility",
+      "name": "repository-preflight-shooter-multiprocess-compatibility",
+      "status": "Passed"
+    },
+    {
+      "group": "compatibility",
+      "name": "repository-preflight-shooter-multiprocess-soak",
+      "status": "Passed"
+    },
+    {
+      "group": "compatibility",
+      "name": "repository-preflight-shooter-multiprocess-ownership-cleanup",
+      "status": "Passed"
+    },
+    {
+      "group": "compatibility",
+      "name": "repository-preflight-runtime-performance-measurement",
+      "status": "Passed"
+    },
+    {
+      "group": "compatibility",
+      "name": "repository-preflight-shooter-performance",
+      "status": "Passed"
+    },
+    {
+      "group": "compatibility",
+      "name": "repository-preflight-moba-complete-battle-journey",
+      "status": "Passed"
+    },
+    {
+      "group": "compatibility",
+      "name": "repository-preflight-moba-smoke",
+      "status": "Passed"
+    },
+    {
+      "group": "compatibility",
+      "name": "repository-preflight-moba-multiprocess",
+      "status": "Passed"
+    },
+    {
+      "group": "native-streams",
+      "name": "window-width-40-long-lines-direct-capture",
+      "status": "Passed"
+    },
+    {
+      "group": "native-streams",
+      "name": "window-width-80-long-lines-direct-capture",
+      "status": "Passed"
+    },
+    {
+      "group": "native-streams",
+      "name": "window-width-120-long-lines-direct-capture",
+      "status": "Passed"
+    },
+    {
+      "group": "native-width-bindings",
+      "name": "reject-dimension",
+      "status": "Passed"
+    },
+    {
+      "group": "native-width-bindings",
+      "name": "reject-duplicate",
+      "status": "Passed"
+    },
+    {
+      "group": "native-width-bindings",
+      "name": "reject-setter",
+      "status": "Passed"
+    },
+    {
+      "group": "native-width-bindings",
+      "name": "reject-streams",
+      "status": "Passed"
+    },
+    {
+      "group": "paths",
+      "name": "reparse-artifact-refused",
+      "status": "Passed"
+    },
+    {
+      "group": "freeze",
+      "name": "implementation-inputs-before-after-identical",
+      "status": "Passed"
+    }
+  ],
+  "newControls": [
+    {
+      "id": "be723bd6-6489-4915-8a36-2547131902c1",
+      "group": "validator",
+      "name": "binding-build-omit-primary",
+      "expected": false,
+      "actual": false,
+      "status": "Passed",
+      "command": [
+        "Assert-GateResult",
+        "candidate.json",
+        "unchanged-assigned-plan"
+      ],
+      "nativeExit": null,
+      "rawDirectory": "C:\\Users\\Administrator\\orca\\workspaces\\AbilityKit\\issue6-cooking-truthful-gates\\local\\Artifacts\\issue6-cooking-slice1-binding-repair-muvwbc61\\full02\\c097",
+      "evidence": "Build target binary absent."
+    },
+    {
+      "id": "0effa9a3-b538-4fb9-a7e6-16607de39268",
+      "group": "validator",
+      "name": "binding-loaded-omit-primary",
+      "expected": false,
+      "actual": false,
+      "status": "Passed",
+      "command": [
+        "Assert-GateResult",
+        "candidate.json",
+        "unchanged-assigned-plan"
+      ],
+      "nativeExit": null,
+      "rawDirectory": "C:\\Users\\Administrator\\orca\\workspaces\\AbilityKit\\issue6-cooking-truthful-gates\\local\\Artifacts\\issue6-cooking-slice1-binding-repair-muvwbc61\\full02\\c098",
+      "evidence": "Binary identity membership mismatch: build.outputs -> loadedBefore"
+    },
+    {
+      "id": "2cf40378-0117-44ff-acc0-df801aa84f76",
+      "group": "validator",
+      "name": "binding-test-input-omit-primary",
+      "expected": false,
+      "actual": false,
+      "status": "Passed",
+      "command": [
+        "Assert-GateResult",
+        "candidate.json",
+        "unchanged-assigned-plan"
+      ],
+      "nativeExit": null,
+      "rawDirectory": "C:\\Users\\Administrator\\orca\\workspaces\\AbilityKit\\issue6-cooking-truthful-gates\\local\\Artifacts\\issue6-cooking-slice1-binding-repair-muvwbc61\\full02\\c099",
+      "evidence": "Binary identity membership mismatch: loadedBefore -> test.inputs"
+    },
+    {
+      "id": "0a37e854-f8b0-47e8-9d60-f03720c7b6b8",
+      "group": "validator",
+      "name": "binding-coherent-omit-primary",
+      "expected": false,
+      "actual": false,
+      "status": "Passed",
+      "command": [
+        "Assert-GateResult",
+        "candidate.json",
+        "unchanged-assigned-plan"
+      ],
+      "nativeExit": null,
+      "rawDirectory": "C:\\Users\\Administrator\\orca\\workspaces\\AbilityKit\\issue6-cooking-truthful-gates\\local\\Artifacts\\issue6-cooking-slice1-binding-repair-muvwbc61\\full02\\c100",
+      "evidence": "Build target binary absent."
+    },
+    {
+      "id": "7d30720c-0f77-4ce5-84ee-d7aa501c6a7a",
+      "group": "validator",
+      "name": "binding-test-input-substitute-source",
+      "expected": false,
+      "actual": false,
+      "status": "Passed",
+      "command": [
+        "Assert-GateResult",
+        "candidate.json",
+        "unchanged-assigned-plan"
+      ],
+      "nativeExit": null,
+      "rawDirectory": "C:\\Users\\Administrator\\orca\\workspaces\\AbilityKit\\issue6-cooking-truthful-gates\\local\\Artifacts\\issue6-cooking-slice1-binding-repair-muvwbc61\\full02\\c101",
+      "evidence": "Binary identity mismatch: loadedBefore -> test.inputs"
+    },
+    {
+      "id": "d4eeb448-a743-4e3e-8d8d-0144213c76ef",
+      "group": "validator",
+      "name": "binding-coherent-substitute-source",
+      "expected": false,
+      "actual": false,
+      "status": "Passed",
+      "command": [
+        "Assert-GateResult",
+        "candidate.json",
+        "unchanged-assigned-plan"
+      ],
+      "nativeExit": null,
+      "rawDirectory": "C:\\Users\\Administrator\\orca\\workspaces\\AbilityKit\\issue6-cooking-truthful-gates\\local\\Artifacts\\issue6-cooking-slice1-binding-repair-muvwbc61\\full02\\c102",
+      "evidence": "Build target binary absent."
+    },
+    {
+      "id": "819a8d90-c785-40c4-8572-b9258ac801b9",
+      "group": "validator",
+      "name": "binding-loaded-after-omit-primary",
+      "expected": false,
+      "actual": false,
+      "status": "Passed",
+      "command": [
+        "Assert-GateResult",
+        "candidate.json",
+        "unchanged-assigned-plan"
+      ],
+      "nativeExit": null,
+      "rawDirectory": "C:\\Users\\Administrator\\orca\\workspaces\\AbilityKit\\issue6-cooking-truthful-gates\\local\\Artifacts\\issue6-cooking-slice1-binding-repair-muvwbc61\\full02\\c103",
+      "evidence": "Binary identity membership mismatch: loadedBefore -> loadedAfter"
+    },
+    {
+      "id": "9eceeb8f-7d73-45ab-9e4d-a62932b72d14",
+      "group": "validator",
+      "name": "binding-loaded-omit-dependency",
+      "expected": false,
+      "actual": false,
+      "status": "Passed",
+      "command": [
+        "Assert-GateResult",
+        "candidate.json",
+        "unchanged-assigned-plan"
+      ],
+      "nativeExit": null,
+      "rawDirectory": "C:\\Users\\Administrator\\orca\\workspaces\\AbilityKit\\issue6-cooking-truthful-gates\\local\\Artifacts\\issue6-cooking-slice1-binding-repair-muvwbc61\\full02\\c104",
+      "evidence": "Binary identity membership mismatch: build.outputs -> loadedBefore"
+    },
+    {
+      "id": "37422e68-95dc-45dc-9d0e-1f5702955e1d",
+      "group": "validator",
+      "name": "binding-test-input-omit-dependency",
+      "expected": false,
+      "actual": false,
+      "status": "Passed",
+      "command": [
+        "Assert-GateResult",
+        "candidate.json",
+        "unchanged-assigned-plan"
+      ],
+      "nativeExit": null,
+      "rawDirectory": "C:\\Users\\Administrator\\orca\\workspaces\\AbilityKit\\issue6-cooking-truthful-gates\\local\\Artifacts\\issue6-cooking-slice1-binding-repair-muvwbc61\\full02\\c105",
+      "evidence": "Binary identity membership mismatch: loadedBefore -> test.inputs"
+    },
+    {
+      "id": "d68942c7-f4f2-4dde-ba87-fc1d4c8570b9",
+      "group": "validator",
+      "name": "binding-test-input-substitute-dependency",
+      "expected": false,
+      "actual": false,
+      "status": "Passed",
+      "command": [
+        "Assert-GateResult",
+        "candidate.json",
+        "unchanged-assigned-plan"
+      ],
+      "nativeExit": null,
+      "rawDirectory": "C:\\Users\\Administrator\\orca\\workspaces\\AbilityKit\\issue6-cooking-truthful-gates\\local\\Artifacts\\issue6-cooking-slice1-binding-repair-muvwbc61\\full02\\c106",
+      "evidence": "Binary identity mismatch: loadedBefore -> test.inputs"
+    },
+    {
+      "id": "498516e5-93aa-4c22-adca-574b287a67ba",
+      "group": "validator",
+      "name": "binding-loaded-duplicate-normalized-path",
+      "expected": false,
+      "actual": false,
+      "status": "Passed",
+      "command": [
+        "Assert-GateResult",
+        "candidate.json",
+        "unchanged-assigned-plan"
+      ],
+      "nativeExit": null,
+      "rawDirectory": "C:\\Users\\Administrator\\orca\\workspaces\\AbilityKit\\issue6-cooking-truthful-gates\\local\\Artifacts\\issue6-cooking-slice1-binding-repair-muvwbc61\\full02\\c107",
+      "evidence": "Duplicate binary identity: build.outputs -> loadedBefore"
+    },
+    {
+      "id": "af865d50-90e9-41e2-a5e4-838de223e802",
+      "group": "validator",
+      "name": "binding-test-input-duplicate-normalized-path",
+      "expected": false,
+      "actual": false,
+      "status": "Passed",
+      "command": [
+        "Assert-GateResult",
+        "candidate.json",
+        "unchanged-assigned-plan"
+      ],
+      "nativeExit": null,
+      "rawDirectory": "C:\\Users\\Administrator\\orca\\workspaces\\AbilityKit\\issue6-cooking-truthful-gates\\local\\Artifacts\\issue6-cooking-slice1-binding-repair-muvwbc61\\full02\\c108",
+      "evidence": "Duplicate binary identity: loadedBefore -> test.inputs"
+    },
+    {
+      "id": "f2b82421-7bcc-4f1a-8d26-27017b61433c",
+      "group": "validator",
+      "name": "binding-loaded-hash-contradiction",
+      "expected": false,
+      "actual": false,
+      "status": "Passed",
+      "command": [
+        "Assert-GateResult",
+        "candidate.json",
+        "unchanged-assigned-plan"
+      ],
+      "nativeExit": null,
+      "rawDirectory": "C:\\Users\\Administrator\\orca\\workspaces\\AbilityKit\\issue6-cooking-truthful-gates\\local\\Artifacts\\issue6-cooking-slice1-binding-repair-muvwbc61\\full02\\c109",
+      "evidence": "Binary archive contradiction: build.outputs -> loadedBefore"
+    },
+    {
+      "id": "a9cf1013-334c-486e-a13e-0a852690a798",
+      "group": "validator",
+      "name": "binding-loaded-size-contradiction",
+      "expected": false,
+      "actual": false,
+      "status": "Passed",
+      "command": [
+        "Assert-GateResult",
+        "candidate.json",
+        "unchanged-assigned-plan"
+      ],
+      "nativeExit": null,
+      "rawDirectory": "C:\\Users\\Administrator\\orca\\workspaces\\AbilityKit\\issue6-cooking-truthful-gates\\local\\Artifacts\\issue6-cooking-slice1-binding-repair-muvwbc61\\full02\\c110",
+      "evidence": "Binary archive contradiction: build.outputs -> loadedBefore"
+    },
+    {
+      "id": "942d133f-5cc2-493d-9aee-3605fbf2594f",
+      "group": "validator",
+      "name": "binding-positive-distinct-archive-locations",
+      "expected": true,
+      "actual": true,
+      "status": "Passed",
+      "command": [
+        "Assert-GateResult",
+        "candidate.json",
+        "unchanged-assigned-plan"
+      ],
+      "nativeExit": null,
+      "rawDirectory": "C:\\Users\\Administrator\\orca\\workspaces\\AbilityKit\\issue6-cooking-truthful-gates\\local\\Artifacts\\issue6-cooking-slice1-binding-repair-muvwbc61\\full02\\c111",
+      "evidence": null
+    },
+    {
+      "id": "0f2a99d9-03bb-4858-a459-1270d1173031",
+      "group": "validator",
+      "name": "binding-positive-reordered-identities",
+      "expected": true,
+      "actual": true,
+      "status": "Passed",
+      "command": [
+        "Assert-GateResult",
+        "candidate.json",
+        "unchanged-assigned-plan"
+      ],
+      "nativeExit": null,
+      "rawDirectory": "C:\\Users\\Administrator\\orca\\workspaces\\AbilityKit\\issue6-cooking-truthful-gates\\local\\Artifacts\\issue6-cooking-slice1-binding-repair-muvwbc61\\full02\\c112",
+      "evidence": null
+    },
+    {
+      "id": "6b5929ce-96c4-41bf-8634-bb2da799f013",
+      "group": "validator",
+      "name": "binding-positive-alternate-valid-archives-and-roles",
+      "expected": true,
+      "actual": true,
+      "status": "Passed",
+      "command": [
+        "Assert-GateResult",
+        "candidate.json",
+        "unchanged-assigned-plan"
+      ],
+      "nativeExit": null,
+      "rawDirectory": "C:\\Users\\Administrator\\orca\\workspaces\\AbilityKit\\issue6-cooking-truthful-gates\\local\\Artifacts\\issue6-cooking-slice1-binding-repair-muvwbc61\\full02\\c113",
+      "evidence": null
+    },
+    {
+      "id": "e7bab91f-f94f-4a9c-ace7-664643243dd3",
+      "group": "validator",
+      "name": "binding-positive-normalized-windows-paths",
+      "expected": true,
+      "actual": true,
+      "status": "Passed",
+      "command": [
+        "Assert-GateResult",
+        "candidate.json",
+        "unchanged-assigned-plan"
+      ],
+      "nativeExit": null,
+      "rawDirectory": "C:\\Users\\Administrator\\orca\\workspaces\\AbilityKit\\issue6-cooking-truthful-gates\\local\\Artifacts\\issue6-cooking-slice1-binding-repair-muvwbc61\\full02\\c114",
+      "evidence": null
+    },
+    {
+      "id": "3818e80f-821d-438d-8711-9c4c5fc779bb",
+      "group": "validator",
+      "name": "binding-reused-build-positive",
+      "expected": true,
+      "actual": true,
+      "status": "Passed",
+      "command": [
+        "Assert-GateResult",
+        "candidate.json",
+        "unchanged-assigned-plan"
+      ],
+      "nativeExit": null,
+      "rawDirectory": "C:\\Users\\Administrator\\orca\\workspaces\\AbilityKit\\issue6-cooking-truthful-gates\\local\\Artifacts\\issue6-cooking-slice1-binding-repair-muvwbc61\\full02\\c115",
+      "evidence": null
+    },
+    {
+      "id": "a45822b9-7c07-4ff9-99df-0b2e8a4b9423",
+      "group": "validator",
+      "name": "binding-reused-build-test-input-omission",
+      "expected": false,
+      "actual": false,
+      "status": "Passed",
+      "command": [
+        "Assert-GateResult",
+        "candidate.json",
+        "unchanged-assigned-plan"
+      ],
+      "nativeExit": null,
+      "rawDirectory": "C:\\Users\\Administrator\\orca\\workspaces\\AbilityKit\\issue6-cooking-truthful-gates\\local\\Artifacts\\issue6-cooking-slice1-binding-repair-muvwbc61\\full02\\c116",
+      "evidence": "Binary identity membership mismatch: loadedBefore -> test.inputs"
+    },
+    {
+      "id": "7328c556-dd99-4a4c-9e11-1cda007709eb",
+      "group": "validator",
+      "name": "binding-reused-build-loaded-omission",
+      "expected": false,
+      "actual": false,
+      "status": "Passed",
+      "command": [
+        "Assert-GateResult",
+        "candidate.json",
+        "unchanged-assigned-plan"
+      ],
+      "nativeExit": null,
+      "rawDirectory": "C:\\Users\\Administrator\\orca\\workspaces\\AbilityKit\\issue6-cooking-truthful-gates\\local\\Artifacts\\issue6-cooking-slice1-binding-repair-muvwbc61\\full02\\c117",
+      "evidence": "Binary identity membership mismatch: build.outputs -> loadedBefore"
+    }
+  ],
+  "groups": {
+    "restore-graph": {
+      "executed": 13,
+      "passed": 13,
+      "failed": 0
+    },
+    "restore-graph-json": {
+      "executed": 10,
+      "passed": 10,
+      "failed": 0
+    },
+    "restore-graph-reuse": {
+      "executed": 6,
+      "passed": 6,
+      "failed": 0
+    },
+    "imports": {
+      "executed": 2,
+      "passed": 2,
+      "failed": 0
+    },
+    "valid": {
+      "executed": 2,
+      "passed": 2,
+      "failed": 0
+    },
+    "original-red": {
+      "executed": 1,
+      "passed": 1,
+      "failed": 0
+    },
+    "trx": {
+      "executed": 16,
+      "passed": 16,
+      "failed": 0
+    },
+    "environment": {
+      "executed": 1,
+      "passed": 1,
+      "failed": 0
+    },
+    "failure": {
+      "executed": 1,
+      "passed": 1,
+      "failed": 0
+    },
+    "source": {
+      "executed": 2,
+      "passed": 2,
+      "failed": 0
+    },
+    "timeout-cancel": {
+      "executed": 2,
+      "passed": 2,
+      "failed": 0
+    },
+    "coverage": {
+      "executed": 6,
+      "passed": 6,
+      "failed": 0
+    },
+    "selector": {
+      "executed": 2,
+      "passed": 2,
+      "failed": 0
+    },
+    "unsupported": {
+      "executed": 5,
+      "passed": 5,
+      "failed": 0
+    },
+    "config": {
+      "executed": 5,
+      "passed": 5,
+      "failed": 0
+    },
+    "identity": {
+      "executed": 1,
+      "passed": 1,
+      "failed": 0
+    },
+    "reuse": {
+      "executed": 29,
+      "passed": 29,
+      "failed": 0
+    },
+    "validator": {
+      "executed": 70,
+      "passed": 70,
+      "failed": 0
+    },
+    "production": {
+      "executed": 1,
+      "passed": 1,
+      "failed": 0
+    },
+    "compatibility": {
+      "executed": 32,
+      "passed": 32,
+      "failed": 0
+    },
+    "native-streams": {
+      "executed": 3,
+      "passed": 3,
+      "failed": 0
+    },
+    "native-width-bindings": {
+      "executed": 4,
+      "passed": 4,
+      "failed": 0
+    },
+    "paths": {
+      "executed": 1,
+      "passed": 1,
+      "failed": 0
+    },
+    "freeze": {
+      "executed": 1,
+      "passed": 1,
+      "failed": 0
+    }
+  },
+  "total": 216,
+  "passed": 216,
+  "failed": 0,
+  "width": {
+    "status": "Passed",
+    "dimension": "RawUI.WindowSize.Width",
+    "requested": [
+      40,
+      80,
+      120
+    ],
+    "observations": [
+      {
+        "requestedWidth": 40,
+        "mode": "Window",
+        "dimension": "RawUI.WindowSize.Width",
+        "windowAdjustmentAttempted": false,
+        "windowAdjustmentSucceeded": null,
+        "setterSucceeded": true,
+        "applied": true,
+        "appliedWidth": 40,
+        "observedWidth": 40,
+        "observedBufferWidth": 120,
+        "observedWindowWidth": 40,
+        "widthCoverageStatus": "Passed",
+        "limitation": "",
+        "host": "ConsoleHost",
+        "outputRedirected": true,
+        "errorRedirected": true,
+        "initialState": {
+          "bufferWidth": 120,
+          "bufferHeight": 3000,
+          "windowWidth": 120,
+          "windowHeight": 50,
+          "windowLeft": 0,
+          "windowTop": 0,
+          "cursorLeft": 0,
+          "cursorTop": 0
+        },
+        "finalState": {
+          "bufferWidth": 120,
+          "bufferHeight": 3000,
+          "windowWidth": 40,
+          "windowHeight": 50,
+          "windowLeft": 0,
+          "windowTop": 0,
+          "cursorLeft": 0,
+          "cursorTop": 0
+        }
+      },
+      {
+        "requestedWidth": 80,
+        "mode": "Window",
+        "dimension": "RawUI.WindowSize.Width",
+        "windowAdjustmentAttempted": false,
+        "windowAdjustmentSucceeded": null,
+        "setterSucceeded": true,
+        "applied": true,
+        "appliedWidth": 80,
+        "observedWidth": 80,
+        "observedBufferWidth": 120,
+        "observedWindowWidth": 80,
+        "widthCoverageStatus": "Passed",
+        "limitation": "",
+        "host": "ConsoleHost",
+        "outputRedirected": true,
+        "errorRedirected": true,
+        "initialState": {
+          "bufferWidth": 120,
+          "bufferHeight": 3000,
+          "windowWidth": 120,
+          "windowHeight": 50,
+          "windowLeft": 0,
+          "windowTop": 0,
+          "cursorLeft": 0,
+          "cursorTop": 0
+        },
+        "finalState": {
+          "bufferWidth": 120,
+          "bufferHeight": 3000,
+          "windowWidth": 80,
+          "windowHeight": 50,
+          "windowLeft": 0,
+          "windowTop": 0,
+          "cursorLeft": 0,
+          "cursorTop": 0
+        }
+      },
+      {
+        "requestedWidth": 120,
+        "mode": "Window",
+        "dimension": "RawUI.WindowSize.Width",
+        "windowAdjustmentAttempted": false,
+        "windowAdjustmentSucceeded": null,
+        "setterSucceeded": true,
+        "applied": true,
+        "appliedWidth": 120,
+        "observedWidth": 120,
+        "observedBufferWidth": 120,
+        "observedWindowWidth": 120,
+        "widthCoverageStatus": "Passed",
+        "limitation": "",
+        "host": "ConsoleHost",
+        "outputRedirected": true,
+        "errorRedirected": true,
+        "initialState": {
+          "bufferWidth": 120,
+          "bufferHeight": 3000,
+          "windowWidth": 120,
+          "windowHeight": 50,
+          "windowLeft": 0,
+          "windowTop": 0,
+          "cursorLeft": 0,
+          "cursorTop": 0
+        },
+        "finalState": {
+          "bufferWidth": 120,
+          "bufferHeight": 3000,
+          "windowWidth": 120,
+          "windowHeight": 50,
+          "windowLeft": 0,
+          "windowTop": 0,
+          "cursorLeft": 0,
+          "cursorTop": 0
+        }
+      }
+    ]
+  },
+  "sourceFingerprint": "ad4805bb9d3e4e751a96622f500cf33a543e4f3312ad37a2518aa57b9281bf9d",
+  "native": {
+    "command": {
+      "executable": "C:\\Windows\\System32\\WindowsPowerShell\\v1.0\\powershell.exe",
+      "arguments": [
+        "-NoProfile",
+        "-ExecutionPolicy",
+        "Bypass",
+        "-File",
+        "tools/tests/test-gate-result-contract.tests.ps1",
+        "-ArtifactRoot",
+        "local/Artifacts/issue6-cooking-slice1-binding-repair-muvwbc61/full02"
+      ],
+      "workingDirectory": "C:\\Users\\Administrator\\orca\\workspaces\\AbilityKit\\issue6-cooking-truthful-gates"
+    },
+    "startedAt": "2026-10-06T00:07:10.8369650+00:00",
+    "endedAt": "2026-10-06T00:20:35.4226503+00:00",
+    "processExitCode": 0,
+    "reason": null,
+    "ownedProcessId": 75784,
+    "exitConfirmed": true,
+    "stdoutPath": "C:\\Users\\Administrator\\orca\\workspaces\\AbilityKit\\issue6-cooking-truthful-gates\\local\\Artifacts\\issue6-cooking-slice1-binding-repair-muvwbc61\\full02-harness.stdout.txt",
+    "stderrPath": "C:\\Users\\Administrator\\orca\\workspaces\\AbilityKit\\issue6-cooking-truthful-gates\\local\\Artifacts\\issue6-cooking-slice1-binding-repair-muvwbc61\\full02-harness.stderr.txt"
+  }
+}

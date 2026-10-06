@@ -1,0 +1,12 @@
+{
+  "version": 1,
+  "flow_id": "6d3174fd-2b01-4136-8ea5-0b0cd0e2845d",
+  "seq": 66,
+  "op_id": "6d3174fd-2b01-4136-8ea5-0b0cd0e2845d:000066",
+  "kind": "receipt",
+  "recorded_utc": "2026-10-05T22:07:10.657167Z",
+  "intent_hash": "cc8d171fc74ca5654518663915ee1d23f9ba4c71683f66def192673eac314311",
+  "outcome": "applied",
+  "raw_ref": "evidence/ack-restore-repair-done.json",
+  "result": {}
+}

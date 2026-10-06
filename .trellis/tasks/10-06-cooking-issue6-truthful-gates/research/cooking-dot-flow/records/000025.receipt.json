@@ -1,0 +1,18 @@
+{
+  "version": 1,
+  "flow_id": "6d3174fd-2b01-4136-8ea5-0b0cd0e2845d",
+  "seq": 25,
+  "op_id": "6d3174fd-2b01-4136-8ea5-0b0cd0e2845d:000025",
+  "kind": "receipt",
+  "recorded_utc": "2026-10-05T19:08:05.719019Z",
+  "intent_hash": "253f2f71a1e31796fe1093d4860860f82385eee00932bc054ff44fe82529a71e",
+  "outcome": "applied",
+  "raw_ref": "evidence/push-slice1-raw.json",
+  "result": {
+    "candidate_sha": "b1644ec4e0418df99641a5db7e7e65010fc5f24a",
+    "command_exit_code": 0,
+    "remote_sha": "b1644ec4e0418df99641a5db7e7e65010fc5f24a",
+    "readback": "evidence/push-slice1-readback.txt",
+    "checkpoint_only": true
+  }
+}

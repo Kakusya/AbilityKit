@@ -1,0 +1,126 @@
+{
+  "id": "ed4b588d-a0c1-4fa0-8f5f-ff6e5a09ea41",
+  "ok": true,
+  "result": {
+    "dispatchId": "ctx_a4e2695b308e",
+    "source": "transcript",
+    "sourceIdentity": "cu2zdwkdsmPUSCyhNJeOZCjLL8pYI9Oi",
+    "provider": "codex",
+    "transcript": {
+      "messages": [
+        {
+          "id": "ctco_01a10ec0-5a0b-7e83-9249-99e57dc26479",
+          "role": "tool",
+          "blocks": [
+            {
+              "type": "tool-result",
+              "output": "Script completed\nWall time 0.8 seconds\nOutput:\n{}\n{\"chunk_id\":\"13d3c1\",\"wall_time_seconds\":0.1008672,\"exit_code\":0,\"original_token_count\":458,\"output\":\"{\\\"status\\\": \\\"Passed\\\", \\\"full\\\": true, \\\"coverage\\\": {\\\"required\\\": [\\\"cooking-et-level-runtime:1:dotnet-build:AbilityKit.ET.RelationAnalyzer\\\", \\\"cooking-et-level-runtime:2:dotnet-build:AbilityKit.Game.Cooking.EtRuntime\\\", \\\"cooking-et-level-runtime:3:dotnet-test:AbilityKit.Game.Cooking.Tests\\\", \\\"cooking-et-level-runtime:4:dotnet-test:AbilityKit.ET.Runtime.Tests\\\"], \\\"optional\\\": [], \\\"completed\\\": [\\\"cooking-et-level-runtime:1:dotnet-build:AbilityKit.ET.RelationAnalyzer\\\", \\\"cooking-et-level-runtime:2:dotnet-build:AbilityKit.Game.Cooking.EtRuntime\\\", \\\"cooking-et-level-runtime:3:dotnet-test:AbilityKit.Game.Cooking.Tests\\\", \\\"cooking-et-level-runtime:4:dotnet-test:AbilityKit.ET.Runtime.Tests\\\"], \\\"missing\\\": [], \\\"bindings\\\": {\\\"cooking-et-level-runtime:1:dotnet-build:AbilityKit.ET.RelationAnalyzer\\\": [\\\"b5d9e6fc-be4a-4854-a98c-ef5dcaa37f4d\\\"], \\\"cooking-et-level-runtime:2:dotnet-build:AbilityKit.Game.Cooking.EtRuntime\\\": [\\\"3780ac55-cba0-4a7c-9d2f-64017e9f9edd\\\"], \\\"cooking-et-level-runtime:3:dotnet-test:AbilityKit.Game.Cooking\n… (truncated)"
+            }
+          ],
+          "timestamp": 1791248849419,
+          "source": "transcript"
+        },
+        {
+          "id": "msg_03d36cc6d8b642f4016ac449dcd3b487d0a9e6dce37a187e29",
+          "role": "assistant",
+          "blocks": [
+            {
+              "type": "text",
+              "text": "A provisional summary reports all four required leaves Passed, with completed post-test source checks. Its final acceptance is still pending the parent’s JSON roundtrip check. My first read-only summary inspection used an incorrect local path; I preserved that metadata failure and corrected the inspection without rerunning a gate."
+            }
+          ],
+          "timestamp": 1791248862639,
+          "source": "transcript"
+        },
+        {
+          "id": "fc_03d36cc6d8b642f4016ac449de1cf487d0b613beef6dd1d768",
+          "role": "assistant",
+          "blocks": [
+            {
+              "type": "tool-call",
+              "name": "sleep",
+              "input": "{\"duration_ms\":45000}",
+              "callId": "call_YoebNekCQgEqJIHoOBpbRYXd"
+            }
+          ],
+          "timestamp": 1791248862764,
+          "source": "transcript"
+        }
+      ],
+      "nextCursor": "owr1_eyJ2IjoxLCJkIjoiY3R4X2E0ZTI2OTViMzA4ZSIsInMiOiJ0cmFuc2NyaXB0IiwiaSI6ImN1Mnpkd2tkc21QVVNDeWhOSmVPWkNqTEw4cFlJOU9pIiwicCI6Mjc2NjQxMzgsImMiOiJqTWhkcnhPLTlTNU9XTXk1d014ZDlFZEFrbWh4NnY1bSJ9",
+      "limited": true,
+      "returnedMessageCount": 3
+    },
+    "cursor": "owr1_eyJ2IjoxLCJkIjoiY3R4X2E0ZTI2OTViMzA4ZSIsInMiOiJ0cmFuc2NyaXB0IiwiaSI6ImN1Mnpkd2tkc21QVVNDeWhOSmVPWkNqTEw4cFlJOU9pIiwicCI6Mjc2NjQxMzgsImMiOiJqTWhkcnhPLTlTNU9XTXk1d014ZDlFZEFrbWh4NnY1bSJ9",
+    "status": {
+      "worker": "ready",
+      "terminal": "running",
+      "liveness": "live"
+    },
+    "fallbackReason": null,
+    "warnings": [
+      "Oversized transcript text was clipped."
+    ],
+    "sourceExact": true,
+    "contentComplete": false,
+    "clipping": [
+      "message_limit_or_scan_window",
+      "transcript_payload"
+    ],
+    "projection": {
+      "id": "ctx_a4e2695b308e",
+      "dispatchId": "ctx_a4e2695b308e",
+      "taskId": "task_8285f2c0421e",
+      "runId": "run_5ba664a5f016",
+      "role": "worker",
+      "parent": null,
+      "provider": {
+        "id": "codex",
+        "model": "gpt-6.1-sol"
+      },
+      "host": {
+        "kind": "local",
+        "id": "local"
+      },
+      "workspace": {
+        "id": "aaa97e0d-5026-4e5c-95f8-bb420dcb4c65::C:/Users/Administrator/orca/workspaces/AbilityKit/issue6-cooking-truthful-gates",
+        "kind": "folder_or_worktree"
+      },
+      "stage": {
+        "worker": "ready",
+        "dispatch": "dispatched",
+        "detail": "input_accepted",
+        "activity": "working"
+      },
+      "outcome": "in_progress",
+      "liveness": {
+        "verdict": "live",
+        "observedAt": 1791248862884,
+        "source": "agent_status"
+      },
+      "evidence": {
+        "durable": true,
+        "liveStatus": "fresh",
+        "lastObservedAt": 1791248862884
+      },
+      "resource": {
+        "state": "external",
+        "id": "wtr_de5d9ab4b4af",
+        "ownerDispatchId": "ctx_a4e2695b308e",
+        "releaseState": "not_requested",
+        "terminalState": "retained"
+      },
+      "nextAction": {
+        "kind": "none",
+        "argv": []
+      },
+      "attention": {
+        "categories": [],
+        "requiresAction": false
+      }
+    }
+  },
+  "_meta": {
+    "runtimeId": "ff0c5f2c-d341-4455-bc1c-c113650bdd60"
+  }
+}

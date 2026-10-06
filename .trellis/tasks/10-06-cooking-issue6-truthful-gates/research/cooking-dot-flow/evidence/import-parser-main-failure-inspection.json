@@ -1,0 +1,13 @@
+{
+  "actualPreprocessedXml": "local\\Logs\\test-gates\\d3fd6cfd-2e33-47b9-8d48-a9846258d61e\\337d792c2f71\\ev-b-0.pp.xml",
+  "nonPathCommentSamples": [
+    "<Import Project=\"Sdk.props\" Sdk=\"Microsoft.NET.Sdk\">",
+    "This import was added implicitly because the Project element's Sdk attribute specified \"Microsoft.NET.Sdk\".",
+    "<Import Project=\"$(AlternateCommonProps)\" Condition=\"'$(AlternateCommonProps)' != ''\" />",
+    "<Import Project=\"$(MSBuildExtensionsPath)\\$(MSBuildToolsVersion)\\Microsoft.Common.props\" Condition=\"'$(AlternateCommonProps)' == ''\">",
+    "<Import Project=\"$(CustomBeforeDirectoryBuildProps)\" Condition=\"'$(CustomBeforeDirectoryBuildProps)' != ''\" />"
+  ],
+  "defect": "Path.IsPathRooted invoked on arbitrary comment strings without path grammar/invalid-char guard",
+  "gates": "both Failed/CLI1 before restore/build/test, business tests NotRun",
+  "repairScope": "existing Get-GateProjectClosure parser and isolated regression fixtures/controls only"
+}

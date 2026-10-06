@@ -1,0 +1,11 @@
+{
+  "id": "6a80fbdf-400f-4c7d-9402-a49beb79ce85",
+  "ok": false,
+  "error": {
+    "code": "browser_eval_error",
+    "message": "SyntaxError: Invalid regular expression: /send|stop|??|??/i: Nothing to repeat"
+  },
+  "_meta": {
+    "runtimeId": "ff0c5f2c-d341-4455-bc1c-c113650bdd60"
+  }
+}

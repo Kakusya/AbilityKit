@@ -1,0 +1,12 @@
+{
+  "version": 1,
+  "flow_id": "6d3174fd-2b01-4136-8ea5-0b0cd0e2845d",
+  "seq": 29,
+  "op_id": "6d3174fd-2b01-4136-8ea5-0b0cd0e2845d:000029",
+  "kind": "receipt",
+  "recorded_utc": "2026-10-05T19:29:12.817151Z",
+  "intent_hash": "ec34a4f80c699f3c02823c8d84a9e0e679aa00d447d6fce6f7ac154c38de8483",
+  "outcome": "applied",
+  "raw_ref": "evidence/ack-window-settled-02.json",
+  "result": {}
+}

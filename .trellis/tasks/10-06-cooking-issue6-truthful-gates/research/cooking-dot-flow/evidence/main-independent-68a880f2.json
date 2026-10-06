@@ -1,0 +1,187 @@
+{
+  "status": "Passed",
+  "sourceSHA": "68a880f2a31c7269da634b2f152362bccb5857ab",
+  "dirty": true,
+  "inputFingerprintBefore": "36ed6a74129d9d48bafaa9b0cc64bee1dd1b759942fe010cd31c8d8d561e273a",
+  "inputFingerprintAfter": "36ed6a74129d9d48bafaa9b0cc64bee1dd1b759942fe010cd31c8d8d561e273a",
+  "isolatedExecuted": 15,
+  "isolatedPassed": 15,
+  "probeNativeExit": 0,
+  "controlsRaw": "local\\Artifacts\\issue6-main-independent-68a880f2-01\\controls.json",
+  "controlsSha256": "2d9ac5315346c1ea4a72636331e87853469ef2c6c120e11854200060a57f82c9",
+  "controls": [
+    {
+      "name": "new-SHA-mixed-real-shaped-comments-import-retained",
+      "status": "Passed",
+      "raw": "C:\\Users\\Administrator\\orca\\workspaces\\AbilityKit\\issue6-cooking-truthful-gates\\local\\Artifacts\\issue6-main-independent-68a880f2-01\\mixed-comments-positive\\db86eb95-9db3-4d22-a441-7658f6faa1cb\\gate-summary.json"
+    },
+    {
+      "name": "mixed-reference-TFM-and-hash-only-config-positive",
+      "status": "Passed",
+      "raw": "C:\\Users\\Administrator\\orca\\workspaces\\AbilityKit\\issue6-cooking-truthful-gates\\local\\Artifacts\\issue6-main-independent-68a880f2-01\\mixed-comments-positive\\db86eb95-9db3-4d22-a441-7658f6faa1cb\\gate-summary.json"
+    },
+    {
+      "name": "new-SHA-changing-import-refused",
+      "status": "Passed",
+      "raw": "C:\\Users\\Administrator\\orca\\workspaces\\AbilityKit\\issue6-cooking-truthful-gates\\local\\Artifacts\\issue6-main-independent-68a880f2-01\\changed-import-negative\\eb2bb21f-f4fa-4a52-b4ab-01f11bb7af7a\\gate-summary.json"
+    },
+    {
+      "name": "valid-roundtrip",
+      "status": "Passed",
+      "raw": "C:\\Users\\Administrator\\orca\\workspaces\\AbilityKit\\issue6-cooking-truthful-gates\\local\\Artifacts\\issue6-main-independent-68a880f2-01\\valid-roundtrip.json"
+    },
+    {
+      "name": "empty-bindings",
+      "status": "Passed",
+      "raw": "C:\\Users\\Administrator\\orca\\workspaces\\AbilityKit\\issue6-cooking-truthful-gates\\local\\Artifacts\\issue6-main-independent-68a880f2-01\\empty-bindings.json"
+    },
+    {
+      "name": "lowercase-status",
+      "status": "Passed",
+      "raw": "C:\\Users\\Administrator\\orca\\workspaces\\AbilityKit\\issue6-cooking-truthful-gates\\local\\Artifacts\\issue6-main-independent-68a880f2-01\\lowercase-status.json"
+    },
+    {
+      "name": "missing-child-with-forged-completion",
+      "status": "Passed",
+      "raw": "C:\\Users\\Administrator\\orca\\workspaces\\AbilityKit\\issue6-cooking-truthful-gates\\local\\Artifacts\\issue6-main-independent-68a880f2-01\\missing-child-with-forged-completion.json"
+    },
+    {
+      "name": "native-seven-claims-passed",
+      "status": "Passed",
+      "raw": "C:\\Users\\Administrator\\orca\\workspaces\\AbilityKit\\issue6-cooking-truthful-gates\\local\\Artifacts\\issue6-main-independent-68a880f2-01\\native-seven-claims-passed.json"
+    },
+    {
+      "name": "wrong-source",
+      "status": "Passed",
+      "raw": "C:\\Users\\Administrator\\orca\\workspaces\\AbilityKit\\issue6-cooking-truthful-gates\\local\\Artifacts\\issue6-main-independent-68a880f2-01\\wrong-source.json"
+    },
+    {
+      "name": "forged-filter",
+      "status": "Passed",
+      "raw": "C:\\Users\\Administrator\\orca\\workspaces\\AbilityKit\\issue6-cooking-truthful-gates\\local\\Artifacts\\issue6-main-independent-68a880f2-01\\forged-filter.json"
+    },
+    {
+      "name": "omitted-build-config-coherent-fingerprint",
+      "status": "Passed",
+      "raw": "C:\\Users\\Administrator\\orca\\workspaces\\AbilityKit\\issue6-cooking-truthful-gates\\local\\Artifacts\\issue6-main-independent-68a880f2-01\\omitted-build-config-coherent-fingerprint.json"
+    },
+    {
+      "name": "config-proof-extra-content",
+      "status": "Passed",
+      "raw": "C:\\Users\\Administrator\\orca\\workspaces\\AbilityKit\\issue6-cooking-truthful-gates\\local\\Artifacts\\issue6-main-independent-68a880f2-01\\config-proof-extra-content.json"
+    },
+    {
+      "name": "non-config-hash-only-proof",
+      "status": "Passed",
+      "raw": "C:\\Users\\Administrator\\orca\\workspaces\\AbilityKit\\issue6-cooking-truthful-gates\\local\\Artifacts\\issue6-main-independent-68a880f2-01\\non-config-hash-only-proof.json"
+    },
+    {
+      "name": "retargeted-reference-declaration",
+      "status": "Passed",
+      "raw": "C:\\Users\\Administrator\\orca\\workspaces\\AbilityKit\\issue6-cooking-truthful-gates\\local\\Artifacts\\issue6-main-independent-68a880f2-01\\retargeted-reference-declaration.json"
+    },
+    {
+      "name": "input-and-HEAD-stability",
+      "status": "Passed",
+      "raw": "C:\\Users\\Administrator\\orca\\workspaces\\AbilityKit\\issue6-cooking-truthful-gates\\local\\Artifacts\\issue6-main-independent-prepared\\probe-restore.ps1"
+    }
+  ],
+  "sameSecondRaw": "local\\Artifacts\\issue6-main-independent-68a880f2-01\\same-second\\receipt.json",
+  "sameSecond": {
+    "status": "Passed",
+    "example": true,
+    "acceptance": "IndependentPreflightInvocationIsolationOnly",
+    "attempts": [
+      {
+        "attempt": 1,
+        "status": "Passed",
+        "launchSeconds": [
+          "2026-10-05T22:06:02"
+        ],
+        "timeBasis": "UTC bounds surrounding each owned process Start; both bounds of both starts must lie in one second",
+        "native": [
+          {
+            "argv": [
+              "C:\\Windows\\System32\\WindowsPowerShell\\v1.0\\powershell.exe",
+              "-NoProfile",
+              "-ExecutionPolicy",
+              "Bypass",
+              "-File",
+              "C:\\Users\\Administrator\\orca\\workspaces\\AbilityKit\\issue6-cooking-truthful-gates\\tools\\run_test_gate.ps1",
+              "-Gate",
+              "control",
+              "-ConfigPath",
+              "C:\\Users\\Administrator\\AppData\\Local\\Temp\\abilitykit-gate-control-f4f3e038-cf50-4af1-9dbb-dc3d8aeba33e\\config.json",
+              "-ControlContextPath",
+              "C:\\Users\\Administrator\\AppData\\Local\\Temp\\abilitykit-gate-control-f4f3e038-cf50-4af1-9dbb-dc3d8aeba33e\\context.json",
+              "-ResultsDirectory",
+              "C:\\Users\\Administrator\\orca\\workspaces\\AbilityKit\\issue6-cooking-truthful-gates\\local\\Artifacts\\issue6-main-independent-68a880f2-01\\same-second\\1\\results",
+              "-CI"
+            ],
+            "cwd": "C:\\Users\\Administrator\\orca\\workspaces\\AbilityKit\\issue6-cooking-truthful-gates",
+            "pid": 80956,
+            "launchBeforeUtc": "2026-10-05T22:06:02.100844+00:00",
+            "launchAfterUtc": "2026-10-05T22:06:02.107247+00:00",
+            "endedUtc": "2026-10-05T22:06:02.770404+00:00",
+            "nativeExit": 2,
+            "timedOut": false,
+            "exitConfirmed": true
+          },
+          {
+            "argv": [
+              "C:\\Windows\\System32\\WindowsPowerShell\\v1.0\\powershell.exe",
+              "-NoProfile",
+              "-ExecutionPolicy",
+              "Bypass",
+              "-File",
+              "C:\\Users\\Administrator\\orca\\workspaces\\AbilityKit\\issue6-cooking-truthful-gates\\tools\\run_test_gate.ps1",
+              "-Gate",
+              "control",
+              "-ConfigPath",
+              "C:\\Users\\Administrator\\AppData\\Local\\Temp\\abilitykit-gate-control-f4f3e038-cf50-4af1-9dbb-dc3d8aeba33e\\config.json",
+              "-ControlContextPath",
+              "C:\\Users\\Administrator\\AppData\\Local\\Temp\\abilitykit-gate-control-f4f3e038-cf50-4af1-9dbb-dc3d8aeba33e\\context.json",
+              "-ResultsDirectory",
+              "C:\\Users\\Administrator\\orca\\workspaces\\AbilityKit\\issue6-cooking-truthful-gates\\local\\Artifacts\\issue6-main-independent-68a880f2-01\\same-second\\1\\results",
+              "-CI"
+            ],
+            "cwd": "C:\\Users\\Administrator\\orca\\workspaces\\AbilityKit\\issue6-cooking-truthful-gates",
+            "pid": 74440,
+            "launchBeforeUtc": "2026-10-05T22:06:02.108047+00:00",
+            "launchAfterUtc": "2026-10-05T22:06:02.109480+00:00",
+            "endedUtc": "2026-10-05T22:06:02.771589+00:00",
+            "nativeExit": 2,
+            "timedOut": false,
+            "exitConfirmed": true
+          }
+        ],
+        "runIds": [
+          "500d4430-78cb-4d9f-ac0f-5b5249c6d20f",
+          "8f7fcf7f-8dbf-4f79-a9d0-c1bb6f5004f1"
+        ],
+        "uniqueResultIds": [
+          "28b10ef4-d46d-471b-bc48-bbfd81354adb",
+          "34d756ba-27f7-43a0-8916-967e20182927",
+          "f7d165c6-3d42-4f3f-813a-e744f37951ad",
+          "744c9948-7984-4e84-8fb8-0aa0d6ab7c8c",
+          "92e3d4e5-38b6-4727-8c42-407e94d42127",
+          "154093ae-03cf-4b84-8c7b-b39ae6159c87"
+        ],
+        "noProducerInvoked": true,
+        "summaries": [
+          {
+            "path": "C:\\Users\\Administrator\\orca\\workspaces\\AbilityKit\\issue6-cooking-truthful-gates\\local\\Artifacts\\issue6-main-independent-68a880f2-01\\same-second\\1\\results\\500d4430-78cb-4d9f-ac0f-5b5249c6d20f\\gate-summary.json",
+            "sha256": "251ef09d9e04dd90129069c910cc2dcb546c1201c4c1d1ee58f8b5b5b044adc8"
+          },
+          {
+            "path": "C:\\Users\\Administrator\\orca\\workspaces\\AbilityKit\\issue6-cooking-truthful-gates\\local\\Artifacts\\issue6-main-independent-68a880f2-01\\same-second\\1\\results\\8f7fcf7f-8dbf-4f79-a9d0-c1bb6f5004f1\\gate-summary.json",
+            "sha256": "c12c79efd6f2ae3e31659d949ef7f4fb0297fc3ba799c248e55ba7a90015b2e3"
+          }
+        ]
+      }
+    ],
+    "productionDotNet": "NotRun"
+  },
+  "realCooking": "NotRun",
+  "acceptance": "IndependentIsolatedContractControlsOnly"
+}

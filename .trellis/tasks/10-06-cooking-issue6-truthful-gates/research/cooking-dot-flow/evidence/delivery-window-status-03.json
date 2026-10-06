@@ -1,0 +1,38 @@
+{
+  "id": "906129e4-ceaa-4fbe-8f4c-f285b1ddf6e5",
+  "ok": true,
+  "result": {
+    "runId": "run_5ba664a5f016",
+    "deliveryId": "delivery_cf528113c4ef",
+    "messages": [
+      {
+        "id": "msg_cdd004baf73b",
+        "run_id": "run_5ba664a5f016",
+        "delivery_contract": "current_delivery",
+        "from_handle": "term_a1a61c7c-aef6-4cd0-8c46-27a90632617b",
+        "to_handle": "run:run_5ba664a5f016",
+        "subject": "alive",
+        "body": "",
+        "type": "heartbeat",
+        "priority": "normal",
+        "thread_id": null,
+        "payload": "{\"taskId\":\"task_c9384f689b07\",\"dispatchId\":\"ctx_f42f62847f04\",\"phase\":\"reviewing\"}",
+        "created_at": "2026-10-05T19:23:21Z",
+        "delivered_at": null
+      }
+    ],
+    "count": 1,
+    "replayed": false,
+    "acknowledged": null,
+    "timedOut": false,
+    "cancelled": false,
+    "connectionLost": false,
+    "mutation": {
+      "requestId": "07f3aa06-085f-45c9-81fe-36a61139cd2f",
+      "replayed": false
+    }
+  },
+  "_meta": {
+    "runtimeId": "ff0c5f2c-d341-4455-bc1c-c113650bdd60"
+  }
+}

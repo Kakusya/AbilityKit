@@ -1,0 +1,10 @@
+{
+  "run_id": "run_5ba664a5f016",
+  "task_id": "task_b21c8d19b8ee",
+  "dispatch_id": "ctx_5c932faebb3d",
+  "input_accepted": true,
+  "turn_started": true,
+  "state": "ready",
+  "candidate_sha": "79bf9642b04a696880a1c393ca5d11171a4b078a",
+  "specRef": "evidence/slice4-real-verification-spec.md"
+}

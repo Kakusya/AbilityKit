@@ -1,0 +1,13 @@
+{
+  "taskId": "task_b85eae037475",
+  "dispatchId": "ctx_2127fab8d0af",
+  "doneMessageId": "msg_ec203597f8ef",
+  "outcome": "failed genuine verification; preserved",
+  "sourceSha": "a0824b6dc4dbea3c4fc0722c60cf7d257c8fa261",
+  "doneRaw": "delivery-slice2-settled02.json",
+  "live": "slice2-settled-live.json",
+  "idle": "slice2-settled-idle.json",
+  "approvedAccounting": "same terminal/worktree explicitly reused for a NEW bounded import-parser tool repair; not retry/resend or cleanup",
+  "repairScope": "import-parser-repair-worker-spec.md",
+  "mainFailureAudit": "slice2-main-failure-audit.json"
+}

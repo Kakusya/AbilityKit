@@ -1,0 +1,83 @@
+﻿{
+  "id": "be40e1bf-904c-4ae2-ba05-ca8c0a97ff9e",
+  "ok": true,
+  "result": {
+    "runId": "run_5ba664a5f016",
+    "deliveryId": "delivery_d579728c5c9c",
+    "messages": [
+      {
+        "id": "msg_e52e1c3bbeab",
+        "run_id": "run_5ba664a5f016",
+        "delivery_contract": "current_delivery",
+        "from_handle": "term_a1a61c7c-aef6-4cd0-8c46-27a90632617b",
+        "to_handle": "run:run_5ba664a5f016",
+        "subject": "Config interpretation follow-up acknowledged",
+        "body": "Acknowledged msg_ab31f43a8876/current ctx4c and will distinguish the main-added direct test-input requirement from the normative source/restore/build/reuse config contract. No implementation repair or final acceptance decision will be made; both exact gates remain required serially. Gate1 full Cooking867/867 native0 is preserved and its ET testhost is still executing with increasing CPU and bounded memory, no final ET TRX yet.",
+        "type": "status",
+        "priority": "normal",
+        "thread_id": null,
+        "payload": "{\"taskId\":\"task_31fd1c2368df\",\"dispatchId\":\"ctx_4c94250ae711\"}",
+        "created_at": "2026-10-05T22:31:10Z",
+        "delivered_at": null
+      },
+      {
+        "id": "msg_ce383a550ea3",
+        "run_id": "run_5ba664a5f016",
+        "delivery_contract": "current_delivery",
+        "from_handle": "term_a1a61c7c-aef6-4cd0-8c46-27a90632617b",
+        "to_handle": "run:run_5ba664a5f016",
+        "subject": "alive",
+        "body": "",
+        "type": "heartbeat",
+        "priority": "normal",
+        "thread_id": null,
+        "payload": "{\"taskId\":\"task_31fd1c2368df\",\"dispatchId\":\"ctx_4c94250ae711\",\"phase\":\"reviewing\"}",
+        "created_at": "2026-10-05T22:34:45Z",
+        "delivered_at": null
+      },
+      {
+        "id": "msg_d6b330a52601",
+        "run_id": "run_5ba664a5f016",
+        "delivery_contract": "current_delivery",
+        "from_handle": "term_a1a61c7c-aef6-4cd0-8c46-27a90632617b",
+        "to_handle": "run:run_5ba664a5f016",
+        "subject": "First gate all native stages0 and TRX867/328",
+        "body": "Genuine Cooking full TRX867/867 and ET full TRX328/328 completed with zero failed/skipped/unexecuted outcomes and all four leaves restore/build plus two tests native0. Gate1 runner is doing aggregate sole validation/JSON serialization; final canonical exit is not yet available. Next exact kitchen gate remains pending until parent exit and exclusive process/source recheck, and the direct-test-config interpretation stays separately recorded.",
+        "type": "status",
+        "priority": "normal",
+        "thread_id": null,
+        "payload": "{\"taskId\":\"task_31fd1c2368df\",\"dispatchId\":\"ctx_4c94250ae711\"}",
+        "created_at": "2026-10-05T22:36:31Z",
+        "delivered_at": null
+      },
+      {
+        "id": "msg_28026d0d38fa",
+        "run_id": "run_5ba664a5f016",
+        "delivery_contract": "current_delivery",
+        "from_handle": "term_a1a61c7c-aef6-4cd0-8c46-27a90632617b",
+        "to_handle": "run:run_5ba664a5f016",
+        "subject": "alive",
+        "body": "",
+        "type": "heartbeat",
+        "priority": "normal",
+        "thread_id": null,
+        "payload": "{\"taskId\":\"task_31fd1c2368df\",\"dispatchId\":\"ctx_4c94250ae711\",\"phase\":\"reviewing\"}",
+        "created_at": "2026-10-05T22:39:01Z",
+        "delivered_at": null
+      }
+    ],
+    "count": 4,
+    "replayed": false,
+    "acknowledged": null,
+    "timedOut": false,
+    "cancelled": false,
+    "connectionLost": false,
+    "mutation": {
+      "requestId": "1eae97de-fd29-4010-9327-5e6dc8ab665e",
+      "replayed": false
+    }
+  },
+  "_meta": {
+    "runtimeId": "ff0c5f2c-d341-4455-bc1c-c113650bdd60"
+  }
+}

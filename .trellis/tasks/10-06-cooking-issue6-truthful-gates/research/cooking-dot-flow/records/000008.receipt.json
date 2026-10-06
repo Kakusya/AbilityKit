@@ -1,0 +1,12 @@
+{
+  "version": 1,
+  "flow_id": "6d3174fd-2b01-4136-8ea5-0b0cd0e2845d",
+  "seq": 8,
+  "op_id": "6d3174fd-2b01-4136-8ea5-0b0cd0e2845d:000008",
+  "kind": "receipt",
+  "recorded_utc": "2026-10-05T17:34:14.503810Z",
+  "intent_hash": "389adf47611e2a118270a08549269720f2d60fd352277779a8708bf606117d92",
+  "outcome": "applied",
+  "raw_ref": "evidence/slice1-progress-send-raw.json",
+  "result": {}
+}

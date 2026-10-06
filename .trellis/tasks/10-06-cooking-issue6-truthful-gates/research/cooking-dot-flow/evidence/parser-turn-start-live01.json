@@ -1,0 +1,212 @@
+{
+  "id": "070038e7-05ce-442e-a546-5c98fdbb3366",
+  "ok": true,
+  "result": {
+    "dispatch": {
+      "id": "ctx_e989de325df7",
+      "runId": "run_5ba664a5f016",
+      "taskId": "task_0330e4b97a9b",
+      "task_id": "task_0330e4b97a9b",
+      "contractVersion": 1,
+      "assigneeHandle": "term_a1a61c7c-aef6-4cd0-8c46-27a90632617b",
+      "assigneePaneKey": "b94085c4-6c28-4ad4-9667-869f1b118e1c:3797e78e-d534-4408-b8bf-37e9e7df13f8",
+      "processIncarnation": "aaa97e0d-5026-4e5c-95f8-bb420dcb4c65::C:/Users/Administrator/orca/workspaces/AbilityKit/issue6-cooking-truthful-gates@@0151d7c9:1215b4fe-5c81-4165-a3e2-aa12abaf4aac",
+      "capabilityRevokedAt": null,
+      "retryOfDispatchId": null,
+      "creatorDispatchId": null,
+      "hostScope": {
+        "kind": "local",
+        "hostId": "local"
+      },
+      "status": "pending",
+      "failureCount": 0,
+      "lastFailure": null,
+      "terminationReason": null,
+      "depth": 1,
+      "dispatchedAt": "2026-10-05 19:58:45",
+      "completedAt": null,
+      "createdAt": "2026-10-05 19:58:45",
+      "lastHeartbeatAt": null
+    },
+    "worker": {
+      "dispatchId": "ctx_e989de325df7",
+      "runtimeEpoch": "ff0c5f2c-d341-4455-bc1c-c113650bdd60",
+      "state": "start_unknown",
+      "stage": "turn_start_unobserved",
+      "worktreeId": "aaa97e0d-5026-4e5c-95f8-bb420dcb4c65::C:/Users/Administrator/orca/workspaces/AbilityKit/issue6-cooking-truthful-gates",
+      "agentTerminalHandle": "term_a1a61c7c-aef6-4cd0-8c46-27a90632617b",
+      "setupState": "not_applicable",
+      "effects": [
+        {
+          "kind": "worktree",
+          "action": "reused",
+          "id": "aaa97e0d-5026-4e5c-95f8-bb420dcb4c65::C:/Users/Administrator/orca/workspaces/AbilityKit/issue6-cooking-truthful-gates"
+        },
+        {
+          "kind": "setup",
+          "action": "not_applicable",
+          "state": "not_applicable"
+        },
+        {
+          "kind": "terminal",
+          "role": "agent",
+          "action": "reused",
+          "id": "term_a1a61c7c-aef6-4cd0-8c46-27a90632617b"
+        },
+        {
+          "kind": "dispatch_input",
+          "role": "agent",
+          "id": "term_a1a61c7c-aef6-4cd0-8c46-27a90632617b",
+          "state": "accepted"
+        },
+        {
+          "kind": "dispatch_input",
+          "role": "agent",
+          "id": "term_a1a61c7c-aef6-4cd0-8c46-27a90632617b",
+          "state": "turn_unobserved"
+        }
+      ],
+      "residualResources": [],
+      "startOptions": {
+        "worktree": "id:aaa97e0d-5026-4e5c-95f8-bb420dcb4c65::C:/Users/Administrator/orca/workspaces/AbilityKit/issue6-cooking-truthful-gates",
+        "mode": {
+          "mode": "terminal",
+          "preferred": "terminal",
+          "reason": "user_default",
+          "detail": "Started a terminal agent worker, the default for new agent tabs in your settings."
+        },
+        "resolvedWorktreeId": "aaa97e0d-5026-4e5c-95f8-bb420dcb4c65::C:/Users/Administrator/orca/workspaces/AbilityKit/issue6-cooking-truthful-gates",
+        "name": null,
+        "repo": null,
+        "baseBranch": null,
+        "terminal": "term_a1a61c7c-aef6-4cd0-8c46-27a90632617b",
+        "agent": null,
+        "launch": {
+          "requested": {
+            "agent": null,
+            "model": null,
+            "effort": null
+          },
+          "effective": {
+            "agent": null,
+            "model": null,
+            "effort": null
+          }
+        },
+        "timeoutMs": 60000,
+        "setup": "not_applicable",
+        "setupSource": "existing_worktree"
+      },
+      "lastError": "Dispatch input was written and submitted, but the agent's turn start could not be verified during observation (up to 30s). This is unverifiable, not proof the worker is dead: the agent may still be starting, may be wedged (for example waiting on network), or may be holding the task unsent in its composer. If the worker recovers and reports, this Dispatch settles normally.",
+      "createdAt": "2026-10-05 19:58:45",
+      "updatedAt": "2026-10-05T19:59:23.536Z"
+    },
+    "projection": {
+      "id": "ctx_e989de325df7",
+      "dispatchId": "ctx_e989de325df7",
+      "taskId": "task_0330e4b97a9b",
+      "runId": "run_5ba664a5f016",
+      "role": "worker",
+      "parent": null,
+      "provider": {
+        "id": "codex",
+        "model": "gpt-6.1-sol"
+      },
+      "host": {
+        "kind": "local",
+        "id": "local"
+      },
+      "workspace": {
+        "id": "aaa97e0d-5026-4e5c-95f8-bb420dcb4c65::C:/Users/Administrator/orca/workspaces/AbilityKit/issue6-cooking-truthful-gates",
+        "kind": "folder_or_worktree"
+      },
+      "stage": {
+        "worker": "start_unknown",
+        "dispatch": "pending",
+        "detail": "turn_start_unobserved",
+        "activity": "working"
+      },
+      "outcome": "in_progress",
+      "liveness": {
+        "verdict": "live",
+        "observedAt": 1791230431408,
+        "source": "agent_status"
+      },
+      "evidence": {
+        "durable": true,
+        "liveStatus": "fresh",
+        "lastObservedAt": 1791230431408
+      },
+      "resource": {
+        "state": "external",
+        "id": "wtr_05556928e06e",
+        "ownerDispatchId": "ctx_e989de325df7",
+        "releaseState": "not_requested",
+        "terminalState": "retained"
+      },
+      "nextAction": {
+        "kind": "inspect",
+        "argv": [
+          "orchestration",
+          "worker-show",
+          "--dispatch",
+          "ctx_e989de325df7"
+        ]
+      },
+      "attention": {
+        "categories": [],
+        "requiresAction": false
+      }
+    },
+    "terminal": {
+      "handle": "term_a1a61c7c-aef6-4cd0-8c46-27a90632617b",
+      "ptyId": "aaa97e0d-5026-4e5c-95f8-bb420dcb4c65::C:/Users/Administrator/orca/workspaces/AbilityKit/issue6-cooking-truthful-gates@@0151d7c9",
+      "incarnationId": "1215b4fe-5c81-4165-a3e2-aa12abaf4aac",
+      "orphaned": false,
+      "worktreeId": "aaa97e0d-5026-4e5c-95f8-bb420dcb4c65::C:/Users/Administrator/orca/workspaces/AbilityKit/issue6-cooking-truthful-gates",
+      "worktreePath": "C:/Users/Administrator/orca/workspaces/AbilityKit/issue6-cooking-truthful-gates",
+      "branch": "refs/heads/Kakusya/issue6-cooking-truthful-gates",
+      "tabId": "b94085c4-6c28-4ad4-9667-869f1b118e1c",
+      "leafId": "3797e78e-d534-4408-b8bf-37e9e7df13f8",
+      "title": "⠴ Report task outcome | issue6-cooking-truthf...",
+      "connected": true,
+      "writable": true,
+      "lastOutputAt": 1791230434847,
+      "preview": "\\AbilityKit\\issue6-cooking-truthful-gates · Report task outcome\n? for shortcuts                                                                                                                                                                                                     ⚠ 1 warning · f2 to view",
+      "executionHostId": "local",
+      "agentIdentity": "codex",
+      "paneRuntimeId": 1,
+      "rendererGraphEpoch": 0,
+      "agentWait": null
+    },
+    "observation": {
+      "status": "live",
+      "exactWorker": true,
+      "agentWait": null
+    },
+    "terminalResource": {
+      "id": "wtr_05556928e06e",
+      "ownershipState": "external",
+      "releaseState": "not_requested",
+      "retainedReason": "external_terminal",
+      "terminalHandle": "term_a1a61c7c-aef6-4cd0-8c46-27a90632617b",
+      "worktreeId": "aaa97e0d-5026-4e5c-95f8-bb420dcb4c65::C:/Users/Administrator/orca/workspaces/AbilityKit/issue6-cooking-truthful-gates",
+      "endpointId": "ff0c5f2c-d341-4455-bc1c-c113650bdd60",
+      "endpointIncarnation": "aaa97e0d-5026-4e5c-95f8-bb420dcb4c65::C:/Users/Administrator/orca/workspaces/AbilityKit/issue6-cooking-truthful-gates@@0151d7c9:1215b4fe-5c81-4165-a3e2-aa12abaf4aac",
+      "originDispatchId": "ctx_e989de325df7",
+      "ownerDispatchId": "ctx_e989de325df7",
+      "releaseRequestedAt": null,
+      "releaseCompletedAt": null,
+      "releaseError": null,
+      "recoveryAttemptCount": 0,
+      "lastRecoveryAt": null,
+      "archive": {
+        "source": null,
+        "status": null
+      }
+    }
+  },
+  "_meta": {
+    "runtimeId": "ff0c5f2c-d341-4455-bc1c-c113650bdd60"
+  }
+}

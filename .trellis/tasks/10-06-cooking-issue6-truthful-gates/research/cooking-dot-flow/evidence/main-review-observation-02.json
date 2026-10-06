@@ -1,0 +1,16 @@
+{
+  "observed_utc": "2026-10-05T18:57:18.156164+00:00",
+  "confirmed_fixed_review_defect": "Stage/native actual TFM and restore Configuration accepted mismatches; immutable original red evidence under stage-binding-red. Worker fixed restore TargetFramework argv expression split; f03 failed/partial preserved. Further duplicate filter/leaf summary command binding reds preserved by worker.",
+  "current_controls": "f06:160 assertions/zero failures; overall Blocked/CLI2 due requested buffer40/80 stayed120, 180 applied. No final acceptance.",
+  "pending_worker_guidance": "msg_4c521201e9a9: preserve actual existing buffer Height rather than hardcoded300; independently test, preserve f06 Blocked, rerun frozen controls or deliver honest blocker.",
+  "unproven_future_audit_questions": [
+    {
+      "question": "Actual effective NuGet configFilePaths used by restore may not be hashed: current Get-GateProjectClosure only walks ancestor NuGet.Config names; Get-GatePackageInputs reads assets packages but not restore.configFilePaths. Compare actual future Cooking assets/config paths to input ledger before final acceptance. SDK dotnet nuget config paths --help only displayed generic help, no positively proven API. Do not install or assume capability; use current SDK if a gap is proven. Never publish/record credential contents by default."
+    },
+    {
+      "question": "Current two-fast-runs isolation control uses <= on start-time seconds rather than equality and does not publish starts. Main can independently run a safely owned fake preflight-only pair and preserve actual same-second start evidence; no real producers/source mutations."
+    }
+  ],
+  "main_scope": "No main test execution or shared-source edits while worker owns slice1; main currently writes task evidence only.",
+  "next": "Wait exact worker_done/checkpoint, audit actual clean implementation SHA and preserved failures, then separate bounded both-Cooking-gates verification on approved source. Old worktree and user dirt remain untouched."
+}

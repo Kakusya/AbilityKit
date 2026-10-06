@@ -1,0 +1,15 @@
+{
+  "version": 1,
+  "flow_id": "6d3174fd-2b01-4136-8ea5-0b0cd0e2845d",
+  "seq": 85,
+  "op_id": "6d3174fd-2b01-4136-8ea5-0b0cd0e2845d:000085",
+  "kind": "intent",
+  "recorded_utc": "2026-10-05T23:23:29.100361Z",
+  "action": "acknowledge-delivery",
+  "target": "delivery_e8e1bf996a6e",
+  "authorization_ref": "evidence/approval.md",
+  "payload_ref": "evidence/slice6-dot-clarification-amendment.md",
+  "preconditions": {
+    "run_id": "run_5ba664a5f016"
+  }
+}

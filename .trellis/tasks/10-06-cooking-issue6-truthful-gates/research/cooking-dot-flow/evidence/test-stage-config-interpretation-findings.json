@@ -1,0 +1,15 @@
+{
+  "status": "NotRun",
+  "decision": "Requires dot interpretation before final acceptance; no code repair selected",
+  "raw": "local\\Artifacts\\issue6-cooking-slice6-verification-c66e1880\\test-config-ledger-gap-first.json",
+  "rawSha256": "571d8121249fdf4c04e1460952c06a3fd6dd20463fcecd95f26a1abf33649fa5",
+  "observed": "Actual test native0; effective config typed proof exists in restore/build and source before/after but not direct test-stage inputs, which record loaded binaries.",
+  "normativePlan": "dot-plan-reply-raw.txt lines90-92 require actual input closure/source/config, stages argv and assets/loaded binary identities; allow test --no-build --no-restore.",
+  "approvedRepair": "restore-graph-repair-spec.md item2 requires restore/build/reuse config proof.",
+  "extraMainDispatchCheck": "slice6-real-verification-spec.md adds direct typed config proof in every restore/build/test. This stricter check was introduced by the coordinator; do not silently treat it as an explicit dot requirement.",
+  "questionsForDot": [
+    "Does inherited checked source/config plus restore/build typed proof and --no-build --no-restore loaded-binary stage satisfy the approved contract?",
+    "If direct typed config proof in the test-stage input ledger is still required, specify bounded correction and controls before acceptance."
+  ],
+  "delivery": "No final acceptance/merge/close while interpretation or other required results pending."
+}

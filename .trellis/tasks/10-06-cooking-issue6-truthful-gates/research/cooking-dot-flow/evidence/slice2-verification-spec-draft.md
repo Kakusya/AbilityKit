@@ -1,0 +1,14 @@
+# Separate authoritative Cooking verification dispatch (draft; not dispatched)
+
+Continue only after main has checked and settled slice1 Task/Dispatch and filled the full implementation SHA. The accepted dot plan is normative: read the complete `dot-plan-reply-raw.txt`, task PRD/design/manifests and AGENTS. This dispatch owns only `research/slice2-verification-report.md` and fresh ignored `local/Artifacts/` evidence. It owns no implementation source. You are not alone; preserve main-owned flow/evidence and all other changes. No subworkers, remote writes, push, merge, close, archive, cleanup, business fixes, dependency/toolchain upgrades or Unity/example/service/benchmark execution.
+
+Before running: verify exact supplied implementation SHA, full delivered-file hashes and no dirty implementation source; main-owned task evidence dirt is disclosed separately and must not become compilation input. Record tool versions, actual argv, source SHA/dirty/exclusions and actual evaluated project closure. Coordinate exclusive .NET execution: this dispatch is the sole authorized .NET check writer; do not run checks in other trees. Stop if another writer is discovered rather than killing it.
+
+Execute serially from this managed worktree, using the committed runner without NoBuild/NoRestore/StepName or synthetic context:
+
+1. powershell -NoProfile -ExecutionPolicy Bypass -File tools/run_test_gate.ps1 -Gate cooking-et-level-runtime -Configuration Debug -CI
+2. powershell -NoProfile -ExecutionPolicy Bypass -File tools/run_test_gate.ps1 -Gate cooking-kitchen-loop -Configuration Debug -CI
+
+Both commands must be actually attempted unless an unsafe active writer/environment prevents the next launch; a failure is preserved and does not authorize repair. Record complete stdout/stderr, native/CLI exit, unique run/result identity, summary and all stage/artifact paths/hashes. Independently inspect every required build/test leaf, canonical status, coverage bindings, genuine nonzero TRX counts, focused filter and full projects, source/binary/tool identities and pre/post stability. No skipped/missing/zero tests count as Passed. Build leaves have tests=null. Produce a compact report with per-command/leaf Passed/Failed/Blocked/Skipped/NotRun, counts and linked raw evidence; explicitly distinguish actual gameplay failure from runner/validator failure without editing either. No historical counts or synthetic acceptance.
+
+Upon completion or first unresolved blocker, report exact SHA, dirty disclosure, all actual commands/exits/counts/evidence and limitation. Emit exactly one worker_done with both current Task and Dispatch IDs, explicit outcome and report path, then idle. No source commit or followup work without a new authoritative dispatch. Main may independently read evidence while you run but will not mutate source or run concurrent tests.

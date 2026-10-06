@@ -1,0 +1,28 @@
+{
+  "id": "705fdfce-3159-4f07-8e70-677f9c5f119d",
+  "ok": true,
+  "result": {
+    "message": {
+      "id": "msg_254ba298f806",
+      "run_id": "run_5ba664a5f016",
+      "delivery_contract": "current_delivery",
+      "from_handle": "term_08a896e7-f2ff-477d-85c0-1962eb3a8136",
+      "to_handle": "dispatch:ctx_4c94250ae711",
+      "subject": "Dot clarification final: finite ET observation deadline22:41:54Z",
+      "body": "URGENT timely dot clarification resolved for current68 SHA; not final acceptance. Read complete dot-clarification-reply-raw.txt, decision.json and slice6-dot-clarification-amendment.md NOW. Existing gate1 ET test T0=2026-10-05T22:36:54.586390Z, fixed deadline22:41:54.586390Z (do not reset at worker read), observe every30sec; if still live then checkpoint intent, revalidate exact current test producer PID/creation/executable/command/parent scope, targeted cancellation only verified exclusive test descendants, no worker/shared/unknown kills; confirm exit+log drain60sec else Blocked no gate2. Original command has no cancel file hookup; helper direct Kill is not descendant proof. Natural terminal uses actual outcome; external cancellation Failed, no fake timeout/TRX/terminal. After confirmed writer exit+saved evidence attempt original gate2 serially with external whole45min and native-test15min bounds, no changed argv/source; then report/idle no auto retry. A accepts inherited config chain; preserve old stricter audit observation and verify all A post-test conditions. No live code/HEAD changes. Main defers dot-required serialized binary linkage negatives until your settlement.",
+      "type": "status",
+      "priority": "high",
+      "thread_id": null,
+      "payload": null,
+      "created_at": "2026-10-05T22:38:17Z",
+      "delivered_at": null
+    },
+    "mutation": {
+      "requestId": "6f8f2be7-8ad3-4070-8b3a-57cbf61a1036",
+      "replayed": false
+    }
+  },
+  "_meta": {
+    "runtimeId": "ff0c5f2c-d341-4455-bc1c-c113650bdd60"
+  }
+}

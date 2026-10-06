@@ -1,0 +1,29 @@
+﻿{
+  "id": "local",
+  "ok": false,
+  "error": {
+    "code": "invalid_argument",
+    "message": "Unknown flag --run for command: check",
+    "data": {
+      "validFlags": [
+        "element",
+        "environment",
+        "help",
+        "json",
+        "page",
+        "pairing-code",
+        "worktree"
+      ],
+      "suggestions": [
+        "json"
+      ],
+      "nextSteps": [
+        "Did you mean: --json",
+        "Valid flags: --element, --environment, --help, --json, --page, --pairing-code, --worktree"
+      ]
+    }
+  },
+  "_meta": {
+    "runtimeId": null
+  }
+}

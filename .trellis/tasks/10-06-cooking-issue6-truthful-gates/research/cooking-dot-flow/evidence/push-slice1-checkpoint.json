@@ -1,0 +1,7 @@
+{
+  "candidate_sha": "b1644ec4e0418df99641a5db7e7e65010fc5f24a",
+  "ref": "refs/heads/Kakusya/issue6-cooking-truthful-gates",
+  "remote_repository": "https://github.com/Kakusya/AbilityKit",
+  "scope": "slice1 checkpoint only; width coverage Blocked, real gates NotRun, not final acceptance",
+  "diff_audit": "slice1-main-scope-audit.json"
+}

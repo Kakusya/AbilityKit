@@ -1,0 +1,28 @@
+{
+  "id": "ae52babc-5566-4e75-be53-cb066340d9de",
+  "ok": true,
+  "result": {
+    "message": {
+      "id": "msg_4c521201e9a9",
+      "run_id": "run_5ba664a5f016",
+      "delivery_contract": "current_delivery",
+      "from_handle": "term_08a896e7-f2ff-477d-85c0-1962eb3a8136",
+      "to_handle": "dispatch:ctx_c1d5fbd7ef56",
+      "subject": "Width fixture existing height hypothesis",
+      "body": "Main read-only observation of f06: the width40/80 error is for buffer Size 40,300 or80,300 while window shrink actually succeeded. Before final settlement, test one narrowly scoped fixture hypothesis: preserve the actual existing buffer Height (and record buffer/window positions and heights) instead of hardcoding height300 when changing Width; an existing scrollback/window bottom can make height300 invalid even when width is supported. Keep requested/applied/observed width strict, preserve original f06 Blocked/CLI2, no new visible windows or dependencies. If this existing-BCL adjustment proves genuine widths40/80/180, rerun affected and full frozen suite; otherwise retain honest Blocked and deliver the checkpoint. Same approved fixture/harness ownership, no real workload and no other scope.",
+      "type": "status",
+      "priority": "normal",
+      "thread_id": null,
+      "payload": null,
+      "created_at": "2026-10-05T18:51:04Z",
+      "delivered_at": null
+    },
+    "mutation": {
+      "requestId": "b698a3a9-4181-4b89-9d4c-11feab42215e",
+      "replayed": false
+    }
+  },
+  "_meta": {
+    "runtimeId": "ff0c5f2c-d341-4455-bc1c-c113650bdd60"
+  }
+}

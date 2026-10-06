@@ -1,0 +1,19 @@
+{
+  "version": 1,
+  "flow_id": "6d3174fd-2b01-4136-8ea5-0b0cd0e2845d",
+  "seq": 67,
+  "op_id": "6d3174fd-2b01-4136-8ea5-0b0cd0e2845d:000067",
+  "kind": "receipt",
+  "recorded_utc": "2026-10-05T22:07:55.302744Z",
+  "intent_hash": "0bcf093a2d381c7895be28aa8410c574e705b1cafdfc66abfc54c1b48c6e9b1b",
+  "outcome": "applied",
+  "raw_ref": "evidence/push-68a880f2-raw.json",
+  "result": {
+    "status": "Passed",
+    "sha": "68a880f2a31c7269da634b2f152362bccb5857ab",
+    "remoteRaw": "push-68a880f2-remote.txt",
+    "githubRaw": "push-68a880f2-github.json",
+    "issueRaw": "issue6-before-slice6.json",
+    "allNativeExit": 0
+  }
+}

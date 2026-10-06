@@ -1,0 +1,85 @@
+{
+  "id": "b791c95f-b50f-4f81-b017-8b6c31feeab4",
+  "ok": true,
+  "result": {
+    "runId": "run_5ba664a5f016",
+    "taskId": "task_b21c8d19b8ee",
+    "dispatchId": "ctx_5c932faebb3d",
+    "state": "ready",
+    "stage": "input_accepted",
+    "turnStart": "observed",
+    "setup": {
+      "requested": "not_applicable",
+      "effective": "not_applicable",
+      "source": "existing_worktree",
+      "hookFound": false,
+      "startupPolicy": "start-immediately",
+      "state": "not_applicable"
+    },
+    "launch": {
+      "requested": {
+        "agent": null,
+        "model": null,
+        "effort": null
+      },
+      "effective": {
+        "agent": null,
+        "model": null,
+        "effort": null
+      }
+    },
+    "mode": {
+      "mode": "terminal",
+      "preferred": "terminal",
+      "reason": "user_default",
+      "detail": "Started a terminal agent worker, the default for new agent tabs in your settings."
+    },
+    "timeoutMs": 60000,
+    "effects": [
+      {
+        "kind": "worktree",
+        "action": "reused",
+        "id": "aaa97e0d-5026-4e5c-95f8-bb420dcb4c65::C:/Users/Administrator/orca/workspaces/AbilityKit/issue6-cooking-truthful-gates"
+      },
+      {
+        "kind": "setup",
+        "action": "not_applicable",
+        "state": "not_applicable"
+      },
+      {
+        "kind": "terminal",
+        "role": "agent",
+        "action": "reused",
+        "id": "term_a1a61c7c-aef6-4cd0-8c46-27a90632617b"
+      },
+      {
+        "kind": "dispatch_input",
+        "role": "agent",
+        "id": "term_a1a61c7c-aef6-4cd0-8c46-27a90632617b",
+        "state": "accepted"
+      }
+    ],
+    "prompt": {
+      "requestId": "36a9c367-02fe-463b-a32a-430c2a7b006a",
+      "stages": [
+        "input_accepted",
+        "turn_started"
+      ],
+      "provider": "codex",
+      "observation": "supported",
+      "processIncarnation": "1215b4fe-5c81-4165-a3e2-aa12abaf4aac",
+      "generation": 36,
+      "baselineWorkingSequence": 9,
+      "baselineExplicitWorkingStartedAt": null,
+      "baselinePermissionSequence": 0
+    },
+    "residualResources": [],
+    "mutation": {
+      "requestId": "36a9c367-02fe-463b-a32a-430c2a7b006a",
+      "replayed": false
+    }
+  },
+  "_meta": {
+    "runtimeId": "ff0c5f2c-d341-4455-bc1c-c113650bdd60"
+  }
+}

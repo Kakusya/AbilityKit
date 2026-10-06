@@ -1,0 +1,155 @@
+{
+  "id": "7b9375ec-3c10-4da6-827f-ebf73406d571",
+  "ok": true,
+  "result": {
+    "dispatchId": "ctx_4c94250ae711",
+    "source": "transcript",
+    "sourceIdentity": "cu2zdwkdsmPUSCyhNJeOZCjLL8pYI9Oi",
+    "provider": "codex",
+    "transcript": {
+      "messages": [
+        {
+          "id": "ctc_03d36cc6d8b642f4016ac421b17c6887d08019dc76551658f6",
+          "role": "assistant",
+          "blocks": [
+            {
+              "type": "tool-call",
+              "name": "exec",
+              "input": "text(await tools.exec_command({cmd:\"$e='local/Artifacts/issue6-cooking-slice6-verification-c66e1880'; @(Get-CimInstance Win32_Process|Where-Object {$_.Name -match '^(dotnet|MSBuild|VBCSCompiler|testhost|vstest.console).*'}|Select-Object ProcessId,ParentProcessId,CreationDate,Name,CommandLine,KernelModeTime,UserModeTime)|ConvertTo-Json -Depth 5|Set-Content \\\"$e/gate1-active-processes-02.json\\\" -Encoding UTF8; Get-Content tools/test-gate-result-contract.ps1 -Encoding UTF8 | Select-Object -Skip 560 -First 45; Get-Content tools/test-gate-result-contract.ps1 -Encoding UTF8 | Select-Object -Skip 252 -First 49\",max_output_tokens:2200}));\ntext(await tools.write_stdin({session_id:4063,chars:\"\",yield_time_ms:1000,max_output_tokens:1000}));\n",
+              "callId": "call_MYWNuFGSBHF7eIVXIAROazrk"
+            }
+          ],
+          "timestamp": 1791238581432,
+          "source": "transcript"
+        },
+        {
+          "id": "ctco_01a10e23-c27b-74a0-95d0-74b0b355682f",
+          "role": "tool",
+          "blocks": [
+            {
+              "type": "tool-result",
+              "output": "Script completed\nWall time 5.6 seconds\nOutput:\n{\"chunk_id\":\"e649fb\",\"wall_time_seconds\":0.1230724,\"exit_code\":0,\"original_token_count\":1793,\"output\":\"        if ('--no-build' -cnotin $argv) { throw 'Implicit test build forbidden.' }\\r\\n        $index=[Array]::IndexOf($argv,'--filter')\\r\\n        if (@($argv | Where-Object { $_ -ceq '--filter' }).Count -gt 1) { throw 'Ambiguous test filter argv.' }\\r\\n        $filter=if ($index -ge 0) { [string]$argv[$index+1] } else { '' }\\r\\n        if ($filter -cne $Result.configuration.filter) { throw 'Test filter command mismatch.' }\\r\\n    }\\r\\n    if ($Stage.mode -ceq 'Executed' -and ($Stage.runId -cne $Result.runId -or $Stage.resultId -cne $Result.resultId)) { throw 'Stage stale owner.' }\\r\\n    if ($Stage.mode -ceq 'Executed' -and $Result.provenance.invocations) {\\r\\n        $matches=@($Result.provenance.invocations | Where-Object { $_.startedAt -ceq $Stage.startedAt -and $_.endedAt -ceq $Stage.endedAt -and (ConvertTo-GateJson $_.command) -ceq (ConvertTo-GateJson $Stage.command) })\\r\\n        if ($matches.Count -ne 1 -or $matches[0].processExitCode -ne 0 -or -not $matches[0].exitConfirmed -or $matches[0].reason) { throw 'Stage/native receip\n… (truncated)"
+            }
+          ],
+          "timestamp": 1791238587003,
+          "source": "transcript"
+        },
+        {
+          "id": "ctc_03d36cc6d8b642f4016ac421c5b80887d0a8cff3935d92d90f",
+          "role": "assistant",
+          "blocks": [
+            {
+              "type": "tool-call",
+              "name": "exec",
+              "input": "text(await tools.exec_command({cmd:\"@'\\nfrom pathlib import Path\\np=Path('local/Artifacts/issue6-cooking-slice6-verification-c66e1880/independent-audit.py');s=p.read_text(encoding='utf-8-sig')\\ns=s.replace(\\\"leafs.append(leafout)\\\\n completed=\\\",'''# Actual SDK evaluation/preprocess closure, independent of the serialized graph.\\n  source_index={norm(x['path']):x for x in ((leaf['source'] or {}).get('before') or {}).get('inputs',[])}\\n  evaluated=[]\\n  for evfile in sorted(node.glob('ev-r-*.stdout.txt')):\\n   if not re.fullmatch(r'ev-r-\\\\\\\\d+\\\\\\\\.stdout\\\\\\\\.txt',evfile.name):continue\\n   ev=j(evfile);props=ev['Properties'];evinputs=[]\\n   for kind in ['Compile','Analyzer','AdditionalFiles','EmbeddedResource','Content','None','Reference','EditorConfigFiles']:\\n    for item in ev.get('Items',{}).get(kind,[]):\\n     path=item.get('FullPath') or str(pathlib.Path(props['MSBuildProjectFullPath']).parent/item['Identity'])\\n     if pathlib.Path(path).is_file():\\n      h=hf(path);included=norm(path) in source_index and source_index[norm(path)]['sha256']==h\\n      if not included:err.append('evaluated '+kind+' input omitted/hash mismatch '+path)\\n      evinputs.append(dict(kind=kind,path=path… (truncated)",
+              "callId": "call_0GvPdN4dDy4mxHzuSuEymGdP"
+            }
+          ],
+          "timestamp": 1791238616663,
+          "source": "transcript"
+        },
+        {
+          "id": "ctco_01a10e24-4bf2-73d0-9737-83ce46958ebf",
+          "role": "tool",
+          "blocks": [
+            {
+              "type": "tool-result",
+              "output": "Script completed\nWall time 5.5 seconds\nOutput:\n{\"chunk_id\":\"5a6aa7\",\"wall_time_seconds\":0.0730454,\"exit_code\":0,\"original_token_count\":0,\"output\":\"\"}\n{\"chunk_id\":\"5935d3\",\"wall_time_seconds\":5.0103652,\"session_id\":4063,\"original_token_count\":0,\"output\":\"\"}"
+            }
+          ],
+          "timestamp": 1791238622194,
+          "source": "transcript"
+        },
+        {
+          "id": "ctc_03d36cc6d8b642f4016ac421e3b12c87d09824b8e8ff6228a8",
+          "role": "assistant",
+          "blocks": [
+            {
+              "type": "tool-call",
+              "name": "exec",
+              "input": "text(await tools.exec_command({cmd:\"Get-ChildItem 'local/Logs/test-gates/86324cd6-22d9-45ea-9762-e2c301e59734' -Recurse -Filter '*.stdout.txt'|Sort-Object LastWriteTime -Descending|Select-Object -First 2 FullName,Length,LastWriteTime|ConvertTo-Json; Get-Process -Id 77560 -ErrorAction SilentlyContinue|Select-Object Id,CPU,WorkingSet64|ConvertTo-Json; $a=Get-Content '.trellis/tasks/10-06-cooking-issue6-truthful-gates/research/cooking-dot-flow/evidence/main-independent-68a880f2.json' -Raw -Encoding UTF8|ConvertFrom-Json; $a.PSObject.Properties|Where-Object {$_.Name -notmatch 'dirty|cases|controls|files'}|ForEach-Object {[pscustomobject]@{name=$_.Name;value=$_.Value}|ConvertTo-Json -Depth 4 -Compress}\",max_output_tokens:1400}));\ntext(await tools.write_stdin({session_id:4063,chars:\"\",yield_time_ms:1000,max_output_tokens:1000}));\n",
+              "callId": "call_zdcx7pJJbPigrXr4ByZGyqg8"
+            }
+          ],
+          "timestamp": 1791238632569,
+          "source": "transcript"
+        }
+      ],
+      "nextCursor": "owr1_eyJ2IjoxLCJkIjoiY3R4XzRjOTQyNTBhZTcxMSIsInMiOiJ0cmFuc2NyaXB0IiwiaSI6ImN1Mnpkd2tkc21QVVNDeWhOSmVPWkNqTEw4cFlJOU9pIiwicCI6MTk4NjA2MzAsImMiOiJyd3F5eUdLQ3lmZzdFRnJIQk4yRVQxYVpnS2REQ1pJTiJ9",
+      "limited": true,
+      "returnedMessageCount": 5
+    },
+    "cursor": "owr1_eyJ2IjoxLCJkIjoiY3R4XzRjOTQyNTBhZTcxMSIsInMiOiJ0cmFuc2NyaXB0IiwiaSI6ImN1Mnpkd2tkc21QVVNDeWhOSmVPWkNqTEw4cFlJOU9pIiwicCI6MTk4NjA2MzAsImMiOiJyd3F5eUdLQ3lmZzdFRnJIQk4yRVQxYVpnS2REQ1pJTiJ9",
+    "status": {
+      "worker": "ready",
+      "terminal": "running",
+      "liveness": "live"
+    },
+    "fallbackReason": null,
+    "warnings": [
+      "Oversized transcript text was clipped.",
+      "Oversized tool input was clipped."
+    ],
+    "sourceExact": true,
+    "contentComplete": false,
+    "clipping": [
+      "message_limit_or_scan_window",
+      "transcript_payload"
+    ],
+    "projection": {
+      "id": "ctx_4c94250ae711",
+      "dispatchId": "ctx_4c94250ae711",
+      "taskId": "task_31fd1c2368df",
+      "runId": "run_5ba664a5f016",
+      "role": "worker",
+      "parent": null,
+      "provider": {
+        "id": "codex",
+        "model": "gpt-6.1-sol"
+      },
+      "host": {
+        "kind": "local",
+        "id": "local"
+      },
+      "workspace": {
+        "id": "aaa97e0d-5026-4e5c-95f8-bb420dcb4c65::C:/Users/Administrator/orca/workspaces/AbilityKit/issue6-cooking-truthful-gates",
+        "kind": "folder_or_worktree"
+      },
+      "stage": {
+        "worker": "ready",
+        "dispatch": "dispatched",
+        "detail": "input_accepted",
+        "activity": "working"
+      },
+      "outcome": "in_progress",
+      "liveness": {
+        "verdict": "live",
+        "observedAt": 1791238633064,
+        "source": "agent_status"
+      },
+      "evidence": {
+        "durable": true,
+        "liveStatus": "fresh",
+        "lastObservedAt": 1791238633064
+      },
+      "resource": {
+        "state": "external",
+        "id": "wtr_e8df662b2afa",
+        "ownerDispatchId": "ctx_4c94250ae711",
+        "releaseState": "not_requested",
+        "terminalState": "retained"
+      },
+      "nextAction": {
+        "kind": "none",
+        "argv": []
+      },
+      "attention": {
+        "categories": [],
+        "requiresAction": false
+      }
+    }
+  },
+  "_meta": {
+    "runtimeId": "ff0c5f2c-d341-4455-bc1c-c113650bdd60"
+  }
+}

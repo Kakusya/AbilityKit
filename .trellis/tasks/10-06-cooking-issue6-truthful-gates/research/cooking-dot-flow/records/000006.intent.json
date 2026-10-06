@@ -1,0 +1,15 @@
+{
+  "version": 1,
+  "flow_id": "6d3174fd-2b01-4136-8ea5-0b0cd0e2845d",
+  "seq": 6,
+  "op_id": "6d3174fd-2b01-4136-8ea5-0b0cd0e2845d:000006",
+  "kind": "intent",
+  "recorded_utc": "2026-10-05T17:20:34.438415Z",
+  "action": "worker-start",
+  "target": "run_5ba664a5f016 slice1 exact managed worktree issue6-cooking-truthful-gates",
+  "authorization_ref": "evidence/approval.md",
+  "payload_ref": "evidence/slice1-worker-spec.md",
+  "preconditions": {
+    "run_id": "run_5ba664a5f016"
+  }
+}

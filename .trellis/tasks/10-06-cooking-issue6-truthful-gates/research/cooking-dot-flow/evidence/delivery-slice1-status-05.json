@@ -1,0 +1,68 @@
+{
+  "id": "1bfc90ee-18cc-41b5-8c64-b5a4aa4d328b",
+  "ok": true,
+  "result": {
+    "runId": "run_5ba664a5f016",
+    "deliveryId": "delivery_a11a4b637a12",
+    "messages": [
+      {
+        "id": "msg_59e663b6a037",
+        "run_id": "run_5ba664a5f016",
+        "delivery_contract": "current_delivery",
+        "from_handle": "term_a1a61c7c-aef6-4cd0-8c46-27a90632617b",
+        "to_handle": "run:run_5ba664a5f016",
+        "subject": "Observed width limitation preserved; final full rerun next",
+        "body": "f05 completed 160 controls with zero assertion failures/native0, preserved before width metadata changes. Affected direct-capture controls now record requested/applied/observed values: buffer width40/80 rejected by redirected ConsoleHost and observed120 (window shrink succeeded), width180 applied/observed180; all exact raw bytes and native7 checks pass. Final full rerun will therefore report consoleWidthCoverage=Blocked, fullControlSuiteAccepted=false and suite CLI2 rather than full width acceptance, while retaining separate contractControlsAccepted/counts and the limitation.",
+        "type": "status",
+        "priority": "normal",
+        "thread_id": null,
+        "payload": "{\"taskId\":\"task_c2b5e42b2e23\",\"dispatchId\":\"ctx_c1d5fbd7ef56\"}",
+        "created_at": "2026-10-05T18:40:38Z",
+        "delivered_at": null
+      },
+      {
+        "id": "msg_e6e04124bbda",
+        "run_id": "run_5ba664a5f016",
+        "delivery_contract": "current_delivery",
+        "from_handle": "term_a1a61c7c-aef6-4cd0-8c46-27a90632617b",
+        "to_handle": "run:run_5ba664a5f016",
+        "subject": "alive",
+        "body": "",
+        "type": "heartbeat",
+        "priority": "normal",
+        "thread_id": null,
+        "payload": "{\"taskId\":\"task_c2b5e42b2e23\",\"dispatchId\":\"ctx_c1d5fbd7ef56\",\"phase\":\"reviewing\"}",
+        "created_at": "2026-10-05T18:43:01Z",
+        "delivered_at": null
+      },
+      {
+        "id": "msg_8ff3a2fb921a",
+        "run_id": "run_5ba664a5f016",
+        "delivery_contract": "current_delivery",
+        "from_handle": "term_a1a61c7c-aef6-4cd0-8c46-27a90632617b",
+        "to_handle": "run:run_5ba664a5f016",
+        "subject": "Frozen full controls settled: 160 assertions pass, width coverage Blocked2",
+        "body": "Final f06 finished 160/160 isolated assertions, zero failures, exact implementation input fingerprint 8aeb1e611cfa8ced0551b32fc26703f51d4f316580f08c89666bc9e7842fa4bf unchanged before/after on dirty SHA a6f00cf54579828456deccd7afbb961d8eab6752. Requested buffer40/80 remained120 with setter failures; requested180 applied/observed180, so consoleWidthCoverage=Blocked, fullControlSuiteAccepted=false and actual suite exit2 are preserved; direct stream bytes/native7 checks pass. Final scope audit/report/scoped implementation commit next, then checkpoint delivery; real Cooking gates and final acceptance remain NotRun.",
+        "type": "status",
+        "priority": "normal",
+        "thread_id": null,
+        "payload": "{\"taskId\":\"task_c2b5e42b2e23\",\"dispatchId\":\"ctx_c1d5fbd7ef56\"}",
+        "created_at": "2026-10-05T18:48:18Z",
+        "delivered_at": null
+      }
+    ],
+    "count": 3,
+    "replayed": false,
+    "acknowledged": null,
+    "timedOut": false,
+    "cancelled": false,
+    "connectionLost": false,
+    "mutation": {
+      "requestId": "8ee8d1b3-7323-4ea1-8d16-2dc9c5040a2d",
+      "replayed": false
+    }
+  },
+  "_meta": {
+    "runtimeId": "ff0c5f2c-d341-4455-bc1c-c113650bdd60"
+  }
+}

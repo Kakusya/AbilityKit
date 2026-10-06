@@ -1,0 +1,48 @@
+{
+  "status": "Frozen historical evidence copies",
+  "qualification": "Raw copies for review, unchanged from settled source worker. Full216 actual execution source dirty68 plus two owned edits, not cleanb8. All failures remain locally and in accounting; no binary/config-content publication.",
+  "files": [
+    {
+      "originalPath": "local\\Artifacts\\issue6-cooking-slice1-binding-repair-muvwbc61\\full02\\controls.json",
+      "publishedRef": "slice7-published-full02-controls.json",
+      "bytes": 547066,
+      "sha256": "1de2c0f3e7f6ec7fe97c59a3e5d39a2608b583442288e28e38450ee9b7e36e54"
+    },
+    {
+      "originalPath": "local\\Artifacts\\issue6-cooking-slice1-binding-repair-muvwbc61\\full02-native.json",
+      "publishedRef": "slice7-published-full02-native.json",
+      "bytes": 956,
+      "sha256": "ee85a8bbf4a19eaaeed93cdb9451cd6a9bbc4a5ab679f3b7849910f61c8257a7"
+    },
+    {
+      "originalPath": "local\\Artifacts\\issue6-cooking-slice1-binding-repair-muvwbc61\\full02-independent-accounting.json",
+      "publishedRef": "slice7-published-full02-independent-accounting.json",
+      "bytes": 43795,
+      "sha256": "993ae0184dd49df9543bf55c9e425d88ed0ac91bda028cdd7b55744df94d4184"
+    },
+    {
+      "originalPath": "local\\Artifacts\\issue6-cooking-slice1-binding-repair-muvwbc61\\frozen03.json",
+      "publishedRef": "slice7-published-frozen03.json",
+      "bytes": 7746272,
+      "sha256": "c4f6563a62cef984ebff6cca99454af6a160ef22f446b1a3433cc6e17bc7e3bd"
+    },
+    {
+      "originalPath": "local\\Artifacts\\issue6-cooking-slice1-binding-repair-muvwbc61\\after-full02.json",
+      "publishedRef": "slice7-published-after-full02.json",
+      "bytes": 7748078,
+      "sha256": "31ab68ff9c8c5f351ca166d05e9be071035d86107549f5aa66da9106e334f63b"
+    },
+    {
+      "originalPath": "local\\Artifacts\\issue6-cooking-slice1-binding-repair-muvwbc61\\scoped-checks.json",
+      "publishedRef": "slice7-published-scoped-checks.json",
+      "bytes": 65320,
+      "sha256": "a8630a51b93589b0ce26761bb8aa2605d25b3fa59f55d18aa22a46011714975e"
+    },
+    {
+      "originalPath": "local\\Artifacts\\issue6-cooking-slice1-binding-repair-muvwbc61\\commit-receipt.json",
+      "publishedRef": "slice7-published-commit-receipt.json",
+      "bytes": 145210,
+      "sha256": "7792ead459e342e050bb5842869bb659031e4a52575c19ce3f5be8acd159eeb3"
+    }
+  ]
+}

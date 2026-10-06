@@ -1,0 +1,2 @@
+﻿79bf9642b04a696880a1c393ca5d11171a4b078a	refs/heads/Kakusya/issue6-cooking-truthful-gates
+c78ed3de83f69bb53ff1a09bbc23638115928e1e	refs/heads/master

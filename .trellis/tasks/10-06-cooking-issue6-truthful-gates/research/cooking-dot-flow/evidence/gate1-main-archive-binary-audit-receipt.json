@@ -1,0 +1,19 @@
+{
+  "status": "Passed",
+  "actualNativeExitCode": 0,
+  "pythonVersion": "3.14.8 (tags/v3.14.8:8e6e75d, Sep 30 2026, 18:19:33) [MSC v.1944 64 bit (AMD64)]",
+  "sourceScriptSha256": "5f20691562202da33e6a5d040b43cdb191b512319374400ee051d7045b79883a",
+  "reportSha256": "be13f0d514465b517e965f38d6c82f7d8ae5bb1e85bb5f86114f68b96fe22e48",
+  "command": [
+    "python",
+    "-B",
+    "local\\Artifacts\\issue6-main-independent-prepared\\audit-real-archives.py",
+    "--run",
+    "86324cd6-22d9-45ea-9762-e2c301e59734",
+    "--native",
+    "local/Artifacts/issue6-cooking-slice6-verification-c66e1880/cooking-et-level-runtime-native.json",
+    "--output",
+    ".trellis\\tasks\\10-06-cooking-issue6-truthful-gates\\research\\cooking-dot-flow\\evidence\\gate1-main-archive-binary-audit.json"
+  ],
+  "coverage": "14451 owned archived files; actual build/loaded/test binary identity linkage and 1195 actual TRX tests; no producer launched"
+}

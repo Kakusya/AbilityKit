@@ -1,0 +1,26 @@
+﻿{
+    "command":  {
+                    "executable":  "C:\\Windows\\System32\\WindowsPowerShell\\v1.0\\powershell.exe",
+                    "arguments":  [
+                                      "-NoProfile",
+                                      "-ExecutionPolicy",
+                                      "Bypass",
+                                      "-File",
+                                      "tools/run_test_gate.ps1",
+                                      "-Gate",
+                                      "cooking-kitchen-loop",
+                                      "-Configuration",
+                                      "Debug",
+                                      "-CI"
+                                  ],
+                    "workingDirectory":  "C:\\Users\\Administrator\\orca\\workspaces\\AbilityKit\\issue6-cooking-truthful-gates"
+                },
+    "startedAt":  "2026-10-06T01:10:52.6861266+00:00",
+    "endedAt":  "2026-10-06T01:53:19.5688347+00:00",
+    "processExitCode":  0,
+    "reason":  null,
+    "ownedProcessId":  85868,
+    "exitConfirmed":  true,
+    "stdoutPath":  "C:\\Users\\Administrator\\orca\\workspaces\\AbilityKit\\issue6-cooking-truthful-gates\\local\\Artifacts\\issue6-cooking-slice8-verification-640lwkzs\\cooking-kitchen-loop.stdout.txt",
+    "stderrPath":  "C:\\Users\\Administrator\\orca\\workspaces\\AbilityKit\\issue6-cooking-truthful-gates\\local\\Artifacts\\issue6-cooking-slice8-verification-640lwkzs\\cooking-kitchen-loop.stderr.txt"
+}

@@ -1,0 +1,123 @@
+{
+  "id": "b8fd31c1-aa20-4158-ad9e-c58cf9795461",
+  "ok": true,
+  "result": {
+    "dispatchId": "ctx_a4e2695b308e",
+    "source": "transcript",
+    "sourceIdentity": "cu2zdwkdsmPUSCyhNJeOZCjLL8pYI9Oi",
+    "provider": "codex",
+    "transcript": {
+      "messages": [
+        {
+          "id": "ctco_01a10ecf-c135-7132-9455-2ba8ed9607d0",
+          "role": "tool",
+          "blocks": [
+            {
+              "type": "tool-result",
+              "output": "Script completed\nWall time 5.5 seconds\nOutput:\n{\"chunk_id\":\"b08280\",\"wall_time_seconds\":0.096757,\"exit_code\":0,\"original_token_count\":94,\"output\":\"{\\\"at\\\":\\\"2026-10-06T01:23:48.7102073Z\\\",\\\"runner\\\":true,\\\"wholeDue\\\":false,\\\"testDue\\\":0,\\\"testPid\\\":null,\\\"observedTRXFiles\\\":1}\\r\\n[\\r\\n    {\\r\\n        \\\"node\\\":  \\\"9dcd5ad3190c\\\",\\r\\n        \\\"total\\\":  \\\"644\\\",\\r\\n        \\\"passed\\\":  \\\"644\\\",\\r\\n        \\\"failed\\\":  \\\"0\\\"\\r\\n    },\\r\\n    {\\r\\n        \\\"node\\\":  \\\"a180dfda4425\\\",\\r\\n        \\\"total\\\":  \\\"867\\\",\\r\\n        \\\"passed\\\":  \\\"867\\\",\\r\\n        \\\"failed\\\":  \\\"0\\\"\\r\\n    }\\r\\n]\\r\\n\"}\n{\"chunk_id\":\"a21d99\",\"wall_time_seconds\":5.0088079,\"session_id\":29830,\"original_token_count\":0,\"output\":\"\"}"
+            }
+          ],
+          "timestamp": 1791249858869,
+          "source": "transcript"
+        },
+        {
+          "id": "msg_03d36cc6d8b642f4016ac44dd661d487d0b3d82d1d14f5daa6",
+          "role": "assistant",
+          "blocks": [
+            {
+              "type": "text",
+              "text": "The second gate’s full Cooking TRX contains 867 entries, all Passed, alongside the focused 644-entry result. The ET regression and final gate validation are still pending."
+            }
+          ],
+          "timestamp": 1791249879889,
+          "source": "transcript"
+        },
+        {
+          "id": "fc_03d36cc6d8b642f4016ac44dd7473c87d08266bf7b3c67c0b3",
+          "role": "assistant",
+          "blocks": [
+            {
+              "type": "tool-call",
+              "name": "sleep",
+              "input": "{\"duration_ms\":50000}",
+              "callId": "call_6d7EFCIgdP6l9kFTGazDwvMv"
+            }
+          ],
+          "timestamp": 1791249879911,
+          "source": "transcript"
+        }
+      ],
+      "nextCursor": "owr1_eyJ2IjoxLCJkIjoiY3R4X2E0ZTI2OTViMzA4ZSIsInMiOiJ0cmFuc2NyaXB0IiwiaSI6ImN1Mnpkd2tkc21QVVNDeWhOSmVPWkNqTEw4cFlJOU9pIiwicCI6Mjc5NDM2NDMsImMiOiJaSlFQVmhDSWI1NjJrZHQ1Y2pSa1RZR3diOFJCNzNXQyJ9",
+      "limited": true,
+      "returnedMessageCount": 3
+    },
+    "cursor": "owr1_eyJ2IjoxLCJkIjoiY3R4X2E0ZTI2OTViMzA4ZSIsInMiOiJ0cmFuc2NyaXB0IiwiaSI6ImN1Mnpkd2tkc21QVVNDeWhOSmVPWkNqTEw4cFlJOU9pIiwicCI6Mjc5NDM2NDMsImMiOiJaSlFQVmhDSWI1NjJrZHQ1Y2pSa1RZR3diOFJCNzNXQyJ9",
+    "status": {
+      "worker": "ready",
+      "terminal": "running",
+      "liveness": "live"
+    },
+    "fallbackReason": null,
+    "warnings": [],
+    "sourceExact": true,
+    "contentComplete": false,
+    "clipping": [
+      "message_limit_or_scan_window"
+    ],
+    "projection": {
+      "id": "ctx_a4e2695b308e",
+      "dispatchId": "ctx_a4e2695b308e",
+      "taskId": "task_8285f2c0421e",
+      "runId": "run_5ba664a5f016",
+      "role": "worker",
+      "parent": null,
+      "provider": {
+        "id": "codex",
+        "model": "gpt-6.1-sol"
+      },
+      "host": {
+        "kind": "local",
+        "id": "local"
+      },
+      "workspace": {
+        "id": "aaa97e0d-5026-4e5c-95f8-bb420dcb4c65::C:/Users/Administrator/orca/workspaces/AbilityKit/issue6-cooking-truthful-gates",
+        "kind": "folder_or_worktree"
+      },
+      "stage": {
+        "worker": "ready",
+        "dispatch": "dispatched",
+        "detail": "input_accepted",
+        "activity": "working"
+      },
+      "outcome": "in_progress",
+      "liveness": {
+        "verdict": "live",
+        "observedAt": 1791249880033,
+        "source": "agent_status"
+      },
+      "evidence": {
+        "durable": true,
+        "liveStatus": "fresh",
+        "lastObservedAt": 1791249880033
+      },
+      "resource": {
+        "state": "external",
+        "id": "wtr_de5d9ab4b4af",
+        "ownerDispatchId": "ctx_a4e2695b308e",
+        "releaseState": "not_requested",
+        "terminalState": "retained"
+      },
+      "nextAction": {
+        "kind": "none",
+        "argv": []
+      },
+      "attention": {
+        "categories": [],
+        "requiresAction": false
+      }
+    }
+  },
+  "_meta": {
+    "runtimeId": "ff0c5f2c-d341-4455-bc1c-c113650bdd60"
+  }
+}

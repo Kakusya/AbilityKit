@@ -1,0 +1,18 @@
+{
+  "taskId": "task_322fb9a3b5cf",
+  "dispatchId": "ctx_f4b36cbac369",
+  "outcome": "succeeded",
+  "acceptedWorkerDone": "msg_329820d7271a",
+  "delivery": "delivery_55b0c0c5f2de",
+  "implementationSHA": "68a880f2a31c7269da634b2f152362bccb5857ab",
+  "nextOwner": "Same proven idle terminal approved for immediate distinct real verification dispatch; no cleanup",
+  "evidence": [
+    "restore-repair-settled-live.json",
+    "restore-repair-settled-idle.json",
+    "restore-repair-main-scope-audit.json",
+    "main-independent-68a880f2.json"
+  ],
+  "scope": "Six approved files; no project/gameplay/dependency/Unity/example changes",
+  "fullControls": "195/195 Passed at disclosed dirty parent, working implementation inputs unchanged",
+  "requiredRealGates": "NotRun"
+}

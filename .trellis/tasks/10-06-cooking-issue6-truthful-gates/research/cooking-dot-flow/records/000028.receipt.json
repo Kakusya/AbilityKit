@@ -1,0 +1,12 @@
+{
+  "version": 1,
+  "flow_id": "6d3174fd-2b01-4136-8ea5-0b0cd0e2845d",
+  "seq": 28,
+  "op_id": "6d3174fd-2b01-4136-8ea5-0b0cd0e2845d:000028",
+  "kind": "receipt",
+  "recorded_utc": "2026-10-05T19:25:48.173421Z",
+  "intent_hash": "1e7bac5e38520ed69c082d0236bdefe26a4ce3d34d2fafe390c23e60016a2278",
+  "outcome": "applied",
+  "raw_ref": "evidence/ack-window-status-03.json",
+  "result": {}
+}

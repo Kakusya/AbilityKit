@@ -1,0 +1,15 @@
+{
+  "version": 1,
+  "flow_id": "6d3174fd-2b01-4136-8ea5-0b0cd0e2845d",
+  "seq": 30,
+  "op_id": "6d3174fd-2b01-4136-8ea5-0b0cd0e2845d:000030",
+  "kind": "intent",
+  "recorded_utc": "2026-10-05T19:29:54.254918Z",
+  "action": "worker-start",
+  "target": "term_a1a61c7c-aef6-4cd0-8c46-27a90632617b",
+  "authorization_ref": "evidence/approval.md",
+  "payload_ref": "evidence/slice2-verification-spec.md",
+  "preconditions": {
+    "run_id": "run_5ba664a5f016"
+  }
+}

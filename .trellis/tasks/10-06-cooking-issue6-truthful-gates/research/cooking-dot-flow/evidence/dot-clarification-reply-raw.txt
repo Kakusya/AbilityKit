@@ -1,0 +1,40 @@
+最终澄清：A 接受继承式配置证据的解释；B 采用有明确截止点的等待，随后允许保留证据的定向取消。没有交付接受或集成许可。
+
+request_id：AK-I6-COOK-CLARIFY-20261006-02
+flow_id：6d3174fd-2b01-4136-8ea5-0b0cd0e2845d
+reviewed_sha：68a880f2a31c7269da634b2f152362bccb5857ab
+
+A. 配置证明不必在 test.inputs 重复
+
+我已读取该提交的 runner、helper 和 slice5 报告。原合同允许 restore→build→test --no-build --no-restore，由测试消费已验证的构建产物。因此，满足以下条件的继承链符合已批准合同：
+
+SDK 发现的有效配置进入 sourceBeforeRestore、source.before/source.after，存在性、长度/hash 和未变化检查真实成立。
+restore/build（或合法复用来源）保留严格的 EffectiveNuGetConfigHashOnly 证明，并与实际配置发现、assets、项目/TFM/工具身份对应。
+test 的实际 argv 禁止隐式 restore/build，测试输入对应已验证构建输出，测试前后二进制身份不变，TRX 对应当前测试调用。
+测试结束后的 source/config 检查确实完成。当前 ET 测试仍运行，不能提前宣称这一步通过。
+
+源码在第 639–644 行检查配置/source 与 restore/build，在第 914–927 行构造二进制测试输入，第 936–941 行执行结束后的来源检查。依据(https://github.com/Kakusya/AbilityKit/blob/68a880f2a31c7269da634b2f152362bccb5857ab/tools/test-gate-result-contract.ps1#L603-L678)。
+
+据此，主控可以修订自己新增的“每个 test ledger 必须直接重复配置条目”检查，注明由本澄清替代，保留原检查结果和修订原因；不要把原观察改写成当时已通过。不需要为了重复字段修改实现，更不能归档或展示 NuGet.Config 内容。
+
+另有一个独立的最终审计重点：当前 runner 正确构造了 build.outputs→loadedBefore→test.inputs，但验证器没有在这些集合之间逐一做显式等同性检查。最终验收应加入序列化后替换/删减该关联的反例，证明不能用各自合法但互不对应的产物蒙混通过。若反例被接受，再做已批准 helper/自测范围内的最小绑定修复；这与是否重复配置字段是两件事，不在当前 live 验证中热改源码。
+
+B. 当前 ET 测试：再观察最多 5 分钟，然后定向取消
+
+从原主控可靠读取并保存本完整回复的时刻 T0 开始，给当前 ET test 最多 5 分钟收尾，每 30 秒只读观察一次。保存 T0、截止点、已有运行时长、进程身份、CPU/日志变化和结果文件状态。CPU 活跃不等于会终止，超过 10 分钟也不能证明哪个测试有死循环。
+
+截止前自然结束：按真实退出、TRX 和完整校验判定，不预设失败。
+截止时仍未结束：允许取消且仅取消此 run/result 对应、身份已核实的当前测试 producer 及其独占后代。先保存取消意图与证据；核对 PID＋创建时间＋命令/可执行文件＋父子来源，不能只凭进程名或旧 PID。
+优先使用已支持的定向停止方式；若需强制终止，也只针对重新核实的上述进程。不得关闭 Orca worker/主控、其他测试、共享 MSBuild 节点或未知归属进程。
+
+这里不能假设现有 CancelSignalPath 已接入：原命令没传它，临时创建一个文件不会使该调用可取消。helper 的 Process.Kill() 也只针对直接进程，不能据此声称后代均退出。源码(https://github.com/Kakusya/AbilityKit/blob/68a880f2a31c7269da634b2f152362bccb5857ab/tools/test-gate-result-contract.ps1#L136-L169)。
+
+取消后最多用 60 秒确认目标退出并完成日志排空。保留真实原生退出码、stdout/stderr、取消原因、时间和进程核对记录。若 runner 能正常收口，接受它实际生成的 Failed 结果；若没有生成终态，保存独立的主控取消回执，明确 runner 终态缺失，不能手造原生结果或补一个假 TRX。已通过步骤保留，当前被取消测试判 Failed/外部取消，未启动步骤 NotRun；不能伪称命中了原命令不存在的 timeout。
+
+若身份不清、后代退出无法确认，或日志排空仍卡住：保留 UnknownWriter/Blocked，停止，不运行 gate2。
+
+确认 gate1 所有相关测试写入者已经退出、证据保存后，允许实际尝试 gate2 原定完整命令，仍串行、同一源码、无过滤/新 timeout 参数。为避免再次无限等待，本次 gate2 设外部观察预算：整项最多 45 分钟，任一原生 test 调用最多 15 分钟，以先到者为停止点；到点执行同样的身份核验和取消流程。这是本轮资源观察上限，不是新增“满足时间即通过”的测试标准。
+
+gate2 结束或被取消后，本次验证派发保存报告并 idle，不自动重试，不删测试、不改 Tick 循环。业务不终止的原因仍需独立证据；在原因未明或任一必需 gate 未成功时，不合并、关单或归档。
+
+allowed_next_action：原主控 run_5ba664a5f016 保存本决定；按 A 更正额外审计要求；让现有验证派发执行上述有限观察／必要取消／退出核实／gate2 串行尝试。无需为同一边界重复询问 Owner，也不启动新的实现 worker。

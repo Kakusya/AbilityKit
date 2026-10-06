@@ -1,0 +1,38 @@
+﻿{
+  "id": "309fcd44-a359-409f-8f76-70d0cd28a3b3",
+  "ok": true,
+  "result": {
+    "runId": "run_5ba664a5f016",
+    "deliveryId": "delivery_7707c0fad7ac",
+    "messages": [
+      {
+        "id": "msg_ff6e3047e9ad",
+        "run_id": "run_5ba664a5f016",
+        "delivery_contract": "current_delivery",
+        "from_handle": "term_a1a61c7c-aef6-4cd0-8c46-27a90632617b",
+        "to_handle": "run:run_5ba664a5f016",
+        "subject": "Restore repair isolated reds preserved; affected26 Passed; full191 frozen running",
+        "body": "Preserved three old-helper false-success reds (mixed reference TFM, omitted config, changed config) using unique TEMP fixtures; SDK10.0.300 path-only _GetRestoreSettings discovery was independently exercised native0 before selecting the fix. Final affected26 controls passed on frozen dirty79bf-plus-owned-edits input fingerprint aaff4abaac606e6f329dcc19a72deab50517fa2ebc07992838ee92577db3298a, with valid mixed graph/generated transition/hash-only config and JSON/reuse negatives; full191 (all original166 plus25 new) is running without source edits. After it finishes I will serially evaluate/restore only actual Cooking.EtRuntime and Cooking graphs, preserving config contents and no real build/test, then scoped six-file commit/report; no runner/config/native-probe/gameplay changes.",
+        "type": "status",
+        "priority": "normal",
+        "thread_id": null,
+        "payload": "{\"taskId\":\"task_322fb9a3b5cf\",\"dispatchId\":\"ctx_f4b36cbac369\"}",
+        "created_at": "2026-10-05T21:02:22Z",
+        "delivered_at": null
+      }
+    ],
+    "count": 1,
+    "replayed": false,
+    "acknowledged": null,
+    "timedOut": false,
+    "cancelled": false,
+    "connectionLost": false,
+    "mutation": {
+      "requestId": "571397d1-7e7e-4ee9-807c-19cb33878782",
+      "replayed": false
+    }
+  },
+  "_meta": {
+    "runtimeId": "ff0c5f2c-d341-4455-bc1c-c113650bdd60"
+  }
+}

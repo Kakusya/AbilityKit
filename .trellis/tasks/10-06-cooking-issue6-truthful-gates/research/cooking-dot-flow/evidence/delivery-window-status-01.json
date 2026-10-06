@@ -1,0 +1,68 @@
+{
+  "id": "dce8a228-a1b4-4280-96b2-7e6de237579a",
+  "ok": true,
+  "result": {
+    "runId": "run_5ba664a5f016",
+    "deliveryId": "delivery_19c775b4b0c7",
+    "messages": [
+      {
+        "id": "msg_b567806e4e24",
+        "run_id": "run_5ba664a5f016",
+        "delivery_contract": "current_delivery",
+        "from_handle": "term_a1a61c7c-aef6-4cd0-8c46-27a90632617b",
+        "to_handle": "run:run_5ba664a5f016",
+        "subject": "alive",
+        "body": "",
+        "type": "heartbeat",
+        "priority": "normal",
+        "thread_id": null,
+        "payload": "{\"taskId\":\"task_c9384f689b07\",\"dispatchId\":\"ctx_f42f62847f04\",\"phase\":\"reviewing\"}",
+        "created_at": "2026-10-05T19:11:20Z",
+        "delivered_at": null
+      },
+      {
+        "id": "msg_832c62af8931",
+        "run_id": "run_5ba664a5f016",
+        "delivery_contract": "current_delivery",
+        "from_handle": "term_a1a61c7c-aef6-4cd0-8c46-27a90632617b",
+        "to_handle": "run:run_5ba664a5f016",
+        "subject": "Window widths verified; frozen suite running",
+        "body": "Affected real fake-subprocess controls set and read RawUI.WindowSize.Width 40/80/120 successfully with preserved height50, native7, exact8192-character payloads and redirected streams. Raw receipts are in local/Artifacts/issue6-cooking-slice1-window-target-d838736c; old buffer-mode Blocked evidence is unchanged. Final test inputs are frozen for the full isolated suite with all original160 cases plus four actual-receipt width-binding refusal controls; no production or real workload changes.",
+        "type": "status",
+        "priority": "normal",
+        "thread_id": null,
+        "payload": "{\"taskId\":\"task_c9384f689b07\",\"dispatchId\":\"ctx_f42f62847f04\"}",
+        "created_at": "2026-10-05T19:11:43Z",
+        "delivered_at": null
+      },
+      {
+        "id": "msg_f8e41c936061",
+        "run_id": "run_5ba664a5f016",
+        "delivery_contract": "current_delivery",
+        "from_handle": "term_a1a61c7c-aef6-4cd0-8c46-27a90632617b",
+        "to_handle": "run:run_5ba664a5f016",
+        "subject": "alive",
+        "body": "",
+        "type": "heartbeat",
+        "priority": "normal",
+        "thread_id": null,
+        "payload": "{\"taskId\":\"task_c9384f689b07\",\"dispatchId\":\"ctx_f42f62847f04\",\"phase\":\"reviewing\"}",
+        "created_at": "2026-10-05T19:14:52Z",
+        "delivered_at": null
+      }
+    ],
+    "count": 3,
+    "replayed": false,
+    "acknowledged": null,
+    "timedOut": false,
+    "cancelled": false,
+    "connectionLost": false,
+    "mutation": {
+      "requestId": "02aed7d5-821b-46e8-b48c-d0bc5f2b669b",
+      "replayed": false
+    }
+  },
+  "_meta": {
+    "runtimeId": "ff0c5f2c-d341-4455-bc1c-c113650bdd60"
+  }
+}

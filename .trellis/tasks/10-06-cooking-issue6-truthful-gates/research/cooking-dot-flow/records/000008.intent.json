@@ -1,0 +1,15 @@
+{
+  "version": 1,
+  "flow_id": "6d3174fd-2b01-4136-8ea5-0b0cd0e2845d",
+  "seq": 8,
+  "op_id": "6d3174fd-2b01-4136-8ea5-0b0cd0e2845d:000008",
+  "kind": "intent",
+  "recorded_utc": "2026-10-05T17:34:14.211175Z",
+  "action": "worker-message",
+  "target": "dispatch:ctx_c1d5fbd7ef56",
+  "authorization_ref": "evidence/approval.md",
+  "payload_ref": "evidence/slice1-progress-request.txt",
+  "preconditions": {
+    "run_id": "run_5ba664a5f016"
+  }
+}

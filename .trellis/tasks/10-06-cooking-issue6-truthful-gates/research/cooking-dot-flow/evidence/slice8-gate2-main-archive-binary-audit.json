@@ -1,0 +1,57 @@
+{
+  "status": "Passed",
+  "observedUtc": "2026-10-06T01:55:12.663418+00:00",
+  "runId": "f899c5d2-b47d-4728-96f7-a1f0fc2467b7",
+  "sourceSha": "b8c53e8153b9c6f015e75040b9561b3078f05e5f",
+  "sourceDirty": true,
+  "qualification": "Historical archived bytes independently checked; binary linkage compares path/bytes/hash, not archive location. No new producer launched.",
+  "summarySha256": "9f0a2cdabd067a351064830bda4902fb39e5d1c2d22ec07f183da14201af32ae",
+  "nativeSha256": "88315ccb9d5995025d0196ac948e92c6cff3068b9e254e46e2fad1af648bf5fb",
+  "artifactCount": 19342,
+  "artifactBytes": 2006465449,
+  "leaves": [
+    {
+      "name": "Cooking domain build",
+      "kind": "dotnet-build",
+      "resultId": "b2b1fdb9-2ebc-4248-93ca-5c8fec03702b",
+      "buildOutputCount": 92
+    },
+    {
+      "name": "Cooking ET runtime build with relation analyzer",
+      "kind": "dotnet-build",
+      "resultId": "0bf5b6b5-ea2a-472f-ab13-944dc40116d6",
+      "buildOutputCount": 125
+    },
+    {
+      "name": "Kitchen-loop focused contract tests",
+      "kind": "dotnet-test",
+      "resultId": "9dcd5ad3-190c-4ecd-ac27-d86716fe5891",
+      "buildOutputCount": 259,
+      "actualTrxCount": 644,
+      "filter": "Gate=CookingKitchenLoop",
+      "binaryChainCount": 259,
+      "assembly": "C:\\Users\\Administrator\\orca\\workspaces\\AbilityKit\\issue6-cooking-truthful-gates\\src\\AbilityKit.Game.Cooking.Tests\\bin\\Debug\\net10.0\\AbilityKit.Game.Cooking.Tests.dll"
+    },
+    {
+      "name": "Cooking domain and Level lifecycle regression",
+      "kind": "dotnet-test",
+      "resultId": "a180dfda-4425-44c0-ba7d-f505d4858559",
+      "buildOutputCount": 259,
+      "actualTrxCount": 867,
+      "filter": "",
+      "binaryChainCount": 259,
+      "assembly": "C:\\Users\\Administrator\\orca\\workspaces\\AbilityKit\\issue6-cooking-truthful-gates\\src\\AbilityKit.Game.Cooking.Tests\\bin\\Debug\\net10.0\\AbilityKit.Game.Cooking.Tests.dll"
+    },
+    {
+      "name": "Cooking ET Level host and runtime regression",
+      "kind": "dotnet-test",
+      "resultId": "0b102d57-dc1a-429d-9186-db89f19fc1a2",
+      "buildOutputCount": 270,
+      "actualTrxCount": 328,
+      "filter": "",
+      "binaryChainCount": 270,
+      "assembly": "C:\\Users\\Administrator\\orca\\workspaces\\AbilityKit\\issue6-cooking-truthful-gates\\src\\AbilityKit.ET.Runtime.Tests\\bin\\Debug\\net10.0\\AbilityKit.ET.Runtime.Tests.dll"
+    }
+  ],
+  "issues": []
+}

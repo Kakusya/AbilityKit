@@ -1,0 +1,9 @@
+{
+  "run_id": "run_5ba664a5f016",
+  "task_id": "task_b85eae037475",
+  "dispatch_id": "ctx_2127fab8d0af",
+  "input_accepted": true,
+  "turn_started": false,
+  "stage": "turn_start_unobserved",
+  "replay_ref": "evidence/slice2-start-replay-raw.json"
+}

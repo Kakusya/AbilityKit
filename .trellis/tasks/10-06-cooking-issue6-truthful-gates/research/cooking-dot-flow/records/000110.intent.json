@@ -1,0 +1,18 @@
+{
+  "version": 1,
+  "flow_id": "6d3174fd-2b01-4136-8ea5-0b0cd0e2845d",
+  "seq": 110,
+  "op_id": "6d3174fd-2b01-4136-8ea5-0b0cd0e2845d:000110",
+  "kind": "intent",
+  "recorded_utc": "2026-10-06T01:09:02.085705Z",
+  "action": "acknowledge-observed-worker-batch",
+  "target": "delivery_e8b876bce621",
+  "authorization_ref": "evidence/approval.md",
+  "payload_ref": "evidence/slice8-inbox-poll32.json",
+  "preconditions": {
+    "processedMessageIds": [
+      "msg_ac9747845bb8"
+    ],
+    "run_id": "run_5ba664a5f016"
+  }
+}

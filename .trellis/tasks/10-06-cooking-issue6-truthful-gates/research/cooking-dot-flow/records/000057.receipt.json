@@ -1,0 +1,12 @@
+{
+  "version": 1,
+  "flow_id": "6d3174fd-2b01-4136-8ea5-0b0cd0e2845d",
+  "seq": 57,
+  "op_id": "6d3174fd-2b01-4136-8ea5-0b0cd0e2845d:000057",
+  "kind": "receipt",
+  "recorded_utc": "2026-10-05T21:32:03.104867Z",
+  "intent_hash": "5e4f58a928fe5c876f108b95529b8b90f1c441b4b473f3f859230991634ce503",
+  "outcome": "applied",
+  "raw_ref": "evidence/restore-sdk-smoke-guidance-send.json",
+  "result": {}
+}

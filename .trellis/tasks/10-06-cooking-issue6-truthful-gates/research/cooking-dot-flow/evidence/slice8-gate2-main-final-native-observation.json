@@ -1,0 +1,131 @@
+{
+  "status": "Passed",
+  "qualification": "Final native and summary/source consistency checked; full independent archive/binary audit follows. Not complete Issue acceptance.",
+  "observedUtc": "2026-10-06T01:55:01.591426+00:00",
+  "sourceSha": "b8c53e8153b9c6f015e75040b9561b3078f05e5f",
+  "runId": "f899c5d2-b47d-4728-96f7-a1f0fc2467b7",
+  "native": {
+    "command": {
+      "executable": "C:\\Windows\\System32\\WindowsPowerShell\\v1.0\\powershell.exe",
+      "arguments": [
+        "-NoProfile",
+        "-ExecutionPolicy",
+        "Bypass",
+        "-File",
+        "tools/run_test_gate.ps1",
+        "-Gate",
+        "cooking-kitchen-loop",
+        "-Configuration",
+        "Debug",
+        "-CI"
+      ],
+      "workingDirectory": "C:\\Users\\Administrator\\orca\\workspaces\\AbilityKit\\issue6-cooking-truthful-gates"
+    },
+    "startedAt": "2026-10-06T01:10:52.6861266+00:00",
+    "endedAt": "2026-10-06T01:53:19.5688347+00:00",
+    "processExitCode": 0,
+    "reason": null,
+    "ownedProcessId": 85868,
+    "exitConfirmed": true,
+    "stdoutPath": "C:\\Users\\Administrator\\orca\\workspaces\\AbilityKit\\issue6-cooking-truthful-gates\\local\\Artifacts\\issue6-cooking-slice8-verification-640lwkzs\\cooking-kitchen-loop.stdout.txt",
+    "stderrPath": "C:\\Users\\Administrator\\orca\\workspaces\\AbilityKit\\issue6-cooking-truthful-gates\\local\\Artifacts\\issue6-cooking-slice8-verification-640lwkzs\\cooking-kitchen-loop.stderr.txt"
+  },
+  "summaryBytes": 26940949,
+  "summarySha256": "9f0a2cdabd067a351064830bda4902fb39e5d1c2d22ec07f183da14201af32ae",
+  "coverage": {
+    "required": [
+      "cooking-kitchen-loop:1:dotnet-build:AbilityKit.Game.Cooking",
+      "cooking-kitchen-loop:2:dotnet-build:AbilityKit.Game.Cooking.EtRuntime",
+      "cooking-kitchen-loop:3:dotnet-test:AbilityKit.Game.Cooking.Tests:Gate=CookingKitchenLoop",
+      "cooking-kitchen-loop:4:dotnet-test:AbilityKit.Game.Cooking.Tests",
+      "cooking-kitchen-loop:5:dotnet-test:AbilityKit.ET.Runtime.Tests"
+    ],
+    "optional": [],
+    "completed": [
+      "cooking-kitchen-loop:1:dotnet-build:AbilityKit.Game.Cooking",
+      "cooking-kitchen-loop:2:dotnet-build:AbilityKit.Game.Cooking.EtRuntime",
+      "cooking-kitchen-loop:3:dotnet-test:AbilityKit.Game.Cooking.Tests:Gate=CookingKitchenLoop",
+      "cooking-kitchen-loop:4:dotnet-test:AbilityKit.Game.Cooking.Tests",
+      "cooking-kitchen-loop:5:dotnet-test:AbilityKit.ET.Runtime.Tests"
+    ],
+    "missing": [],
+    "bindings": {
+      "cooking-kitchen-loop:1:dotnet-build:AbilityKit.Game.Cooking": [
+        "b2b1fdb9-2ebc-4248-93ca-5c8fec03702b"
+      ],
+      "cooking-kitchen-loop:2:dotnet-build:AbilityKit.Game.Cooking.EtRuntime": [
+        "0bf5b6b5-ea2a-472f-ab13-944dc40116d6"
+      ],
+      "cooking-kitchen-loop:3:dotnet-test:AbilityKit.Game.Cooking.Tests:Gate=CookingKitchenLoop": [
+        "9dcd5ad3-190c-4ecd-ac27-d86716fe5891"
+      ],
+      "cooking-kitchen-loop:4:dotnet-test:AbilityKit.Game.Cooking.Tests": [
+        "a180dfda-4425-44c0-ba7d-f505d4858559"
+      ],
+      "cooking-kitchen-loop:5:dotnet-test:AbilityKit.ET.Runtime.Tests": [
+        "0b102d57-dc1a-429d-9186-db89f19fc1a2"
+      ]
+    }
+  },
+  "children": [
+    {
+      "name": "Cooking domain build",
+      "status": "Passed",
+      "cliExitCode": 0,
+      "testCounts": null,
+      "resultId": "b2b1fdb9-2ebc-4248-93ca-5c8fec03702b"
+    },
+    {
+      "name": "Cooking ET runtime build with relation analyzer",
+      "status": "Passed",
+      "cliExitCode": 0,
+      "testCounts": null,
+      "resultId": "0bf5b6b5-ea2a-472f-ab13-944dc40116d6"
+    },
+    {
+      "name": "Kitchen-loop focused contract tests",
+      "status": "Passed",
+      "cliExitCode": 0,
+      "testCounts": {
+        "total": 644,
+        "resultEntries": 644,
+        "passed": 644,
+        "failed": 0,
+        "skipped": 0,
+        "notExecuted": 0,
+        "executed": 644
+      },
+      "resultId": "9dcd5ad3-190c-4ecd-ac27-d86716fe5891"
+    },
+    {
+      "name": "Cooking domain and Level lifecycle regression",
+      "status": "Passed",
+      "cliExitCode": 0,
+      "testCounts": {
+        "total": 867,
+        "resultEntries": 867,
+        "passed": 867,
+        "failed": 0,
+        "skipped": 0,
+        "notExecuted": 0,
+        "executed": 867
+      },
+      "resultId": "a180dfda-4425-44c0-ba7d-f505d4858559"
+    },
+    {
+      "name": "Cooking ET Level host and runtime regression",
+      "status": "Passed",
+      "cliExitCode": 0,
+      "testCounts": {
+        "total": 328,
+        "resultEntries": 328,
+        "passed": 328,
+        "failed": 0,
+        "skipped": 0,
+        "notExecuted": 0,
+        "executed": 328
+      },
+      "resultId": "0b102d57-dc1a-429d-9186-db89f19fc1a2"
+    }
+  ]
+}

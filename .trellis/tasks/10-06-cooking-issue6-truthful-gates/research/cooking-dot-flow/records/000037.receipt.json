@@ -1,0 +1,20 @@
+{
+  "version": 1,
+  "flow_id": "6d3174fd-2b01-4136-8ea5-0b0cd0e2845d",
+  "seq": 37,
+  "op_id": "6d3174fd-2b01-4136-8ea5-0b0cd0e2845d:000037",
+  "kind": "receipt",
+  "recorded_utc": "2026-10-05T20:00:13.275288Z",
+  "intent_hash": "faed525f0bab3f847b4342a3c053f88efa1ff3f0a73385a015b21f39a2b9e4fb",
+  "outcome": "unknown",
+  "raw_ref": "evidence/parser-repair-start-raw.json",
+  "result": {
+    "run_id": "run_5ba664a5f016",
+    "task_id": "task_0330e4b97a9b",
+    "dispatch_id": "ctx_e989de325df7",
+    "input_accepted": true,
+    "turn_started": false,
+    "state": "outcome_unknown",
+    "actualSpecRef": "evidence/parser-repair-dispatched-spec.md"
+  }
+}

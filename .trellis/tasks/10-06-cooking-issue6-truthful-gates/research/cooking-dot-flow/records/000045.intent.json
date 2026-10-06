@@ -1,0 +1,15 @@
+{
+  "version": 1,
+  "flow_id": "6d3174fd-2b01-4136-8ea5-0b0cd0e2845d",
+  "seq": 45,
+  "op_id": "6d3174fd-2b01-4136-8ea5-0b0cd0e2845d:000045",
+  "kind": "intent",
+  "recorded_utc": "2026-10-05T20:31:41.035815Z",
+  "action": "worker-guidance",
+  "target": "ctx_5c932faebb3d",
+  "authorization_ref": "evidence/approval.md",
+  "payload_ref": "evidence/slice4-main-findings-message.md",
+  "preconditions": {
+    "run_id": "run_5ba664a5f016"
+  }
+}

@@ -1,0 +1,36 @@
+{
+  "observedUtc": "2026-10-06T01:25:45.632386+00:00",
+  "gateAcceptance": "pending final native/summary",
+  "trxPath": "local\\Logs\\test-gates\\f899c5d2-b47d-4728-96f7-a1f0fc2467b7\\a180dfda4425\\test-results.trx",
+  "bytes": 1422522,
+  "sha256": "a7ed048e37c3b06f3347ad7d1a7866a6741d600ac6a68d79d4041adce0c43a76",
+  "counters": {
+    "total": "867",
+    "executed": "867",
+    "passed": "867",
+    "failed": "0",
+    "error": "0",
+    "timeout": "0",
+    "aborted": "0",
+    "inconclusive": "0",
+    "passedButRunAborted": "0",
+    "notRunnable": "0",
+    "notExecuted": "0",
+    "disconnected": "0",
+    "warning": "0",
+    "completed": "0",
+    "inProgress": "0",
+    "pending": "0"
+  },
+  "actualEntries": 867,
+  "actualDefinitions": 867,
+  "allPassed": true,
+  "uniqueResultPairs": 867,
+  "times": {
+    "creation": "2026-10-06T09:22:27.1156925+08:00",
+    "queuing": "2026-10-06T09:22:27.1156926+08:00",
+    "start": "2026-10-06T09:22:26.5377441+08:00",
+    "finish": "2026-10-06T09:22:43.6740000+08:00"
+  },
+  "qualification": "Direct current TRX inspection corrects prior absent-result inference from observer snapshot."
+}

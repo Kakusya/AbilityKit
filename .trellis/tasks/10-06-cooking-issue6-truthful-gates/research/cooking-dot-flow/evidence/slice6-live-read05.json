@@ -1,0 +1,164 @@
+{
+  "id": "133476b1-2ae5-46af-8806-712e02b04127",
+  "ok": true,
+  "result": {
+    "dispatchId": "ctx_4c94250ae711",
+    "source": "transcript",
+    "sourceIdentity": "cu2zdwkdsmPUSCyhNJeOZCjLL8pYI9Oi",
+    "provider": "codex",
+    "transcript": {
+      "messages": [
+        {
+          "id": "ctco_01a10e21-2b55-7393-b63a-51cc55ccb486",
+          "role": "tool",
+          "blocks": [
+            {
+              "type": "tool-result",
+              "output": "Script completed\nWall time 0.4 seconds\nOutput:\n{\"chunk_id\":\"f1e61b\",\"wall_time_seconds\":0.0036403,\"exit_code\":0,\"original_token_count\":4184,\"output\":\"}\\r\\n\\r\\nfunction Assert-GateRestoreDiscovery {\\r\\n    param([object[]]$Graph, $Result, $Context)\\r\\n    if (-not $Graph.Count -or @($Graph.project | Sort-Object -Unique).Count -ne $Graph.Count -or $Graph[0].project -ine $Result.configuration.project -or $Result.configuration.tfm -cnotin $Graph[0].frameworks) { throw 'Restore graph identity/framework contradiction.' }\\r\\n    foreach ($project in $Graph) {\\r\\n        if ($project.configuration -cne $Result.configuration.configuration) { throw 'Restore graph Configuration mismatch.' }\\r\\n        $file=Assert-GateArtifact $project.settingsArtifact $Result $Context.runRoot\\r\\n        $suffix=[IO.Path]::DirectorySeparatorChar+$Result.resultId.Replace('-','').Substring(0,12)+[IO.Path]::DirectorySeparatorChar+$project.settingsArtifact.path.Replace('/',[IO.Path]::DirectorySeparatorChar)\\r\\n        $native=@($Result.provenance.invocations | Where-Object { $_.startedAt -ceq $project.settingsStartedAt -and $_.stdoutPath.EndsWith($suffix,[StringComparison]::OrdinalIgnoreCase) })\\r\\n        $expec\n… (truncated)"
+            }
+          ],
+          "timestamp": 1791238417237,
+          "source": "transcript"
+        },
+        {
+          "id": "ctc_03d36cc6d8b642f4016ac4211b23cc87d0b86007314cba7ba7",
+          "role": "assistant",
+          "blocks": [
+            {
+              "type": "tool-call",
+              "name": "exec",
+              "input": "text(await tools.exec_command({cmd:\"Get-Content tools/test-gate-result-contract.ps1 -Encoding UTF8|Select-Object -Skip 680 -First 70; Get-Content tools/test-gate-result-contract.ps1 -Encoding UTF8|Select-Object -Skip 322 -First 99; Get-ChildItem 'local/Logs/test-gates/86324cd6-22d9-45ea-9762-e2c301e59734' -Recurse -Filter '*.stdout.txt'|Sort-Object LastWriteTime -Descending|Select-Object -First 2 FullName,Length,LastWriteTime|ConvertTo-Json\",max_output_tokens:3300}));\ntext(await tools.write_stdin({session_id:4063,chars:\"\",yield_time_ms:1000,max_output_tokens:1000}));\n",
+              "callId": "call_JR5CkcOn6sxp8MKnj85DZ0Ud"
+            }
+          ],
+          "timestamp": 1791238430769,
+          "source": "transcript"
+        },
+        {
+          "id": "ctco_01a10e21-75b1-7fc3-9099-f1fcf2f40847",
+          "role": "tool",
+          "blocks": [
+            {
+              "type": "tool-result",
+              "output": "Script completed\nWall time 5.5 seconds\nOutput:\n{\"chunk_id\":\"e756bb\",\"wall_time_seconds\":0.0331178,\"exit_code\":0,\"original_token_count\":3905,\"output\":\"Warning: truncated output (original token count: 3905)\\nTotal output lines: 181\\n\\n\\r\\nfunction Assert-GateResult {\\r\\n    param($Result, $Plan, $Context)\\r\\n    # Normalize both Hashtable and JSON/PSCustomObject through the same boundary.\\r\\n    $root=ConvertTo-GateJson $Result | ConvertFrom-Json\\r\\n    $expected=ConvertTo-GateJson $Plan | ConvertFrom-Json\\r\\n    $seen=@{}; $leaves=@{}\\r\\n    function Visit-GateResult($node,$planNode) {\\r\\n        foreach ($field in @('schemaVersion','example','runId','resultId','parentResultId','invocationPath','name','kind','declaration','configuration')) { Assert-GateEqual $node.$field $planNode.$field \\\"assigned $field\\\" }\\r\\n        if ($node.example -and -not $Context.allowExample) { throw 'Synthetic production result.' }\\r\\n        $id=[guid]::Empty\\r\\n        if (-not [guid]::TryParse($node.resultId,[ref]$id) -or $seen.ContainsKey($node.resultId)) { throw 'Duplicate/invalid result ID.' }; $seen[$node.resultId]=$true\\r\\n        $index=[Array]::IndexOf($script:GateStates,[string]$node.status)\\r\n… (truncated)"
+            }
+          ],
+          "timestamp": 1791238436273,
+          "source": "transcript"
+        },
+        {
+          "id": "ctc_03d36cc6d8b642f4016ac42129910c87d0aa5774d838ed0aa8",
+          "role": "assistant",
+          "blocks": [
+            {
+              "type": "tool-call",
+              "name": "exec",
+              "input": "text(await tools.exec_command({cmd:\"$e='local/Artifacts/issue6-cooking-slice6-verification-c66e1880'; @(Get-CimInstance Win32_Process|Where-Object {$_.Name -match '^(dotnet|MSBuild|VBCSCompiler|testhost|vstest.console).*'}|Select-Object ProcessId,ParentProcessId,CreationDate,Name,CommandLine,KernelModeTime,UserModeTime)|ConvertTo-Json -Depth 5|Set-Content \\\"$e/gate1-active-processes-01.json\\\" -Encoding UTF8; Get-ChildItem 'local/Logs/test-gates/86324cd6-22d9-45ea-9762-e2c301e59734' -Recurse -Filter 'stage-receipt.json'|ForEach-Object {$s=Get-Content $_.FullName -Raw -Encoding UTF8|ConvertFrom-Json; [pscustomobject]@{project=$s.project;restore=$s.restore.processExitCode;build=$s.build.processExitCode;test=$s.test.processExitCode}}|ConvertTo-Json; Get-Content tools/test-gate-result-contract.ps1 -Encoding UTF8|Select-Object -Skip 627 -First 53\",max_output_tokens:2000}));\n",
+              "callId": "call_Zj7whUorqsaDEzI51AiPtkSA"
+            }
+          ],
+          "timestamp": 1791238446594,
+          "source": "transcript"
+        },
+        {
+          "id": "ctco_01a10e21-a07b-7833-b8db-f1e262d1b772",
+          "role": "tool",
+          "blocks": [
+            {
+              "type": "tool-result",
+              "output": "Script completed\nWall time 0.6 seconds\nOutput:\n{\"chunk_id\":\"b02a34\",\"wall_time_seconds\":0.2120694,\"exit_code\":0,\"original_token_count\":1255,\"output\":\"{\\r\\n    \\\"project\\\":  \\\"C:\\\\\\\\Users\\\\\\\\Administrator\\\\\\\\orca\\\\\\\\workspaces\\\\\\\\AbilityKit\\\\\\\\issue6-cooking-truthful-gates\\\\\\\\src\\\\\\\\AbilityKit.ET.RelationAnalyzer\\\\\\\\AbilityKit.ET.RelationAnalyzer.csproj\\\",\\r\\n    \\\"restore\\\":  0,\\r\\n    \\\"build\\\":  0,\\r\\n    \\\"test\\\":  null\\r\\n}\\r\\n        }\\r\\n    }\\r\\n    $sdkReceipt=@($p.invocations | Where-Object { $_.toolArguments.Count -eq 1 -and $_.toolArguments[0] -ceq '--version' })\\r\\n    if ($sdkReceipt.Count -ne 1 -or $sdkReceipt[0].processExitCode -ne 0 -or ([IO.File]::ReadAllText($sdkReceipt[0].stdoutPath)).Trim() -cne $p.sdk) { throw 'SDK receipt mismatch.' }\\r\\n    Assert-GateRestoreDiscovery $p.closure $Result $Context\\r\\n    if (-not $p.sourceBeforeRestore -or @($p.sourceBeforeRestore.inputs.path | Sort-Object -Unique).Count -ne $p.sourceBeforeRestore.inputs.Count -or $p.sourceBeforeRestore.sha -cne $Result.source.before.sha -or (Get-GateFingerprint $p.sourceBeforeRestore.inputs) -cne $p.sourceBeforeRestore.inputFingerprint) { throw 'Pre-restore source proof absent/forged.' }\\r\\n  \n… (truncated)"
+            }
+          ],
+          "timestamp": 1791238447227,
+          "source": "transcript"
+        },
+        {
+          "id": "msg_03d36cc6d8b642f4016ac42131037087d0b8587fbbce2ec7ff",
+          "role": "assistant",
+          "blocks": [
+            {
+              "type": "text",
+              "text": "The first gate’s analyzer restore and build completed with native exit 0. The runner is now preparing the Cooking runtime build. I’ll inspect the completed stage receipts and retain the runner’s final result, including any provenance failure."
+            }
+          ],
+          "timestamp": 1791238450610,
+          "source": "transcript"
+        }
+      ],
+      "nextCursor": "owr1_eyJ2IjoxLCJkIjoiY3R4XzRjOTQyNTBhZTcxMSIsInMiOiJ0cmFuc2NyaXB0IiwiaSI6ImN1Mnpkd2tkc21QVVNDeWhOSmVPWkNqTEw4cFlJOU9pIiwicCI6MTk3MTc2MTAsImMiOiJHQzh2QkxYZjk1WU9xcFhhUXNzX0t2ZGREVl9kczZ3diJ9",
+      "limited": true,
+      "returnedMessageCount": 6
+    },
+    "cursor": "owr1_eyJ2IjoxLCJkIjoiY3R4XzRjOTQyNTBhZTcxMSIsInMiOiJ0cmFuc2NyaXB0IiwiaSI6ImN1Mnpkd2tkc21QVVNDeWhOSmVPWkNqTEw4cFlJOU9pIiwicCI6MTk3MTc2MTAsImMiOiJHQzh2QkxYZjk1WU9xcFhhUXNzX0t2ZGREVl9kczZ3diJ9",
+    "status": {
+      "worker": "ready",
+      "terminal": "running",
+      "liveness": "live"
+    },
+    "fallbackReason": null,
+    "warnings": [
+      "Oversized transcript text was clipped."
+    ],
+    "sourceExact": true,
+    "contentComplete": false,
+    "clipping": [
+      "message_limit_or_scan_window",
+      "transcript_payload"
+    ],
+    "projection": {
+      "id": "ctx_4c94250ae711",
+      "dispatchId": "ctx_4c94250ae711",
+      "taskId": "task_31fd1c2368df",
+      "runId": "run_5ba664a5f016",
+      "role": "worker",
+      "parent": null,
+      "provider": {
+        "id": "codex",
+        "model": "gpt-6.1-sol"
+      },
+      "host": {
+        "kind": "local",
+        "id": "local"
+      },
+      "workspace": {
+        "id": "aaa97e0d-5026-4e5c-95f8-bb420dcb4c65::C:/Users/Administrator/orca/workspaces/AbilityKit/issue6-cooking-truthful-gates",
+        "kind": "folder_or_worktree"
+      },
+      "stage": {
+        "worker": "ready",
+        "dispatch": "dispatched",
+        "detail": "input_accepted",
+        "activity": "working"
+      },
+      "outcome": "in_progress",
+      "liveness": {
+        "verdict": "live",
+        "observedAt": 1791238447212,
+        "source": "agent_status"
+      },
+      "evidence": {
+        "durable": true,
+        "liveStatus": "fresh",
+        "lastObservedAt": 1791238447212
+      },
+      "resource": {
+        "state": "external",
+        "id": "wtr_e8df662b2afa",
+        "ownerDispatchId": "ctx_4c94250ae711",
+        "releaseState": "not_requested",
+        "terminalState": "retained"
+      },
+      "nextAction": {
+        "kind": "none",
+        "argv": []
+      },
+      "attention": {
+        "categories": [],
+        "requiresAction": false
+      }
+    }
+  },
+  "_meta": {
+    "runtimeId": "ff0c5f2c-d341-4455-bc1c-c113650bdd60"
+  }
+}

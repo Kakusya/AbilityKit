@@ -1,0 +1,9 @@
+{
+  "repository": "Kakusya/AbilityKit",
+  "remote": "origin",
+  "ref": "refs/heads/Kakusya/issue6-cooking-truthful-gates",
+  "sourceSha": "a0824b6dc4dbea3c4fc0722c60cf7d257c8fa261",
+  "purpose": "publish scope-audited window control fix checkpoint; real Cooking validation still NotRun/running; not final acceptance",
+  "verifiedScope": "window-main-scope-audit.json",
+  "noForce": true
+}

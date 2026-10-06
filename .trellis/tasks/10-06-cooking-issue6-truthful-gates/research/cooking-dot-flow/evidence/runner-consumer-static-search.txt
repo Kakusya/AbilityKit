@@ -1,0 +1,65 @@
+.\AGENTS.md:43:- 默认：`powershell -ExecutionPolicy Bypass -File tools/run_test_gate.ps1`，`-List` 查看、按范围选择 `-Gate core-stability` / `-Gate runtime-contracts`；权威为 [test-gates](tools/test-gates.json)。先读 [测试规范](Docs/AbilityKit测试门禁与批量回归规范.md)，不能用 MOBA precheck 代替全部范围。
+.\.claude\skills\tiny-demo\acceptance.md:74:- `tools/test-gates.json`（30 个 gate，P0=3 / P1=19 / P2=8）**零处提及 Tiny**；`tools/run_test_gate.ps1` 同样零命中。Tiny 的整套验收是**手动入口**，`verify-tiny-starter.ps1` 是**叶子**——`tools/` 里没有任何东西调用它。
+.\.claude\skills\test-artifacts\when_to_use.md:27:- 你要直接调 Unity batchmode 跑 `MultiplayerHeadlessHeroReplacementCommand`（不走 `run_test_gate.ps1`）
+.\.claude\skills\test-artifacts\unity_editmode_playmode.md:37:`run_test_gate.ps1` 会自动：
+.\.claude\skills\test-artifacts\unity_editmode_playmode.md:78:`run_test_gate.ps1` 的 `Invoke-UnityTestStep` 解析 `test-run` 节点的 `result/total/passed/failed` 属性。
+.\.claude\skills\test-artifacts\unity_editmode_playmode.md:86:## 常见错误模式（来自 run_test_gate.ps1 源码）
+.\.claude\skills\test-artifacts\SKILL.md:3:description: AbilityKit 测试产物管理规范——统一规划 moba headless / shooter StateSync multiprocess / dotnet test / Unity EditMode+PlayMode 四类测试的输出路径、命名、生命周期与清理。涵盖 tools/run_test_gate.ps1 + tools/test-gates.json 的 29 个 gate 体系（P0 3 / P1 18 / P2 8，含 foundation-units 基础叶子包契约与 moba-acceptance-dotnet 白盒验收）、本地 local/Logs/ 与 CI 显式 artifacts/test-gates/ 目录约定、.gitignore 覆盖范围、绕过 gate 体系直接跑命令的注意事项。触发场景：跑测试、写新测试、加 test gate、排查测试产物位置、清理 TestResults、MultiplayerHeadlessHeroReplacement 产物、shooter multiprocess artifact、TRX 文件、NUnit XML、上传 CI artifact、CI workflow 上传测试产物。
+.\.claude\skills\test-artifacts\SKILL.md:17:**本地测试产物必须落在 `local/Logs/` 下，永远不要写在项目根或源码目录中。** `tools/run_test_gate.ps1` 的本地默认值为 `local/Logs/test-gates`；直接调用的测试命令也必须显式指定该根目录下的结果路径。
+.\.claude\skills\test-artifacts\SKILL.md:59:- [gate_runner.md](gate_runner.md) — `run_test_gate.ps1` + `test-gates.json` 29 gate 体系（推荐入口；含 foundation-units 基础叶子包契约 + moba-acceptance-dotnet 白盒验收判定 gate，trace 基线在 `src/AbilityKit.Demo.Moba.Acceptance.Tests/{Fixtures,Traces}/`，真实基线经 `tools/capture_moba_acceptance_traces.ps1` 刷新）
+.\.claude\skills\test-artifacts\shooter_state_sync.md:25:本地运行时，`{GateOutputDirectory}` 由 `run_test_gate.ps1` 自动替换为 `local/Logs/test-gates/{ts}-{gate}/`。CI 通过工作流显式覆写为 `artifacts/test-gates/{job}/`。
+.\.claude\skills\test-artifacts\gate_runner.md:3:**所有跨项目测试统一走 gate 体系**，由 `tools/run_test_gate.ps1` + `tools/test-gates.json` 驱动。
+.\.claude\skills\test-artifacts\gate_runner.md:7:- `tools/run_test_gate.ps1` — 主执行器（约 744 行）
+.\.claude\skills\test-artifacts\gate_runner.md:17:./tools/run_test_gate.ps1 -List
+.\.claude\skills\test-artifacts\gate_runner.md:20:./tools/run_test_gate.ps1
+.\.claude\skills\test-artifacts\gate_runner.md:23:./tools/run_test_gate.ps1 -Gate moba-console-smoke
+.\.claude\skills\test-artifacts\gate_runner.md:26:./tools/run_test_gate.ps1 -Gate regression -StepName "AOI LOD smoke"
+.\.claude\skills\test-artifacts\gate_runner.md:29:./tools/run_test_gate.ps1 -ResultsDirectory local/Logs/test-gates-custom
+.\.claude\skills\test-artifacts\gate_runner.md:32:./tools/run_test_gate.ps1 -Gate precheck -CI
+.\.trellis\workflow.md:14:- 默认门禁：`powershell -ExecutionPolicy Bypass -File tools/run_test_gate.ps1`；先用 `-List`，再按范围选择 `-Gate core-stability` 或 `-Gate runtime-contracts`。配置权威是 `tools/test-gates.json`。
+.\.claude\skills\test-artifacts\dotnet_test.md:3:不经过 `run_test_gate.ps1`，直接 `dotnet test` 的产物管理。
+.\.claude\skills\test-artifacts\dotnet_test.md:55:`run_test_gate.ps1` 的 `Assert-DotNetTrxResult` 解析 Counters 节点判断 pass/fail。
+.\.claude\skills\test-artifacts\ci_integration.md:57:./tools/run_test_gate.ps1 -Gate precheck -CI
+.\.claude\skills\test-artifacts\ci_integration.md:61:./tools/run_test_gate.ps1 -Gate shooter-fast -CI
+.\.claude\skills\test-artifacts\ci_integration.md:64:./tools/run_test_gate.ps1 -Gate regression -CI
+.\.claude\skills\test-artifacts\ci_integration.md:102:`run_test_gate.ps1` 的 `Get-UnityEditorPath` 默认 `C:\Program Files\Unity\Hub\Editor\2022.3.62f1\Editor\Unity.exe`。
+.\.claude\skills\test-artifacts\ad_hoc_workflows.md:3:**首选：永远走 `run_test_gate.ps1`**。本页只覆盖必须绕过的情况。
+.\.claude\skills\test-artifacts\ad_hoc_workflows.md:73:统一 `yyyyMMdd-HHmmss`（如 `20260720-143015`）。`run_test_gate.ps1` 默认就是这个格式。
+.\.claude\skills\test-artifacts\ad_hoc_workflows.md:122:4. 用 `./tools/run_test_gate.ps1 -Gate new-gate-name` 验证
+.\.claude\skills\moba-demo\testing.md:78:powershell -ExecutionPolicy Bypass -File tools/run_test_gate.ps1 -Gate moba-codegen
+.\.claude\skills\moba-demo\testing.md:81:powershell -ExecutionPolicy Bypass -File tools/run_test_gate.ps1 -Gate precheck
+.\.trellis\spec\abilitykit\validation.md:5:- 默认门禁：`powershell -ExecutionPolicy Bypass -File tools/run_test_gate.ps1`；用 `-List` 查看可用 gate，按范围选择 `-Gate core-stability` 或 `-Gate runtime-contracts`。配置权威是 `tools/test-gates.json`。
+.\.claude\skills\moba-demo\codegen_analyzer.md:79:powershell -ExecutionPolicy Bypass -File tools/run_test_gate.ps1 -Gate moba-codegen
+.\.claude\skills\moba-demo\codegen_analyzer.md:85:powershell -ExecutionPolicy Bypass -File tools/run_test_gate.ps1 -Gate precheck
+.\.claude\skills\moba-skill-authoring\SKILL.md:218:tools/run_test_gate.ps1 -Gate moba-content-contracts      # P1 内容契约（资源归属/业务ID/依赖图/触发器聚合/表现资源/区域时序）
+.\.claude\skills\moba-skill-authoring\SKILL.md:219:tools/run_test_gate.ps1 -Gate moba-console-smoke          # P0 控制台冒烟
+.\.claude\skills\moba-skill-authoring\SKILL.md:220:tools/run_test_gate.ps1 -Gate moba-complete-battle-journey # P1 完整对局旅程
+.\.claude\skills\moba-skill-authoring\SKILL.md:221:tools/run_test_gate.ps1 -Gate moba-<hero>-unity           # 逐英雄 Unity EditMode 验收
+.\tools\README.md:9:| `run_test_gate.ps1` | 统一测试门禁入口（CI + 本地） |
+.\tools\AbilityKitPptAssetGenerator\Program.cs:193:    Text(g, "test-gates.json\nrun_test_gate.ps1", new RectangleF(1400, 420, 330, 90), smallFont, Brush(colors.Text), StringAlignment.Near);
+.\tools\AbilityKitPptAssetGenerator\Program.cs:2027:        S("55-gate-config-workflow-evidence.png", CodeVisualKind.DataFlow, "Gate 声明只有跑通证据链才构成自动准入", "28 个配置项、Runner、手写 Workflow 和实际 Artifact 必须逐层对齐", "ciPolicy 或 job 名称存在都不能单独证明 E5。", "文档依据：正式测试流程", I("配置", "level / steps / ciPolicy", "test-gates.json"), I("执行", "命令 / 退出码 / 日志", "run_test_gate.ps1"), I("编排", "event / job / artifact upload", "abilitykit-test-gates.yml"), I("结果", "commit / environment / gaps", "gate-summary + trx")),
+.\tools\AbilityKitPptAssetGenerator\Program.cs:2124:    Config --> Runner[run_test_gate.ps1]
+.\Docs\design\CookingGame\history\agents-notices-2026-10-04.md:95:- 默认门禁：`powershell -ExecutionPolicy Bypass -File tools/run_test_gate.ps1`；用 `-List` 查看门禁，按范围选择 `-Gate core-stability` 或 `-Gate runtime-contracts`。配置权威是 `tools/test-gates.json`。
+.\Docs\design\CookingGame\current-et-foundation-contract.md:179:| Passed/Failed/Blocked/Skipped/NotRun 与真实覆盖 | tools/test-gates.json；[Unity compile helper](../../../tools/run-unity-compile-check.ps1) 缺DLL exit0而 [父gate](../../../tools/run_test_gate.ps1) 按exit标Passed，修正待#6；根配置引用workflow缺失待#7 | 人工将声明覆盖所需环境缺失标Skipped/Blocked；声明应执行测试或必需测试覆盖却实际零测试、旧结果/错SHA不接受。纯构建或文档检查可按自身声明覆盖记Passed，不适用测试记N/A、未运行测试记NotRun，不声称测试通过；证据记录actual command/exit/source dirty/test counts/artifact identity/raw log。后续成功/真实失败/缺必需工具/声明测试覆盖却零测试/旧产物正负控制；本轮.NET/Unity NotRun |
+.\Docs\design\10-EngineeringQuality\06-BetaStabilizationAndReleaseChecklist.md:176:| `tools/run_test_gate.ps1 -Gate <name>` | `tools/test-gates.json` 中该 gate 的步骤在本次环境执行 | gate 未列出的 package、平台和场景也通过 |
+.\Docs\design\10-EngineeringQuality\06-BetaStabilizationAndReleaseChecklist.md:324:- 门禁执行器：[`tools/run_test_gate.ps1`](../../../tools/run_test_gate.ps1)
+.\Docs\design\10-EngineeringQuality\05-CrossModulePerformanceAndHotPathGovernance.md:80:tools/run_test_gate.ps1 -Gate runtime-performance-measurement -Configuration Release
+.\Docs\design\10-EngineeringQuality\01-TestingWorkflow.md:375:| 执行层 | `tools/run_test_gate.ps1` 及专项脚本 | 本地或 job 中怎样解释步骤并产生退出码、日志和 artifact | 该入口已被 PR、push 或 schedule 自动调用 |
+.\Docs\AbilityKit白盒测试DSL与测试平台设计.md:53:| 门禁/CI | `tools/test-gates.json`（24 门禁）+ `run_test_gate.ps1` + GH Actions + 定时 cron + self-hosted runner | ✅ 加一个 `dsl-regression` 门禁即可 |
+.\Docs\AbilityKit白盒测试DSL与测试平台设计.md:343:- **gate**：`gate-summary.json`（`run_test_gate.ps1`）。
+.\Docs\AbilityKit白盒测试DSL与测试平台设计.md:456:| `tools/test-gates.json` / `run_test_gate.ps1` / `.github/workflows/abilitykit-test-gates.yml` | 门禁/CI（→ 加 `dsl-regression`） |
+.\Docs\AbilityKit测试门禁与批量回归规范.md:14:统一执行入口是 [`tools/run_test_gate.ps1`](../tools/run_test_gate.ps1)，门禁清单是 [`tools/test-gates.json`](../tools/test-gates.json)。
+.\Docs\AbilityKit测试门禁与批量回归规范.md:31:powershell -ExecutionPolicy Bypass -File tools\run_test_gate.ps1 -Gate moba-console-smoke
+.\Docs\AbilityKit测试门禁与批量回归规范.md:37:powershell -ExecutionPolicy Bypass -File tools\run_test_gate.ps1
+.\Docs\AbilityKit测试门禁与批量回归规范.md:53:powershell -ExecutionPolicy Bypass -File tools\run_test_gate.ps1 -Gate core-stability
+.\Docs\AbilityKit测试门禁与批量回归规范.md:59:powershell -ExecutionPolicy Bypass -File tools\run_test_gate.ps1 -Gate runtime-contracts
+.\Docs\AbilityKit测试门禁与批量回归规范.md:69:powershell -ExecutionPolicy Bypass -File tools\run_test_gate.ps1 -Gate regression
+.\Docs\AbilityKit测试门禁与批量回归规范.md:93:powershell -ExecutionPolicy Bypass -File tools\run_test_gate.ps1 -List
+.\Docs\AbilityKit测试门禁与批量回归规范.md:219:| Pull Request quick check | `powershell -ExecutionPolicy Bypass -File tools\run_test_gate.ps1 -Gate precheck -CI -ResultsDirectory artifacts\test-gates\precheck` | 快速阻断明显回归 |
+.\Docs\AbilityKit测试门禁与批量回归规范.md:220:| MOBA compile-time contract check | `powershell -ExecutionPolicy Bypass -File tools\run_test_gate.ps1 -Gate moba-codegen -CI -ResultsDirectory artifacts\test-gates\moba-codegen` | 校验 Roslyn 构建、生成/分析契约和 package 所有权 |
+.\Docs\AbilityKit测试门禁与批量回归规范.md:221:| Core stability check | `powershell -ExecutionPolicy Bypass -File tools\run_test_gate.ps1 -Gate core-stability -CI -ResultsDirectory artifacts\test-gates\core-stability` | 校验八个核心包测试、Attributes 零分配契约和 UPM 直接依赖 |
+.\Docs\AbilityKit测试门禁与批量回归规范.md:222:| Runtime contract check | `powershell -ExecutionPolicy Bypass -File tools\run_test_gate.ps1 -Gate runtime-contracts -CI -ResultsDirectory artifacts\test-gates\runtime-contracts` | 校验网络、DI 和表现运行时契约 |
+.\Docs\AbilityKit测试门禁与批量回归规范.md:223:| Nightly regression | `powershell -ExecutionPolicy Bypass -File tools\run_test_gate.ps1 -Gate regression -CI -ResultsDirectory artifacts\test-gates\regression` | 批量回归，包含嵌套 `core-stability` |
+.\Unity\Packages\com.abilitykit.demo.moba.codegen\README.md:33:powershell -ExecutionPolicy Bypass -File tools\run_test_gate.ps1 -Gate moba-codegen
+
+STDERR:

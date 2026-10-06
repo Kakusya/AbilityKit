@@ -1,0 +1,11 @@
+{
+  "taskId": "task_0330e4b97a9b",
+  "dispatchId": "ctx_e989de325df7",
+  "doneMessageId": "msg_a28fed52381b",
+  "outcome": "succeeded bounded repair only",
+  "candidateSha": "79bf9642b04a696880a1c393ca5d11171a4b078a",
+  "liveRef": "parser-settled-live.json",
+  "idleRef": "parser-settled-idle.json",
+  "doneRaw": "delivery-parser-settled01.json",
+  "accounting": "explicit approved reuse of same retained user-owned terminal/worktree for separate genuine gate verification after main controls; no release/cleanup"
+}

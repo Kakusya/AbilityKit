@@ -1,0 +1,15 @@
+{
+  "version": 1,
+  "flow_id": "6d3174fd-2b01-4136-8ea5-0b0cd0e2845d",
+  "seq": 96,
+  "op_id": "6d3174fd-2b01-4136-8ea5-0b0cd0e2845d:000096",
+  "kind": "intent",
+  "recorded_utc": "2026-10-06T00:10:14.387904Z",
+  "action": "acknowledge-delivery",
+  "target": "delivery_60b19ff3f264",
+  "authorization_ref": "evidence/approval.md",
+  "payload_ref": "evidence/slice7-binding-repair-spec.md",
+  "preconditions": {
+    "run_id": "run_5ba664a5f016"
+  }
+}

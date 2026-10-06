@@ -1,0 +1,154 @@
+{
+  "recordedUtc": "2026-10-05T20:21:00.328935+00:00",
+  "implementationSha": "79bf9642b04a696880a1c393ca5d11171a4b078a",
+  "implementationDirty": false,
+  "mainTaskDirty": true,
+  "isolatedContractControls": {
+    "status": "Passed",
+    "executed": 10,
+    "failed": 0,
+    "raw": "local\\Artifacts\\issue6-main-independent-79bf9642b-01\\controls.json",
+    "sha256": "f2e5744430778c52e7174c2d1da66f8868f35f939e568851b4c0876b899fe26b",
+    "cases": [
+      {
+        "name": "new-SHA-mixed-real-shaped-comments-import-retained",
+        "expected": {
+          "status": "Passed",
+          "source": "79bf9642b04a696880a1c393ca5d11171a4b078a",
+          "retained": true,
+          "exit": 0
+        },
+        "actual": {
+          "status": "Passed",
+          "source": "79bf9642b04a696880a1c393ca5d11171a4b078a",
+          "retained": true,
+          "exit": 0
+        },
+        "status": "Passed",
+        "raw": "C:\\Users\\Administrator\\orca\\workspaces\\AbilityKit\\issue6-cooking-truthful-gates\\local\\Artifacts\\issue6-main-independent-79bf9642b-01\\mixed-comments-positive\\5d4b1321-415c-44d0-92bc-1c4ac8a996b7\\gate-summary.json"
+      },
+      {
+        "name": "new-SHA-changing-import-refused",
+        "expected": {
+          "status": "Failed",
+          "reason": true,
+          "exit": 1
+        },
+        "actual": {
+          "status": "Failed",
+          "reason": true,
+          "exit": 1
+        },
+        "status": "Passed",
+        "raw": "C:\\Users\\Administrator\\orca\\workspaces\\AbilityKit\\issue6-cooking-truthful-gates\\local\\Artifacts\\issue6-main-independent-79bf9642b-01\\changed-import-negative\\9ab56018-dc0f-4608-b0a8-730c43c18475\\gate-summary.json"
+      },
+      {
+        "name": "valid-roundtrip",
+        "expected": true,
+        "actual": true,
+        "status": "Passed",
+        "raw": "C:\\Users\\Administrator\\orca\\workspaces\\AbilityKit\\issue6-cooking-truthful-gates\\local\\Artifacts\\issue6-main-independent-79bf9642b-01\\valid-roundtrip.json"
+      },
+      {
+        "name": "empty-bindings",
+        "expected": false,
+        "actual": false,
+        "status": "Passed",
+        "raw": "C:\\Users\\Administrator\\orca\\workspaces\\AbilityKit\\issue6-cooking-truthful-gates\\local\\Artifacts\\issue6-main-independent-79bf9642b-01\\empty-bindings.json"
+      },
+      {
+        "name": "lowercase-status",
+        "expected": false,
+        "actual": false,
+        "status": "Passed",
+        "raw": "C:\\Users\\Administrator\\orca\\workspaces\\AbilityKit\\issue6-cooking-truthful-gates\\local\\Artifacts\\issue6-main-independent-79bf9642b-01\\lowercase-status.json"
+      },
+      {
+        "name": "missing-child-with-forged-completion",
+        "expected": false,
+        "actual": false,
+        "status": "Passed",
+        "raw": "C:\\Users\\Administrator\\orca\\workspaces\\AbilityKit\\issue6-cooking-truthful-gates\\local\\Artifacts\\issue6-main-independent-79bf9642b-01\\missing-child-with-forged-completion.json"
+      },
+      {
+        "name": "native-seven-claims-passed",
+        "expected": false,
+        "actual": false,
+        "status": "Passed",
+        "raw": "C:\\Users\\Administrator\\orca\\workspaces\\AbilityKit\\issue6-cooking-truthful-gates\\local\\Artifacts\\issue6-main-independent-79bf9642b-01\\native-seven-claims-passed.json"
+      },
+      {
+        "name": "wrong-source",
+        "expected": false,
+        "actual": false,
+        "status": "Passed",
+        "raw": "C:\\Users\\Administrator\\orca\\workspaces\\AbilityKit\\issue6-cooking-truthful-gates\\local\\Artifacts\\issue6-main-independent-79bf9642b-01\\wrong-source.json"
+      },
+      {
+        "name": "forged-filter",
+        "expected": false,
+        "actual": false,
+        "status": "Passed",
+        "raw": "C:\\Users\\Administrator\\orca\\workspaces\\AbilityKit\\issue6-cooking-truthful-gates\\local\\Artifacts\\issue6-main-independent-79bf9642b-01\\forged-filter.json"
+      },
+      {
+        "name": "input-and-HEAD-stability",
+        "expected": true,
+        "actual": true,
+        "status": "Passed",
+        "raw": "C:\\Users\\Administrator\\orca\\workspaces\\AbilityKit\\issue6-cooking-truthful-gates\\local\\Artifacts\\issue6-main-independent-prepared\\probe.ps1"
+      }
+    ]
+  },
+  "sameSecond": {
+    "status": "Passed",
+    "attempts": 1,
+    "raw": "local\\Artifacts\\issue6-main-independent-79bf9642b-01\\same-second\\receipt.json",
+    "sha256": "bf9846779405a45a08f07b6cf4ae90d55fff5aa0b7c788867e065793784264cf",
+    "launchSeconds": [
+      "2026-10-05T20:19:32"
+    ],
+    "runIds": [
+      "35eb3f2d-09ea-4009-ab6f-0b35c9bc04c5",
+      "fc591f93-9758-40de-9047-a137eba14e6e"
+    ],
+    "noProducerInvoked": true
+  },
+  "preparedScripts": [
+    {
+      "path": "local\\Artifacts\\issue6-main-independent-prepared\\probe.ps1",
+      "sha256": "28d72d24031b91a74072989fa631fc8141090d72cbfcacbe52d40be711cfb43d"
+    },
+    {
+      "path": "local\\Artifacts\\issue6-main-independent-prepared\\same_second.py",
+      "sha256": "0663ed2c3d89dca32cab90eda94ca76a34d390f956645264eedea12c0015c579"
+    }
+  ],
+  "actualCommands": [
+    {
+      "argv": [
+        "powershell",
+        "-NoProfile",
+        "-ExecutionPolicy",
+        "Bypass",
+        "-File",
+        "local/Artifacts/issue6-main-independent-prepared/probe.ps1",
+        "-ExpectedSha",
+        "79bf9642b04a696880a1c393ca5d11171a4b078a",
+        "-OutputRoot",
+        "local\\Artifacts\\issue6-main-independent-79bf9642b-01"
+      ],
+      "exit": 0
+    },
+    {
+      "argv": [
+        "python",
+        "-B",
+        "local/Artifacts/issue6-main-independent-prepared/same_second.py",
+        "local\\Artifacts\\issue6-main-independent-79bf9642b-01"
+      ],
+      "exit": 0
+    }
+  ],
+  "realCooking": "NotRun on repaired candidate; next dispatch"
+}

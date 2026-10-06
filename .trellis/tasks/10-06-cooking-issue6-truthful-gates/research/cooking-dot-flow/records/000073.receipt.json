@@ -1,0 +1,19 @@
+{
+  "version": 1,
+  "flow_id": "6d3174fd-2b01-4136-8ea5-0b0cd0e2845d",
+  "seq": 73,
+  "op_id": "6d3174fd-2b01-4136-8ea5-0b0cd0e2845d:000073",
+  "kind": "receipt",
+  "recorded_utc": "2026-10-05T22:34:16.237008Z",
+  "intent_hash": "5ee325675956e48043b91898b4a54d0bb48922acfe3ac30c0e8a7e8d144e021a",
+  "outcome": "applied",
+  "raw_ref": "evidence/dot-clarification-send-raw.json",
+  "result": {
+    "postedMessageId": "2104e682-1ae1-4d21-8732-370ff98deab5",
+    "request_id": "AK-I6-COOK-CLARIFY-20261006-02",
+    "candidate_sha": "68a880f2a31c7269da634b2f152362bccb5857ab",
+    "url": "https://chatgpt.com/dots/01a10258-c084-74bb-8bcc-ec01958e5023",
+    "observedPosted": true,
+    "deadline_utc": "2026-10-05T23:03:49.051236Z"
+  }
+}

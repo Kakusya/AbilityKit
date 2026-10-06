@@ -1,0 +1,38 @@
+{
+  "id": "5261cfe7-9492-45ab-820f-aa00ba858ddf",
+  "ok": true,
+  "result": {
+    "runId": "run_5ba664a5f016",
+    "deliveryId": "delivery_9ad82e5949b0",
+    "messages": [
+      {
+        "id": "msg_e57b5975b93e",
+        "run_id": "run_5ba664a5f016",
+        "delivery_contract": "current_delivery",
+        "from_handle": "term_a1a61c7c-aef6-4cd0-8c46-27a90632617b",
+        "to_handle": "run:run_5ba664a5f016",
+        "subject": "Window-width followup succeeded: a0824b6dc",
+        "body": "Implemented the bounded WindowSize width followup and committed exactly the four owned files at checkpoint a0824b6dc4dbea3c4fc0722c60cf7d257c8fa261, preserving production sources, all30 nonCooking objects and original evidence. Final frozen isolated controls passed164/164 with native0, actual RawUI.WindowSize.Width40/80/120 setter/readback and exact8192-character streams, while the first native1 JSON-array test failure remains preserved and all seven tested input hashes match after commit. The report provides complete per-case receipts and local/Artifacts/issue6-cooking-slice1-window-audit02/final-commit-identity.json records final scope and hashes; no bounded-followup blocker remains, and real Cooking gates, Unity, exact-clean-checkpoint rerun, Issue acceptance and merge/close remain NotRun for independent main validation.",
+        "type": "worker_done",
+        "priority": "normal",
+        "thread_id": null,
+        "payload": "{\"taskId\":\"task_c9384f689b07\",\"dispatchId\":\"ctx_f42f62847f04\",\"outcome\":\"succeeded\",\"filesModified\":[\"tools/tests/fixtures/gate-result-native-probe.ps1\",\"tools/tests/test-gate-result-contract.tests.ps1\",\"Docs/AbilityKit测试门禁与批量回归规范.md\",\".trellis/tasks/10-06-cooking-issue6-truthful-gates/research/slice1-width-window-report.md\"],\"reportPath\":\".trellis/tasks/10-06-cooking-issue6-truthful-gates/research/slice1-width-window-report.md\"}",
+        "created_at": "2026-10-05T19:29:12Z",
+        "delivered_at": null
+      }
+    ],
+    "count": 1,
+    "replayed": false,
+    "acknowledged": "delivery_cff71622b4c8",
+    "timedOut": false,
+    "cancelled": false,
+    "connectionLost": false,
+    "mutation": {
+      "requestId": "f4cc3787-8d79-4dec-bde5-80bb933b1ac1",
+      "replayed": false
+    }
+  },
+  "_meta": {
+    "runtimeId": "ff0c5f2c-d341-4455-bc1c-c113650bdd60"
+  }
+}

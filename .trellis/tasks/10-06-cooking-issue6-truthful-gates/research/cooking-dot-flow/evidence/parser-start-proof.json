@@ -1,0 +1,13 @@
+{
+  "taskId": "task_0330e4b97a9b",
+  "dispatchId": "ctx_e989de325df7",
+  "inputAccepted": true,
+  "initialNativeExit": 1,
+  "initialTurnProof": "unobserved preserved",
+  "manualCompletion": "Enter-only original queued prompt operation39; no resend/new dispatch",
+  "actualTurnStart": "fresh exact transcript and exact-dispatch activity working after Enter",
+  "transcriptRef": "parser-turn-start-transcript01.json",
+  "liveRef": "parser-turn-start-live01.json",
+  "recordedUtc": "2026-10-05T20:01:23.874556+00:00",
+  "readiness": "actual work observed; persisted start_unknown state is not changed/greenwashed"
+}

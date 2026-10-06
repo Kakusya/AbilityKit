@@ -4,6 +4,8 @@
 
 Owner 显式调用 cooking-dot-workflow，当前 dot 已 accept-plan `cf41218ab468a40457f6a15bbe0fc2556158b983`，规划与剩余出口见 [当前 task](../../../.trellis/tasks/10-06-cooking-issue6-truthful-gates/prd.md) 和 [完整决定](../../../.trellis/tasks/10-06-cooking-issue6-truthful-gates/research/cooking-dot-flow/evidence/dot-plan-reply-raw.txt)。新分支 `Kakusya/issue6-cooking-truthful-gates` 从 master `c78ed3de83f69bb53ff1a09bbc23638115928e1e` 创建；仅适配两个 Cooking .NET gates 的结果/覆盖/provenance，未适配入口启动前 Blocked。旧十八 producer、Unity mirror/Editor/exporter、示例五项目验收退出条件被收窄，本轮 N/A/实际 NotRun；旧越界分支保持停止隔离。当前只有规划接受，实施/真实测试/最终接受/合并/关单均未完成。下方旧 #6 调度是历史，不恢复旧 Run 或授权。
 
+Current checkpoint (2026-10-06): implementation `b8c53e8153b9c6f015e75040b9561b3078f05e5f` is pushed. Both genuine Cooking gates Passed/native0 (867+328 and644+867+328 tests); full216 isolated controls and main29 independent controls Passed with original source/dirty qualifications preserved. Main independently checked all owned archive bytes, binary linkage and TRXs. The distinct verifier is settled/revoked/idle. [Current review envelope](../../../.trellis/tasks/10-06-cooking-issue6-truthful-gates/research/cooking-dot-flow/evidence/final-main-review-envelope.json) supersedes the earlier planning-only checkpoint. Exact-SHA final dot review, merge and actual merged-source integration remain NotRun; Issue6 is OPEN. Old out-of-scope tree stays isolated; Unity/physical LAN boundaries are unchanged.
+
 ## Owner 最高优先级范围与停止越界实施（2026-10-05）
 
 - Owner 重申只做 Cooking（Cook／做菜项目）；Shooter、MOBA、Orleans 等其他项目仅为示例，不得修改。最高优先级规则已写入 [AGENTS](../../../AGENTS.md)，并加入 [SOP](../../../.trellis/spec/abilitykit/supervised-issue-delivery.md) 的派发和审计前置检查。

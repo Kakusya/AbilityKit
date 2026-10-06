@@ -1,0 +1,8 @@
+{
+  "taskId": "task_f9cd55629781",
+  "dispatchId": "ctx_00994ffacdae",
+  "state": "ready",
+  "stage": "input_accepted",
+  "turnStart": "observed",
+  "actualNativeExitCode": 0
+}

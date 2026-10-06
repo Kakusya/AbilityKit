@@ -1,0 +1,36 @@
+{
+  "status": "Passed",
+  "qualification": "Receipt metadata correction only; genuine gates remain NotRun on b8. Failed original launcher is preserved and did not prove a process exit. Its executable field concatenated two discovered python paths. Corrected fully resolved C:/Python314/python.exe launched a fresh commit-receipt02 script, native0 confirmed. Source/report commit unchanged. This failure is additional to committed report setup/metadata failures, not erased by corrected launch.",
+  "failedReceipt": {
+    "ref": "slice7-commit-receipt-native.json",
+    "bytes": 985,
+    "sha256": "29214f52816c3869b37118111d0ee261b4239c5f04d09d089bcfada04e38eb98"
+  },
+  "correctedReceipt": {
+    "ref": "slice7-commit-receipt02-native.json",
+    "bytes": 911,
+    "sha256": "2b7c80b4e7068c62084e40e2b664c04651ef901b6d8b58318090ed77336bd519"
+  },
+  "files": [
+    {
+      "ref": "slice7-commit-receipt-native.json",
+      "bytes": 985,
+      "sha256": "29214f52816c3869b37118111d0ee261b4239c5f04d09d089bcfada04e38eb98"
+    },
+    {
+      "ref": "slice7-commit-receipt02-native.json",
+      "bytes": 911,
+      "sha256": "2b7c80b4e7068c62084e40e2b664c04651ef901b6d8b58318090ed77336bd519"
+    },
+    {
+      "ref": "slice7-commit-receipt02.stdout.txt",
+      "bytes": 440,
+      "sha256": "79940ebc715ed1b5a793214a7c4f5cef60e2f62c5f1c6cbafbaad24cccdf8a81"
+    },
+    {
+      "ref": "slice7-commit-receipt02.stderr.txt",
+      "bytes": 0,
+      "sha256": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855"
+    }
+  ]
+}

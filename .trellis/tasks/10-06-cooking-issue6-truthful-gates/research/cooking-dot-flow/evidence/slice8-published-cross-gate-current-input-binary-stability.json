@@ -1,0 +1,648 @@
+{
+  "at": "2026-10-06T01:56:07.468841+00:00",
+  "sourceSHA": "b8c53e8153b9c6f015e75040b9561b3078f05e5f",
+  "checks": [
+    {
+      "gate": "cooking-et-level-runtime",
+      "leaf": "ET relation analyzer build",
+      "group": "sourceBeforeRestore",
+      "checked": 322,
+      "mismatches": []
+    },
+    {
+      "gate": "cooking-et-level-runtime",
+      "leaf": "ET relation analyzer build",
+      "group": "sourceBefore",
+      "checked": 1202,
+      "mismatches": []
+    },
+    {
+      "gate": "cooking-et-level-runtime",
+      "leaf": "ET relation analyzer build",
+      "group": "sourceAfter",
+      "checked": 1202,
+      "mismatches": []
+    },
+    {
+      "gate": "cooking-et-level-runtime",
+      "leaf": "ET relation analyzer build",
+      "group": "compiler",
+      "checked": 131,
+      "mismatches": []
+    },
+    {
+      "gate": "cooking-et-level-runtime",
+      "leaf": "ET relation analyzer build",
+      "group": "loadedAfter",
+      "checked": 0,
+      "mismatches": []
+    },
+    {
+      "gate": "cooking-et-level-runtime",
+      "leaf": "ET relation analyzer build",
+      "group": "restore/inputs",
+      "checked": 322,
+      "mismatches": []
+    },
+    {
+      "gate": "cooking-et-level-runtime",
+      "leaf": "ET relation analyzer build",
+      "group": "build/inputs",
+      "checked": 1203,
+      "mismatches": []
+    },
+    {
+      "gate": "cooking-et-level-runtime",
+      "leaf": "ET relation analyzer build",
+      "group": "restore/outputs",
+      "checked": 3,
+      "mismatches": []
+    },
+    {
+      "gate": "cooking-et-level-runtime",
+      "leaf": "ET relation analyzer build",
+      "group": "build/outputs",
+      "checked": 3,
+      "mismatches": []
+    },
+    {
+      "gate": "cooking-et-level-runtime",
+      "leaf": "Cooking ET runtime build with relation analyzer",
+      "group": "sourceBeforeRestore",
+      "checked": 703,
+      "mismatches": []
+    },
+    {
+      "gate": "cooking-et-level-runtime",
+      "leaf": "Cooking ET runtime build with relation analyzer",
+      "group": "sourceBefore",
+      "checked": 1758,
+      "mismatches": []
+    },
+    {
+      "gate": "cooking-et-level-runtime",
+      "leaf": "Cooking ET runtime build with relation analyzer",
+      "group": "sourceAfter",
+      "checked": 1758,
+      "mismatches": []
+    },
+    {
+      "gate": "cooking-et-level-runtime",
+      "leaf": "Cooking ET runtime build with relation analyzer",
+      "group": "compiler",
+      "checked": 719,
+      "mismatches": []
+    },
+    {
+      "gate": "cooking-et-level-runtime",
+      "leaf": "Cooking ET runtime build with relation analyzer",
+      "group": "loadedAfter",
+      "checked": 0,
+      "mismatches": []
+    },
+    {
+      "gate": "cooking-et-level-runtime",
+      "leaf": "Cooking ET runtime build with relation analyzer",
+      "group": "restore/inputs",
+      "checked": 703,
+      "mismatches": []
+    },
+    {
+      "gate": "cooking-et-level-runtime",
+      "leaf": "Cooking ET runtime build with relation analyzer",
+      "group": "build/inputs",
+      "checked": 1768,
+      "mismatches": []
+    },
+    {
+      "gate": "cooking-et-level-runtime",
+      "leaf": "Cooking ET runtime build with relation analyzer",
+      "group": "restore/outputs",
+      "checked": 30,
+      "mismatches": []
+    },
+    {
+      "gate": "cooking-et-level-runtime",
+      "leaf": "Cooking ET runtime build with relation analyzer",
+      "group": "build/outputs",
+      "checked": 125,
+      "mismatches": []
+    },
+    {
+      "gate": "cooking-et-level-runtime",
+      "leaf": "Cooking domain and Level lifecycle tests",
+      "group": "sourceBeforeRestore",
+      "checked": 782,
+      "mismatches": []
+    },
+    {
+      "gate": "cooking-et-level-runtime",
+      "leaf": "Cooking domain and Level lifecycle tests",
+      "group": "sourceBefore",
+      "checked": 2143,
+      "mismatches": []
+    },
+    {
+      "gate": "cooking-et-level-runtime",
+      "leaf": "Cooking domain and Level lifecycle tests",
+      "group": "sourceAfter",
+      "checked": 2143,
+      "mismatches": []
+    },
+    {
+      "gate": "cooking-et-level-runtime",
+      "leaf": "Cooking domain and Level lifecycle tests",
+      "group": "compiler",
+      "checked": 809,
+      "mismatches": []
+    },
+    {
+      "gate": "cooking-et-level-runtime",
+      "leaf": "Cooking domain and Level lifecycle tests",
+      "group": "loadedAfter",
+      "checked": 259,
+      "mismatches": []
+    },
+    {
+      "gate": "cooking-et-level-runtime",
+      "leaf": "Cooking domain and Level lifecycle tests",
+      "group": "restore/inputs",
+      "checked": 782,
+      "mismatches": []
+    },
+    {
+      "gate": "cooking-et-level-runtime",
+      "leaf": "Cooking domain and Level lifecycle tests",
+      "group": "build/inputs",
+      "checked": 2155,
+      "mismatches": []
+    },
+    {
+      "gate": "cooking-et-level-runtime",
+      "leaf": "Cooking domain and Level lifecycle tests",
+      "group": "test/inputs",
+      "checked": 259,
+      "mismatches": []
+    },
+    {
+      "gate": "cooking-et-level-runtime",
+      "leaf": "Cooking domain and Level lifecycle tests",
+      "group": "restore/outputs",
+      "checked": 36,
+      "mismatches": []
+    },
+    {
+      "gate": "cooking-et-level-runtime",
+      "leaf": "Cooking domain and Level lifecycle tests",
+      "group": "build/outputs",
+      "checked": 259,
+      "mismatches": []
+    },
+    {
+      "gate": "cooking-et-level-runtime",
+      "leaf": "Cooking domain and Level lifecycle tests",
+      "group": "test/outputs",
+      "checked": 1,
+      "mismatches": []
+    },
+    {
+      "gate": "cooking-et-level-runtime",
+      "leaf": "Cooking ET Level host and runtime tests",
+      "group": "sourceBeforeRestore",
+      "checked": 747,
+      "mismatches": []
+    },
+    {
+      "gate": "cooking-et-level-runtime",
+      "leaf": "Cooking ET Level host and runtime tests",
+      "group": "sourceBefore",
+      "checked": 2208,
+      "mismatches": []
+    },
+    {
+      "gate": "cooking-et-level-runtime",
+      "leaf": "Cooking ET Level host and runtime tests",
+      "group": "sourceAfter",
+      "checked": 2208,
+      "mismatches": []
+    },
+    {
+      "gate": "cooking-et-level-runtime",
+      "leaf": "Cooking ET Level host and runtime tests",
+      "group": "compiler",
+      "checked": 774,
+      "mismatches": []
+    },
+    {
+      "gate": "cooking-et-level-runtime",
+      "leaf": "Cooking ET Level host and runtime tests",
+      "group": "loadedAfter",
+      "checked": 270,
+      "mismatches": []
+    },
+    {
+      "gate": "cooking-et-level-runtime",
+      "leaf": "Cooking ET Level host and runtime tests",
+      "group": "restore/inputs",
+      "checked": 747,
+      "mismatches": []
+    },
+    {
+      "gate": "cooking-et-level-runtime",
+      "leaf": "Cooking ET Level host and runtime tests",
+      "group": "build/inputs",
+      "checked": 2219,
+      "mismatches": []
+    },
+    {
+      "gate": "cooking-et-level-runtime",
+      "leaf": "Cooking ET Level host and runtime tests",
+      "group": "test/inputs",
+      "checked": 270,
+      "mismatches": []
+    },
+    {
+      "gate": "cooking-et-level-runtime",
+      "leaf": "Cooking ET Level host and runtime tests",
+      "group": "restore/outputs",
+      "checked": 33,
+      "mismatches": []
+    },
+    {
+      "gate": "cooking-et-level-runtime",
+      "leaf": "Cooking ET Level host and runtime tests",
+      "group": "build/outputs",
+      "checked": 270,
+      "mismatches": []
+    },
+    {
+      "gate": "cooking-et-level-runtime",
+      "leaf": "Cooking ET Level host and runtime tests",
+      "group": "test/outputs",
+      "checked": 1,
+      "mismatches": []
+    },
+    {
+      "gate": "cooking-kitchen-loop",
+      "leaf": "Cooking domain build",
+      "group": "sourceBeforeRestore",
+      "checked": 494,
+      "mismatches": []
+    },
+    {
+      "gate": "cooking-kitchen-loop",
+      "leaf": "Cooking domain build",
+      "group": "sourceBefore",
+      "checked": 665,
+      "mismatches": []
+    },
+    {
+      "gate": "cooking-kitchen-loop",
+      "leaf": "Cooking domain build",
+      "group": "sourceAfter",
+      "checked": 665,
+      "mismatches": []
+    },
+    {
+      "gate": "cooking-kitchen-loop",
+      "leaf": "Cooking domain build",
+      "group": "compiler",
+      "checked": 493,
+      "mismatches": []
+    },
+    {
+      "gate": "cooking-kitchen-loop",
+      "leaf": "Cooking domain build",
+      "group": "loadedAfter",
+      "checked": 0,
+      "mismatches": []
+    },
+    {
+      "gate": "cooking-kitchen-loop",
+      "leaf": "Cooking domain build",
+      "group": "restore/inputs",
+      "checked": 494,
+      "mismatches": []
+    },
+    {
+      "gate": "cooking-kitchen-loop",
+      "leaf": "Cooking domain build",
+      "group": "build/inputs",
+      "checked": 672,
+      "mismatches": []
+    },
+    {
+      "gate": "cooking-kitchen-loop",
+      "leaf": "Cooking domain build",
+      "group": "restore/outputs",
+      "checked": 21,
+      "mismatches": []
+    },
+    {
+      "gate": "cooking-kitchen-loop",
+      "leaf": "Cooking domain build",
+      "group": "build/outputs",
+      "checked": 92,
+      "mismatches": []
+    },
+    {
+      "gate": "cooking-kitchen-loop",
+      "leaf": "Cooking ET runtime build with relation analyzer",
+      "group": "sourceBeforeRestore",
+      "checked": 703,
+      "mismatches": []
+    },
+    {
+      "gate": "cooking-kitchen-loop",
+      "leaf": "Cooking ET runtime build with relation analyzer",
+      "group": "sourceBefore",
+      "checked": 1758,
+      "mismatches": []
+    },
+    {
+      "gate": "cooking-kitchen-loop",
+      "leaf": "Cooking ET runtime build with relation analyzer",
+      "group": "sourceAfter",
+      "checked": 1758,
+      "mismatches": []
+    },
+    {
+      "gate": "cooking-kitchen-loop",
+      "leaf": "Cooking ET runtime build with relation analyzer",
+      "group": "compiler",
+      "checked": 719,
+      "mismatches": []
+    },
+    {
+      "gate": "cooking-kitchen-loop",
+      "leaf": "Cooking ET runtime build with relation analyzer",
+      "group": "loadedAfter",
+      "checked": 0,
+      "mismatches": []
+    },
+    {
+      "gate": "cooking-kitchen-loop",
+      "leaf": "Cooking ET runtime build with relation analyzer",
+      "group": "restore/inputs",
+      "checked": 703,
+      "mismatches": []
+    },
+    {
+      "gate": "cooking-kitchen-loop",
+      "leaf": "Cooking ET runtime build with relation analyzer",
+      "group": "build/inputs",
+      "checked": 1768,
+      "mismatches": []
+    },
+    {
+      "gate": "cooking-kitchen-loop",
+      "leaf": "Cooking ET runtime build with relation analyzer",
+      "group": "restore/outputs",
+      "checked": 30,
+      "mismatches": []
+    },
+    {
+      "gate": "cooking-kitchen-loop",
+      "leaf": "Cooking ET runtime build with relation analyzer",
+      "group": "build/outputs",
+      "checked": 125,
+      "mismatches": []
+    },
+    {
+      "gate": "cooking-kitchen-loop",
+      "leaf": "Kitchen-loop focused contract tests",
+      "group": "sourceBeforeRestore",
+      "checked": 782,
+      "mismatches": []
+    },
+    {
+      "gate": "cooking-kitchen-loop",
+      "leaf": "Kitchen-loop focused contract tests",
+      "group": "sourceBefore",
+      "checked": 2143,
+      "mismatches": []
+    },
+    {
+      "gate": "cooking-kitchen-loop",
+      "leaf": "Kitchen-loop focused contract tests",
+      "group": "sourceAfter",
+      "checked": 2143,
+      "mismatches": []
+    },
+    {
+      "gate": "cooking-kitchen-loop",
+      "leaf": "Kitchen-loop focused contract tests",
+      "group": "compiler",
+      "checked": 809,
+      "mismatches": []
+    },
+    {
+      "gate": "cooking-kitchen-loop",
+      "leaf": "Kitchen-loop focused contract tests",
+      "group": "loadedAfter",
+      "checked": 259,
+      "mismatches": []
+    },
+    {
+      "gate": "cooking-kitchen-loop",
+      "leaf": "Kitchen-loop focused contract tests",
+      "group": "restore/inputs",
+      "checked": 782,
+      "mismatches": []
+    },
+    {
+      "gate": "cooking-kitchen-loop",
+      "leaf": "Kitchen-loop focused contract tests",
+      "group": "build/inputs",
+      "checked": 2155,
+      "mismatches": []
+    },
+    {
+      "gate": "cooking-kitchen-loop",
+      "leaf": "Kitchen-loop focused contract tests",
+      "group": "test/inputs",
+      "checked": 259,
+      "mismatches": []
+    },
+    {
+      "gate": "cooking-kitchen-loop",
+      "leaf": "Kitchen-loop focused contract tests",
+      "group": "restore/outputs",
+      "checked": 36,
+      "mismatches": []
+    },
+    {
+      "gate": "cooking-kitchen-loop",
+      "leaf": "Kitchen-loop focused contract tests",
+      "group": "build/outputs",
+      "checked": 259,
+      "mismatches": []
+    },
+    {
+      "gate": "cooking-kitchen-loop",
+      "leaf": "Kitchen-loop focused contract tests",
+      "group": "test/outputs",
+      "checked": 1,
+      "mismatches": []
+    },
+    {
+      "gate": "cooking-kitchen-loop",
+      "leaf": "Cooking domain and Level lifecycle regression",
+      "group": "sourceBeforeRestore",
+      "checked": 782,
+      "mismatches": []
+    },
+    {
+      "gate": "cooking-kitchen-loop",
+      "leaf": "Cooking domain and Level lifecycle regression",
+      "group": "sourceBefore",
+      "checked": 2143,
+      "mismatches": []
+    },
+    {
+      "gate": "cooking-kitchen-loop",
+      "leaf": "Cooking domain and Level lifecycle regression",
+      "group": "sourceAfter",
+      "checked": 2143,
+      "mismatches": []
+    },
+    {
+      "gate": "cooking-kitchen-loop",
+      "leaf": "Cooking domain and Level lifecycle regression",
+      "group": "compiler",
+      "checked": 809,
+      "mismatches": []
+    },
+    {
+      "gate": "cooking-kitchen-loop",
+      "leaf": "Cooking domain and Level lifecycle regression",
+      "group": "loadedAfter",
+      "checked": 259,
+      "mismatches": []
+    },
+    {
+      "gate": "cooking-kitchen-loop",
+      "leaf": "Cooking domain and Level lifecycle regression",
+      "group": "restore/inputs",
+      "checked": 782,
+      "mismatches": []
+    },
+    {
+      "gate": "cooking-kitchen-loop",
+      "leaf": "Cooking domain and Level lifecycle regression",
+      "group": "build/inputs",
+      "checked": 2155,
+      "mismatches": []
+    },
+    {
+      "gate": "cooking-kitchen-loop",
+      "leaf": "Cooking domain and Level lifecycle regression",
+      "group": "test/inputs",
+      "checked": 259,
+      "mismatches": []
+    },
+    {
+      "gate": "cooking-kitchen-loop",
+      "leaf": "Cooking domain and Level lifecycle regression",
+      "group": "restore/outputs",
+      "checked": 36,
+      "mismatches": []
+    },
+    {
+      "gate": "cooking-kitchen-loop",
+      "leaf": "Cooking domain and Level lifecycle regression",
+      "group": "build/outputs",
+      "checked": 259,
+      "mismatches": []
+    },
+    {
+      "gate": "cooking-kitchen-loop",
+      "leaf": "Cooking domain and Level lifecycle regression",
+      "group": "test/outputs",
+      "checked": 1,
+      "mismatches": []
+    },
+    {
+      "gate": "cooking-kitchen-loop",
+      "leaf": "Cooking ET Level host and runtime regression",
+      "group": "sourceBeforeRestore",
+      "checked": 747,
+      "mismatches": []
+    },
+    {
+      "gate": "cooking-kitchen-loop",
+      "leaf": "Cooking ET Level host and runtime regression",
+      "group": "sourceBefore",
+      "checked": 2208,
+      "mismatches": []
+    },
+    {
+      "gate": "cooking-kitchen-loop",
+      "leaf": "Cooking ET Level host and runtime regression",
+      "group": "sourceAfter",
+      "checked": 2208,
+      "mismatches": []
+    },
+    {
+      "gate": "cooking-kitchen-loop",
+      "leaf": "Cooking ET Level host and runtime regression",
+      "group": "compiler",
+      "checked": 774,
+      "mismatches": []
+    },
+    {
+      "gate": "cooking-kitchen-loop",
+      "leaf": "Cooking ET Level host and runtime regression",
+      "group": "loadedAfter",
+      "checked": 270,
+      "mismatches": []
+    },
+    {
+      "gate": "cooking-kitchen-loop",
+      "leaf": "Cooking ET Level host and runtime regression",
+      "group": "restore/inputs",
+      "checked": 747,
+      "mismatches": []
+    },
+    {
+      "gate": "cooking-kitchen-loop",
+      "leaf": "Cooking ET Level host and runtime regression",
+      "group": "build/inputs",
+      "checked": 2219,
+      "mismatches": []
+    },
+    {
+      "gate": "cooking-kitchen-loop",
+      "leaf": "Cooking ET Level host and runtime regression",
+      "group": "test/inputs",
+      "checked": 270,
+      "mismatches": []
+    },
+    {
+      "gate": "cooking-kitchen-loop",
+      "leaf": "Cooking ET Level host and runtime regression",
+      "group": "restore/outputs",
+      "checked": 33,
+      "mismatches": []
+    },
+    {
+      "gate": "cooking-kitchen-loop",
+      "leaf": "Cooking ET Level host and runtime regression",
+      "group": "build/outputs",
+      "checked": 270,
+      "mismatches": []
+    },
+    {
+      "gate": "cooking-kitchen-loop",
+      "leaf": "Cooking ET Level host and runtime regression",
+      "group": "test/outputs",
+      "checked": 1,
+      "mismatches": []
+    }
+  ],
+  "mismatches": [],
+  "resultIdsUnique": true,
+  "runIdsDistinct": true,
+  "trxIdsUnique": true,
+  "noConfigContentsRead": true
+}

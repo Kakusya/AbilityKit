@@ -1,0 +1,68 @@
+{
+  "id": "ff9e8126-caf2-4bbc-b043-a0d54d8d7848",
+  "ok": true,
+  "result": {
+    "runId": "run_5ba664a5f016",
+    "deliveryId": "delivery_c325762ec493",
+    "messages": [
+      {
+        "id": "msg_db0228989b16",
+        "run_id": "run_5ba664a5f016",
+        "delivery_contract": "current_delivery",
+        "from_handle": "term_a1a61c7c-aef6-4cd0-8c46-27a90632617b",
+        "to_handle": "run:run_5ba664a5f016",
+        "subject": "alive",
+        "body": "",
+        "type": "heartbeat",
+        "priority": "normal",
+        "thread_id": null,
+        "payload": "{\"taskId\":\"task_c2b5e42b2e23\",\"dispatchId\":\"ctx_c1d5fbd7ef56\",\"phase\":\"implementing\"}",
+        "created_at": "2026-10-05T18:14:41Z",
+        "delivered_at": null
+      },
+      {
+        "id": "msg_eb66f8cf8fc3",
+        "run_id": "run_5ba664a5f016",
+        "delivery_contract": "current_delivery",
+        "from_handle": "term_a1a61c7c-aef6-4cd0-8c46-27a90632617b",
+        "to_handle": "run:run_5ba664a5f016",
+        "subject": "alive",
+        "body": "",
+        "type": "heartbeat",
+        "priority": "normal",
+        "thread_id": null,
+        "payload": "{\"taskId\":\"task_c2b5e42b2e23\",\"dispatchId\":\"ctx_c1d5fbd7ef56\",\"phase\":\"implementing\"}",
+        "created_at": "2026-10-05T18:21:45Z",
+        "delivered_at": null
+      },
+      {
+        "id": "msg_abeb23627609",
+        "run_id": "run_5ba664a5f016",
+        "delivery_contract": "current_delivery",
+        "from_handle": "term_a1a61c7c-aef6-4cd0-8c46-27a90632617b",
+        "to_handle": "run:run_5ba664a5f016",
+        "subject": "Stage argv regression corrected; full controls frozen rerun",
+        "body": "Confirmed the four independent stage+native argv reds and added six dimension mutations. The stricter validation exposed an existing PowerShell restore TargetFramework expression split, now fixed; actual isolated runner build/test smoke is Passed and f03 failure is preserved. Frozen full controls f04 is running with completed-counter=0 and uninvoked aggregate regressions included; no real workload ran.",
+        "type": "status",
+        "priority": "normal",
+        "thread_id": null,
+        "payload": "{\"taskId\":\"task_c2b5e42b2e23\",\"dispatchId\":\"ctx_c1d5fbd7ef56\"}",
+        "created_at": "2026-10-05T18:22:45Z",
+        "delivered_at": null
+      }
+    ],
+    "count": 3,
+    "replayed": false,
+    "acknowledged": null,
+    "timedOut": false,
+    "cancelled": false,
+    "connectionLost": false,
+    "mutation": {
+      "requestId": "792ab07c-8fcb-43b4-ba4f-79ff8fc2c32f",
+      "replayed": false
+    }
+  },
+  "_meta": {
+    "runtimeId": "ff0c5f2c-d341-4455-bc1c-c113650bdd60"
+  }
+}

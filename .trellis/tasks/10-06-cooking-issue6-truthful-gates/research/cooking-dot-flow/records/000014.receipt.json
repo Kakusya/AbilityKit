@@ -1,0 +1,12 @@
+{
+  "version": 1,
+  "flow_id": "6d3174fd-2b01-4136-8ea5-0b0cd0e2845d",
+  "seq": 14,
+  "op_id": "6d3174fd-2b01-4136-8ea5-0b0cd0e2845d:000014",
+  "kind": "receipt",
+  "recorded_utc": "2026-10-05T18:03:16.728115Z",
+  "intent_hash": "27d4c3a831ad0c14616f5c15862082ae5061850ceb79433550e75851af6799ae",
+  "outcome": "applied",
+  "raw_ref": "evidence/slice1-stage-binding-send-raw.json",
+  "result": {}
+}

@@ -1,0 +1,38 @@
+{
+  "id": "45a367df-4859-4fdd-bc24-e3e6f716ce5d",
+  "ok": true,
+  "result": {
+    "runId": "run_5ba664a5f016",
+    "deliveryId": "delivery_bd576bd74596",
+    "messages": [
+      {
+        "id": "msg_ea8b1fced150",
+        "run_id": "run_5ba664a5f016",
+        "delivery_contract": "current_delivery",
+        "from_handle": "term_a1a61c7c-aef6-4cd0-8c46-27a90632617b",
+        "to_handle": "run:run_5ba664a5f016",
+        "subject": "Gate1 Passed audited Gate2 exact launched serially",
+        "body": "Gate1 parent native0 exitConfirmed00:36:32.004Z->01:10:03.079Z; independent auditnative0 zeroissues/gaps4required867/328. Eight pinned hashes unchanged between,6241 originalFailed files preserved, zero.NET writers before actual gate2launch.",
+        "type": "heartbeat",
+        "priority": "normal",
+        "thread_id": null,
+        "payload": "{\"taskId\":\"task_8285f2c0421e\",\"dispatchId\":\"ctx_a4e2695b308e\",\"phase\":\"reviewing\"}",
+        "created_at": "2026-10-06T01:11:28Z",
+        "delivered_at": null
+      }
+    ],
+    "count": 1,
+    "replayed": false,
+    "acknowledged": null,
+    "timedOut": false,
+    "cancelled": false,
+    "connectionLost": false,
+    "mutation": {
+      "requestId": "2f15cda1-22cb-4b28-adb5-f7ed61ea814c",
+      "replayed": false
+    }
+  },
+  "_meta": {
+    "runtimeId": "ff0c5f2c-d341-4455-bc1c-c113650bdd60"
+  }
+}

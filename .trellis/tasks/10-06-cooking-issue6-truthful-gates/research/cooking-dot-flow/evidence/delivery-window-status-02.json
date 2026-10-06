@@ -1,0 +1,53 @@
+{
+  "id": "03c43d22-5e64-4c9e-8bb1-1f1713d780f5",
+  "ok": true,
+  "result": {
+    "runId": "run_5ba664a5f016",
+    "deliveryId": "delivery_0825e006d559",
+    "messages": [
+      {
+        "id": "msg_fc77b6664a52",
+        "run_id": "run_5ba664a5f016",
+        "delivery_contract": "current_delivery",
+        "from_handle": "term_a1a61c7c-aef6-4cd0-8c46-27a90632617b",
+        "to_handle": "run:run_5ba664a5f016",
+        "subject": "First frozen suite failed; width cases pass; fix isolated",
+        "body": "The first frozen suite exited native1 after158 Passed cases when the newly added width mutation used a nested array from PowerShell5 JSON deserialization, so this attempt is failed and preserved in window-full01/window-full-log01. The three actual WindowSize.Width40/80/120 subprocess cases pass; one-line test-only array-unwrapping fix now passes the positive receipt and all four refusal mutations against those actual receipts. A second complete frozen suite will run on final inputs; production files and prior records remain unchanged.",
+        "type": "status",
+        "priority": "normal",
+        "thread_id": null,
+        "payload": "{\"taskId\":\"task_c9384f689b07\",\"dispatchId\":\"ctx_f42f62847f04\"}",
+        "created_at": "2026-10-05T19:18:02Z",
+        "delivered_at": null
+      },
+      {
+        "id": "msg_2b8a47959d30",
+        "run_id": "run_5ba664a5f016",
+        "delivery_contract": "current_delivery",
+        "from_handle": "term_a1a61c7c-aef6-4cd0-8c46-27a90632617b",
+        "to_handle": "run:run_5ba664a5f016",
+        "subject": "alive",
+        "body": "",
+        "type": "heartbeat",
+        "priority": "normal",
+        "thread_id": null,
+        "payload": "{\"taskId\":\"task_c9384f689b07\",\"dispatchId\":\"ctx_f42f62847f04\",\"phase\":\"reviewing\"}",
+        "created_at": "2026-10-05T19:19:33Z",
+        "delivered_at": null
+      }
+    ],
+    "count": 2,
+    "replayed": false,
+    "acknowledged": null,
+    "timedOut": false,
+    "cancelled": false,
+    "connectionLost": false,
+    "mutation": {
+      "requestId": "ed33443c-2f53-4188-a477-842761e61fe8",
+      "replayed": false
+    }
+  },
+  "_meta": {
+    "runtimeId": "ff0c5f2c-d341-4455-bc1c-c113650bdd60"
+  }
+}

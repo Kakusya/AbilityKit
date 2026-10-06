@@ -1,0 +1,19 @@
+{
+  "version": 1,
+  "flow_id": "6d3174fd-2b01-4136-8ea5-0b0cd0e2845d",
+  "seq": 89,
+  "op_id": "6d3174fd-2b01-4136-8ea5-0b0cd0e2845d:000089",
+  "kind": "receipt",
+  "recorded_utc": "2026-10-05T23:42:32.845657Z",
+  "intent_hash": "3b9e637825daebb8e764305380710114cbc429bd0095ac033dc79e59e95ac9b9",
+  "outcome": "applied",
+  "raw_ref": "evidence/slice7-binding-repair-worker-start.json",
+  "result": {
+    "taskId": "task_f9cd55629781",
+    "dispatchId": "ctx_00994ffacdae",
+    "state": "ready",
+    "stage": "input_accepted",
+    "turnStart": "observed",
+    "actualNativeExitCode": 0
+  }
+}

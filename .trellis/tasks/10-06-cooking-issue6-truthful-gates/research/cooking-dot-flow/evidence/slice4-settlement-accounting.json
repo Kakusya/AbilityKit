@@ -1,0 +1,13 @@
+{
+  "at": "2026-10-05T20:44:17.617093+00:00",
+  "taskId": "task_b21c8d19b8ee",
+  "dispatchId": "ctx_5c932faebb3d",
+  "workerDone": "msg_3ab454f783c2",
+  "outcome": "failed",
+  "capabilityRevoked": "2026-10-05T20:43:42.324Z",
+  "idleEvidence": "slice4-settled-idle.json",
+  "audit": "slice4-main-report-audit.json",
+  "resourceAccounting": "approved terminal/worktree reuse for distinct bounded restore graph repair; no cleanup",
+  "nextScope": "restore-graph-repair-spec.md",
+  "finalReceiptSha256": "c82b0237adbcc99ef6e1b3cc700aa6e27478aef53f58bd3f7c5b58aa3df4aad1"
+}

@@ -1,0 +1,38 @@
+{
+  "id": "e822f4ff-faf4-4dfc-80b9-78d97c5e8b4c",
+  "ok": true,
+  "result": {
+    "runId": "run_5ba664a5f016",
+    "deliveryId": "delivery_29d203fe63d1",
+    "messages": [
+      {
+        "id": "msg_79bc38bef7a5",
+        "run_id": "run_5ba664a5f016",
+        "delivery_contract": "current_delivery",
+        "from_handle": "term_a1a61c7c-aef6-4cd0-8c46-27a90632617b",
+        "to_handle": "run:run_5ba664a5f016",
+        "subject": "Slice1 full controls and provenance review",
+        "body": "The first complete isolated run finished with 101 executed controls and zero failures, preserving all prior failed smoke attempts and the original false-Passed evidence. A follow-up source review identified the need to capture target-added compiler inputs, so I added an owned per-run MSBuild GetFileHash trace before CoreCompile plus native stage and SDK receipt binding; a fresh positive smoke and full rerun are in progress. Scope remains confined to the exact owned files, with real Cooking gates and final Issue acceptance still NotRun.",
+        "type": "status",
+        "priority": "normal",
+        "thread_id": null,
+        "payload": "{\"taskId\":\"task_c2b5e42b2e23\",\"dispatchId\":\"ctx_c1d5fbd7ef56\"}",
+        "created_at": "2026-10-05T18:01:03Z",
+        "delivered_at": null
+      }
+    ],
+    "count": 1,
+    "replayed": false,
+    "acknowledged": null,
+    "timedOut": false,
+    "cancelled": false,
+    "connectionLost": false,
+    "mutation": {
+      "requestId": "4bfbe1f7-fcc1-48e2-be97-edf51c6c5a35",
+      "replayed": false
+    }
+  },
+  "_meta": {
+    "runtimeId": "ff0c5f2c-d341-4455-bc1c-c113650bdd60"
+  }
+}

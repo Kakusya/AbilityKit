@@ -1,0 +1,123 @@
+{
+  "id": "eddae21d-7445-45f5-9562-7dd853a1793f",
+  "ok": true,
+  "result": {
+    "dispatchId": "ctx_a4e2695b308e",
+    "source": "transcript",
+    "sourceIdentity": "cu2zdwkdsmPUSCyhNJeOZCjLL8pYI9Oi",
+    "provider": "codex",
+    "transcript": {
+      "messages": [
+        {
+          "id": "ctco_01a10ead-749c-72c0-8009-349632d58cc6",
+          "role": "tool",
+          "blocks": [
+            {
+              "type": "tool-result",
+              "output": "Script completed\nWall time 5.6 seconds\nOutput:\n{\"chunk_id\":\"f92202\",\"wall_time_seconds\":0.1235198,\"exit_code\":0,\"original_token_count\":146,\"output\":\"{\\r\\n    \\\"at\\\":  \\\"2026-10-06T00:46:32.3678443Z\\\",\\r\\n    \\\"runner\\\":  true,\\r\\n    \\\"wholeDue\\\":  false,\\r\\n    \\\"testDue\\\":  0,\\r\\n    \\\"nativeTests\\\":  [\\r\\n\\r\\n                    ]\\r\\n}\\r\\n[\\r\\n    {\\r\\n        \\\"Name\\\":  \\\"ev-r-10.pp.xml\\\",\\r\\n        \\\"Length\\\":  1536332,\\r\\n        \\\"LastWriteTime\\\":  \\\"\\\\/Date(1791247554329)\\\\/\\\"\\r\\n    },\\r\\n    {\\r\\n        \\\"Name\\\":  \\\"ev-r-10-imports.stderr.txt\\\",\\r\\n        \\\"Length\\\":  0,\\r\\n        \\\"LastWriteTime\\\":  \\\"\\\\/Date(1791247554048)\\\\/\\\"\\r\\n    },\\r\\n    {\\r\\n        \\\"Name\\\":  \\\"ev-r-10-imports.stdout.txt\\\",\\r\\n        \\\"Length\\\":  0,\\r\\n        \\\"LastWriteTime\\\":  \\\"\\\\/Date(1791247554047)\\\\/\\\"\\r\\n    }\\r\\n]\\r\\n\"}\n{\"chunk_id\":\"19d79d\",\"wall_time_seconds\":5.0123833,\"session_id\":29067,\"original_token_count\":0,\"output\":\"\"}"
+            }
+          ],
+          "timestamp": 1791247611036,
+          "source": "transcript"
+        },
+        {
+          "id": "msg_03d36cc6d8b642f4016ac444ff3cf087d0abe1e426c79f9704",
+          "role": "assistant",
+          "blocks": [
+            {
+              "type": "text",
+              "text": "ET project preprocessing has reached its referenced inputs. No current native test has reached the 15-minute observation boundary, and the whole gate remains below 45 minutes."
+            }
+          ],
+          "timestamp": 1791247616705,
+          "source": "transcript"
+        },
+        {
+          "id": "fc_03d36cc6d8b642f4016ac44500438087d08081c2462c3d92c5",
+          "role": "assistant",
+          "blocks": [
+            {
+              "type": "tool-call",
+              "name": "sleep",
+              "input": "{\"duration_ms\":50000}",
+              "callId": "call_jXyCLdMaAStt1UjYCuMaFqQj"
+            }
+          ],
+          "timestamp": 1791247617239,
+          "source": "transcript"
+        }
+      ],
+      "nextCursor": "owr1_eyJ2IjoxLCJkIjoiY3R4X2E0ZTI2OTViMzA4ZSIsInMiOiJ0cmFuc2NyaXB0IiwiaSI6ImN1Mnpkd2tkc21QVVNDeWhOSmVPWkNqTEw4cFlJOU9pIiwicCI6MjcyOTYwMjMsImMiOiI3QndRZnVyNS05aHA2Y2NjRHJWREsxVTlxcXpRLWhlayJ9",
+      "limited": true,
+      "returnedMessageCount": 3
+    },
+    "cursor": "owr1_eyJ2IjoxLCJkIjoiY3R4X2E0ZTI2OTViMzA4ZSIsInMiOiJ0cmFuc2NyaXB0IiwiaSI6ImN1Mnpkd2tkc21QVVNDeWhOSmVPWkNqTEw4cFlJOU9pIiwicCI6MjcyOTYwMjMsImMiOiI3QndRZnVyNS05aHA2Y2NjRHJWREsxVTlxcXpRLWhlayJ9",
+    "status": {
+      "worker": "ready",
+      "terminal": "running",
+      "liveness": "live"
+    },
+    "fallbackReason": null,
+    "warnings": [],
+    "sourceExact": true,
+    "contentComplete": false,
+    "clipping": [
+      "message_limit_or_scan_window"
+    ],
+    "projection": {
+      "id": "ctx_a4e2695b308e",
+      "dispatchId": "ctx_a4e2695b308e",
+      "taskId": "task_8285f2c0421e",
+      "runId": "run_5ba664a5f016",
+      "role": "worker",
+      "parent": null,
+      "provider": {
+        "id": "codex",
+        "model": "gpt-6.1-sol"
+      },
+      "host": {
+        "kind": "local",
+        "id": "local"
+      },
+      "workspace": {
+        "id": "aaa97e0d-5026-4e5c-95f8-bb420dcb4c65::C:/Users/Administrator/orca/workspaces/AbilityKit/issue6-cooking-truthful-gates",
+        "kind": "folder_or_worktree"
+      },
+      "stage": {
+        "worker": "ready",
+        "dispatch": "dispatched",
+        "detail": "input_accepted",
+        "activity": "working"
+      },
+      "outcome": "in_progress",
+      "liveness": {
+        "verdict": "live",
+        "observedAt": 1791247617364,
+        "source": "agent_status"
+      },
+      "evidence": {
+        "durable": true,
+        "liveStatus": "fresh",
+        "lastObservedAt": 1791247617364
+      },
+      "resource": {
+        "state": "external",
+        "id": "wtr_de5d9ab4b4af",
+        "ownerDispatchId": "ctx_a4e2695b308e",
+        "releaseState": "not_requested",
+        "terminalState": "retained"
+      },
+      "nextAction": {
+        "kind": "none",
+        "argv": []
+      },
+      "attention": {
+        "categories": [],
+        "requiresAction": false
+      }
+    }
+  },
+  "_meta": {
+    "runtimeId": "ff0c5f2c-d341-4455-bc1c-c113650bdd60"
+  }
+}

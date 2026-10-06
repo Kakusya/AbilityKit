@@ -1,0 +1,1 @@
+Push exact verified implementation b8c53e8153b9c6f015e75040b9561b3078f05e5f to origin Kakusya/issue6-cooking-truthful-gates. Main scope and 29 controls Passed; real checks on new source NotRun. No merge/close.

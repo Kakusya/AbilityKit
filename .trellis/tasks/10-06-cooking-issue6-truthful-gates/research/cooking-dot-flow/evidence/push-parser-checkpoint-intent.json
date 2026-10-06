@@ -1,0 +1,8 @@
+{
+  "repository": "Kakusya/AbilityKit",
+  "remote": "origin",
+  "ref": "refs/heads/Kakusya/issue6-cooking-truthful-gates",
+  "sourceSha": "79bf9642b04a696880a1c393ca5d11171a4b078a",
+  "purpose": "published scope-audited parser repair, full166 controls and main10+same-second controls passed; real Cooking rerun active, final acceptance NotRun",
+  "noForce": true
+}

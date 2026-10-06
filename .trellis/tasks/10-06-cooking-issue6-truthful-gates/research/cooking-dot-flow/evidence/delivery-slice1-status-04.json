@@ -1,0 +1,98 @@
+{
+  "id": "114cb7ac-91dc-43f0-b68e-ef1b640fc369",
+  "ok": true,
+  "result": {
+    "runId": "run_5ba664a5f016",
+    "deliveryId": "delivery_7bb148cf5659",
+    "messages": [
+      {
+        "id": "msg_9229f045f938",
+        "run_id": "run_5ba664a5f016",
+        "delivery_contract": "current_delivery",
+        "from_handle": "term_a1a61c7c-aef6-4cd0-8c46-27a90632617b",
+        "to_handle": "run:run_5ba664a5f016",
+        "subject": "Additional command identity reds preserved",
+        "body": "Independent validator review reproduced duplicate filter argv (mutating matching native receipt too) and forged leaf summary command as accepted. Saved both red candidates/receipts in local/Artifacts/issue6-cooking-slice1-filter-command-red; f04 remains frozen while completing, then I will bind unique filter and final summary command/times to the terminal stage and rerun final controls. No real workload or scope expansion.",
+        "type": "status",
+        "priority": "normal",
+        "thread_id": null,
+        "payload": "{\"taskId\":\"task_c2b5e42b2e23\",\"dispatchId\":\"ctx_c1d5fbd7ef56\"}",
+        "created_at": "2026-10-05T18:26:55Z",
+        "delivered_at": null
+      },
+      {
+        "id": "msg_21aa20de09e8",
+        "run_id": "run_5ba664a5f016",
+        "delivery_contract": "current_delivery",
+        "from_handle": "term_a1a61c7c-aef6-4cd0-8c46-27a90632617b",
+        "to_handle": "run:run_5ba664a5f016",
+        "subject": "alive",
+        "body": "",
+        "type": "heartbeat",
+        "priority": "normal",
+        "thread_id": null,
+        "payload": "{\"taskId\":\"task_c2b5e42b2e23\",\"dispatchId\":\"ctx_c1d5fbd7ef56\",\"phase\":\"reviewing\"}",
+        "created_at": "2026-10-05T18:27:49Z",
+        "delivered_at": null
+      },
+      {
+        "id": "msg_452202c7412b",
+        "run_id": "run_5ba664a5f016",
+        "delivery_contract": "current_delivery",
+        "from_handle": "term_a1a61c7c-aef6-4cd0-8c46-27a90632617b",
+        "to_handle": "run:run_5ba664a5f016",
+        "subject": "Final command identity fixes frozen; f05 started",
+        "body": "f04 completed 154 isolated controls with native0, preserved as superseded due the independent duplicate-filter/summary-command reds. Added six actual validator mutations and fixed terminal summary command/time, unique filter, native tool argv/executable and stream archive ownership checks; new runner positive s08 Passed. f05 full frozen suite started, report and scoped audit are being finalized, no real workload ran.",
+        "type": "status",
+        "priority": "normal",
+        "thread_id": null,
+        "payload": "{\"taskId\":\"task_c2b5e42b2e23\",\"dispatchId\":\"ctx_c1d5fbd7ef56\"}",
+        "created_at": "2026-10-05T18:31:42Z",
+        "delivered_at": null
+      },
+      {
+        "id": "msg_fd93e8feee1a",
+        "run_id": "run_5ba664a5f016",
+        "delivery_contract": "current_delivery",
+        "from_handle": "term_a1a61c7c-aef6-4cd0-8c46-27a90632617b",
+        "to_handle": "run:run_5ba664a5f016",
+        "subject": "Width evidence request acknowledged; no edits during f05",
+        "body": "Acknowledged requested/applied/observed width requirement and will preserve direct stream bytes. Current report already limits width claims because redirected RawUI setter can fail, but the fixture/harness must also record that fact; I will add owned width metadata after f05 settles, then rerun affected and full frozen controls before checkpoint. No visible windows, dependencies, process cleanup or real workload will be used.",
+        "type": "status",
+        "priority": "normal",
+        "thread_id": null,
+        "payload": "{\"taskId\":\"task_c2b5e42b2e23\",\"dispatchId\":\"ctx_c1d5fbd7ef56\"}",
+        "created_at": "2026-10-05T18:34:47Z",
+        "delivered_at": null
+      },
+      {
+        "id": "msg_6a3265952e47",
+        "run_id": "run_5ba664a5f016",
+        "delivery_contract": "current_delivery",
+        "from_handle": "term_a1a61c7c-aef6-4cd0-8c46-27a90632617b",
+        "to_handle": "run:run_5ba664a5f016",
+        "subject": "alive",
+        "body": "",
+        "type": "heartbeat",
+        "priority": "normal",
+        "thread_id": null,
+        "payload": "{\"taskId\":\"task_c2b5e42b2e23\",\"dispatchId\":\"ctx_c1d5fbd7ef56\",\"phase\":\"reviewing\"}",
+        "created_at": "2026-10-05T18:34:59Z",
+        "delivered_at": null
+      }
+    ],
+    "count": 5,
+    "replayed": false,
+    "acknowledged": null,
+    "timedOut": false,
+    "cancelled": false,
+    "connectionLost": false,
+    "mutation": {
+      "requestId": "bb9befd7-4c66-4983-90a0-59604bd7d5bd",
+      "replayed": false
+    }
+  },
+  "_meta": {
+    "runtimeId": "ff0c5f2c-d341-4455-bc1c-c113650bdd60"
+  }
+}

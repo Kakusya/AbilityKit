@@ -1,0 +1,68 @@
+﻿{
+  "id": "bc202f88-6051-497e-9a6c-b02283210457",
+  "ok": true,
+  "result": {
+    "runId": "run_5ba664a5f016",
+    "deliveryId": "delivery_7327cb7f62ed",
+    "messages": [
+      {
+        "id": "msg_f2edb7a5a83f",
+        "run_id": "run_5ba664a5f016",
+        "delivery_contract": "current_delivery",
+        "from_handle": "term_a1a61c7c-aef6-4cd0-8c46-27a90632617b",
+        "to_handle": "run:run_5ba664a5f016",
+        "subject": "Slice6 observed test config ledger gap",
+        "body": "First genuine Cooking test completed native0/TRX867 executed867 passed0 unexecuted; both explicit builds native0 and analyzer assets netstandard2.0. Direct test-stage inputs contain only loaded binaries and omit the SDK-discovered EffectiveNuGetConfigHashOnly entry, while source/restore/build proofs retain the stable config; observation is preserved in local/Artifacts/issue6-cooking-slice6-verification-c66e1880/test-config-ledger-gap-first.json. I will preserve this verification limitation and still complete gate1 and attempt gate2 serially as contracted, without source repair.",
+        "type": "status",
+        "priority": "normal",
+        "thread_id": null,
+        "payload": "{\"taskId\":\"task_31fd1c2368df\",\"dispatchId\":\"ctx_4c94250ae711\"}",
+        "created_at": "2026-10-05T22:21:44Z",
+        "delivered_at": null
+      },
+      {
+        "id": "msg_6c0e8bd05b9e",
+        "run_id": "run_5ba664a5f016",
+        "delivery_contract": "current_delivery",
+        "from_handle": "term_a1a61c7c-aef6-4cd0-8c46-27a90632617b",
+        "to_handle": "run:run_5ba664a5f016",
+        "subject": "alive",
+        "body": "",
+        "type": "heartbeat",
+        "priority": "normal",
+        "thread_id": null,
+        "payload": "{\"taskId\":\"task_31fd1c2368df\",\"dispatchId\":\"ctx_4c94250ae711\",\"phase\":\"reviewing\"}",
+        "created_at": "2026-10-05T22:22:58Z",
+        "delivered_at": null
+      },
+      {
+        "id": "msg_135f351729e1",
+        "run_id": "run_5ba664a5f016",
+        "delivery_contract": "current_delivery",
+        "from_handle": "term_a1a61c7c-aef6-4cd0-8c46-27a90632617b",
+        "to_handle": "run:run_5ba664a5f016",
+        "subject": "alive",
+        "body": "",
+        "type": "heartbeat",
+        "priority": "normal",
+        "thread_id": null,
+        "payload": "{\"taskId\":\"task_31fd1c2368df\",\"dispatchId\":\"ctx_4c94250ae711\",\"phase\":\"reviewing\"}",
+        "created_at": "2026-10-05T22:27:47Z",
+        "delivered_at": null
+      }
+    ],
+    "count": 3,
+    "replayed": false,
+    "acknowledged": null,
+    "timedOut": false,
+    "cancelled": false,
+    "connectionLost": false,
+    "mutation": {
+      "requestId": "80c58095-a301-4c55-b499-73c790e99c75",
+      "replayed": false
+    }
+  },
+  "_meta": {
+    "runtimeId": "ff0c5f2c-d341-4455-bc1c-c113650bdd60"
+  }
+}

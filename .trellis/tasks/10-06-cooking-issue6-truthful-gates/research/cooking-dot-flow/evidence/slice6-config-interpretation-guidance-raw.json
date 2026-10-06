@@ -1,0 +1,28 @@
+{
+  "id": "ce1117d9-7bae-4d71-99f1-9d09e8c4fe39",
+  "ok": true,
+  "result": {
+    "message": {
+      "id": "msg_ab31f43a8876",
+      "run_id": "run_5ba664a5f016",
+      "delivery_contract": "current_delivery",
+      "from_handle": "term_08a896e7-f2ff-477d-85c0-1962eb3a8136",
+      "to_handle": "dispatch:ctx_4c94250ae711",
+      "subject": "Preserve test-ledger interpretation separately; no repair",
+      "body": "Main preserved test-stage-config-interpretation-findings.json. Direct config proof in every test-stage input ledger was added by the main slice6 spec; approved dot plan lines90-92 and restore repair item2 instead expressly bind source/config and restore/build/reuse proof with test --no-build --no-restore consuming verified binaries. Preserve the observation and distinguish actual native/test outcomes, source/restore/build config proof, and this stricter direct-test-ledger interpretation; no code repair or final acceptance decision here. Main will present this exact conflict to dot after both genuine runs settle. Continue BOTH exact commands serially unless unsafe writer; record any process/timeouts/raw failures without changing thresholds or business code. Read inbox at checkpoints and before worker_done.",
+      "type": "status",
+      "priority": "normal",
+      "thread_id": null,
+      "payload": null,
+      "created_at": "2026-10-05T22:28:28Z",
+      "delivered_at": null
+    },
+    "mutation": {
+      "requestId": "7e4211bc-e999-4d0f-af28-7bb44ee5fec2",
+      "replayed": false
+    }
+  },
+  "_meta": {
+    "runtimeId": "ff0c5f2c-d341-4455-bc1c-c113650bdd60"
+  }
+}

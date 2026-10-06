@@ -1,0 +1,11 @@
+{
+  "command": [
+    "gh",
+    "api",
+    "repos/Kakusya/AbilityKit/branches/master/protection"
+  ],
+  "exit_code": 1,
+  "stdout": "",
+  "stderr": "Get \"https://api.github.com/repos/Kakusya/AbilityKit/branches/master/protection\": EOF\n",
+  "observed_utc": "2026-10-05T17:24:50.554272+00:00"
+}

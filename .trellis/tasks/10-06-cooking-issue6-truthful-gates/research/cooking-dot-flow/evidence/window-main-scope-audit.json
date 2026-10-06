@@ -1,0 +1,54 @@
+{
+  "recordedUtc": "2026-10-05T19:28:40.042526+00:00",
+  "candidateSha": "a0824b6dc4dbea3c4fc0722c60cf7d257c8fa261",
+  "scopeFiles": [
+    ".trellis/tasks/10-06-cooking-issue6-truthful-gates/research/slice1-width-window-report.md",
+    "Docs/AbilityKit测试门禁与批量回归规范.md",
+    "tools/tests/fixtures/gate-result-native-probe.ps1",
+    "tools/tests/test-gate-result-contract.tests.ps1"
+  ],
+  "implementationDirty": false,
+  "mainTaskDirty": true,
+  "testedInputsMatchCommittedFiles": true,
+  "controls": {
+    "status": "Passed",
+    "total": 164,
+    "passed": 164,
+    "failed": 0,
+    "sourceBeforeAfterStable": true,
+    "executedAtBaseDirty": true
+  },
+  "other30GateObjectsUnchanged": true,
+  "rootMetadataUnchanged": true,
+  "files": [
+    {
+      "path": "tools/run_test_gate.ps1",
+      "sha256": "575469c4238e29cf41b5826a43748d38c9c81578793261835b6e51dc3a886e8f"
+    },
+    {
+      "path": "tools/test-gate-result-contract.ps1",
+      "sha256": "647fd558fb7bb660e30a3749a8323b35961f6236bc5052eb2342c807407e167c"
+    },
+    {
+      "path": "tools/test-gates.json",
+      "sha256": "85111d00c4a3a61c87f61da3e43d159da60e07d058406f7049e17495e7e520a1"
+    },
+    {
+      "path": "tools/tests/fixtures/gate-result-fake-dotnet.ps1",
+      "sha256": "d662821a04386382f3ac5c9bc981d3e973e96a38d5228b9e762d1325d70dbb76"
+    },
+    {
+      "path": "tools/tests/fixtures/gate-result-model.ps1",
+      "sha256": "fb7cf4c82af3c78c2f825317b9573a92abe28f0135d26d5e09f6cb8c1ffe5a35"
+    },
+    {
+      "path": "tools/tests/fixtures/gate-result-native-probe.ps1",
+      "sha256": "f3a1a95a96cb42f1c1c3dbc2cf77fb6df66d13855543a6332c576f56bd355bfe"
+    },
+    {
+      "path": "tools/tests/test-gate-result-contract.tests.ps1",
+      "sha256": "70d8724365b8b16cd00e6569287c4e94c769ef3204bb1f4cef584b887ec7c572"
+    }
+  ],
+  "workerSettlement": "matching worker_done msg_e57b5975b93e; completed/revoked/settled, approved reuse for separate verification"
+}

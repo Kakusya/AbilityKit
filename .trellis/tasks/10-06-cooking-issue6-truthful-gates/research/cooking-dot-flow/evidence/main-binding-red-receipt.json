@@ -1,0 +1,107 @@
+{
+  "observedUtc": "2026-10-05T23:39:09.296396+00:00",
+  "status": "Failed",
+  "actualNativeExitCode": 1,
+  "exitConfirmed": true,
+  "sourceSha": "68a880f2a31c7269da634b2f152362bccb5857ab",
+  "sourceStable": true,
+  "example": true,
+  "coverage": "Independent isolated controls; no genuine Cooking test result is replaced",
+  "executed": 21,
+  "passed": 18,
+  "failed": 3,
+  "acceptedInvalidBindings": [
+    "binding-loaded-omit-primary",
+    "binding-test-input-omit-primary",
+    "binding-test-input-substitute-source"
+  ],
+  "raw": [
+    {
+      "path": "main-binding-red-controls.json",
+      "bytes": 126171,
+      "sha256": "035bb25e84206a3c65afbe2b1ff787dce8b3d571712a453c1d36fc9fafe40420"
+    },
+    {
+      "path": "main-binding-red-native.json",
+      "bytes": 1012,
+      "sha256": "5403d245ee746c03a341ee5a9c61f3abde9e44db1a3a61e504a831833c9fbcb9"
+    },
+    {
+      "path": "main-binding-red.stdout.txt",
+      "bytes": 0,
+      "sha256": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855"
+    },
+    {
+      "path": "main-binding-red.stderr.txt",
+      "bytes": 0,
+      "sha256": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855"
+    },
+    {
+      "path": "main-binding-probe-script.ps1",
+      "bytes": 12714,
+      "sha256": "092210e4971d612b808d6caf24a676151efd3eb1bd7aaa4c0bf8e9cf4086ddd9"
+    },
+    {
+      "path": "main-binding-red-binding-build-omit-primary-decision.json",
+      "bytes": 57,
+      "sha256": "27c284fc9177e1d5cb7e36ced66eb5fd80b8c0198d0affc41eb30900547f88c3"
+    },
+    {
+      "path": "main-binding-red-binding-build-omit-primary.json",
+      "bytes": 860781,
+      "sha256": "192a52e35862a7550fe8ec1714178e2eb2e52afaca9b100196f3329e517c065a"
+    },
+    {
+      "path": "main-binding-red-binding-coherent-omit-primary-decision.json",
+      "bytes": 57,
+      "sha256": "27c284fc9177e1d5cb7e36ced66eb5fd80b8c0198d0affc41eb30900547f88c3"
+    },
+    {
+      "path": "main-binding-red-binding-coherent-omit-primary.json",
+      "bytes": 859344,
+      "sha256": "c47871489a73ee4b7f83c00aacada738434b458ac11ef3b7bea389861ebb43b4"
+    },
+    {
+      "path": "main-binding-red-binding-coherent-substitute-source-decision.json",
+      "bytes": 57,
+      "sha256": "27c284fc9177e1d5cb7e36ced66eb5fd80b8c0198d0affc41eb30900547f88c3"
+    },
+    {
+      "path": "main-binding-red-binding-coherent-substitute-source.json",
+      "bytes": 861188,
+      "sha256": "688c041c27921343f2e4c6c17dc1504a538ad627c9d6bb5dc64535857832a876"
+    },
+    {
+      "path": "main-binding-red-binding-loaded-omit-primary-decision.json",
+      "bytes": 31,
+      "sha256": "3bbd25b5cedae39f6267e684b040786a2e41838c30640e4b31fc1968d774ebc7"
+    },
+    {
+      "path": "main-binding-red-binding-loaded-omit-primary.json",
+      "bytes": 860302,
+      "sha256": "cfc1eae5dc5c6a32a23e47e8c6fcdb37b33469db862d8be99324ca968d791e3a"
+    },
+    {
+      "path": "main-binding-red-binding-test-input-omit-primary-decision.json",
+      "bytes": 31,
+      "sha256": "3bbd25b5cedae39f6267e684b040786a2e41838c30640e4b31fc1968d774ebc7"
+    },
+    {
+      "path": "main-binding-red-binding-test-input-omit-primary.json",
+      "bytes": 860781,
+      "sha256": "c0493a73d3e90ef362e6829c2a5876fce076af5cb1a07862f0eef5e2147ad89a"
+    },
+    {
+      "path": "main-binding-red-binding-test-input-substitute-source-decision.json",
+      "bytes": 31,
+      "sha256": "3bbd25b5cedae39f6267e684b040786a2e41838c30640e4b31fc1968d774ebc7"
+    },
+    {
+      "path": "main-binding-red-binding-test-input-substitute-source.json",
+      "bytes": 861242,
+      "sha256": "2f3ce70db91a1ab852cc10bed9d96f6d0ea5f784baebadef29ece29d4eee106e"
+    }
+  ],
+  "authorizedRepair": "dot-clarification-reply-raw.txt A: if serialized association counterexamples are accepted, minimal helper/self-test binding repair after live verification settlement",
+  "genuineGates": "Both Passed on68; source repair will require new-source verification of both gates before final acceptance"
+}

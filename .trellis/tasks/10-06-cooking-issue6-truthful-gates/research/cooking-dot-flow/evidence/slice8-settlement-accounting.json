@@ -1,0 +1,19 @@
+{
+  "taskId": "task_8285f2c0421e",
+  "dispatchId": "ctx_a4e2695b308e",
+  "workerDoneMessageId": "msg_2963e01b4f81",
+  "outcome": "succeeded",
+  "sourceSha": "b8c53e8153b9c6f015e75040b9561b3078f05e5f",
+  "reportPath": ".trellis\\tasks\\10-06-cooking-issue6-truthful-gates\\research\\slice8-real-verification-report.md",
+  "reportSha256": "b6bff72330ed62df5c40b938afada6c4c050bde728960e9c286f83230c8ee336",
+  "capabilityRevoked": true,
+  "terminalIdleConfirmed": true,
+  "liveRef": "slice8-settled-live.json",
+  "idleRef": "slice8-settled-idle.json",
+  "resourceDecision": "Existing external/user-owned terminal retained idle under Owner preservation boundary for current review and evidence; no terminal resource cleanup/release is authorized. No additional worker authority, new debugging retention exception or process action is claimed. Source worktree/evidence remain necessary for delivery.",
+  "authorizationRefs": [
+    "approval.md"
+  ],
+  "finalAcceptance": "NotRun",
+  "integration": "NotRun"
+}

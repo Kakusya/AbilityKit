@@ -1,0 +1,12 @@
+{
+  "version": 1,
+  "flow_id": "6d3174fd-2b01-4136-8ea5-0b0cd0e2845d",
+  "seq": 60,
+  "op_id": "6d3174fd-2b01-4136-8ea5-0b0cd0e2845d:000060",
+  "kind": "receipt",
+  "recorded_utc": "2026-10-05T21:39:06.439638Z",
+  "intent_hash": "1dd786b247748a5045851f5ae590ef875b0b9a81a9f3addcac7e84979bc1807a",
+  "outcome": "applied",
+  "raw_ref": "evidence/ack-restore-repair-heartbeat11.json",
+  "result": {}
+}

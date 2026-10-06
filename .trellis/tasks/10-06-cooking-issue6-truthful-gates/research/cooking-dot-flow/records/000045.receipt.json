@@ -1,0 +1,12 @@
+{
+  "version": 1,
+  "flow_id": "6d3174fd-2b01-4136-8ea5-0b0cd0e2845d",
+  "seq": 45,
+  "op_id": "6d3174fd-2b01-4136-8ea5-0b0cd0e2845d:000045",
+  "kind": "receipt",
+  "recorded_utc": "2026-10-05T20:31:50.861664Z",
+  "intent_hash": "1a43828c2c6cac4c266f2fcee614434157459e5184024e3539800d1c0e842c73",
+  "outcome": "applied",
+  "raw_ref": "evidence/slice4-main-findings-send-raw.json",
+  "result": {}
+}

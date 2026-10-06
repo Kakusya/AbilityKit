@@ -1,0 +1,34 @@
+{
+  "version": 1,
+  "flow_id": "6d3174fd-2b01-4136-8ea5-0b0cd0e2845d",
+  "seq": 49,
+  "op_id": "6d3174fd-2b01-4136-8ea5-0b0cd0e2845d:000049",
+  "kind": "receipt",
+  "recorded_utc": "2026-10-05T20:44:58.337383Z",
+  "intent_hash": "904dd5b5cfcfb6715a5eb77da68ae17009737f54868bd6f1ca3f575a14e475eb",
+  "outcome": "applied",
+  "raw_ref": "evidence/restore-repair-start-raw.json",
+  "result": {
+    "runId": "run_5ba664a5f016",
+    "taskId": "task_322fb9a3b5cf",
+    "dispatchId": "ctx_f4b36cbac369",
+    "state": "ready",
+    "stage": "input_accepted",
+    "turnStart": "observed",
+    "prompt": {
+      "requestId": "1a50e0e3-b218-4457-bce8-dc18f3812e44",
+      "stages": [
+        "input_accepted",
+        "turn_started"
+      ],
+      "provider": "codex",
+      "observation": "supported",
+      "processIncarnation": "1215b4fe-5c81-4165-a3e2-aa12abaf4aac",
+      "generation": 36,
+      "baselineWorkingSequence": 11,
+      "baselineExplicitWorkingStartedAt": null,
+      "baselinePermissionSequence": 0
+    },
+    "nativeExit": 0
+  }
+}

@@ -1,0 +1,12 @@
+{
+  "version": 1,
+  "flow_id": "6d3174fd-2b01-4136-8ea5-0b0cd0e2845d",
+  "seq": 86,
+  "op_id": "6d3174fd-2b01-4136-8ea5-0b0cd0e2845d:000086",
+  "kind": "receipt",
+  "recorded_utc": "2026-10-05T23:29:05.608610Z",
+  "intent_hash": "bbf33e5d512a8e90912059bf897f9f30db618d654e1bdc5576efec53de055a2c",
+  "outcome": "applied",
+  "raw_ref": "evidence/ack-slice6-clarification-heartbeat12.json",
+  "result": {}
+}

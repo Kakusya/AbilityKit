@@ -1,0 +1,38 @@
+{
+  "id": "8a0c43d7-0985-41ba-b7aa-46d1c5f28b09",
+  "ok": true,
+  "result": {
+    "runId": "run_5ba664a5f016",
+    "deliveryId": "delivery_8a3bcbd99040",
+    "messages": [
+      {
+        "id": "msg_43aebe25e96a",
+        "run_id": "run_5ba664a5f016",
+        "delivery_contract": "current_delivery",
+        "from_handle": "term_a1a61c7c-aef6-4cd0-8c46-27a90632617b",
+        "to_handle": "run:run_5ba664a5f016",
+        "subject": "Import red preserved; affected controls pass; frozen166 running",
+        "body": "Original helper at a0824b6 plus a real-shaped fake preprocess fixture reproduces the same pre-restore Path.IsPathRooted exception; isolated red is preserved at local/Artifacts/issue6-cooking-slice1-import-red-633329e3. Bounded repair guards invalid BCL path characters before path interpretation without an extension whitelist, and affected controls prove PP-only space/Unicode/nonstandard imports remain hashed and modifications still fail. Frozen full166-case suite is running, followed by exclusively serial actual relation-analyzer and Cooking-domain project-closure evaluation/preprocess only; no real restore/build/test will run.",
+        "type": "status",
+        "priority": "normal",
+        "thread_id": null,
+        "payload": "{\"taskId\":\"task_0330e4b97a9b\",\"dispatchId\":\"ctx_e989de325df7\"}",
+        "created_at": "2026-10-05T20:05:05Z",
+        "delivered_at": null
+      }
+    ],
+    "count": 1,
+    "replayed": false,
+    "acknowledged": null,
+    "timedOut": false,
+    "cancelled": false,
+    "connectionLost": false,
+    "mutation": {
+      "requestId": "18979dc9-e513-47dd-9012-e5a7c4e573c7",
+      "replayed": false
+    }
+  },
+  "_meta": {
+    "runtimeId": "ff0c5f2c-d341-4455-bc1c-c113650bdd60"
+  }
+}

@@ -1,0 +1,17 @@
+{
+  "version": 1,
+  "flow_id": "6d3174fd-2b01-4136-8ea5-0b0cd0e2845d",
+  "seq": 25,
+  "op_id": "6d3174fd-2b01-4136-8ea5-0b0cd0e2845d:000025",
+  "kind": "intent",
+  "recorded_utc": "2026-10-05T19:08:01.418127Z",
+  "action": "branch-push",
+  "target": "origin:refs/heads/Kakusya/issue6-cooking-truthful-gates",
+  "authorization_ref": "evidence/approval.md",
+  "payload_ref": "evidence/push-slice1-checkpoint.json",
+  "preconditions": {
+    "candidate_sha": "b1644ec4e0418df99641a5db7e7e65010fc5f24a",
+    "old_remote_sha": "619883e8a18027a1c9f7419f84023eb60c5f9466",
+    "run_id": "run_5ba664a5f016"
+  }
+}

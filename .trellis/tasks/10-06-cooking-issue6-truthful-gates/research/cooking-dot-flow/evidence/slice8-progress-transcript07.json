@@ -1,0 +1,127 @@
+{
+  "id": "baf29c82-fc4a-4293-bad7-eb6be97b8ce3",
+  "ok": true,
+  "result": {
+    "dispatchId": "ctx_a4e2695b308e",
+    "source": "transcript",
+    "sourceIdentity": "cu2zdwkdsmPUSCyhNJeOZCjLL8pYI9Oi",
+    "provider": "codex",
+    "transcript": {
+      "messages": [
+        {
+          "id": "ctc_03d36cc6d8b642f4016ac45565681087d0a691922bac896fec",
+          "role": "assistant",
+          "blocks": [
+            {
+              "type": "tool-call",
+              "name": "exec",
+              "input": "const e=load(\"slice8ev\");\ntext(await tools.apply_patch(\"*** Begin Patch\\n*** Add File: \"+e+\"/summary-read-encoding-metadata-failure.json\\n+{\\\"kind\\\":\\\"ReadOnlyMetadataInspection\\\",\\\"nativeExit\\\":1,\\\"producerRetried\\\":false,\\\"sourceChanged\\\":false,\\\"operation\\\":\\\"Python -c reading two completed independent audits then source-freeze summaries\\\",\\\"failure\\\":\\\"The source-freeze read omitted explicit UTF-8 and used Windows gbk; UnicodeDecodeError at byte75353 while reading pinned CJK document path metadata\\\",\\\"completedBeforeFailure\\\":\\\"Both actual audit summaries printed; canonical audits were already complete and separately captured with explicit utf-8-sig\\\",\\\"originalRawError\\\":\\\"UnicodeDecodeError: 'gbk' codec can't decode byte 0xa6 in position 75353: illegal multibyte sequence\\\",\\\"rawToolOutputTruncated\\\":true,\\\"limitation\\\":\\\"Tool-returned native1 is preserved here; this ad-hoc metadata one-liner had no separately instrumented Python PID/capture receipt.\\\"}\\n*** Add File: \"+e+\"/compact-receipt.py\\n+import pathlib,json,datetime,sys,importlib.util\\n+E=pathlib.Path('\"+e+\"');R=pathlib.Path.cwd()\\n+def j(p):return json.loads(p.read_text(encoding='utf-8-sig'))\\n+audits=[j(E/(g+'-indepen… (truncated)",
+              "callId": "call_NEtOctgsNV7nSD9WksLSTZCy"
+            }
+          ],
+          "timestamp": 1791251834306,
+          "source": "transcript"
+        },
+        {
+          "id": "ctco_01a10eed-eb93-7e51-9af1-f13c755f2529",
+          "role": "tool",
+          "blocks": [
+            {
+              "type": "tool-result",
+              "output": "Script completed\nWall time 1.5 seconds\nOutput:\n{}\n{\"chunk_id\":\"e1e672\",\"wall_time_seconds\":0.3767101,\"exit_code\":0,\"original_token_count\":204,\"output\":\"{\\\"command\\\":{\\\"executable\\\":\\\"C:\\\\\\\\Python314\\\\\\\\python.exe\\\",\\\"arguments\\\":[\\\"local/Artifacts/issue6-cooking-slice8-verification-640lwkzs/compact-receipt.py\\\"],\\\"workingDirectory\\\":\\\"C:\\\\\\\\Users\\\\\\\\Administrator\\\\\\\\orca\\\\\\\\workspaces\\\\\\\\AbilityKit\\\\\\\\issue6-cooking-truthful-gates\\\"},\\\"startedAt\\\":\\\"2026-10-06T01:57:14.9899480+00:00\\\",\\\"endedAt\\\":\\\"2026-10-06T01:57:15.2006365+00:00\\\",\\\"processExitCode\\\":0,\\\"reason\\\":null,\\\"ownedProcessId\\\":81372,\\\"exitConfirmed\\\":true,\\\"stdoutPath\\\":\\\"C:\\\\\\\\Users\\\\\\\\Administrator\\\\\\\\orca\\\\\\\\workspaces\\\\\\\\AbilityKit\\\\\\\\issue6-cooking-truthful-gates\\\\\\\\local\\\\\\\\Artifacts\\\\\\\\issue6-cooking-slice8-verification-640lwkzs\\\\\\\\compact-receipt.stdout.txt\\\",\\\"stderrPath\\\":\\\"C:\\\\\\\\Users\\\\\\\\Administrator\\\\\\\\orca\\\\\\\\workspaces\\\\\\\\AbilityKit\\\\\\\\issue6-cooking-truthful-gates\\\\\\\\local\\\\\\\\Artifacts\\\\\\\\issue6-cooking-slice8-verification-640lwkzs\\\\\\\\compact-receipt.stderr.txt\\\"}\\r\\n\"}\n{\"chunk_id\":\"2c7a08\",\"wall_time_seconds\":0.0000235,\"exit_code\":0,\"original_token_count\":539,\"output\":\"{\\\"fingerprints\\\": [{\\\"at\\\": \\\"20\n… (truncated)"
+            }
+          ],
+          "timestamp": 1791251835795,
+          "source": "transcript"
+        },
+        {
+          "id": "msg_03d36cc6d8b642f4016ac4559cc47c87d095bed302e1b82990",
+          "role": "assistant",
+          "blocks": [
+            {
+              "type": "text",
+              "text": "Cross-gate verification found zero mismatches across 71,490 current input and binary entries. Historical checks also passed: the 6,241 original failed-run files, 21,705 slice7 evidence records and both older positive run trees are unchanged. A second read-only metadata summary failed on Windows default encoding; it is preserved, and the corrected UTF-8 receipt completed successfully."
+            }
+          ],
+          "timestamp": 1791251870904,
+          "source": "transcript"
+        }
+      ],
+      "nextCursor": "owr1_eyJ2IjoxLCJkIjoiY3R4X2E0ZTI2OTViMzA4ZSIsInMiOiJ0cmFuc2NyaXB0IiwiaSI6ImN1Mnpkd2tkc21QVVNDeWhOSmVPWkNqTEw4cFlJOU9pIiwicCI6Mjg2MDgyODMsImMiOiJXQ3FmcW1ERHlEQnJIdXZReHZpRTZFYjFiV1YzeW5LZyJ9",
+      "limited": true,
+      "returnedMessageCount": 3
+    },
+    "cursor": "owr1_eyJ2IjoxLCJkIjoiY3R4X2E0ZTI2OTViMzA4ZSIsInMiOiJ0cmFuc2NyaXB0IiwiaSI6ImN1Mnpkd2tkc21QVVNDeWhOSmVPWkNqTEw4cFlJOU9pIiwicCI6Mjg2MDgyODMsImMiOiJXQ3FmcW1ERHlEQnJIdXZReHZpRTZFYjFiV1YzeW5LZyJ9",
+    "status": {
+      "worker": "ready",
+      "terminal": "running",
+      "liveness": "live"
+    },
+    "fallbackReason": null,
+    "warnings": [
+      "Oversized tool input was clipped.",
+      "Oversized transcript text was clipped."
+    ],
+    "sourceExact": true,
+    "contentComplete": false,
+    "clipping": [
+      "message_limit_or_scan_window",
+      "transcript_payload"
+    ],
+    "projection": {
+      "id": "ctx_a4e2695b308e",
+      "dispatchId": "ctx_a4e2695b308e",
+      "taskId": "task_8285f2c0421e",
+      "runId": "run_5ba664a5f016",
+      "role": "worker",
+      "parent": null,
+      "provider": {
+        "id": "codex",
+        "model": "gpt-6.1-sol"
+      },
+      "host": {
+        "kind": "local",
+        "id": "local"
+      },
+      "workspace": {
+        "id": "aaa97e0d-5026-4e5c-95f8-bb420dcb4c65::C:/Users/Administrator/orca/workspaces/AbilityKit/issue6-cooking-truthful-gates",
+        "kind": "folder_or_worktree"
+      },
+      "stage": {
+        "worker": "ready",
+        "dispatch": "dispatched",
+        "detail": "input_accepted",
+        "activity": "working"
+      },
+      "outcome": "in_progress",
+      "liveness": {
+        "verdict": "live",
+        "observedAt": 1791251835781,
+        "source": "agent_status"
+      },
+      "evidence": {
+        "durable": true,
+        "liveStatus": "fresh",
+        "lastObservedAt": 1791251835781
+      },
+      "resource": {
+        "state": "external",
+        "id": "wtr_de5d9ab4b4af",
+        "ownerDispatchId": "ctx_a4e2695b308e",
+        "releaseState": "not_requested",
+        "terminalState": "retained"
+      },
+      "nextAction": {
+        "kind": "none",
+        "argv": []
+      },
+      "attention": {
+        "categories": [],
+        "requiresAction": false
+      }
+    }
+  },
+  "_meta": {
+    "runtimeId": "ff0c5f2c-d341-4455-bc1c-c113650bdd60"
+  }
+}

@@ -1,0 +1,13 @@
+{
+  "old_task": "task_c2b5e42b2e23",
+  "old_dispatch": "ctx_c1d5fbd7ef56",
+  "outcome": "succeeded checkpoint delivery; not full Issue acceptance",
+  "implementation_sha": "b1644ec4e0418df99641a5db7e7e65010fc5f24a",
+  "controls_status": "Blocked/CLI2",
+  "accounting": "approved_reuse",
+  "new_task": "task_c9384f689b07",
+  "new_dispatch": "ctx_f42f62847f04",
+  "start_proof": "slice1-window-start-raw.json",
+  "raw_delivery": "delivery-slice1-status-06.json",
+  "independent_scope": "slice1-main-scope-audit.json"
+}

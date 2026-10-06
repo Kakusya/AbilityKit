@@ -1,0 +1,11 @@
+{
+  "taskId": "task_c9384f689b07",
+  "dispatchId": "ctx_f42f62847f04",
+  "doneMessageId": "msg_e57b5975b93e",
+  "outcome": "succeeded bounded followup only",
+  "implementationSha": "a0824b6dc4dbea3c4fc0722c60cf7d257c8fa261",
+  "accounting": "approved reuse of same user-owned retained terminal/worktree for separate exact-source authoritative verification; no cleanup",
+  "raw": "window-settled-live.json",
+  "doneRaw": "ack-window-settled-02.json",
+  "limitation": "worker_done filesModified Chinese name was encoding-corrupted; independent git four-file scope and report UTF8 paths are authoritative proof"
+}

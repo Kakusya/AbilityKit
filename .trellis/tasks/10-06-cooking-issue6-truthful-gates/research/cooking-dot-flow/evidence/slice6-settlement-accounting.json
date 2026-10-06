@@ -1,0 +1,22 @@
+{
+  "taskId": "task_31fd1c2368df",
+  "dispatchId": "ctx_4c94250ae711",
+  "workerDoneMessageId": "msg_557d39a7eb54",
+  "sourceSha": "68a880f2a31c7269da634b2f152362bccb5857ab",
+  "reportSha256": "5ee4243a3ad2efb9ee5c0d8e0deb796d12b804748808dbcdeefa33499981e43f",
+  "outcome": "succeeded",
+  "sourceScope": "No production source edits; report-only verified",
+  "resourceDecision": "Approved reuse for the next bounded binary-linkage repair if main isolated counterexamples establish the dot-authorized defect; until that decision main retains this user-owned external terminal within the active flow. No worker write authority remains. No release, deletion or process cleanup is authorized.",
+  "authorizationRefs": [
+    "approval.md",
+    "dot-clarification-reply-raw.txt"
+  ],
+  "mainAuditRefs": [
+    "gate1-main-archive-binary-audit.json",
+    "gate2-main-archive-binary-audit.json"
+  ],
+  "finalAcceptance": "NotRun",
+  "integration": "NotRun",
+  "terminalIdleConfirmed": true,
+  "terminalIdleRef": "slice6-settled-idle.json"
+}

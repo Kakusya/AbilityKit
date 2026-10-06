@@ -1,0 +1,13 @@
+{
+  "command": [
+    "git",
+    "push",
+    "origin",
+    "79bf9642b04a696880a1c393ca5d11171a4b078a:refs/heads/Kakusya/issue6-cooking-truthful-gates"
+  ],
+  "exit": 0,
+  "stdout": "",
+  "stderr": "To https://github.com/Kakusya/AbilityKit\n   a0824b6dc..79bf9642b  79bf9642b04a696880a1c393ca5d11171a4b078a -> Kakusya/issue6-cooking-truthful-gates\n",
+  "readbackExit": 0,
+  "readback": "79bf9642b04a696880a1c393ca5d11171a4b078a\trefs/heads/Kakusya/issue6-cooking-truthful-gates\n"
+}

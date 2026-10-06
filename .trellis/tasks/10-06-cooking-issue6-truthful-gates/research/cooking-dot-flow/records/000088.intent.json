@@ -1,0 +1,15 @@
+{
+  "version": 1,
+  "flow_id": "6d3174fd-2b01-4136-8ea5-0b0cd0e2845d",
+  "seq": 88,
+  "op_id": "6d3174fd-2b01-4136-8ea5-0b0cd0e2845d:000088",
+  "kind": "intent",
+  "recorded_utc": "2026-10-05T23:36:58.825740Z",
+  "action": "acknowledge-worker-done",
+  "target": "delivery_138b1e336cd0",
+  "authorization_ref": "evidence/approval.md",
+  "payload_ref": "evidence/slice6-settlement-accounting.json",
+  "preconditions": {
+    "run_id": "run_5ba664a5f016"
+  }
+}

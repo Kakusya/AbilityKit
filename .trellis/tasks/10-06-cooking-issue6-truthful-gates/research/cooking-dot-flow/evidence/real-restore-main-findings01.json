@@ -1,0 +1,40 @@
+{
+  "runId": "6fec830e-8bfd-45f6-bd0e-abcf0bd7d32e",
+  "sourceSha": "79bf9642b04a696880a1c393ca5d11171a4b078a",
+  "status": "Failed",
+  "summary": "local\\Logs\\test-gates\\6fec830e-8bfd-45f6-bd0e-abcf0bd7d32e\\gate-summary.json",
+  "summarySha256": "ffc9b2f5c0a2613698119430d3a5eb65648cc247b2e5e48c610db3d6d1f3df46",
+  "findings": [
+    {
+      "type": "RestoreGraphRetargeted",
+      "facts": "analyzer declaration/evaluation netstandard2.0; current assets after Cooking ET restore contain net10.0, generated nuget.g.targets changed",
+      "targets": [
+        "net10.0"
+      ],
+      "actualCookingRestoreArgv": [
+        [
+          "restore",
+          "C:\\Users\\Administrator\\orca\\workspaces\\AbilityKit\\issue6-cooking-truthful-gates\\src\\AbilityKit.Game.Cooking.EtRuntime\\AbilityKit.Game.Cooking.EtRuntime.csproj",
+          "-p:Configuration=Debug",
+          "-p:TargetFramework=net10.0",
+          "--nologo"
+        ]
+      ]
+    },
+    {
+      "type": "EffectiveNuGetConfigOmitted",
+      "facts": "actual assets configFilePaths user NuGet.Config has no matching restore or build input hash entry for successful analyzer leaf",
+      "configs": [
+        {
+          "path": "C:\\Users\\Administrator\\AppData\\Roaming\\NuGet\\NuGet.Config",
+          "exists": true,
+          "sha256": "3bdb050540ecdd6fe717cbb9028c0ff9e2af5e1544afa71b6bade80140c7a236",
+          "restoreInputMatches": [],
+          "buildInputMatches": [],
+          "contentsCopied": false
+        }
+      ]
+    }
+  ],
+  "acceptance": "Failed; preserve both required gate attempts, settle worker, bounded tool repair needed"
+}

@@ -1,0 +1,23 @@
+{
+  "runId": "run_5ba664a5f016",
+  "taskId": "task_322fb9a3b5cf",
+  "dispatchId": "ctx_f4b36cbac369",
+  "state": "ready",
+  "stage": "input_accepted",
+  "turnStart": "observed",
+  "prompt": {
+    "requestId": "1a50e0e3-b218-4457-bce8-dc18f3812e44",
+    "stages": [
+      "input_accepted",
+      "turn_started"
+    ],
+    "provider": "codex",
+    "observation": "supported",
+    "processIncarnation": "1215b4fe-5c81-4165-a3e2-aa12abaf4aac",
+    "generation": 36,
+    "baselineWorkingSequence": 11,
+    "baselineExplicitWorkingStartedAt": null,
+    "baselinePermissionSequence": 0
+  },
+  "nativeExit": 0
+}

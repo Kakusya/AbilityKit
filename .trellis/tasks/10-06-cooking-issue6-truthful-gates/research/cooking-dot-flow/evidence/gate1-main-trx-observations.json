@@ -1,0 +1,101 @@
+{
+  "scope": "Completed TRX only, parent outcome remains pending",
+  "status": "Passed",
+  "sourceSHA": "68a880f2a31c7269da634b2f152362bccb5857ab",
+  "rows": [
+    {
+      "trx": "local\\Logs\\test-gates\\86324cd6-22d9-45ea-9762-e2c301e59734\\46187749acd6\\test-results.trx",
+      "sha256": "d8c781cb88e668440ba196c3d1e6e0d7adbbb81bfe6c3841dc41d4f37df0ab23",
+      "entries": 328,
+      "counters": {
+        "total": "328",
+        "executed": "328",
+        "passed": "328",
+        "failed": "0",
+        "error": "0",
+        "timeout": "0",
+        "aborted": "0",
+        "inconclusive": "0",
+        "passedButRunAborted": "0",
+        "notRunnable": "0",
+        "notExecuted": "0",
+        "disconnected": "0",
+        "warning": "0",
+        "completed": "0",
+        "inProgress": "0",
+        "pending": "0"
+      },
+      "times": {
+        "creation": "2026-10-06T06:22:20.2794959+08:00",
+        "queuing": "2026-10-06T06:22:20.2794960+08:00",
+        "start": "2026-10-06T06:22:18.8740826+08:00",
+        "finish": "2026-10-06T06:33:35.7856171+08:00"
+      },
+      "longest": [
+        {
+          "testName": "AbilityKit.ET.Runtime.Tests.CookingNetworkRichLiveRecoveryEtTests.Real_F01_D31_finite_chain_recovers_cutpoint_naturally_closes_and_creates_durable_successor(cutpoint: \"automatic-active\")",
+          "duration": "00:02:42.3536258",
+          "outcome": "Passed"
+        },
+        {
+          "testName": "AbilityKit.ET.Runtime.Tests.CookingNetworkRichLiveRecoveryEtTests.Real_F01_D31_finite_chain_recovers_cutpoint_naturally_closes_and_creates_durable_successor(cutpoint: \"manual-paused\")",
+          "duration": "00:02:40.3695174",
+          "outcome": "Passed"
+        },
+        {
+          "testName": "AbilityKit.ET.Runtime.Tests.CookingNetworkRichLiveRecoveryEtTests.Real_F01_D31_finite_chain_recovers_cutpoint_naturally_closes_and_creates_durable_successor(cutpoint: \"unbound-cup\")",
+          "duration": "00:02:38.3982964",
+          "outcome": "Passed"
+        }
+      ]
+    },
+    {
+      "trx": "local\\Logs\\test-gates\\86324cd6-22d9-45ea-9762-e2c301e59734\\8530a91f82b5\\test-results.trx",
+      "sha256": "2c1b36763f7e849649b286de338ed6178a116c9241b1aa3905e91301122639a9",
+      "entries": 867,
+      "counters": {
+        "total": "867",
+        "executed": "867",
+        "passed": "867",
+        "failed": "0",
+        "error": "0",
+        "timeout": "0",
+        "aborted": "0",
+        "inconclusive": "0",
+        "passedButRunAborted": "0",
+        "notRunnable": "0",
+        "notExecuted": "0",
+        "disconnected": "0",
+        "warning": "0",
+        "completed": "0",
+        "inProgress": "0",
+        "pending": "0"
+      },
+      "times": {
+        "creation": "2026-10-06T06:18:08.3968293+08:00",
+        "queuing": "2026-10-06T06:18:08.3968294+08:00",
+        "start": "2026-10-06T06:18:07.8262376+08:00",
+        "finish": "2026-10-06T06:18:24.7938881+08:00"
+      },
+      "longest": [
+        {
+          "testName": "AbilityKit.Game.Cooking.Tests.CookingLiteNetFramingBoundaryTests.Exact_wire_limit_plus_twenty_framing_bytes_traverses_actual_udp_both_directions",
+          "duration": "00:00:08.2766780",
+          "outcome": "Passed"
+        },
+        {
+          "testName": "AbilityKit.Game.Cooking.Tests.CookingNetworkSessionV3Tests.Actual_ET_Session_admits_control_bound_Join_and_rejects_oversized_control_or_wrong_direction_baseline(scenario: 2)",
+          "duration": "00:00:04.1042172",
+          "outcome": "Passed"
+        },
+        {
+          "testName": "AbilityKit.Game.Cooking.Tests.CookingLiteNetFramingBoundaryTests.Actual_udp_rejects_storage_plus_one_and_preserves_generic_default(applicationAllowance: True)",
+          "duration": "00:00:04.0334611",
+          "outcome": "Passed"
+        }
+      ]
+    }
+  ],
+  "earlierNontermination": "Inference unproven and now superseded by natural test completion; no causal claim about unbounded loops",
+  "cancellation": "NotRun/unnecessary for naturally completed test"
+}

@@ -1,0 +1,22 @@
+{
+  "version": 1,
+  "flow_id": "6d3174fd-2b01-4136-8ea5-0b0cd0e2845d",
+  "seq": 31,
+  "op_id": "6d3174fd-2b01-4136-8ea5-0b0cd0e2845d:000031",
+  "recorded_utc": "2026-10-05T19:32:16.610821Z",
+  "kind": "receipt",
+  "intent_hash": "e9fc2fa06a0a2f7fc6a35658ecc515dd670991eee3eaa6edff8293e4b2a7d8d5",
+  "outcome": "applied",
+  "raw_ref": "evidence/slice2-start-composer-read01.json",
+  "result": {
+    "resolves": "6d3174fd-2b01-4136-8ea5-0b0cd0e2845d:000030",
+    "run_id": "run_5ba664a5f016",
+    "effect": "known dispatch creation and exact prompt queued in same terminal; replay proves no duplicate",
+    "task_id": "task_b85eae037475",
+    "dispatch_id": "ctx_2127fab8d0af",
+    "input_accepted": true,
+    "turn_started": false,
+    "readiness": "Blocked until actual turn start",
+    "next_bounded_action": "submit existing queued prompt with Enter only; do not send new text or create replacement dispatch"
+  }
+}

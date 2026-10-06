@@ -43,4 +43,5 @@ else:
     base.update(intent_hash=fingerprint(intent), outcome=a.outcome, raw_ref=a.raw, result=result)
 append(root, base, authority)
 write_index(root, authority)
-print(json.dumps({"operation": base["op_id"], "kind": base["kind"], "state": reconstruct(root)}, ensure_ascii=False))
+final_state = reconstruct(root)
+print(json.dumps({"operation": base["op_id"], "kind": base["kind"], "effective_run_id": final_state["effective_run_id"], "unresolved": final_state["unresolved"]}, ensure_ascii=False))

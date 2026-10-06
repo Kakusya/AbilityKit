@@ -1,0 +1,3 @@
+b8c53e8153b9c6f015e75040b9561b3078f05e5f	refs/heads/Kakusya/issue6-cooking-truthful-gates
+
+STDERR

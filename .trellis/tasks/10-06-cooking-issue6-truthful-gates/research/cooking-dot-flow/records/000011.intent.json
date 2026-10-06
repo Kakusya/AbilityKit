@@ -1,0 +1,15 @@
+{
+  "version": 1,
+  "flow_id": "6d3174fd-2b01-4136-8ea5-0b0cd0e2845d",
+  "seq": 11,
+  "op_id": "6d3174fd-2b01-4136-8ea5-0b0cd0e2845d:000011",
+  "kind": "intent",
+  "recorded_utc": "2026-10-05T17:48:07.173148Z",
+  "action": "inbox-ack",
+  "target": "delivery_14be3655f66c",
+  "authorization_ref": "evidence/approval.md",
+  "payload_ref": "evidence/delivery-heartbeat-03.json",
+  "preconditions": {
+    "run_id": "run_5ba664a5f016"
+  }
+}

@@ -1,0 +1,35 @@
+{
+  "observedUtc": "2026-10-06T01:38:56.532499+00:00",
+  "gateAcceptance": "pending final native/summary",
+  "trxPath": "local\\Logs\\test-gates\\f899c5d2-b47d-4728-96f7-a1f0fc2467b7\\0b102d57dc1a\\test-results.trx",
+  "bytes": 593033,
+  "sha256": "c0922b8e5cef1328f747c68ad24c0b9be86a6a36dd71ce8ba5ef2e4044f83540",
+  "counters": {
+    "total": "328",
+    "executed": "328",
+    "passed": "328",
+    "failed": "0",
+    "error": "0",
+    "timeout": "0",
+    "aborted": "0",
+    "inconclusive": "0",
+    "passedButRunAborted": "0",
+    "notRunnable": "0",
+    "notExecuted": "0",
+    "disconnected": "0",
+    "warning": "0",
+    "completed": "0",
+    "inProgress": "0",
+    "pending": "0"
+  },
+  "actualEntries": 328,
+  "actualDefinitions": 328,
+  "allPassed": true,
+  "uniqueResultPairs": 328,
+  "times": {
+    "creation": "2026-10-06T09:26:52.7864425+08:00",
+    "queuing": "2026-10-06T09:26:52.7864426+08:00",
+    "start": "2026-10-06T09:26:51.9422099+08:00",
+    "finish": "2026-10-06T09:38:15.0872497+08:00"
+  }
+}

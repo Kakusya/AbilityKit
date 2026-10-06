@@ -1,0 +1,33 @@
+{
+  "observedUtc": "2026-10-05T23:57:34.612267+00:00",
+  "sourceSha": "68a880f2a31c7269da634b2f152362bccb5857ab",
+  "sourceDirty": true,
+  "staticReview": "Passed within the current bounded diff",
+  "requiredChecks": "NotRun until final native/full-suite/commit evidence",
+  "qualification": "Provisional static review only; worker currently owns frozen checks and source. Recheck committed diff/hashes after settlement.",
+  "cookingConsumers": [
+    "cooking-et-level-runtime",
+    "cooking-kitchen-loop"
+  ],
+  "findings": [
+    "Complete one-to-one normalized Windows binary path/bytes/sha256 sets; duplicate/empty/invalid identities and archive contradictions rejected.",
+    "Build/loadedBefore/loadedAfter/test.inputs all linked without NuGet.Config field duplication or dependence on archive location/order.",
+    "Existing stage/native/TRX/source/config checks retained. Actual stage reuse positive/negative controls added without Executed credit.",
+    "Only helper and harness source changes in this diff; source repair report is separately owned. No project/business/toolchain/example changes authorized."
+  ],
+  "files": [
+    {
+      "path": "tools/test-gate-result-contract.ps1",
+      "bytes": 77845,
+      "sha256": "20c23618b437b6f174920d75aaa7afba5ae8b9ccfedcc00af82db65e8704f22a"
+    },
+    {
+      "path": "tools/tests/test-gate-result-contract.tests.ps1",
+      "bytes": 54508,
+      "sha256": "b33987693e69c4b9ee8b6b061e04aa6b5cab7ab1c6f565c8dcc0da4e20149f26"
+    }
+  ],
+  "diffSha256": "51d7e78a4b3b91f415b76c9f0e65de6284267c485f1f97b9b0ef1a0cfa05a857",
+  "rawDiffRef": "slice7-main-provisional-source-diff.patch",
+  "actualGitDiffExit": 0
+}

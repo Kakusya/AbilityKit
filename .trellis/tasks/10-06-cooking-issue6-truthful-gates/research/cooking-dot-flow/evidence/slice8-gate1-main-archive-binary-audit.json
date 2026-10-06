@@ -1,0 +1,47 @@
+{
+  "status": "Passed",
+  "observedUtc": "2026-10-06T01:12:12.369660+00:00",
+  "runId": "8dfabf17-f938-40d2-84a1-660bae4fb503",
+  "sourceSha": "b8c53e8153b9c6f015e75040b9561b3078f05e5f",
+  "sourceDirty": true,
+  "qualification": "Historical archived bytes independently checked; binary linkage compares path/bytes/hash, not archive location. No new producer launched.",
+  "summarySha256": "51f86ff80dfcf2330cb090ac5eeb5f3306a3d85fd56172cc20738fb3dd337f38",
+  "nativeSha256": "800e9387ad8d16b1d1d083457486d994fb988dfd89a9b31f9133923735dfcb67",
+  "artifactCount": 14486,
+  "artifactBytes": 1573851643,
+  "leaves": [
+    {
+      "name": "ET relation analyzer build",
+      "kind": "dotnet-build",
+      "resultId": "b5d9e6fc-be4a-4854-a98c-ef5dcaa37f4d",
+      "buildOutputCount": 3
+    },
+    {
+      "name": "Cooking ET runtime build with relation analyzer",
+      "kind": "dotnet-build",
+      "resultId": "3780ac55-cba0-4a7c-9d2f-64017e9f9edd",
+      "buildOutputCount": 125
+    },
+    {
+      "name": "Cooking domain and Level lifecycle tests",
+      "kind": "dotnet-test",
+      "resultId": "e6ae5d52-2698-439c-a48c-1e2a2197790d",
+      "buildOutputCount": 259,
+      "actualTrxCount": 867,
+      "filter": "",
+      "binaryChainCount": 259,
+      "assembly": "C:\\Users\\Administrator\\orca\\workspaces\\AbilityKit\\issue6-cooking-truthful-gates\\src\\AbilityKit.Game.Cooking.Tests\\bin\\Debug\\net10.0\\AbilityKit.Game.Cooking.Tests.dll"
+    },
+    {
+      "name": "Cooking ET Level host and runtime tests",
+      "kind": "dotnet-test",
+      "resultId": "38b5c1c4-b94f-49b6-a16e-97dd98786ec5",
+      "buildOutputCount": 270,
+      "actualTrxCount": 328,
+      "filter": "",
+      "binaryChainCount": 270,
+      "assembly": "C:\\Users\\Administrator\\orca\\workspaces\\AbilityKit\\issue6-cooking-truthful-gates\\src\\AbilityKit.ET.Runtime.Tests\\bin\\Debug\\net10.0\\AbilityKit.ET.Runtime.Tests.dll"
+    }
+  ],
+  "issues": []
+}

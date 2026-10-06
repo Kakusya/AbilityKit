@@ -1,0 +1,7 @@
+{
+  "candidate_sha": "b1644ec4e0418df99641a5db7e7e65010fc5f24a",
+  "command_exit_code": 0,
+  "remote_sha": "b1644ec4e0418df99641a5db7e7e65010fc5f24a",
+  "readback": "evidence/push-slice1-readback.txt",
+  "checkpoint_only": true
+}

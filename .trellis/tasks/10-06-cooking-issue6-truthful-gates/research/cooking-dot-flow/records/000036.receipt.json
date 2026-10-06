@@ -1,0 +1,12 @@
+{
+  "version": 1,
+  "flow_id": "6d3174fd-2b01-4136-8ea5-0b0cd0e2845d",
+  "seq": 36,
+  "op_id": "6d3174fd-2b01-4136-8ea5-0b0cd0e2845d:000036",
+  "kind": "receipt",
+  "recorded_utc": "2026-10-05T19:52:29.375256Z",
+  "intent_hash": "da750dec65ce660cf9bd72e44891c33a60957f9c047cec5210d25ceaf767da47",
+  "outcome": "applied",
+  "raw_ref": "evidence/ack-slice2-escalation-01.json",
+  "result": {}
+}

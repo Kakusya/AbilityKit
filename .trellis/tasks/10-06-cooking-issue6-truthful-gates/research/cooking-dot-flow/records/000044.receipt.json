@@ -1,0 +1,12 @@
+{
+  "version": 1,
+  "flow_id": "6d3174fd-2b01-4136-8ea5-0b0cd0e2845d",
+  "seq": 44,
+  "op_id": "6d3174fd-2b01-4136-8ea5-0b0cd0e2845d:000044",
+  "kind": "receipt",
+  "recorded_utc": "2026-10-05T20:23:39.490022Z",
+  "intent_hash": "368d5924b02decb9890a09438aca37e2388cfe7d08fb307438efc7bdd942e704",
+  "outcome": "applied",
+  "raw_ref": "evidence/push-parser-checkpoint-raw.json",
+  "result": {}
+}

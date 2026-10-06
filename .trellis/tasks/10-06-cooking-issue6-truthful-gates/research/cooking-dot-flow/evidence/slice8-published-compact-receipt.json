@@ -1,0 +1,563 @@
+{
+  "at": "2026-10-06T01:57:15.166187+00:00",
+  "sourceSHA": "b8c53e8153b9c6f015e75040b9561b3078f05e5f",
+  "inputFingerprints": [
+    {
+      "at": "2026-10-06T00:36:07.596601+00:00",
+      "dirtyEntries": 572,
+      "seven": "ad4805bb9d3e4e751a96622f500cf33a543e4f3312ad37a2518aa57b9281bf9d",
+      "eight": "1e25f3dbf2e7a35d058080fb3523ccb79ca1dda774d0c85e9a7c8b210fd76e02"
+    },
+    {
+      "at": "2026-10-06T01:10:49.858356+00:00",
+      "dirtyEntries": 671,
+      "seven": "ad4805bb9d3e4e751a96622f500cf33a543e4f3312ad37a2518aa57b9281bf9d",
+      "eight": "1e25f3dbf2e7a35d058080fb3523ccb79ca1dda774d0c85e9a7c8b210fd76e02"
+    },
+    {
+      "at": "2026-10-06T01:55:11.654896+00:00",
+      "dirtyEntries": 799,
+      "seven": "ad4805bb9d3e4e751a96622f500cf33a543e4f3312ad37a2518aa57b9281bf9d",
+      "eight": "1e25f3dbf2e7a35d058080fb3523ccb79ca1dda774d0c85e9a7c8b210fd76e02"
+    }
+  ],
+  "gates": [
+    {
+      "gate": "cooking-et-level-runtime",
+      "runId": "8dfabf17-f938-40d2-84a1-660bae4fb503",
+      "resultId": "9b71781f-e46e-4bfa-ae79-8dfc11a9ad70",
+      "summary": {
+        "path": "C:\\Users\\Administrator\\orca\\workspaces\\AbilityKit\\issue6-cooking-truthful-gates\\local\\Logs\\test-gates\\8dfabf17-f938-40d2-84a1-660bae4fb503\\gate-summary.json",
+        "bytes": 20577173,
+        "sha256": "51f86ff80dfcf2330cb090ac5eeb5f3306a3d85fd56172cc20738fb3dd337f38"
+      },
+      "status": "Passed",
+      "cliExitCode": 0,
+      "native": {
+        "command": {
+          "executable": "C:\\Windows\\System32\\WindowsPowerShell\\v1.0\\powershell.exe",
+          "arguments": [
+            "-NoProfile",
+            "-ExecutionPolicy",
+            "Bypass",
+            "-File",
+            "tools/run_test_gate.ps1",
+            "-Gate",
+            "cooking-et-level-runtime",
+            "-Configuration",
+            "Debug",
+            "-CI"
+          ],
+          "workingDirectory": "C:\\Users\\Administrator\\orca\\workspaces\\AbilityKit\\issue6-cooking-truthful-gates"
+        },
+        "startedAt": "2026-10-06T00:36:32.0042698+00:00",
+        "endedAt": "2026-10-06T01:10:03.0787827+00:00",
+        "processExitCode": 0,
+        "reason": null,
+        "ownedProcessId": 21204,
+        "exitConfirmed": true,
+        "stdoutPath": "C:\\Users\\Administrator\\orca\\workspaces\\AbilityKit\\issue6-cooking-truthful-gates\\local\\Artifacts\\issue6-cooking-slice8-verification-640lwkzs\\cooking-et-level-runtime.stdout.txt",
+        "stderrPath": "C:\\Users\\Administrator\\orca\\workspaces\\AbilityKit\\issue6-cooking-truthful-gates\\local\\Artifacts\\issue6-cooking-slice8-verification-640lwkzs\\cooking-et-level-runtime.stderr.txt"
+      },
+      "fullGateAccepted": true,
+      "coverage": {
+        "required": [
+          "cooking-et-level-runtime:1:dotnet-build:AbilityKit.ET.RelationAnalyzer",
+          "cooking-et-level-runtime:2:dotnet-build:AbilityKit.Game.Cooking.EtRuntime",
+          "cooking-et-level-runtime:3:dotnet-test:AbilityKit.Game.Cooking.Tests",
+          "cooking-et-level-runtime:4:dotnet-test:AbilityKit.ET.Runtime.Tests"
+        ],
+        "optional": [],
+        "completed": [
+          "cooking-et-level-runtime:1:dotnet-build:AbilityKit.ET.RelationAnalyzer",
+          "cooking-et-level-runtime:2:dotnet-build:AbilityKit.Game.Cooking.EtRuntime",
+          "cooking-et-level-runtime:3:dotnet-test:AbilityKit.Game.Cooking.Tests",
+          "cooking-et-level-runtime:4:dotnet-test:AbilityKit.ET.Runtime.Tests"
+        ],
+        "missing": [],
+        "bindings": {
+          "cooking-et-level-runtime:1:dotnet-build:AbilityKit.ET.RelationAnalyzer": [
+            "b5d9e6fc-be4a-4854-a98c-ef5dcaa37f4d"
+          ],
+          "cooking-et-level-runtime:2:dotnet-build:AbilityKit.Game.Cooking.EtRuntime": [
+            "3780ac55-cba0-4a7c-9d2f-64017e9f9edd"
+          ],
+          "cooking-et-level-runtime:3:dotnet-test:AbilityKit.Game.Cooking.Tests": [
+            "e6ae5d52-2698-439c-a48c-1e2a2197790d"
+          ],
+          "cooking-et-level-runtime:4:dotnet-test:AbilityKit.ET.Runtime.Tests": [
+            "38b5c1c4-b94f-49b6-a16e-97dd98786ec5"
+          ]
+        }
+      },
+      "sourceFingerprint": "ea3ca2709a0f6f4fcf60ee4e5cc32fb79443227d5b030cb0f5674e1d6d49ba60",
+      "nativeInvocations": 328,
+      "nativeNonzero": 0,
+      "runFiles": 14488,
+      "stages": {
+        "restore": 4,
+        "build": 4,
+        "test": 2
+      },
+      "projectPairs": 13,
+      "leaves": [
+        {
+          "name": "ET relation analyzer build",
+          "resultId": "b5d9e6fc-be4a-4854-a98c-ef5dcaa37f4d",
+          "status": "Passed",
+          "cli": 0,
+          "native": 0,
+          "tests": null,
+          "trx": null,
+          "stageTimes": [
+            {
+              "name": "restore",
+              "start": "2026-10-06T00:36:38.0780443+00:00",
+              "end": "2026-10-06T00:36:38.5623914+00:00",
+              "native": 0
+            },
+            {
+              "name": "build",
+              "start": "2026-10-06T00:37:03.8981729+00:00",
+              "end": "2026-10-06T00:37:05.0143701+00:00",
+              "native": 0
+            }
+          ],
+          "issues": [],
+          "gaps": []
+        },
+        {
+          "name": "Cooking ET runtime build with relation analyzer",
+          "resultId": "3780ac55-cba0-4a7c-9d2f-64017e9f9edd",
+          "status": "Passed",
+          "cli": 0,
+          "native": 0,
+          "tests": null,
+          "trx": null,
+          "stageTimes": [
+            {
+              "name": "restore",
+              "start": "2026-10-06T00:37:55.0205696+00:00",
+              "end": "2026-10-06T00:37:56.0274922+00:00",
+              "native": 0
+            },
+            {
+              "name": "build",
+              "start": "2026-10-06T00:38:56.5760428+00:00",
+              "end": "2026-10-06T00:39:02.6938738+00:00",
+              "native": 0
+            }
+          ],
+          "issues": [],
+          "gaps": []
+        },
+        {
+          "name": "Cooking domain and Level lifecycle tests",
+          "resultId": "e6ae5d52-2698-439c-a48c-1e2a2197790d",
+          "status": "Passed",
+          "cli": 0,
+          "native": 0,
+          "tests": {
+            "total": 867,
+            "resultEntries": 867,
+            "passed": 867,
+            "failed": 0,
+            "skipped": 0,
+            "notExecuted": 0,
+            "executed": 867
+          },
+          "trx": {
+            "path": "C:\\Users\\Administrator\\orca\\workspaces\\AbilityKit\\issue6-cooking-truthful-gates\\local\\Logs\\test-gates\\8dfabf17-f938-40d2-84a1-660bae4fb503\\e6ae5d522698\\test-results.trx",
+            "sha256": "92ca4893581e4f1fc0507256bce08ddafa4d2ec2c57dc4db52b86c9eb39f19d6",
+            "runId": "0f238847-59b9-40e4-af45-fcff3add6787",
+            "filter": ""
+          },
+          "stageTimes": [
+            {
+              "name": "restore",
+              "start": "2026-10-06T00:41:04.3492979+00:00",
+              "end": "2026-10-06T00:41:05.4050008+00:00",
+              "native": 0
+            },
+            {
+              "name": "build",
+              "start": "2026-10-06T00:42:21.8810772+00:00",
+              "end": "2026-10-06T00:42:27.5508783+00:00",
+              "native": 0
+            },
+            {
+              "name": "test",
+              "start": "2026-10-06T00:43:20.8557615+00:00",
+              "end": "2026-10-06T00:43:38.5890755+00:00",
+              "native": 0
+            }
+          ],
+          "issues": [],
+          "gaps": []
+        },
+        {
+          "name": "Cooking ET Level host and runtime tests",
+          "resultId": "38b5c1c4-b94f-49b6-a16e-97dd98786ec5",
+          "status": "Passed",
+          "cli": 0,
+          "native": 0,
+          "tests": {
+            "total": 328,
+            "resultEntries": 328,
+            "passed": 328,
+            "failed": 0,
+            "skipped": 0,
+            "notExecuted": 0,
+            "executed": 328
+          },
+          "trx": {
+            "path": "C:\\Users\\Administrator\\orca\\workspaces\\AbilityKit\\issue6-cooking-truthful-gates\\local\\Logs\\test-gates\\8dfabf17-f938-40d2-84a1-660bae4fb503\\38b5c1c4b94f\\test-results.trx",
+            "sha256": "96f7dc608c9baad5982eb76d76111d6ac5bbe134ac4fc47995dbd2e31546f442",
+            "runId": "a1390880-eaea-46fb-b788-2454f1cc6714",
+            "filter": ""
+          },
+          "stageTimes": [
+            {
+              "name": "restore",
+              "start": "2026-10-06T00:45:33.6495810+00:00",
+              "end": "2026-10-06T00:45:34.6894366+00:00",
+              "native": 0
+            },
+            {
+              "name": "build",
+              "start": "2026-10-06T00:46:49.4118874+00:00",
+              "end": "2026-10-06T00:46:52.3901051+00:00",
+              "native": 0
+            },
+            {
+              "name": "test",
+              "start": "2026-10-06T00:47:40.6966940+00:00",
+              "end": "2026-10-06T00:58:57.7588732+00:00",
+              "native": 0
+            }
+          ],
+          "issues": [],
+          "gaps": []
+        }
+      ]
+    },
+    {
+      "gate": "cooking-kitchen-loop",
+      "runId": "f899c5d2-b47d-4728-96f7-a1f0fc2467b7",
+      "resultId": "5f993648-501f-49e3-adec-03e40b3863df",
+      "summary": {
+        "path": "C:\\Users\\Administrator\\orca\\workspaces\\AbilityKit\\issue6-cooking-truthful-gates\\local\\Logs\\test-gates\\f899c5d2-b47d-4728-96f7-a1f0fc2467b7\\gate-summary.json",
+        "bytes": 26940949,
+        "sha256": "9f0a2cdabd067a351064830bda4902fb39e5d1c2d22ec07f183da14201af32ae"
+      },
+      "status": "Passed",
+      "cliExitCode": 0,
+      "native": {
+        "command": {
+          "executable": "C:\\Windows\\System32\\WindowsPowerShell\\v1.0\\powershell.exe",
+          "arguments": [
+            "-NoProfile",
+            "-ExecutionPolicy",
+            "Bypass",
+            "-File",
+            "tools/run_test_gate.ps1",
+            "-Gate",
+            "cooking-kitchen-loop",
+            "-Configuration",
+            "Debug",
+            "-CI"
+          ],
+          "workingDirectory": "C:\\Users\\Administrator\\orca\\workspaces\\AbilityKit\\issue6-cooking-truthful-gates"
+        },
+        "startedAt": "2026-10-06T01:10:52.6861266+00:00",
+        "endedAt": "2026-10-06T01:53:19.5688347+00:00",
+        "processExitCode": 0,
+        "reason": null,
+        "ownedProcessId": 85868,
+        "exitConfirmed": true,
+        "stdoutPath": "C:\\Users\\Administrator\\orca\\workspaces\\AbilityKit\\issue6-cooking-truthful-gates\\local\\Artifacts\\issue6-cooking-slice8-verification-640lwkzs\\cooking-kitchen-loop.stdout.txt",
+        "stderrPath": "C:\\Users\\Administrator\\orca\\workspaces\\AbilityKit\\issue6-cooking-truthful-gates\\local\\Artifacts\\issue6-cooking-slice8-verification-640lwkzs\\cooking-kitchen-loop.stderr.txt"
+      },
+      "fullGateAccepted": true,
+      "coverage": {
+        "required": [
+          "cooking-kitchen-loop:1:dotnet-build:AbilityKit.Game.Cooking",
+          "cooking-kitchen-loop:2:dotnet-build:AbilityKit.Game.Cooking.EtRuntime",
+          "cooking-kitchen-loop:3:dotnet-test:AbilityKit.Game.Cooking.Tests:Gate=CookingKitchenLoop",
+          "cooking-kitchen-loop:4:dotnet-test:AbilityKit.Game.Cooking.Tests",
+          "cooking-kitchen-loop:5:dotnet-test:AbilityKit.ET.Runtime.Tests"
+        ],
+        "optional": [],
+        "completed": [
+          "cooking-kitchen-loop:1:dotnet-build:AbilityKit.Game.Cooking",
+          "cooking-kitchen-loop:2:dotnet-build:AbilityKit.Game.Cooking.EtRuntime",
+          "cooking-kitchen-loop:3:dotnet-test:AbilityKit.Game.Cooking.Tests:Gate=CookingKitchenLoop",
+          "cooking-kitchen-loop:4:dotnet-test:AbilityKit.Game.Cooking.Tests",
+          "cooking-kitchen-loop:5:dotnet-test:AbilityKit.ET.Runtime.Tests"
+        ],
+        "missing": [],
+        "bindings": {
+          "cooking-kitchen-loop:1:dotnet-build:AbilityKit.Game.Cooking": [
+            "b2b1fdb9-2ebc-4248-93ca-5c8fec03702b"
+          ],
+          "cooking-kitchen-loop:2:dotnet-build:AbilityKit.Game.Cooking.EtRuntime": [
+            "0bf5b6b5-ea2a-472f-ab13-944dc40116d6"
+          ],
+          "cooking-kitchen-loop:3:dotnet-test:AbilityKit.Game.Cooking.Tests:Gate=CookingKitchenLoop": [
+            "9dcd5ad3-190c-4ecd-ac27-d86716fe5891"
+          ],
+          "cooking-kitchen-loop:4:dotnet-test:AbilityKit.Game.Cooking.Tests": [
+            "a180dfda-4425-44c0-ba7d-f505d4858559"
+          ],
+          "cooking-kitchen-loop:5:dotnet-test:AbilityKit.ET.Runtime.Tests": [
+            "0b102d57-dc1a-429d-9186-db89f19fc1a2"
+          ]
+        }
+      },
+      "sourceFingerprint": "ea3ca2709a0f6f4fcf60ee4e5cc32fb79443227d5b030cb0f5674e1d6d49ba60",
+      "nativeInvocations": 496,
+      "nativeNonzero": 0,
+      "runFiles": 19344,
+      "stages": {
+        "restore": 5,
+        "build": 5,
+        "test": 3
+      },
+      "projectPairs": 13,
+      "leaves": [
+        {
+          "name": "Cooking domain build",
+          "resultId": "b2b1fdb9-2ebc-4248-93ca-5c8fec03702b",
+          "status": "Passed",
+          "cli": 0,
+          "native": 0,
+          "tests": null,
+          "trx": null,
+          "stageTimes": [
+            {
+              "name": "restore",
+              "start": "2026-10-06T01:11:08.9349391+00:00",
+              "end": "2026-10-06T01:11:10.0939981+00:00",
+              "native": 0
+            },
+            {
+              "name": "build",
+              "start": "2026-10-06T01:11:35.8845226+00:00",
+              "end": "2026-10-06T01:11:41.4660896+00:00",
+              "native": 0
+            }
+          ],
+          "issues": [],
+          "gaps": []
+        },
+        {
+          "name": "Cooking ET runtime build with relation analyzer",
+          "resultId": "0bf5b6b5-ea2a-472f-ab13-944dc40116d6",
+          "status": "Passed",
+          "cli": 0,
+          "native": 0,
+          "tests": null,
+          "trx": null,
+          "stageTimes": [
+            {
+              "name": "restore",
+              "start": "2026-10-06T01:12:54.8853736+00:00",
+              "end": "2026-10-06T01:12:55.8252278+00:00",
+              "native": 0
+            },
+            {
+              "name": "build",
+              "start": "2026-10-06T01:13:54.7985563+00:00",
+              "end": "2026-10-06T01:13:59.8025002+00:00",
+              "native": 0
+            }
+          ],
+          "issues": [],
+          "gaps": []
+        },
+        {
+          "name": "Kitchen-loop focused contract tests",
+          "resultId": "9dcd5ad3-190c-4ecd-ac27-d86716fe5891",
+          "status": "Passed",
+          "cli": 0,
+          "native": 0,
+          "tests": {
+            "total": 644,
+            "resultEntries": 644,
+            "passed": 644,
+            "failed": 0,
+            "skipped": 0,
+            "notExecuted": 0,
+            "executed": 644
+          },
+          "trx": {
+            "path": "C:\\Users\\Administrator\\orca\\workspaces\\AbilityKit\\issue6-cooking-truthful-gates\\local\\Logs\\test-gates\\f899c5d2-b47d-4728-96f7-a1f0fc2467b7\\9dcd5ad3190c\\test-results.trx",
+            "sha256": "2c587c2345452875c56689a7c7ec6f7f5853a485de5cc8a9820bc0bb0f1e8c52",
+            "runId": "17e7dc61-02e9-4d7e-a649-051c625a26b0",
+            "filter": "Gate=CookingKitchenLoop"
+          },
+          "stageTimes": [
+            {
+              "name": "restore",
+              "start": "2026-10-06T01:16:01.7224927+00:00",
+              "end": "2026-10-06T01:16:02.7503817+00:00",
+              "native": 0
+            },
+            {
+              "name": "build",
+              "start": "2026-10-06T01:17:19.5161632+00:00",
+              "end": "2026-10-06T01:17:23.2341076+00:00",
+              "native": 0
+            },
+            {
+              "name": "test",
+              "start": "2026-10-06T01:18:11.9908353+00:00",
+              "end": "2026-10-06T01:18:19.1351838+00:00",
+              "native": 0
+            }
+          ],
+          "issues": [],
+          "gaps": []
+        },
+        {
+          "name": "Cooking domain and Level lifecycle regression",
+          "resultId": "a180dfda-4425-44c0-ba7d-f505d4858559",
+          "status": "Passed",
+          "cli": 0,
+          "native": 0,
+          "tests": {
+            "total": 867,
+            "resultEntries": 867,
+            "passed": 867,
+            "failed": 0,
+            "skipped": 0,
+            "notExecuted": 0,
+            "executed": 867
+          },
+          "trx": {
+            "path": "C:\\Users\\Administrator\\orca\\workspaces\\AbilityKit\\issue6-cooking-truthful-gates\\local\\Logs\\test-gates\\f899c5d2-b47d-4728-96f7-a1f0fc2467b7\\a180dfda4425\\test-results.trx",
+            "sha256": "a7ed048e37c3b06f3347ad7d1a7866a6741d600ac6a68d79d4041adce0c43a76",
+            "runId": "48f77f19-216f-4333-9484-7662bb1f1e8f",
+            "filter": ""
+          },
+          "stageTimes": [
+            {
+              "name": "restore",
+              "start": "2026-10-06T01:20:16.4719535+00:00",
+              "end": "2026-10-06T01:20:17.4963875+00:00",
+              "native": 0
+            },
+            {
+              "name": "build",
+              "start": "2026-10-06T01:21:32.9724603+00:00",
+              "end": "2026-10-06T01:21:36.0215502+00:00",
+              "native": 0
+            },
+            {
+              "name": "test",
+              "start": "2026-10-06T01:22:26.1129860+00:00",
+              "end": "2026-10-06T01:22:43.7939559+00:00",
+              "native": 0
+            }
+          ],
+          "issues": [],
+          "gaps": []
+        },
+        {
+          "name": "Cooking ET Level host and runtime regression",
+          "resultId": "0b102d57-dc1a-429d-9186-db89f19fc1a2",
+          "status": "Passed",
+          "cli": 0,
+          "native": 0,
+          "tests": {
+            "total": 328,
+            "resultEntries": 328,
+            "passed": 328,
+            "failed": 0,
+            "skipped": 0,
+            "notExecuted": 0,
+            "executed": 328
+          },
+          "trx": {
+            "path": "C:\\Users\\Administrator\\orca\\workspaces\\AbilityKit\\issue6-cooking-truthful-gates\\local\\Logs\\test-gates\\f899c5d2-b47d-4728-96f7-a1f0fc2467b7\\0b102d57dc1a\\test-results.trx",
+            "sha256": "c0922b8e5cef1328f747c68ad24c0b9be86a6a36dd71ce8ba5ef2e4044f83540",
+            "runId": "32c3b24e-7c00-4695-8ac3-43b32e0d3f8d",
+            "filter": ""
+          },
+          "stageTimes": [
+            {
+              "name": "restore",
+              "start": "2026-10-06T01:24:40.4658022+00:00",
+              "end": "2026-10-06T01:24:41.5313270+00:00",
+              "native": 0
+            },
+            {
+              "name": "build",
+              "start": "2026-10-06T01:25:58.2415704+00:00",
+              "end": "2026-10-06T01:26:01.0272343+00:00",
+              "native": 0
+            },
+            {
+              "name": "test",
+              "start": "2026-10-06T01:26:51.5235727+00:00",
+              "end": "2026-10-06T01:38:15.1560547+00:00",
+              "native": 0
+            }
+          ],
+          "issues": [],
+          "gaps": []
+        }
+      ]
+    }
+  ],
+  "crossGate": {
+    "groups": 91,
+    "entries": 71490,
+    "mismatches": [],
+    "resultIdsUnique": true,
+    "runIdsDistinct": true,
+    "trxIdsUnique": true
+  },
+  "history": {
+    "at": "2026-10-06T01:56:27.275296+00:00",
+    "sourceSHA": "b8c53e8153b9c6f015e75040b9561b3078f05e5f",
+    "checks": [
+      {
+        "label": "owned-evidence-manifest.json",
+        "checked": 21700,
+        "changed": []
+      },
+      {
+        "label": "closing-evidence-hashes.json",
+        "checked": 5,
+        "changed": []
+      },
+      {
+        "label": "positive68-cooking-et-level-runtime",
+        "checked": 14453,
+        "changed": []
+      },
+      {
+        "label": "positive68-cooking-kitchen-loop",
+        "checked": 19344,
+        "changed": []
+      }
+    ],
+    "changed": [],
+    "readOnly": true,
+    "tool": {
+      "executable": "C:\\Python314\\python.exe",
+      "version": "3.14.8 (tags/v3.14.8:8e6e75d, Sep 30 2026, 18:19:33) [MSC v.1944 64 bit (AMD64)]",
+      "argv": [
+        "local/Artifacts/issue6-cooking-slice8-verification-640lwkzs/preserve-history.py"
+      ]
+    }
+  },
+  "tool": {
+    "version": "3.14.8 (tags/v3.14.8:8e6e75d, Sep 30 2026, 18:19:33) [MSC v.1944 64 bit (AMD64)]",
+    "executable": "C:\\Python314\\python.exe",
+    "argv": [
+      "local/Artifacts/issue6-cooking-slice8-verification-640lwkzs/compact-receipt.py"
+    ]
+  }
+}

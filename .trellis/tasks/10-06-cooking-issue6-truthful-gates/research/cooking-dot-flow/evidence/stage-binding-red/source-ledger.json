@@ -1,0 +1,37 @@
+{
+  "recorded_utc": "2026-10-05T18:12:16.648869+00:00",
+  "scope": "Original synthetic mutation red evidence, before repair. No real Cooking acceptance.",
+  "dispatch": "ctx_c1d5fbd7ef56",
+  "source_files": [
+    {
+      "name": "red-controls.json",
+      "bytes": 940,
+      "sha256": "4802ccf86d28664b03aab92a8031817d79dd1f85772a15dfaf2142afb2f63f8d",
+      "original": "local\\Artifacts\\issue6-cooking-slice1-stage-red\\red-controls.json"
+    },
+    {
+      "name": "build-tfm.json",
+      "bytes": 252878,
+      "sha256": "df0a8128af2ff9f1117a9693810e39ce9502648b374c787d4487d82fccdd7148",
+      "original": "local\\Artifacts\\issue6-cooking-slice1-stage-red\\build-tfm.json"
+    },
+    {
+      "name": "test-tfm.json",
+      "bytes": 252878,
+      "sha256": "09f65953e29a67af548a3a641c3517fa8cde5ce369a39b80f457849ab30fea38",
+      "original": "local\\Artifacts\\issue6-cooking-slice1-stage-red\\test-tfm.json"
+    },
+    {
+      "name": "restore-tfm.json",
+      "bytes": 252899,
+      "sha256": "b6a6d68703a96eca5fb2217059993ff18bc39d68dc6f26dcb3e6cbcbc1a76db9",
+      "original": "local\\Artifacts\\issue6-cooking-slice1-stage-red\\restore-tfm.json"
+    },
+    {
+      "name": "restore-configuration.json",
+      "bytes": 252887,
+      "sha256": "95355b88dfae54dc604b5f1efdc1c9e079994262197024542267eb9d9b126dfd",
+      "original": "local\\Artifacts\\issue6-cooking-slice1-stage-red\\restore-configuration.json"
+    }
+  ]
+}

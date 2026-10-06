@@ -1,0 +1,21 @@
+{
+  "version": 1,
+  "flow_id": "6d3174fd-2b01-4136-8ea5-0b0cd0e2845d",
+  "seq": 42,
+  "op_id": "6d3174fd-2b01-4136-8ea5-0b0cd0e2845d:000042",
+  "kind": "receipt",
+  "recorded_utc": "2026-10-05T20:22:36.725260Z",
+  "intent_hash": "09710fc0a8c61a0239f497c6bbfa8950e275a029a0c689e7d7729424ecc18ec3",
+  "outcome": "applied",
+  "raw_ref": "evidence/slice4-start-raw.json",
+  "result": {
+    "run_id": "run_5ba664a5f016",
+    "task_id": "task_b21c8d19b8ee",
+    "dispatch_id": "ctx_5c932faebb3d",
+    "input_accepted": true,
+    "turn_started": true,
+    "state": "ready",
+    "candidate_sha": "79bf9642b04a696880a1c393ca5d11171a4b078a",
+    "specRef": "evidence/slice4-real-verification-spec.md"
+  }
+}

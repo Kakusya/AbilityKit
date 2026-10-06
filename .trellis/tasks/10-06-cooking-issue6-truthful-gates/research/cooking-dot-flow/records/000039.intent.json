@@ -1,0 +1,15 @@
+{
+  "version": 1,
+  "flow_id": "6d3174fd-2b01-4136-8ea5-0b0cd0e2845d",
+  "seq": 39,
+  "op_id": "6d3174fd-2b01-4136-8ea5-0b0cd0e2845d:000039",
+  "kind": "intent",
+  "recorded_utc": "2026-10-05T20:00:13.512699Z",
+  "action": "terminal-submit-existing-prompt",
+  "target": "term_a1a61c7c-aef6-4cd0-8c46-27a90632617b",
+  "authorization_ref": "evidence/approval.md",
+  "payload_ref": "evidence/parser-start-composer01.json",
+  "preconditions": {
+    "run_id": "run_5ba664a5f016"
+  }
+}

@@ -1,0 +1,19 @@
+{
+  "taskId": "task_f9cd55629781",
+  "dispatchId": "ctx_00994ffacdae",
+  "workerDoneMessageId": "msg_51d1ddc8494e",
+  "outcome": "succeeded",
+  "commit": "b8c53e8153b9c6f015e75040b9561b3078f05e5f",
+  "reportSha256": "9d2535ca25a35706a8b20035168fa7540976f2f9b0b3e32b5a9eeaa2dc97b53c",
+  "capabilityRevoked": true,
+  "terminalIdleConfirmed": true,
+  "liveRef": "slice7-settled-live.json",
+  "idleRef": "slice7-settled-idle.json",
+  "resourceDecision": "Approved immediate reuse for a distinct new-source genuine verification dispatch after independent main acceptance; user-owned external terminal retained during those main checks, no cleanup/release.",
+  "authorizationRefs": [
+    "approval.md",
+    "dot-clarification-reply-raw.txt"
+  ],
+  "finalAcceptance": "NotRun",
+  "integration": "NotRun"
+}

@@ -1,0 +1,8 @@
+{
+  "status": "Passed",
+  "sha": "68a880f2a31c7269da634b2f152362bccb5857ab",
+  "remoteRaw": "push-68a880f2-remote.txt",
+  "githubRaw": "push-68a880f2-github.json",
+  "issueRaw": "issue6-before-slice6.json",
+  "allNativeExit": 0
+}

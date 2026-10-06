@@ -1,0 +1,15 @@
+{
+  "version": 1,
+  "flow_id": "6d3174fd-2b01-4136-8ea5-0b0cd0e2845d",
+  "seq": 52,
+  "op_id": "6d3174fd-2b01-4136-8ea5-0b0cd0e2845d:000052",
+  "kind": "intent",
+  "recorded_utc": "2026-10-05T21:04:03.897351Z",
+  "action": "inbox-ack",
+  "target": "delivery_7707c0fad7ac",
+  "authorization_ref": "evidence/approval.md",
+  "payload_ref": "evidence/delivery-restore-repair-status05.json",
+  "preconditions": {
+    "run_id": "run_5ba664a5f016"
+  }
+}

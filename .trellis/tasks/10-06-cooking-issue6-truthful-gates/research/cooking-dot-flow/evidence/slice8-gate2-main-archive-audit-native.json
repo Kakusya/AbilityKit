@@ -1,0 +1,24 @@
+{
+  "command": [
+    "C:\\Python314\\python.exe",
+    "local\\Artifacts\\issue6-main-independent-prepared\\audit-real-archives-v2.py",
+    "--run",
+    "f899c5d2-b47d-4728-96f7-a1f0fc2467b7",
+    "--expected-sha",
+    "b8c53e8153b9c6f015e75040b9561b3078f05e5f",
+    "--native",
+    "local\\Artifacts\\issue6-cooking-slice8-verification-640lwkzs\\cooking-kitchen-loop-native.json",
+    "--output",
+    ".trellis\\tasks\\10-06-cooking-issue6-truthful-gates\\research\\cooking-dot-flow\\evidence\\slice8-gate2-main-archive-binary-audit.json"
+  ],
+  "cwd": "C:\\Users\\Administrator\\orca\\workspaces\\AbilityKit\\issue6-cooking-truthful-gates",
+  "startedAt": "2026-10-06T01:55:01.608127+00:00",
+  "endedAt": "2026-10-06T01:55:12.766877+00:00",
+  "ownedProcessId": 83032,
+  "processExitCode": 0,
+  "exitConfirmed": true,
+  "tool": "3.14.8 (tags/v3.14.8:8e6e75d, Sep 30 2026, 18:19:33) [MSC v.1944 64 bit (AMD64)]",
+  "scriptSha256": "1360e3c2455b17d88f57806c9b531560fa8d39020e124de1ee84b9bc5afd4e03",
+  "stdoutRef": "slice8-gate2-main-archive-audit.stdout.txt",
+  "stderrRef": "slice8-gate2-main-archive-audit.stderr.txt"
+}

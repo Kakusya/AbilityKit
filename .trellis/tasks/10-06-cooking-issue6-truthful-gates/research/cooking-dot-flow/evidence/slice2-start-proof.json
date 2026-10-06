@@ -1,0 +1,12 @@
+{
+  "dispatchId": "ctx_2127fab8d0af",
+  "taskId": "task_b85eae037475",
+  "inputAcceptanceRef": "slice2-start-raw.json",
+  "initialTurnObservation": "unobserved; preserved",
+  "completionAction": "same queued prompt Enter only operation32; no text resend/replacement",
+  "actualTurnStarted": true,
+  "proof": "live exact-dispatch activity working plus fresh exact transcript executing read on frozen source a0824b6 and normative plan/spec",
+  "transcriptRef": "slice2-turn-start-transcript01.json",
+  "liveRef": "slice2-turn-start-live02.json",
+  "recordedUtc": "2026-10-05T19:33:44.945320+00:00"
+}

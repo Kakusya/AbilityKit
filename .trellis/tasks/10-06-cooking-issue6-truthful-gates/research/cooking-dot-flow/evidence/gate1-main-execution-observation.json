@@ -1,0 +1,95 @@
+{
+  "status": "Passed",
+  "cliExitCode": 0,
+  "fullGateAccepted": true,
+  "runId": "86324cd6-22d9-45ea-9762-e2c301e59734",
+  "resultId": "9e4d0da5-f96a-459a-8665-b914370a061c",
+  "nativeExit": 0,
+  "exitConfirmed": true,
+  "startedAt": "2026-10-05T22:12:27.5409680+00:00",
+  "endedAt": "2026-10-05T22:44:09.4136978+00:00",
+  "summaryRaw": "local\\Logs\\test-gates\\86324cd6-22d9-45ea-9762-e2c301e59734\\gate-summary.json",
+  "summarySha256": "6b07cb60a5ce365c540c35f95bae8c808a4cc709286fd50505e03740ccf7f165",
+  "nativeRaw": "local\\Artifacts\\issue6-cooking-slice6-verification-c66e1880\\cooking-et-level-runtime-native.json",
+  "nativeSha256": "2a6a9955169fd7a4ee6e3d74dd390daf2944cb6a3974c14aa9c83470c1d1b488",
+  "sourceSHA": "68a880f2a31c7269da634b2f152362bccb5857ab",
+  "sourceAfterSHA": "68a880f2a31c7269da634b2f152362bccb5857ab",
+  "dirty": true,
+  "coverage": {
+    "required": [
+      "cooking-et-level-runtime:1:dotnet-build:AbilityKit.ET.RelationAnalyzer",
+      "cooking-et-level-runtime:2:dotnet-build:AbilityKit.Game.Cooking.EtRuntime",
+      "cooking-et-level-runtime:3:dotnet-test:AbilityKit.Game.Cooking.Tests",
+      "cooking-et-level-runtime:4:dotnet-test:AbilityKit.ET.Runtime.Tests"
+    ],
+    "optional": [],
+    "completed": [
+      "cooking-et-level-runtime:1:dotnet-build:AbilityKit.ET.RelationAnalyzer",
+      "cooking-et-level-runtime:2:dotnet-build:AbilityKit.Game.Cooking.EtRuntime",
+      "cooking-et-level-runtime:3:dotnet-test:AbilityKit.Game.Cooking.Tests",
+      "cooking-et-level-runtime:4:dotnet-test:AbilityKit.ET.Runtime.Tests"
+    ],
+    "missing": [],
+    "bindings": {
+      "cooking-et-level-runtime:1:dotnet-build:AbilityKit.ET.RelationAnalyzer": [
+        "e755beed-2ad2-4207-a1be-030bdf597d89"
+      ],
+      "cooking-et-level-runtime:2:dotnet-build:AbilityKit.Game.Cooking.EtRuntime": [
+        "c4d6b402-4c4a-413a-912f-25ad5f10b6d4"
+      ],
+      "cooking-et-level-runtime:3:dotnet-test:AbilityKit.Game.Cooking.Tests": [
+        "8530a91f-82b5-461a-a2c4-1c2f09b2e4d2"
+      ],
+      "cooking-et-level-runtime:4:dotnet-test:AbilityKit.ET.Runtime.Tests": [
+        "46187749-acd6-4c79-9695-e9e9c4d2dd65"
+      ]
+    }
+  },
+  "leaves": [
+    {
+      "name": "ET relation analyzer build",
+      "status": "Passed",
+      "kind": "dotnet-build",
+      "testCounts": null,
+      "nativeExit": 0
+    },
+    {
+      "name": "Cooking ET runtime build with relation analyzer",
+      "status": "Passed",
+      "kind": "dotnet-build",
+      "testCounts": null,
+      "nativeExit": 0
+    },
+    {
+      "name": "Cooking domain and Level lifecycle tests",
+      "status": "Passed",
+      "kind": "dotnet-test",
+      "testCounts": {
+        "total": 867,
+        "resultEntries": 867,
+        "passed": 867,
+        "failed": 0,
+        "skipped": 0,
+        "notExecuted": 0,
+        "executed": 867
+      },
+      "nativeExit": 0
+    },
+    {
+      "name": "Cooking ET Level host and runtime tests",
+      "status": "Passed",
+      "kind": "dotnet-test",
+      "testCounts": {
+        "total": 328,
+        "resultEntries": 328,
+        "passed": 328,
+        "failed": 0,
+        "skipped": 0,
+        "notExecuted": 0,
+        "executed": 328
+      },
+      "nativeExit": 0
+    }
+  ],
+  "scope": "Gate1 execution only; independent full closure audit, gate2 and final acceptance still pending"
+}

@@ -1,0 +1,126 @@
+{
+  "id": "74776a93-30ef-4570-8c0b-373cfae7a568",
+  "ok": true,
+  "result": {
+    "dispatchId": "ctx_a4e2695b308e",
+    "source": "transcript",
+    "sourceIdentity": "cu2zdwkdsmPUSCyhNJeOZCjLL8pYI9Oi",
+    "provider": "codex",
+    "transcript": {
+      "messages": [
+        {
+          "id": "ctco_01a10ea5-2030-7ac0-89b2-3021c52fc507",
+          "role": "tool",
+          "blocks": [
+            {
+              "type": "tool-result",
+              "output": "Script completed\nWall time 0.7 seconds\nOutput:\n{\"chunk_id\":\"df9154\",\"wall_time_seconds\":0.2117861,\"exit_code\":0,\"original_token_count\":516,\"output\":\"{\\r\\n    \\\"gate\\\":  \\\"cooking-et-level-runtime\\\",\\r\\n    \\\"sourceSHA\\\":  \\\"b8c53e8153b9c6f015e75040b9561b3078f05e5f\\\",\\r\\n    \\\"observedAt\\\":  \\\"2026-10-06T00:37:02.2579053Z\\\",\\r\\n    \\\"runner\\\":  {\\r\\n                   \\\"ProcessId\\\":  21204,\\r\\n                   \\\"ParentProcessId\\\":  77140,\\r\\n                   \\\"CreationDate\\\":  \\\"\\\\/Date(1791246992009)\\\\/\\\",\\r\\n                   \\\"ExecutablePath\\\":  \\\"C:\\\\\\\\Windows\\\\\\\\System32\\\\\\\\WindowsPowerShell\\\\\\\\v1.0\\\\\\\\powershell.exe\\\",\\r\\n                   \\\"Name\\\":  \\\"powershell.exe\\\",\\r\\n                   \\\"CommandLine\\\":  \\\"\\\\\\\"C:\\\\\\\\Windows\\\\\\\\System32\\\\\\\\WindowsPowerShell\\\\\\\\v1.0\\\\\\\\powershell.exe\\\\\\\" \\\\\\\"-NoProfile\\\\\\\" \\\\\\\"-ExecutionPolicy\\\\\\\" \\\\\\\"Bypass\\\\\\\" \\\\\\\"-File\\\\\\\" \\\\\\\"tools/run_test_gate.ps1\\\\\\\" \\\\\\\"-Gate\\\\\\\" \\\\\\\"cooking-et-level-runtime\\\\\\\" \\\\\\\"-Configuration\\\\\\\" \\\\\\\"Debug\\\\\\\" \\\\\\\"-CI\\\\\\\"\\\"\\r\\n               },\\r\\n    \\\"wholeStartUTC\\\":  \\\"2026-10-06T00:36:32.0090850Z\\\",\\r\\n    \\\"wholeDeadlineUTC\\\":  \\\"2026-10-06T01:21:32.0090850Z\\\",\\r\\n    \\\"wholeClockBasis\\\":  \\\"Actual \n… (truncated)"
+            }
+          ],
+          "timestamp": 1791247065136,
+          "source": "transcript"
+        },
+        {
+          "id": "msg_03d36cc6d8b642f4016ac442de052c87d09d632883293653d5",
+          "role": "assistant",
+          "blocks": [
+            {
+              "type": "text",
+              "text": "The first gate has a fresh run UUID, and its 45-minute observation clock is recorded. I’ll check the completed native receipts as it progresses; quiet redirected streams alone won’t be treated as a hang."
+            }
+          ],
+          "timestamp": 1791247071443,
+          "source": "transcript"
+        },
+        {
+          "id": "ctc_03d36cc6d8b642f4016ac442df010087d0a0d57f27627bd5cb",
+          "role": "assistant",
+          "blocks": [
+            {
+              "type": "tool-call",
+              "name": "exec",
+              "input": "text(await tools.exec_command({cmd:\"$r='local/Logs/test-gates/8dfabf17-f938-40d2-84a1-660bae4fb503'; Get-ChildItem $r -Recurse -Filter 'result.json' | ForEach-Object { $x=Get-Content $_.FullName -Raw -Encoding UTF8|ConvertFrom-Json; [pscustomobject]@{name=$x.name;status=$x.status;native=$x.processExitCode;tests=$x.tests.counts.total} } | ConvertTo-Json; Get-ChildItem $r -Recurse -Filter 'build.stdout.txt' | Select-Object FullName,Length | ConvertTo-Json; Get-ChildItem $r -Recurse -Filter 'test-results.trx' | Select-Object FullName,Length | ConvertTo-Json\",\"max_output_tokens\":1500}));\ntext(await tools.exec_command({cmd:\"Get-Content -Raw local/Artifacts/issue6-cooking-slice6-verification-c66e1880/cross-gate-stability.py; Get-Content -Raw local/Artifacts/issue6-cooking-slice6-verification-c66e1880/run-audit-capture.ps1\",\"max_output_tokens\":2000}));\n",
+              "callId": "call_MAVbL3g0XAGXEuTEVSn4Y9zJ"
+            }
+          ],
+          "timestamp": 1791247076422,
+          "source": "transcript"
+        }
+      ],
+      "nextCursor": "owr1_eyJ2IjoxLCJkIjoiY3R4X2E0ZTI2OTViMzA4ZSIsInMiOiJ0cmFuc2NyaXB0IiwiaSI6ImN1Mnpkd2tkc21QVVNDeWhOSmVPWkNqTEw4cFlJOU9pIiwicCI6MjY5NjQ1NTAsImMiOiIwZ0Fyc21BM2d4M016LXJCZUVpMGo3bmNBQXY1VTY5NyJ9",
+      "limited": true,
+      "returnedMessageCount": 3
+    },
+    "cursor": "owr1_eyJ2IjoxLCJkIjoiY3R4X2E0ZTI2OTViMzA4ZSIsInMiOiJ0cmFuc2NyaXB0IiwiaSI6ImN1Mnpkd2tkc21QVVNDeWhOSmVPWkNqTEw4cFlJOU9pIiwicCI6MjY5NjQ1NTAsImMiOiIwZ0Fyc21BM2d4M016LXJCZUVpMGo3bmNBQXY1VTY5NyJ9",
+    "status": {
+      "worker": "ready",
+      "terminal": "running",
+      "liveness": "live"
+    },
+    "fallbackReason": null,
+    "warnings": [
+      "Oversized transcript text was clipped."
+    ],
+    "sourceExact": true,
+    "contentComplete": false,
+    "clipping": [
+      "message_limit_or_scan_window",
+      "transcript_payload"
+    ],
+    "projection": {
+      "id": "ctx_a4e2695b308e",
+      "dispatchId": "ctx_a4e2695b308e",
+      "taskId": "task_8285f2c0421e",
+      "runId": "run_5ba664a5f016",
+      "role": "worker",
+      "parent": null,
+      "provider": {
+        "id": "codex",
+        "model": "gpt-6.1-sol"
+      },
+      "host": {
+        "kind": "local",
+        "id": "local"
+      },
+      "workspace": {
+        "id": "aaa97e0d-5026-4e5c-95f8-bb420dcb4c65::C:/Users/Administrator/orca/workspaces/AbilityKit/issue6-cooking-truthful-gates",
+        "kind": "folder_or_worktree"
+      },
+      "stage": {
+        "worker": "ready",
+        "dispatch": "dispatched",
+        "detail": "input_accepted",
+        "activity": "working"
+      },
+      "outcome": "in_progress",
+      "liveness": {
+        "verdict": "live",
+        "observedAt": 1791247065122,
+        "source": "agent_status"
+      },
+      "evidence": {
+        "durable": true,
+        "liveStatus": "fresh",
+        "lastObservedAt": 1791247065122
+      },
+      "resource": {
+        "state": "external",
+        "id": "wtr_de5d9ab4b4af",
+        "ownerDispatchId": "ctx_a4e2695b308e",
+        "releaseState": "not_requested",
+        "terminalState": "retained"
+      },
+      "nextAction": {
+        "kind": "none",
+        "argv": []
+      },
+      "attention": {
+        "categories": [],
+        "requiresAction": false
+      }
+    }
+  },
+  "_meta": {
+    "runtimeId": "ff0c5f2c-d341-4455-bc1c-c113650bdd60"
+  }
+}

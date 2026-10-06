@@ -1,0 +1,38 @@
+{
+  "id": "ab3c8028-da9f-4f5b-84e4-0ea7c9690490",
+  "ok": true,
+  "result": {
+    "runId": "run_5ba664a5f016",
+    "deliveryId": "delivery_ef8ea8e09552",
+    "messages": [
+      {
+        "id": "msg_1357a9a9de8d",
+        "run_id": "run_5ba664a5f016",
+        "delivery_contract": "current_delivery",
+        "from_handle": "term_a1a61c7c-aef6-4cd0-8c46-27a90632617b",
+        "to_handle": "run:run_5ba664a5f016",
+        "subject": "Gate2 ET current native about9min no boundary",
+        "body": "Current ET81968 parent85868 remains live below fixed01:41:51.525Z, wholedeadline01:55:52.691Z; ownership13 processes timedreceipts362 unknown0. All outputs preserved, no terminal ET/count claim yet/no cancellation/retry/source edits.",
+        "type": "heartbeat",
+        "priority": "normal",
+        "thread_id": null,
+        "payload": "{\"taskId\":\"task_8285f2c0421e\",\"dispatchId\":\"ctx_a4e2695b308e\",\"phase\":\"reviewing\"}",
+        "created_at": "2026-10-06T01:37:09Z",
+        "delivered_at": null
+      }
+    ],
+    "count": 1,
+    "replayed": false,
+    "acknowledged": null,
+    "timedOut": false,
+    "cancelled": false,
+    "connectionLost": false,
+    "mutation": {
+      "requestId": "62944838-9e4a-4beb-a158-7963e515cf80",
+      "replayed": false
+    }
+  },
+  "_meta": {
+    "runtimeId": "ff0c5f2c-d341-4455-bc1c-c113650bdd60"
+  }
+}

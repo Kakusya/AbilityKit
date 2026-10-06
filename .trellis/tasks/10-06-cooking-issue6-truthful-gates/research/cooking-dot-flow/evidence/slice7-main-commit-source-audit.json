@@ -1,0 +1,80 @@
+{
+  "status": "Passed",
+  "observedUtc": "2026-10-06T00:27:23.487015+00:00",
+  "sourceSha": "b8c53e8153b9c6f015e75040b9561b3078f05e5f",
+  "parentSha": "68a880f2a31c7269da634b2f152362bccb5857ab",
+  "changedFiles": [
+    ".trellis/tasks/10-06-cooking-issue6-truthful-gates/research/slice7-binding-repair-report.md",
+    "tools/test-gate-result-contract.ps1",
+    "tools/tests/test-gate-result-contract.tests.ps1"
+  ],
+  "testedWorkingBytesUnchanged": true,
+  "qualification": "Seven frozen suite input bytes unchanged after commit; mixed CRLF/LF normalized only CRLF to LF for Git equality. Both raw identities retained. Main task dirt is outside implementation closure.",
+  "files": [
+    {
+      "path": "tools/run_test_gate.ps1",
+      "workingBytes": 15192,
+      "workingSha256": "575469c4238e29cf41b5826a43748d38c9c81578793261835b6e51dc3a886e8f",
+      "blobBytes": 15192,
+      "blobSha256": "575469c4238e29cf41b5826a43748d38c9c81578793261835b6e51dc3a886e8f",
+      "testedWorkingBytesUnchanged": true,
+      "normalizedLFMatches": true
+    },
+    {
+      "path": "tools/test-gate-result-contract.ps1",
+      "workingBytes": 77845,
+      "workingSha256": "20c23618b437b6f174920d75aaa7afba5ae8b9ccfedcc00af82db65e8704f22a",
+      "blobBytes": 76887,
+      "blobSha256": "1476939ca5b630e28c62e8976b30a5aec35214a8eefcf3d1929862f12957b3c9",
+      "testedWorkingBytesUnchanged": true,
+      "normalizedLFMatches": true
+    },
+    {
+      "path": "tools/test-gates.json",
+      "workingBytes": 63749,
+      "workingSha256": "85111d00c4a3a61c87f61da3e43d159da60e07d058406f7049e17495e7e520a1",
+      "blobBytes": 63749,
+      "blobSha256": "85111d00c4a3a61c87f61da3e43d159da60e07d058406f7049e17495e7e520a1",
+      "testedWorkingBytesUnchanged": true,
+      "normalizedLFMatches": true
+    },
+    {
+      "path": "tools/tests/test-gate-result-contract.tests.ps1",
+      "workingBytes": 54517,
+      "workingSha256": "1def7fa5f1cdedf5ed60558d1d54792d667ff1233291cffbb6b12ab24b0412f1",
+      "blobBytes": 54022,
+      "blobSha256": "54000122f9e21ea6c31211e3b2eec9513d389f06f5765fe857b17b40c0df2915",
+      "testedWorkingBytesUnchanged": true,
+      "normalizedLFMatches": true
+    },
+    {
+      "path": "tools/tests/fixtures/gate-result-model.ps1",
+      "workingBytes": 6941,
+      "workingSha256": "bcb89b5a2feb31b033fa3dea8eee095f9b07155dec87d82cf01706f5a5e76d64",
+      "blobBytes": 6869,
+      "blobSha256": "338d8cc9ed30b3ee5ff1f60119225b90735816f005b43e6a5615f43f094289c1",
+      "testedWorkingBytesUnchanged": true,
+      "normalizedLFMatches": true
+    },
+    {
+      "path": "tools/tests/fixtures/gate-result-fake-dotnet.ps1",
+      "workingBytes": 11372,
+      "workingSha256": "aa83a5f7ee3ec4efc225bc3ef6fbdafb08900021b55e65e7dde98fdac070a86e",
+      "blobBytes": 11256,
+      "blobSha256": "b67f1ebb72e9d5542a5cff48238dd32be739340c0c23b517666fd9ca92cc5b85",
+      "testedWorkingBytesUnchanged": true,
+      "normalizedLFMatches": true
+    },
+    {
+      "path": "tools/tests/fixtures/gate-result-native-probe.ps1",
+      "workingBytes": 5534,
+      "workingSha256": "f3a1a95a96cb42f1c1c3dbc2cf77fb6df66d13855543a6332c576f56bd355bfe",
+      "blobBytes": 5534,
+      "blobSha256": "f3a1a95a96cb42f1c1c3dbc2cf77fb6df66d13855543a6332c576f56bd355bfe",
+      "testedWorkingBytesUnchanged": true,
+      "normalizedLFMatches": true
+    }
+  ],
+  "reportSha256": "9d2535ca25a35706a8b20035168fa7540976f2f9b0b3e32b5a9eeaa2dc97b53c",
+  "genuineNewSourceChecks": "NotRun"
+}

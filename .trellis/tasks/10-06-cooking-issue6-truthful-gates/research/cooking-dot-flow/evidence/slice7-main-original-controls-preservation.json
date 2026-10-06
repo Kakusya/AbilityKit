@@ -1,0 +1,64 @@
+{
+  "status": "Passed",
+  "observedUtc": "2026-10-06T00:23:02.472378+00:00",
+  "coverage": "Independent comparison of original195 and final216 isolated case names/statuses/native exit; no new producer launched.",
+  "old": {
+    "path": "local\\Artifacts\\issue6-cooking-slice1-restore-full03\\controls.json",
+    "sha256": "a31c7654de942af6c7b4be213baafa750faff0c9b36ac13dd3bd3d45668cab10",
+    "count": 195
+  },
+  "new": {
+    "path": "local\\Artifacts\\issue6-cooking-slice1-binding-repair-muvwbc61\\full02\\controls.json",
+    "sha256": "1de2c0f3e7f6ec7fe97c59a3e5d39a2608b583442288e28e38450ee9b7e36e54",
+    "count": 216
+  },
+  "sourceBefore": {
+    "sha": "68a880f2a31c7269da634b2f152362bccb5857ab",
+    "dirty": true,
+    "inputFingerprint": "ad4805bb9d3e4e751a96622f500cf33a543e4f3312ad37a2518aa57b9281bf9d"
+  },
+  "sourceAfter": {
+    "sha": "68a880f2a31c7269da634b2f152362bccb5857ab",
+    "dirty": true,
+    "inputFingerprint": "ad4805bb9d3e4e751a96622f500cf33a543e4f3312ad37a2518aa57b9281bf9d"
+  },
+  "oldCasesMissing": [],
+  "duplicateCaseNames": false,
+  "newCases": [
+    "binding-build-omit-primary",
+    "binding-loaded-omit-primary",
+    "binding-test-input-omit-primary",
+    "binding-coherent-omit-primary",
+    "binding-test-input-substitute-source",
+    "binding-coherent-substitute-source",
+    "binding-loaded-after-omit-primary",
+    "binding-loaded-omit-dependency",
+    "binding-test-input-omit-dependency",
+    "binding-test-input-substitute-dependency",
+    "binding-loaded-duplicate-normalized-path",
+    "binding-test-input-duplicate-normalized-path",
+    "binding-loaded-hash-contradiction",
+    "binding-loaded-size-contradiction",
+    "binding-positive-distinct-archive-locations",
+    "binding-positive-reordered-identities",
+    "binding-positive-alternate-valid-archives-and-roles",
+    "binding-positive-normalized-windows-paths",
+    "binding-reused-build-positive",
+    "binding-reused-build-test-input-omission",
+    "binding-reused-build-loaded-omission"
+  ],
+  "all216Statuses": "Passed",
+  "nativeExit": 0,
+  "exitConfirmed": true,
+  "nativeSha256": "ee85a8bbf4a19eaaeed93cdb9451cd6a9bbc4a5ab679f3b7849910f61c8257a7",
+  "consoleWidths": {
+    "dimension": "RawUI.WindowSize.Width",
+    "status": "Passed",
+    "observed": [
+      40,
+      80,
+      120
+    ]
+  },
+  "finalDelivery": "NotRun"
+}

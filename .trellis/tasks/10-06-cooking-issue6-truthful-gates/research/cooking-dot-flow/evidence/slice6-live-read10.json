@@ -1,0 +1,149 @@
+{
+  "id": "528be660-d975-4c18-9f06-37f4da9406f6",
+  "ok": true,
+  "result": {
+    "dispatchId": "ctx_4c94250ae711",
+    "source": "transcript",
+    "sourceIdentity": "cu2zdwkdsmPUSCyhNJeOZCjLL8pYI9Oi",
+    "provider": "codex",
+    "transcript": {
+      "messages": [
+        {
+          "id": "fco_01a10e2f-c6c4-7062-89c6-1bbb1aa4c71e",
+          "role": "tool",
+          "blocks": [
+            {
+              "type": "tool-result",
+              "output": "Script completed\nWall time 0.0 seconds\nOutput:\n{\"chunk_id\":\"dcf76c\",\"wall_time_seconds\":45.0156661,\"session_id\":4063,\"original_token_count\":0,\"output\":\"\"}"
+            }
+          ],
+          "timestamp": 1791239374532,
+          "source": "transcript"
+        },
+        {
+          "id": "msg_03d36cc6d8b642f4016ac424d22eb887d0a0b4a6da40f00a4f",
+          "role": "assistant",
+          "blocks": [
+            {
+              "type": "text",
+              "text": "The ET test host is still consuming CPU under the first gate’s invocation. The contracted command has no timeout configured, and there is no final TRX yet. I’ll wait for its result and keep the second gate pending."
+            }
+          ],
+          "timestamp": 1791239379711,
+          "source": "transcript"
+        },
+        {
+          "id": "ctc_03d36cc6d8b642f4016ac424d3490887d09f3c55a25e37cb72",
+          "role": "assistant",
+          "blocks": [
+            {
+              "type": "tool-call",
+              "name": "exec",
+              "input": "text(await tools.write_stdin({session_id:4063,chars:\"\",yield_time_ms:45000,max_output_tokens:1000}));\n",
+              "callId": "call_jiZF0lXIfHxMaSW7qBV0K3tY"
+            }
+          ],
+          "timestamp": 1791239380083,
+          "source": "transcript"
+        },
+        {
+          "id": "ctco_01a10e30-55a0-7d23-a79c-a81262a70eae",
+          "role": "tool",
+          "blocks": [
+            {
+              "type": "tool-result",
+              "output": "Script running with cell ID 413\nWall time 31.0 seconds\nOutput:\n"
+            }
+          ],
+          "timestamp": 1791239411104,
+          "source": "transcript"
+        },
+        {
+          "id": "fc_03d36cc6d8b642f4016ac424f4d65087d09540181354386058",
+          "role": "assistant",
+          "blocks": [
+            {
+              "type": "tool-call",
+              "name": "wait",
+              "input": "{\"cell_id\":\"413\",\"yield_time_ms\":20000,\"max_tokens\":1000}",
+              "callId": "call_DMGr2nOojhhUmlBQ4EjutLam"
+            }
+          ],
+          "timestamp": 1791239413673,
+          "source": "transcript"
+        }
+      ],
+      "nextCursor": "owr1_eyJ2IjoxLCJkIjoiY3R4XzRjOTQyNTBhZTcxMSIsInMiOiJ0cmFuc2NyaXB0IiwiaSI6ImN1Mnpkd2tkc21QVVNDeWhOSmVPWkNqTEw4cFlJOU9pIiwicCI6MjAyMDQwNjksImMiOiI2RnFMSU14XzFxRDdITDVhcjJMNW9uWWlvSEV2MFZ4VyJ9",
+      "limited": true,
+      "returnedMessageCount": 5
+    },
+    "cursor": "owr1_eyJ2IjoxLCJkIjoiY3R4XzRjOTQyNTBhZTcxMSIsInMiOiJ0cmFuc2NyaXB0IiwiaSI6ImN1Mnpkd2tkc21QVVNDeWhOSmVPWkNqTEw4cFlJOU9pIiwicCI6MjAyMDQwNjksImMiOiI2RnFMSU14XzFxRDdITDVhcjJMNW9uWWlvSEV2MFZ4VyJ9",
+    "status": {
+      "worker": "ready",
+      "terminal": "running",
+      "liveness": "live"
+    },
+    "fallbackReason": null,
+    "warnings": [],
+    "sourceExact": true,
+    "contentComplete": false,
+    "clipping": [
+      "message_limit_or_scan_window"
+    ],
+    "projection": {
+      "id": "ctx_4c94250ae711",
+      "dispatchId": "ctx_4c94250ae711",
+      "taskId": "task_31fd1c2368df",
+      "runId": "run_5ba664a5f016",
+      "role": "worker",
+      "parent": null,
+      "provider": {
+        "id": "codex",
+        "model": "gpt-6.1-sol"
+      },
+      "host": {
+        "kind": "local",
+        "id": "local"
+      },
+      "workspace": {
+        "id": "aaa97e0d-5026-4e5c-95f8-bb420dcb4c65::C:/Users/Administrator/orca/workspaces/AbilityKit/issue6-cooking-truthful-gates",
+        "kind": "folder_or_worktree"
+      },
+      "stage": {
+        "worker": "ready",
+        "dispatch": "dispatched",
+        "detail": "input_accepted",
+        "activity": "working"
+      },
+      "outcome": "in_progress",
+      "liveness": {
+        "verdict": "live",
+        "observedAt": 1791239323341,
+        "source": "agent_status"
+      },
+      "evidence": {
+        "durable": true,
+        "liveStatus": "fresh",
+        "lastObservedAt": 1791239323341
+      },
+      "resource": {
+        "state": "external",
+        "id": "wtr_e8df662b2afa",
+        "ownerDispatchId": "ctx_4c94250ae711",
+        "releaseState": "not_requested",
+        "terminalState": "retained"
+      },
+      "nextAction": {
+        "kind": "none",
+        "argv": []
+      },
+      "attention": {
+        "categories": [],
+        "requiresAction": false
+      }
+    }
+  },
+  "_meta": {
+    "runtimeId": "ff0c5f2c-d341-4455-bc1c-c113650bdd60"
+  }
+}

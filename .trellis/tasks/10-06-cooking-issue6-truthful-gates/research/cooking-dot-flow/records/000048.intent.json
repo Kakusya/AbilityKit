@@ -1,0 +1,15 @@
+{
+  "version": 1,
+  "flow_id": "6d3174fd-2b01-4136-8ea5-0b0cd0e2845d",
+  "seq": 48,
+  "op_id": "6d3174fd-2b01-4136-8ea5-0b0cd0e2845d:000048",
+  "kind": "intent",
+  "recorded_utc": "2026-10-05T20:44:17.696903Z",
+  "action": "inbox-ack",
+  "target": "delivery_bfc3f5fb3998",
+  "authorization_ref": "evidence/approval.md",
+  "payload_ref": "evidence/slice4-settlement-accounting.json",
+  "preconditions": {
+    "run_id": "run_5ba664a5f016"
+  }
+}

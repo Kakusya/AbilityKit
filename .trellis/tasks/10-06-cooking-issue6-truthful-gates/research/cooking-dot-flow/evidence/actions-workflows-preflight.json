@@ -1,0 +1,11 @@
+{
+  "command": [
+    "gh",
+    "api",
+    "repos/Kakusya/AbilityKit/actions/workflows"
+  ],
+  "exit_code": 0,
+  "stdout": "{\"total_count\":0,\"workflows\":[]}",
+  "stderr": "",
+  "observed_utc": "2026-10-05T17:24:51.844770+00:00"
+}

@@ -1,0 +1,38 @@
+{
+  "id": "1f797631-fa2a-4421-b44e-c018e272e355",
+  "ok": true,
+  "result": {
+    "runId": "run_5ba664a5f016",
+    "deliveryId": "delivery_238b6e38e1eb",
+    "messages": [
+      {
+        "id": "msg_9cce549c26ba",
+        "run_id": "run_5ba664a5f016",
+        "delivery_contract": "current_delivery",
+        "from_handle": "term_a1a61c7c-aef6-4cd0-8c46-27a90632617b",
+        "to_handle": "run:run_5ba664a5f016",
+        "subject": "Width result contract will preserve unavailable coverage",
+        "body": "Planned width evidence records requested value, setter applied flag, observed buffer/window value and any limitation in an owned JSON sidecar while keeping exact stdout/stderr unchanged. If RawUI width is unavailable in CreateNoWindow redirected processes, byte/control assertions can pass but actual distinct-width coverage will remain Blocked and fullControlSuiteAccepted=false (separate contract-control count retained), rather than fabricating width acceptance. Current f05 still frozen and running; no implementation edits until it settles.",
+        "type": "status",
+        "priority": "normal",
+        "thread_id": null,
+        "payload": "{\"taskId\":\"task_c2b5e42b2e23\",\"dispatchId\":\"ctx_c1d5fbd7ef56\"}",
+        "created_at": "2026-10-05T18:36:45Z",
+        "delivered_at": null
+      }
+    ],
+    "count": 1,
+    "replayed": false,
+    "acknowledged": null,
+    "timedOut": false,
+    "cancelled": false,
+    "connectionLost": false,
+    "mutation": {
+      "requestId": "a2b4c648-8b1d-4455-976e-cc59a7a8a95a",
+      "replayed": false
+    }
+  },
+  "_meta": {
+    "runtimeId": "ff0c5f2c-d341-4455-bc1c-c113650bdd60"
+  }
+}

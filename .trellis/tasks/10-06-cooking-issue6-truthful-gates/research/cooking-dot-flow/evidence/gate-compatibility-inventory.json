@@ -1,0 +1,370 @@
+{
+  "base_sha": "c78ed3de83f69bb53ff1a09bbc23638115928e1e",
+  "observed_utc": "2026-10-05T17:50:03.910471+00:00",
+  "read_only": true,
+  "execution_status": "NotRun",
+  "gates": [
+    {
+      "name": "precheck",
+      "kinds": [
+        "dotnet-build",
+        "dotnet-test"
+      ],
+      "Cooking_consumer": false,
+      "coverage_contract_at_base": false,
+      "current_capability": "unadapted; selected execution Blocked before launch",
+      "compatibility_action": "keep definition, list, diagnose; no example edits"
+    },
+    {
+      "name": "moba-codegen",
+      "kinds": [
+        "dotnet-build",
+        "dotnet-test",
+        "powershell-script"
+      ],
+      "Cooking_consumer": false,
+      "coverage_contract_at_base": false,
+      "current_capability": "unadapted; selected execution Blocked before launch",
+      "compatibility_action": "keep definition, list, diagnose; no example edits"
+    },
+    {
+      "name": "moba-console-smoke",
+      "kinds": [
+        "dotnet-test"
+      ],
+      "Cooking_consumer": false,
+      "coverage_contract_at_base": false,
+      "current_capability": "unadapted; selected execution Blocked before launch",
+      "compatibility_action": "keep definition, list, diagnose; no example edits"
+    },
+    {
+      "name": "runtime-contracts",
+      "kinds": [
+        "dotnet-test"
+      ],
+      "Cooking_consumer": false,
+      "coverage_contract_at_base": false,
+      "current_capability": "unadapted; selected execution Blocked before launch",
+      "compatibility_action": "keep definition, list, diagnose; no example edits"
+    },
+    {
+      "name": "moba-network-options",
+      "kinds": [
+        "dotnet-test"
+      ],
+      "Cooking_consumer": false,
+      "coverage_contract_at_base": false,
+      "current_capability": "unadapted; selected execution Blocked before launch",
+      "compatibility_action": "keep definition, list, diagnose; no example edits"
+    },
+    {
+      "name": "moba-acceptance-dotnet",
+      "kinds": [
+        "dotnet-test"
+      ],
+      "Cooking_consumer": false,
+      "coverage_contract_at_base": false,
+      "current_capability": "unadapted; selected execution Blocked before launch",
+      "compatibility_action": "keep definition, list, diagnose; no example edits"
+    },
+    {
+      "name": "cooking-et-level-runtime",
+      "kinds": [
+        "dotnet-build",
+        "dotnet-test"
+      ],
+      "Cooking_consumer": true,
+      "coverage_contract_at_base": false,
+      "current_capability": "complete contract subject to checks",
+      "compatibility_action": "keep definition, list, diagnose; no example edits"
+    },
+    {
+      "name": "cooking-kitchen-loop",
+      "kinds": [
+        "dotnet-build",
+        "dotnet-test"
+      ],
+      "Cooking_consumer": true,
+      "coverage_contract_at_base": false,
+      "current_capability": "complete contract subject to checks",
+      "compatibility_action": "keep definition, list, diagnose; no example edits"
+    },
+    {
+      "name": "network-sdk",
+      "kinds": [
+        "dotnet-test"
+      ],
+      "Cooking_consumer": false,
+      "coverage_contract_at_base": false,
+      "current_capability": "unadapted; selected execution Blocked before launch",
+      "compatibility_action": "keep definition, list, diagnose; no example edits"
+    },
+    {
+      "name": "core-stability",
+      "kinds": [
+        "dotnet-test",
+        "powershell-script"
+      ],
+      "Cooking_consumer": false,
+      "coverage_contract_at_base": false,
+      "current_capability": "unadapted; selected execution Blocked before launch",
+      "compatibility_action": "keep definition, list, diagnose; no example edits"
+    },
+    {
+      "name": "foundation-units",
+      "kinds": [
+        "dotnet-build",
+        "dotnet-test",
+        "powershell-script"
+      ],
+      "Cooking_consumer": false,
+      "coverage_contract_at_base": false,
+      "current_capability": "unadapted; selected execution Blocked before launch",
+      "compatibility_action": "keep definition, list, diagnose; no example edits"
+    },
+    {
+      "name": "regression",
+      "kinds": [
+        "dotnet-test",
+        "gate"
+      ],
+      "Cooking_consumer": false,
+      "coverage_contract_at_base": false,
+      "current_capability": "unadapted; selected execution Blocked before launch",
+      "compatibility_action": "keep definition, list, diagnose; no example edits"
+    },
+    {
+      "name": "moba-content-contracts",
+      "kinds": [
+        "powershell-script",
+        "unity-editmode-test"
+      ],
+      "Cooking_consumer": false,
+      "coverage_contract_at_base": false,
+      "current_capability": "unadapted; selected execution Blocked before launch",
+      "compatibility_action": "keep definition, list, diagnose; no example edits"
+    },
+    {
+      "name": "moba-xiaoqiao-unity",
+      "kinds": [
+        "unity-editmode-test"
+      ],
+      "Cooking_consumer": false,
+      "coverage_contract_at_base": false,
+      "current_capability": "unadapted; selected execution Blocked before launch",
+      "compatibility_action": "keep definition, list, diagnose; no example edits"
+    },
+    {
+      "name": "moba-lianpo-unity",
+      "kinds": [
+        "unity-editmode-test"
+      ],
+      "Cooking_consumer": false,
+      "coverage_contract_at_base": false,
+      "current_capability": "unadapted; selected execution Blocked before launch",
+      "compatibility_action": "keep definition, list, diagnose; no example edits"
+    },
+    {
+      "name": "moba-zhaoyun-unity",
+      "kinds": [
+        "unity-editmode-test"
+      ],
+      "Cooking_consumer": false,
+      "coverage_contract_at_base": false,
+      "current_capability": "unadapted; selected execution Blocked before launch",
+      "compatibility_action": "keep definition, list, diagnose; no example edits"
+    },
+    {
+      "name": "moba-mozi-unity",
+      "kinds": [
+        "unity-editmode-test"
+      ],
+      "Cooking_consumer": false,
+      "coverage_contract_at_base": false,
+      "current_capability": "unadapted; selected execution Blocked before launch",
+      "compatibility_action": "keep definition, list, diagnose; no example edits"
+    },
+    {
+      "name": "moba-daji-unity",
+      "kinds": [
+        "unity-editmode-test"
+      ],
+      "Cooking_consumer": false,
+      "coverage_contract_at_base": false,
+      "current_capability": "unadapted; selected execution Blocked before launch",
+      "compatibility_action": "keep definition, list, diagnose; no example edits"
+    },
+    {
+      "name": "moba-yingzheng-unity",
+      "kinds": [
+        "unity-editmode-test"
+      ],
+      "Cooking_consumer": false,
+      "coverage_contract_at_base": false,
+      "current_capability": "unadapted; selected execution Blocked before launch",
+      "compatibility_action": "keep definition, list, diagnose; no example edits"
+    },
+    {
+      "name": "moba-config-sync",
+      "kinds": [
+        "unity-editmode-test"
+      ],
+      "Cooking_consumer": false,
+      "coverage_contract_at_base": false,
+      "current_capability": "unadapted; selected execution Blocked before launch",
+      "compatibility_action": "keep definition, list, diagnose; no example edits"
+    },
+    {
+      "name": "shooter-fast",
+      "kinds": [
+        "dotnet-test"
+      ],
+      "Cooking_consumer": false,
+      "coverage_contract_at_base": false,
+      "current_capability": "unadapted; selected execution Blocked before launch",
+      "compatibility_action": "keep definition, list, diagnose; no example edits"
+    },
+    {
+      "name": "shooter-integration",
+      "kinds": [
+        "dotnet-test"
+      ],
+      "Cooking_consumer": false,
+      "coverage_contract_at_base": false,
+      "current_capability": "unadapted; selected execution Blocked before launch",
+      "compatibility_action": "keep definition, list, diagnose; no example edits"
+    },
+    {
+      "name": "shooter-unity-playmode",
+      "kinds": [
+        "unity-playmode-test"
+      ],
+      "Cooking_consumer": false,
+      "coverage_contract_at_base": false,
+      "current_capability": "unadapted; selected execution Blocked before launch",
+      "compatibility_action": "keep definition, list, diagnose; no example edits"
+    },
+    {
+      "name": "shooter-multiprocess",
+      "kinds": [
+        "powershell-script"
+      ],
+      "Cooking_consumer": false,
+      "coverage_contract_at_base": false,
+      "current_capability": "unadapted; selected execution Blocked before launch",
+      "compatibility_action": "keep definition, list, diagnose; no example edits"
+    },
+    {
+      "name": "shooter-multiprocess-compatibility",
+      "kinds": [
+        "powershell-script"
+      ],
+      "Cooking_consumer": false,
+      "coverage_contract_at_base": false,
+      "current_capability": "unadapted; selected execution Blocked before launch",
+      "compatibility_action": "keep definition, list, diagnose; no example edits"
+    },
+    {
+      "name": "shooter-multiprocess-soak",
+      "kinds": [
+        "powershell-script"
+      ],
+      "Cooking_consumer": false,
+      "coverage_contract_at_base": false,
+      "current_capability": "unadapted; selected execution Blocked before launch",
+      "compatibility_action": "keep definition, list, diagnose; no example edits"
+    },
+    {
+      "name": "shooter-multiprocess-ownership-cleanup",
+      "kinds": [
+        "powershell-script"
+      ],
+      "Cooking_consumer": false,
+      "coverage_contract_at_base": false,
+      "current_capability": "unadapted; selected execution Blocked before launch",
+      "compatibility_action": "keep definition, list, diagnose; no example edits"
+    },
+    {
+      "name": "runtime-performance-measurement",
+      "kinds": [
+        "dotnet-test",
+        "powershell-script"
+      ],
+      "Cooking_consumer": false,
+      "coverage_contract_at_base": false,
+      "current_capability": "unadapted; selected execution Blocked before launch",
+      "compatibility_action": "keep definition, list, diagnose; no example edits"
+    },
+    {
+      "name": "shooter-performance",
+      "kinds": [
+        "powershell-script"
+      ],
+      "Cooking_consumer": false,
+      "coverage_contract_at_base": false,
+      "current_capability": "unadapted; selected execution Blocked before launch",
+      "compatibility_action": "keep definition, list, diagnose; no example edits"
+    },
+    {
+      "name": "moba-complete-battle-journey",
+      "kinds": [
+        "dotnet-test",
+        "unity-editmode-test"
+      ],
+      "Cooking_consumer": false,
+      "coverage_contract_at_base": false,
+      "current_capability": "unadapted; selected execution Blocked before launch",
+      "compatibility_action": "keep definition, list, diagnose; no example edits"
+    },
+    {
+      "name": "moba-smoke",
+      "kinds": [
+        "powershell-script"
+      ],
+      "Cooking_consumer": false,
+      "coverage_contract_at_base": false,
+      "current_capability": "unadapted; selected execution Blocked before launch",
+      "compatibility_action": "keep definition, list, diagnose; no example edits"
+    },
+    {
+      "name": "moba-multiprocess",
+      "kinds": [
+        "powershell-script"
+      ],
+      "Cooking_consumer": false,
+      "coverage_contract_at_base": false,
+      "current_capability": "unadapted; selected execution Blocked before launch",
+      "compatibility_action": "keep definition, list, diagnose; no example edits"
+    }
+  ],
+  "static_consumer_search": {
+    "command": [
+      "rg",
+      "-n",
+      "--hidden",
+      "--glob",
+      "!.git/**",
+      "--glob",
+      "!.trellis/tasks/**",
+      "--glob",
+      "!.trellis/workspace/**",
+      "--glob",
+      "!local/**",
+      "--glob",
+      "!artifacts/**",
+      "--glob",
+      "!Unity/Library/**",
+      "--glob",
+      "!Unity/Temp/**",
+      "--glob",
+      "!*.patch",
+      "run_test_gate\\.ps1",
+      "."
+    ],
+    "exit_code": 0,
+    "raw": "runner-consumer-static-search.txt"
+  },
+  "old_behavior": "Runner used native exit 0 as its success criterion, including script/Unity producers. Current complete support is only dotnet-build, dotnet-test, gate. Unadapted producers/contracts are refused; inventory does not grant authority to migrate their consumers.",
+  "standalone_legacy_Unity": "not changed or executed; old warning plus exit0 reproduced only in isolated synthetic control",
+  "ci_observation": "Actual workflow API total_count0; repository rulesets empty; master protection404. These facts will be reread at premerge."
+}

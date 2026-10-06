@@ -1,0 +1,18 @@
+{
+  "version": 1,
+  "flow_id": "6d3174fd-2b01-4136-8ea5-0b0cd0e2845d",
+  "seq": 107,
+  "op_id": "6d3174fd-2b01-4136-8ea5-0b0cd0e2845d:000107",
+  "kind": "receipt",
+  "recorded_utc": "2026-10-06T00:53:52.902238Z",
+  "intent_hash": "a68c513651a4e98096efa5c2cd6aac0cb7802474f978dbb14caf894b030da431",
+  "outcome": "applied",
+  "raw_ref": "evidence/slice8-ack-heartbeat05.json",
+  "result": {
+    "nativeExit": 0,
+    "processedMessageIds": [
+      "msg_2a71ee0a6b36"
+    ],
+    "operator": "Main explicitly supplied every observed message ID; no automatic acknowledgment/polling."
+  }
+}

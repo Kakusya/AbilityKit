@@ -1,0 +1,12 @@
+{
+  "version": 1,
+  "flow_id": "6d3174fd-2b01-4136-8ea5-0b0cd0e2845d",
+  "seq": 40,
+  "op_id": "6d3174fd-2b01-4136-8ea5-0b0cd0e2845d:000040",
+  "kind": "receipt",
+  "recorded_utc": "2026-10-05T20:00:34.704408Z",
+  "intent_hash": "9fb7a9817ab43f61e2539aeaf57efade08e65b1d33c51abfbd990cc2dddbe184",
+  "outcome": "applied",
+  "raw_ref": "evidence/ack-slice2-done.json",
+  "result": {}
+}

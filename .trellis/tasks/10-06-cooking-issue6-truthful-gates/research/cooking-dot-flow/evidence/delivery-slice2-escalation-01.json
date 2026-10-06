@@ -1,0 +1,38 @@
+{
+  "id": "7dfaee82-a078-49a0-89b2-1ded10e4fb2a",
+  "ok": true,
+  "result": {
+    "runId": "run_5ba664a5f016",
+    "deliveryId": "delivery_56fb457de0c3",
+    "messages": [
+      {
+        "id": "msg_407fb01d212a",
+        "run_id": "run_5ba664a5f016",
+        "delivery_contract": "current_delivery",
+        "from_handle": "term_a1a61c7c-aef6-4cd0-8c46-27a90632617b",
+        "to_handle": "run:run_5ba664a5f016",
+        "subject": "Blocked genuine acceptance: runner import parser failure",
+        "body": "Committed-source isolated suite passed164/164 native0 with actual window40/80/120 and stable inputs. First genuine cooking-et-level-runtime failed CLI1 before restore/build/test: all five SDK/project evaluation/import preprocessing subprocesses native0, then Get-GateProjectClosure calls IsPathRooted on a non-path preprocessed XML comment line and throws illegal path characters; no business tests ran. Both exact genuine commands were actually attempted serially without source edits; evidence is being independently inventoried and a bounded failed verification report will be delivered, with no repair authorized.",
+        "type": "escalation",
+        "priority": "normal",
+        "thread_id": null,
+        "payload": "{\"taskId\":\"task_b85eae037475\",\"dispatchId\":\"ctx_2127fab8d0af\"}",
+        "created_at": "2026-10-05T19:51:48Z",
+        "delivered_at": null
+      }
+    ],
+    "count": 1,
+    "replayed": true,
+    "acknowledged": null,
+    "timedOut": false,
+    "cancelled": false,
+    "connectionLost": false,
+    "mutation": {
+      "requestId": "197021e4-842f-4de4-9678-7f90f0aed723",
+      "replayed": false
+    }
+  },
+  "_meta": {
+    "runtimeId": "ff0c5f2c-d341-4455-bc1c-c113650bdd60"
+  }
+}

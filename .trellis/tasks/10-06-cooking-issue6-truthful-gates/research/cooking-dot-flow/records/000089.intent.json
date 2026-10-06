@@ -1,0 +1,27 @@
+{
+  "version": 1,
+  "flow_id": "6d3174fd-2b01-4136-8ea5-0b0cd0e2845d",
+  "seq": 89,
+  "op_id": "6d3174fd-2b01-4136-8ea5-0b0cd0e2845d:000089",
+  "kind": "intent",
+  "recorded_utc": "2026-10-05T23:41:53.898881Z",
+  "action": "worker-start",
+  "target": "term_a1a61c7c-aef6-4cd0-8c46-27a90632617b@issue6-cooking-truthful-gates",
+  "authorization_ref": "evidence/approval.md",
+  "payload_ref": "evidence/slice7-binding-repair-spec.md",
+  "preconditions": {
+    "sourceSha": "68a880f2a31c7269da634b2f152362bccb5857ab",
+    "priorDispatch": "ctx_4c94250ae711",
+    "priorTask": "task_31fd1c2368df",
+    "priorCapabilityRevoked": true,
+    "terminalIdleConfirmed": true,
+    "mainBindingControls": {
+      "executed": 21,
+      "passed": 18,
+      "failed": 3,
+      "nativeExit": 1
+    },
+    "scope": "helper+harness+slice7-report only; dot clarification A conditional authorization; both real gates new source deferred to distinct verifier",
+    "run_id": "run_5ba664a5f016"
+  }
+}

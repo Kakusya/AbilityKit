@@ -1,0 +1,28 @@
+{
+  "id": "9c569bc9-9720-4dc9-91b1-ddf3c55c6603",
+  "ok": true,
+  "result": {
+    "message": {
+      "id": "msg_f1402ab4ec95",
+      "run_id": "run_5ba664a5f016",
+      "delivery_contract": "current_delivery",
+      "from_handle": "term_08a896e7-f2ff-477d-85c0-1962eb3a8136",
+      "to_handle": "dispatch:ctx_5c932faebb3d",
+      "subject": "Read-only real restore graph/config findings; no source repair",
+      "body": "Main read-only findings are now pinned at evidence/real-restore-main-findings01.json. The first real gate Failed at 79bf9642b: analyzer build Passed, Cooking ET restore passed global -p:TargetFramework=net10.0 and analyzer assets now have only net10.0 despite evaluated declaration netstandard2.0, with generated nuget.g.targets source guard failure. Actual assets configFilePaths identify the user NuGet.Config, but no matching path/hash exists in the successful analyzer restore or build input ledgers. Only file hash/path was read, no config contents copied. Inspect independently for report; this is NOT source repair authority. Preserve both exact gate attempts and previous failures, report actual restore stage execution versus unestablished stage proof and any genuine counts, then current Task/Dispatch worker_done and idle as specified.\n",
+      "type": "status",
+      "priority": "normal",
+      "thread_id": null,
+      "payload": null,
+      "created_at": "2026-10-05T20:31:50Z",
+      "delivered_at": null
+    },
+    "mutation": {
+      "requestId": "3617fc63-b397-4509-a8df-34b166972fd8",
+      "replayed": false
+    }
+  },
+  "_meta": {
+    "runtimeId": "ff0c5f2c-d341-4455-bc1c-c113650bdd60"
+  }
+}

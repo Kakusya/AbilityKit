@@ -1,0 +1,11 @@
+{
+  "command": [
+    "gh",
+    "api",
+    "repos/Kakusya/AbilityKit/rulesets?includes_parents=true"
+  ],
+  "exit_code": 0,
+  "stdout": "[]",
+  "stderr": "",
+  "observed_utc": "2026-10-05T17:24:51.169047+00:00"
+}

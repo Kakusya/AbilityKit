@@ -1,0 +1,152 @@
+{
+  "id": "5f990f27-5459-408c-80ec-9e1c5fe5dcc7",
+  "ok": true,
+  "result": {
+    "dispatchId": "ctx_4c94250ae711",
+    "source": "transcript",
+    "sourceIdentity": "cu2zdwkdsmPUSCyhNJeOZCjLL8pYI9Oi",
+    "provider": "codex",
+    "transcript": {
+      "messages": [
+        {
+          "id": "fco_01a10e29-82d6-7951-aaf3-9097a87ee505",
+          "role": "tool",
+          "blocks": [
+            {
+              "type": "tool-result",
+              "output": "Script completed\nWall time 11.5 seconds\nOutput:\n{\"chunk_id\":\"23a7fe\",\"wall_time_seconds\":45.0012018,\"session_id\":4063,\"original_token_count\":0,\"output\":\"\"}"
+            }
+          ],
+          "timestamp": 1791238963926,
+          "source": "transcript"
+        },
+        {
+          "id": "ctc_03d36cc6d8b642f4016ac42335732087d0a77033285035dbf3",
+          "role": "assistant",
+          "blocks": [
+            {
+              "type": "tool-call",
+              "name": "exec",
+              "input": "text(await tools.exec_command({cmd:\"$run='local/Logs/test-gates/86324cd6-22d9-45ea-9762-e2c301e59734'; Get-ChildItem $run -Recurse -Filter '*.stdout.txt'|Sort-Object LastWriteTime -Descending|Select-Object -First 2 FullName,Length,LastWriteTime|ConvertTo-Json; Get-ChildItem $run -Recurse -Filter 'test-results.trx'|Select-Object FullName,Length|ConvertTo-Json; orca orchestration check --terminal term_a1a61c7c-aef6-4cd0-8c46-27a90632617b --json\",max_output_tokens:1700}));\n",
+              "callId": "call_a8BwOhdQKDHj1jnJAXnaPza5"
+            }
+          ],
+          "timestamp": 1791238969081,
+          "source": "transcript"
+        },
+        {
+          "id": "ctco_01a10e29-9982-7d12-8867-a2c1e3e23415",
+          "role": "tool",
+          "blocks": [
+            {
+              "type": "tool-result",
+              "output": "Script completed\nWall time 0.6 seconds\nOutput:\n{\"chunk_id\":\"8ddb8a\",\"wall_time_seconds\":0.2068884,\"exit_code\":0,\"original_token_count\":340,\"output\":\"[\\r\\n    {\\r\\n        \\\"FullName\\\":  \\\"C:\\\\\\\\Users\\\\\\\\Administrator\\\\\\\\orca\\\\\\\\workspaces\\\\\\\\AbilityKit\\\\\\\\issue6-cooking-truthful-gates\\\\\\\\local\\\\\\\\Logs\\\\\\\\test-gates\\\\\\\\86324cd6-22d9-45ea-9762-e2c301e59734\\\\\\\\46187749acd6\\\\\\\\test.stdout.txt\\\",\\r\\n        \\\"Length\\\":  0,\\r\\n        \\\"LastWriteTime\\\":  \\\"\\\\/Date(1791238938478)\\\\/\\\"\\r\\n    },\\r\\n    {\\r\\n        \\\"FullName\\\":  \\\"C:\\\\\\\\Users\\\\\\\\Administrator\\\\\\\\orca\\\\\\\\workspaces\\\\\\\\AbilityKit\\\\\\\\issue6-cooking-truthful-gates\\\\\\\\local\\\\\\\\Logs\\\\\\\\test-gates\\\\\\\\86324cd6-22d9-45ea-9762-e2c301e59734\\\\\\\\46187749acd6\\\\\\\\build.stdout.txt\\\",\\r\\n        \\\"Length\\\":  1857066,\\r\\n        \\\"LastWriteTime\\\":  \\\"\\\\/Date(1791238890099)\\\\/\\\"\\r\\n    }\\r\\n]\\r\\n{\\r\\n    \\\"FullName\\\":  \\\"C:\\\\\\\\Users\\\\\\\\Administrator\\\\\\\\orca\\\\\\\\workspaces\\\\\\\\AbilityKit\\\\\\\\issue6-cooking-truthful-gates\\\\\\\\local\\\\\\\\Logs\\\\\\\\test-gates\\\\\\\\86324cd6-22d9-45ea-9762-e2c301e59734\\\\\\\\8530a91f82b5\\\\\\\\test-results.trx\\\",\\r\\n    \\\"Length\\\":  1424298\\r\\n}\\r\\n{\\n  \\\"id\\\": \\\"f4c7f842-4701-4c31-a22d-89270378dbd7\\\",\\n  \\\"ok\\\": true,\\n  \\\"resu\n… (truncated)"
+            }
+          ],
+          "timestamp": 1791238969730,
+          "source": "transcript"
+        },
+        {
+          "id": "msg_03d36cc6d8b642f4016ac4233d3f6487d0a152e513fd8b8203",
+          "role": "assistant",
+          "blocks": [
+            {
+              "type": "text",
+              "text": "The full ET runtime test command has launched after restore and build native exit 0. The first gate’s Cooking test results remain preserved. I’ve recorded the test config ledger gap separately so that test success is not confused with complete provenance acceptance."
+            }
+          ],
+          "timestamp": 1791238975125,
+          "source": "transcript"
+        },
+        {
+          "id": "ctc_03d36cc6d8b642f4016ac4233ebdbc87d091b54a822cc3a549",
+          "role": "assistant",
+          "blocks": [
+            {
+              "type": "tool-call",
+              "name": "exec",
+              "input": "text(await tools.exec_command({cmd:\"orca orchestration send --from term_a1a61c7c-aef6-4cd0-8c46-27a90632617b --type heartbeat --subject alive --task-id task_31fd1c2368df --dispatch-id ctx_4c94250ae711 --phase reviewing; $e='local/Artifacts/issue6-cooking-slice6-verification-c66e1880'; @(Get-CimInstance Win32_Process|Where-Object {$_.Name -match '^(dotnet|MSBuild|VBCSCompiler|testhost|vstest.console).*'}|Select-Object ProcessId,ParentProcessId,CreationDate,Name,CommandLine,KernelModeTime,UserModeTime)|ConvertTo-Json -Depth 5|Set-Content \\\"$e/gate1-active-processes-04.json\\\" -Encoding UTF8\",max_output_tokens:500}));\ntext(await tools.write_stdin({session_id:4063,chars:\"\",yield_time_ms:45000,max_output_tokens:1000}));\n",
+              "callId": "call_8XEKjghrk30X4iGVM1lRbC96"
+            }
+          ],
+          "timestamp": 1791238978645,
+          "source": "transcript"
+        }
+      ],
+      "nextCursor": "owr1_eyJ2IjoxLCJkIjoiY3R4XzRjOTQyNTBhZTcxMSIsInMiOiJ0cmFuc2NyaXB0IiwiaSI6ImN1Mnpkd2tkc21QVVNDeWhOSmVPWkNqTEw4cFlJOU9pIiwicCI6MjAwNjI3OTcsImMiOiJqaDB0ZmVtdVB2eUxNaEY0UlpvTFd4dzhUSEpVTVROSCJ9",
+      "limited": true,
+      "returnedMessageCount": 5
+    },
+    "cursor": "owr1_eyJ2IjoxLCJkIjoiY3R4XzRjOTQyNTBhZTcxMSIsInMiOiJ0cmFuc2NyaXB0IiwiaSI6ImN1Mnpkd2tkc21QVVNDeWhOSmVPWkNqTEw4cFlJOU9pIiwicCI6MjAwNjI3OTcsImMiOiJqaDB0ZmVtdVB2eUxNaEY0UlpvTFd4dzhUSEpVTVROSCJ9",
+    "status": {
+      "worker": "ready",
+      "terminal": "running",
+      "liveness": "live"
+    },
+    "fallbackReason": null,
+    "warnings": [
+      "Oversized transcript text was clipped."
+    ],
+    "sourceExact": true,
+    "contentComplete": false,
+    "clipping": [
+      "message_limit_or_scan_window",
+      "transcript_payload"
+    ],
+    "projection": {
+      "id": "ctx_4c94250ae711",
+      "dispatchId": "ctx_4c94250ae711",
+      "taskId": "task_31fd1c2368df",
+      "runId": "run_5ba664a5f016",
+      "role": "worker",
+      "parent": null,
+      "provider": {
+        "id": "codex",
+        "model": "gpt-6.1-sol"
+      },
+      "host": {
+        "kind": "local",
+        "id": "local"
+      },
+      "workspace": {
+        "id": "aaa97e0d-5026-4e5c-95f8-bb420dcb4c65::C:/Users/Administrator/orca/workspaces/AbilityKit/issue6-cooking-truthful-gates",
+        "kind": "folder_or_worktree"
+      },
+      "stage": {
+        "worker": "ready",
+        "dispatch": "dispatched",
+        "detail": "input_accepted",
+        "activity": "working"
+      },
+      "outcome": "in_progress",
+      "liveness": {
+        "verdict": "live",
+        "observedAt": 1791238979394,
+        "source": "agent_status"
+      },
+      "evidence": {
+        "durable": true,
+        "liveStatus": "fresh",
+        "lastObservedAt": 1791238979394
+      },
+      "resource": {
+        "state": "external",
+        "id": "wtr_e8df662b2afa",
+        "ownerDispatchId": "ctx_4c94250ae711",
+        "releaseState": "not_requested",
+        "terminalState": "retained"
+      },
+      "nextAction": {
+        "kind": "none",
+        "argv": []
+      },
+      "attention": {
+        "categories": [],
+        "requiresAction": false
+      }
+    }
+  },
+  "_meta": {
+    "runtimeId": "ff0c5f2c-d341-4455-bc1c-c113650bdd60"
+  }
+}

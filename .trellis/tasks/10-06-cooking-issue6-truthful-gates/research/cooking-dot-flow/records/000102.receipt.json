@@ -1,0 +1,15 @@
+{
+  "version": 1,
+  "flow_id": "6d3174fd-2b01-4136-8ea5-0b0cd0e2845d",
+  "seq": 102,
+  "op_id": "6d3174fd-2b01-4136-8ea5-0b0cd0e2845d:000102",
+  "kind": "receipt",
+  "recorded_utc": "2026-10-06T00:33:33.633390Z",
+  "intent_hash": "a9466d90aa2328196ff99687bb4d69685e9e5c4c633fa18fac3ffca4f25d7738",
+  "outcome": "applied",
+  "raw_ref": "evidence/slice8-worker-start-raw.json",
+  "result": {
+    "nativeExit": 0,
+    "inputRawRef": "evidence/slice8-worker-start-raw.json"
+  }
+}

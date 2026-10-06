@@ -1,0 +1,12 @@
+{
+  "version": 1,
+  "flow_id": "6d3174fd-2b01-4136-8ea5-0b0cd0e2845d",
+  "seq": 59,
+  "op_id": "6d3174fd-2b01-4136-8ea5-0b0cd0e2845d:000059",
+  "kind": "receipt",
+  "recorded_utc": "2026-10-05T21:38:51.050560Z",
+  "intent_hash": "5154d24652c94085d728b30d983198fd45993c231e4b71510470104450041cb2",
+  "outcome": "applied",
+  "raw_ref": "evidence/ack-restore-sdk-guidance-read.json",
+  "result": {}
+}
