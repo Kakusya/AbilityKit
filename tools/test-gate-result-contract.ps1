@@ -534,7 +534,8 @@ function Assert-GateStage {
         Assert-GateEqual $receipt $prior.$Name 'archived reuse stage'
         if ($receipt.runId -cne $Stage.reuse.originalRunId -or $receipt.resultId -cne $Stage.reuse.originalResultId) { throw 'Reuse producer contradiction.' }
         # Inputs/outputs are re-archived under the current node; original receipt retains original IDs.
-        if ($receipt.inputFingerprint -cne $Stage.inputFingerprint -or $receipt.outputFingerprint -cne $Stage.outputFingerprint) { throw 'Reuse fingerprint mismatch.' }
+        if ($Name -ceq 'build') { Assert-GateProducerMembership $Result $Context }
+        if ($receipt.inputFingerprint -cne $Stage.inputFingerprint -or ($Name -cne 'build' -and $receipt.outputFingerprint -cne $Stage.outputFingerprint)) { throw 'Reuse fingerprint mismatch.' }
     } else { $receipt=$Stage }
     if ($receipt.processExitCode -ne 0 -or -not $receipt.startedAt -or -not $receipt.endedAt -or [DateTimeOffset]$receipt.endedAt -lt [DateTimeOffset]$receipt.startedAt) { throw 'Failed/invalid stage receipt.' }
     if (-not $receipt.command -or -not $receipt.command.arguments.Count) { throw 'Stage argv absent.' }
@@ -624,6 +625,43 @@ function Assert-GateBinaryIdentitySet {
     }
 }
 
+function Save-GateProducerReceipt {
+    param($Result, $Context)
+    # Capture the producer's complete ledger before validating any candidate.
+    # This trusted invocation map is deliberately outside serialized results.
+    if (-not $Context.producerReceipts) { $Context | Add-Member -NotePropertyName producerReceipts -NotePropertyValue @{} -Force }
+    if ($Context.producerReceipts.ContainsKey($Result.resultId)) { return }
+    $path=Join-Path (Get-GateNodeRoot $Context.runRoot $Result.resultId) 'stage-receipt.json'
+    [IO.File]::WriteAllText($path,(ConvertTo-GateJson $Result.provenance),[Text.UTF8Encoding]::new($false))
+    $artifact=Add-GateArtifact $Result $Context.runRoot $path 'stage-receipt'
+    $Context.producerReceipts[$Result.resultId]=[pscustomobject]@{
+        artifact=(ConvertTo-GateJson $artifact | ConvertFrom-Json)
+        sourceSha=$Result.provenance.source.sha
+        sourceFingerprint=$Result.provenance.source.inputFingerprint
+    }
+}
+
+function Assert-GateProducerMembership {
+    param($Result, $Context)
+    if (-not $Context.producerReceipts -or -not $Context.producerReceipts.ContainsKey($Result.resultId)) { throw 'Independent producer receipt missing.' }
+    $proof=$Context.producerReceipts[$Result.resultId]
+    if ($proof.artifact.path -cne 'stage-receipt.json' -or $proof.artifact.role -cne 'stage-receipt') { throw 'Independent producer receipt reference mismatch.' }
+    $path=Assert-GateArtifact $proof.artifact $Result $Context.runRoot
+    $references=@($Result.artifacts | Where-Object { $_.path -ceq 'stage-receipt.json' -or $_.role -ceq 'stage-receipt' })
+    if ($references.Count -ne 1) { throw 'Independent producer receipt reference missing/ambiguous.' }
+    Assert-GateEqual $references[0] $proof.artifact 'trusted producer receipt reference'
+    $producer=Get-Content -LiteralPath $path -Raw -Encoding UTF8 | ConvertFrom-Json
+    $p=$Result.provenance
+    if ($producer.schemaVersion -ne 1 -or ($producer.example -and -not $Context.allowExample) -or $producer.project -ine $Result.configuration.project -or $producer.tfm -cne $Result.configuration.tfm -or $producer.configuration -cne $Result.configuration.configuration -or $producer.configSha256 -cne $Result.configuration.configSha256 -or $producer.sdk -cne $p.sdk) { throw 'Independent producer configuration mismatch.' }
+    if (-not $proof.sourceSha -or -not $proof.sourceFingerprint -or $producer.source.sha -cne $proof.sourceSha -or $producer.source.inputFingerprint -cne $proof.sourceFingerprint -or $p.source.sha -cne $proof.sourceSha -or $p.source.inputFingerprint -cne $proof.sourceFingerprint) { throw 'Independent producer source mismatch.' }
+    $build=$producer.build
+    if (-not $build -or $build.runId -cne $Result.runId -or $build.resultId -cne $Result.resultId -or $p.build.runId -cne $build.runId -or $p.build.resultId -cne $build.resultId -or $build.mode -cne $p.build.mode) { throw 'Independent producer run/result/mode mismatch.' }
+    # A reused build's independently recorded origin is also fixed; candidates
+    # cannot choose another owned, valid receipt with a smaller output set.
+    if ($build.mode -ceq 'Reused') { Assert-GateEqual $p.build.reuse $build.reuse 'trusted reused producer origin' }
+    Assert-GateBinaryIdentitySet $build.outputs $p.build.outputs $Result $Context 'independent producer -> build.outputs'
+}
+
 function Assert-GateProvenance {
     param($Result, $Context)
     $p=$Result.provenance
@@ -666,6 +704,7 @@ function Assert-GateProvenance {
     Assert-GateInputs $Result.source.after.inputs
     Assert-GateStage $p.restore $Result $Context 'restore'
     Assert-GateStage $p.build $Result $Context 'build'
+    Assert-GateProducerMembership $Result $Context
     $terminal=if ($Result.kind -ceq 'dotnet-test') { $p.test } else { $p.build }
     if (-not $terminal -or $terminal.mode -cne 'Executed') { throw 'Terminal stage was not executed.' }
     Assert-GateEqual $Result.command $terminal.command 'terminal summary command'
@@ -686,7 +725,7 @@ function Assert-GateProvenance {
     }
     if (@($traced.path | Sort-Object -Unique).Count -ne $p.compilerInputs.Count) { throw 'Incomplete actual compiler closure.' }
     Assert-GateInputs $p.compilerInputs
-    $assembly=@($p.build.outputs | Where-Object { $_.path -ieq $p.assembly })
+    $assembly=@($p.build.outputs | Where-Object { [IO.Path]::GetFullPath($_.path) -ieq [IO.Path]::GetFullPath($p.assembly) })
     if ($assembly.Count -ne 1) { throw 'Build target binary absent.' }
     if ($Result.kind -ceq 'dotnet-test') {
         Assert-GateStage $p.test $Result $Context 'test'
@@ -964,6 +1003,7 @@ function Invoke-GateDotNet {
         Assert-GateEqual $inputPaths $afterPaths 'evaluated input closure before/after'
         $Result.source.after=Get-GateSource $Context.repoRoot $afterPaths $Context.exclusions
         if ($source.sha -cne $Result.source.after.sha -or $source.inputFingerprint -cne $Result.source.after.inputFingerprint) { throw 'Source changed during invocation.' }
+        Save-GateProducerReceipt $Result $Context
         Assert-GateProvenance $Result $Context
         Set-GateTerminal $Result 'Passed' $null
     } catch {
@@ -978,9 +1018,7 @@ function Invoke-GateDotNet {
         # Failed build attempts keep valid independent restore receipts for NoRestore.
         if ($Result.provenance.restore) {
             if (-not $Result.provenance.source -and $Result.source) { $Result.provenance.source=$Result.source.before }
-            $receiptPath=Join-Path $nodeRoot 'stage-receipt.json'
-            [IO.File]::WriteAllText($receiptPath,(ConvertTo-GateJson $Result.provenance),[Text.UTF8Encoding]::new($false))
-            $null=Add-GateArtifact $Result $Context.runRoot $receiptPath 'stage-receipt'
+            Save-GateProducerReceipt $Result $Context
         }
     }
 }

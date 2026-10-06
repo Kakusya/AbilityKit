@@ -120,6 +120,18 @@ function Test-ControlPreprocessedImportRetention {
     return $true
 }
 
+function Get-ControlProducerReceipts {
+    param($Trusted)
+    $proofs=@{}
+    foreach ($leaf in $Trusted.children) {
+        if ($leaf.status -cne 'Passed' -or -not $leaf.provenance) { continue }
+        $artifact=@($leaf.artifacts | Where-Object path -ceq 'stage-receipt.json')
+        if ($artifact.Count -ne 1) { throw 'Trusted runner producer receipt required.' }
+        $proofs[$leaf.resultId]=[pscustomobject]@{artifact=(ConvertTo-GateJson $artifact[0] | ConvertFrom-Json);sourceSha=$leaf.source.before.sha;sourceFingerprint=$leaf.source.before.inputFingerprint}
+    }
+    return $proofs
+}
+
 
 # Cooking mixed graph and effective settings regressions use actual runner receipts.
 $mixed=Runner-Case 'restore-graph' 'mixed-own-TFMs-and-hash-only-config-positive' 'valid' 0 'Passed' 'mixed' -Verify {
@@ -177,7 +189,7 @@ foreach ($mutation in @('omitted-config','forged-config-hash','forged-config-siz
     }
     [IO.File]::WriteAllText((Join-Path $directory 'candidate.json'),(ConvertTo-GateJson $candidate))
     $candidate=Get-Content -LiteralPath (Join-Path $directory 'candidate.json') -Raw -Encoding UTF8 | ConvertFrom-Json
-    $ctx=[pscustomobject]@{runRoot=$mixed.runRoot;allowExample=$true;control=$null;abortStatus=$null}
+    $ctx=[pscustomobject]@{runRoot=$mixed.runRoot;allowExample=$true;control=$null;abortStatus=$null;producerReceipts=(Get-ControlProducerReceipts $mixed.summary)}
     # Control identity remains the exact fixture that generated this accepted baseline.
     $ctx.control=Get-Content -LiteralPath (Join-Path $mixed.fixtureRoot 'context.json') -Raw -Encoding UTF8 | ConvertFrom-Json
     $accepted=$false;$reason=$null
@@ -352,19 +364,37 @@ foreach ($target in @('assets','source','DLL','package-tool')) {
 $baseline=$seed.summary
 $validationContext=[pscustomobject]@{runRoot=$seed.runRoot; allowExample=$true; control=$reuseFixture.context; abortStatus=$null}
 function Validator-Case {
-    param([string]$Name,[scriptblock]$Mutation,[bool]$AllowExample=$true,[bool]$ExpectedAccepted=$false,$BaselineRun=$null)
+    param([string]$Name,[scriptblock]$Mutation,[bool]$AllowExample=$true,[bool]$ExpectedAccepted=$false,$BaselineRun=$null,[scriptblock]$ContextMutation)
     $directory=New-ControlDirectory
     $trusted=if ($BaselineRun) { $BaselineRun.summary } else { $baseline }
     $runRoot=if ($BaselineRun) { $BaselineRun.runRoot } else { $seed.runRoot }
     $control=if ($BaselineRun) { Get-Content -LiteralPath (Join-Path $BaselineRun.fixtureRoot 'context.json') -Raw -Encoding UTF8 | ConvertFrom-Json } else { $reuseFixture.context }
+    $planHash=Get-GateTextHash (ConvertTo-GateJson $trusted)
+    $proofs=Get-ControlProducerReceipts $trusted
+    $archives=@()
+    foreach ($leaf in $trusted.children) {
+        if ($leaf.status -cne 'Passed' -or -not $leaf.provenance) { continue }
+        if ($Name.StartsWith('producer-')) {
+            foreach ($a in $leaf.artifacts) { $path=Assert-GateArtifact $a $leaf $runRoot;$archives+= [pscustomobject]@{path=$path;bytes=$a.bytes;sha256=$a.sha256} }
+        }
+    }
     $candidate=ConvertTo-GateJson $trusted | ConvertFrom-Json
     & $Mutation $candidate
     [IO.File]::WriteAllText((Join-Path $directory 'candidate.json'),(ConvertTo-GateJson $candidate))
     $candidate=Get-Content -LiteralPath (Join-Path $directory 'candidate.json') -Raw -Encoding UTF8 | ConvertFrom-Json
-    $ctx=[pscustomobject]@{runRoot=$runRoot; allowExample=$AllowExample; control=$control; abortStatus=$null}
+    $ctx=[pscustomobject]@{runRoot=$runRoot; allowExample=$AllowExample; control=$control; abortStatus=$null;producerReceipts=$proofs}
+    if ($Name.StartsWith('producer-')) { [IO.File]::WriteAllText((Join-Path $directory 'trusted-context.json'),(ConvertTo-GateJson $ctx)) }
+    if ($ContextMutation) { & $ContextMutation $ctx $candidate }
     $accepted=$false; $reason=$null
     try { $null=Assert-GateResult $candidate $trusted $ctx; $accepted=$true } catch { $reason=$_.Exception.Message }
-    Record-Control 'validator' $Name $ExpectedAccepted $accepted $directory @('Assert-GateResult','candidate.json','unchanged-assigned-plan') $null $reason
+    $evidence=$reason
+    if ($Name.StartsWith('producer-')) {
+        $unchanged=$planHash -ceq (Get-GateTextHash (ConvertTo-GateJson $trusted))
+        foreach ($a in $archives) { if ($a.sha256 -cne (Get-GateHash $a.path) -or $a.bytes -ne (Get-Item -LiteralPath $a.path).Length) { $unchanged=$false } }
+        if (-not $unchanged) { throw 'Producer control changed trusted plan/immutable archives.' }
+        $evidence=[pscustomobject]@{reason=$reason;trustedPlanHash=$planHash;archives=$archives;trustedPlanAndArchivesUnchanged=$unchanged;candidate=(Join-Path $directory 'candidate.json');seedSummary=$(if ($BaselineRun) {$BaselineRun.path}else{$seed.path})}
+    }
+    Record-Control 'validator' $Name $ExpectedAccepted $accepted $directory @('Assert-GateResult','candidate.json','unchanged-assigned-plan') $null $evidence
 }
 # Each mutation keeps its unchanged assigned plan and real fixture archives.
 # Recomputed fingerprints make these association controls independent of scalar
@@ -415,6 +445,69 @@ foreach ($bindingPositive in @('distinct-archive-locations','reordered-identitie
 Validator-Case 'binding-reused-build-positive' { param($r) if ($r.children[1].provenance.build.mode -cne 'Reused' -or $r.children[1].provenance.build.command -ne $null) { throw 'Actual reused build required.' } } -ExpectedAccepted $true -BaselineRun $explicit
 Validator-Case 'binding-reused-build-test-input-omission' { param($r) $p=$r.children[1].provenance;$p.test.inputs=@($p.test.inputs | Where-Object path -ine $p.assembly);$p.test.inputFingerprint=Get-GateFingerprint $p.test.inputs } -BaselineRun $explicit
 Validator-Case 'binding-reused-build-loaded-omission' { param($r) $p=$r.children[1].provenance;$p.loadedBefore=@($p.loadedBefore | Where-Object path -ine $p.assembly);$p.loadedAfter=$p.loadedBefore } -BaselineRun $explicit
+
+# Complete membership comes from the independently pinned producer archive,
+# never from any of the four coherently editable candidate ledgers.
+foreach ($producerMode in @('Executed','Reused')) {
+    $producerRun=if ($producerMode -ceq 'Executed') { $seed } else { $explicit }
+    $producerIndex=if ($producerMode -ceq 'Executed') { 0 } else { 1 }
+    foreach ($ownerField in @('runId','resultId')) {
+        Validator-Case ('producer-'+$producerMode+'-wrong-stage-'+$ownerField) { param($r) $r.children[$producerIndex].provenance.build.$ownerField=[guid]::NewGuid().ToString() } -BaselineRun $producerRun
+    }
+    foreach ($corruption in @('coherent-secondary-omission','coherent-secondary-replacement')) {
+        Validator-Case ('producer-'+$producerMode+'-'+$corruption) {
+            param($r)
+            $p=$r.children[$producerIndex].provenance
+            $dependency=Join-Path (Split-Path $p.assembly) 'dependency.dll'
+            if (@($p.build.outputs | Where-Object path -ieq $dependency).Count -ne 1) { throw 'Secondary dependency required.' }
+            $replacement=@($p.build.inputs | Where-Object path -like '*.cs')[0]
+            if (-not $replacement) { throw 'Independently valid replacement archive required.' }
+            $outputs=@($p.build.outputs | Where-Object path -ine $dependency)
+            if ($corruption -ceq 'coherent-secondary-replacement') { $outputs+=@($replacement) }
+            $p.build.outputs=$outputs;$p.loadedBefore=$outputs;$p.loadedAfter=$outputs;$p.test.inputs=$outputs
+            $p.build.outputFingerprint=Get-GateFingerprint $outputs;$p.test.inputFingerprint=Get-GateFingerprint $outputs
+        } -BaselineRun $producerRun
+    }
+    foreach ($corruption in @('missing-proof','wrong-run','wrong-result','wrong-source','wrong-source-fingerprint','wrong-hash','wrong-length','swapped-proof')) {
+        Validator-Case ('producer-'+$producerMode+'-'+$corruption) { param($r) } -BaselineRun $producerRun -ContextMutation {
+            param($ctx,$r)
+            $leaf=$r.children[$producerIndex];$proof=$ctx.producerReceipts[$leaf.resultId]
+            switch ($corruption) {
+                'missing-proof' { $ctx.producerReceipts.Remove($leaf.resultId) }
+                'wrong-run' { $proof.artifact.runId=[guid]::NewGuid().ToString() }
+                'wrong-result' { $proof.artifact.resultId=[guid]::NewGuid().ToString() }
+                'wrong-source' { $proof.sourceSha='0'*40 }
+                'wrong-source-fingerprint' { $proof.sourceFingerprint='0'*64 }
+                'wrong-hash' { $proof.artifact.sha256='0'*64 }
+                'wrong-length' { $proof.artifact.bytes++ }
+                'swapped-proof' { $proof.artifact.path=$leaf.provenance.compilerTraceArtifact.path;$proof.artifact.bytes=$leaf.provenance.compilerTraceArtifact.bytes;$proof.artifact.sha256=$leaf.provenance.compilerTraceArtifact.sha256 }
+            }
+        }
+    }
+    Validator-Case ('producer-'+$producerMode+'-swapped-candidate-reference') {
+        param($r)
+        $leaf=$r.children[$producerIndex]
+        $replacement=ConvertTo-GateJson $leaf.provenance.compilerTraceArtifact | ConvertFrom-Json
+        $replacement.role='stage-receipt'
+        $leaf.artifacts=@($leaf.artifacts | Where-Object path -cne 'stage-receipt.json')+@($replacement)
+    } -BaselineRun $producerRun
+    Validator-Case ('producer-'+$producerMode+'-missing-candidate-reference') { param($r) $leaf=$r.children[$producerIndex];$leaf.artifacts=@($leaf.artifacts | Where-Object path -cne 'stage-receipt.json') } -BaselineRun $producerRun
+    foreach ($positive in @('ordered-copy-roles','coherent-normalized-paths')) {
+        Validator-Case ('producer-'+$producerMode+'-positive-'+$positive) {
+            param($r)
+            $p=$r.children[$producerIndex].provenance
+            if ($positive -ceq 'ordered-copy-roles') {
+                $p.build.outputs=@($p.loadedBefore | Sort-Object path -Descending)
+                $p.loadedBefore=@($p.build.outputs | Sort-Object path)
+                $p.loadedAfter=@($p.build.outputs | Sort-Object path -Descending);$p.test.inputs=@($p.loadedBefore)
+            } else {
+                foreach ($entry in $p.build.outputs+$p.loadedBefore+$p.loadedAfter+$p.test.inputs) { $entry.path=$entry.path.ToUpperInvariant().Replace('\','/') }
+            }
+            $p.build.outputFingerprint=Get-GateFingerprint $p.build.outputs;$p.test.inputFingerprint=Get-GateFingerprint $p.test.inputs
+        } -BaselineRun $producerRun -ExpectedAccepted $true
+    }
+}
+Validator-Case 'producer-NoRestore-positive-original-build-failed' { param($r) if ($r.children[0].provenance.restore.mode -cne 'Reused' -or $r.children[0].provenance.build.mode -cne 'Executed') { throw 'Actual NoRestore required.' } } -BaselineRun $restored -ExpectedAccepted $true
 Validator-Case 'strict-lowercase-status' { param($r) $r.children[0].status='passed' }
 Validator-Case 'strict-CLI-map' { param($r) $r.children[0].cliExitCode=2 }
 Validator-Case 'native2-cannot-claim-Passed' { param($r) $r.children[0].processExitCode=2 }
