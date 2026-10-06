@@ -1,0 +1,11 @@
+{
+  "terminal": "term_401024fc-a381-4adf-a831-fcde113232d2",
+  "observedPrompt": "codex-model-migration-prompt",
+  "selection": "Use existing model",
+  "steps": [
+    "terminal send raw text-only 2",
+    "terminal send raw Enter-only"
+  ],
+  "reason": "The combined prompt submission was explicitly rejected before input. Orca documents raw text-only and Enter-only as direct terminal input; this selects the existing configured model without starting the failed Task.",
+  "expectedPostcondition": "migration prompt dismissed and terminal reaches normal Codex readiness"
+}

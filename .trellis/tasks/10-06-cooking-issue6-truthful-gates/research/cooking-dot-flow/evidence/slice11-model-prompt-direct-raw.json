@@ -1,0 +1,20 @@
+{
+  "textSend": {
+    "accepted": true,
+    "bytesWritten": 1,
+    "receiptId": "1026b6a9-a50d-4a28-9065-9208a5e5b98c"
+  },
+  "enterSend": {
+    "accepted": true,
+    "bytesWritten": 1,
+    "receiptId": "1b10d0dd-9475-4d71-8e1d-8bdc9a88c450"
+  },
+  "wait": {
+    "condition": "tui-idle",
+    "satisfied": true,
+    "status": "running"
+  },
+  "terminal": "term_401024fc-a381-4adf-a831-fcde113232d2",
+  "postcondition": "Codex normal input prompt, GPT-5.6-Sol high existing configured model",
+  "warning": "Codex failed to persist the migration preference to the Orca account config; the current terminal selection succeeded. No config file was modified by the coordinator."
+}

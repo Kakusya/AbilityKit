@@ -1,0 +1,66 @@
+结论：approve-direction，采用“每次项目实例采集独立文件，再按真实 MSBuild 执行事件校验和汇总”。仅把文件名改成项目名，或只比较目录中的文件数量，都不够：同一个项目可能以不同属性多次执行，整份实例记录被漏掉也必须能查出来。
+
+request_id：AK-I6-COOK-COMPILER-20261007-01
+flow_id：6d3174fd-2b01-4136-8ea5-0b0cd0e2845d
+reviewed_sha：c84cc3687351a975c060335f907de46231dfced5
+gate_implementation_source：665068ae71100328cf6344b8d6c2a6fa74e968bd
+
+已读事实与判断
+我读了决策包、失败观察 JSON、生成的 compiler.targets、compiler ancestry 证明、abandonment 回执，以及 helper、控制脚本和 fake-dotnet 实现。原始 stdout 文件通过当前接口未能取得可读内容，因此没有声称逐行审阅它。
+helper 的 Save-GateCompilerTarget 把各项目输出追加到共同路径；Get-GateCompilerTrace 只解析 path/hash 行。当前项目闭包按项目路径去重，不能作为实际项目实例数量的依据。现有模拟构建也没有真正运行这个并发目标。因此，249 个控制通过与这次真实构建失败并不矛盾。
+
+精确文件边界
+一个 Orca 修复 worker 可以修改：
+
+tools/test-gate-result-contract.ps1：生成目标、采集、汇总、校验、复用证据衔接。
+tools/tests/test-gate-result-contract.tests.ps1：新增回归和真实 MSBuild 夹具。
+tools/tests/fixtures/gate-result-fake-dotnet.ps1：匹配新采集协议，仍明确标为模拟。
+tools/tests/fixtures/gate-result-model.ps1：仅补新证据字段和夹具数据。
+新增 tools/test-gate-compiler-events.cs：仅用于读取当前 SDK 的结构化 MSBuild 构建事件，输出可验证的实例/目标/编译任务清单；不得变成通用调度器。
+本 task 的 research/slice11-compiler-trace-repair-report.md：修复说明、原失败、控制映射和限制。
+
+优先复用当前 SDK 自带的 binlog/事件读取能力。允许在独占临时工具目录生成必要的工具构建文件，使用现有 SDK 和其程序集；不修改仓库任何业务或测试 csproj，不下载包、不安装工具、不升级依赖。若当前 SDK 无法提供所需事件或无法无新增依赖地读取，先提交这个具体阻塞，不用目录扫描或文本猜测替代。
+本切片不改 runner 入口、test-gates.json、其他 gate、skill 权限机制或业务代码。主控自己保存派发/回执和计划更新。
+
+写入与身份规则
+每次 build 有独立 invocation ID；目录位于已验证的 run/result/build-invocation 根下，创建时必须不存在。
+在采集目标实际执行时生成独立 capture ID。不要把根项目生成的 ID 当全图全局属性传播，也不要仅用项目 basename、TFM 或 PID 命名。
+每次 capture 只写自己的临时文件，关闭并验证后提交为完成文件；禁止多个实例 append 同一文件，禁止覆盖已有完成记录。
+每份记录绑定 run、result、build invocation、capture ID、规范化项目完整路径、实际 TFM/配置及可区分实例的属性身份，并记录输入条目数、路径、大小和 SHA256。
+所有证据路径必须在该 owned 根内；拒绝越界、链接绕出、旧 run 文件和名字碰撞。源码输入可以位于已批准的仓库/SDK/package 闭包中，证据副本仍须在 owned 根内。
+相同项目的不同实例分别保留。不同 capture 的相同输入可以在最终输入集合中去重，但不能丢掉实例记录；同一规范化路径出现冲突 hash 必须失败。重复 capture ID 不能当作合法重复忽略。
+
+“完整”必须有独立依据
+使用本次 native build 的结构化 MSBuild 事件作为实际执行实例和 CoreCompile/Csc 调用清单。采集目标可以发带 capture ID 的机器可读消息，利用事件上下文关联项目实例；消息本身不能充当“所有编译都已采集”的唯一证明。
+校验必须从真实编译事件出发，确认每次需要采集的执行都有对应完成记录；再反向确认没有无归属的额外记录。同项目不同属性/重复实例不能被项目路径去重掩盖。编译任务暴露的实际文件输入要与采集闭包核对；无法解释的输入或关联歧义须停止。
+增量跳过与实际执行应分开记录；不能把“没有 trace”解释成“应该是跳过了”。跳过需要本次引擎事件和已有有效产物身份支持。
+原始事件证据、生成目标、每份 trace 及完整实例清单，在生成候选结果前绑定到受信 invocation context。候选 JSON 不得自行挑选较小清单、重算 hash 后绕过检查。复用构建同样要验证原始来源和新旧身份，不得退回旧的裸 compiler.txt 验证。
+
+汇总时机与失败规则
+只在 native build 终止且 exit 已确认、日志流完全落盘、相关写入完成后汇总。成功路径要求 native0、事件日志完整、实例与 trace 双向一致，再按固定规则排序、生成聚合记录、计算最终 hash、保存 producer receipt；之后才能进入 test。
+缺失、截断、格式错误、额外实例、身份替换、hash 不符、文件仍被锁定或无法确认写入结束，都不能 Passed。native 非零保留原退出码；native0 但证据校验失败，gate 仍 Failed，native 仍如实为0。启动前所有权无法证实则 Blocked；未运行的测试保持 NotRun。禁止吞异常、不断重试争用、偷偷忽略文件或从旧目录补齐。
+构建日志可能含路径和属性：原始日志保留本地受控证据，只发布脱敏摘要及 hash；不要公开配置内容。binlog 不嵌入导入文件内容。
+
+必须增加的自动控制
+保留原249项的名称、期望和历史结果，新总数写成249＋实际新增N；不得靠改名、删项或重复计数凑数。
+新增至少覆盖：
+
+真正执行生成目标的并行 MSBuild 夹具：两个项目并发、菱形引用、同项目不同全局属性实例、重复相同输入、生成文件及增量跳过。
+用同步屏障确定性制造重叠写入。旧方案保留明确失败证据；新方案仍并行且完整成功。另做持锁控制，必须有界失败。
+删除一整份实例 trace，同时删除候选清单对应项并重算 hash，仍被原始事件证据拒绝。
+删除单个输入；替换 trace/项目/TFM/run/result/invocation；陈旧记录；重复 ID；额外文件；部分写入；畸形事件日志；缺结束事件；路径越界。
+顺序变化及合法重复实例正例；相同路径冲突内容反例；Executed 和 Reused 的来源替换/遗漏反例。
+假 dotnet 只能验证协议控制，不能替代上述真实 MSBuild 并发夹具。新增读取工具也须有原始事件到输出清单的对照控制。
+
+重跑与允许下一步
+allowed_next_action：主控先确认旧 verifier 和旧协调者没有仍可影响新工作树、输出目录或证据的写入；abandoned/capability revoked 本身不证明进程退出。必要时使用已验证隔离的 managed worktree，保留旧资源。条件成立后，派发上述一个有界修复 worker。
+修复提交并冻结后，由独立 verifier 在同一个已提交 SHA 先跑完整249＋N控制和真实并发夹具，再串行执行原始两条命令：
+powershell -NoProfile -ExecutionPolicy Bypass -File tools/run_test_gate.ps1 -Gate cooking-et-level-runtime -Configuration Debug -CI
+powershell -NoProfile -ExecutionPolicy Bypass -File tools/run_test_gate.ps1 -Gate cooking-kitchen-loop -Configuration Debug -CI
+不加 StepName/NoBuild/NoRestore，不改测试范围。保留既定观察/停止边界、所有 native argv/退出、源前后状态、工作字节与 Git blob 区别、完整 TRX/二进制/实例证据。任何实现修改都使此前真实 gate 结果只能作为历史，不能代替新 SHA 验证。
+
+本决定批准修复方向，不是最终验收。c84 中另外三份 skill 接任机制改动不包含在这次批准内；最终候选必须单独列明其范围与验证，不能称为纯证据变化。现有 Cooking867、ET build Failed、kitchen NotRun 全部原样保留；完成上述验证后再提交精确 SHA 技术复审，当前不合并、不关闭、不归档。
+
+补充：tools/test-gate-compiler-events.cs 是允许新增，不是必须新增。若当前 SDK 的 RoslynCodeTaskFactory 能在 owned 临时目录运行生成的事件读取目标，可把实现留在现有 helper，进一步减少文件。先做当前 SDK 的有界可行性控制；dot 没有执行或验证这条路径。
+
+再加入一个关键反例：让同项目的另一实例真实执行 CoreCompile，但故意绕过采集 hook。即使其余 trace 和消息完全自洽，也必须由引擎事件发现遗漏。这样才能证明没有把“收到了哪些记录”误当成“本应收到哪些记录”。请求 ID、SHA、范围及重跑要求均不变。

@@ -1,0 +1,13 @@
+{
+  "runId": "run_5ba664a5f016",
+  "taskId": "task_0c3ccf539029",
+  "retryOfDispatchId": "ctx_27690ccb2ec6",
+  "terminal": "term_401024fc-a381-4adf-a831-fcde113232d2",
+  "worktree": "C:/Users/Administrator/orca/workspaces/AbilityKit/issue6-cooking-truthful-gates",
+  "coordinator": "term_a345586c-d76c-4d68-afdf-f3a58f9686c1",
+  "terminalReady": true,
+  "effectiveModel": "GPT-5.6-Sol",
+  "effectiveEffort": "high",
+  "assignmentRef": "evidence/slice11-compiler-trace-repair-spec.md",
+  "expectedPostcondition": "new retry dispatch accepts the same Task and proves task turn start"
+}

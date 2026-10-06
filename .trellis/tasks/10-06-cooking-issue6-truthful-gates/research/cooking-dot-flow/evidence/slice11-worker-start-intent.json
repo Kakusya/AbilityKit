@@ -1,0 +1,15 @@
+{
+  "runId": "run_5ba664a5f016",
+  "coordinator": "term_a345586c-d76c-4d68-afdf-f3a58f9686c1",
+  "worktree": "C:/Users/Administrator/orca/workspaces/AbilityKit/issue6-cooking-truthful-gates",
+  "sourceSHA": "c84cc3687351a975c060335f907de46231dfced5",
+  "requestId": "AK-I6-COOK-COMPILER-20261007-01",
+  "assignmentRef": "evidence/slice11-compiler-trace-repair-spec.md",
+  "placement": "new Codex worker terminal in existing Orca-managed worktree",
+  "model": null,
+  "effort": null,
+  "configuredDefaultsRequired": true,
+  "ownedSourcePathsClean": true,
+  "oldWriterIsolationRef": "evidence/slice11-preflight-writer-isolation.json",
+  "stopBoundary": "focused implementation plus full 249+N controls and report; no genuine Cooking gates, commit, push, merge, close, cleanup, or work outside exact owned files"
+}

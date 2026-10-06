@@ -1,0 +1,19 @@
+{
+  "version": 1,
+  "flow_id": "6d3174fd-2b01-4136-8ea5-0b0cd0e2845d",
+  "seq": 163,
+  "op_id": "6d3174fd-2b01-4136-8ea5-0b0cd0e2845d:000163",
+  "kind": "receipt",
+  "recorded_utc": "2026-10-06T16:38:44.255322Z",
+  "intent_hash": "008d53a8fdf12bebaf7dd3416ec4ae8788cfd43c65ac16f3953e546982decb50",
+  "outcome": "applied",
+  "raw_ref": "evidence/dot-compiler-contention-posted-dom.json",
+  "result": {
+    "postedMessageId": "3f12f99a2ea4819b8541c90bd4ea9e30~3f12f99a2ea4819b8541c90bd4ea9e30~CalpicoMessage~Sentinel_2f9b4c021df48191a08c84526ed74256",
+    "requestId": "AK-I6-COOK-COMPILER-20261007-01",
+    "reviewedSHA": "c84cc3687351a975c060335f907de46231dfced5",
+    "observedUtc": "2026-10-06T16:38:15.4341494Z",
+    "postedUtc": null,
+    "generating": false
+  }
+}

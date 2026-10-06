@@ -1,0 +1,22 @@
+{
+  "version": 1,
+  "flow_id": "6d3174fd-2b01-4136-8ea5-0b0cd0e2845d",
+  "seq": 167,
+  "op_id": "6d3174fd-2b01-4136-8ea5-0b0cd0e2845d:000167",
+  "kind": "receipt",
+  "recorded_utc": "2026-10-06T17:00:15.789696Z",
+  "intent_hash": "924c73516a7071c5130b88359f97c25388e06802a472752625a84f45a4193b41",
+  "outcome": "not-applied",
+  "raw_ref": "evidence/slice11-worker-retry-aborted.json",
+  "result": {
+    "outcome": "not-applied",
+    "taskId": "task_0c3ccf539029",
+    "failedDispatchId": "ctx_27690ccb2ec6",
+    "terminal": "term_401024fc-a381-4adf-a831-fcde113232d2",
+    "reason": "Owner directed the coordinator not to communicate with existing sessions and to use a fresh cc-switch relay-routed worker or worktree.",
+    "workerStartRetryExecuted": false,
+    "taskTurnStarted": false,
+    "sourceFilesChanged": false,
+    "resourceAction": "retained; no stop, release, close, delete, or further terminal input"
+  }
+}

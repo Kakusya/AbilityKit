@@ -1,0 +1,18 @@
+{
+  "version": 1,
+  "flow_id": "6d3174fd-2b01-4136-8ea5-0b0cd0e2845d",
+  "seq": 163,
+  "op_id": "6d3174fd-2b01-4136-8ea5-0b0cd0e2845d:000163",
+  "kind": "intent",
+  "recorded_utc": "2026-10-06T16:37:20.813937Z",
+  "action": "dot-technical-direction-send",
+  "target": "https://chatgpt.com/dots/01a10258-c084-74bb-8bcc-ec01958e5023",
+  "authorization_ref": "evidence/approval.md",
+  "payload_ref": "evidence/dot-compiler-contention-request.txt",
+  "preconditions": {
+    "budget_ref": "evidence/dot-compiler-contention-budget.json",
+    "request_id": "AK-I6-COOK-COMPILER-20261007-01",
+    "reviewed_sha": "c84cc3687351a975c060335f907de46231dfced5",
+    "run_id": "run_5ba664a5f016"
+  }
+}

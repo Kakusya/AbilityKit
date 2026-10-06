@@ -1,0 +1,16 @@
+{
+  "version": 1,
+  "flow_id": "6d3174fd-2b01-4136-8ea5-0b0cd0e2845d",
+  "seq": 162,
+  "op_id": "6d3174fd-2b01-4136-8ea5-0b0cd0e2845d:000162",
+  "kind": "receipt",
+  "recorded_utc": "2026-10-06T16:35:41.904998Z",
+  "intent_hash": "77785d63c1af2e1ed55505cd5cf74d2781a0d5b6ea401e6eed2653da1f89c79d",
+  "outcome": "applied",
+  "raw_ref": "evidence/push-c84cc36-raw.txt",
+  "result": {
+    "exitCode": 0,
+    "remoteReadbackSHA": "c84cc3687351a975c060335f907de46231dfced5",
+    "readbackRef": "evidence/push-c84cc36-readback.json"
+  }
+}

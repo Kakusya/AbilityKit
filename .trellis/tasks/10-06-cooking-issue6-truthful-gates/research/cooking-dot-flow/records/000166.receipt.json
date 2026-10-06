@@ -1,0 +1,19 @@
+{
+  "version": 1,
+  "flow_id": "6d3174fd-2b01-4136-8ea5-0b0cd0e2845d",
+  "seq": 166,
+  "op_id": "6d3174fd-2b01-4136-8ea5-0b0cd0e2845d:000166",
+  "kind": "receipt",
+  "recorded_utc": "2026-10-06T16:55:11.338106Z",
+  "intent_hash": "3f6c2098eb16bed72a998bc0304ebe15fcdc6c540fb04357c9d38e8fb7328cca",
+  "outcome": "applied",
+  "raw_ref": "evidence/slice11-model-prompt-direct-raw.json",
+  "result": {
+    "textAccepted": true,
+    "enterAccepted": true,
+    "tuiIdle": true,
+    "effectiveModel": "GPT-5.6-Sol",
+    "effectiveEffort": "high",
+    "taskTurnStarted": false
+  }
+}

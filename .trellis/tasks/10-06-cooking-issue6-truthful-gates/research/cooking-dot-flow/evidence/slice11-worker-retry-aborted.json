@@ -1,0 +1,11 @@
+{
+  "outcome": "not-applied",
+  "taskId": "task_0c3ccf539029",
+  "failedDispatchId": "ctx_27690ccb2ec6",
+  "terminal": "term_401024fc-a381-4adf-a831-fcde113232d2",
+  "reason": "Owner directed the coordinator not to communicate with existing sessions and to use a fresh cc-switch relay-routed worker or worktree.",
+  "workerStartRetryExecuted": false,
+  "taskTurnStarted": false,
+  "sourceFilesChanged": false,
+  "resourceAction": "retained; no stop, release, close, delete, or further terminal input"
+}

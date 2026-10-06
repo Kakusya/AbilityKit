@@ -1,0 +1,11 @@
+{
+  "outcome": "not-applied",
+  "terminal": "term_401024fc-a381-4adf-a831-fcde113232d2",
+  "attempts": 2,
+  "errorCode": "agent_prompt_blocked",
+  "orchestrationRequestId": "7842392b-fa7c-4655-8b80-cd9e2ed7d922",
+  "firstCommand": "orca terminal send --terminal term_401024fc-a381-4adf-a831-fcde113232d2 --text 2 --enter --json",
+  "reconciliationCommand": "orca terminal send --terminal term_401024fc-a381-4adf-a831-fcde113232d2 --text 2 --enter --retry-request 7842392b-fa7c-4655-8b80-cd9e2ed7d922 --wait-submit 10 --json",
+  "terminalPromptUnchanged": true,
+  "qualification": "Orca rejected both commands before terminal input. The model selection was not applied and no task turn started."
+}

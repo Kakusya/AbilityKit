@@ -1,0 +1,10 @@
+{
+  "taskId": "task_0c3ccf539029",
+  "failedDispatchId": "ctx_27690ccb2ec6",
+  "terminal": "term_401024fc-a381-4adf-a831-fcde113232d2",
+  "observedPrompt": "codex-model-migration-prompt",
+  "selection": "Use existing model",
+  "input": "2 + Enter",
+  "reason": "Preserve Orca configured model/defaults as required by the workflow; do not opt into an unreviewed migration",
+  "expectedPostcondition": "Codex reaches a normal ready input state; the failed dispatch remains historical and no task is started by this input"
+}

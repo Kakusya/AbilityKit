@@ -1,0 +1,20 @@
+Technical direction request only; this is NOT final acceptance and no merge/integration is requested.
+
+request_id: AK-I6-COOK-COMPILER-20261007-01
+flow_id: 6d3174fd-2b01-4136-8ea5-0b0cd0e2845d
+reviewed_sha: c84cc3687351a975c060335f907de46231dfced5
+gate_implementation_source: 665068ae71100328cf6344b8d6c2a6fa74e968bd
+
+Owner-authorized successor coordinator continues the same Run after the original coordinator became inactive. Cooking-only scope, fixed ET versions, and all previous evidence rules remain unchanged. Please converse/read GitHub only; do not execute code or write GitHub.
+
+Exact pushed packet:
+https://github.com/Kakusya/AbilityKit/commit/c84cc3687351a975c060335f907de46231dfced5
+
+Decision packet and full raw evidence index:
+https://github.com/Kakusya/AbilityKit/blob/c84cc3687351a975c060335f907de46231dfced5/.trellis/tasks/10-06-cooking-issue6-truthful-gates/research/cooking-dot-flow/evidence/slice10-compiler-contention-dot-request.md
+
+Verified result on committed source 665068a: full controls Passed 249/249/native0 with source unchanged. Original cooking-et-level-runtime run 0b3b3cac-0bee-4ac9-a9e0-ea843a97fbc9 then Failed/CLI1. Analyzer build, Cooking ET runtime build, and Cooking tests Passed867/867. ET Runtime Tests did not execute because its build failed native1/MSB3491: parallel project instances appended to one node-owned compiler.txt through the generated WriteLinesToFile target. cooking-kitchen-loop is NotRun. The verifier later hit provider quota and was abandoned/fenced with terminal/files retained; no worker_done/report fabrication/cleanup.
+
+Please choose a bounded complete-closure repair: serialize all shared writes; collision-free per-project/project-instance traces with deterministic aggregation; or another mechanism that proves every actual compiler input. Explicitly specify exact worker-owned files, unique path/ownership rules, duplicate/parallel instance handling, aggregation completion point, fail-closed malformed/missing/extra/locked behavior, required positive and deliberate contention/omission/substitution controls, and the required final reruns. Do not authorize business/example/Unity/dependency/SDK/ET-version changes.
+
+Return one explicit decision bound to this request_id and full reviewed_sha, with allowed_next_action and exact file/verification boundary. No implementation worker will be dispatched while this request is pending.

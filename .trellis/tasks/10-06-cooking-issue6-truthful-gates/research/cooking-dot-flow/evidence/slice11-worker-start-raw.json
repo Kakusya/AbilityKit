@@ -1,0 +1,22 @@
+{
+  "cliExitCode": 1,
+  "requestId": "75b30406-2137-4922-833d-1ebba5ca0f9e",
+  "runId": "run_5ba664a5f016",
+  "taskId": "task_0c3ccf539029",
+  "dispatchId": "ctx_27690ccb2ec6",
+  "terminal": "term_401024fc-a381-4adf-a831-fcde113232d2",
+  "state": "failed",
+  "stage": "agent_readiness",
+  "error": "Agent startup blocked: codex-model-migration-prompt",
+  "capabilityRevokedAt": "2026-10-06T16:51:25.763Z",
+  "taskTurnStarted": false,
+  "sourceFilesChanged": false,
+  "residualResource": "owned reclaimable terminal retained; no release or deletion",
+  "prompt": {
+    "title": "Meet GPT-6 Sol",
+    "options": [
+      "Try new model",
+      "Use existing model"
+    ]
+  }
+}

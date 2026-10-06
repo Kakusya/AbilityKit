@@ -1,0 +1,9 @@
+{
+  "sha": "c84cc3687351a975c060335f907de46231dfced5",
+  "branch": "Kakusya/issue6-cooking-truthful-gates",
+  "repo": "https://github.com/Kakusya/AbilityKit",
+  "purpose": "Publish Owner-authorized succession, exact failed-gate evidence, and dot compiler-contention decision request",
+  "implementationSource": "665068ae71100328cf6344b8d6c2a6fa74e968bd",
+  "controls": "196/196 Passed",
+  "requestId": "AK-I6-COOK-COMPILER-20261007-01"
+}

@@ -1,0 +1,10 @@
+{
+  "requestId": "AK-I6-COOK-COMPILER-20261007-01",
+  "reviewedSHA": "c84cc3687351a975c060335f907de46231dfced5",
+  "pollOrdinal": 2,
+  "observedUtc": "2026-10-06T16:40:11Z",
+  "generating": false,
+  "latestMessageId": "3f12f99a2ea4819b8541c90bd4ea9e30~3f12f99a2ea4819b8541c90bd4ea9e30~CalpicoMessage~Sentinel_062fe9a064588191996af83bd025675a",
+  "decision": null,
+  "nextPollUtc": "2026-10-06T16:42:11Z"
+}

@@ -1,0 +1,18 @@
+{
+  "version": 1,
+  "flow_id": "6d3174fd-2b01-4136-8ea5-0b0cd0e2845d",
+  "seq": 165,
+  "op_id": "6d3174fd-2b01-4136-8ea5-0b0cd0e2845d:000165",
+  "kind": "receipt",
+  "recorded_utc": "2026-10-06T16:53:44.241785Z",
+  "intent_hash": "d07948054517856b3cbbb8dc5d31158cb33ae095ab86a530107a7552dce26a4c",
+  "outcome": "not-applied",
+  "raw_ref": "evidence/slice11-model-prompt-blocked.json",
+  "result": {
+    "cliExitCode": 1,
+    "requestId": "7842392b-fa7c-4655-8b80-cd9e2ed7d922",
+    "errorCode": "agent_prompt_blocked",
+    "inputApplied": false,
+    "taskTurnStarted": false
+  }
+}

@@ -1,0 +1,13 @@
+{
+  "conversationId": "01a10258-c084-74bb-8bcc-ec01958e5023",
+  "browserPageId": "da9c3b17-5a76-44d1-8401-2af1b389fc6c",
+  "requestId": "AK-I6-COOK-COMPILER-20261007-01",
+  "reviewedSHA": "c84cc3687351a975c060335f907de46231dfced5",
+  "priorMessageBoundary": "3f12f99a2ea4819b8541c90bd4ea9e30~3f12f99a2ea4819b8541c90bd4ea9e30~CalpicoMessage~Sentinel_536895c5b024819188f11ce35b00c261",
+  "postedMessageId": "3f12f99a2ea4819b8541c90bd4ea9e30~3f12f99a2ea4819b8541c90bd4ea9e30~CalpicoMessage~Sentinel_2f9b4c021df48191a08c84526ed74256",
+  "fullTextRef": "evidence/dot-compiler-contention-request.txt",
+  "postedUtc": null,
+  "observedUtc": "2026-10-06T16:38:15.4341494Z",
+  "generating": false,
+  "afterPriorBoundary": true
+}
