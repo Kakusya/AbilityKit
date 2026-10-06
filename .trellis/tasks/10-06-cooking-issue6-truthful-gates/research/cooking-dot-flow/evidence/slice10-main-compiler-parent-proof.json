@@ -1,0 +1,45 @@
+{
+  "status": "Observed",
+  "qualification": "Compiler ancestry observed; sharing/active writer exclusivity still belongs to current verifier preflight. Do not stop compiler or infer unrelated ownership from exited parent.",
+  "receiptPath": "local\\Logs\\test-gates\\0b3b3cac-0bee-4ac9-a9e0-ea843a97fbc9\\3c2d8b3e48cb\\stage-receipt.json",
+  "matches": [
+    {
+      "command": {
+        "executable": "D:\\Environment\\dotnet\\dotnet.exe",
+        "arguments": [
+          "build",
+          "C:\\Users\\Administrator\\orca\\workspaces\\AbilityKit\\issue6-cooking-truthful-gates\\src\\AbilityKit.ET.RelationAnalyzer\\AbilityKit.ET.RelationAnalyzer.csproj",
+          "-c",
+          "Debug",
+          "-f",
+          "netstandard2.0",
+          "--no-restore",
+          "--nologo",
+          "-p:CustomAfterMicrosoftCommonTargets=C:\\Users\\Administrator\\orca\\workspaces\\AbilityKit\\issue6-cooking-truthful-gates\\local\\Logs\\test-gates\\0b3b3cac-0bee-4ac9-a9e0-ea843a97fbc9\\3c2d8b3e48cb\\compiler.targets",
+          "-p:AbilityKitCompilerTracePath=C:\\Users\\Administrator\\orca\\workspaces\\AbilityKit\\issue6-cooking-truthful-gates\\local\\Logs\\test-gates\\0b3b3cac-0bee-4ac9-a9e0-ea843a97fbc9\\3c2d8b3e48cb\\compiler.txt"
+        ],
+        "workingDirectory": "C:\\Users\\Administrator\\orca\\workspaces\\AbilityKit\\issue6-cooking-truthful-gates"
+      },
+      "startedAt": "2026-10-06T03:38:55.5229294+00:00",
+      "endedAt": "2026-10-06T03:38:56.6337485+00:00",
+      "processExitCode": 0,
+      "reason": null,
+      "ownedProcessId": 82916,
+      "exitConfirmed": true,
+      "stdoutPath": "C:\\Users\\Administrator\\orca\\workspaces\\AbilityKit\\issue6-cooking-truthful-gates\\local\\Logs\\test-gates\\0b3b3cac-0bee-4ac9-a9e0-ea843a97fbc9\\3c2d8b3e48cb\\build.stdout.txt",
+      "stderrPath": "C:\\Users\\Administrator\\orca\\workspaces\\AbilityKit\\issue6-cooking-truthful-gates\\local\\Logs\\test-gates\\0b3b3cac-0bee-4ac9-a9e0-ea843a97fbc9\\3c2d8b3e48cb\\build.stderr.txt",
+      "toolArguments": [
+        "build",
+        "C:\\Users\\Administrator\\orca\\workspaces\\AbilityKit\\issue6-cooking-truthful-gates\\src\\AbilityKit.ET.RelationAnalyzer\\AbilityKit.ET.RelationAnalyzer.csproj",
+        "-c",
+        "Debug",
+        "-f",
+        "netstandard2.0",
+        "--no-restore",
+        "--nologo",
+        "-p:CustomAfterMicrosoftCommonTargets=C:\\Users\\Administrator\\orca\\workspaces\\AbilityKit\\issue6-cooking-truthful-gates\\local\\Logs\\test-gates\\0b3b3cac-0bee-4ac9-a9e0-ea843a97fbc9\\3c2d8b3e48cb\\compiler.targets",
+        "-p:AbilityKitCompilerTracePath=C:\\Users\\Administrator\\orca\\workspaces\\AbilityKit\\issue6-cooking-truthful-gates\\local\\Logs\\test-gates\\0b3b3cac-0bee-4ac9-a9e0-ea843a97fbc9\\3c2d8b3e48cb\\compiler.txt"
+      ]
+    }
+  ]
+}

@@ -1,0 +1,12 @@
+{
+  "version": 1,
+  "flow_id": "6d3174fd-2b01-4136-8ea5-0b0cd0e2845d",
+  "previous_session": "01a10cf3-81fd-7120-99e8-5587f9526a3c",
+  "previous_terminal": "term_08a896e7-f2ff-477d-85c0-1962eb3a8136",
+  "successor_session": "01a111ee-2277-79d1-8e14-704dc43454cf",
+  "successor_terminal": "term_a345586c-d76c-4d68-afdf-f3a58f9686c1",
+  "owner_approval_ref": "evidence/owner-successor-approval-20261007.md",
+  "previous_inactive_ref": "evidence/coordinator-resume-20261007.json",
+  "recorded_utc": "2026-10-06T16:18:34.6153102Z",
+  "revokes_previous": true
+}

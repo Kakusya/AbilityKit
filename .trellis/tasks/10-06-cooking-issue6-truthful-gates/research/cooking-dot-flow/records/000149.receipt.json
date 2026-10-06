@@ -1,0 +1,17 @@
+{
+  "version": 1,
+  "flow_id": "6d3174fd-2b01-4136-8ea5-0b0cd0e2845d",
+  "seq": 149,
+  "op_id": "6d3174fd-2b01-4136-8ea5-0b0cd0e2845d:000149",
+  "kind": "receipt",
+  "recorded_utc": "2026-10-06T03:20:57.855750Z",
+  "intent_hash": "a5c425ff52fc65eaf1cfacba772fd7c8622cc500e84a47d9352dd76e6078a933",
+  "outcome": "applied",
+  "raw_ref": "evidence/pr-create-readback.json",
+  "result": {
+    "url": "https://github.com/Kakusya/AbilityKit/pull/12",
+    "number": 12,
+    "isDraft": true,
+    "closingIssuesReferences": []
+  }
+}

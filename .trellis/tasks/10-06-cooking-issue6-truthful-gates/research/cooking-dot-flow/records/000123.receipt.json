@@ -1,0 +1,19 @@
+{
+  "version": 1,
+  "flow_id": "6d3174fd-2b01-4136-8ea5-0b0cd0e2845d",
+  "seq": 123,
+  "op_id": "6d3174fd-2b01-4136-8ea5-0b0cd0e2845d:000123",
+  "kind": "receipt",
+  "recorded_utc": "2026-10-06T02:09:15.951124Z",
+  "intent_hash": "0d7ae3729288b775d71a879bf2283b3193feeff03b438c0a0399538e6e5b2401",
+  "outcome": "applied",
+  "raw_ref": "evidence/dot-final-review-posted-dom.json",
+  "result": {
+    "postedMessageId": "6e002de1-827d-4bec-a963-4f0419fe3ef9",
+    "requestId": "AK-I6-COOK-REVIEW-20261006-03",
+    "reviewedSHA": "3490ec80c207161aa3fd5967f6aa0ab71ba7bdc6",
+    "observedUtc": "2026-10-06T02:09:15.829802+00:00",
+    "postedUtc": null,
+    "generating": false
+  }
+}

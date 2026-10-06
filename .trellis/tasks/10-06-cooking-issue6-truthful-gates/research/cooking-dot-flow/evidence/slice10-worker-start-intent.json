@@ -1,0 +1,7 @@
+{
+  "spec": "Exact HEAD must be665068ae71100328cf6344b8d6c2a6fa74e968bd. Read .trellis/tasks/10-06-cooking-issue6-truthful-gates/research/cooking-dot-flow/evidence/slice10-exact-source-verification-spec.md, implementation-freeze-665068a.json and dot-final-review-reply-raw.txt there. Own only new slice10-real-verification-report.md plus fresh ignored raw artifacts. Full current249 isolated controls on this committed SHA first (retain216 originals), then original BOTH Cooking gates serially unchanged; no source/business/project/dependency/Unity/example fixes, retry, commit or remote write. Exclusive.NET ownership and independent producer/binary/source/TRX/complete archive audits. Existing45m whole/15m native resource observation bounds, identity-only cancellation/60s drain contract. Preserve all history/main dirt. Matching exactly-once Done+idle; configured defaults.",
+  "sourceSHA": "665068ae71100328cf6344b8d6c2a6fa74e968bd",
+  "priorWorker": "task_9bfd5b74eaa6/ctx_ccde18aea1d0 succeeded/revoked/idle",
+  "mainChecks": "scope+freeze+39controls Passed/native0; parent main probe exited",
+  "configuredDefaults": true
+}

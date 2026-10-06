@@ -1,0 +1,8 @@
+{
+  "sha": "665068ae71100328cf6344b8d6c2a6fa74e968bd",
+  "branch": "Kakusya/issue6-cooking-truthful-gates",
+  "repo": "https://github.com/Kakusya/AbilityKit",
+  "mainScope": "Passed",
+  "mainControls": "39/39 native0; unchanged8pins",
+  "sourceDispatch": "task_9bfd5b74eaa6/ctx_ccde18aea1d0 succeeded/revoked/idle"
+}

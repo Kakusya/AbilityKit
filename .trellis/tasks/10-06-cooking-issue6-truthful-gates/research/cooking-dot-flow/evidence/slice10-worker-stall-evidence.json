@@ -1,0 +1,20 @@
+{
+  "taskId": "task_29beea8dc224",
+  "dispatchId": "ctx_1fcdf6ecf3ae",
+  "terminal": "term_a1a61c7c-aef6-4cd0-8c46-27a90632617b",
+  "finalAgentTurn": {
+    "provider": "codex",
+    "model": "gpt-6.1-sol",
+    "result": "usage-limit",
+    "message": "You've hit your usage limit. Visit https://chatgpt.com/codex/settings/usage to purchase more credits or try again at Oct 10th, 2026 5:10 AM.",
+    "workerDoneSent": false,
+    "reportPath": ".trellis/tasks/10-06-cooking-issue6-truthful-gates/research/slice10-real-verification-report.md",
+    "reportExists": false
+  },
+  "verifiedWork": {
+    "committedControls": "249/249 Passed, native0, source before/after 665068ae71100328cf6344b8d6c2a6fa74e968bd",
+    "gate1": "Failed, CLI 1, ET Runtime Tests build native1 with MSB3491 compiler.txt sharing violation",
+    "gate2": "NotRun"
+  },
+  "lifecycleDecision": "Abandon the Dispatch to fence orchestration while retaining the terminal, worktree, processes, files, logs, and all failure evidence. Do not claim the process stopped."
+}

@@ -1,0 +1,38 @@
+{
+  "id": "3de054b4-3e68-43fd-9f9a-1572663050a3",
+  "ok": true,
+  "result": {
+    "runId": "run_5ba664a5f016",
+    "deliveryId": "delivery_d51a9e5eb819",
+    "messages": [
+      {
+        "id": "msg_4d7ed07ed707",
+        "run_id": "run_5ba664a5f016",
+        "delivery_contract": "current_delivery",
+        "from_handle": "term_a1a61c7c-aef6-4cd0-8c46-27a90632617b",
+        "to_handle": "run:run_5ba664a5f016",
+        "subject": "Ownership provenance pending for gate1 compiler",
+        "body": "Committed249 isolated controls Passed/native0 and all source pins match; original gate1 launched03:38:24Z, run 0b3b3cac-0bee-4ac9-a9e0-ea843a97fbc9, runner79652. Pre-start had zero.NET writers, but live check observed VBCSCompiler78908 created03:38:55Z under exited parent82916 before completed stage receipts exist, so ownership is not yet proven by the receipt ledger; raw process identity is preserved in gate1-live-ownership01.json. I will not launch gate2 or stop that compiler; I am inspecting the existing run's native receipts to resolve ownership, with45/15minute observation still active and no source changes.",
+        "type": "escalation",
+        "priority": "normal",
+        "thread_id": null,
+        "payload": "{\"taskId\":\"task_29beea8dc224\",\"dispatchId\":\"ctx_1fcdf6ecf3ae\"}",
+        "created_at": "2026-10-06T03:40:15Z",
+        "delivered_at": null
+      }
+    ],
+    "count": 1,
+    "replayed": false,
+    "acknowledged": null,
+    "timedOut": false,
+    "cancelled": false,
+    "connectionLost": false,
+    "mutation": {
+      "requestId": "be6c1ca0-727e-4361-8b3c-39e96490fdbe",
+      "replayed": false
+    }
+  },
+  "_meta": {
+    "runtimeId": "ff0c5f2c-d341-4455-bc1c-c113650bdd60"
+  }
+}

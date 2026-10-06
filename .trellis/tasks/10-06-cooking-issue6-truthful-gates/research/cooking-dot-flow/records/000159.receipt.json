@@ -1,0 +1,41 @@
+{
+  "version": 1,
+  "flow_id": "6d3174fd-2b01-4136-8ea5-0b0cd0e2845d",
+  "seq": 159,
+  "op_id": "6d3174fd-2b01-4136-8ea5-0b0cd0e2845d:000159",
+  "kind": "receipt",
+  "recorded_utc": "2026-10-06T16:22:48.209916Z",
+  "intent_hash": "c222b07cb60b534dffc8ab382c6d58c15378d80480319ae54efc5ac95d85ddd5",
+  "outcome": "applied",
+  "raw_ref": "evidence/coordinator-succession-run-use-raw.json",
+  "result": {
+    "effect": {
+      "id": "d6c25a26-4320-47b6-9a4a-54f99d286f45",
+      "ok": true,
+      "runId": "run_5ba664a5f016",
+      "coordinatorHandle": "term_a345586c-d76c-4d68-afdf-f3a58f9686c1",
+      "consumerGeneration": 2,
+      "updatedAt": "2026-10-06T16:21:55Z",
+      "requestId": "8e908a5d-0083-4561-8d13-4eea1a26e67c",
+      "replayed": false
+    },
+    "readbacks": [
+      {
+        "operation": "run-current",
+        "id": "a4d5d39a-5a92-403d-a40c-563b84516599",
+        "ok": true,
+        "runId": "run_5ba664a5f016",
+        "coordinatorHandle": "term_a345586c-d76c-4d68-afdf-f3a58f9686c1",
+        "consumerGeneration": 2
+      },
+      {
+        "operation": "run-show",
+        "id": "636e2f59-3a27-4d1b-bf6a-fabf3fad3e02",
+        "ok": true,
+        "runId": "run_5ba664a5f016",
+        "coordinatorHandle": "term_a345586c-d76c-4d68-afdf-f3a58f9686c1",
+        "consumerGeneration": 2
+      }
+    ]
+  }
+}

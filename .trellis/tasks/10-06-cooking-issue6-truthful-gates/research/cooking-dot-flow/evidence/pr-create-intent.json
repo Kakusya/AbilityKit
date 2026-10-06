@@ -1,0 +1,10 @@
+{
+  "repo": "Kakusya/AbilityKit",
+  "head": "Kakusya/issue6-cooking-truthful-gates",
+  "base": "master",
+  "draft": true,
+  "headSHA": "665068ae71100328cf6344b8d6c2a6fa74e968bd",
+  "existingBranchPRs": [],
+  "bodyRef": "evidence/pr-draft-body.md",
+  "noClosingAssociation": true
+}

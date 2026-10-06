@@ -1,0 +1,15 @@
+{
+  "version": 1,
+  "flow_id": "6d3174fd-2b01-4136-8ea5-0b0cd0e2845d",
+  "seq": 155,
+  "op_id": "6d3174fd-2b01-4136-8ea5-0b0cd0e2845d:000155",
+  "kind": "receipt",
+  "recorded_utc": "2026-10-06T03:42:22.536853Z",
+  "intent_hash": "c936bb1cac94bd1dc737517de1f1414566935a32bb965cbbdb20de59aa4f2327",
+  "outcome": "applied",
+  "raw_ref": "evidence/slice10-compiler-proof-followup-raw.json",
+  "result": {
+    "exitCode": 0,
+    "qualification": "Durable followup enqueued; worker checkpoint consumption not yet asserted"
+  }
+}

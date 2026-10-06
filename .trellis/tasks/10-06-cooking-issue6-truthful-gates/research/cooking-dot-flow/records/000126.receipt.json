@@ -1,0 +1,17 @@
+{
+  "version": 1,
+  "flow_id": "6d3174fd-2b01-4136-8ea5-0b0cd0e2845d",
+  "seq": 126,
+  "op_id": "6d3174fd-2b01-4136-8ea5-0b0cd0e2845d:000126",
+  "kind": "receipt",
+  "recorded_utc": "2026-10-06T02:27:45.453000Z",
+  "intent_hash": "bac779993e27535238e863c12b496a95eb3e01a49e9ca493b2ba8876eae35918",
+  "outcome": "applied",
+  "raw_ref": "evidence/issue6-changes-required-comment-readback.json",
+  "result": {
+    "readbackMatched": true,
+    "state": "OPEN",
+    "commentUrl": "https://github.com/Kakusya/AbilityKit/issues/6#issuecomment-6008084142",
+    "comparison": "CRLF normalized; first exact raw-string assertion failed after successful post; reconciled without second send"
+  }
+}

@@ -1,0 +1,19 @@
+{
+  "id": "8f5efb16-81c4-402a-84a4-ca986e83539f",
+  "ok": true,
+  "runId": "run_5ba664a5f016",
+  "deliveryId": "delivery_1f4183676f92",
+  "messages": [
+    {
+      "id": "msg_412e7e83b30e",
+      "from": "term_a1a61c7c-aef6-4cd0-8c46-27a90632617b",
+      "type": "heartbeat",
+      "createdAt": "2026-10-06T03:52:35Z",
+      "taskId": "task_29beea8dc224",
+      "dispatchId": "ctx_1fcdf6ecf3ae",
+      "phase": "reviewing"
+    }
+  ],
+  "processed": true,
+  "processingNote": "Heartbeat predates the provider usage-limit terminal result. It proves only liveness at its timestamp and does not override the later transcript evidence or settle the Dispatch."
+}

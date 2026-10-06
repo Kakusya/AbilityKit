@@ -1,0 +1,18 @@
+{
+  "version": 1,
+  "flow_id": "6d3174fd-2b01-4136-8ea5-0b0cd0e2845d",
+  "seq": 154,
+  "op_id": "6d3174fd-2b01-4136-8ea5-0b0cd0e2845d:000154",
+  "kind": "receipt",
+  "recorded_utc": "2026-10-06T03:41:37.261223Z",
+  "intent_hash": "a4d37b9752e021573b7902ff86f1dd291c858c67ff6df0e92e7af2e363f62084",
+  "outcome": "applied",
+  "raw_ref": "evidence/slice10-ack-ownership-escalation.json",
+  "result": {
+    "nativeExit": 0,
+    "processedMessageIds": [
+      "msg_4d7ed07ed707"
+    ],
+    "operator": "Main explicitly supplied every observed message ID; no automatic acknowledgment/polling."
+  }
+}

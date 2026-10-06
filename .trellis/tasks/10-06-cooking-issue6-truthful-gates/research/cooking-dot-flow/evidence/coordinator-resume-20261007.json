@@ -1,0 +1,35 @@
+{
+  "observedUtc": "2026-10-07T00:00:00+08:00",
+  "runId": "run_5ba664a5f016",
+  "flowId": "6d3174fd-2b01-4136-8ea5-0b0cd0e2845d",
+  "coordinator": {
+    "terminalHandle": "term_08a896e7-f2ff-477d-85c0-1962eb3a8136",
+    "sessionId": "01a10cf3-81fd-7120-99e8-5587f9526a3c"
+  },
+  "recovery": {
+    "method": "Resume the original Codex session in its original Orca terminal.",
+    "terminalSendRequestId": "2df4edc3-50a9-4e65-8605-10aa42f559dd",
+    "terminalSendAccepted": true,
+    "tuiIdleObservationId": "2bf798ec-be54-4178-b0cc-e4d718e6cc3f",
+    "tuiIdleSatisfied": true,
+    "runUsePerformed": false,
+    "newCoordinatorBound": false
+  },
+  "failedAlternative": {
+    "action": "record-operation begin from a different Codex session",
+    "result": "Blocked before mutation by exclusive original coordinator/record-write authority.",
+    "recordCreated": false
+  },
+  "resumeBoundary": {
+    "lastCompletedOperation": 158,
+    "nextOperation": 159,
+    "candidateSha": "665068ae71100328cf6344b8d6c2a6fa74e968bd",
+    "verificationTask": "task_29beea8dc224",
+    "verificationDispatch": "ctx_1fcdf6ecf3ae",
+    "verificationTerminal": "term_a1a61c7c-aef6-4cd0-8c46-27a90632617b",
+    "workerState": "No worker_done; Codex usage limit reached; terminal is idle at an agent prompt; Dispatch remains in_progress/unverifiable.",
+    "gate1": "Failed: ET Runtime Tests build returned MSB3491 because compiler.txt was locked by another parallel project instance.",
+    "gate2": "NotRun",
+    "issueAndDelivery": "Issue open; PR draft; no final dot acceptance, merge, close, archive, or cleanup."
+  }
+}

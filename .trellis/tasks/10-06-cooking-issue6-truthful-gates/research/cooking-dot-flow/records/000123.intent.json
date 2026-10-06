@@ -1,0 +1,18 @@
+{
+  "version": 1,
+  "flow_id": "6d3174fd-2b01-4136-8ea5-0b0cd0e2845d",
+  "seq": 123,
+  "op_id": "6d3174fd-2b01-4136-8ea5-0b0cd0e2845d:000123",
+  "kind": "intent",
+  "recorded_utc": "2026-10-06T02:08:50.640317Z",
+  "action": "dot-final-review-send",
+  "target": "https://chatgpt.com/dots/01a10258-c084-74bb-8bcc-ec01958e5023",
+  "authorization_ref": "evidence/approval.md",
+  "payload_ref": "evidence/dot-final-review-request.txt",
+  "preconditions": {
+    "budget_ref": "evidence/dot-final-review-budget.json",
+    "request_id": "AK-I6-COOK-REVIEW-20261006-03",
+    "reviewed_sha": "3490ec80c207161aa3fd5967f6aa0ab71ba7bdc6",
+    "run_id": "run_5ba664a5f016"
+  }
+}

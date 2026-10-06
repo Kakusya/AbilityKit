@@ -1,0 +1,78 @@
+{
+  "status": "Failed",
+  "observedUtc": "2026-10-06T03:53:27.672449+00:00",
+  "sourceSHA": "665068ae71100328cf6344b8d6c2a6fa74e968bd",
+  "runId": "0b3b3cac-0bee-4ac9-a9e0-ea843a97fbc9",
+  "summaryStatus": "Failed",
+  "fullGateAccepted": false,
+  "summarySha256": "54873c3789c85094b0eb14a0d4db622bdf21a934370f1268177deaa2c9e17c05",
+  "nativeFailedBuild": {
+    "command": {
+      "executable": "D:\\Environment\\dotnet\\dotnet.exe",
+      "arguments": [
+        "build",
+        "C:\\Users\\Administrator\\orca\\workspaces\\AbilityKit\\issue6-cooking-truthful-gates\\src\\AbilityKit.ET.Runtime.Tests\\AbilityKit.ET.Runtime.Tests.csproj",
+        "-c",
+        "Debug",
+        "-f",
+        "net10.0",
+        "--no-restore",
+        "--nologo",
+        "-p:CustomAfterMicrosoftCommonTargets=C:\\Users\\Administrator\\orca\\workspaces\\AbilityKit\\issue6-cooking-truthful-gates\\local\\Logs\\test-gates\\0b3b3cac-0bee-4ac9-a9e0-ea843a97fbc9\\d3ebc71475bc\\compiler.targets",
+        "-p:AbilityKitCompilerTracePath=C:\\Users\\Administrator\\orca\\workspaces\\AbilityKit\\issue6-cooking-truthful-gates\\local\\Logs\\test-gates\\0b3b3cac-0bee-4ac9-a9e0-ea843a97fbc9\\d3ebc71475bc\\compiler.txt"
+      ],
+      "workingDirectory": "C:\\Users\\Administrator\\orca\\workspaces\\AbilityKit\\issue6-cooking-truthful-gates"
+    },
+    "startedAt": "2026-10-06T03:48:15.9601155+00:00",
+    "endedAt": "2026-10-06T03:48:18.3705297+00:00",
+    "processExitCode": 1,
+    "reason": null,
+    "ownedProcessId": 71160,
+    "exitConfirmed": true,
+    "stdoutPath": "C:\\Users\\Administrator\\orca\\workspaces\\AbilityKit\\issue6-cooking-truthful-gates\\local\\Logs\\test-gates\\0b3b3cac-0bee-4ac9-a9e0-ea843a97fbc9\\d3ebc71475bc\\build.stdout.txt",
+    "stderrPath": "C:\\Users\\Administrator\\orca\\workspaces\\AbilityKit\\issue6-cooking-truthful-gates\\local\\Logs\\test-gates\\0b3b3cac-0bee-4ac9-a9e0-ea843a97fbc9\\d3ebc71475bc\\build.stderr.txt",
+    "toolArguments": [
+      "build",
+      "C:\\Users\\Administrator\\orca\\workspaces\\AbilityKit\\issue6-cooking-truthful-gates\\src\\AbilityKit.ET.Runtime.Tests\\AbilityKit.ET.Runtime.Tests.csproj",
+      "-c",
+      "Debug",
+      "-f",
+      "net10.0",
+      "--no-restore",
+      "--nologo",
+      "-p:CustomAfterMicrosoftCommonTargets=C:\\Users\\Administrator\\orca\\workspaces\\AbilityKit\\issue6-cooking-truthful-gates\\local\\Logs\\test-gates\\0b3b3cac-0bee-4ac9-a9e0-ea843a97fbc9\\d3ebc71475bc\\compiler.targets",
+      "-p:AbilityKitCompilerTracePath=C:\\Users\\Administrator\\orca\\workspaces\\AbilityKit\\issue6-cooking-truthful-gates\\local\\Logs\\test-gates\\0b3b3cac-0bee-4ac9-a9e0-ea843a97fbc9\\d3ebc71475bc\\compiler.txt"
+    ]
+  },
+  "errors": [
+    "C:\\Users\\Administrator\\orca\\workspaces\\AbilityKit\\issue6-cooking-truthful-gates\\local\\Logs\\test-gates\\0b3b3cac-0bee-4ac9-a9e0-ea843a97fbc9\\d3ebc71475bc\\compiler.targets(10,5): error MSB3491: 未能向文件“C:\\Users\\Administrator\\orca\\workspaces\\AbilityKit\\issue6-cooking-truthful-gates\\local\\Logs\\test-gates\\0b3b3cac-0bee-4ac9-a9e0-ea843a97fbc9\\d3ebc71475bc\\compiler.txt”写入行。The process cannot access the file 'C:\\Users\\Administrator\\orca\\workspaces\\AbilityKit\\issue6-cooking-truthful-gates\\local\\Logs\\test-gates\\0b3b3cac-0bee-4ac9-a9e0-ea843a97fbc9\\d3ebc71475bc\\compiler.txt' because it is being used by another process.  [C:\\Users\\Administrator\\orca\\workspaces\\AbilityKit\\issue6-cooking-truthful-gates\\src\\AbilityKit.ET.RelationAnalyzer\\AbilityKit.ET.RelationAnalyzer.csproj]",
+    "C:\\Users\\Administrator\\orca\\workspaces\\AbilityKit\\issue6-cooking-truthful-gates\\local\\Logs\\test-gates\\0b3b3cac-0bee-4ac9-a9e0-ea843a97fbc9\\d3ebc71475bc\\compiler.targets(10,5): error MSB3491: 未能向文件“C:\\Users\\Administrator\\orca\\workspaces\\AbilityKit\\issue6-cooking-truthful-gates\\local\\Logs\\test-gates\\0b3b3cac-0bee-4ac9-a9e0-ea843a97fbc9\\d3ebc71475bc\\compiler.txt”写入行。The process cannot access the file 'C:\\Users\\Administrator\\orca\\workspaces\\AbilityKit\\issue6-cooking-truthful-gates\\local\\Logs\\test-gates\\0b3b3cac-0bee-4ac9-a9e0-ea843a97fbc9\\d3ebc71475bc\\compiler.txt' because it is being used by another process.  [C:\\Users\\Administrator\\orca\\workspaces\\AbilityKit\\issue6-cooking-truthful-gates\\src\\AbilityKit.ET.RelationAnalyzer\\AbilityKit.ET.RelationAnalyzer.csproj]"
+  ],
+  "leafStatuses": [
+    {
+      "name": "ET relation analyzer build",
+      "status": "Passed",
+      "reason": "",
+      "processExitCode": 0
+    },
+    {
+      "name": "Cooking ET runtime build with relation analyzer",
+      "status": "Passed",
+      "reason": "",
+      "processExitCode": 0
+    },
+    {
+      "name": "Cooking domain and Level lifecycle tests",
+      "status": "Passed",
+      "reason": "",
+      "processExitCode": 0
+    },
+    {
+      "name": "Cooking ET Level host and runtime tests",
+      "status": "Failed",
+      "reason": "NativeFailure:build:1",
+      "processExitCode": 1
+    }
+  ],
+  "qualification": "Genuine ET test build failed; ET tests not executed, Cooking867 preserved. Parent final native/sourceAfter/worker settlement still pending at this observation. No gate2/retry/business edit/merge/close/archive allowed."
+}

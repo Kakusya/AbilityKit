@@ -1,0 +1,35 @@
+{
+  "version": 1,
+  "flow_id": "6d3174fd-2b01-4136-8ea5-0b0cd0e2845d",
+  "seq": 161,
+  "op_id": "6d3174fd-2b01-4136-8ea5-0b0cd0e2845d:000161",
+  "kind": "receipt",
+  "recorded_utc": "2026-10-06T16:25:23.547710Z",
+  "intent_hash": "a1a70ca605eae15ab3487779b5cee4bb86afba3ec3d1296d099138e6b87bf3bd",
+  "outcome": "applied",
+  "raw_ref": "evidence/slice10-worker-abandon-raw.json",
+  "result": {
+    "effect": {
+      "id": "16c650f8-bc9e-48bc-a82e-340ed4cf08b3",
+      "ok": true,
+      "dispatchId": "ctx_1fcdf6ecf3ae",
+      "state": "abandoned",
+      "alreadySettled": false,
+      "stale": false,
+      "processAction": "none",
+      "warning": "Possibly-live resources were retained; no process was stopped or deleted.",
+      "requestId": "70c9f873-bc3e-45ec-861a-26bc4ad91ce5",
+      "replayed": false
+    },
+    "readback": {
+      "id": "ae2d5725-d86e-4ba0-8d96-ae8eba51d6c5",
+      "dispatchStatus": "failed",
+      "workerState": "abandoned",
+      "capabilityRevokedAt": "2026-10-06T16:24:45.718Z",
+      "taskStatus": "blocked",
+      "terminalRetained": true,
+      "terminalObservation": "live",
+      "processStoppedClaimed": false
+    }
+  }
+}

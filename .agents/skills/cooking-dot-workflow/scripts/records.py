@@ -21,6 +21,7 @@ SKILL = "cooking-dot-workflow"
 SHA = re.compile(r"[0-9a-f]{40}\Z")
 HASH = re.compile(r"[0-9a-f]{64}\Z")
 FILE = re.compile(r"([0-9]{6})\.(intent|receipt)\.json\Z")
+SUCCESSION_FILE = "authority-succession.json"
 
 
 class Invalid(ValueError):
@@ -116,18 +117,59 @@ class WriteAuthority:
     evidence_ref: str
 
 
-def mutation_allowed(flow, authority):
-    """Pure predicate; never obtains authority. New/unverified main fails closed."""
-    return (isinstance(authority, WriteAuthority) and
-            authority.session == flow["original_session"] and
-            authority.terminal == flow["original_terminal"] and
+def validate_succession(root, flow, value):
+    keys = {"version", "flow_id", "previous_session", "previous_terminal",
+            "successor_session", "successor_terminal", "owner_approval_ref",
+            "previous_inactive_ref", "recorded_utc", "revokes_previous"}
+    require(isinstance(value, dict) and set(value) == keys,
+            "coordinator succession fields/version mismatch")
+    require(type(value["version"]) is int and value["version"] == VERSION and
+            value["flow_id"] == flow["flow_id"], "coordinator succession identity mismatch")
+    require(value["previous_session"] == flow["original_session"] and
+            value["previous_terminal"] == flow["original_terminal"],
+            "coordinator succession predecessor mismatch")
+    require(text_identity(value["successor_session"]) and
+            text_identity(value["successor_terminal"]), "missing successor identity")
+    require(value["successor_session"] != value["previous_session"] or
+            value["successor_terminal"] != value["previous_terminal"],
+            "successor must differ from predecessor")
+    require(value["revokes_previous"] is True, "coordinator succession must revoke predecessor")
+    require(utc(value["recorded_utc"]) >= utc(flow["created_utc"]),
+            "coordinator succession predates flow")
+    reference(root, value["owner_approval_ref"])
+    reference(root, value["previous_inactive_ref"])
+
+
+def succession(root, flow):
+    path = Path(root) / SUCCESSION_FILE
+    if not path.exists():
+        return None
+    require(path.is_file() and not path.is_symlink(), "invalid coordinator succession entry")
+    value = read(path)
+    validate_succession(root, flow, value)
+    return value
+
+
+def mutation_allowed(flow, authority, handover=None):
+    """Pure predicate; authority and any Owner-approved succession are supplied facts."""
+    if not (isinstance(authority, WriteAuthority) and
             authority.sole_coordinator_verified is True and
-            authority.record_write_authorized is True)
+            authority.record_write_authorized is True):
+        return False
+    if handover is None:
+        return (authority.session == flow["original_session"] and
+                authority.terminal == flow["original_terminal"])
+    return (isinstance(handover, dict) and handover.get("revokes_previous") is True and
+            handover.get("flow_id") == flow["flow_id"] and
+            authority.session == handover.get("successor_session") and
+            authority.terminal == handover.get("successor_terminal"))
 
 
 def write_guard(root, flow, authority):
-    require(mutation_allowed(flow, authority), "Blocked: exclusive original coordinator/record-write authority")
     require(Path(root).resolve() == Path(flow["canonical_root"]).resolve(), "copy is read-only")
+    handover = succession(root, flow)
+    require(mutation_allowed(flow, authority, handover),
+            "Blocked: exclusive current coordinator/record-write authority")
     reference(root, authority.evidence_ref)
 
 

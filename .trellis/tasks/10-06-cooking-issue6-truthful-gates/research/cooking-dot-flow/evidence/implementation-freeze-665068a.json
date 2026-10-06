@@ -1,0 +1,77 @@
+{
+  "sourceSHA": "665068ae71100328cf6344b8d6c2a6fa74e968bd",
+  "files": [
+    {
+      "path": "tools/run_test_gate.ps1",
+      "bytes": 15192,
+      "sha256": "575469c4238e29cf41b5826a43748d38c9c81578793261835b6e51dc3a886e8f",
+      "gitBlobBytes": 15192,
+      "gitBlobSha256": "575469c4238e29cf41b5826a43748d38c9c81578793261835b6e51dc3a886e8f",
+      "matchesGitAfterOnlyCRLFNormalization": true,
+      "rawBytesEqualGitBlob": true
+    },
+    {
+      "path": "tools/test-gate-result-contract.ps1",
+      "bytes": 81230,
+      "sha256": "1ad2907cdac147ae1f90c81eba9635aff55b8b38353a85731c07fc7b2de6d954",
+      "gitBlobBytes": 80280,
+      "gitBlobSha256": "4aafa0d736e6293c6a227ad5f109e8ea49ddc92ccb2a8b29a5110d7aa00897f9",
+      "matchesGitAfterOnlyCRLFNormalization": true,
+      "rawBytesEqualGitBlob": false
+    },
+    {
+      "path": "tools/test-gates.json",
+      "bytes": 63749,
+      "sha256": "85111d00c4a3a61c87f61da3e43d159da60e07d058406f7049e17495e7e520a1",
+      "gitBlobBytes": 63749,
+      "gitBlobSha256": "85111d00c4a3a61c87f61da3e43d159da60e07d058406f7049e17495e7e520a1",
+      "matchesGitAfterOnlyCRLFNormalization": true,
+      "rawBytesEqualGitBlob": true
+    },
+    {
+      "path": "tools/tests/test-gate-result-contract.tests.ps1",
+      "bytes": 61383,
+      "sha256": "19582a4bdcfac2a44ab37c2978910108adf37b4ce5b2e8ea7b545f310078725f",
+      "gitBlobBytes": 60892,
+      "gitBlobSha256": "c9b2d172cf7fee281e814b8130da420b725bbf11e91305ac724baa0939e24c6b",
+      "matchesGitAfterOnlyCRLFNormalization": true,
+      "rawBytesEqualGitBlob": false
+    },
+    {
+      "path": "tools/tests/fixtures/gate-result-model.ps1",
+      "bytes": 6941,
+      "sha256": "bcb89b5a2feb31b033fa3dea8eee095f9b07155dec87d82cf01706f5a5e76d64",
+      "gitBlobBytes": 6869,
+      "gitBlobSha256": "338d8cc9ed30b3ee5ff1f60119225b90735816f005b43e6a5615f43f094289c1",
+      "matchesGitAfterOnlyCRLFNormalization": true,
+      "rawBytesEqualGitBlob": false
+    },
+    {
+      "path": "tools/tests/fixtures/gate-result-fake-dotnet.ps1",
+      "bytes": 11372,
+      "sha256": "aa83a5f7ee3ec4efc225bc3ef6fbdafb08900021b55e65e7dde98fdac070a86e",
+      "gitBlobBytes": 11256,
+      "gitBlobSha256": "b67f1ebb72e9d5542a5cff48238dd32be739340c0c23b517666fd9ca92cc5b85",
+      "matchesGitAfterOnlyCRLFNormalization": true,
+      "rawBytesEqualGitBlob": false
+    },
+    {
+      "path": "tools/tests/fixtures/gate-result-native-probe.ps1",
+      "bytes": 5534,
+      "sha256": "f3a1a95a96cb42f1c1c3dbc2cf77fb6df66d13855543a6332c576f56bd355bfe",
+      "gitBlobBytes": 5534,
+      "gitBlobSha256": "f3a1a95a96cb42f1c1c3dbc2cf77fb6df66d13855543a6332c576f56bd355bfe",
+      "matchesGitAfterOnlyCRLFNormalization": true,
+      "rawBytesEqualGitBlob": true
+    },
+    {
+      "path": "Docs/AbilityKit\u6d4b\u8bd5\u95e8\u7981\u4e0e\u6279\u91cf\u56de\u5f52\u89c4\u8303.md",
+      "bytes": 38135,
+      "sha256": "02888aea27bc2fb4e3a5c60f9973c9b8d40e23cb6651af83b61af8a0832ced64",
+      "gitBlobBytes": 37684,
+      "gitBlobSha256": "853bcbc2bc530492dcf433af909867521130ae5eb2d78841850cf460597025ee",
+      "matchesGitAfterOnlyCRLFNormalization": true,
+      "rawBytesEqualGitBlob": false
+    }
+  ]
+}

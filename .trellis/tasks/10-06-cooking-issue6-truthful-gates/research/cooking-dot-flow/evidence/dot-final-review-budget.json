@@ -1,0 +1,21 @@
+{
+  "requestId": "AK-I6-COOK-REVIEW-20261006-03",
+  "reviewedSHA": "3490ec80c207161aa3fd5967f6aa0ab71ba7bdc6",
+  "conversationUrl": "https://chatgpt.com/dots/01a10258-c084-74bb-8bcc-ec01958e5023",
+  "browserPageId": "77075ca3-7da4-4890-8bd5-002b9ef6a07e",
+  "wait_started_utc": "2026-10-06T02:08:50.523202+00:00",
+  "deadline_utc": "2026-10-06T02:38:50.523202+00:00",
+  "requestSha256": "c4f1f608dfdaf33971e6b5127629868558bc2cdbb2553cdda4320fc4f6ad327d",
+  "pollOrdinal": 4,
+  "nextPollUtc": "2026-10-06T02:23:34.938187+00:00",
+  "reminderUsed": false,
+  "beforeObservation": "dot-final-review-before-dom.json",
+  "lastPollUtc": "2026-10-06T02:18:34.938187+00:00",
+  "generatingObservation": false,
+  "fullResponse": true,
+  "outcome": "changes-required",
+  "replyMessageId": "3f12f99a2ea4819b8541c90bd4ea9e30~3f12f99a2ea4819b8541c90bd4ea9e30~CalpicoMessage~Sentinel_536895c5b024819188f11ce35b00c261",
+  "replyPostedUtc": null,
+  "fullObservedUtc": "2026-10-06T02:18:34.938187+00:00",
+  "timelyFullObservation": true
+}

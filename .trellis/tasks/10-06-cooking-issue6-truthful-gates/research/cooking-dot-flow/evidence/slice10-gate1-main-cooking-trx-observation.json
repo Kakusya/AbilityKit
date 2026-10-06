@@ -1,0 +1,31 @@
+{
+  "status": "Observed",
+  "observedUtc": "2026-10-06T03:45:58.653099+00:00",
+  "sourceSHA": "665068ae71100328cf6344b8d6c2a6fa74e968bd",
+  "runId": "0b3b3cac-0bee-4ac9-a9e0-ea843a97fbc9",
+  "trxPath": "local\\Logs\\test-gates\\0b3b3cac-0bee-4ac9-a9e0-ea843a97fbc9\\fe7e01d3051f\\test-results.trx",
+  "trxBytes": 1422522,
+  "trxSha256": "05f4ef11fe42a9ac6a1558082ab3608767607eefa0cd64ef944bc1c706ade160",
+  "actualResults": 867,
+  "actualDefinitions": 867,
+  "uniquePairs": 867,
+  "counters": {
+    "total": "867",
+    "executed": "867",
+    "passed": "867",
+    "failed": "0",
+    "error": "0",
+    "timeout": "0",
+    "aborted": "0",
+    "inconclusive": "0",
+    "passedButRunAborted": "0",
+    "notRunnable": "0",
+    "notExecuted": "0",
+    "disconnected": "0",
+    "warning": "0",
+    "completed": "0",
+    "inProgress": "0",
+    "pending": "0"
+  },
+  "qualification": "Complete direct TRX inventory, not sampled observer list. This is partial test evidence; native/sourceAfter/binary/full-gate acceptance remain pending."
+}

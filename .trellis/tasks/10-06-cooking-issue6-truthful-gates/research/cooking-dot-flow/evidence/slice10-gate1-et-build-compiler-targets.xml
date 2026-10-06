@@ -1,0 +1,12 @@
+<Project>
+  <Target Name="AbilityKitCaptureCompilerInputs" BeforeTargets="CoreCompile">
+    <ItemGroup>
+      <AbilityKitCompilerInput Include="$(MSBuildProjectFullPath);$(MSBuildAllProjects);@(Compile->'%(FullPath)');@(ReferencePath->'%(FullPath)');@(Analyzer->'%(FullPath)');@(AdditionalFiles->'%(FullPath)');@(EmbeddedResource->'%(FullPath)')" />
+      <AbilityKitCompilerInput Remove="@(AbilityKitCompilerInput)" Condition="!Exists('%(Identity)')" />
+    </ItemGroup>
+    <GetFileHash Files="@(AbilityKitCompilerInput)" Algorithm="SHA256">
+      <Output TaskParameter="Items" ItemName="AbilityKitHashedCompilerInput" />
+    </GetFileHash>
+    <WriteLinesToFile File="$(AbilityKitCompilerTracePath)" Lines="@(AbilityKitHashedCompilerInput->'%(FullPath)|%(FileHash)')" Overwrite="false" Encoding="UTF-8" />
+  </Target>
+</Project>

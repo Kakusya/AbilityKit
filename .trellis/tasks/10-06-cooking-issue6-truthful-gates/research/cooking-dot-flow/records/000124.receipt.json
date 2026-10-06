@@ -1,0 +1,14 @@
+{
+  "version": 1,
+  "flow_id": "6d3174fd-2b01-4136-8ea5-0b0cd0e2845d",
+  "seq": 124,
+  "op_id": "6d3174fd-2b01-4136-8ea5-0b0cd0e2845d:000124",
+  "kind": "receipt",
+  "recorded_utc": "2026-10-06T02:19:55.775254Z",
+  "intent_hash": "92269244f486bfe3e982baa132bd4877ae674ceca84ebf6166b84562a6c674d8",
+  "outcome": "applied",
+  "raw_ref": "evidence/slice9-worker-start-raw.json",
+  "result": {
+    "cliExitCode": 0
+  }
+}

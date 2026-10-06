@@ -1,0 +1,30 @@
+{
+  "effect": {
+    "id": "d6c25a26-4320-47b6-9a4a-54f99d286f45",
+    "ok": true,
+    "runId": "run_5ba664a5f016",
+    "coordinatorHandle": "term_a345586c-d76c-4d68-afdf-f3a58f9686c1",
+    "consumerGeneration": 2,
+    "updatedAt": "2026-10-06T16:21:55Z",
+    "requestId": "8e908a5d-0083-4561-8d13-4eea1a26e67c",
+    "replayed": false
+  },
+  "readbacks": [
+    {
+      "operation": "run-current",
+      "id": "a4d5d39a-5a92-403d-a40c-563b84516599",
+      "ok": true,
+      "runId": "run_5ba664a5f016",
+      "coordinatorHandle": "term_a345586c-d76c-4d68-afdf-f3a58f9686c1",
+      "consumerGeneration": 2
+    },
+    {
+      "operation": "run-show",
+      "id": "636e2f59-3a27-4d1b-bf6a-fabf3fad3e02",
+      "ok": true,
+      "runId": "run_5ba664a5f016",
+      "coordinatorHandle": "term_a345586c-d76c-4d68-afdf-f3a58f9686c1",
+      "consumerGeneration": 2
+    }
+  ]
+}

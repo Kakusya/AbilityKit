@@ -1,0 +1,18 @@
+{
+  "version": 1,
+  "flow_id": "6d3174fd-2b01-4136-8ea5-0b0cd0e2845d",
+  "seq": 127,
+  "op_id": "6d3174fd-2b01-4136-8ea5-0b0cd0e2845d:000127",
+  "kind": "intent",
+  "recorded_utc": "2026-10-06T02:28:45.923922Z",
+  "action": "acknowledge-observed-worker-batch",
+  "target": "delivery_d9e0f6ea2def",
+  "authorization_ref": "evidence/approval.md",
+  "payload_ref": "evidence/slice9-inbox07.json",
+  "preconditions": {
+    "processedMessageIds": [
+      "msg_6f532995bf5d"
+    ],
+    "run_id": "run_5ba664a5f016"
+  }
+}
