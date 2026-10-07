@@ -1,9 +1,9 @@
 {
   "id": "cooking-issue13-flow-orchestrator",
   "name": "cooking-issue13-flow-orchestrator",
-  "title": "Issue 13 fixed Flow test orchestrator S0",
-  "description": "Owner-invoked cooking-dot-workflow: inventory existing Cooking APIs and runtime completion, prepare scoped S0 plan and Draft rule-category cards for Owner review; no implementation authorization.",
-  "status": "planning",
+  "title": "Issue 13 fixed Flow test orchestrator",
+  "description": "Owner approved complete Issue13 using accepted dot plan; bounded offline S1, real external network S2, completion S3; focused verification only.",
+  "status": "in_progress",
   "dev_type": null,
   "scope": null,
   "package": null,
@@ -28,6 +28,7 @@
     "planning_request": "AK-I13-S0-PLAN-20261007-01",
     "planning_sha": "a8ea630ca1fd29fcf0327556f7847e13f589c218",
     "planning_decision": "accept-plan-S0-only",
-    "next_action": "owner-rule-categories-and-S1-API-files-budget-approval"
+    "next_action": "S1-offline-implementation",
+    "owner_approval": "research/owner-approval-20261007.md"
   }
 }

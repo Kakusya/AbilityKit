@@ -1,4 +1,6 @@
-# Accepted 技术执行计划；当前只完成 S0
+# Accepted 技术执行计划；开始 S1
+
+Owner后续要求完成Issue13，已批准所呈类别与有界S1→S2→S3；[approval](research/owner-approval-20261007.md)。历史S0-only段落保留来源；当前先一个worker实施S1，独立检查/技术审阅后推进S2/S3，不重复要求Owner确认routine步骤。测试严格按必要范围，不扩全仓或累计控制数。
 
 来源：[完整dot回复](research/dot-plan-reply-raw.txt)、[API](research/accepted-api-design.md)、[决定](research/dot-plan-decision.md)。task继续planning，Issue13继续OPEN/blocked；规则与S1具体范围待Owner。
 
@@ -6,8 +8,8 @@
 - [x] 写S0来源/首个Flow/五类Draft规则；脱敏规划10文件发布并核对SHA。
 - [x] dot当前request/完整SHA接受技术规划，保存完整回复与具体API。
 - [x] 按dot修订规则、两个Flow与实施候选列表。
-- [ ] Issue首次回报并提交Owner审核：类别、S1 API/精确文件/预算/正负控制。
-- [ ] Owner批准后才ready/task start，一个Orca managed-worktree worker，证明accepted input+turn-start。
+- [x] Issue首次回报；Owner续作目标批准类别、API/文件/预算与完成要求。
+- [ ] ready/task start，一个Orca managed-worktree worker，证明accepted input+turn-start。
 - [ ] S1完成即停，main独立检查/冻结candidate+交付hash，dot final-review；不自动派发S2。
 - [ ] S2/S3范围另确认；未运行范围继续NotRun。
 

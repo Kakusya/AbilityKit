@@ -1,6 +1,6 @@
 # Issue #13 — Cooking 固定 Flow 测试编排者
 
-状态：planning；当前批准范围仅 S0 阅读、盘点、提交计划。Owner 于 2026-10-07 显式调用 `$cooking-dot-workflow 请你开始对Issue #13工作.`，按 Issue 最新正文保留规则类别与实施计划审批门。交付模式为 branch-only 规划提交；不授权实现、合并、关单、发布或清理。
+当前Owner续作授权：[approval](research/owner-approval-20261007.md)。在完整S0审阅后，Owner要求完成Issue13、禁止过度测试、模糊点及时问dot；五类修订规则与S1→S2→S3有界实施获准。按dot已接受方案逐阶段实现/技术审阅，不重复 routine 确认。已有flow交付模式branch-only保持，生产mode在具体候选就绪时解决；发布/清理不获默认授权。以下旧S0事实仍保留来源。
 
 ## 目标
 
@@ -32,4 +32,4 @@ Unity/UI/键盘、物理双机 LAN、其他示例、ET/SDK/依赖升级、第二
 
 ## Owner 待决定
 
-审批 [五类规则卡](research/rule-categories.md) 及 dot 审阅后的 S1 文件/API/验收边界。此前不添加 `orca-ready`，不运行 task start，不派发实现。
+Owner已通过续作目标批准所呈五类规则和有界实现；新语义/类别/放宽阈值仍须重审。当前只派发S1，完成后独立检查与dot技术审阅，再推进既批准的S2/S3。合并/关单模式在可审阅候选形成后处理，避免提前推导生产权限。

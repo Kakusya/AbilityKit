@@ -1,4 +1,6 @@
-# Owner 规则类别审批卡（全部 Draft）
+# Owner 规则类别审批卡（version1.0 已批准）
+
+Owner在完整S0审阅后要求完成Issue13；批准出处：[owner-approval-20261007](owner-approval-20261007.md)。五卡version1.0按本文件修订语义Approved；后续旧Draft/null文字保留为S0历史来源，不给新类别/放宽阈值授权。具体批准引用以此段为准，runtime目录写可定位的此文件/commit引用，不接收请求自称Approved。
 
 类别审核是 Issue #13 的产品决定；dot 只能给技术建议。版本均 1.0，Owner decision/ref 均 null。Approved 后同语义/范围/参数实例无需重复审批；语义、适用范围、允许阈值放宽、新例外须重审。未批准规则探索结果最多 Finding/未判定，不是 Passed。
 

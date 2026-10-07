@@ -1,4 +1,6 @@
-# Accepted S0 技术规划；实施仍待 Owner 批准
+# Accepted 技术规划；Owner已授权完成Issue13
+
+Owner后续目标授权见 [approval](research/owner-approval-20261007.md)：按下述设计推进全部切片，禁止过度测试，模糊点及时向dot询问。下文“S0-only/未批准”是当时的dot决定及历史事实，不再表示当前实施阻塞。不得扩大其他示例/Unity/依赖或修改规则降低标准。
 
 dot对请求 `AK-I13-S0-PLAN-20261007-01` / 规划SHA `a8ea630ca1fd29fcf0327556f7847e13f589c218` 返回 **accept-plan，限S0**。完整原文：[dot-plan-reply](research/dot-plan-reply-raw.txt)；完整具体C#签名：[accepted-api-design](research/accepted-api-design.md)；身份/时间/范围：[decision](research/dot-plan-decision.md)。所有新API为拟新增测试层合同，不是已编译事实。Owner规则和S1 API/文件范围未批准。
 
