@@ -1,0 +1,514 @@
+裁决：accept-plan，仅接受下述 S0 技术规划。不是规则类别批准，也不允许据此派发 S1。
+
+request_id：AK-I13-S0-PLAN-20261007-01
+flow_id：a2dafd3b-6a4d-4914-aa68-6a4a20af7a02
+reviewed_sha：a8ea630ca1fd29fcf0327556f7847e13f589c218
+
+我已读取六份指定规划材料，并核对 command/result、ET host、v3 session/codec、authority adapter、SingleThreadOwner 和相关项目引用。以下为应写回 design/implement 的技术定稿；其中规则建议仍交 Owner 审核。
+
+一、选择薄 FlowAcceptance 项目
+
+采用 src/AbilityKit.Game.Cooking.FlowAcceptance，不扩展旧 RichRunner 的600秒恢复场景，也不重新实现领域状态机。
+
+复用现有 CookingLevelEtHost、CookingNetworkAuthorityAdapter、v3 SessionHost/Client。SingleThreadOwner.cs 以 Compile Include 链接原文件，保持原 namespace，不复制或修改它。它只保证 continuation 回到 owner，并不提供完整取消/归位机制；新宿主必须在其场景任务返回前结束自己的异步工作。
+
+Rich planner 的成功专用 Dispatch、RichRunner.Send 不用于竞争操作，因为它们要求结果 Accepted。最小 fixture 不需要导入整套菜单和恢复流程。旧 Harness 的 dummy snapshot/旧 UDP topology 只作接口参考，不作本次联网证据。
+
+我也核对了 PR #12 的 GitHub 状态：确已 merged，merge commit 为 3c178851819abac5755c5bc53fa03c8b94257e2a。S0 应追加现状说明，保留旧记录；这不是追认旧测试全部通过，不成为 #13 的隐藏前置。
+
+二、API DESIGN：新测试层合同
+
+以下 C# 均为拟新增 API，不是现有实现或已编译代码。已有 CookingRecipeCommand、CookingRecipeCommandResult、CookingRecipeEvent、CookingLevelScope 等类型继续复用，不改变产品签名、wire v3 或领域语义。
+
+首版只开放 Pickup/Drop 与“精确重放上一调用”。不提前做任意动作脚本或通用工作流引擎。
+
+请求和规则引用：
+
+C#
+public enum FlowMode { Offline, Network }
+public enum FlowVerb { Pickup, Drop }
+
+public sealed record RuleRef(string Id, string Version);
+
+public sealed record FixtureSpec(
+    string Id, string Version,
+    IReadOnlyList<string> Actors,
+    string ItemId, string InitialSlot, string DropSlot);
+
+public sealed record FlowBudgets(
+    int StartupMs, int StepMs, int ConvergenceMs,
+    int OverallMs, int ResetMs, int PublishMs);
+
+public sealed record FlowLogLimits(
+    int QueueCapacity, int MaxEventBytes,
+    int MaxEvents, long MaxEventLogBytes, int DiagnosticBytesPerHost);
+
+public sealed record FlowRequest(
+    int SchemaVersion, string RequestId,
+    string FlowId, int FlowVersion, FlowMode Mode,
+    FixtureSpec Fixture, IReadOnlyList<RuleRef> Rules,
+    int? Seed, FlowBudgets Budgets, FlowLogLimits Logs,
+    string OutputRoot);
+
+public sealed record RunIdentity(
+    string RequestId, string RunId, string AttemptId,
+    long RunGeneration);
+
+public sealed record ApprovedRule(
+    RuleRef Rule, string ApprovalRef,
+    IReadOnlyDictionary<string, string> Parameters);
+
+public interface IFlowRuleCatalog
+{
+    IReadOnlyList<ApprovedRule> ResolveApproved(
+        IReadOnlyList<RuleRef> requested, FlowMode mode);
+}
+
+消费者是 CLI/编排者。JSON 只选择注册的 flow、fixture、参数；不能指定任意类型、程序集或脚本路径。ApprovalRef 来自受审阅的规则目录，不接受请求自行填写 Approved=true。未知版本、重复角色、非法预算、缺少必需批准规则、已有输出目录，都在创建 host 前拒绝。
+
+规则目录不做签名服务或权限基础设施，只保存 Owner 可定位的批准及范围。
+
+动作与真实结果：
+
+C#
+public sealed record FlowAction(
+    string CallId, string BusinessId, string ActorId,
+    FlowVerb Verb, string ItemId, int ExpectedItemVersion,
+    string? StationSlot);
+
+public enum CallCompletion
+{
+    NotAdmitted, Terminal, ProtocolRejected, Unknown
+}
+
+public sealed record CommandObservation(
+    string StepId, string CallId, string BusinessId, string ActorId,
+    CookingRecipeCommand FrozenCommand,
+    bool? AdmissionAccepted, string? AdmissionReason,
+    string? NativeDisposition, string? DomainCommandId,
+    string? WireCorrelationId, string? WireReason,
+    CookingRecipeCommandResult? BusinessResult,
+    CallCompletion Completion, string? ErrorCode);
+
+public sealed record DispatchResult(
+    bool Complete,
+    IReadOnlyList<CommandObservation> Outcomes,
+    string? ErrorCode);
+
+CallId 是每次调用的标识，BusinessId 是业务幂等身份，两者不能混用。新动作使用新 BusinessId；ReplayAsync 使用原始已冻结命令及原业务身份，只生成新的 CallId。
+
+AdmissionAccepted=null 表示该观察点没有得到准入事实，不填假 true。NativeDisposition 保留实际 ET/network disposition 名称。Executed 不等于拾取成功，必须检查 BusinessResult.Outcome。
+
+普通业务拒绝作为正常返回值，不抛“测试失败”异常。超时、断线不能伪造成 CookingRecipeCommandResult.Reject。网络协议拒绝可能没有 domain/result，须保留为 ProtocolRejected，不能充当本 flow 所需的业务拒绝。
+
+状态观察：
+
+C#
+public enum ObservationOrigin { Authority, Client }
+public enum HandEvidence { DomainHandIndex, ClientProjection }
+
+public sealed record BindingFence(
+    long RunGeneration, CookingLevelScope Scope,
+    string? ServerSessionInstance, long? ConnectionGeneration);
+
+public sealed record ItemProbe(
+    string ItemId, int Version, bool Removed,
+    string LocationKind, string? OwnerId, string? SlotId);
+
+public sealed record HandProbe(
+    string ActorId, string? ItemId, HandEvidence Evidence);
+
+public sealed record FlowObservation(
+    string ObserverId, ObservationOrigin Origin,
+    bool Available, string? ErrorCode,
+    BindingFence Fence,
+    long? StateVersion, long? HostFrame, long? LogicalTick,
+    long? BaselineSequence, bool? SynchronizedObserved,
+    IReadOnlyList<ItemProbe> Items,
+    IReadOnlyList<HandProbe> Hands,
+    IReadOnlyList<CookingRecipeEvent> CommandEvents);
+
+public sealed record ProjectionFence(
+    BindingFence Authority,
+    IReadOnlyList<string> RequiredClients,
+    long MinimumStateVersion,
+    IReadOnlyList<ItemProbe> ExpectedItems,
+    IReadOnlyList<HandProbe> ExpectedHands);
+
+public sealed record ConvergenceResult(
+    bool Reached,
+    IReadOnlyList<FlowObservation> LastObservations,
+    string? ErrorCode);
+
+所有观察都是复制后的只读值，不向 flow 暴露 ET Entity、simulation 或可变集合。
+
+Authority 的 Hands 必须在同一次 idle-owner 观察中，通过现有 TryPeekBoundKitchen → ItemInHand(A/B) 复制，然后丢弃可变引用。Observe.Players.HeldItem 是从 item location 推导的，不能拿它与同源 location 比较后声称验证了独立手槽索引。
+
+Client 的 Hands 只能标 ClientProjection，来自实际安装的 baseline。不得通过控制通道向客户端灌入服务端 snapshot。
+
+统一会话接口：
+
+C#
+public interface IFlowSessionFactory
+{
+    IFlowSession Create(FlowMode mode);
+}
+
+public interface IFlowSession
+{
+    ValueTask<FlowObservation> StartAsync(
+        FlowRequest request, RunIdentity run,
+        IFlowEventSink events, CancellationToken cancellationToken);
+
+    ValueTask<DispatchResult> DispatchGroupAsync(
+        string stepId, IReadOnlyList<FlowAction> actions,
+        int timeoutMs, CancellationToken cancellationToken);
+
+    ValueTask<DispatchResult> ReplayAsync(
+        string stepId, string originalCallId, string newCallId,
+        int timeoutMs, CancellationToken cancellationToken);
+
+    ValueTask<FlowObservation> CaptureAsync(
+        string observerId, CancellationToken cancellationToken);
+
+    ValueTask<ConvergenceResult> WaitForProjectionAsync(
+        ProjectionFence expected, int timeoutMs,
+        CancellationToken cancellationToken);
+
+    ValueTask<CleanupResult> CloseAsync(
+        int timeoutMs, CancellationToken cleanupToken);
+}
+
+Start 仅一次；关闭后禁止新动作。调用后必须重验 run generation、scope 和角色存活。非法调用顺序/参数在产生效果前拒绝。运行中失败返回已有观察并记录原因；必要异常由编排者捕获进入统一收尾，不能丢弃已经成功提交的其他动作。
+
+DispatchGroupAsync 不承诺事务式全有或全无：
+
+offline：在同一 owner 线程同步尝试所有 TryEnqueue，中间不 Tick/await；记录每项准入，再由唯一 driver 推进。
+network：客户端先 Arm，再释放 barrier，通过各自正式 SendCommandAsync 发送；barrier 不保证同帧到达。
+等待有上限；返回 Complete=false 时保留已经得到的结果，未知结果不补造。
+
+事件、判定和报告：
+
+C#
+public enum FlowStatus { Passed, Failed, Blocked, Skipped, NotRun }
+public enum FlowVerdict { Passed, Failed, Undetermined }
+public enum FailureKind { ProductFailure, HarnessOrEnvironmentFailure, Finding }
+public enum CleanupState { Complete, Incomplete, NotNeeded }
+public enum FlowEventKind
+{
+    RoleReady, StepStarted, CommandObserved, StateObserved,
+    RuleChecked, RoleFaulted, RoleStopped
+}
+
+public sealed record RuleCheck(
+    RuleRef Rule, FlowVerdict Verdict,
+    string StepId, string Expected, string Actual,
+    IReadOnlyList<string> EvidenceRefs);
+
+public sealed record FlowEvent(
+    int SchemaVersion, string RunId, string HostId,
+    long RunGeneration, long HostSequence,
+    string StepId, string? CallId, FlowEventKind Kind,
+    long? GameTick,
+    CommandObservation? Command,
+    FlowObservation? Observation,
+    RuleCheck? Check,
+    string? ErrorCode, string? Detail);
+
+public sealed record LoggedEvent(
+    long CollectorSequence, DateTimeOffset ObservedUtc, FlowEvent Event);
+
+public interface IFlowEventSink
+{
+    bool TryPublish(FlowEvent value);
+    bool EvidenceComplete { get; }
+}
+
+public sealed record FlowEvidence(
+    IReadOnlyList<CommandObservation> Commands,
+    IReadOnlyDictionary<string, FlowObservation> Cuts,
+    bool RequiredEventsComplete);
+
+public interface IFlowRule
+{
+    RuleRef Identity { get; }
+    RuleCheck Evaluate(FlowEvidence evidence, ApprovedRule approval);
+}
+
+public sealed record ResourceOutcome(
+    string RoleId, int? ProcessId, bool ExitConfirmed, string? ErrorCode);
+
+public sealed record CleanupResult(
+    CleanupState State,
+    IReadOnlyList<ResourceOutcome> Resources,
+    IReadOnlyList<string> Errors);
+
+public sealed record FlowFailure(
+    FailureKind Kind, string Code, string StepId, string? CallId,
+    string Expected, string Actual,
+    IReadOnlyList<string> EvidenceRefs);
+
+public sealed record SourceStamp(
+    string Commit, bool Dirty, string Configuration, string ToolVersion);
+
+public sealed record FlowTiming(
+    long? BuildMs, long StartupMs, long ExecuteMs,
+    long ResetMs, long TotalMs);
+
+public sealed record FlowResult(
+    int SchemaVersion, RunIdentity Run, SourceStamp Source,
+    string FlowId, int FlowVersion, FlowMode Mode,
+    FlowStatus Status, bool ExecutionComplete, FlowVerdict Verdict,
+    bool EvidenceComplete, CleanupResult Cleanup,
+    IReadOnlyList<RuleCheck> Checks,
+    IReadOnlyList<string> CompletedGoals,
+    IReadOnlyList<string> UnverifiedGoals,
+    IReadOnlyList<FlowFailure> Failures,
+    FlowTiming Timing);
+
+public sealed record FailurePack(
+    RunIdentity Run, FlowRequest Request,
+    FlowFailure FirstFailure,
+    IReadOnlyList<FlowObservation> RelevantCuts,
+    IReadOnlyList<LoggedEvent> EventWindow,
+    string ReproduceCommand, CleanupResult Cleanup);
+
+public interface IFlowOrchestrator
+{
+    Task<FlowResult> RunAsync(
+        FlowRequest request, CancellationToken cancellationToken);
+}
+
+public interface IFlowReportWriter
+{
+    Task PublishAsync(
+        string runDirectory, FlowResult result, FailurePack? failure,
+        CancellationToken publishToken);
+}
+
+FlowEvent 的 payload 必须与 Kind 一致；其他 payload 为空，禁止把任意 JSON 当作“已验证事件”。CollectorSequence 只是收集顺序，不是跨 host 的因果顺序。
+
+规则只读取 FlowEvidence，不控制游戏，也不修改 expected。报告由编排者统一发布。首次 ProductFailure 与后续环境/归位错误都保留；不能用后者覆盖前者。
+
+整体 Passed 要求：必要目标完成、适用批准规则通过、必要证据完整、归位完成。无业务判定依据为 Undetermined。进程崩溃而无结果时，调用器记录不完整运行，不能生成假的正常 result。
+
+CLI 映射采用项目已有约定：Passed=0、Failed=1、Blocked=2、Skipped=3、NotRun=4。实际子进程 native exit 单列，不与业务拒绝混用。启动前阻塞为 Blocked；启动后的超时/故障为 Failed 且 ExecutionComplete=false；若已有确定 ProductFailure，其 Verdict=Failed 继续保留。
+
+三、最小调用顺序与内部适配
+
+以下是 flow 调用示意，不是已经存在的实现。实际类型和行为以上述合同为准：
+
+C#
+var initial = await session.StartAsync(request, run, events, ct);
+// 从 initial 选择已验证的目标版本；A/B 必须空手且合法可达。
+var actions = new[]
+{
+    new FlowAction("call-a", "pickup-a", "A",
+        FlowVerb.Pickup, itemId, initialItemVersion, null),
+    new FlowAction("call-b", "pickup-b", "B",
+        FlowVerb.Pickup, itemId, initialItemVersion, null)
+};
+var pair = await session.DispatchGroupAsync(
+    "compete", actions, request.Budgets.StepMs, ct);
+var authority = await session.CaptureAsync("authority", ct);
+// 先检查 pair 的完整性与正式业务结果，再根据 Accepted 结果选胜者。
+// network 在这里等待 pickup 目标投影收敛，不能拖到 Drop 之后补证明。
+var replay = await session.ReplayAsync(
+    "retry-winner", winningCallId, "call-retry",
+    request.Budgets.StepMs, ct);
+var afterRetry = await session.CaptureAsync("authority", ct);
+// finally 使用独立 cleanupToken 调用 CloseAsync，不能复用已取消 ct。
+
+原始输入值的合法性不是注释替代实现：FixedFlows 必须显式检查 initial.Available、角色/物品、必要终态和 approved rule；不允许直接 Single(...) 然后把异常当成正常业务结论。
+
+OfflineFlowAdapter 的内部 owner-only 操作固定为：
+
+SubmitGroup：逐项调用 TryEnqueue，无中途 Tick/await；
+PumpOwnerOnce：一次 host.Tick；
+CaptureAuthority：复制权威 item、独立 ItemInHand 及相关 command events；
+终态汇合：Admission.TerminalDisposition、Tick().Dispositions、DispositionHistory；故障/结束时再读可用的 FinalDispositionHistory。
+按 call/correlation 去重同一终态的多处观测，不去重掉真正不同调用。
+
+DrainNewTerminalDispositions 是网络通知队列，不能作为 offline 的唯一来源。准入拒绝且没有 terminal 是“没有进入领域执行”的已知结果，不无限等待不存在的 terminal。
+
+offline 同组新命令使用同一个合法正 SimulationBatch；新组大于 LastCommittedSimulationBatch。既有 owner 会按规则排序，报告应称“同批竞争”，不是多线程同时修改领域。
+
+network 命令的 SimulationBatch 必须为0，由 SessionHost 映射。不要把 offline 的正 batch 直接发上网。预期 domain ID 使用现有：
+CookingNetworkWireCodec.DomainId(string instance, CookingLevelScope scope, PlayerId participant, string stableId)。
+
+Client.SendCommandAsync 内部生成 wire correlation，调用者不能伪称自己设置了它。CallId 关联返回任务；真实 wire correlation 若公开入口不可见就为 null，服务端观察到的 correlation 则原样保留。
+
+ReplayAsync 必须保存原始命令，包括 ExpectedItemVersion、offline 原 batch、network batch0及所有其他 payload。不能根据最新 snapshot 重建重试。Drop 使用新 BusinessId、新观察到的版本以及已配置合法槽位。
+
+四、S2 的进程与控制协议
+
+一个短生命周期父编排进程，管理三个本次新建子进程：server、client-a、client-b。旧 RichRunner 的“本地 Chef＋远端 Partner”不直接算这项验收。
+
+使用同一个新 CLI 的私有 host role 入口。父子通过重定向 stdin/stdout 的有界 NDJSON 控制，不用 MCP/HTTP 服务。游戏命令仍经客户端 v3 网络传输；控制管道不发送“安装此世界 snapshot”。
+
+具体控制 DTO：
+
+C#
+public enum RoleControlKind { Initialize, ArmAction, ReleaseBarrier, Observe, Stop }
+public enum RoleReplyKind { Ready, Armed, Event, Fault, Stopped }
+
+public sealed record RoleInit(
+    string RoleId, string? ActorId, string? Endpoint,
+    FixtureSpec? Fixture, FlowBudgets Budgets, FlowLogLimits Logs);
+
+public sealed record RoleControl(
+    int SchemaVersion, RunIdentity Run,
+    string RoleId, long ControlSequence, string ControlId,
+    RoleControlKind Kind,
+    RoleInit? Init, FlowAction? Action,
+    string? BarrierId, string? ObservationPoint);
+
+public sealed record RoleReply(
+    int SchemaVersion, RunIdentity Run,
+    string RoleId, long HostSequence, string? ControlId,
+    RoleReplyKind Kind, FlowEvent? Event,
+    string? BoundEndpoint, string? ErrorCode);
+
+Arm/Release 用于新动作；Replay 仍由同一 adapter 保存的冻结命令生成受支持的发送指令。实施时可以在 ArmAction 的已定义 payload 中区分新动作与原 call 的精确重放，但不能由主会话自行补一套协议：下述补充字段固定为 RoleControl 新增 string? ReplayOfCallId。Action 与 ReplayOfCallId 二选一，Replay 必须属于同角色、当前 run/scope 的已知调用；未知或两者同时提供则拒绝。
+
+server 先监听 loopback 的系统分配端口，Ready 回报实际 endpoint，再启动客户端。不预留后关闭端口制造竞争；不调用 CreateLocalClientTransport 冒充真实联网。若现有 listener 不支持端口0，以现有受支持的实际绑定方式实现并记录，不修改 transport API 来完成这一偏好。
+
+管道 reader 只入队，server owner loop 执行控制并调用 ProcessOwnerFrame。network 不再额外调用 host.Tick。stdout 只发协议，stderr 有界保存诊断。未知控制、错 run/role/generation、重复 controlId、非法序号、超限记录和 EOF 提前到来都不能被忽略。
+
+五、所有权、取消和提交语义
+
+游戏可变状态的唯一 writer 仍是现有 ET owner。初始化、推进、观察、Dispose 均在创建线程且合法 idle 点完成。
+collector/report 在自己的 I/O 路径工作，不能回调修改领域；owner 不等待磁盘写入。
+不对触碰 host 的 continuation 使用 Task.Run 或 ConfigureAwait(false)。
+每次 await 后重验取消、run generation、角色存活、scope；network 还核对 session instance/connection generation。首版遇到意外重连/换 scope 即停止该 flow，不扩成恢复产品。
+取消 SendCommandAsync 只取消本地等待，不撤销已经发出的命令。结果未知时保留未知，并在有界归位中读取可用服务端事实，不能填“未执行”。
+fixed-step 失败不回滚之前已提交的 command effects/event/Executed terminal。保留这些事实及故障，不伪造正常完整 capture。host 已 faulted 时保存最后有效 cut、终态历史和可用诊断；Available=false 明确表示当前完整观察不可得。
+CloseAsync 必须幂等，第二次返回同一收尾结果；所有本次 task/pipe reader/事件订阅结束后才退出 SingleThreadOwner 场景。generation 退役后晚到回调不得写下一 run。
+
+六、五张规则卡的修订建议，均不代替 Owner 批准
+
+C13-OWN：
+保留提交点唯一归属；authority 使用独立手索引＋item location。fixture 必须证明两角色最初空手、具资格、合法可达。客户端只验证自己的正式投影，不冒称校验服务端内部索引。
+
+C13-REJECT：
+不固定失败原因为 ItemStale。当前空间校验可能先得到 TargetOutOfRange。类别表达“合法竞争失败不产生该命令成功副作用”；具体 fixture 的合法原因集合由源码对应路径列明。全局状态/version 改变不算拒绝方副作用。
+
+C13-IDEMP：
+删除“全局 event 水位不得变化”的歧义。固定 Tick 自己也会推进全局 sequence/version。检查原 command 的业务事件身份/数量、重复返回不产生新业务事件、目标 item/独立手槽不因 retry 再变。重试必须保留原 batch/version/payload；新操作不能借原 ID 冒充 retry。
+
+C13-CONVERGE：
+用当前 session/scope/generation 的实际安装完整 baseline，recipe version 至少达到目标 fence，并匹配所选 item/手持字段。允许更高 version，不要求全局快照逐字相等。
+必须在 pickup 后、下一次改变该物品之前验证 pickup 收敛。不能用最终 Drop 的收敛补证明 pickup。
+IsSynchronized 不是当前采样 baseline 的精确 ACK/Ready 身份证明。初始连接按现有 Join/baseline/Ready 路径；首版不新增目标 ACK 追踪能力，结果写“已安装目标投影收敛”。
+
+C13-COMPLETE：
+这是执行完整性/收尾条件，与产品规则分开记录。已确认产品失败＋后续崩溃可同时存在；没有结果、证据不全或归位不明不能 Passed。
+测试 flow 完成不等于餐厅自然经营成功。最小拾取测试结束按测试会话释放，不调用 TryFinishService 冒称完成整个关卡。
+
+规则审批卡仅需 ID/version、语义、适用 fixture/mode、允许参数范围、正反例、Owner 决定引用。S1 使用 OWN/REJECT/IDEMP/COMPLETE；CONVERGE 在 S1 标不适用，S2 才消费。现在全部仍是 Draft。
+
+首个 flow 定稿：
+初始化 → 初始观察/联网就绪 → 两动作 barrier → 两正式结果 → authority OWN/REJECT → network pickup 收敛 → 胜者精确 retry → IDEMP → 收尾。
+把 Drop 从这条首例移到独立 pickup-drop-one-item/v1：单角色 Pickup → 观察/必要收敛 → 新 ID及新版本 Drop → authority及必要客户端目标观察 → 收尾。这样复用是实在的，也不会把两个目标的证据窗口混在一起。
+
+七、预算、证据与归位
+
+建议提案值：
+
+startup 10秒、每步骤10秒、convergence 10秒；
+overall 120秒，包括 startup/执行/归位/结果发布；
+预留 reset 10秒、publish 2秒，活动工作最迟在 overall−12秒停止。
+每个局部等待取“自身预算与剩余预算”较小者。客户端原15秒内部超时不改，以外层 cancellation 限制等待。Owner 可批准一个参数范围，不需每次数据变体重批；收紧预算得到的超时也不能无证据归因为产品 bug。
+
+collector queue 256、单条事件64KiB、首例总4096事件/8MiB、每角色 stderr 256KiB，作为工程初值而非性能承诺。超限前记录限制；必要事件写入失败在带外状态锁存 evidenceIncomplete 并停止新动作，不能依赖把“溢出事件”塞入已满队列。正常 debug 截断可提示；验收事实丢失绝不 Passed。所有 cap 调整须说明原因，不能默默绕开失败。
+
+失败先固定首次 cut/事件位置，然后：
+停止新动作/扰动 → 取消并有界收集等待中的调用 → 关闭客户端 → server 有界处理断开/清理 → session dispose → idle-owner host dispose → 等待本次子进程/reader退出 → collector flush → 发布 failure/report/result。
+收尾使用独立 token。不得使用已经取消的执行 token 立即跳过清理。
+
+父编排者只管理自己启动且身份仍匹配的进程。优先正常关闭；若需要强制终止，只能作用于已确认的本次子进程并记录 forced termination，不能全局 kill dotnet。归属/退出未知则 Cleanup=Incomplete，阻塞 fixture 复用。S1 同进程 owner 若卡死，由实际调用器的有界进程监督处理；不存在终态结果就按不完整执行记录，不能承诺进程自己总能写出报告。
+
+request/result/event 的测试 schemaVersion 首版固定1，和游戏 wire v3分开。使用 BCL JSON、文本枚举、必需字段/上限验证，未知版本或未知动作拒绝。记录只含稳定值，不序列化 Entity/内部集合或凭据。原始业务 wire 使用现有 codec，不另造 serializer。
+当前 source/version、dirty、配置、命令、规则/flow版本、必要事件及终态足够；不增加编译器输入追踪或整套 SDK/DLL 归档。
+
+八、精确文件清单与阶段
+
+S0 当前可写：本 task 的 prd/design/implement、六份研究/规则/flow文档及必要 context/决定证据；可回报 Issue。不得据本裁决修改下列运行时代码。
+
+Owner 批准 S1 后，允许一个 Orca worker 的候选范围：
+
+src/AbilityKit.Game.Cooking.FlowAcceptance/
+
+AbilityKit.Game.Cooking.FlowAcceptance.csproj：net10.0、IsPackable=false；引用已有 Cooking/EtRuntime，链接原 SingleThreadOwner.cs；不升级依赖。验收为该宿主与聚焦测试可构建。
+Program.cs：run --request <file>、请求验证/退出。验收 invalid/normal/异常出口。
+FlowContracts.cs：上述 DTO/API与一个 JSON 契约。验收往返、缺失/未知/超限。
+FlowOrchestrator.cs：预算、步骤、判定、统一结束路径。验收超时/取消/不完整不误过。
+FixedFlows.cs：两个注册 C# flow；无 DSL/LLM。验收目标与调用顺序。
+FlowFixture.cs：最小合法场景装配。验收角色/位置/资格/物品版本前提。
+OfflineFlowAdapter.cs：owner 入队、Tick、终态、只读探针。验收竞争、拒绝、精确重放。
+FlowEventCollector.cs：唯一文件 writer及限额。验收错序、缺失、背压、写失败。
+FlowRuleEvaluator.cs：批准规则目录和确定性检查。验收正确/故意违规事实。
+FlowResourceScope.cs：本次资源账目、幂等有界归位。验收正常/异常连续运行。
+FlowReport.cs：小摘要、失败包、本地HTML、最后发布result。验收缺终态/部分写入不能成功。
+
+src/AbilityKit.ET.Runtime.Tests/
+
+AbilityKit.ET.Runtime.Tests.csproj：只增加新测试宿主项目引用；不改包版本或现有测试。
+CookingFixedFlowTests.cs：新增聚焦控制，标记 FlowStage=S1/S2/S3；合成规则反例标 synthetic。
+
+Docs/design/CookingGame/testing/
+
+fixed-flow.md：真实命令、支持范围和失败阅读方式；
+flow-rules.json：Owner批准后才填批准类别；
+requests/compete-offline.json、pickup-drop-offline.json：批准后的合法示例。
+
+S2 另行确认后新增 NetworkFlowAdapter.cs、NetworkRoleHost.cs、FlowRoleProtocol.cs；csproj 加已有 LiteNet 项目引用；扩展同一聚焦测试，并新增两个 network 请求样例。验收独立server+两外部client，而非in-process伪网络。
+
+S3 不预建 watcher 服务。先复用 Program/FlowReport 和说明验证真实完成返回；若运行器确需小 wait helper，先给出已验证能力与具体最小文件，再决定，不提前授权另一套调度器。
+
+旧 RichRunner、SingleThreadOwner原文件、产品 Session/codec/authority、Unity源码、tools/run_test_gate.ps1、test-gates.json、其他示例均不在这批修改清单内。若实际需要改变产品接口，停止该部分，提交具体差距重新审议。
+
+九、必要验证与停止点
+
+S1：
+
+两个合法竞争动作：一个领域 Accepted、一个领域 Rejected，不固定赢家；
+immediate duplicate、准入拒绝无terminal、同一terminal多观察来源不重复计事件；
+独立手槽/location不一致反例、拒绝误增成功事件、重复执行反例；
+目标未达到、frame fault保留先前command效果、取消/超时、host启动失败；
+未批准规则/错版本/旧输出、必要事件缺失/溢出、报告写失败；
+归位异常独立记录，两次全新运行无残留；
+两个flow各有真实正例；故意违规的 evaluator 输入是合成控制，不冒称修改了游戏再验证。
+
+S2追加：
+真实三子进程、不同frame到达、原样返回失败方业务终态、错scope/generation/旧baseline不能收敛、发出后取消不宣称未提交、child crash/EOF/复用旧run拒绝、单writer及完整收尾。
+
+先一次构建测试项目及其新宿主引用；随后使用同一未变化源码的构建输出：
+dotnet build src/AbilityKit.ET.Runtime.Tests/AbilityKit.ET.Runtime.Tests.csproj -c Debug
+dotnet test src/AbilityKit.ET.Runtime.Tests/AbilityKit.ET.Runtime.Tests.csproj -c Debug --no-build --no-restore --filter "FullyQualifiedName~CookingFixedFlowTests&FlowStage=S1" --logger "trx;LogFileName=flow-s1.trx" --results-directory <本次新目录>
+dotnet src/AbilityKit.Game.Cooking.FlowAcceptance/bin/Debug/net10.0/AbilityKit.Game.Cooking.FlowAcceptance.dll run --request <本次已批准请求>
+
+这些是未来实现后的命令，不是现在已存在可运行的入口。S2/S3改用相应trait，并保留必要的S1短回归。不运行默认全仓gate，不要求把旧全部rich恢复/编译证据链跑完。
+
+S1完成即停：主控检查源码差异、短测试与实际结果，再申请候选审阅；不自动接着派发S2。S2和S3分别有明确范围确认，不能通过“后续计划已写”获得当前实施权。
+
+十、S3 一次提交/等待/返回的真实试点
+
+当前 dotnet --version shell 等待只证明普通子进程完成返回，Orca advertised capabilities 不等于新玩法自动唤醒已经接通。
+
+可实现的首路径：
+调用器启动 run 命令并等待进程 → 编排者内部完成全部等待 → 完整写出 result 并退出 → 同一次工具返回小摘要 → agent读取对应result/failure包。
+
+以后用一个短成功flow和一个故意失败flow实测：
+
+分别只提交一次；
+等待期间模型不反复发 status；
+结束后获得匹配request/run的结果与真实退出；
+失败只读取小失败包；
+另测进程无result退出，调用器必须报告不完整。
+记录实际工具是否yield、如何等待、是否真的产生完成通知。若只能一个显式wait，则如实采用，不冒称后台自动唤醒；文件本身不唤醒agent。
+
+当前运行验证全部 NotRun；产品 API 无需修改，但新测试 API 如上，不能写 N/A。上述是具体规划，不是已实现能力。
+
+allowed_next_action：
+主会话保存完整回复，以本request/SHA写回 S0 的 Accepted 技术规划；按以上修订五张 Draft 卡和两个 flow，将具体S1 API/文件/预算提交 Owner 审核。可追加当前PR12已merged的事实说明，但不维护旧#6或追认其出口。Issue #13 继续 OPEN/blocked、task继续planning；在 Owner 类别及S1范围批准前，不添加orca-ready、不创建实现派发、不进行S1构建/运行。本次没有合并、发布、清理或旧flow接管授权。

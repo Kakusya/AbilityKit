@@ -1,16 +1,97 @@
-# S0 与后续有界切片
+# Accepted 技术执行计划；当前只完成 S0
 
-- [x] 读取 Issue #13 最新正文/blocked、AGENTS、progress、Cooking index/menu plan、SOP、当前 ET 合同、ADR/路线入口。
-- [x] 枚举 Git/Orca/Run/terminal，建立新任务，不接管历史 Run。
-- [x] 核对正式 Pickup、ET owner、v3 client/session、Rich fixture/planner/runner 与旧 Harness 限制。
-- [x] 写 Draft 类别卡、竞争 Flow 与候选文件/数据契约输入。
-- [ ] 发布 S0 branch-only 规划 SHA并核实远端；以 intent/receipt 记录 dot planning 请求。
-- [ ] 保存完整当前请求/SHA 的 dot 计划与 API 设计，检查内容/时间/范围，更新 design/manifests。
-- [ ] Issue #13 首次回报；Owner 审核类别和 S1 文件/API/验收；保持 blocked/planning。
-- [ ] 批准后才添加 ready/进入 implementation，并由一个 Orca managed-worktree worker 执行 S1；接受输入与 turn-start 必须同时证明。
-- [ ] S1 离线最小闭环、正常/违规/超时/归位控制；main 独立检查后冻结 candidate/hash，dot final-review。
-- [ ] 单独确认 S2 同机真实 server/client，S3 调用器回执/失败交接范围；不把后续候选视为当前派发。
+来源：[完整dot回复](research/dot-plan-reply-raw.txt)、[API](research/accepted-api-design.md)、[决定](research/dot-plan-decision.md)。task继续planning，Issue13继续OPEN/blocked；规则与S1具体范围待Owner。
 
-S0 检查：JSON/context 引用、真实符号/链接、diff scope、flow records inspect、远端 SHA/Issue 回报 readback。产品构建/测试/二进制 N/A（文档阶段）；offline/network 执行 NotRun；Orca 玩法 completion 集成 NotRun。Trellis Phase loader 已报告 `Phase Index section not found in workflow.md`，不把它当 Passed。不安装依赖绕过缺失 validator 环境。
+- [x] 阅读最新Issue与项目权威、盘点worktree/运行身份、隔离旧Run。
+- [x] 写S0来源/首个Flow/五类Draft规则；脱敏规划10文件发布并核对SHA。
+- [x] dot当前request/完整SHA接受技术规划，保存完整回复与具体API。
+- [x] 按dot修订规则、两个Flow与实施候选列表。
+- [ ] Issue首次回报并提交Owner审核：类别、S1 API/精确文件/预算/正负控制。
+- [ ] Owner批准后才ready/task start，一个Orca managed-worktree worker，证明accepted input+turn-start。
+- [ ] S1完成即停，main独立检查/冻结candidate+交付hash，dot final-review；不自动派发S2。
+- [ ] S2/S3范围另确认；未运行范围继续NotRun。
 
-实施具体 dotnet 命令与过滤器待 dot 定稿；不执行默认全仓 gate。各树独占 .NET 检查串行。失败、时间、计数、命令/native exit、源 dirty 与原始结果保留；不靠退出0替代真实覆盖。
+## 精确文件、消费者及验收（dot原文）
+
+S0 当前可写：本 task 的 prd/design/implement、六份研究/规则/flow文档及必要 context/决定证据；可回报 Issue。不得据本裁决修改下列运行时代码。
+
+Owner 批准 S1 后，允许一个 Orca worker 的候选范围：
+
+src/AbilityKit.Game.Cooking.FlowAcceptance/
+
+AbilityKit.Game.Cooking.FlowAcceptance.csproj：net10.0、IsPackable=false；引用已有 Cooking/EtRuntime，链接原 SingleThreadOwner.cs；不升级依赖。验收为该宿主与聚焦测试可构建。
+Program.cs：run --request <file>、请求验证/退出。验收 invalid/normal/异常出口。
+FlowContracts.cs：上述 DTO/API与一个 JSON 契约。验收往返、缺失/未知/超限。
+FlowOrchestrator.cs：预算、步骤、判定、统一结束路径。验收超时/取消/不完整不误过。
+FixedFlows.cs：两个注册 C# flow；无 DSL/LLM。验收目标与调用顺序。
+FlowFixture.cs：最小合法场景装配。验收角色/位置/资格/物品版本前提。
+OfflineFlowAdapter.cs：owner 入队、Tick、终态、只读探针。验收竞争、拒绝、精确重放。
+FlowEventCollector.cs：唯一文件 writer及限额。验收错序、缺失、背压、写失败。
+FlowRuleEvaluator.cs：批准规则目录和确定性检查。验收正确/故意违规事实。
+FlowResourceScope.cs：本次资源账目、幂等有界归位。验收正常/异常连续运行。
+FlowReport.cs：小摘要、失败包、本地HTML、最后发布result。验收缺终态/部分写入不能成功。
+
+src/AbilityKit.ET.Runtime.Tests/
+
+AbilityKit.ET.Runtime.Tests.csproj：只增加新测试宿主项目引用；不改包版本或现有测试。
+CookingFixedFlowTests.cs：新增聚焦控制，标记 FlowStage=S1/S2/S3；合成规则反例标 synthetic。
+
+Docs/design/CookingGame/testing/
+
+fixed-flow.md：真实命令、支持范围和失败阅读方式；
+flow-rules.json：Owner批准后才填批准类别；
+requests/compete-offline.json、pickup-drop-offline.json：批准后的合法示例。
+
+S2 另行确认后新增 NetworkFlowAdapter.cs、NetworkRoleHost.cs、FlowRoleProtocol.cs；csproj 加已有 LiteNet 项目引用；扩展同一聚焦测试，并新增两个 network 请求样例。验收独立server+两外部client，而非in-process伪网络。
+
+S3 不预建 watcher 服务。先复用 Program/FlowReport 和说明验证真实完成返回；若运行器确需小 wait helper，先给出已验证能力与具体最小文件，再决定，不提前授权另一套调度器。
+
+旧 RichRunner、SingleThreadOwner原文件、产品 Session/codec/authority、Unity源码、tools/run_test_gate.ps1、test-gates.json、其他示例均不在这批修改清单内。若实际需要改变产品接口，停止该部分，提交具体差距重新审议。
+
+九、必要验证与停止点
+
+S1：
+
+两个合法竞争动作：一个领域 Accepted、一个领域 Rejected，不固定赢家；
+immediate duplicate、准入拒绝无terminal、同一terminal多观察来源不重复计事件；
+独立手槽/location不一致反例、拒绝误增成功事件、重复执行反例；
+目标未达到、frame fault保留先前command效果、取消/超时、host启动失败；
+未批准规则/错版本/旧输出、必要事件缺失/溢出、报告写失败；
+归位异常独立记录，两次全新运行无残留；
+两个flow各有真实正例；故意违规的 evaluator 输入是合成控制，不冒称修改了游戏再验证。
+
+S2追加：
+真实三子进程、不同frame到达、原样返回失败方业务终态、错scope/generation/旧baseline不能收敛、发出后取消不宣称未提交、child crash/EOF/复用旧run拒绝、单writer及完整收尾。
+
+先一次构建测试项目及其新宿主引用；随后使用同一未变化源码的构建输出：
+dotnet build src/AbilityKit.ET.Runtime.Tests/AbilityKit.ET.Runtime.Tests.csproj -c Debug
+dotnet test src/AbilityKit.ET.Runtime.Tests/AbilityKit.ET.Runtime.Tests.csproj -c Debug --no-build --no-restore --filter "FullyQualifiedName~CookingFixedFlowTests&FlowStage=S1" --logger "trx;LogFileName=flow-s1.trx" --results-directory <本次新目录>
+dotnet src/AbilityKit.Game.Cooking.FlowAcceptance/bin/Debug/net10.0/AbilityKit.Game.Cooking.FlowAcceptance.dll run --request <本次已批准请求>
+
+这些是未来实现后的命令，不是现在已存在可运行的入口。S2/S3改用相应trait，并保留必要的S1短回归。不运行默认全仓gate，不要求把旧全部rich恢复/编译证据链跑完。
+
+S1完成即停：主控检查源码差异、短测试与实际结果，再申请候选审阅；不自动接着派发S2。S2和S3分别有明确范围确认，不能通过“后续计划已写”获得当前实施权。
+
+
+## S3 completion 试点
+
+当前 dotnet --version shell 等待只证明普通子进程完成返回，Orca advertised capabilities 不等于新玩法自动唤醒已经接通。
+
+可实现的首路径：
+调用器启动 run 命令并等待进程 → 编排者内部完成全部等待 → 完整写出 result 并退出 → 同一次工具返回小摘要 → agent读取对应result/failure包。
+
+以后用一个短成功flow和一个故意失败flow实测：
+
+分别只提交一次；
+等待期间模型不反复发 status；
+结束后获得匹配request/run的结果与真实退出；
+失败只读取小失败包；
+另测进程无result退出，调用器必须报告不完整。
+记录实际工具是否yield、如何等待、是否真的产生完成通知。若只能一个显式wait，则如实采用，不冒称后台自动唤醒；文件本身不唤醒agent。
+
+当前运行验证全部 NotRun；产品 API 无需修改，但新测试 API 如上，不能写 N/A。上述是具体规划，不是已实现能力。
+
+
+## 当前验证状态
+
+S0文档diff/context/符号/链接与scope检查按其声明覆盖Passed；Trellis Phase loader缺Phase Index记Blocked。产品构建/测试、offline/network运行、Orca玩法自动完成唤醒全部NotRun；二进制N/A。发布不包含个人绝对路径、原始runtime inventory或无关会话。跨树.NET验证串行，保留命令/源dirty/计数/native exit和原失败，不启动默认全仓gate作为调研。

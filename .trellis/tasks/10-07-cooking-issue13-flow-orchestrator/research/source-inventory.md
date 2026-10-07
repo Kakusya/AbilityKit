@@ -16,7 +16,9 @@
 | `src/AbilityKit.Game.Cooking.Tests/Harness/InProcessPairTopology.cs`、`LoopbackUdpTopology.cs` | 仅接口参考；前者 dummy字节/直接snapshot复制，后者旧session；不作为v3真实network验收 |
 | `tools/run-cooking-network-rich-recovery-acceptance.ps1` | 有 Start-Process/有界程序循环/退出与角色隔离；其旧编译归档控制不自动继承。S0未启动该脚本 |
 
-`CookingLevelEtHost` 当前仍是 existing adapter/owner，不据 Task 或 DTO 外观宣称 ET 状态族迁移已全部完成；遵循当前 ET foundation合同现状/目标与分阶段提交。测试查询合法，测试层写入权不能绕过正式接口。
+`CookingLevelEtHost` 当前仍是existing adapter/owner，不据Task或DTO外观宣称ET状态族迁移已全部完成；遵循当前ET合同现状/目标与分阶段提交。正式只读探针：`CookingLevelEtHost.cs:542` TryPeekBoundKitchen及`CookingRecipeLoop.cs:638` ItemInHand，在同次idle-owner观察复制独立手索引后丢弃借用引用。既有Observe.HeldItem来自item location，不作独立索引证据；测试层不取得写入权。
+
+dot定稿补充：offline网络通知队列不完整，需汇合准入即时terminal/Tick/DispositionHistory/可用FinalDispositionHistory；同组正batch同步入队后唯一Tick。network batch0由server映射，client内部wire correlation不可见时null。retry保留原完整batch/version/payload，只换CallId；固定Tick可推进全局event水位，IDEMP只按原command业务事实归因。完整定稿见本task的dot回复与accepted-api-design。
 
 ## 宿主与依赖闭包
 

@@ -24,7 +24,7 @@
 | R06 | 一次 CLI 提交/程序等待/终态返回 | exit0 仅整体 Passed；缺失/不匹配/未发布完结果不能通过；连续两次独立运行无残留 |
 | R07 | 小摘要、HTML 报告、失败包与回归选择 | 展示成功/失败报告；目的、覆盖、首次差异、NotRun、构建/执行/归位耗时清楚；模型不高频轮询 |
 
-S0 出口：真实源码接口表、复用取舍、具体候选文件范围、dot API 设计、规则类别卡与首个 Flow、CLI completion 支持/限制、Owner 可审阅规划。不跑长期 gate 作为调研。S1–S3 的具体计划由 dot 决策后写入 design/implement；技术接受不替代 Owner 类别审批。
+S0资料已形成：真实源码接口表、复用取舍、具体候选文件范围、dot API设计、规则类别卡与两个固定Flow、CLI completion支持/限制。[完整dot回复](research/dot-plan-reply-raw.txt) 对 `a8ea630ca1fd29fcf0327556f7847e13f589c218` 返回accept-plan，仅技术规划；[API](research/accepted-api-design.md)、design/implement已按其定稿同步，仍须Owner类别及S1具体范围批准。两Flow分开竞争/原样重试与Pickup/Drop，不用后者收敛掩盖前者。未跑长期gate或产品测试。
 
 ## 范围外
 

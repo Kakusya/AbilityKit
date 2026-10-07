@@ -24,6 +24,10 @@
   "notes": "",
   "meta": {
     "issue": "13",
-    "delivery_mode": "branch-only"
+    "delivery_mode": "branch-only",
+    "planning_request": "AK-I13-S0-PLAN-20261007-01",
+    "planning_sha": "a8ea630ca1fd29fcf0327556f7847e13f589c218",
+    "planning_decision": "accept-plan-S0-only",
+    "next_action": "owner-rule-categories-and-S1-API-files-budget-approval"
   }
 }

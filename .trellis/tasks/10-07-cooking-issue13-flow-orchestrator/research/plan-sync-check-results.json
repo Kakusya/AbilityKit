@@ -1,0 +1,108 @@
+{
+  "scope": "S0 plan synchronization only, no runtime acceptance",
+  "source_sha": "a8ea630ca1fd29fcf0327556f7847e13f589c218",
+  "source_dirty": "plan changes/local evidence and two pre-existing user journal changes",
+  "observed_utc": "2026-10-07T13:57:04.286417+00:00",
+  "checks": {
+    "docLinks": {
+      "status": "Passed",
+      "count": 15,
+      "links": [
+        {
+          "file": "prd.md",
+          "target": "research/source-inventory.md"
+        },
+        {
+          "file": "prd.md",
+          "target": "research/dot-plan-reply-raw.txt"
+        },
+        {
+          "file": "prd.md",
+          "target": "research/accepted-api-design.md"
+        },
+        {
+          "file": "prd.md",
+          "target": "research/rule-categories.md"
+        },
+        {
+          "file": "design.md",
+          "target": "research/dot-plan-reply-raw.txt"
+        },
+        {
+          "file": "design.md",
+          "target": "research/accepted-api-design.md"
+        },
+        {
+          "file": "design.md",
+          "target": "research/dot-plan-decision.md"
+        },
+        {
+          "file": "implement.md",
+          "target": "research/dot-plan-reply-raw.txt"
+        },
+        {
+          "file": "implement.md",
+          "target": "research/accepted-api-design.md"
+        },
+        {
+          "file": "implement.md",
+          "target": "research/dot-plan-decision.md"
+        },
+        {
+          "file": "research/first-flow.md",
+          "target": "dot-plan-reply-raw.txt"
+        },
+        {
+          "file": "research/first-flow.md",
+          "target": "accepted-api-design.md"
+        },
+        {
+          "file": "research/dot-plan-decision.md",
+          "target": "dot-plan-reply-raw.txt"
+        },
+        {
+          "file": "research/dot-plan-decision.md",
+          "target": "accepted-api-design.md"
+        },
+        {
+          "file": "research/accepted-api-design.md",
+          "target": "dot-plan-reply-raw.txt"
+        }
+      ]
+    },
+    "verbatimApi": {
+      "status": "Passed",
+      "blocks": 7,
+      "source": "research/dot-plan-reply-raw.txt"
+    },
+    "context": {
+      "status": "Passed",
+      "implementEntries": 3,
+      "checkEntries": 3,
+      "command": "python .trellis/scripts/task.py validate .trellis/tasks/10-07-cooking-issue13-flow-orchestrator",
+      "exit": 0
+    },
+    "diff": {
+      "status": "Passed",
+      "command": "git diff --check",
+      "exit": 0
+    },
+    "privacyAndEncoding": {
+      "status": "Passed",
+      "documents": 9,
+      "privateAbsolutePaths": 0,
+      "replacementCharacters": 0
+    }
+  },
+  "runtimeTests": {
+    "status": "NotRun",
+    "count": 0,
+    "reason": "Owner categories and S1 implementation scope approval pending"
+  },
+  "binaryIdentity": "N/A",
+  "offline": "NotRun",
+  "network": "NotRun",
+  "orcaGameplayCompletion": "NotRun",
+  "phaseLoader": "Blocked; preserved missing Phase Index",
+  "originalFailures": "Earlier local scratch naming/browser quoting/encoding failures remain in initial S0 report; promotion inline script failed CJK marker lookup and was replaced with UTF-8 file script before data promotion."
+}

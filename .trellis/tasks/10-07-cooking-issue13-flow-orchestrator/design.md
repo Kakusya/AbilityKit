@@ -1,39 +1,33 @@
-# 技术规划输入（S0；待 dot 返回 API 设计）
+# Accepted S0 技术规划；实施仍待 Owner 批准
 
-这份文件是规划输入，不是 Accepted 实施设计。唯一技术规划者为 dot；主会话盘点真实来源并检查范围，不代补缺失 API。见 [来源盘点](research/source-inventory.md)、[规则卡](research/rule-categories.md)、[首个 Flow](research/first-flow.md)。
+dot对请求 `AK-I13-S0-PLAN-20261007-01` / 规划SHA `a8ea630ca1fd29fcf0327556f7847e13f589c218` 返回 **accept-plan，限S0**。完整原文：[dot-plan-reply](research/dot-plan-reply-raw.txt)；完整具体C#签名：[accepted-api-design](research/accepted-api-design.md)；身份/时间/范围：[decision](research/dot-plan-decision.md)。所有新API为拟新增测试层合同，不是已编译事实。Owner规则和S1 API/文件范围未批准。
 
-## 边界和候选复用
+## 组件与消费者
 
-普通 C# 固定函数/构建器表达顺序、并发、barrier、有界条件等待、固定循环与分支；JSON 只选择受支持 Flow 和参数。不加载任意脚本。ET host 是领域状态的现有权威；offline 仅 TryEnqueue→owner Tick→disposition，network 仅 client SendCommandAsync→v3 transport/session→ProcessOwnerFrame→同一 ET host。
+采用新的Cooking FlowAcceptance薄测试CLI，S1引用已有Cooking/EtRuntime，链接原SingleThreadOwner.cs并保留namespace，不复制/修改该类。S2再引用已有LiteNet项目与三子进程。旧RichRunner/成功专用planner保持原用途；最小fixture不导入全菜单。product API/wire v3/游戏语义不变更。
 
-建议 Cooking 专用小 CLI 项目，不修改现有 RichRunner 的长恢复用例/默认命令。原因：现有 runner 紧耦合恢复切点、10分钟场景、成对证据和诊断，不能简单改一个 case 就承担通用拒绝/竞争/规则审批/归位报告。复用它已有 session/owner 生命周期模式，优先 Compile Include 现有 SingleThreadOwner（不复制机制）；dot 须判断是否适合链接或是否需要更小组合。现有 Rich planner 公有 Go/WaitUntil 可借鉴/复用，但 Dispatch 强制 Accepted、Pick 私有，不能用它断言竞争失败方。
+CLI验证FlowRequest和受审规则目录后创建全新RunIdentity/fixture；IFlowOrchestrator驱动注册C#Flow，经IFlowSession正式提交/只读capture，IFlowRule确定性判断，单writer IFlowEventSink收集，独立cleanup token归位，IFlowReportWriter最后发布结果。全部具体API/DTO与调用序列按accepted-api-design；RoleControl含dot明确补充的ReplayOfCallId，Action与重放二选一。
 
-拟新增文件类别（准确 API/文件拆分待 dot）：
+## 正式路径与证据
 
-| 候选路径 | Cooking 消费者 / 必要性 / 验收 |
-|---|---|
-| `src/AbilityKit.Game.Cooking.FlowAcceptance/AbilityKit.Game.Cooking.FlowAcceptance.csproj` | CLI；只引用现有 Cooking/EtRuntime/LiteNet 项目、BCL，不变 TFM/版本；构建闭包检查 |
-| 同目录 `Program.cs`, `FlowContracts.cs`, `FixedFlows.cs` | 请求验证、固定流程、运行终态；invalid/normal/timeout 入口 |
-| 同目录 `OfflineFlowAdapter.cs`, `NetworkFlowAdapter.cs` | 正式操作与只读观察；竞争真实业务终态、真实 transport、owner/thread/generation 控制 |
-| 同目录 `FlowEventCollector.cs`, `FlowRuleEvaluator.cs`, `FlowReport.cs` | 单 writer、有界证据、批准规则、报告/失败包；故意违规/丢事件/写失败控制 |
-| 同目录 `FlowResourceScope.cs` | 只释放本次资源；失败先快照、取消/退出有界、连续两 run 不残留 |
-| `src/AbilityKit.ET.Runtime.Tests/CookingFixedFlowTests.cs` | 聚焦 orchestration 正负控制；不扩其他示例测试 |
-| `Docs/design/CookingGame/testing/fixed-flow.md` 与规则/请求样例 | Cooking 操作者；可执行命令、审批与支持范围 |
+offline同构造owner线程同步尝试所有TryEnqueue，组内不Tick/await；同组合法正SimulationBatch，新组高于LastCommittedSimulationBatch。唯一driver Tick。汇合准入即时terminal、Tick.Dispositions、DispositionHistory和可用FinalDispositionHistory；网络通知队列不能当offline完整来源。
 
-S0 当前只能修改本 task 内规划/研究/context/evidence。以上是未来候选，任何 shared/API 变化另列必要性，不能由读源码推导授权。
+network父进程管理独立server/client-a/client-b；有界NDJSON仅控制装配/Arm/Release/Observe/Stop。游戏动作仍经真实client SendCommandAsync→v3/LiteNet→Session ProcessOwnerFrame→同一个ET host，不额外Tick或用local transport冒充。network batch必须0由server映射；barrier不保证同帧到达。
 
-## 请求/结果与失败语义输入
+CallId为一次调用，BusinessId为幂等业务身份。Replay保留原完整冻结payload（item version、offline原batch/network0），只换CallId；新动作用新ID/版本。client内部correlation不可观察时null。准入、Executed、Outcome、ACK、已安装投影分别记录；协议拒绝不冒充所需领域拒绝，timeout/断线不伪造domain Reject。
 
-Request 最小项：requestId、flowId/version、offline/network、fixture/角色/初始目标、approved ruleSetId/version、seed（适用时）、步骤/整体/归位预算、输出目录与日志上限。编排者分配独立 runId/attemptId；不覆盖已有目录。执行、规则判定、证据完整性、归位与整体状态分开；ProductFailure/HarnessOrEnvironmentFailure/Finding 区分。已确认业务失败优先保留；没有 approved 规则不整体 Passed。
+authority同次idle-owner capture读取独立ItemInHand及item location，随即丢弃TryPeekBoundKitchen借用引用。不能用同源Observe.HeldItem作独立手索引证明。只输出复制DTO，不暴露Entity/simulation/可变集合。client手标ClientProjection；Pickup后、下次改变item前检查实际安装当前scope/session/generation baseline及version≥fence/必要字段。允许更高version，不要求全世界相等，不用Drop补证明Pickup，不声称目标baseline精确ACK。
 
-结果采用一个版本化契约，临时文件完整关闭后原子发布 result.json，只声明正常进程交付，不证明断电事务。故障窗口、退出码、缺失/未知字段处理、必要事件背压、跨 host 因果关联与预算范围由 dot 给具体 API/DTO 与行为。按两 PC NOT_VERIFIED 边界，network 首版为同机实际网络。
+## 生命周期、失败与归位
 
-## 必须由 dot 决定
+现有ET owner仍是游戏writer/唯一Tick。触host continuation不Task.Run/ConfigureAwait(false)，每await后重验取消/run generation/role/scope与network instance/generation；意外换scope/重连停止首版flow。取消等待不撤销已发command。fixed-step失败保留先前effects/event/terminal；完整capture不可得标Available=false，保存最后有效cut/可用终态。
 
-1. 具体 C# 接口/类型/签名、输入输出、existing/new/changed 标记、错误/取消与调用示例。
-2. offline/network 的统一操作提交与分离观察契约；拒绝/Execute/ACK/投影不可合并。
-3. 初始化最小竞争 fixture，合法距离/能力、同一 item version；不引入菜单生产/新增玩法前置。
-4. 子进程控制通道、唯一 Tick/thread、continuation/代次/scope、single-writer 背压/丢事件失败与归位。
-5. 具体文件边界、优先 S1、S2/S3 停点、必要正负控制与目标预算。短 Flow 编译后几十秒至两分钟是设计目标，S0 尚无实测承诺。
+collector不让owner等待磁盘；有界TryPublish失败在带外锁存evidenceIncomplete并停止新动作。CollectorSequence仅收集顺序；按hostSequence/command关联事实。先固定首次失败cut，再停动作/扰动、独立token有界收集调用、关闭client、server处理断开清理、session/idle host释放、确认本次child/readers退出、collector flush、发布failure/report/result。CloseAsync幂等；未知writer/退出阻塞复用。仅管理确认身份的本次child；同进程卡死由调用器监督，无result不伪造正常终态。
 
-只有完整且当前 SHA 的 dot 设计，才能填入 Accepted 技术部分；只有 Owner 类别与实施计划批准，才能进入实现。
+测试schemaVersion1独立于wire v3，BCL JSON/文本枚举/必需字段与上限、未知版本动作拒绝。发布只声明正常进程文件交付，不证明掉电事务。ProductFailure与后续环境/归位错误并存。Passed须目标、批准规则、证据、归位全部完整；启动前Blocked，启动后超时/故障Failed且执行不完整，未知Verdict=Undetermined。整体退出0/1/2/3/4分别Passed/Failed/Blocked/Skipped/NotRun；native child exit另记。
+
+## 预算与停点（提案，不是Owner批准或性能实测）
+
+startup/step/convergence各10s；overall120s含startup/execute/reset/publish，预留reset10s/publish2s，活动工作最迟overall−12s停止。等待取局部与剩余较小预算。collector queue256、单event64KiB、4096events/8MiB、每角色stderr256KiB；不能默默放宽以抹除失败。Owner审批卡可约定允许参数范围。
+
+S1只offline两个注册Flow/真实正例/明确synthetic反例与归位控制，完成即停，经main独立检查/冻结候选/dot review。S2/S3另确认范围。当前runtime/Orca玩法完成回执全部NotRun；S0接受不授权实现、后续派发或产品验收。
