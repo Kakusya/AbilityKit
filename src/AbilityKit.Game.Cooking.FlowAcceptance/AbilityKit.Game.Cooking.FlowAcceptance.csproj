@@ -1,0 +1,15 @@
+<Project Sdk="Microsoft.NET.Sdk">
+  <PropertyGroup>
+    <OutputType>Exe</OutputType>
+    <TargetFramework>net10.0</TargetFramework>
+    <ImplicitUsings>enable</ImplicitUsings>
+    <Nullable>enable</Nullable>
+    <IsPackable>false</IsPackable>
+  </PropertyGroup>
+  <ItemGroup>
+    <ProjectReference Include="../AbilityKit.Game.Cooking/AbilityKit.Game.Cooking.csproj" />
+    <ProjectReference Include="../AbilityKit.Game.Cooking.EtRuntime/AbilityKit.Game.Cooking.EtRuntime.csproj" />
+    <Compile Include="../AbilityKit.Game.Cooking.NetworkRichRecoveryAcceptance/SingleThreadOwner.cs" Link="SingleThreadOwner.cs" />
+    <Content Include="../../Docs/design/CookingGame/testing/flow-rules.json" Link="flow-rules.json" CopyToOutputDirectory="PreserveNewest" />
+  </ItemGroup>
+</Project>

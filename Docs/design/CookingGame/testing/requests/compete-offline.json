@@ -1,0 +1,53 @@
+{
+    "mode":  "Offline",
+    "seed":  null,
+    "fixture":  {
+                    "id":  "one-item",
+                    "version":  "1.0",
+                    "itemId":  "flow-item",
+                    "actors":  [
+                                   "A",
+                                   "B"
+                               ],
+                    "initialSlot":  "source",
+                    "dropSlot":  "drop"
+                },
+    "budgets":  {
+                    "convergenceMs":  10000,
+                    "stepMs":  10000,
+                    "startupMs":  10000,
+                    "resetMs":  10000,
+                    "publishMs":  2000,
+                    "overallMs":  120000
+                },
+    "rules":  [
+                  {
+                      "id":  "C13-OWN",
+                      "version":  "1.0"
+                  },
+                  {
+                      "id":  "C13-REJECT",
+                      "version":  "1.0"
+                  },
+                  {
+                      "id":  "C13-IDEMP",
+                      "version":  "1.0"
+                  },
+                  {
+                      "id":  "C13-COMPLETE",
+                      "version":  "1.0"
+                  }
+              ],
+    "flowId":  "compete-one-item",
+    "flowVersion":  1,
+    "outputRoot":  "local/Logs/issue13-s1-worker/compete-offline-v1",
+    "logs":  {
+                 "diagnosticBytesPerHost":  262144,
+                 "maxEventLogBytes":  8388608,
+                 "queueCapacity":  256,
+                 "maxEvents":  4096,
+                 "maxEventBytes":  65536
+             },
+    "schemaVersion":  1,
+    "requestId":  "compete-offline-v1"
+}
