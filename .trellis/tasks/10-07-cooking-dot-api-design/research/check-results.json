@@ -1,0 +1,163 @@
+{
+  "source_sha": "3c178851819abac5755c5bc53fa03c8b94257e2a",
+  "dirty": " M .agents/skills/cooking-dot-workflow/SKILL.md\n M .agents/skills/cooking-dot-workflow/assets/dot-decision.md\n M .agents/skills/cooking-dot-workflow/assets/dot-request.md\n M .agents/skills/cooking-dot-workflow/references/dot-dialogue.md\n M .agents/skills/cooking-dot-workflow/references/operator-example.md\n?? .trellis/tasks/10-07-cooking-dot-api-design/\n",
+  "python": "3.14.8 (tags/v3.14.8:8e6e75d, Sep 30 2026, 18:19:33) [MSC v.1944 64 bit (AMD64)]",
+  "git": "git version 2.56.0.windows.1",
+  "delivered_sha256": {
+    ".agents\\skills\\cooking-dot-workflow\\SKILL.md": "d2aec3f04aebadf60ff8c9446545163cee9afe290c7b8c8f990a73e20e3fc1b6",
+    ".agents\\skills\\cooking-dot-workflow\\assets\\dot-request.md": "c957fdbafc0eafdadd76e23063fda485edef55da84223b6aa080d5028ac3c01a",
+    ".agents\\skills\\cooking-dot-workflow\\assets\\dot-decision.md": "db126412969175b323522d783097659ed1d89fbbeb7531dee5a18f72a3701ee0",
+    ".agents\\skills\\cooking-dot-workflow\\references\\dot-dialogue.md": "5f5cf273bcfaaa9b08f5df371eb066f05a5292c904b5d1dde99f9f2a29c3b0e8",
+    ".agents\\skills\\cooking-dot-workflow\\references\\operator-example.md": "d05b151ff0bad9ca11679326a589366b04611a1f7fde6e18ab94a8340b21c09c"
+  },
+  "checks": [
+    {
+      "name": "skill-validator",
+      "status": "Blocked",
+      "command": [
+        "C:\\Python314\\python.exe",
+        "-B",
+        "C:/Users/Administrator/AppData/Roaming/orca/codex-accounts/81627c2b-efc2-4498-aeb6-64c652c0acab/home/skills/.system/skill-creator/scripts/quick_validate.py",
+        "D:\\MyWorkTree\\AbilityKit\\.agents\\skills\\cooking-dot-workflow"
+      ],
+      "exit_code": 1,
+      "stdout": "",
+      "stderr": "Traceback (most recent call last):\n  File \"C:\\Users\\Administrator\\AppData\\Roaming\\orca\\codex-accounts\\81627c2b-efc2-4498-aeb6-64c652c0acab\\home\\skills\\.system\\skill-creator\\scripts\\quick_validate.py\", line 10, in <module>\n    import yaml\nModuleNotFoundError: No module named 'yaml'\n"
+    },
+    {
+      "name": "task-context",
+      "status": "Passed",
+      "command": [
+        "C:\\Python314\\python.exe",
+        ".trellis/scripts/task.py",
+        "validate",
+        "D:\\MyWorkTree\\AbilityKit\\.trellis\\tasks\\10-07-cooking-dot-api-design"
+      ],
+      "exit_code": 0,
+      "stdout": "\u001b[0;34m=== Validating Context Files ===\u001b[0m\nTarget dir: D:\\MyWorkTree\\AbilityKit\\.trellis\\tasks\\10-07-cooking-dot-api-design\n\n  \u001b[0;32mimplement.jsonl: ✓ (1 entries)\u001b[0m\n  \u001b[0;32mcheck.jsonl: ✓ (1 entries)\u001b[0m\n\n\u001b[0;32m✓ All validations passed\u001b[0m\n",
+      "stderr": ""
+    },
+    {
+      "name": "whitespace",
+      "status": "Passed",
+      "command": [
+        "git",
+        "diff",
+        "--check"
+      ],
+      "exit_code": 0,
+      "stdout": "",
+      "stderr": ""
+    },
+    {
+      "name": "local-markdown-links",
+      "status": "Passed",
+      "coverage": 24,
+      "errors": [],
+      "links": [
+        {
+          "file": ".agents\\skills\\cooking-dot-workflow\\SKILL.md",
+          "target": "../../../AGENTS.md"
+        },
+        {
+          "file": ".agents\\skills\\cooking-dot-workflow\\SKILL.md",
+          "target": "../../../Docs/design/CookingGame/progress.md"
+        },
+        {
+          "file": ".agents\\skills\\cooking-dot-workflow\\SKILL.md",
+          "target": "../../../.trellis/spec/cooking/index.md"
+        },
+        {
+          "file": ".agents\\skills\\cooking-dot-workflow\\SKILL.md",
+          "target": "../../../.trellis/spec/abilitykit/supervised-issue-delivery.md"
+        },
+        {
+          "file": ".agents\\skills\\cooking-dot-workflow\\SKILL.md",
+          "target": "references/recovery.md"
+        },
+        {
+          "file": ".agents\\skills\\cooking-dot-workflow\\SKILL.md",
+          "target": "assets/checkpoint-operation.md"
+        },
+        {
+          "file": ".agents\\skills\\cooking-dot-workflow\\SKILL.md",
+          "target": "assets/dot-request.md"
+        },
+        {
+          "file": ".agents\\skills\\cooking-dot-workflow\\SKILL.md",
+          "target": "assets/dot-decision.md"
+        },
+        {
+          "file": ".agents\\skills\\cooking-dot-workflow\\SKILL.md",
+          "target": "references/dot-dialogue.md"
+        },
+        {
+          "file": ".agents\\skills\\cooking-dot-workflow\\SKILL.md",
+          "target": "references/recovery.md"
+        },
+        {
+          "file": ".agents\\skills\\cooking-dot-workflow\\SKILL.md",
+          "target": "references/operator-example.md"
+        },
+        {
+          "file": ".agents\\skills\\cooking-dot-workflow\\SKILL.md",
+          "target": "references/dot-dialogue.md#required-reply-content"
+        },
+        {
+          "file": ".agents\\skills\\cooking-dot-workflow\\SKILL.md",
+          "target": "references/recovery.md#production-merge-and-close"
+        },
+        {
+          "file": ".agents\\skills\\cooking-dot-workflow\\assets\\dot-request.md",
+          "target": "../references/dot-dialogue.md#required-reply-content"
+        },
+        {
+          "file": ".agents\\skills\\cooking-dot-workflow\\assets\\dot-request.md",
+          "target": "../references/dot-dialogue.md"
+        },
+        {
+          "file": ".agents\\skills\\cooking-dot-workflow\\assets\\dot-decision.md",
+          "target": "../references/dot-dialogue.md"
+        },
+        {
+          "file": ".agents\\skills\\cooking-dot-workflow\\references\\dot-dialogue.md",
+          "target": "recovery.md"
+        },
+        {
+          "file": ".agents\\skills\\cooking-dot-workflow\\references\\dot-dialogue.md",
+          "target": "../assets/dot-request.md"
+        },
+        {
+          "file": ".agents\\skills\\cooking-dot-workflow\\references\\dot-dialogue.md",
+          "target": "../assets/dot-decision.md"
+        },
+        {
+          "file": ".agents\\skills\\cooking-dot-workflow\\references\\operator-example.md",
+          "target": "recovery.md"
+        },
+        {
+          "file": ".agents\\skills\\cooking-dot-workflow\\references\\operator-example.md",
+          "target": "dot-dialogue.md"
+        },
+        {
+          "file": ".agents\\skills\\cooking-dot-workflow\\references\\operator-example.md",
+          "target": "../assets/checkpoint-operation.md"
+        },
+        {
+          "file": ".agents\\skills\\cooking-dot-workflow\\references\\operator-example.md",
+          "target": "../assets/dot-request.md"
+        },
+        {
+          "file": ".agents\\skills\\cooking-dot-workflow\\references\\operator-example.md",
+          "target": "../assets/dot-decision.md"
+        }
+      ]
+    }
+  ],
+  "live_dot": "NotRun",
+  "host_auto_loading": "NotRun",
+  "product_tests": "N/A",
+  "binary_identity": "N/A: documentation only",
+  "commit": "NotRun",
+  "archive": "NotRun"
+}

@@ -5,9 +5,23 @@ This is the sole request/supplement/timing contract. Use live Orca browser guida
 ## Bind and send
 
 1. Verify conversation URL/identity/purpose and current generation state. Reuse verified binding, not a default dot ID; multiple suitable conversations require selection. Never overwrite/repeat a generating prompt.
-2. Use [request template](../assets/dot-request.md): `planning` or `final-review`, unique request ID, stable flow ID, approved scope, full published SHA/link, decision/evidence/conflicts. Verify visibility in the explicit remote repository; dirty local files are not review input.
+2. Use [request template](../assets/dot-request.md): `planning` or `final-review`, unique request ID, stable flow ID, approved scope, full published SHA/link, decision/evidence/conflicts and the required API response below. Include current API/source references, and the accepted design for final review. Verify visibility in the explicit remote repository; dirty local files are not review input.
 3. Persist/read back send intent **before input**: fingerprint, conversation/prior-message boundary, `wait_started_utc`, `deadline_utc = start + 30 minutes`. Save posted-message identity/raw send receipt afterwards. Input acceptance is not a posted prompt. Lost receipt consumes original budget; reconcile before repeat.
-4. Save full completed reply, conversation/message/request identity, full reviewed SHA, `reply_posted_utc` (null if unavailable), timestamp provenance/reliability and separate `observed_utc`. Generating text, generic praise, ambiguity, old request or different SHA is not acceptance. Use [decision template](../assets/dot-decision.md). Preserve conflicts/failures; apply dot's technical decision within Owner scope/honest evidence.
+4. Save full completed reply, conversation/message/request identity, full reviewed SHA, `reply_posted_utc` (null if unavailable), timestamp provenance/reliability and separate `observed_utc`. Generating text, generic praise, ambiguity, old request or different SHA is not acceptance. Check required reply content below and use [decision template](../assets/dot-decision.md) to record API references and completeness. Preserve conflicts/failures; apply dot's technical decision within Owner scope/honest evidence.
+
+## Required reply content
+
+Every planning request must explicitly ask dot to return **API design**, alongside its technical plan and decision. For APIs affected by the approved scope, require:
+
+- Concrete interfaces/types/method signatures, parameters and return/DTO shapes, plus whether each API is existing, changed or new. Use the target language; C# declarations are appropriate for C# changes. Mark proposals as proposals, not implemented facts.
+- Responsibilities and Cooking callers/consumers, observable behavior, preconditions, rejection/error results and a minimal calling example or call sequence.
+- Relevant contract details: state writer and lifecycle/release owner; driving Tick/thread, async cancellation/generation checks, idempotency, event publication and schema compatibility where the change touches them. Reference unchanged authoritative contracts rather than inventing new mechanisms.
+
+For final review, ask dot to compare the frozen candidate's API with the accepted design, identify differences (or explicitly state none), and decide whether they are acceptable or require revision. Keep this finding distinct from the full-SHA candidate decision and validation scope. For a documentation-only task or a scope with no API design relevance, dot must explicitly return **API design: N/A** with a reason; an absent section is not N/A.
+
+Preserve dot's full original reply and link its API design/finding in the decision record. Carry the accepted design into the owning task's planning artifacts before implementation. Main checks completeness and scope; it must not invent missing signatures or silently substitute its own design. An otherwise accepting reply missing required content is `ambiguous` for continuation; retain dot's stated decision verbatim. A clear blocker or revision request remains actionable as such and cannot authorize implementation or acceptance through the missing design.
+
+Request missing content only through the existing one-supplement rule and original deadline below. No new quota, repeated questions or renewed budget. Until complete design or justified N/A exists, do not advance from Dot plan to Prepare/Implement; until the final API finding or justified N/A exists, do not accept/deliver the candidate. At deadline without valid resolution, use the existing timeout/pause path.
 
 ## Budget and one supplement
 

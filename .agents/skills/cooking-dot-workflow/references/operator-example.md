@@ -202,6 +202,10 @@ Repository / full published SHA / link: https://github.com/Kakusya/AbilityKit /
 Scope/consumers/mode/excluded exits: approved Cooking workflow docs, coordinators/
   workers, branch-only; no master merge, product changes, release, cleanup
 Decision / conflicts: explicit accept-candidate or revisions; preserve old failures
+Required API response: compare candidate API with accepted design, list differences
+  and disposition; for this docs-only scope explicitly return API design: N/A
+  with reason, following references/dot-dialogue.md#required-reply-content
+Current API/source / accepted design: <NEXT_API_SOURCE_AND_ACCEPTED_DESIGN_REF_OR_NA_REASON>
 Plans/raw/checks/delivered hashes: <NEXT_IMMUTABLE_EVIDENCE_LINKS_AND_HASH_MAP>
 Conversation/boundary/prior snapshot/fingerprint: <NEXT_VERIFIED_CONVERSATION_AND_BOUNDARY>
   / <NEXT_PRIOR_SNAPSHOT_REF> / <NEXT_PAYLOAD_FINGERPRINT>
@@ -212,7 +216,7 @@ Supplement intent: none initially; one shared quota, reserved by intent
 Identify this request and full SHA; converse/read commits only
 ```
 
-The resulting decision record must fill **all** decision-template fields: flow/request/type; verified conversation/reply/full raw ref; full reviewed SHA/explicit decision; posted UTC (null when unknown)/reliability/source and observed UTC; timing basis/trusted upper UTC/uncertainty/time source/optional lower UTC; complete/not-generating/full and prior snapshots/verified boundary; timely/timely-late-read/late/unknown classification; original deadline/supplement intent+receipt/prior timeout+pause refs; accepted scope and delivered hashes/blockers/conflicts; main scope/evidence finding and next action/authority; new linked request and reopening/revision provenance if needed. Until that reply exists, **no accept-candidate or archive decision is prefilled**.
+The resulting decision record must fill **all** decision-template fields: flow/request/type; verified conversation/reply/full raw ref; full reviewed SHA/explicit decision; posted UTC (null when unknown)/reliability/source and observed UTC; timing basis/trusted upper UTC/uncertainty/time source/optional lower UTC; complete/not-generating/full and prior snapshots/verified boundary; timely/timely-late-read/late/unknown classification; original deadline/supplement intent+receipt/prior timeout+pause refs; accepted scope and delivered hashes/blockers/conflicts; dot API design/conformance reference or justified N/A and main reply completeness finding; main scope/evidence finding and next action/authority; new linked request and reopening/revision provenance if needed. Until that reply exists, **no accept-candidate or archive decision is prefilled**.
 
 If awaiting dot, follow the original 30-minute budget and 30/60/120/300-second polling schedule in dialogue, splitting waits into at most 60-second slices. No new dispatch or technical/integration/merge decision during the wait. At timeout main records original budget/quota, failures, workers and next evidence, then ends its turn paused. A timely late-read decision can resolve the old technical question while preserving pause; it never grants cross-main authority or refreshes the budget.
 

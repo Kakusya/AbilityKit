@@ -1,0 +1,39 @@
+{
+  "kind": "review-publication",
+  "authorization_ref": "dot-review-authority.md",
+  "base_sha": "3c178851819abac5755c5bc53fa03c8b94257e2a",
+  "branch": "Kakusya/cooking-dot-api-design-review-20261007",
+  "delivery_mode": "branch-only-review",
+  "files": [
+    ".agents/skills/cooking-dot-workflow/SKILL.md",
+    ".agents/skills/cooking-dot-workflow/assets/dot-decision.md",
+    ".agents/skills/cooking-dot-workflow/assets/dot-request.md",
+    ".agents/skills/cooking-dot-workflow/references/dot-dialogue.md",
+    ".agents/skills/cooking-dot-workflow/references/operator-example.md",
+    ".trellis/tasks/10-07-cooking-dot-api-design/check.jsonl",
+    ".trellis/tasks/10-07-cooking-dot-api-design/implement.jsonl",
+    ".trellis/tasks/10-07-cooking-dot-api-design/prd.md",
+    ".trellis/tasks/10-07-cooking-dot-api-design/task.json",
+    ".trellis/tasks/10-07-cooking-dot-api-design/research/check-results.json",
+    ".trellis/tasks/10-07-cooking-dot-api-design/research/dot-prior-observation-utf8.json",
+    ".trellis/tasks/10-07-cooking-dot-api-design/research/dot-review-authority.md",
+    ".trellis/tasks/10-07-cooking-dot-api-design/research/implementation-report.md"
+  ],
+  "working_hashes": {
+    ".agents/skills/cooking-dot-workflow/SKILL.md": "d2aec3f04aebadf60ff8c9446545163cee9afe290c7b8c8f990a73e20e3fc1b6",
+    ".agents/skills/cooking-dot-workflow/assets/dot-decision.md": "db126412969175b323522d783097659ed1d89fbbeb7531dee5a18f72a3701ee0",
+    ".agents/skills/cooking-dot-workflow/assets/dot-request.md": "c957fdbafc0eafdadd76e23063fda485edef55da84223b6aa080d5028ac3c01a",
+    ".agents/skills/cooking-dot-workflow/references/dot-dialogue.md": "5f5cf273bcfaaa9b08f5df371eb066f05a5292c904b5d1dde99f9f2a29c3b0e8",
+    ".agents/skills/cooking-dot-workflow/references/operator-example.md": "d05b151ff0bad9ca11679326a589366b04611a1f7fde6e18ab94a8340b21c09c",
+    ".trellis/tasks/10-07-cooking-dot-api-design/check.jsonl": "e8b7269290ac9668a93d9a39e00ada30b991d704e29bc73dfb81f39aabf28e8a",
+    ".trellis/tasks/10-07-cooking-dot-api-design/implement.jsonl": "82e422dd08dab82c850c01b76bf0df1bf913cc72a3b206d4d11018218269a4db",
+    ".trellis/tasks/10-07-cooking-dot-api-design/prd.md": "43ada1ab2b4bccee71f75447a01f63ae213a8f5bcf503d865fe10b36733b9510",
+    ".trellis/tasks/10-07-cooking-dot-api-design/task.json": "551c8b758c3b3953a507c8f38af435c29acb0a2e9e5484d1668ae997f690dba5",
+    ".trellis/tasks/10-07-cooking-dot-api-design/research/check-results.json": "1bef6bed398ad2a8b7721071ec6b6a0da77333891744c76f0c96c92a02932bbe",
+    ".trellis/tasks/10-07-cooking-dot-api-design/research/dot-prior-observation-utf8.json": "2704291040e5b0d08f69f81dc0876369dd2086f04ab17ffa925825145ff7d0ce",
+    ".trellis/tasks/10-07-cooking-dot-api-design/research/dot-review-authority.md": "2a374cbea4479d67ef40c69fc1bd576ad2100784a1b9e3429d19246d665ccd07",
+    ".trellis/tasks/10-07-cooking-dot-api-design/research/implementation-report.md": "70aa1e711cb7ba61402efe2d0b0ef08384892f41e358515955c65b050a811bdb"
+  },
+  "created_utc": "2026-10-07T09:55:50.976732+00:00",
+  "checkout_mutation": false
+}

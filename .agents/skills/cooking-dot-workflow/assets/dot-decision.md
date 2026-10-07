@@ -18,6 +18,10 @@ Original deadline / supplement intent+receipt / prior timeout+pause refs:
 
 Accepted scope/delivered hashes (final acceptance) / blockers/conflicts:
 
+Dot API design reference/excerpt in full raw reply (planning) / API conformance finding and differences (final-review) / explicit N/A and reason:
+
+Main reply completeness finding: complete | missing-content | justified-N/A; missing API items and clarification disposition (use existing supplement quota/deadline):
+
 Main scope/evidence finding / next allowed action/required authority:
 
 New linked request ID + Owner reopening or valid revision provenance (if needed):
