@@ -1,4 +1,7 @@
 {"file": ".trellis/spec/abilitykit/supervised-issue-delivery.md", "reason": "Owner scope and actual evidence exits"}
-{"file": ".trellis/tasks/10-07-cooking-issue13-flow-orchestrator/prd.md", "reason": "Issue13 S0 and deferred implementation acceptance"}
-{"file": ".trellis/tasks/10-07-cooking-issue13-flow-orchestrator/research/rule-categories.md", "reason": "Draft categories cannot authorize Passed or implementation"}
+{"file": ".trellis/tasks/10-07-cooking-issue13-flow-orchestrator/prd.md", "reason": "Current full Issue13 requirements plus accepted S1 and bounded S2 continuation"}
+{"file": ".trellis/tasks/10-07-cooking-issue13-flow-orchestrator/research/rule-categories.md", "reason": "Owner-approved five category cards1.0; unknown facts never product pass/failure without proof"}
 {"file": ".trellis/tasks/10-07-cooking-issue13-flow-orchestrator/research/accepted-api-amendment.md", "reason": "Exact dot bounded API amendment and CLI diagnostic contracts"}
+{"file": ".trellis/tasks/10-07-cooking-issue13-flow-orchestrator/research/accepted-s2-bootstrap.md", "reason": "Exact approved role bootstrap, protocol lifecycle and fourteen-file scope"}
+{"file": ".trellis/tasks/10-07-cooking-issue13-flow-orchestrator/research/dot-s1-revision-review-decision.md", "reason": "Exact current S1 acceptance and explicit S2 allowed_next_action"}
+{"file": ".trellis/tasks/10-07-cooking-issue13-flow-orchestrator/research/s2-dispatch-plan.md", "reason": "Reviewed S2 ownership, file consumers, invariants, focused checks and stop boundary"}

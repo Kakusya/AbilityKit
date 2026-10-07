@@ -35,3 +35,8 @@ collector不让owner等待磁盘；有界TryPublish失败在带外锁存evidence
 startup/step/convergence各10s；overall120s含startup/execute/reset/publish，预留reset10s/publish2s，活动工作最迟overall−12s停止。等待取局部与剩余较小预算。collector queue256、单event64KiB、4096events/8MiB、每角色stderr256KiB；不能默默放宽以抹除失败。Owner审批卡可约定允许参数范围。
 
 S1只offline两个注册Flow/真实正例/明确synthetic反例与归位控制，完成即停，经main独立检查/冻结候选/dot review。S2/S3另确认范围。当前runtime/Orca玩法完成回执全部NotRun；S0接受不授权实现、后续派发或产品验收。
+
+
+## Current S2 continuation (2026-10-08)
+
+S1 exact candidate `2201931e1846acb9ab8a205d501e39731b5a39bb` is accepted with complete API behavior finding. [Current decision](research/dot-s1-revision-review-decision.md) and [bounded 14-file S2 execution plan](research/s2-dispatch-plan.md) supersede historical deferred-S2/S0-only scheduling passages. One retained managed Orca worker may now implement S2 under existing Owner approval; main reviewed these artifacts and context manifests. Independent check/freeze/new dot review precedes S3. Branch-only and honest evidence remain.

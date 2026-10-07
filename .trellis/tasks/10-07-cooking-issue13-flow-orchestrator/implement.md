@@ -99,3 +99,8 @@ S1完成即停：主控检查源码差异、短测试与实际结果，再申请
 ## 当前验证状态
 
 S0文档diff/context/符号/链接与scope检查按其声明覆盖Passed；Trellis Phase loader缺Phase Index记Blocked。产品构建/测试、offline/network运行、Orca玩法自动完成唤醒全部NotRun；二进制N/A。发布不包含个人绝对路径、原始runtime inventory或无关会话。跨树.NET验证串行，保留命令/源dirty/计数/native exit和原失败，不启动默认全仓gate作为调研。
+
+
+## Current S2 continuation (2026-10-08)
+
+S1 exact candidate `2201931e1846acb9ab8a205d501e39731b5a39bb` is accepted with complete API behavior finding. [Current decision](research/dot-s1-revision-review-decision.md) and [bounded 14-file S2 execution plan](research/s2-dispatch-plan.md) supersede historical deferred-S2/S0-only scheduling passages. One retained managed Orca worker may now implement S2 under existing Owner approval; main reviewed these artifacts and context manifests. Independent check/freeze/new dot review precedes S3. Branch-only and honest evidence remain.

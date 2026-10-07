@@ -33,3 +33,8 @@ Unity/UI/键盘、物理双机 LAN、其他示例、ET/SDK/依赖升级、第二
 ## Owner 待决定
 
 Owner已通过续作目标批准所呈五类规则和有界实现；新语义/类别/放宽阈值仍须重审。当前只派发S1，完成后独立检查与dot技术审阅，再推进既批准的S2/S3。合并/关单模式在可审阅候选形成后处理，避免提前推导生产权限。
+
+
+## Current S2 continuation (2026-10-08)
+
+S1 exact candidate `2201931e1846acb9ab8a205d501e39731b5a39bb` is accepted with complete API behavior finding. [Current decision](research/dot-s1-revision-review-decision.md) and [bounded 14-file S2 execution plan](research/s2-dispatch-plan.md) supersede historical deferred-S2/S0-only scheduling passages. One retained managed Orca worker may now implement S2 under existing Owner approval; main reviewed these artifacts and context manifests. Independent check/freeze/new dot review precedes S3. Branch-only and honest evidence remain.
