@@ -1,0 +1,76 @@
+{
+  "phase": "S0 documentation/inventory",
+  "source": "271f76c8e4ab88ae93b28fb49e46f4700a399b66",
+  "sourceDirty": "two pre-existing user journal changes plus new task documents",
+  "tools": {
+    "orca": "1.4.221",
+    "node": "24.21.0",
+    "dotnet": "10.0.300",
+    "python": "3.14.8"
+  },
+  "context": {
+    "status": "Passed",
+    "command": "python .trellis/scripts/task.py validate .trellis/tasks/10-07-cooking-issue13-flow-orchestrator",
+    "checkEntries": 2,
+    "implementEntries": 2,
+    "exit": 0
+  },
+  "phaseLoader": {
+    "status": "Blocked",
+    "command": "python .trellis/scripts/get_context.py --mode phase",
+    "actual": "Phase Index section not found in workflow.md",
+    "exit": 0
+  },
+  "productTests": {
+    "status": "NotRun",
+    "reason": "S0 only; runtime implementation and rule categories not approved",
+    "count": 0
+  },
+  "binaryIdentity": "N/A documentation-only",
+  "offline": "NotRun",
+  "network": "NotRun",
+  "physicalLan": "NotRun; retained NOT_VERIFIED boundary",
+  "orcaGameplayCompletion": "NotRun",
+  "limitations": [
+    "Initial ignored operator scratch name shadowed Python operator module; renamed before any external effect",
+    "Initial browser eval quoting failed read-only; corrected PowerShell expression",
+    "Python-captured browser CJK contains replacement characters; authoritative boundary saved through PowerShell UTF-8; no corrupted reply accepted"
+  ],
+  "scope": {
+    "status": "Passed",
+    "fileCount": 10,
+    "prefix": ".trellis/tasks/10-07-cooking-issue13-flow-orchestrator",
+    "privateAbsolutePaths": 0
+  },
+  "links": {
+    "status": "Passed",
+    "count": 5,
+    "checks": [
+      {
+        "file": "prd.md",
+        "link": "research/source-inventory.md"
+      },
+      {
+        "file": "prd.md",
+        "link": "research/rule-categories.md"
+      },
+      {
+        "file": "design.md",
+        "link": "research/source-inventory.md"
+      },
+      {
+        "file": "design.md",
+        "link": "research/rule-categories.md"
+      },
+      {
+        "file": "design.md",
+        "link": "research/first-flow.md"
+      }
+    ]
+  },
+  "diffCheck": {
+    "status": "Passed",
+    "command": "git diff --cached --check",
+    "exit": 0
+  }
+}

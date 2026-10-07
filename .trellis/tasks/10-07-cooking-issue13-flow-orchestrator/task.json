@@ -1,0 +1,29 @@
+{
+  "id": "cooking-issue13-flow-orchestrator",
+  "name": "cooking-issue13-flow-orchestrator",
+  "title": "Issue 13 fixed Flow test orchestrator S0",
+  "description": "Owner-invoked cooking-dot-workflow: inventory existing Cooking APIs and runtime completion, prepare scoped S0 plan and Draft rule-category cards for Owner review; no implementation authorization.",
+  "status": "planning",
+  "dev_type": null,
+  "scope": null,
+  "package": null,
+  "priority": "P1",
+  "creator": "Kakusya",
+  "assignee": "Kakusya",
+  "createdAt": "2026-10-07",
+  "completedAt": null,
+  "branch": "Kakusya/issue13-flow-s0",
+  "base_branch": "master",
+  "worktree_path": null,
+  "commit": null,
+  "pr_url": null,
+  "subtasks": [],
+  "children": [],
+  "parent": null,
+  "relatedFiles": [],
+  "notes": "",
+  "meta": {
+    "issue": "13",
+    "delivery_mode": "branch-only"
+  }
+}
