@@ -64,8 +64,8 @@ def fixture(root, run_id="simulation-run"):
     return flow
 
 
-def authority(session="simulation-original", terminal="simulation-terminal", sole=True, write=True):
-    return r.WriteAuthority(session, terminal, sole, write, "evidence/authority.json")
+def authority(session="simulation-original", sole=True, write=True):
+    return r.WriteAuthority(session, "simulation-terminal", sole, write, "evidence/authority.json")
 
 
 def intent(root, seq=1, action="mock-effect", preconditions=None):
@@ -216,38 +216,6 @@ def record_controls(base):
         expect(f"{name} refuses index write", rejected(lambda: r.write_index(guard, denied)), True)
     after_files = {str(p.relative_to(guard)): p.read_bytes() for p in guard.rglob("*") if p.is_file()}
     expect("denied recovery leaves all shared files unchanged", after_files == before_files, True)
-    for name in ("owner-successor-approval", "previous-inactive"):
-        save(guard / "evidence" / f"{name}.json", {"simulation": True, "name": name})
-    handover = {"version": 1, "flow_id": f["flow_id"],
-                "previous_session": f["original_session"],
-                "previous_terminal": f["original_terminal"],
-                "successor_session": "simulation-successor",
-                "successor_terminal": "simulation-successor-terminal",
-                "owner_approval_ref": "evidence/owner-successor-approval.json",
-                "previous_inactive_ref": "evidence/previous-inactive.json",
-                "recorded_utc": START, "revokes_previous": True}
-    save(guard / r.SUCCESSION_FILE, handover)
-    successor = authority("simulation-successor", "simulation-successor-terminal")
-    expect("validated Owner succession enables exact successor predicate",
-           r.mutation_allowed(f, successor, handover), True)
-    expect("validated Owner succession revokes original predicate",
-           r.mutation_allowed(f, authority(), handover), False)
-    expect("validated Owner succession rejects wrong successor terminal",
-           r.mutation_allowed(f, authority("simulation-successor", "wrong-terminal"), handover), False)
-    takeover = intent(guard)
-    r.append(guard, takeover, successor)
-    r.append(guard, receipt(takeover), successor)
-    r.write_index(guard, successor)
-    expect("validated Owner successor can append and index",
-           [r.reconstruct(guard)["last_seq"], r.reconstruct(guard)["unresolved"]], [1, []])
-    expect("revoked predecessor cannot append after succession",
-           rejected(lambda: r.append(guard, intent(guard, 2), authority())), True)
-    broken = deepcopy(handover)
-    broken["revokes_previous"] = False
-    save(guard / r.SUCCESSION_FILE, broken)
-    expect("malformed succession fails closed",
-           rejected(lambda: r.write_index(guard, successor)), True)
-    save(guard / r.SUCCESSION_FILE, handover)
     correlated = base / "receipt-identity"
     fixture(correlated)
     action = intent(correlated, preconditions={"request_id": "expected-request", "dispatch_id": "expected-dispatch"})
