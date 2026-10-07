@@ -28,7 +28,7 @@
     "planning_request": "AK-I13-S0-PLAN-20261007-01",
     "planning_sha": "a8ea630ca1fd29fcf0327556f7847e13f589c218",
     "planning_decision": "accept-plan-S0-only",
-    "next_action": "S1-frozen-candidate-dot-review",
+    "next_action": "S1-bounded-B1-B2-B3-revision",
     "owner_approval": "research/owner-approval-20261007.md",
     "api_amendment_request": "AK-I13-API-CLARIFY-20261007-01",
     "api_amendment_sha": "6ad948d0c72255873b4fbd1cd6b5fce7594e3d13"
