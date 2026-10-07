@@ -1,0 +1,29 @@
+{
+  "version": 1,
+  "flow_id": "6d3174fd-2b01-4136-8ea5-0b0cd0e2845d",
+  "seq": 222,
+  "op_id": "6d3174fd-2b01-4136-8ea5-0b0cd0e2845d:000222",
+  "kind": "receipt",
+  "recorded_utc": "2026-10-06T23:30:59.474857Z",
+  "intent_hash": "433087b2354ad284596d0adb9f677b4bfc0ad96816834da5c988794e4ff4824c",
+  "outcome": "applied",
+  "raw_ref": "evidence/push-2bcb6d8-raw.txt",
+  "result": {
+    "repository": "Kakusya/AbilityKit",
+    "ref": "refs/heads/Kakusya/issue6-cooking-truthful-gates",
+    "localHead": "2bcb6d8165fd5abaa9469d9bc1462a7f3781d2dc",
+    "remoteHead": "2bcb6d8165fd5abaa9469d9bc1462a7f3781d2dc",
+    "pullRequest": {
+      "number": 12,
+      "head": "2bcb6d8165fd5abaa9469d9bc1462a7f3781d2dc",
+      "base": "c78ed3de83f69bb53ff1a09bbc23638115928e1e",
+      "state": "open",
+      "draft": true
+    },
+    "commit": {
+      "sha": "2bcb6d8165fd5abaa9469d9bc1462a7f3781d2dc",
+      "url": "https://github.com/Kakusya/AbilityKit/commit/2bcb6d8165fd5abaa9469d9bc1462a7f3781d2dc",
+      "message": "docs(cooking): record exact SHA gate verification"
+    }
+  }
+}

@@ -1,0 +1,10 @@
+{
+  "request_id": "AK-I6-COOK-FINAL-20261007-02",
+  "flow_id": "6d3174fd-2b01-4136-8ea5-0b0cd0e2845d",
+  "reviewed_sha": "2bcb6d8165fd5abaa9469d9bc1462a7f3781d2dc",
+  "implementation_sha": "8497d3a673bd84be079d99a58df97b96676dea88",
+  "decision": "changes-required",
+  "allowed_next_action": "Record the decision, verify current write isolation, then dispatch one bounded repair worker within the named compiler files and task evidence. Handle the succession mechanism separately without expanding scope.",
+  "reply_ref": "evidence/dot-final-review-2bcb6d8-reply.md",
+  "observed_utc": "2026-10-06T23:37:34.0609982Z"
+}

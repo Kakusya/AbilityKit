@@ -1,0 +1,17 @@
+{
+  "version": 1,
+  "flow_id": "6d3174fd-2b01-4136-8ea5-0b0cd0e2845d",
+  "seq": 231,
+  "op_id": "6d3174fd-2b01-4136-8ea5-0b0cd0e2845d:000231",
+  "kind": "receipt",
+  "recorded_utc": "2026-10-07T00:30:40.079527Z",
+  "intent_hash": "3ac18ea84e259e809c593c59486804adfc7fe01a3ff7510b350724105f928c2a",
+  "outcome": "applied",
+  "raw_ref": "evidence/slice16-cherry-pick-raw.json",
+  "result": {
+    "command": "git cherry-pick 3fe069c3da5fd574ed6875d225bb9fd76bd69fa1",
+    "exitCode": 0,
+    "output": "[Kakusya/issue6-cooking-truthful-gates c13f6bbd3] fix(cooking): close compiler input attribution gaps\n Date: Wed Oct 7 08:23:01 2026 +0800\n 6 files changed, 265 insertions(+), 26 deletions(-)\n create mode 100644 .trellis/tasks/10-06-cooking-issue6-truthful-gates/research/slice16-compiler-input-target-repair-report.md",
+    "head": "c13f6bbd3"
+  }
+}

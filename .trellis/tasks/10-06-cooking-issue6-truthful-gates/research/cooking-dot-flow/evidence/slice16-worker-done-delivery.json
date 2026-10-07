@@ -1,0 +1,38 @@
+{
+  "id": "7248a805-4a59-4406-9ef2-ed9f2af1c03c",
+  "ok": true,
+  "result": {
+    "runId": "run_5ba664a5f016",
+    "deliveryId": "delivery_c35154713ebd",
+    "messages": [
+      {
+        "id": "msg_694409da7c31",
+        "run_id": "run_5ba664a5f016",
+        "delivery_contract": "current_delivery",
+        "from_handle": "term_035237e3-1edc-470c-a9fa-195600dd2bfe",
+        "to_handle": "run:run_5ba664a5f016",
+        "subject": "Slice 16 repair committed",
+        "body": "Implemented compiler input closure and exact CoreCompile/Csc target attribution, committed as 3fe069c3da5fd574ed6875d225bb9fd76bd69fa1 with only five authorized tooling/control files plus the report. Pre-fix false accepts were retained, final focused controls passed 45/45 and the complete suite passed 301/301 (290+11), with PowerShell parsing and git diff checks clean. Both genuine Cooking gates remain NotRun for the required independent verifier; no other work remains in this source-worker dispatch.",
+        "type": "worker_done",
+        "priority": "normal",
+        "thread_id": null,
+        "payload": "{\"taskId\":\"task_d497b68d967f\",\"dispatchId\":\"ctx_4642154b3b77\",\"outcome\":\"succeeded\",\"filesModified\":[\"tools/test-gate-compiler-events.cs\",\"tools/test-gate-result-contract.ps1\",\"tools/tests/test-gate-result-contract.tests.ps1\",\"tools/tests/fixtures/gate-result-model.ps1\",\"tools/tests/fixtures/gate-result-fake-dotnet.ps1\",\".trellis/tasks/10-06-cooking-issue6-truthful-gates/research/slice16-compiler-input-target-repair-report.md\"],\"reportPath\":\".trellis/tasks/10-06-cooking-issue6-truthful-gates/research/slice16-compiler-input-target-repair-report.md\"}",
+        "created_at": "2026-10-07T00:23:30Z",
+        "delivered_at": null
+      }
+    ],
+    "count": 1,
+    "replayed": true,
+    "acknowledged": null,
+    "timedOut": false,
+    "cancelled": false,
+    "connectionLost": false,
+    "mutation": {
+      "requestId": "885f859a-e8c6-4d86-9624-151affeced71",
+      "replayed": false
+    }
+  },
+  "_meta": {
+    "runtimeId": "cfc0b549-ef00-4305-82a8-e90569f2eae4"
+  }
+}

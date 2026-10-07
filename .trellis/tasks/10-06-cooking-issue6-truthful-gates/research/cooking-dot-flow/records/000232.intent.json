@@ -1,0 +1,15 @@
+{
+  "version": 1,
+  "flow_id": "6d3174fd-2b01-4136-8ea5-0b0cd0e2845d",
+  "seq": 232,
+  "op_id": "6d3174fd-2b01-4136-8ea5-0b0cd0e2845d:000232",
+  "kind": "intent",
+  "recorded_utc": "2026-10-07T00:31:34.729679Z",
+  "action": "git-commit",
+  "target": "remove-succession-from-candidate",
+  "authorization_ref": "evidence/approval.md",
+  "payload_ref": "evidence/dot-final-review-2bcb6d8-reply.md",
+  "preconditions": {
+    "run_id": "run_5ba664a5f016"
+  }
+}

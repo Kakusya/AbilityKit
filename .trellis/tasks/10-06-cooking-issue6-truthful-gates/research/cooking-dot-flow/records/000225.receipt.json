@@ -1,0 +1,30 @@
+{
+  "version": 1,
+  "flow_id": "6d3174fd-2b01-4136-8ea5-0b0cd0e2845d",
+  "seq": 225,
+  "op_id": "6d3174fd-2b01-4136-8ea5-0b0cd0e2845d:000225",
+  "kind": "receipt",
+  "recorded_utc": "2026-10-06T23:43:13.918412Z",
+  "intent_hash": "0b41d337d2fee51ae80d910cb1f7d3ef3fcc96914862eac061c998217009af8a",
+  "outcome": "applied",
+  "raw_ref": "evidence/slice16-terminal-create-raw.json",
+  "result": {
+    "id": "d8af962d-03e1-458b-a816-90fc2f648269",
+    "ok": true,
+    "result": {
+      "terminal": {
+        "handle": "term_035237e3-1edc-470c-a9fa-195600dd2bfe",
+        "tabId": "e5135b2f-33f0-49af-abd4-2af42104536d",
+        "worktreeId": "aaa97e0d-5026-4e5c-95f8-bb420dcb4c65::D:/MyWorkTree/AbilityKit/issue6-compiler-input-target-repair-ccswitch",
+        "title": "Issue6 Slice16 compiler input target repair cc-switch",
+        "executionHostId": "local",
+        "incarnationId": "1e070d31-95b3-440c-8f2d-2bda5b37bfda",
+        "hostPlatform": "win32",
+        "surface": "visible"
+      }
+    },
+    "_meta": {
+      "runtimeId": "cfc0b549-ef00-4305-82a8-e90569f2eae4"
+    }
+  }
+}

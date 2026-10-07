@@ -1,0 +1,57 @@
+{
+  "id": "33d9d913-9981-4f44-be12-7f9c811c2ab2",
+  "ok": true,
+  "result": {
+    "dispatch": {
+      "id": "ctx_4642154b3b77",
+      "run_id": "run_5ba664a5f016",
+      "task_id": "task_d497b68d967f",
+      "contract_version": 1,
+      "launch_token_hash": null,
+      "assignee_handle": "term_035237e3-1edc-470c-a9fa-195600dd2bfe",
+      "assignee_pane_key": "e5135b2f-33f0-49af-abd4-2af42104536d:820c40ec-ebd6-4fb4-9b1b-3dfac6cbcfe1",
+      "assignee_orca_session_id": null,
+      "capability_hash": null,
+      "process_incarnation": "aaa97e0d-5026-4e5c-95f8-bb420dcb4c65::D:/MyWorkTree/AbilityKit/issue6-compiler-input-target-repair-ccswitch@@69868649:1e070d31-95b3-440c-8f2d-2bda5b37bfda",
+      "capability_revoked_at": null,
+      "retry_of_dispatch_id": null,
+      "creator_dispatch_id": null,
+      "creator_handle": "term_a345586c-d76c-4d68-afdf-f3a58f9686c1",
+      "creator_pane_key": "c7c2707b-c337-40a6-835c-d0db787ce9af:b4640822-995e-46b5-a63e-db04e94565fa",
+      "creator_orca_session_id": null,
+      "host_scope": null,
+      "status": "dispatched",
+      "failure_count": 0,
+      "last_failure": null,
+      "termination_reason": null,
+      "depth": 1,
+      "consumer_generation": 0,
+      "dispatched_at": "2026-10-06 23:45:11",
+      "completed_at": null,
+      "created_at": "2026-10-06 23:45:11",
+      "last_heartbeat_at": null
+    },
+    "injected": true,
+    "preamble": "You are working inside Orca, a multi-agent IDE. You are a dispatched worker.\nYour coordinator's terminal handle is: term_a345586c-d76c-4d68-afdf-f3a58f9686c1\nYour task ID is: task_d497b68d967f\n\nThe coordinator cannot see this terminal, so reach it with the `orca orchestration`\ncommands below; a question or result left only in this terminal never gets to it.\nDon't post to Slack, GitHub, or other channels during the run; report through these commands.\n\n=== CLI COMMANDS ===\n\n```sh\n  # Report the task outcome (required, exactly once).\n  #\n  # --body must be a 3-sentence executive summary (what you did,\n  # what you found, what's left). Never send an empty body; the coordinator\n  # reads the body first and only opens artifacts if it needs more detail.\n  # Append --files-modified only when files changed, and append --report-path\n  # only when you produced a durable report. Always pass real values; do not\n  # send the example placeholders literally.\n  #\n  # Send worker_done exactly once. Use --outcome succeeded when the\n  # requested work is done, or replace it with --outcome failed when it is not.\n  # Never encode failure only in prose and never silently exit.\n  # Include BOTH taskId and dispatchId in the payload so a late completion\n  # from a failed retry cannot complete the current dispatch.\n  orca orchestration send --from term_035237e3-1edc-470c-a9fa-195600dd2bfe --type worker_done --subject \"<short status>\" --body \"<3-sentence summary: what you did, what you found, what's left>\" --task-id task_d497b68d967f --dispatch-id ctx_4642154b3b77 --outcome succeeded\n\n  # Send a heartbeat every 5 minutes\n  # while actively working on the task. The coordinator uses this to\n  # distinguish \"still thinking\" from \"hung / crashed.\" Skip heartbeats only\n  # while blocked inside `check --wait` or `ask` — those calls are\n  # themselves liveness signals.\n  #\n  # Include BOTH taskId and dispatchId in the payload: the coordinator\n  # attributes the heartbeat to the specific dispatch context, not just\n  # the task, so a straggler heartbeat from a previously-failed dispatch\n  # cannot mask a hung retry.\n  orca orchestration send --from term_035237e3-1edc-470c-a9fa-195600dd2bfe --type heartbeat --subject \"alive\" --task-id task_d497b68d967f --dispatch-id ctx_4642154b3b77 --phase \"<short: investigating|implementing|reviewing|waiting>\"\n\n  # Ask the coordinator a question and block until it answers.\n  #\n  # Use this instead of AskUserQuestion: that opens a local prompt the\n  # coordinator cannot see or answer, so the task would stall until someone\n  # happened to look at this terminal. Send every question through `ask`.\n  #\n  # The `ask` verb durably records a question in this Dispatch's Run and\n  # blocks until the coordinator replies, then prints the reply body. If the\n  # call times out or disconnects, resume with the returned message ID instead\n  # of creating a duplicate question.\n  orca orchestration ask --from term_035237e3-1edc-470c-a9fa-195600dd2bfe --question \"<your question>\" --options \"<optional,comma,separated>\" --timeout-ms 600000\n\n  # Escalate a blocker or failure (pre-completion, when you need the\n  # coordinator to do something before you can continue):\n  orca orchestration send --from term_035237e3-1edc-470c-a9fa-195600dd2bfe --type escalation --subject \"Blocked: <reason>\" --body \"<details>\" --task-id task_d497b68d967f --dispatch-id ctx_4642154b3b77\n\n  # Read coordinator follow-ups. Nothing interrupts you: a durable message only\n  # arrives when you look, so run this at each natural checkpoint — before you\n  # start a new file and after a test run — and once more immediately before\n  # you send worker_done, so a redirect lands before the task settles.\n  orca orchestration check --terminal term_035237e3-1edc-470c-a9fa-195600dd2bfe --json\n```\n\n=== AFTER YOU SEND worker_done ===\n\nworker_done ends your turn for this task. Your dispatched work is complete:\nstop, return to an idle prompt, and take no further actions — do NOT start\nnew or unrelated work, do NOT run a sleep/poll loop, and do NOT keep calling\n`orca orchestration check`. The coordinator has already recorded your\ncompletion and expects no further output.\n\nA direct instruction from the user takes precedence over this idle rule.\nTreat it as new user-owned work: follow it without coordinator approval or a\nfresh Dispatch, and do not send lifecycle messages using the settled task or\nDispatch IDs. Never refuse a direct user request because you were a worker.\n\nDo not exit the shell. Your terminal stays available, and if the\ncoordinator has more for you it will re-engage this terminal with a fresh\npreamble + TASK block, which arrives as new input. Treat that as supervised\nwork under the new Dispatch; ignore stale follow-ups from the settled task.\n\n=== TASK ===\n# Slice 16: compiler input and target attribution repair\n\n## Authority and base\n\nDot request `AK-I6-COOK-FINAL-20261007-02` returned `changes-required` for exact candidate `2bcb6d8165fd5abaa9469d9bc1462a7f3781d2dc` and explicitly authorized one bounded repair worker. Use a fresh cc-switch Codex session with `model_provider=custom` in a new Orca-managed child worktree based exactly on that candidate. At the migration prompt explicitly select `2. Use existing model`.\n\nDo not communicate with, reuse, modify, stop, release, or clean any existing worker session or worktree. You are not alone in the repository; preserve every other branch, worktree, process, failure, evidence record, and user edit.\n\n## Product boundary and Cooking consumer\n\nThis repair serves only the approved Cooking gates `cooking-et-level-runtime` and `cooking-kitchen-loop`. Their truthful compiler-input closure is the concrete consumer and necessity for every shared tool change.\n\nDo not modify Shooter, MOBA, Orleans, Unity, SDK, dependencies, ET versions, gameplay, services, benchmarks, other gate definitions, defaultGate, or unrelated examples. Do not run Unity, physical LAN, services, or benchmarks.\n\n## Exclusive file ownership\n\nThe worker may modify only:\n\n- `tools/test-gate-compiler-events.cs`\n- `tools/test-gate-result-contract.ps1`\n- `tools/tests/test-gate-result-contract.tests.ps1`\n- `tools/tests/fixtures/gate-result-model.ps1`\n- `tools/tests/fixtures/gate-result-fake-dotnet.ps1` only when the fixture protocol must change\n- this task's Slice 16 repair report and raw/control evidence\n\nThe worker must not modify `.agents/skills/cooking-dot-workflow/scripts/records.py`, `.agents/skills/cooking-dot-workflow/scripts/test_controls.py`, `.agents/skills/cooking-dot-workflow/references/recovery.md`, workflow records/index, Issue/PR data, or any other file. The coordinator will separately remove the reusable succession mechanism changes from this PR while preserving their history and evidence.\n\n## Required repair A: compiler input closure\n\nCurrent event reading silently skips relative Csc file inputs and file inputs that are missing at replay time. Preserve each relevant file parameter category and original `ItemSpec`; resolve file paths using explicit project/task context. A required compiler input that was actually consumed but cannot be located, read, or verified must fail closed. Do not classify every scalar compiler parameter as a file.\n\nReproduce and preserve the current false-accept behavior before fixing it. Add named controls for:\n\n1. a valid relative source input positive;\n2. a generated relative source added after capture but before Csc;\n3. relative input omission;\n4. relative input replacement;\n5. an input consumed by Csc and then missing before replay.\n\n## Required repair B: CoreCompile target attribution\n\n`Get-GateEventContextKey` currently omits `targetId`, so a successful Csc from a sibling target in the same project instance can satisfy a different finished CoreCompile. Require each Csc to match the owning CoreCompile target ID. Independent capture events remain associated at project-instance scope; do not require their target ID to equal CoreCompile's target ID.\n\nReproduce and preserve the current false-accept behavior before fixing it. Add named controls for:\n\n1. a Csc-only `targetId` mismatch negative;\n2. a real fixture where a sibling target in the same project instance executes Csc;\n3. retained normal parallel, multi-instance, and incremental-skip positives.\n\n## Acceptance and stop boundary\n\n- Preserve all existing 290 controls with their existing expectations.\n- Run the affected controls and the complete `290 + N` isolated contract suite; record exact source identity, commands, native exits, actual/expected outcomes, named controls, counts, and raw paths.\n- Inspect scope and report every modified file. Commit the bounded implementation and report in the worker branch.\n- Do not run either genuine Cooking gate in this source-worker dispatch. A fresh independent verifier will run both gates only after coordinator review and integration of the frozen implementation commit.\n- Do not push, merge, edit the Issue/PR, archive the task, or clean resources.\n- Before completion, read the orchestration inbox, send exactly one matching `worker_done` for the active Task and Dispatch, then idle.\n",
+    "prompt": {
+      "requestId": "30e44a5b-5267-4fd1-8171-22f8e0bb2447",
+      "stages": [
+        "input_accepted"
+      ],
+      "provider": "codex",
+      "observation": "supported",
+      "processIncarnation": "1e070d31-95b3-440c-8f2d-2bda5b37bfda",
+      "generation": 32,
+      "baselineWorkingSequence": 1,
+      "baselineExplicitWorkingStartedAt": null,
+      "baselinePermissionSequence": 1
+    },
+    "mutation": {
+      "requestId": "30e44a5b-5267-4fd1-8171-22f8e0bb2447",
+      "replayed": false
+    }
+  },
+  "_meta": {
+    "runtimeId": "cfc0b549-ef00-4305-82a8-e90569f2eae4"
+  }
+}

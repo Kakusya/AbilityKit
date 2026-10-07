@@ -1,0 +1,18 @@
+{
+  "id": "44a7f274-a355-4ae8-a98d-93a60ba4e880",
+  "ok": true,
+  "result": {
+    "dispatchId": "ctx_4642154b3b77",
+    "state": "retained",
+    "reason": "no_owned_resource",
+    "processAction": "none",
+    "archive": null,
+    "mutation": {
+      "requestId": "189bf4a7-99d3-48ef-85fc-92680dc2500b",
+      "replayed": false
+    }
+  },
+  "_meta": {
+    "runtimeId": "cfc0b549-ef00-4305-82a8-e90569f2eae4"
+  }
+}

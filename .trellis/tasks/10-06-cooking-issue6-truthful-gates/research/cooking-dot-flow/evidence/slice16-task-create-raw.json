@@ -1,0 +1,30 @@
+{
+  "id": "94d5a863-b87f-40c2-b5df-f4bda769f354",
+  "ok": true,
+  "result": {
+    "task": {
+      "id": "task_d497b68d967f",
+      "run_id": "run_5ba664a5f016",
+      "parent_id": null,
+      "created_by_terminal_handle": "term_a345586c-d76c-4d68-afdf-f3a58f9686c1",
+      "created_by_pane_key": "c7c2707b-c337-40a6-835c-d0db787ce9af:b4640822-995e-46b5-a63e-db04e94565fa",
+      "created_by_process_incarnation": "aaa97e0d-5026-4e5c-95f8-bb420dcb4c65::D:/MyWorkTree/AbilityKit@@454b2342:753afb7a-f7c3-433b-b372-88c707ccf23d",
+      "created_by_run_generation": 2,
+      "task_title": "Issue6 Slice16 compiler input and target repair",
+      "display_name": "Issue6 Slice16 compiler repair",
+      "spec": "# Slice 16: compiler input and target attribution repair\n\n## Authority and base\n\nDot request `AK-I6-COOK-FINAL-20261007-02` returned `changes-required` for exact candidate `2bcb6d8165fd5abaa9469d9bc1462a7f3781d2dc` and explicitly authorized one bounded repair worker. Use a fresh cc-switch Codex session with `model_provider=custom` in a new Orca-managed child worktree based exactly on that candidate. At the migration prompt explicitly select `2. Use existing model`.\n\nDo not communicate with, reuse, modify, stop, release, or clean any existing worker session or worktree. You are not alone in the repository; preserve every other branch, worktree, process, failure, evidence record, and user edit.\n\n## Product boundary and Cooking consumer\n\nThis repair serves only the approved Cooking gates `cooking-et-level-runtime` and `cooking-kitchen-loop`. Their truthful compiler-input closure is the concrete consumer and necessity for every shared tool change.\n\nDo not modify Shooter, MOBA, Orleans, Unity, SDK, dependencies, ET versions, gameplay, services, benchmarks, other gate definitions, defaultGate, or unrelated examples. Do not run Unity, physical LAN, services, or benchmarks.\n\n## Exclusive file ownership\n\nThe worker may modify only:\n\n- `tools/test-gate-compiler-events.cs`\n- `tools/test-gate-result-contract.ps1`\n- `tools/tests/test-gate-result-contract.tests.ps1`\n- `tools/tests/fixtures/gate-result-model.ps1`\n- `tools/tests/fixtures/gate-result-fake-dotnet.ps1` only when the fixture protocol must change\n- this task's Slice 16 repair report and raw/control evidence\n\nThe worker must not modify `.agents/skills/cooking-dot-workflow/scripts/records.py`, `.agents/skills/cooking-dot-workflow/scripts/test_controls.py`, `.agents/skills/cooking-dot-workflow/references/recovery.md`, workflow records/index, Issue/PR data, or any other file. The coordinator will separately remove the reusable succession mechanism changes from this PR while preserving their history and evidence.\n\n## Required repair A: compiler input closure\n\nCurrent event reading silently skips relative Csc file inputs and file inputs that are missing at replay time. Preserve each relevant file parameter category and original `ItemSpec`; resolve file paths using explicit project/task context. A required compiler input that was actually consumed but cannot be located, read, or verified must fail closed. Do not classify every scalar compiler parameter as a file.\n\nReproduce and preserve the current false-accept behavior before fixing it. Add named controls for:\n\n1. a valid relative source input positive;\n2. a generated relative source added after capture but before Csc;\n3. relative input omission;\n4. relative input replacement;\n5. an input consumed by Csc and then missing before replay.\n\n## Required repair B: CoreCompile target attribution\n\n`Get-GateEventContextKey` currently omits `targetId`, so a successful Csc from a sibling target in the same project instance can satisfy a different finished CoreCompile. Require each Csc to match the owning CoreCompile target ID. Independent capture events remain associated at project-instance scope; do not require their target ID to equal CoreCompile's target ID.\n\nReproduce and preserve the current false-accept behavior before fixing it. Add named controls for:\n\n1. a Csc-only `targetId` mismatch negative;\n2. a real fixture where a sibling target in the same project instance executes Csc;\n3. retained normal parallel, multi-instance, and incremental-skip positives.\n\n## Acceptance and stop boundary\n\n- Preserve all existing 290 controls with their existing expectations.\n- Run the affected controls and the complete `290 + N` isolated contract suite; record exact source identity, commands, native exits, actual/expected outcomes, named controls, counts, and raw paths.\n- Inspect scope and report every modified file. Commit the bounded implementation and report in the worker branch.\n- Do not run either genuine Cooking gate in this source-worker dispatch. A fresh independent verifier will run both gates only after coordinator review and integration of the frozen implementation commit.\n- Do not push, merge, edit the Issue/PR, archive the task, or clean resources.\n- Before completion, read the orchestration inbox, send exactly one matching `worker_done` for the active Task and Dispatch, then idle.\n",
+      "status": "ready",
+      "deps": "[]",
+      "result": null,
+      "created_at": "2026-10-06 23:44:45",
+      "completed_at": null
+    },
+    "mutation": {
+      "requestId": "e7cd8a77-b090-4b82-b56a-ab511cf9e0c1",
+      "replayed": false
+    }
+  },
+  "_meta": {
+    "runtimeId": "cfc0b549-ef00-4305-82a8-e90569f2eae4"
+  }
+}

@@ -1,0 +1,23 @@
+{
+  "version": 1,
+  "flow_id": "6d3174fd-2b01-4136-8ea5-0b0cd0e2845d",
+  "seq": 232,
+  "op_id": "6d3174fd-2b01-4136-8ea5-0b0cd0e2845d:000232",
+  "kind": "receipt",
+  "recorded_utc": "2026-10-07T00:32:37.453512Z",
+  "intent_hash": "034768edce596a39e56d66b3dc65177b0e6977850722d5cbdcb57986ab0c371a",
+  "outcome": "applied",
+  "raw_ref": "evidence/slice16-succession-removal-commit.json",
+  "result": {
+    "command": "git commit -m \"fix(cooking): remove workflow succession changes\"",
+    "exitCode": 0,
+    "output": "[Kakusya/issue6-cooking-truthful-gates 20a972bca] fix(cooking): remove workflow succession changes\n 3 files changed, 10 insertions(+), 84 deletions(-)",
+    "commit": "20a972bca",
+    "candidateFilesEqualBase": [
+      ".agents/skills/cooking-dot-workflow/scripts/records.py",
+      ".agents/skills/cooking-dot-workflow/scripts/test_controls.py",
+      ".agents/skills/cooking-dot-workflow/references/recovery.md"
+    ],
+    "localCoordinatorOverlay": ".agents/skills/cooking-dot-workflow/scripts/records.py (uncommitted, excluded from candidate)"
+  }
+}

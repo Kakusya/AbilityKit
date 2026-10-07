@@ -1,0 +1,131 @@
+{
+  "version": 1,
+  "flow_id": "6d3174fd-2b01-4136-8ea5-0b0cd0e2845d",
+  "seq": 224,
+  "op_id": "6d3174fd-2b01-4136-8ea5-0b0cd0e2845d:000224",
+  "kind": "receipt",
+  "recorded_utc": "2026-10-06T23:42:25.661063Z",
+  "intent_hash": "ae921e5a959c88ee3b7cc8e970f5e35a3cd74f53fc0a0373ac0bb5b0a274302b",
+  "outcome": "applied",
+  "raw_ref": "evidence/slice16-worktree-create-raw.json",
+  "result": {
+    "id": "adc543f8-ff52-460e-a04e-fa98e98ce1f8",
+    "ok": true,
+    "result": {
+      "worktree": {
+        "id": "aaa97e0d-5026-4e5c-95f8-bb420dcb4c65::D:/MyWorkTree/AbilityKit/issue6-compiler-input-target-repair-ccswitch",
+        "identity": {
+          "key": "wt2:local:a50cd290-162b-4c95-8150-6cafddf9a13d",
+          "executionHostId": "local",
+          "instanceId": "a50cd290-162b-4c95-8150-6cafddf9a13d"
+        },
+        "instanceId": "a50cd290-162b-4c95-8150-6cafddf9a13d",
+        "repoId": "aaa97e0d-5026-4e5c-95f8-bb420dcb4c65",
+        "projectId": "github:hobobo/abilitykit",
+        "hostId": "local",
+        "projectHostSetupId": "aaa97e0d-5026-4e5c-95f8-bb420dcb4c65",
+        "creatorProvenance": {
+          "kind": "host"
+        },
+        "path": "D:/MyWorkTree/AbilityKit/issue6-compiler-input-target-repair-ccswitch",
+        "head": "2bcb6d8165fd5abaa9469d9bc1462a7f3781d2dc",
+        "branch": "refs/heads/Kakusya/issue6-compiler-input-target-repair-ccswitch",
+        "isBare": false,
+        "isMainWorktree": false,
+        "displayName": "issue6-compiler-input-target-repair-ccswitch",
+        "displayNameMode": "fixed",
+        "comment": "Issue6 Cooking compiler input and target attribution repair via cc-switch custom relay",
+        "linkedIssue": null,
+        "linkedPR": null,
+        "linkedLinearIssue": null,
+        "linkedLinearIssueWorkspaceId": null,
+        "linkedLinearIssueOrganizationUrlKey": null,
+        "linkedGitLabMR": null,
+        "linkedGitLabIssue": null,
+        "linkedBitbucketPR": null,
+        "linkedAzureDevOpsPR": null,
+        "linkedGiteaPR": null,
+        "linkedWorkItem": null,
+        "linkedTaskSourceContext": null,
+        "isArchived": false,
+        "isUnread": false,
+        "isPinned": false,
+        "sortOrder": 1791330115675,
+        "lastActivityAt": 1791330119278,
+        "createdAt": 1791330119278,
+        "cliProvenance": {
+          "kind": "created-by-cli",
+          "createdAt": 1791330113781,
+          "callerTerminalHandle": "term_a345586c-d76c-4d68-afdf-f3a58f9686c1"
+        },
+        "baseRef": "2bcb6d8165fd5abaa9469d9bc1462a7f3781d2dc",
+        "workspaceStatus": "in-progress",
+        "parentWorktreeId": "aaa97e0d-5026-4e5c-95f8-bb420dcb4c65::C:/Users/Administrator/orca/workspaces/AbilityKit/issue6-cooking-truthful-gates",
+        "childWorktreeIds": [],
+        "lineage": {
+          "worktreeId": "aaa97e0d-5026-4e5c-95f8-bb420dcb4c65::D:/MyWorkTree/AbilityKit/issue6-compiler-input-target-repair-ccswitch",
+          "worktreeInstanceId": "a50cd290-162b-4c95-8150-6cafddf9a13d",
+          "parentWorktreeId": "aaa97e0d-5026-4e5c-95f8-bb420dcb4c65::C:/Users/Administrator/orca/workspaces/AbilityKit/issue6-cooking-truthful-gates",
+          "parentWorktreeInstanceId": "bf4f9d02-9346-4b96-a139-30dec2c378fa",
+          "origin": "cli",
+          "capture": {
+            "source": "explicit-cli-flag",
+            "confidence": "explicit"
+          },
+          "createdAt": 1791330119279
+        },
+        "workspaceLineage": {
+          "childWorkspaceKey": "worktree:aaa97e0d-5026-4e5c-95f8-bb420dcb4c65::D:/MyWorkTree/AbilityKit/issue6-compiler-input-target-repair-ccswitch",
+          "childInstanceId": "a50cd290-162b-4c95-8150-6cafddf9a13d",
+          "parentWorkspaceKey": "worktree:aaa97e0d-5026-4e5c-95f8-bb420dcb4c65::C:/Users/Administrator/orca/workspaces/AbilityKit/issue6-cooking-truthful-gates",
+          "parentInstanceId": "bf4f9d02-9346-4b96-a139-30dec2c378fa",
+          "origin": "cli",
+          "capture": {
+            "source": "explicit-cli-flag",
+            "confidence": "explicit"
+          },
+          "createdAt": 1791330119279
+        },
+        "git": {
+          "path": "D:/MyWorkTree/AbilityKit/issue6-compiler-input-target-repair-ccswitch",
+          "head": "2bcb6d8165fd5abaa9469d9bc1462a7f3781d2dc",
+          "branch": "refs/heads/Kakusya/issue6-compiler-input-target-repair-ccswitch",
+          "isBare": false,
+          "isMainWorktree": false
+        }
+      },
+      "lineage": {
+        "worktreeId": "aaa97e0d-5026-4e5c-95f8-bb420dcb4c65::D:/MyWorkTree/AbilityKit/issue6-compiler-input-target-repair-ccswitch",
+        "worktreeInstanceId": "a50cd290-162b-4c95-8150-6cafddf9a13d",
+        "parentWorktreeId": "aaa97e0d-5026-4e5c-95f8-bb420dcb4c65::C:/Users/Administrator/orca/workspaces/AbilityKit/issue6-cooking-truthful-gates",
+        "parentWorktreeInstanceId": "bf4f9d02-9346-4b96-a139-30dec2c378fa",
+        "origin": "cli",
+        "capture": {
+          "source": "explicit-cli-flag",
+          "confidence": "explicit"
+        },
+        "createdAt": 1791330119279
+      },
+      "workspaceLineage": {
+        "childWorkspaceKey": "worktree:aaa97e0d-5026-4e5c-95f8-bb420dcb4c65::D:/MyWorkTree/AbilityKit/issue6-compiler-input-target-repair-ccswitch",
+        "childInstanceId": "a50cd290-162b-4c95-8150-6cafddf9a13d",
+        "parentWorkspaceKey": "worktree:aaa97e0d-5026-4e5c-95f8-bb420dcb4c65::C:/Users/Administrator/orca/workspaces/AbilityKit/issue6-cooking-truthful-gates",
+        "parentInstanceId": "bf4f9d02-9346-4b96-a139-30dec2c378fa",
+        "origin": "cli",
+        "capture": {
+          "source": "explicit-cli-flag",
+          "confidence": "explicit"
+        },
+        "createdAt": 1791330119279
+      },
+      "warnings": [],
+      "catalogVersion": {
+        "epoch": "58b822c0-94d4-4d7e-befc-89675ee21dff",
+        "sequence": 66
+      }
+    },
+    "_meta": {
+      "runtimeId": "cfc0b549-ef00-4305-82a8-e90569f2eae4"
+    }
+  }
+}
