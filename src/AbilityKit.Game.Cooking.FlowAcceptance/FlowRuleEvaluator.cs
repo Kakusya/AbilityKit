@@ -86,17 +86,23 @@ public sealed class FlowRuleEvaluator(RuleRef identity) : IFlowRule
 
             case "C13-REJECT":
                 var losers = evidence.Commands.Where(c => c.BusinessResult?.Outcome == CookingRecipeOutcome.Rejected).ToArray();
-                if (compete && losers.Length != 1) return Check(FlowVerdict.Failed, "One actual business rejection", "Rejected business result missing");
                 foreach (var loser in losers)
                 {
                     if (loser.Completion != CallCompletion.Terminal || loser.NativeDisposition is not ("Executed" or "Duplicate"))
-                        return Check(FlowVerdict.Undetermined, "Formal domain rejection", "Admission/protocol is not a business rejection");
+                        continue;
                     if (loser.BusinessResult!.Reason is not (CookingRecipeRejectionReason.ItemStale or CookingRecipeRejectionReason.TargetOutOfRange) ||
                         loser.BusinessResult.Events.Count != 0 || evidence.Cuts.Values.Any(c => c.CommandEvents.Any(e =>
                             e.Command.Value == loser.BusinessId && e.Player.Value == loser.ActorId)) ||
-                        evidence.Cuts["pickup"].Hands.Single(h => h.ActorId == loser.ActorId).ItemId is not null)
+                        evidence.Cuts.TryGetValue("pickup", out var rejectedCut) &&
+                        rejectedCut.Hands.Single(h => h.ActorId == loser.ActorId).ItemId is not null)
                         return Check(FlowVerdict.Failed, "Rejected command has no own success effects", "Rejected action has effects or unexpected reason");
                 }
+                var competingCalls = evidence.Commands.Where(c => c.StepId == "compete").ToArray();
+                if (losers.Any(c => c.Completion != CallCompletion.Terminal || c.NativeDisposition is not ("Executed" or "Duplicate")) ||
+                    compete && (competingCalls.Length != 2 || competingCalls.Any(c => c.Completion != CallCompletion.Terminal ||
+                        c.BusinessResult is null || c.NativeDisposition is not ("Executed" or "Duplicate"))))
+                    return Check(FlowVerdict.Undetermined, "Formal domain rejection and competing business terminals", "Business terminal unavailable; admission/protocol is not rejection");
+                if (compete && losers.Length != 1) return Check(FlowVerdict.Failed, "One actual business rejection", "Rejected business result count differs");
                 return Check(FlowVerdict.Passed, "Reject only its own side effects", losers.Length == 0 ? "N/A: no rejection in pickup/drop flow" : "Other legal actor changes allowed");
 
             case "C13-IDEMP":

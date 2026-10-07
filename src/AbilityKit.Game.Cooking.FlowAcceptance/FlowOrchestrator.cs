@@ -34,6 +34,7 @@ public sealed class FlowOrchestrator : IFlowOrchestrator
         IFlowSession? session = null;
         FailurePack? frozenFailure = null;
         bool started = false, startupAttempted = false, executed = false, evidenceComplete = false, ownedDirectory = false;
+        bool callerCancellationRecorded = false;
         long startupMs = 0, executeMs = 0, resetMs = 0, sequence = 0;
         string directory = request.OutputRoot;
         IReadOnlyList<ApprovedRule> approvals = Array.Empty<ApprovedRule>();
@@ -158,6 +159,7 @@ public sealed class FlowOrchestrator : IFlowOrchestrator
 
         if (total.ElapsedMilliseconds >= budgets.OverallMs && ownedDirectory)
             AddFailure(FailureKind.HarnessOrEnvironmentFailure, "OverallDeadline", "completion", "Entire run within overall budget", "Budget exhausted");
+        ObserveCallerCancellation();
         var productFailure = failures.Any(f => f.Kind == FailureKind.ProductFailure);
         var productRules = checks.Where(c => c.Rule.Id != "C13-COMPLETE").ToArray();
         var verdict = productFailure ? FlowVerdict.Failed : executed && productRules.Length >= 3 && productRules.All(c => c.Verdict == FlowVerdict.Passed)
@@ -191,6 +193,19 @@ public sealed class FlowOrchestrator : IFlowOrchestrator
                     throw new InvalidDataException("Published result identity mismatch.");
                 result = published;
                 if (total.ElapsedMilliseconds >= budgets.OverallMs) throw new TimeoutException("Publication exceeded overall deadline.");
+                // Successful delivery is accepted only at this validated readback boundary.
+                // Cleanup/publication use independent tokens; caller cancellation still governs acceptance.
+                if (ObserveCallerCancellation())
+                {
+                    if (published.Status == FlowStatus.Passed)
+                    {
+                        File.Move(resultFile, Path.Combine(directory, "incomplete-result.json"), overwrite: false);
+                        frozenFailure = MakePack(cleanup);
+                        await FlowReport.WriteAtomicAsync(Path.Combine(directory, "failure-pack.json"),
+                            JsonSerializer.Serialize(frozenFailure, FlowJson.Options), 2097152, publishToken.Token);
+                    }
+                    result = result with { Status = started ? FlowStatus.Failed : FlowStatus.Blocked, Failures = failures.ToArray() };
+                }
             }
             catch (Exception e)
             {
@@ -223,6 +238,17 @@ public sealed class FlowOrchestrator : IFlowOrchestrator
         }
         void AddFailure(FailureKind kind, string code, string step, string expected, string actual) =>
             failures.Add(new(kind, code, step, null, expected, actual, context.Cuts.Keys.Select(k => "cut:" + k).ToArray()));
+        bool ObserveCallerCancellation()
+        {
+            if (!cancellationToken.IsCancellationRequested) return false;
+            if (!callerCancellationRecorded)
+            {
+                AddFailure(FailureKind.HarnessOrEnvironmentFailure, "CallerCancelled", "completion",
+                    "Caller permits completion through publication/readback", "Caller cancellation observed before completion");
+                callerCancellationRecorded = true;
+            }
+            return true;
+        }
         FailurePack MakePack(CleanupResult cleanupResult) => new(run, request, source, options.ActualInvocation, failures[0], context.Cuts.Values.ToArray(),
             collector?.EventWindow ?? Array.Empty<LoggedEvent>(),
             "& " + string.Join(" ", new[] { "dotnet", typeof(FlowOrchestrator).Assembly.Location, "run", "--request",

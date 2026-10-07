@@ -43,9 +43,7 @@ public sealed class FlowEventCollector : IFlowEventSink
             if (incomplete) return false;
             if (closed || value.SchemaVersion != 1 || value.RunId != run.RunId || value.RunGeneration != run.RunGeneration ||
                 string.IsNullOrWhiteSpace(value.HostId) || value.HostSequence != hostSequences.GetValueOrDefault(value.HostId) + 1 ||
-                !Enum.IsDefined(value.Kind) || value.Kind == FlowEventKind.CommandObserved && (value.Command is null || value.CallId != value.Command.CallId) ||
-                value.Kind is FlowEventKind.StateObserved or FlowEventKind.RoleReady && value.Observation is null ||
-                value.Kind == FlowEventKind.RuleChecked && value.Check is null)
+                !ValidPayload(value))
                 return Fail("InvalidEventIdentitySequenceOrPayload");
             var logged = new LoggedEvent(accepted + 1, DateTimeOffset.UtcNow, value);
             byte[] encoded;
@@ -85,6 +83,18 @@ public sealed class FlowEventCollector : IFlowEventSink
     }
 
     private bool Fail(string code) { incomplete = true; error ??= code; return false; }
+
+    private static bool ValidPayload(FlowEvent value) => value.Kind switch
+    {
+        FlowEventKind.CommandObserved => value.Command is not null && value.CallId == value.Command.CallId &&
+            value.Observation is null && value.Check is null,
+        FlowEventKind.RoleReady or FlowEventKind.StateObserved => value.Observation is not null &&
+            value.Command is null && value.Check is null,
+        FlowEventKind.RuleChecked => value.Check is not null && value.Command is null && value.Observation is null,
+        FlowEventKind.StepStarted or FlowEventKind.RoleFaulted or FlowEventKind.RoleStopped =>
+            value.Command is null && value.Observation is null && value.Check is null,
+        _ => false
+    };
 
     private async Task DrainAsync()
     {

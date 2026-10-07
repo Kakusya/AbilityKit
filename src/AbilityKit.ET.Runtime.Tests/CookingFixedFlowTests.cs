@@ -140,6 +140,15 @@ public sealed class CookingFixedFlowTests
         var falseSuccess = picked.CommandEvents[0] with { Player = new(loser.ActorId), Command = new(loser.BusinessId), Sequence = 99 };
         Assert.Equal(FlowVerdict.Failed, Evaluate("C13-REJECT", Replace(evidence, "pickup", picked with
         { CommandEvents = picked.CommandEvents.Append(falseSuccess).ToArray() })).Verdict);
+        // Synthetic partial terminals cannot prove a reject count, but do not hide independent violations.
+        var partial = evidence with { Commands = commands.Where(c => c.StepId == "compete").Select(c =>
+            c.CallId == winner.CallId ? c with { BusinessResult = null, Completion = CallCompletion.Unknown,
+                NativeDisposition = null, ErrorCode = "CommandTimeout" } : c).ToArray() };
+        Assert.Equal(FlowVerdict.Undetermined, Evaluate("C13-REJECT", partial).Verdict);
+        Assert.Equal(FlowVerdict.Failed, Evaluate("C13-REJECT", Replace(partial, "pickup", picked with
+        { CommandEvents = picked.CommandEvents.Append(falseSuccess).ToArray() })).Verdict);
+        Assert.Equal(FlowVerdict.Failed, Evaluate("C13-OWN", Replace(partial, "pickup", picked with
+        { Hands = picked.Hands.Select(h => h with { ItemId = "flow-item" }).ToArray() })).Verdict);
         Assert.Equal(FlowVerdict.Failed, Evaluate("C13-IDEMP", Replace(evidence, "retry", evidence.Cuts["retry"] with
         { CommandEvents = picked.CommandEvents.Append(picked.CommandEvents[0] with { Sequence = 99 }).ToArray() })).Verdict);
         Assert.Equal(FlowVerdict.Failed, Evaluate("C13-IDEMP", evidence with { Commands = commands.Select(c =>
@@ -208,6 +217,9 @@ public sealed class CookingFixedFlowTests
                 Assert.Contains(first.EventWindow, e => e.Event.Command?.BusinessResult?.Outcome == CookingRecipeOutcome.Accepted);
             if (mode == Control.Timeout)
             {
+                Assert.Equal(FlowVerdict.Undetermined, result.Verdict);
+                Assert.DoesNotContain(result.Failures, f => f.Kind == FailureKind.ProductFailure);
+                Assert.Equal("CommandTimeout", result.Failures[0].Code);
                 var commands = File.ReadAllLines(Path.Combine(request.OutputRoot, "events.jsonl")).Select(FlowJson.Read<LoggedEvent>)
                     .Where(e => e.Event.Command is not null).Select(e => e.Event.Command!).ToArray();
                 Assert.All(commands, c => { Assert.Null(c.BusinessResult); Assert.Equal(CallCompletion.Unknown, c.Completion); });
@@ -234,11 +246,14 @@ public sealed class CookingFixedFlowTests
     public void First_product_failure_survives_cleanup_failure_with_synthetic_cut_labelled()
     {
         var request = FixedFlows.Request("compete-one-item", Output("synthetic product cleanup path"));
+        using var cancelled = new CancellationTokenSource();
         ControlledSession? session = null;
-        var result = Run(request, new Factory(() => session = new(Control.HandMismatchAndCleanupFault, null)));
+        var result = Run(request, new Factory(() => session = new(Control.HandMismatchAndCleanupFault, null)),
+            report: new BrokenReport("cancel", cancelled), token: cancelled.Token);
         Assert.Equal(FlowStatus.Failed, result.Status); Assert.Equal(FlowVerdict.Failed, result.Verdict);
         Assert.Equal(FailureKind.ProductFailure, result.Failures[0].Kind); Assert.Equal("C13-OWN", result.Failures[0].Code);
         Assert.Contains(result.Failures, f => f.Code == "CleanupIncomplete");
+        Assert.Contains(result.Failures, f => f.Code == "CallerCancelled");
         Assert.Equal(CleanupState.Incomplete, result.Cleanup.State);
         Assert.True(session!.FirstFailureExistedAtClose);
         var pack = FlowJson.Read<FailurePack>(File.ReadAllText(Path.Combine(request.OutputRoot, "failure-pack.json")));
@@ -329,6 +344,19 @@ public sealed class CookingFixedFlowTests
             Assert.False(File.Exists(Path.Combine(request.OutputRoot, "result.json")));
             if (mode is "identity" or "deadline") Assert.True(File.Exists(Path.Combine(request.OutputRoot, "incomplete-result.json")));
         }
+        using var cancelled = new CancellationTokenSource();
+        var lateRequest = FixedFlows.Request("pickup-drop-one-item", Output("report-late-cancel"));
+        var late = Run(lateRequest, report: new BrokenReport("cancel", cancelled), token: cancelled.Token);
+        Assert.Equal(FlowStatus.Failed, late.Status); Assert.Equal(1, FlowOrchestrator.ExitCode(late.Status));
+        Assert.True(late.ExecutionComplete); Assert.Equal(FlowVerdict.Passed, late.Verdict);
+        Assert.True(late.EvidenceComplete); Assert.Equal(CleanupState.Complete, late.Cleanup.State);
+        Assert.DoesNotContain(late.Failures, f => f.Kind == FailureKind.ProductFailure || f.Code.StartsWith("ReportWriteFailure:"));
+        Assert.Equal("CallerCancelled", Assert.Single(late.Failures).Code);
+        Assert.False(File.Exists(Path.Combine(lateRequest.OutputRoot, "result.json")));
+        var unaccepted = FlowJson.Read<FlowResult>(File.ReadAllText(Path.Combine(lateRequest.OutputRoot, "incomplete-result.json")));
+        Assert.Equal(FlowStatus.Passed, unaccepted.Status); Assert.Equal(late.Run, unaccepted.Run);
+        var latePack = FlowJson.Read<FailurePack>(File.ReadAllText(Path.Combine(lateRequest.OutputRoot, "failure-pack.json")));
+        Assert.Equal("CallerCancelled", latePack.FirstFailure.Code); Assert.Equal(late.Source, latePack.Source);
     }
 
     [Fact]
@@ -365,6 +393,33 @@ public sealed class CookingFixedFlowTests
         await queue.CompleteAsync(default);
         Assert.Equal("CollectorQueueOverflow", queue.ErrorCode);
         Assert.False(queue.EvidenceComplete);
+        // Synthetic payloads never become required facts under a mismatched event kind.
+        var scope = new CookingLevelScope(new(new("collector"), new("world"), new("match")), new(1), new("level"), 1);
+        var command = new CommandObservation("step", "call", "business", "A",
+            new CookingRecipeCommand(scope.MatchScope, 1, new("A"), new("business"), CookingRecipeOperation.Pickup),
+            null, null, null, null, null, null, null, CallCompletion.Unknown, "synthetic");
+        var observation = new FlowObservation("synthetic", ObservationOrigin.Authority, true, null,
+            new(1, scope, null, null), 0, 0, 0, null, null, Array.Empty<ItemProbe>(), Array.Empty<HandProbe>(), Array.Empty<CookingRecipeEvent>());
+        var check = new RuleCheck(new("C13-OWN", "1.0"), FlowVerdict.Undetermined, "step", "synthetic", "synthetic", Array.Empty<string>());
+        foreach (var wrong in new[]
+        {
+            Event(1) with { Command = command, CallId = command.CallId },
+            Event(1) with { Kind = FlowEventKind.RoleFaulted, Observation = observation },
+            Event(1) with { Kind = FlowEventKind.RoleStopped, Check = check },
+            Event(1) with { Kind = FlowEventKind.CommandObserved, Command = command, CallId = command.CallId, Observation = observation },
+            Event(1) with { Kind = FlowEventKind.CommandObserved, Command = command, CallId = "wrong-call" },
+            Event(1) with { Kind = FlowEventKind.RoleReady, Observation = observation, Command = command },
+            Event(1) with { Kind = FlowEventKind.StateObserved, Observation = observation, Check = check },
+            Event(1) with { Kind = FlowEventKind.RuleChecked, Check = check, Observation = observation }
+        })
+        {
+            var collector = new FlowEventCollector(Output("wrong-kind"), identity, limits, () => new MemoryStream());
+            Assert.False(collector.TryPublish(wrong));
+            Assert.False(collector.HasRequiredEvents(new(new[] { command }, new Dictionary<string, FlowObservation> { ["synthetic"] = observation }, true)));
+            Assert.Empty(collector.EventWindow);
+            await collector.CompleteAsync(default);
+            Assert.False(collector.EvidenceComplete); Assert.Equal("InvalidEventIdentitySequenceOrPayload", collector.ErrorCode);
+        }
     }
 
     private static RuleCheck Evaluate(string id, FlowEvidence evidence)
@@ -460,11 +515,17 @@ public sealed class CookingFixedFlowTests
             return result;
         }
     }
-    private sealed class BrokenReport(string mode) : IFlowReportWriter
+    private sealed class BrokenReport(string mode, CancellationTokenSource? caller = null) : IFlowReportWriter
     {
         public async Task PublishAsync(string directory, FlowResult result, FailurePack? failure, CancellationToken token)
         {
             if (mode == "write") throw new IOException("Synthetic report write failure");
+            if (mode == "cancel")
+            {
+                await new FlowReport().PublishAsync(directory, result, failure, token);
+                caller!.Cancel(); // Deterministic cancellation after marker write, before orchestrator readback acceptance.
+                return;
+            }
             if (mode == "deadline")
             {
                 await new FlowReport().PublishAsync(directory, result, failure, token);

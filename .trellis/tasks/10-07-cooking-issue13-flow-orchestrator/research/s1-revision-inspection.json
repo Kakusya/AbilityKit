@@ -1,0 +1,402 @@
+{
+  "stage": "S1 B1/B2/B3 revision",
+  "status": "Passed",
+  "meaning": "Main independent source/API/raw-result/binary/scope inspection only; not candidate acceptance and no repeated build/tests.",
+  "priorReviewedSha": "b387179fd4ae60339c3aa7f3a6efb3f12f7a976a",
+  "sourceCommit": "92313027d67706cf2c45f3e948f30ced6e66da01",
+  "dirty": true,
+  "configuration": "Debug",
+  "tools": {
+    "dotnetSdk": "10.0.300",
+    "dotnetRuntime": "10.0.8",
+    "orca": "1.4.221"
+  },
+  "changedFiles": [
+    "Docs/design/CookingGame/testing/fixed-flow.md",
+    "src/AbilityKit.ET.Runtime.Tests/CookingFixedFlowTests.cs",
+    "src/AbilityKit.Game.Cooking.FlowAcceptance/FlowEventCollector.cs",
+    "src/AbilityKit.Game.Cooking.FlowAcceptance/FlowOrchestrator.cs",
+    "src/AbilityKit.Game.Cooking.FlowAcceptance/FlowRuleEvaluator.cs"
+  ],
+  "apiDeclarationsMatched": 47,
+  "testCounters": {
+    "total": "10",
+    "executed": "10",
+    "passed": "10",
+    "failed": "0",
+    "error": "0",
+    "timeout": "0",
+    "aborted": "0",
+    "inconclusive": "0",
+    "passedButRunAborted": "0",
+    "notRunnable": "0",
+    "notExecuted": "0",
+    "disconnected": "0",
+    "warning": "0",
+    "completed": "0",
+    "inProgress": "0",
+    "pending": "0"
+  },
+  "testCases": [
+    {
+      "name": "AbilityKit.ET.Runtime.Tests.CookingFixedFlowTests.Missing_required_events_and_report_failure_deadline_wrong_identity_or_no_result_fail_closed",
+      "outcome": "Passed"
+    },
+    {
+      "name": "AbilityKit.ET.Runtime.Tests.CookingFixedFlowTests.Real_immediate_duplicate_merges_terminal_sources_once_and_admission_without_terminal_is_known",
+      "outcome": "Passed"
+    },
+    {
+      "name": "AbilityKit.ET.Runtime.Tests.CookingFixedFlowTests.Real_registered_flows_and_two_fresh_runs_have_complete_evidence_and_no_residual(flow: \"pickup-drop-one-item\")",
+      "outcome": "Passed"
+    },
+    {
+      "name": "AbilityKit.ET.Runtime.Tests.CookingFixedFlowTests.Real_frame_fault_preserves_accepted_pickup_event_and_executed_terminal_without_clock_advance",
+      "outcome": "Passed"
+    },
+    {
+      "name": "AbilityKit.ET.Runtime.Tests.CookingFixedFlowTests.Synthetic_rule_controls_detect_hand_location_reject_success_replay_effects_and_missing_goals",
+      "outcome": "Passed"
+    },
+    {
+      "name": "AbilityKit.ET.Runtime.Tests.CookingFixedFlowTests.Startup_fault_is_blocked_and_runtime_cancel_timeout_preserve_facts_and_independent_cleanup",
+      "outcome": "Passed"
+    },
+    {
+      "name": "AbilityKit.ET.Runtime.Tests.CookingFixedFlowTests.First_product_failure_survives_cleanup_failure_with_synthetic_cut_labelled",
+      "outcome": "Passed"
+    },
+    {
+      "name": "AbilityKit.ET.Runtime.Tests.CookingFixedFlowTests.Collector_bounds_wrong_run_sequence_overflow_partial_and_write_fault_are_latched",
+      "outcome": "Passed"
+    },
+    {
+      "name": "AbilityKit.ET.Runtime.Tests.CookingFixedFlowTests.Real_registered_flows_and_two_fresh_runs_have_complete_evidence_and_no_residual(flow: \"compete-one-item\")",
+      "outcome": "Passed"
+    },
+    {
+      "name": "AbilityKit.ET.Runtime.Tests.CookingFixedFlowTests.Typed_schema_catalog_limits_and_old_outputs_reject_before_host_creation",
+      "outcome": "Passed"
+    }
+  ],
+  "commands": [
+    {
+      "name": "build",
+      "nativeExit": 0
+    },
+    {
+      "name": "test",
+      "nativeExit": 0
+    },
+    {
+      "name": "compete-cli",
+      "nativeExit": 0
+    },
+    {
+      "name": "pickup-drop-cli",
+      "nativeExit": 0
+    }
+  ],
+  "binaries": [
+    {
+      "file": "src/AbilityKit.Game.Cooking.FlowAcceptance/bin/Debug/net10.0/AbilityKit.Game.Cooking.FlowAcceptance.dll",
+      "sha256": "525F65CBD950F135FD090837E540E76EC0C0D9ECFB9D1BBDB01A48AE0FED1DA1"
+    },
+    {
+      "file": "src/AbilityKit.ET.Runtime.Tests/bin/Debug/net10.0/AbilityKit.ET.Runtime.Tests.dll",
+      "sha256": "711BE0D227583AD69A20D589DEBF45D75FB709C3C31242BEC29B70D22B0D53F5"
+    }
+  ],
+  "cliResults": [
+    {
+      "flowId": "compete-one-item",
+      "status": "Passed",
+      "run": {
+        "requestId": "compete-offline-v1",
+        "runId": "run-49f60805b08f4b59a5d3ae94aee6a208",
+        "attemptId": "6b761b02e7ac415eb7c62805cc9725df",
+        "runGeneration": 1
+      },
+      "source": {
+        "commit": "92313027d67706cf2c45f3e948f30ced6e66da01",
+        "dirty": true,
+        "configuration": "Debug",
+        "toolVersion": "SDK 10.0.300; runtime 10.0.8"
+      },
+      "executionComplete": true,
+      "verdict": "Passed",
+      "evidenceComplete": true,
+      "cleanup": {
+        "state": "Complete",
+        "resources": [
+          {
+            "roleId": "authority",
+            "processId": null,
+            "exitConfirmed": true,
+            "errorCode": null
+          }
+        ],
+        "errors": []
+      },
+      "completedGoals": [
+        "competing-pickup",
+        "exact-replay"
+      ],
+      "unverifiedGoals": [
+        "CONVERGE:N/A(S1)",
+        "Unity:NotRun",
+        "Network:NotRun",
+        "PhysicalLAN:NotRun",
+        "OrcaAutomaticWake:NotRun"
+      ],
+      "timing": {
+        "buildMs": null,
+        "startupMs": 183,
+        "executeMs": 43,
+        "resetMs": 3,
+        "totalMs": 236
+      },
+      "eventCount": 13,
+      "checks": [
+        {
+          "rule": {
+            "id": "C13-OWN",
+            "version": "1.0"
+          },
+          "verdict": "Passed",
+          "stepId": "pickup",
+          "expected": "Unique versioned ownership at each committed cut",
+          "actual": "Independent item and hands agree",
+          "evidenceRefs": [
+            "cut:initial",
+            "cut:pickup",
+            "call:call-A",
+            "call:call-B"
+          ]
+        },
+        {
+          "rule": {
+            "id": "C13-REJECT",
+            "version": "1.0"
+          },
+          "verdict": "Passed",
+          "stepId": "pickup",
+          "expected": "Reject only its own side effects",
+          "actual": "Other legal actor changes allowed",
+          "evidenceRefs": [
+            "cut:initial",
+            "cut:pickup",
+            "call:call-A",
+            "call:call-B"
+          ]
+        },
+        {
+          "rule": {
+            "id": "C13-IDEMP",
+            "version": "1.0"
+          },
+          "verdict": "Passed",
+          "stepId": "retry-winner",
+          "expected": "Command effects stay identical",
+          "actual": "Global tick/version changes are allowed",
+          "evidenceRefs": [
+            "cut:initial",
+            "cut:pickup",
+            "cut:retry",
+            "call:call-A",
+            "call:call-B",
+            "call:call-retry"
+          ]
+        },
+        {
+          "rule": {
+            "id": "C13-COMPLETE",
+            "version": "1.0"
+          },
+          "verdict": "Passed",
+          "stepId": "completion",
+          "expected": "All declared execution facts; cleanup assessed separately",
+          "actual": "Execution facts complete",
+          "evidenceRefs": [
+            "cut:initial",
+            "cut:pickup",
+            "cut:retry",
+            "call:call-A",
+            "call:call-B",
+            "call:call-retry"
+          ]
+        }
+      ]
+    },
+    {
+      "flowId": "pickup-drop-one-item",
+      "status": "Passed",
+      "run": {
+        "requestId": "pickup-drop-offline-v1",
+        "runId": "run-a60d5307ce7b4549bc3f335b76effc37",
+        "attemptId": "1bbfe2ce72064ed1921a86dae4f2305c",
+        "runGeneration": 1
+      },
+      "source": {
+        "commit": "92313027d67706cf2c45f3e948f30ced6e66da01",
+        "dirty": true,
+        "configuration": "Debug",
+        "toolVersion": "SDK 10.0.300; runtime 10.0.8"
+      },
+      "executionComplete": true,
+      "verdict": "Passed",
+      "evidenceComplete": true,
+      "cleanup": {
+        "state": "Complete",
+        "resources": [
+          {
+            "roleId": "authority",
+            "processId": null,
+            "exitConfirmed": true,
+            "errorCode": null
+          }
+        ],
+        "errors": []
+      },
+      "completedGoals": [
+        "pickup-drop"
+      ],
+      "unverifiedGoals": [
+        "CONVERGE:N/A(S1)",
+        "Unity:NotRun",
+        "Network:NotRun",
+        "PhysicalLAN:NotRun",
+        "OrcaAutomaticWake:NotRun"
+      ],
+      "timing": {
+        "buildMs": null,
+        "startupMs": 170,
+        "executeMs": 42,
+        "resetMs": 4,
+        "totalMs": 223
+      },
+      "eventCount": 13,
+      "checks": [
+        {
+          "rule": {
+            "id": "C13-OWN",
+            "version": "1.0"
+          },
+          "verdict": "Passed",
+          "stepId": "pickup",
+          "expected": "Unique versioned ownership at each committed cut",
+          "actual": "Independent item and hands agree",
+          "evidenceRefs": [
+            "cut:initial",
+            "cut:pickup",
+            "call:call-pickup"
+          ]
+        },
+        {
+          "rule": {
+            "id": "C13-OWN",
+            "version": "1.0"
+          },
+          "verdict": "Passed",
+          "stepId": "pickup",
+          "expected": "Unique versioned ownership at each committed cut",
+          "actual": "Independent item and hands agree",
+          "evidenceRefs": [
+            "cut:initial",
+            "cut:pickup",
+            "cut:drop",
+            "call:call-pickup",
+            "call:call-drop"
+          ]
+        },
+        {
+          "rule": {
+            "id": "C13-REJECT",
+            "version": "1.0"
+          },
+          "verdict": "Passed",
+          "stepId": "pickup",
+          "expected": "Reject only its own side effects",
+          "actual": "N/A: no rejection in pickup/drop flow",
+          "evidenceRefs": [
+            "cut:initial",
+            "cut:pickup",
+            "cut:drop",
+            "call:call-pickup",
+            "call:call-drop"
+          ]
+        },
+        {
+          "rule": {
+            "id": "C13-IDEMP",
+            "version": "1.0"
+          },
+          "verdict": "Passed",
+          "stepId": "retry-winner",
+          "expected": "Exact replay when flow declares replay",
+          "actual": "N/A: pickup/drop uses new business IDs",
+          "evidenceRefs": [
+            "cut:initial",
+            "cut:pickup",
+            "cut:drop",
+            "call:call-pickup",
+            "call:call-drop"
+          ]
+        },
+        {
+          "rule": {
+            "id": "C13-COMPLETE",
+            "version": "1.0"
+          },
+          "verdict": "Passed",
+          "stepId": "completion",
+          "expected": "All declared execution facts; cleanup assessed separately",
+          "actual": "Execution facts complete",
+          "evidenceRefs": [
+            "cut:initial",
+            "cut:pickup",
+            "cut:drop",
+            "call:call-pickup",
+            "call:call-drop"
+          ]
+        }
+      ]
+    }
+  ],
+  "build": {
+    "nativeExit": 0,
+    "warnings": 2095,
+    "errors": 0,
+    "newFileWarnings": 0,
+    "elapsedSeconds": 6.64
+  },
+  "scope": "Only approved five S1 files changed; public DTO/catalog/rules/product/dependencies/other examples unchanged; user journals excluded.",
+  "remaining": "Exact new-candidate dot S1 review, S2 external-process network and S3 actual toolcaller completion NotRun.",
+  "controls": {
+    "timeout": {
+      "status": "Failed",
+      "verdict": "Undetermined",
+      "firstCause": "CommandTimeout",
+      "productFailure": false,
+      "cleanup": "Complete"
+    },
+    "lateCancellation": {
+      "validResultMarker": false,
+      "preservedUnacceptedMarkerStatus": "Passed",
+      "firstCause": "CallerCancelled",
+      "productVerdict": "Passed",
+      "executionComplete": true,
+      "evidenceComplete": true,
+      "cleanup": "Complete",
+      "returnedFailedExit1": "Verified by source assertion plus Passed TRX case; not a separate external CLI cancellation run."
+    },
+    "productCleanupThenCancellation": {
+      "firstCause": "C13-OWN",
+      "kind": "ProductFailure",
+      "verdict": "Failed",
+      "cleanup": "Incomplete",
+      "firstCausePreservedAcrossCleanup": true
+    },
+    "labels": "Timeout/partial terminals/hand contradictions/wrong-kind/publisher cancellation use declared test seams/synthetic controls. They are not new product failures or external S3 integration."
+  }
+}
