@@ -1,0 +1,32 @@
+{
+  "authorization": "Owner 2026-10-07: 好,请你执行. Applied as local integration of the reviewed skill documentation.",
+  "candidate_sha": "06825bde981082541c9f4f30e59fad4c3b3ccd83",
+  "target": "local master",
+  "expected_base_sha": "3c178851819abac5755c5bc53fa03c8b94257e2a",
+  "delivered_files": [
+    ".agents/skills/cooking-dot-workflow/SKILL.md",
+    ".agents/skills/cooking-dot-workflow/assets/dot-decision.md",
+    ".agents/skills/cooking-dot-workflow/assets/dot-request.md",
+    ".agents/skills/cooking-dot-workflow/references/dot-dialogue.md",
+    ".agents/skills/cooking-dot-workflow/references/operator-example.md"
+  ],
+  "scope_files": [
+    ".agents/skills/cooking-dot-workflow/SKILL.md",
+    ".agents/skills/cooking-dot-workflow/assets/dot-decision.md",
+    ".agents/skills/cooking-dot-workflow/assets/dot-request.md",
+    ".agents/skills/cooking-dot-workflow/references/dot-dialogue.md",
+    ".agents/skills/cooking-dot-workflow/references/operator-example.md",
+    ".trellis/tasks/10-07-cooking-dot-api-design/check.jsonl",
+    ".trellis/tasks/10-07-cooking-dot-api-design/implement.jsonl",
+    ".trellis/tasks/10-07-cooking-dot-api-design/prd.md",
+    ".trellis/tasks/10-07-cooking-dot-api-design/task.json",
+    ".trellis/tasks/10-07-cooking-dot-api-design/research/check-results.json",
+    ".trellis/tasks/10-07-cooking-dot-api-design/research/dot-prior-observation-utf8.json",
+    ".trellis/tasks/10-07-cooking-dot-api-design/research/dot-review-authority.md",
+    ".trellis/tasks/10-07-cooking-dot-api-design/research/implementation-report.md",
+    ".trellis/tasks/10-07-cooking-dot-api-design/research/dot-publication-intent.json"
+  ],
+  "method": "stage exact candidate blobs then fast-forward; retain newer task evidence in working tree",
+  "created_utc": "2026-10-07T12:01:03.444611+00:00",
+  "remote_master_push": false
+}

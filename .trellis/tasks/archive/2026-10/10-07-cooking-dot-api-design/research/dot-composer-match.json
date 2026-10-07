@@ -1,0 +1,6 @@
+{
+  "content_matches": true,
+  "normalization": "ignore LF added by rich text paragraphs and link rendering; all non-LF characters identical",
+  "source_sha256": "d07cf020d15f2b23e59d644ee6f158b1116a6177b3cc0de80dbd242ea319047e",
+  "composer_sha256": "9f627793c740d4199f9d63e88d5bef27fa443b48de132322836986be5ed5fda7"
+}

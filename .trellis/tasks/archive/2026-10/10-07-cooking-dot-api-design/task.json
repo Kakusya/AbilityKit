@@ -3,19 +3,19 @@
   "name": "cooking-dot-api-design",
   "title": "Cooking dot reply API design contract",
   "description": "Require API design in Cooking dot planning replies and API conformance findings in final reviews; scoped skill documentation update only.",
-  "status": "in_progress",
-  "dev_type": null,
-  "scope": null,
+  "status": "completed",
+  "dev_type": "docs",
+  "scope": "cooking",
   "package": null,
   "priority": "P2",
   "creator": "Kakusya",
   "assignee": "Kakusya",
   "createdAt": "2026-10-07",
-  "completedAt": null,
-  "branch": "master",
+  "completedAt": "2026-10-07",
+  "branch": "Kakusya/cooking-dot-api-design-review-20261007",
   "base_branch": "master",
   "worktree_path": null,
-  "commit": null,
+  "commit": "06825bde981082541c9f4f30e59fad4c3b3ccd83",
   "pr_url": null,
   "subtasks": [],
   "children": [],
@@ -24,6 +24,11 @@
   "notes": "",
   "meta": {
     "implementation_status": "completed",
-    "validation_status": "blocked-missing-pyyaml"
+    "validation_status": "static-docs-passed-validator-blocked-nonblocking",
+    "dot_review_status": "accept-candidate",
+    "reviewed_sha": "06825bde981082541c9f4f30e59fad4c3b3ccd83",
+    "review_branch": "Kakusya/cooking-dot-api-design-review-20261007",
+    "completion_scope": "static-documentation-integrated-local-master",
+    "integrated_sha": "06825bde981082541c9f4f30e59fad4c3b3ccd83"
   }
 }

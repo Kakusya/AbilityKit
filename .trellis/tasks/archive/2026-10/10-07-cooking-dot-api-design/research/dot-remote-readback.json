@@ -1,0 +1,24 @@
+{
+  "verified": true,
+  "ref_command": [
+    "git",
+    "ls-remote",
+    "--heads",
+    "origin",
+    "Kakusya/cooking-dot-api-design-review-20261007"
+  ],
+  "ref_exit": 0,
+  "ref_stdout": "06825bde981082541c9f4f30e59fad4c3b3ccd83\trefs/heads/Kakusya/cooking-dot-api-design-review-20261007\n",
+  "ref_stderr": "",
+  "api_command": [
+    "gh",
+    "api",
+    "repos/Kakusya/AbilityKit/commits/06825bde981082541c9f4f30e59fad4c3b3ccd83",
+    "--jq",
+    ".sha"
+  ],
+  "api_exit": 0,
+  "api_stdout": "06825bde981082541c9f4f30e59fad4c3b3ccd83\n",
+  "api_stderr": "",
+  "observed_utc": "2026-10-07T09:56:15.007847+00:00"
+}

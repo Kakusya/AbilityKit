@@ -1,0 +1,33 @@
+裁决：accept-candidate。
+
+request_id：AK-CDF-API-REVIEW-20261007-01
+reviewed_sha：06825bde981082541c9f4f30e59fad4c3b3ccd83
+baseline_sha：3c178851819abac5755c5bc53fa03c8b94257e2a
+
+接受范围
+仅接受相对该基线的五份技能文档改动，作为 branch-only 文档交付。我已全文读取 SKILL.md、dot-request.md、dot-decision.md、dot-dialogue.md、operator-example.md，并核对 recovery、SOP、相关 helper 逻辑及任务检查记录。
+提交差异为五份技能文档加九份本 task 文件；没有脚本/helper 或产品 API 改动。本决定不接受基线中其他未验收工作，也不涉及 Issue #6/#13。
+
+API design: N/A。
+理由：本次没有新增或改变可执行接口、方法签名、DTO 或记录 schema；改变的是“要求 dot 提供 API 设计及一致性结论”的协作合同，因此无需虚构产品 API。
+
+新增合同审阅结论
+
+规划要求具体接口/类型/签名、参数与返回形状、行为与错误、Cooking 消费者及最小调用示例，内容充分。
+所有权、生命周期、Tick/线程、异步、幂等和 schema 细节按实际变化范围说明，未要求无关重构。
+最终审阅必须对照已接受设计，明确差异及处理决定，并与候选接受、验证范围分别记录。
+主会话保存原始回复和 API 引用，不得代补设计；接受性回复缺项时阻止推进，明确 blocker/revision 的原意仍保留。
+缺项补问仍占用原来唯一一次补问及原30分钟预算，没有重置出口。
+operator-example 只更新未来请求示例和交接字段，没有把历史观察改写成新验收。
+
+没有发现需要修改才能接受的文档阻塞项。唯一合同位于回复要求(https://github.com/Kakusya/AbilityKit/blob/06825bde981082541c9f4f30e59fad4c3b3ccd83/.agents/skills/cooking-dot-workflow/references/dot-dialogue.md#required-reply-content)，模板和入口引用一致。
+
+使用时明确两点：helper 的时间判定不能代替主会话的内容完整性检查；“纯文档”也不是自动豁免，若文档实际定义或改变 API 合同，仍要审阅该设计。N/A 必须确实不适用并说明理由。
+
+PyYAML 与验证范围
+PyYAML 缺失不阻塞本次限定的静态文档接受。记录显示 validator 在 import yaml 时退出1，尚未完成验证；其状态必须继续保留 Blocked，不能由链接检查或本次审阅代称 Passed。
+我没有执行检查。已读取所报 diff/context/24个链接检查的原件；宿主自动加载保持 NotRun，产品测试和二进制身份保持 N/A。本次也不证明完整工作流或自动调用已经通过。
+
+allowed_next_action
+保存本请求的完整回复、精确 SHA、API N/A 理由及接受范围，追加本轮审阅回执。此前“尚未询问/尚未提交”的记录保留为当时事实，不改写历史。
+如追加回复或记账提交，列明仅证据差异并核对五份交付文档未变。需要补跑 validator 时，可在已有合适依赖的环境另记结果；本决定不要求安装依赖，也不授权 master 合并、发布、资源清理或旧流程继续。

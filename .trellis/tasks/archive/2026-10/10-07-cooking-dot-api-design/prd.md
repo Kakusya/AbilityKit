@@ -30,3 +30,7 @@ Owner 本轮要求修改 `cooking-dot-worktree`，让询问 dot 的返回内容�
 ## 2026-10-07 追加授权：dot 审阅
 
 Owner 后续要求“你可以给 dot 审阅一下”。由本轮原主会话将当前五处文档提交给已核实的 dot 会话，保存完整回复与精确来源。为供 dot 读取固定 GitHub commit，可创建并推送独立任务审阅提交；仅分支审阅，不含 master 合并、发布、其他 Issue 派发或清理。使用独立 Git index 保存本任务文件，不改变当前 master HEAD、真实 index 或其他工作区改动。此为外部技能审阅，不启动整个 supervised worker 流程或接管历史 flow。
+
+## 2026-10-07 追加授权：落实已接受版本
+
+Owner 在获知 dot 的 accept-candidate 后要求“好，请你执行”。本轮将此指令落实为把已接受候选原样整合到本地 master 并收尾；不从本轮指令派生任何旧 Issue 或产品施工。候选 `06825bde981082541c9f4f30e59fad4c3b3ccd83` 已精确 fast-forward，五份交付文档 hash 未变。完成标准按 dot 明确接受的静态文档范围：整合后空白、context 和 24 个链接检查 Passed；PyYAML validator 的原 Blocked 保留，作为该限定接受的非阻塞验证缺口。

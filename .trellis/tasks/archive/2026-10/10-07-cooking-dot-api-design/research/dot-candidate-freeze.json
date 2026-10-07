@@ -1,0 +1,33 @@
+{
+  "candidate_sha": "06825bde981082541c9f4f30e59fad4c3b3ccd83",
+  "branch": "Kakusya/cooking-dot-api-design-review-20261007",
+  "base_sha": "3c178851819abac5755c5bc53fa03c8b94257e2a",
+  "tree": "35013b36360707edd4afb6a86c22c6da34fd1893",
+  "files": [
+    ".agents/skills/cooking-dot-workflow/SKILL.md",
+    ".agents/skills/cooking-dot-workflow/assets/dot-decision.md",
+    ".agents/skills/cooking-dot-workflow/assets/dot-request.md",
+    ".agents/skills/cooking-dot-workflow/references/dot-dialogue.md",
+    ".agents/skills/cooking-dot-workflow/references/operator-example.md",
+    ".trellis/tasks/10-07-cooking-dot-api-design/check.jsonl",
+    ".trellis/tasks/10-07-cooking-dot-api-design/implement.jsonl",
+    ".trellis/tasks/10-07-cooking-dot-api-design/prd.md",
+    ".trellis/tasks/10-07-cooking-dot-api-design/task.json",
+    ".trellis/tasks/10-07-cooking-dot-api-design/research/check-results.json",
+    ".trellis/tasks/10-07-cooking-dot-api-design/research/dot-prior-observation-utf8.json",
+    ".trellis/tasks/10-07-cooking-dot-api-design/research/dot-review-authority.md",
+    ".trellis/tasks/10-07-cooking-dot-api-design/research/implementation-report.md",
+    ".trellis/tasks/10-07-cooking-dot-api-design/research/dot-publication-intent.json"
+  ],
+  "stat": ".agents/skills/cooking-dot-workflow/SKILL.md       |   6 +-\n .../cooking-dot-workflow/assets/dot-decision.md    |   4 +\n .../cooking-dot-workflow/assets/dot-request.md     |   6 +-\n .../references/dot-dialogue.md                     |  18 ++-\n .../references/operator-example.md                 |   6 +-\n .../tasks/10-07-cooking-dot-api-design/check.jsonl |   1 +\n .../10-07-cooking-dot-api-design/implement.jsonl   |   1 +\n .trellis/tasks/10-07-cooking-dot-api-design/prd.md |  32 ++++\n .../research/check-results.json                    | 163 +++++++++++++++++++++\n .../research/dot-prior-observation-utf8.json       |  85 +++++++++++\n .../research/dot-publication-intent.json           |  39 +++++\n .../research/dot-review-authority.md               |   9 ++\n .../research/implementation-report.md              |  16 ++\n .../tasks/10-07-cooking-dot-api-design/task.json   |  29 ++++\n 14 files changed, 408 insertions(+), 7 deletions(-)",
+  "delivered_git_sha256": {
+    ".agents/skills/cooking-dot-workflow/SKILL.md": "d2aec3f04aebadf60ff8c9446545163cee9afe290c7b8c8f990a73e20e3fc1b6",
+    ".agents/skills/cooking-dot-workflow/assets/dot-decision.md": "db126412969175b323522d783097659ed1d89fbbeb7531dee5a18f72a3701ee0",
+    ".agents/skills/cooking-dot-workflow/assets/dot-request.md": "c957fdbafc0eafdadd76e23063fda485edef55da84223b6aa080d5028ac3c01a",
+    ".agents/skills/cooking-dot-workflow/references/dot-dialogue.md": "5f5cf273bcfaaa9b08f5df371eb066f05a5292c904b5d1dde99f9f2a29c3b0e8",
+    ".agents/skills/cooking-dot-workflow/references/operator-example.md": "d05b151ff0bad9ca11679326a589366b04611a1f7fde6e18ab94a8340b21c09c"
+  },
+  "created_utc": "2026-10-07T09:55:51.317711+00:00",
+  "index_path": "C:\\Users\\ADMINI~1\\AppData\\Local\\Temp\\cooking-dot-api-review-20261007.index",
+  "actual_head_after": "3c178851819abac5755c5bc53fa03c8b94257e2a"
+}

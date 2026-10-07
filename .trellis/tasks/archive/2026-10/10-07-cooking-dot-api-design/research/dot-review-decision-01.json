@@ -1,0 +1,80 @@
+{
+  "kind": "external-skill-review",
+  "request_id": "AK-CDF-API-REVIEW-20261007-01",
+  "type": "final-review",
+  "reviewed_sha": "06825bde981082541c9f4f30e59fad4c3b3ccd83",
+  "decision": "accept-candidate",
+  "accepted_scope": "Only five changed skill documentation files relative to baseline; branch-only static documentation acceptance",
+  "conversation_id": "https://chatgpt.com/dots/01a10258-c084-74bb-8bcc-ec01958e5023",
+  "request_message_id": "3f12f99a2ea4819b8541c90bd4ea9e30~3f12f99a2ea4819b8541c90bd4ea9e30~CalpicoMessage~Sentinel_47cc25ee2f2c8191a0d95182794c2929",
+  "prior_message_boundary": "3f12f99a2ea4819b8541c90bd4ea9e30~3f12f99a2ea4819b8541c90bd4ea9e30~CalpicoMessage~Sentinel_56250a346bc081919fe914e5cc498b33",
+  "reply_message_id": "3f12f99a2ea4819b8541c90bd4ea9e30~3f12f99a2ea4819b8541c90bd4ea9e30~CalpicoMessage~Sentinel_8f086328c7348191b4043beff018f637",
+  "raw_full_reply_ref": "dot-review-reply-raw-01.txt",
+  "raw_reply_sha256": "b0294be8e29a34c7190ade7ac9244d5c68f9b17d48cf2e536e98218b9a47fdfe",
+  "api_design": "N/A",
+  "api_reason": "No executable interface, method signature, DTO or record schema changed; reviewed collaboration contract requiring API design instead",
+  "reply_completeness": "justified-N/A; explicit verdict/full SHA/acceptance scope/API contract review and permitted next action",
+  "reply_posted_utc": null,
+  "posted_utc_reliability": "unavailable; not inferred from relative UI time",
+  "observed_utc": "2026-10-07T10:03:03.816285+00:00",
+  "completion_verified_utc": "2026-10-07T10:04:41.963669+00:00",
+  "timing": "timely",
+  "timing_basis": "complete-observation-upper-bound",
+  "time_source": "local system UTC datetime.now(timezone.utc)",
+  "uncertainty_ms": 2000,
+  "trusted_upper_utc": "2026-10-07T10:03:05.816285+00:00",
+  "full_snapshot_ref": "dot-final-snapshot-01.json",
+  "prior_snapshot_ref": "dot-prior-snapshot-01.json",
+  "full_observation_ref": "dot-observation-03.json",
+  "complete": true,
+  "generating": false,
+  "verified_after_request": true,
+  "absent_at_prior_boundary": true,
+  "original_deadline_utc": "2026-10-07T10:27:41.204835+00:00",
+  "supplement_used": false,
+  "prior_timeout": null,
+  "main_scope_evidence_approval": true,
+  "delivered_hashes": {
+    ".agents/skills/cooking-dot-workflow/SKILL.md": {
+      "candidate_sha256": "d2aec3f04aebadf60ff8c9446545163cee9afe290c7b8c8f990a73e20e3fc1b6",
+      "working_sha256": "d2aec3f04aebadf60ff8c9446545163cee9afe290c7b8c8f990a73e20e3fc1b6",
+      "git_blob_oid": "ab2046c416ebf9c07bbc9f496bc8132c2a092cdc",
+      "unchanged": true
+    },
+    ".agents/skills/cooking-dot-workflow/assets/dot-decision.md": {
+      "candidate_sha256": "db126412969175b323522d783097659ed1d89fbbeb7531dee5a18f72a3701ee0",
+      "working_sha256": "db126412969175b323522d783097659ed1d89fbbeb7531dee5a18f72a3701ee0",
+      "git_blob_oid": "8bd3f924977df835fb9490cb5d84160c4b8655a9",
+      "unchanged": true
+    },
+    ".agents/skills/cooking-dot-workflow/assets/dot-request.md": {
+      "candidate_sha256": "c957fdbafc0eafdadd76e23063fda485edef55da84223b6aa080d5028ac3c01a",
+      "working_sha256": "c957fdbafc0eafdadd76e23063fda485edef55da84223b6aa080d5028ac3c01a",
+      "git_blob_oid": "2ebfc8d19e78f3a8401eccc607ca9b1c52615b23",
+      "unchanged": true
+    },
+    ".agents/skills/cooking-dot-workflow/references/dot-dialogue.md": {
+      "candidate_sha256": "5f5cf273bcfaaa9b08f5df371eb066f05a5292c904b5d1dde99f9f2a29c3b0e8",
+      "working_sha256": "5f5cf273bcfaaa9b08f5df371eb066f05a5292c904b5d1dde99f9f2a29c3b0e8",
+      "git_blob_oid": "7deef65ef53fb1f4165736fbd25903dc663536c7",
+      "unchanged": true
+    },
+    ".agents/skills/cooking-dot-workflow/references/operator-example.md": {
+      "candidate_sha256": "d05b151ff0bad9ca11679326a589366b04611a1f7fde6e18ab94a8340b21c09c",
+      "working_sha256": "d05b151ff0bad9ca11679326a589366b04611a1f7fde6e18ab94a8340b21c09c",
+      "git_blob_oid": "c8724a6282e7298ff923df50f0aa4e10cf96621f",
+      "unchanged": true
+    }
+  },
+  "validation": {
+    "static_document_checks": "Passed",
+    "stock_validator": "Blocked: missing PyYAML; dot explicitly says nonblocking for this static documentation acceptance",
+    "live_host_loading": "NotRun",
+    "product_tests": "N/A"
+  },
+  "next_action": "Preserve reply/accounting evidence; no source revision required",
+  "merge": "NotRun",
+  "publication": "NotRun",
+  "cleanup": "NotRun",
+  "actual_head_after": "3c178851819abac5755c5bc53fa03c8b94257e2a"
+}

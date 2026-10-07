@@ -1,0 +1,158 @@
+{
+  "actual_source_sha": "06825bde981082541c9f4f30e59fad4c3b3ccd83",
+  "actual_branch": "master",
+  "dirty": " M .trellis/tasks/10-07-cooking-dot-api-design/task.json\n?? .trellis/tasks/10-07-cooking-dot-api-design/research/dot-candidate-freeze.json\n?? .trellis/tasks/10-07-cooking-dot-api-design/research/dot-composer-match.json\n?? .trellis/tasks/10-07-cooking-dot-api-design/research/dot-composer-readback-01.json\n?? .trellis/tasks/10-07-cooking-dot-api-design/research/dot-fill-receipt-01.json\n?? .trellis/tasks/10-07-cooking-dot-api-design/research/dot-fill-receipt-02.json\n?? .trellis/tasks/10-07-cooking-dot-api-design/research/dot-final-snapshot-01.json\n?? .trellis/tasks/10-07-cooking-dot-api-design/research/dot-observation-01.json\n?? .trellis/tasks/10-07-cooking-dot-api-design/research/dot-observation-02.json\n?? .trellis/tasks/10-07-cooking-dot-api-design/research/dot-observation-03.json\n?? .trellis/tasks/10-07-cooking-dot-api-design/research/dot-presend-snapshot-01.json\n?? .trellis/tasks/10-07-cooking-dot-api-design/research/dot-prior-observation.json\n?? .trellis/tasks/10-07-cooking-dot-api-design/research/dot-prior-snapshot-01.json\n?? .trellis/tasks/10-07-cooking-dot-api-design/research/dot-push-receipt.json\n?? .trellis/tasks/10-07-cooking-dot-api-design/research/dot-remote-readback.json\n?? .trellis/tasks/10-07-cooking-dot-api-design/research/dot-review-decision-01.json\n?? .trellis/tasks/10-07-cooking-dot-api-design/research/dot-review-reply-raw-01.txt\n?? .trellis/tasks/10-07-cooking-dot-api-design/research/dot-review-request-01.txt\n?? .trellis/tasks/10-07-cooking-dot-api-design/research/dot-review-send-intent-01.json\n?? .trellis/tasks/10-07-cooking-dot-api-design/research/dot-review-summary.md\n?? .trellis/tasks/10-07-cooking-dot-api-design/research/dot-review-wait-state.json\n?? .trellis/tasks/10-07-cooking-dot-api-design/research/dot-send-click-receipt-01.json\n?? .trellis/tasks/10-07-cooking-dot-api-design/research/local-integration-intent.json\n?? .trellis/tasks/10-07-cooking-dot-api-design/research/local-integration-receipt.json\n",
+  "verified_utc": "2026-10-07T12:01:59.169390+00:00",
+  "python": "3.14.8 (tags/v3.14.8:8e6e75d, Sep 30 2026, 18:19:33) [MSC v.1944 64 bit (AMD64)]",
+  "git": "git version 2.56.0.windows.1",
+  "delivered_hashes": {
+    ".agents/skills/cooking-dot-workflow/SKILL.md": "d2aec3f04aebadf60ff8c9446545163cee9afe290c7b8c8f990a73e20e3fc1b6",
+    ".agents/skills/cooking-dot-workflow/assets/dot-decision.md": "db126412969175b323522d783097659ed1d89fbbeb7531dee5a18f72a3701ee0",
+    ".agents/skills/cooking-dot-workflow/assets/dot-request.md": "c957fdbafc0eafdadd76e23063fda485edef55da84223b6aa080d5028ac3c01a",
+    ".agents/skills/cooking-dot-workflow/references/dot-dialogue.md": "5f5cf273bcfaaa9b08f5df371eb066f05a5292c904b5d1dde99f9f2a29c3b0e8",
+    ".agents/skills/cooking-dot-workflow/references/operator-example.md": "d05b151ff0bad9ca11679326a589366b04611a1f7fde6e18ab94a8340b21c09c"
+  },
+  "checks": [
+    {
+      "name": "integrated-whitespace",
+      "command": [
+        "git",
+        "diff",
+        "3c178851819abac5755c5bc53fa03c8b94257e2a",
+        "06825bde981082541c9f4f30e59fad4c3b3ccd83",
+        "--check"
+      ],
+      "exit_code": 0,
+      "stdout": "",
+      "stderr": "",
+      "status": "Passed"
+    },
+    {
+      "name": "task-context",
+      "command": [
+        "C:\\Python314\\python.exe",
+        ".trellis/scripts/task.py",
+        "validate",
+        "D:\\MyWorkTree\\AbilityKit\\.trellis\\tasks\\10-07-cooking-dot-api-design"
+      ],
+      "exit_code": 0,
+      "stdout": "\u001b[0;34m=== Validating Context Files ===\u001b[0m\nTarget dir: D:\\MyWorkTree\\AbilityKit\\.trellis\\tasks\\10-07-cooking-dot-api-design\n\n  \u001b[0;32mimplement.jsonl: ✓ (1 entries)\u001b[0m\n  \u001b[0;32mcheck.jsonl: ✓ (1 entries)\u001b[0m\n\n\u001b[0;32m✓ All validations passed\u001b[0m\n",
+      "stderr": "",
+      "status": "Passed"
+    },
+    {
+      "name": "local-links-and-anchor",
+      "status": "Passed",
+      "coverage": 24,
+      "errors": [],
+      "links": [
+        {
+          "file": ".agents/skills/cooking-dot-workflow/SKILL.md",
+          "target": "../../../AGENTS.md"
+        },
+        {
+          "file": ".agents/skills/cooking-dot-workflow/SKILL.md",
+          "target": "../../../Docs/design/CookingGame/progress.md"
+        },
+        {
+          "file": ".agents/skills/cooking-dot-workflow/SKILL.md",
+          "target": "../../../.trellis/spec/cooking/index.md"
+        },
+        {
+          "file": ".agents/skills/cooking-dot-workflow/SKILL.md",
+          "target": "../../../.trellis/spec/abilitykit/supervised-issue-delivery.md"
+        },
+        {
+          "file": ".agents/skills/cooking-dot-workflow/SKILL.md",
+          "target": "references/recovery.md"
+        },
+        {
+          "file": ".agents/skills/cooking-dot-workflow/SKILL.md",
+          "target": "assets/checkpoint-operation.md"
+        },
+        {
+          "file": ".agents/skills/cooking-dot-workflow/SKILL.md",
+          "target": "assets/dot-request.md"
+        },
+        {
+          "file": ".agents/skills/cooking-dot-workflow/SKILL.md",
+          "target": "assets/dot-decision.md"
+        },
+        {
+          "file": ".agents/skills/cooking-dot-workflow/SKILL.md",
+          "target": "references/dot-dialogue.md"
+        },
+        {
+          "file": ".agents/skills/cooking-dot-workflow/SKILL.md",
+          "target": "references/recovery.md"
+        },
+        {
+          "file": ".agents/skills/cooking-dot-workflow/SKILL.md",
+          "target": "references/operator-example.md"
+        },
+        {
+          "file": ".agents/skills/cooking-dot-workflow/SKILL.md",
+          "target": "references/dot-dialogue.md#required-reply-content"
+        },
+        {
+          "file": ".agents/skills/cooking-dot-workflow/SKILL.md",
+          "target": "references/recovery.md#production-merge-and-close"
+        },
+        {
+          "file": ".agents/skills/cooking-dot-workflow/assets/dot-decision.md",
+          "target": "../references/dot-dialogue.md"
+        },
+        {
+          "file": ".agents/skills/cooking-dot-workflow/assets/dot-request.md",
+          "target": "../references/dot-dialogue.md#required-reply-content"
+        },
+        {
+          "file": ".agents/skills/cooking-dot-workflow/assets/dot-request.md",
+          "target": "../references/dot-dialogue.md"
+        },
+        {
+          "file": ".agents/skills/cooking-dot-workflow/references/dot-dialogue.md",
+          "target": "recovery.md"
+        },
+        {
+          "file": ".agents/skills/cooking-dot-workflow/references/dot-dialogue.md",
+          "target": "../assets/dot-request.md"
+        },
+        {
+          "file": ".agents/skills/cooking-dot-workflow/references/dot-dialogue.md",
+          "target": "../assets/dot-decision.md"
+        },
+        {
+          "file": ".agents/skills/cooking-dot-workflow/references/operator-example.md",
+          "target": "recovery.md"
+        },
+        {
+          "file": ".agents/skills/cooking-dot-workflow/references/operator-example.md",
+          "target": "dot-dialogue.md"
+        },
+        {
+          "file": ".agents/skills/cooking-dot-workflow/references/operator-example.md",
+          "target": "../assets/checkpoint-operation.md"
+        },
+        {
+          "file": ".agents/skills/cooking-dot-workflow/references/operator-example.md",
+          "target": "../assets/dot-request.md"
+        },
+        {
+          "file": ".agents/skills/cooking-dot-workflow/references/operator-example.md",
+          "target": "../assets/dot-decision.md"
+        }
+      ]
+    }
+  ],
+  "stock_validator": {
+    "status": "Blocked",
+    "original_exit_code": 1,
+    "reason": "Missing PyYAML; original raw failure preserved in check-results.json; dot explicitly waived as nonblocking for static documentation acceptance",
+    "original_ref": "check-results.json"
+  },
+  "host_automatic_invocation": "NotRun",
+  "product_tests": "N/A: documentation only",
+  "binary_identity": "N/A",
+  "remote_master_push": "NotRun"
+}
