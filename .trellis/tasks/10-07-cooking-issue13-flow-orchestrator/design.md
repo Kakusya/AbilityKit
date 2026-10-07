@@ -1,3 +1,5 @@
+Current API amendment: [accepted-api-amendment](research/accepted-api-amendment.md) supersedes affected draft signatures and adds only narrow CLI diagnostics/output override in the original allowed files. [Full decision](research/dot-api-amendment-decision.md). No additional gameplay/rule/dependency scope.
+
 # Accepted 技术规划；Owner已授权完成Issue13
 
 Owner后续目标授权见 [approval](research/owner-approval-20261007.md)：按下述设计推进全部切片，禁止过度测试，模糊点及时向dot询问。下文“S0-only/未批准”是当时的dot决定及历史事实，不再表示当前实施阻塞。不得扩大其他示例/Unity/依赖或修改规则降低标准。

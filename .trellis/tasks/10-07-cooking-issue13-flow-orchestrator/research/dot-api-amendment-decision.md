@@ -1,0 +1,5 @@
+# Dot API amendment decision
+
+Accepted request `AK-I13-API-CLARIFY-20261007-01`, reviewed full SHA `6ad948d0c72255873b4fbd1cd6b5fce7594e3d13`, timely complete observation at 2026-10-07T14:56:32.8076977Z within original30min budget. Posted UTC unavailable/null; reliable observed upper bound, full identity/boundary and source corroboration retained locally. No supplement used. Raw full reply and six exact declaration blocks are preserved in [raw reply](dot-api-amendment-reply-raw.txt) and [accepted amendment](accepted-api-amendment.md).
+
+API design complete, no remaining planning blocker. This supersedes only explicitly affected draft signatures; no compatibility overload fabricates invocation. Stage implementation acceptance is still pending. Same approved files/Owner categories, no production/oldIssue6 scope expansion. Main can apply to active S1; S1 then independent check/freeze/final review before S2. Exact raw poll times are retained; one early read is documented, no budget/quota reset.

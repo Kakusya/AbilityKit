@@ -1,3 +1,5 @@
+Current contract: apply [accepted-api-amendment](accepted-api-amendment.md) first for FailurePack/RunAsync/RoleControl and new invocation/options; original blocks below are retained as S0 design history.
+
 # Accepted proposed test APIs (not implemented)
 
 Source: AK-I13-S0-PLAN-20261007-01 / a8ea630ca1fd29fcf0327556f7847e13f589c218; full original [reply](dot-plan-reply-raw.txt). Signatures below are verbatim dot proposals, not main replacements.

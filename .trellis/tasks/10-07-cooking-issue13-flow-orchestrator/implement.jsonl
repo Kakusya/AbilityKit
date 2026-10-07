@@ -2,3 +2,4 @@
 {"file": ".trellis/tasks/10-07-cooking-issue13-flow-orchestrator/research/source-inventory.md", "reason": "Verified source boundaries and reuse limits"}
 {"file": ".trellis/tasks/10-07-cooking-issue13-flow-orchestrator/research/accepted-api-design.md", "reason": "Exact dot supplied API proposals; approved for bounded implementation"}
 {"file": ".trellis/tasks/10-07-cooking-issue13-flow-orchestrator/research/owner-approval-20261007.md", "reason": "Current scope, rule category approval and no excessive testing constraint"}
+{"file": ".trellis/tasks/10-07-cooking-issue13-flow-orchestrator/research/accepted-api-amendment.md", "reason": "Exact dot bounded API amendment and CLI diagnostic contracts"}

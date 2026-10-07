@@ -1,3 +1,5 @@
+Current API amendment: [accepted-api-amendment](research/accepted-api-amendment.md) supersedes affected draft signatures and adds only narrow CLI diagnostics/output override in the original allowed files. [Full decision](research/dot-api-amendment-decision.md). No additional gameplay/rule/dependency scope.
+
 # Accepted 技术执行计划；开始 S1
 
 Owner后续要求完成Issue13，已批准所呈类别与有界S1→S2→S3；[approval](research/owner-approval-20261007.md)。历史S0-only段落保留来源；当前先一个worker实施S1，独立检查/技术审阅后推进S2/S3，不重复要求Owner确认routine步骤。测试严格按必要范围，不扩全仓或累计控制数。
