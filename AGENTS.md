@@ -51,6 +51,7 @@
 
 - 修改前看 Git 状态，保留用户解决方案及 `Unity/Assets/Practice/`、`src/AbilityKit.Demo.MyPractice/`；不用清空/reset/全局 kill 处理任务。
 - 获准并行工程使用 Orca 受管 worktree 与 supervised orchestration；恢复核对实际 worker/dispatch/进程，不凭状态文件重启。本轮文档任务不得清理用户工作树、备份或进程，不沿用旧合并授权。
+- 全项目长期约束：worktree 只能由根协调者直接创建。任何处于非主工作树中的 worker、agent 或终端都不得调用 `orca worktree create`、`orca orchestration worker-start --worktree new-child|new-top-level`、`git worktree add` 或等价入口来创建后代工作树，也不得委托其他会话代建；需要新的源码隔离时必须停止当前扩展并上报根协调者，由根协调者复用现有工作树或记录必要性后创建。该约束不禁止根协调者在已经批准的现有工作树中启动新终端。违反该约束产生的运行与验证不得作为独占执行证据，派生资源须保留到根协调者完成审计和回收。
 - 持续检查 worktree 生命周期。仅在无活动任务/进程、改动已合并或妥善保存、证据已迁出后按授权及时清理；worker 停止不等于分支可删。保留来源、更新路由，见 [生命周期记录](.trellis/tasks/10-02-cooking-gameplay-menu-plan/research/worktree-lifecycle.md)。Windows 递归删除/移动前核对绝对目标位于指定 workspace，不跨 shell 拼删除命令。
 - 本仓库只用 Trellis 管理工程任务与记录。复杂任务在 planning 完成并审阅 prd/design/implement/context manifests，明确批准后才 in_progress。恢复读 task 全部产物、research 与 manifest 规范；迁移 planning/blocked 不意味着已实施。验证、提交、归档独立，不提交本机 developer/runtime/cache/log。
 - Trellis 安装 0.6.17，Node >=18、Python >=3.9，见 [安装参考](ADR/reference/README.md)。共享配置 .trellis/；宿主集成 .zcode/、.codex/、.agents/skills/trellis-*。磁盘 hook/技能存在不代表宿主已批准或加载；技能列表需新会话刷新，宿主禁用 hooks 时按 bridge 提示安装后新开会话。
