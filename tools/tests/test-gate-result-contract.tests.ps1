@@ -136,7 +136,7 @@ function Get-ControlProducerReceipts {
 }
 
 function Invoke-RealCompilerControlBuild {
-    param([string]$Directory,$Fixture,[string]$BarrierMode='Parallel',[switch]$BypassSecondCapture,[switch]$Incremental,[switch]$NoBarrier)
+    param([string]$Directory,$Fixture,[string]$BarrierMode='Parallel',[switch]$BypassSecondCapture,[switch]$Incremental,[switch]$NoBarrier,[scriptblock]$TargetTransform)
     $dotnet=(Get-Command dotnet -CommandType Application).Source
     $sdkVersion=(& $dotnet --version).Trim()
     $sdkRoot=Join-Path (Split-Path $dotnet) ('sdk/'+$sdkVersion)
@@ -150,6 +150,7 @@ function Invoke-RealCompilerControlBuild {
     $invocation=New-GateCompilerInvocation $context $result $sdkRoot
     $target=Join-Path $invocation.root 'compiler.targets'
     Save-GateCompilerTarget $target
+    if ($TargetTransform) { & $TargetTransform $target }
     if ($Incremental) { [IO.File]::SetLastWriteTimeUtc($target,[DateTime]::UtcNow.AddDays(-1)) }
     $eventLog=Join-Path $invocation.root 'build.binlog'
     $barrierRoot=Join-Path $invocation.root 'barrier'
@@ -233,6 +234,23 @@ foreach ($instance in $realInstances) {
     if ([IO.Path]::GetFullPath($instance.project) -cne $instance.project -or [IO.Path]::GetFullPath($instance.target.path) -cne $instance.target.path -or (ConvertTo-GateJson @($instance.inputs.path)) -cne (ConvertTo-GateJson @($instance.inputs.path | Sort-Object))) { $orderedAndNormalized=$false }
 }
 Record-CompilerBoolean 'deterministic-order-and-normalized-full-paths' $orderedAndNormalized ([pscustomobject]@{instances=$realInstances.Count;inputFingerprint=$realSeed.completed.evidence.inputFingerprint}) $realSeed.native
+$relativeSources=@($realSeed.manifest.csc.inputs | Where-Object { $_.parameterName -ceq 'Sources' -and $_.itemSpec -and -not [IO.Path]::IsPathRooted([string]$_.itemSpec) })
+Record-CompilerBoolean 'valid-relative-source-input-positive' ($realPositive -and $relativeSources.Count -ge 4 -and @($relativeSources | Where-Object { -not [IO.Path]::IsPathRooted([string]$_.path) -or -not [IO.File]::Exists([string]$_.path) }).Count -eq 0) ([pscustomobject]@{relativeSources=@($relativeSources | Select-Object parameterName,itemSpec,path);reason=$realSeed.reason}) $realSeed.native
+$compilerFileParameters=@('Sources','References','Analyzers','AdditionalFiles','AnalyzerConfigFiles','EmbeddedFiles','Resources','LinkResources')
+$classifiedInputs=@($realSeed.manifest.csc.inputs)
+Record-CompilerBoolean 'scalar-compiler-parameters-not-classified-as-files' ($realPositive -and $classifiedInputs.Count -gt 0 -and @($classifiedInputs | Where-Object { $_.parameterName -cnotin $compilerFileParameters -or -not $_.itemSpec }).Count -eq 0) ([pscustomobject]@{parameters=@($classifiedInputs.parameterName | Sort-Object -Unique);inputs=$classifiedInputs.Count}) $realSeed.native
+
+$lateDirectory=New-ControlDirectory
+$lateFixture=New-GateRealCompilerFixture (Join-Path $lateDirectory 'fixture') 'Late'
+$late=Invoke-RealCompilerControlBuild (Join-Path $lateDirectory 'evidence') $lateFixture -NoBarrier
+$lateInputs=@($late.manifest.csc.inputs | Where-Object { $_.parameterName -ceq 'Sources' -and $_.itemSpec -like '*Late.*.g.cs' -and -not [IO.Path]::IsPathRooted([string]$_.itemSpec) })
+Record-Control 'compiler-trace-negative' 'generated-relative-source-after-capture-before-csc-rejected' $true ([bool]($late.native.exitConfirmed -and $late.native.processExitCode -eq 0 -and -not $late.completed -and $late.reason -like '*Csc event input is unexplained*' -and $lateInputs.Count -ge 4)) $lateDirectory $late.native.command $late.native.processExitCode ([pscustomobject]@{reason=$late.reason;lateInputs=@($lateInputs | Select-Object parameterName,itemSpec,path);eventLog=$late.eventLog})
+
+$deletedDirectory=New-ControlDirectory
+$deletedFixture=New-GateRealCompilerFixture (Join-Path $deletedDirectory 'fixture') 'LateDeleted'
+$deleted=Invoke-RealCompilerControlBuild (Join-Path $deletedDirectory 'evidence') $deletedFixture -NoBarrier
+$missingErrors=@($deleted.manifest.errors | Where-Object { $_ -like 'RequiredCompilerInputUnavailable:*Late.*.g.cs*' })
+Record-Control 'compiler-trace-negative' 'csc-consumed-input-missing-before-replay-rejected' $true ([bool]($deleted.native.exitConfirmed -and $deleted.native.processExitCode -eq 0 -and -not $deleted.completed -and $deleted.reason -like '*event log is malformed or incomplete*' -and $missingErrors.Count -ge 4)) $deletedDirectory $deleted.native.command $deleted.native.processExitCode ([pscustomobject]@{reason=$deleted.reason;manifestComplete=$deleted.manifest.complete;errors=@($deleted.manifest.errors);eventLog=$deleted.eventLog})
 
 $compatibilityDirectory=New-ControlDirectory
 $compatibilityFixture=New-GateMissingOptionalCompilerTargetFixture (Join-Path $compatibilityDirectory 'fixture')
@@ -244,6 +262,30 @@ $repaired=Invoke-RealCompilerControlBuild (Join-Path $compatibilityDirectory 're
 $compatibilityManifest=$repaired.manifest
 $compatibilityPassed=$compatibilityRestore.exitConfirmed -and $compatibilityRestore.processExitCode -eq 0 -and $preRepair.native.exitConfirmed -and $preRepair.native.processExitCode -ne 0 -and ($preRepair.stdout -match 'MSB4057' -or $preRepair.stderr -match 'MSB4057') -and $repaired.native.exitConfirmed -and $repaired.native.processExitCode -eq 0 -and -not $repaired.reason -and $repaired.completed -and @($compatibilityManifest.coreCompile).Count -eq 1 -and @($compatibilityManifest.csc).Count -eq 1 -and @($compatibilityManifest.captures).Count -eq 1
 Record-Control 'compiler-trace-real' 'missing-optional-analyzer-targets-native-regression' $true ([bool]$compatibilityPassed) $compatibilityDirectory $repaired.native.command $repaired.native.processExitCode ([pscustomobject]@{restoreExit=$compatibilityRestore.processExitCode;restoreExitConfirmed=$compatibilityRestore.exitConfirmed;preRepairExit=$preRepair.native.processExitCode;preRepairExitConfirmed=$preRepair.native.exitConfirmed;preRepairErrorMatched=[bool]($preRepair.stdout -match 'MSB4057' -or $preRepair.stderr -match 'MSB4057');preRepairStdout=$preRepair.stdout;preRepairStderr=$preRepair.stderr;repairedExit=$repaired.native.processExitCode;repairedExitConfirmed=$repaired.native.exitConfirmed;coreCompile=@($compatibilityManifest.coreCompile).Count;csc=@($compatibilityManifest.csc).Count;captures=@($compatibilityManifest.captures).Count;reason=$repaired.reason;eventLog=$repaired.eventLog})
+
+$siblingDirectory=New-ControlDirectory
+$siblingFixture=New-GateMissingOptionalCompilerTargetFixture (Join-Path $siblingDirectory 'fixture')
+$siblingDotnet=(Get-Command dotnet -CommandType Application).Source
+$siblingRestoreDirectory=Join-Path $siblingDirectory 'restore';$null=New-Item -ItemType Directory -Path $siblingRestoreDirectory
+$siblingRestore=Invoke-GateNative $siblingDotnet @('restore',$siblingFixture.project,'--nologo') $siblingRestoreDirectory 'native' $siblingFixture.root 120 $null
+$siblingTransform={
+    param([string]$TargetPath)
+    $text=[IO.File]::ReadAllText($TargetPath)
+    $replacement=@'
+  <PropertyGroup><ProduceReferenceAssembly>false</ProduceReferenceAssembly></PropertyGroup>
+  <Target Name="AbilityKitSiblingCsc" BeforeTargets="CoreCompile" DependsOnTargets="AbilityKitCaptureCompilerInputs">
+    <Csc Sources="@(Compile)" References="@(ReferencePathWithRefAssemblies)" OutputAssembly="$(IntermediateOutputPath)$(TargetName).dll" TargetType="Library" UseSharedCompilation="false" />
+  </Target>
+  <Target Name="CoreCompile" DependsOnTargets="AbilityKitSiblingCsc" />
+</Project>
+'@
+    [IO.File]::WriteAllText($TargetPath,$text.Replace('</Project>',$replacement),[Text.UTF8Encoding]::new($false))
+}
+$sibling=Invoke-RealCompilerControlBuild (Join-Path $siblingDirectory 'evidence') $siblingFixture -NoBarrier -TargetTransform $siblingTransform
+$siblingCore=@($sibling.manifest.coreCompile)
+$siblingCsc=@($sibling.manifest.csc)
+$siblingMismatch=$siblingCore.Count -eq 1 -and $siblingCsc.Count -eq 1 -and $siblingCore[0].context.projectInstanceId -eq $siblingCsc[0].context.projectInstanceId -and $siblingCore[0].context.targetId -ne $siblingCsc[0].context.targetId
+Record-Control 'compiler-trace-negative' 'real-sibling-target-csc-cannot-satisfy-corecompile' $true ([bool]($siblingRestore.exitConfirmed -and $siblingRestore.processExitCode -eq 0 -and $sibling.native.exitConfirmed -and $sibling.native.processExitCode -eq 0 -and $siblingMismatch -and -not $sibling.completed -and $sibling.reason -like '*Finished CoreCompile requires exactly one successful Csc execution*')) $siblingDirectory $sibling.native.command $sibling.native.processExitCode ([pscustomobject]@{restoreExit=$siblingRestore.processExitCode;restoreExitConfirmed=$siblingRestore.exitConfirmed;reason=$sibling.reason;coreCompile=@($siblingCore | Select-Object project,state,context);csc=@($siblingCsc | Select-Object project,context);eventLog=$sibling.eventLog})
 
 $legacyDirectory=New-ControlDirectory
 $legacyFixture=New-GateRealCompilerFixture (Join-Path $legacyDirectory 'fixture')
@@ -265,6 +307,9 @@ foreach ($instance in $incrementalInstances) {
     if ($prior.Count -ne 1 -or $prior[0].target.path -ine $instance.target.path -or $prior[0].target.bytes -ne $instance.target.bytes -or $prior[0].target.sha256 -cne $instance.target.sha256) { $outputsPreserved=$false }
 }
 Record-Control 'compiler-trace-real' 'incremental-corecompile-skip-with-valid-output-identity' $true ([bool]($incremental.native.processExitCode -eq 0 -and -not $incremental.reason -and @($incremental.manifest.csc).Count -eq 0 -and @($incremental.manifest.coreCompile | Where-Object state -ceq 'Skipped').Count -eq 4 -and @($incrementalInstances | Where-Object kind -cne 'IncrementalSkip').Count -eq 0 -and $outputsPreserved)) $incrementalDirectory $incremental.native.command $incremental.native.processExitCode ([pscustomobject]@{coreCompile=@($incremental.manifest.coreCompile | Select-Object state,project);csc=@($incremental.manifest.csc).Count;kinds=@($incrementalInstances.kind);outputsPreserved=$outputsPreserved;reason=$incremental.reason})
+Record-CompilerBoolean 'corecompile-target-normal-parallel-positive' ($realPositive -and @($realSeed.manifest.csc | Where-Object { $task=$_;@($realSeed.manifest.coreCompile | Where-Object { $_.context.projectContextId -eq $task.context.projectContextId -and $_.context.targetId -eq $task.context.targetId }).Count -ne 1 }).Count -eq 0) ([pscustomobject]@{targets=@($realSeed.manifest.coreCompile.context.targetId);tasks=@($realSeed.manifest.csc.context.targetId)}) $realSeed.native
+Record-CompilerBoolean 'corecompile-target-multi-instance-positive' ($realPositive -and $realShared.Count -eq 2 -and @($realShared.context.projectInstanceId | Sort-Object -Unique).Count -eq 2) ([pscustomobject]@{shared=@($realShared | Select-Object project,context,propertiesFingerprint)}) $realSeed.native
+Record-CompilerBoolean 'corecompile-target-incremental-skip-positive' ($incremental.native.processExitCode -eq 0 -and -not $incremental.reason -and @($incremental.manifest.coreCompile | Where-Object state -ceq 'Skipped').Count -eq 4 -and @($incremental.manifest.csc).Count -eq 0) ([pscustomobject]@{coreCompile=@($incremental.manifest.coreCompile | Select-Object state,context);csc=@($incremental.manifest.csc).Count;reason=$incremental.reason}) $incremental.native
 
 $incrementalBypassDirectory=New-ControlDirectory
 $incrementalBypass=Invoke-RealCompilerControlBuild $incrementalBypassDirectory $realFixture -Incremental -BypassSecondCapture -NoBarrier
@@ -298,6 +343,21 @@ function Get-MutationCaptureFile {
     return Get-ChildItem -LiteralPath $Clone.invocation.completed -File | Sort-Object Name | Select-Object -First 1
 }
 
+function Get-MutationRelativeSourceInput {
+    param($Clone)
+    $source=[IO.Path]::GetFullPath((Join-Path $realFixture.root 'Shared/Shared.cs'))
+    $project=[IO.Path]::GetFullPath((Join-Path $realFixture.root 'Shared/Shared.csproj'))
+    foreach ($file in Get-ChildItem -LiteralPath $Clone.invocation.completed -File) {
+        $lines=@([IO.File]::ReadAllLines($file.FullName))
+        if ($lines.Count -lt 7 -or $lines[2].Split('|').Count -ne 2 -or [IO.Path]::GetFullPath([Uri]::UnescapeDataString($lines[2].Split('|')[1])) -ine $project) { continue }
+        for ($index=5;$index -lt $lines.Count;$index++) {
+            $parts=$lines[$index].Split('|')
+            if ($parts.Count -eq 4 -and [IO.Path]::GetFullPath([Uri]::UnescapeDataString($parts[1])) -ieq $source) { return [pscustomobject]@{file=$file;lines=$lines;index=$index;source=$source} }
+        }
+    }
+    throw 'Mutation fixture relative source capture input missing.'
+}
+
 function Set-MutationCaptureLines {
     param($Clone,$File,[string[]]$Lines)
     [IO.File]::WriteAllLines($File.FullName,$Lines,[Text.UTF8Encoding]::new($false))
@@ -309,7 +369,10 @@ function Get-MutationCscInputLineIndex {
     $captureId=$Lines[1].Split('|')[4]
     $message=@($realSeed.manifest.captures | Where-Object captureId -ceq $captureId)
     if ($message.Count -ne 1) { throw 'Mutation fixture capture message missing.' }
-    $key=Get-GateEventContextKey $message[0].context
+    $projectKey=Get-GateProjectEventContextKey $message[0].context
+    $target=@($realSeed.manifest.coreCompile | Where-Object { (Get-GateProjectEventContextKey $_.context) -ceq $projectKey })
+    if ($target.Count -ne 1) { throw 'Mutation fixture CoreCompile event missing.' }
+    $key=Get-GateEventContextKey $target[0].context
     $task=@($realSeed.manifest.csc | Where-Object { (Get-GateEventContextKey $_.context) -ceq $key })
     if ($task.Count -ne 1) { throw 'Mutation fixture Csc event missing.' }
     foreach ($input in $task[0].inputs) {
@@ -350,6 +413,8 @@ foreach ($identity in @('run','result','invocation')) {
 }
 Invoke-CompilerMutationControl 'one-compiler-input-removed-rejected' { param($c) $f=Get-MutationCaptureFile $c;$lines=@([IO.File]::ReadAllLines($f.FullName));$remove=Get-MutationCscInputLineIndex $f $lines;$lines=@($lines[0..($remove-1)]+$lines[($remove+1)..($lines.Count-1)]);Set-MutationCaptureLines $c $f $lines } @('*Csc event input is unexplained*')
 Invoke-CompilerMutationControl 'one-compiler-input-substituted-rejected' { param($c) $f=Get-MutationCaptureFile $c;$lines=@([IO.File]::ReadAllLines($f.FullName));$replace=Get-MutationCscInputLineIndex $f $lines;$substitute=if ($replace -eq 5) { 6 } else { 5 };$lines[$replace]=$lines[$substitute];Set-MutationCaptureLines $c $f $lines } @('*Csc event input is unexplained*')
+Invoke-CompilerMutationControl 'relative-source-input-omission-rejected' { param($c) $entry=Get-MutationRelativeSourceInput $c;$lines=@($entry.lines[0..($entry.index-1)]+$entry.lines[($entry.index+1)..($entry.lines.Count-1)]);Set-MutationCaptureLines $c $entry.file $lines } @('*Csc event input is unexplained*')
+Invoke-CompilerMutationControl 'relative-source-input-replacement-rejected' { param($c) $entry=Get-MutationRelativeSourceInput $c;$substitute=if ($entry.index -eq 5) { 6 } else { 5 };$entry.lines[$entry.index]=$entry.lines[$substitute];Set-MutationCaptureLines $c $entry.file $entry.lines } @('*Csc event input is unexplained*')
 Invoke-CompilerMutationControl 'conflicting-normalized-input-content-rejected' { param($c) $f=Get-MutationCaptureFile $c;$lines=@([IO.File]::ReadAllLines($f.FullName));$parts=$lines[5].Split('|');$parts[3]='0'*64;$lines+=$parts -join '|';Set-MutationCaptureLines $c $f $lines } @('*Compiler input changed since capture*','*Conflicting duplicate compiler input path*')
 Invoke-CompilerMutationControl 'input-reparse-escape-rejected' { param($c) $targetDirectory=Join-Path $c.invocation.root 'reparse-target';$link=Join-Path $c.invocation.root 'reparse-link';$null=New-Item -ItemType Directory -Path $targetDirectory;$path=Join-Path $targetDirectory 'input.cs';[IO.File]::WriteAllText($path,'class ReparseInput {}');$null=New-Item -ItemType Junction -Path $link -Target $targetDirectory;$linked=Join-Path $link 'input.cs';$f=Get-MutationCaptureFile $c;$lines=@([IO.File]::ReadAllLines($f.FullName));$lines[5]='input|'+[Uri]::EscapeDataString($linked)+'|'+(Get-Item $linked).Length+'|'+(Get-GateHash $linked);Set-MutationCaptureLines $c $f $lines } @('*Reparse path*')
 Invoke-CompilerMutationControl 'malformed-raw-event-log-rejected' { param($c) [IO.File]::WriteAllBytes($c.eventLog,[byte[]](1,2,3,4,5)) } @('*event log is malformed or incomplete*')
@@ -373,6 +438,7 @@ Invoke-CompilerEventRelationshipControl 'finished-corecompile-without-csc-reject
 Invoke-CompilerEventRelationshipControl 'skipped-corecompile-with-csc-rejected' { param($m) $m.coreCompile[0].state='Skipped';$m.coreCompile[0].succeeded=$null } @('*Skipped CoreCompile must not have a Csc execution*')
 Invoke-CompilerEventRelationshipControl 'corecompile-project-mismatch-rejected' { param($m) $m.coreCompile[0].project=$realFixture.project } @('*CoreCompile/capture project identity mismatch*')
 Invoke-CompilerEventRelationshipControl 'csc-context-mismatch-rejected' { param($m) $m.csc[0].context.projectInstanceId=[int]$m.csc[0].context.projectInstanceId+1000 } @('*Finished CoreCompile requires exactly one successful Csc execution*','*Csc execution missing exact CoreCompile/capture coverage*')
+Invoke-CompilerEventRelationshipControl 'csc-only-target-id-mismatch-rejected' { param($m) $m.csc[0].context.targetId=[int]$m.csc[0].context.targetId+1000 } @('*Finished CoreCompile requires exactly one successful Csc execution*','*Csc execution missing exact CoreCompile/capture coverage*')
 
 if ($CompilerTraceOnly) {
     Save-ControlReceipt $true

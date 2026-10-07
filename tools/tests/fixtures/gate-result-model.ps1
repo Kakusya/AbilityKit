@@ -72,7 +72,7 @@ function Save-GateControlFixture {
 }
 
 function New-GateRealCompilerFixture {
-    param([string]$Root)
+    param([string]$Root,[ValidateSet('Captured','Late','LateDeleted')][string]$InputTiming='Captured')
     $Root=[IO.Path]::GetFullPath($Root)
     if (Test-Path -LiteralPath $Root) { throw 'Real compiler fixture root must be new.' }
     $null=New-Item -ItemType Directory -Path $Root
@@ -114,8 +114,27 @@ function New-GateRealCompilerFixture {
     <WriteLinesToFile File="$(IntermediateOutputPath)Generated.$(MSBuildProjectName).$(Flavor).g.cs" Lines="namespace CompilerFixture { internal static class Generated_$(MSBuildProjectName)_$(Flavor) { } }" Overwrite="true" Encoding="UTF-8" Condition="!Exists('$(IntermediateOutputPath)Generated.$(MSBuildProjectName).$(Flavor).g.cs')" />
     <ItemGroup><Compile Include="$(IntermediateOutputPath)Generated.$(MSBuildProjectName).$(Flavor).g.cs" /></ItemGroup>
   </Target>
+__LATE_TARGETS__
 </Project>
 '@
+    $lateTargets=''
+    if ($InputTiming -cin @('Late','LateDeleted')) {
+        $lateTargets=@'
+  <Target Name="AbilityKitGenerateLateFixtureInput" AfterTargets="AbilityKitCaptureCompilerInputs" BeforeTargets="CoreCompile">
+    <MakeDir Directories="$(IntermediateOutputPath)" />
+    <WriteLinesToFile File="$(IntermediateOutputPath)Late.$(MSBuildProjectName).$(Flavor).g.cs" Lines="namespace CompilerFixture { internal static class Late_$(MSBuildProjectName)_$(Flavor) { } }" Overwrite="true" Encoding="UTF-8" />
+    <ItemGroup><Compile Include="$(IntermediateOutputPath)Late.$(MSBuildProjectName).$(Flavor).g.cs" /></ItemGroup>
+  </Target>
+'@
+        if ($InputTiming -ceq 'LateDeleted') {
+            $lateTargets+=@'
+  <Target Name="AbilityKitDeleteLateFixtureInput" AfterTargets="CoreCompile">
+    <Delete Files="$(IntermediateOutputPath)Late.$(MSBuildProjectName).$(Flavor).g.cs" />
+  </Target>
+'@
+        }
+    }
+    $generated=$generated.Replace('__LATE_TARGETS__',$lateTargets)
     $barrier=@'
 param([string]$Root,[string]$CaptureId,[string]$Project,[string]$Mode)
 $ErrorActionPreference='Stop'

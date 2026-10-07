@@ -95,12 +95,14 @@ if ($stage -ceq 'build') {
         $itemGenerated=Join-Path (Split-Path $item.assetsPath) 'Generated.opaque'
         if (-not [IO.File]::Exists($itemGenerated)) { [IO.File]::WriteAllText($itemGenerated,'generated actual compiler input '+$item.assemblyName) }
         $inputs=@($itemGenerated,$item.project)+@($item.compile)+@($item.imports) | Sort-Object -Unique
+        $compilerInputs=@($itemGenerated)+@($item.compile) | Sort-Object -Unique
         $records=@('AKCT|1',('owner|'+$runId+'|'+$resultId+'|'+$invocationId+'|'+$captureId),('project|'+[Uri]::EscapeDataString([IO.Path]::GetFullPath($item.project))),('dimensions|'+[Uri]::EscapeDataString($item.tfm)+'|'+[Uri]::EscapeDataString('Debug')+'|'+[Uri]::EscapeDataString('AnyCPU')+'|'+[Uri]::EscapeDataString('')),('target|'+[Uri]::EscapeDataString([IO.Path]::GetFullPath($item.targetPath))))
-        $identities=@()
+        $identities=@();$taskInputs=@()
         foreach ($file in $inputs) {
             $full=[IO.Path]::GetFullPath($file); $length=(Get-Item -LiteralPath $full).Length; $sha=GetFakeHash $full
             $records+=('input|'+[Uri]::EscapeDataString($full)+'|'+$length+'|'+$sha)
             $identities+=[pscustomobject]@{path=$full;bytes=$length;sha256=$sha}
+            if ($file -iin $compilerInputs) { $taskInputs+=[pscustomobject]@{parameterName='Sources';itemSpec=[string]$file;path=$full;bytes=$length;sha256=$sha} }
         }
         $temp=Join-Path $captureRoot ('pending/'+$captureId+'.tmp'); $complete=Join-Path $captureRoot ('completed/'+$captureId+'.complete')
         [IO.File]::WriteAllLines($temp,$records,[Text.UTF8Encoding]::new($false)); $null=GetFakeHash $temp; [IO.File]::Move($temp,$complete)
@@ -108,7 +110,7 @@ if ($stage -ceq 'build') {
         $propertyFingerprint=GetFakeTextHash ('Configuration' + [char]0 + (GetFakeTextHash 'Debug') + "`n" + 'TargetFramework' + [char]0 + (GetFakeTextHash $item.tfm))
         $projects+=[pscustomobject]@{context=$eventContext;project=[IO.Path]::GetFullPath($item.project);globalProperties=@();propertiesFingerprint=$propertyFingerprint}
         $targets+=[pscustomobject]@{context=$eventContext;project=[IO.Path]::GetFullPath($item.project);state='Finished';succeeded=$true}
-        $tasks+=[pscustomobject]@{context=$eventContext;project=[IO.Path]::GetFullPath($item.project);succeeded=$true;inputs=$identities}
+        $tasks+=[pscustomobject]@{context=$eventContext;project=[IO.Path]::GetFullPath($item.project);succeeded=$true;inputs=$taskInputs}
         $captures+=[pscustomobject]@{runId=$runId;resultId=$resultId;invocationId=$invocationId;captureId=$captureId;project=[IO.Path]::GetFullPath($item.project);tfm=$item.tfm;configuration='Debug';platform='AnyCPU';runtimeIdentifier='';context=$eventContext}
     }
     if ($context.mode -ceq 'compiler-evidence-fail-zero') { $captures=@($captures | Select-Object -Skip 1) }
