@@ -1025,12 +1025,19 @@ function New-GateCompilerInvocation {
     return [pscustomobject][ordered]@{invocationId=$invocationId;root=$root;pending=$pending;completed=$completed;readerDll=$readerDll;readerArtifacts=@($readerArtifacts)}
 }
 
-function Get-GateEventContextKey {
+function Get-GateProjectEventContextKey {
     param($Context)
     foreach ($field in @('submissionId','nodeId','projectInstanceId','projectContextId')) {
         if ($null -eq $Context.$field -or [int]$Context.$field -lt 0) { throw "Compiler event context is incomplete: $field" }
     }
     return ([string]$Context.submissionId)+'|'+([string]$Context.nodeId)+'|'+([string]$Context.projectInstanceId)+'|'+([string]$Context.projectContextId)
+}
+
+function Get-GateEventContextKey {
+    param($Context)
+    $projectKey=Get-GateProjectEventContextKey $Context
+    if ($null -eq $Context.targetId -or [int]$Context.targetId -lt 0) { throw 'Compiler event context is incomplete: targetId' }
+    return $projectKey+'|'+([string]$Context.targetId)
 }
 
 function Invoke-GateCompilerEventReader {
@@ -1077,11 +1084,12 @@ function Complete-GateCompilerEvidence {
     $compileTargets=@($manifest.coreCompile)
     $compilerTasks=@($manifest.csc)
     foreach ($compileTarget in $compileTargets) {
-        $contextKey=Get-GateEventContextKey $compileTarget.context
-        $matchingMessages=@($messages | Where-Object { (Get-GateEventContextKey $_.context) -ceq $contextKey })
+        $projectContextKey=Get-GateProjectEventContextKey $compileTarget.context
+        $targetContextKey=Get-GateEventContextKey $compileTarget.context
+        $matchingMessages=@($messages | Where-Object { (Get-GateProjectEventContextKey $_.context) -ceq $projectContextKey })
         if ($matchingMessages.Count -ne 1) { throw 'CoreCompile event missing exact capture coverage.' }
         if ([IO.Path]::GetFullPath($compileTarget.project) -ine [IO.Path]::GetFullPath($matchingMessages[0].project)) { throw 'CoreCompile/capture project identity mismatch.' }
-        $matchingTasks=@($compilerTasks | Where-Object { (Get-GateEventContextKey $_.context) -ceq $contextKey })
+        $matchingTasks=@($compilerTasks | Where-Object { (Get-GateEventContextKey $_.context) -ceq $targetContextKey })
         if ($compileTarget.state -ceq 'Finished') {
             if (-not $compileTarget.succeeded -or $matchingTasks.Count -ne 1 -or -not $matchingTasks[0].succeeded) { throw 'Finished CoreCompile requires exactly one successful Csc execution.' }
             if ([IO.Path]::GetFullPath($matchingTasks[0].project) -ine [IO.Path]::GetFullPath($compileTarget.project)) { throw 'CoreCompile/Csc project identity mismatch.' }
@@ -1097,19 +1105,24 @@ function Complete-GateCompilerEvidence {
         $capture=$capture[0]
         foreach ($field in @('runId','resultId','invocationId','captureId','tfm','configuration','platform','runtimeIdentifier')) { if ([string]$capture.$field -cne [string]$message.$field) { throw "Compiler capture identity mismatch: $field" } }
         if ([IO.Path]::GetFullPath($capture.project) -ine [IO.Path]::GetFullPath($message.project)) { throw 'Compiler capture project substitution.' }
-        $contextKey=Get-GateEventContextKey $message.context
-        $projects=@($manifest.projects | Where-Object { (Get-GateEventContextKey $_.context) -ceq $contextKey -and $_.project -ieq $capture.project })
+        $projectContextKey=Get-GateProjectEventContextKey $message.context
+        $projects=@($manifest.projects | Where-Object { (Get-GateProjectEventContextKey $_.context) -ceq $projectContextKey -and $_.project -ieq $capture.project })
         if ($projects.Count -ne 1 -or -not $projects[0].propertiesFingerprint) { throw 'Compiler project instance identity missing/ambiguous.' }
-        $matchingTasks=@($compilerTasks | Where-Object { (Get-GateEventContextKey $_.context) -ceq $contextKey })
-        $matchingTargets=@($compileTargets | Where-Object { (Get-GateEventContextKey $_.context) -ceq $contextKey })
+        $matchingTargets=@($compileTargets | Where-Object { (Get-GateProjectEventContextKey $_.context) -ceq $projectContextKey })
         if ($matchingTargets.Count -ne 1) { throw 'Capture lacks exactly one current CoreCompile engine event.' }
         $compileTarget=$matchingTargets[0]
+        $targetContextKey=Get-GateEventContextKey $compileTarget.context
+        $matchingTasks=@($compilerTasks | Where-Object { (Get-GateEventContextKey $_.context) -ceq $targetContextKey })
         if ([IO.Path]::GetFullPath($compileTarget.project) -ine [IO.Path]::GetFullPath($capture.project)) { throw 'Compiler capture/CoreCompile project identity mismatch.' }
         $kind=if ($compileTarget.state -ceq 'Finished') { 'Executed' } elseif ($compileTarget.state -ceq 'Skipped') { 'IncrementalSkip' } else { throw 'CoreCompile event state is invalid.' }
+        $taskInputs=@()
         if ($kind -ceq 'Executed') {
             if (-not $compileTarget.succeeded -or $matchingTasks.Count -ne 1 -or -not $matchingTasks[0].succeeded -or -not @($matchingTasks[0].inputs).Count) { throw 'Csc execution inputs absent, unsuccessful, or ambiguous.' }
             if ([IO.Path]::GetFullPath($matchingTasks[0].project) -ine [IO.Path]::GetFullPath($capture.project)) { throw 'Compiler capture/Csc project identity mismatch.' }
-            foreach ($input in @($matchingTasks[0].inputs)) {
+            $taskInputs=@($matchingTasks[0].inputs)
+            $compilerFileParameters=@('Sources','References','Analyzers','AdditionalFiles','AnalyzerConfigFiles','EmbeddedFiles','Resources','LinkResources')
+            foreach ($input in $taskInputs) {
+                if ($input.parameterName -cnotin $compilerFileParameters -or [string]::IsNullOrWhiteSpace([string]$input.itemSpec) -or -not [IO.Path]::IsPathRooted([string]$input.path)) { throw 'Csc event input category, ItemSpec, or resolved path is invalid.' }
                 $match=@($capture.inputs | Where-Object path -ieq $input.path)
                 if ($match.Count -ne 1 -or $match[0].bytes -ne $input.bytes -or $match[0].sha256 -cne $input.sha256) { throw ('Csc event input is unexplained by its completion record: '+$input.path) }
             }
@@ -1122,18 +1135,19 @@ function Complete-GateCompilerEvidence {
                 if ($prior.bytes -ne $input.bytes -or $prior.sha256 -cne $input.sha256) { throw 'Conflicting compiler content for one normalized path.' }
             } else { $actualInputs.Add($input.path,$input) }
         }
-        $instances+=[pscustomobject][ordered]@{captureId=$capture.captureId;project=$capture.project;tfm=$capture.tfm;configuration=$capture.configuration;platform=$capture.platform;runtimeIdentifier=$capture.runtimeIdentifier;context=$message.context;propertiesFingerprint=$projects[0].propertiesFingerprint;kind=$kind;target=$target;inputs=@($capture.inputs | Sort-Object path)}
+        $instances+=[pscustomobject][ordered]@{captureId=$capture.captureId;project=$capture.project;tfm=$capture.tfm;configuration=$capture.configuration;platform=$capture.platform;runtimeIdentifier=$capture.runtimeIdentifier;context=$message.context;propertiesFingerprint=$projects[0].propertiesFingerprint;kind=$kind;target=$target;inputs=@($capture.inputs | Sort-Object path);taskInputs=@($taskInputs | Sort-Object parameterName,itemSpec,path)}
     }
     foreach ($task in $compilerTasks) {
         $key=Get-GateEventContextKey $task.context
         $matchingTargets=@($compileTargets | Where-Object { (Get-GateEventContextKey $_.context) -ceq $key })
-        $matchingMessages=@($messages | Where-Object { (Get-GateEventContextKey $_.context) -ceq $key })
+        $projectKey=Get-GateProjectEventContextKey $task.context
+        $matchingMessages=@($messages | Where-Object { (Get-GateProjectEventContextKey $_.context) -ceq $projectKey })
         if ($matchingTargets.Count -ne 1 -or $matchingMessages.Count -ne 1) { throw 'Csc execution missing exact CoreCompile/capture coverage.' }
         if ($matchingTargets[0].state -cne 'Finished' -or -not $matchingTargets[0].succeeded -or -not $task.succeeded) { throw 'Csc execution is not owned by one successful finished CoreCompile.' }
         if ([IO.Path]::GetFullPath($task.project) -ine [IO.Path]::GetFullPath($matchingTargets[0].project) -or [IO.Path]::GetFullPath($task.project) -ine [IO.Path]::GetFullPath($matchingMessages[0].project)) { throw 'Csc/CoreCompile/capture project identity mismatch.' }
     }
     $compilerInputs=Save-GateFiles $Result $Context.runRoot @($actualInputs.Keys | Sort-Object) 'compiler-input' @($Result.provenance.closure.configPaths)
-    $evidence=[pscustomobject][ordered]@{schemaVersion=2;mode='Executed';runId=$Result.runId;resultId=$Result.resultId;invocationId=$Invocation.invocationId;origin=$null;targetArtifact=$targetArtifact;eventLogArtifact=$eventLogArtifact;eventManifestArtifact=$eventManifestArtifact;readerArtifacts=@($Invocation.readerArtifacts);captureArtifacts=@($captureArtifacts);instances=@($instances | Sort-Object project,tfm,captureId);inputFingerprint=Get-GateFingerprint @($actualInputs.Values);aggregateArtifact=$null}
+    $evidence=[pscustomobject][ordered]@{schemaVersion=3;mode='Executed';runId=$Result.runId;resultId=$Result.resultId;invocationId=$Invocation.invocationId;origin=$null;targetArtifact=$targetArtifact;eventLogArtifact=$eventLogArtifact;eventManifestArtifact=$eventManifestArtifact;readerArtifacts=@($Invocation.readerArtifacts);captureArtifacts=@($captureArtifacts);instances=@($instances | Sort-Object project,tfm,captureId);inputFingerprint=Get-GateFingerprint @($actualInputs.Values);aggregateArtifact=$null}
     $aggregatePath=Join-Path $Invocation.root 'compiler-evidence.json'
     [IO.File]::WriteAllText($aggregatePath,(ConvertTo-GateJson $evidence),[Text.UTF8Encoding]::new($false))
     $evidence.aggregateArtifact=Add-GateArtifact $Result $Context.runRoot $aggregatePath 'compiler-evidence'
@@ -1143,7 +1157,7 @@ function Complete-GateCompilerEvidence {
 function Assert-GateCompilerEvidence {
     param($Result,$Context)
     $evidence=$Result.provenance.compilerEvidence
-    if (-not $evidence -or $evidence.schemaVersion -ne 2 -or $evidence.mode -cnotin @('Executed','Reused') -or $evidence.runId -cne $Result.runId -or $evidence.resultId -cne $Result.resultId -or -not $evidence.instances.Count -or -not $evidence.captureArtifacts.Count) { throw 'Compiler evidence absent or invalid.' }
+    if (-not $evidence -or $evidence.schemaVersion -ne 3 -or $evidence.mode -cnotin @('Executed','Reused') -or $evidence.runId -cne $Result.runId -or $evidence.resultId -cne $Result.resultId -or -not $evidence.instances.Count -or -not $evidence.captureArtifacts.Count) { throw 'Compiler evidence absent or invalid.' }
     foreach ($artifact in @($evidence.targetArtifact,$evidence.eventLogArtifact,$evidence.eventManifestArtifact)+@($evidence.readerArtifacts)+@($evidence.captureArtifacts)) { $null=Assert-GateArtifact $artifact $Result $Context.runRoot }
     $aggregatePath=Assert-GateArtifact $evidence.aggregateArtifact $Result $Context.runRoot
     $aggregate=Get-Content -LiteralPath $aggregatePath -Raw -Encoding UTF8 | ConvertFrom-Json
@@ -1152,8 +1166,14 @@ function Assert-GateCompilerEvidence {
     $deduplicated=New-Object 'System.Collections.Generic.Dictionary[string,object]' ([StringComparer]::OrdinalIgnoreCase)
     foreach ($instance in $evidence.instances) {
         if (-not $instance.captureId -or -not $instance.propertiesFingerprint -or $instance.kind -cnotin @('Executed','IncrementalSkip') -or -not [IO.Path]::IsPathRooted($instance.project) -or -not [IO.Path]::IsPathRooted($instance.target.path)) { throw 'Compiler instance manifest invalid.' }
+        if (($instance.kind -ceq 'Executed' -and -not @($instance.taskInputs).Count) -or ($instance.kind -ceq 'IncrementalSkip' -and @($instance.taskInputs).Count)) { throw 'Compiler instance task input declaration is invalid.' }
         $output=@($Result.provenance.build.outputs | Where-Object { [IO.Path]::GetFullPath($_.path) -ieq [IO.Path]::GetFullPath($instance.target.path) })
         if ($output.Count -ne 1 -or $output[0].bytes -ne $instance.target.bytes -or $output[0].sha256 -cne $instance.target.sha256) { throw 'Compiler instance output is not in the build producer set.' }
+        foreach ($taskInput in @($instance.taskInputs)) {
+            if ($taskInput.parameterName -cnotin @('Sources','References','Analyzers','AdditionalFiles','AnalyzerConfigFiles','EmbeddedFiles','Resources','LinkResources') -or [string]::IsNullOrWhiteSpace([string]$taskInput.itemSpec) -or -not [IO.Path]::IsPathRooted([string]$taskInput.path)) { throw 'Compiler task input identity is invalid.' }
+            $captured=@($instance.inputs | Where-Object path -ieq $taskInput.path)
+            if ($captured.Count -ne 1 -or $captured[0].bytes -ne $taskInput.bytes -or $captured[0].sha256 -cne $taskInput.sha256) { throw 'Compiler task input is not bound to the captured input closure.' }
+        }
         foreach ($input in $instance.inputs) {
             if ($deduplicated.ContainsKey($input.path)) {
                 $prior=$deduplicated[$input.path]

@@ -8,6 +8,17 @@ using Microsoft.Build.Logging;
 internal static class Program
 {
     private const string CapturePrefix = "ABILITYKIT_CAPTURE|";
+    private static readonly HashSet<string> CompilerFileParameters = new(StringComparer.Ordinal)
+    {
+        "Sources",
+        "References",
+        "Analyzers",
+        "AdditionalFiles",
+        "AnalyzerConfigFiles",
+        "EmbeddedFiles",
+        "Resources",
+        "LinkResources"
+    };
 
     public static int Main(string[] args)
     {
@@ -180,16 +191,29 @@ internal static class Program
             }
             taskInputs.TryGetValue(key, out var inputs);
             var normalized = (inputs ?? new List<InputRecord>())
-                .GroupBy(input => input.Path, StringComparer.OrdinalIgnoreCase)
+                .GroupBy(input => input.ParameterName + "\0" + input.ItemSpec + "\0" + input.Path, StringComparer.OrdinalIgnoreCase)
                 .Select(group => group.First())
-                .OrderBy(input => input.Path, StringComparer.OrdinalIgnoreCase)
+                .OrderBy(input => input.ParameterName, StringComparer.Ordinal)
+                .ThenBy(input => input.ItemSpec, StringComparer.Ordinal)
+                .ThenBy(input => input.Path, StringComparer.OrdinalIgnoreCase)
                 .ToArray();
             tasks.Add(started with { Succeeded = e.Succeeded, Inputs = normalized });
         }
 
         private void AddTaskInputs(BuildEventArgs e)
         {
+            var parameterName = ReadString(e, "ParameterName");
+            if (string.IsNullOrWhiteSpace(parameterName) || !CompilerFileParameters.Contains(parameterName))
+            {
+                return;
+            }
             var key = TaskKey(e.BuildEventContext);
+            if (!activeTasks.TryGetValue(key, out var task) || string.IsNullOrWhiteSpace(task.Project))
+            {
+                // Other MSBuild tasks use the same parameter names. Only parameters
+                // raised inside an active Csc task belong to the compiler closure.
+                return;
+            }
             var items = e.GetType().GetProperty("Items")?.GetValue(e) as IEnumerable;
             if (items is null)
             {
@@ -202,14 +226,32 @@ internal static class Program
             }
             foreach (var item in items)
             {
-                var path = item is ITaskItem taskItem ? taskItem.ItemSpec : ReadString(item, "ItemSpec");
-                if (string.IsNullOrWhiteSpace(path) || !Path.IsPathRooted(path) || !File.Exists(path))
+                var itemSpec = item is ITaskItem taskItem ? taskItem.ItemSpec : ReadString(item, "ItemSpec");
+                if (string.IsNullOrWhiteSpace(itemSpec))
                 {
+                    Errors.Add("RequiredCompilerInputItemSpecMissing:" + parameterName);
                     continue;
                 }
-                var fullPath = Path.GetFullPath(path);
-                var info = new FileInfo(fullPath);
-                inputs.Add(new InputRecord(fullPath, info.Length, HashFile(fullPath)));
+                try
+                {
+                    var projectDirectory = Path.GetDirectoryName(task.Project);
+                    if (string.IsNullOrWhiteSpace(projectDirectory))
+                    {
+                        throw new InvalidOperationException("Project directory missing.");
+                    }
+                    var fullPath = Path.GetFullPath(Path.IsPathRooted(itemSpec) ? itemSpec : Path.Combine(projectDirectory, itemSpec));
+                    if (!File.Exists(fullPath))
+                    {
+                        Errors.Add("RequiredCompilerInputUnavailable:" + parameterName + ":" + itemSpec);
+                        continue;
+                    }
+                    var info = new FileInfo(fullPath);
+                    inputs.Add(new InputRecord(parameterName, itemSpec, fullPath, info.Length, HashFile(fullPath)));
+                }
+                catch (Exception exception)
+                {
+                    Errors.Add("RequiredCompilerInputUnreadable:" + parameterName + ":" + itemSpec + ":" + exception.GetType().Name);
+                }
             }
         }
 
@@ -308,5 +350,5 @@ internal static class Program
     private sealed record TargetRecord(EventContextRecord Context, string? Project, string State, bool? Succeeded);
     private sealed record TaskRecord(EventContextRecord Context, string? Project, bool Succeeded, IReadOnlyList<InputRecord> Inputs);
     private sealed record CaptureRecord(string RunId, string ResultId, string InvocationId, string CaptureId, string? Project, string Tfm, string Configuration, string Platform, string RuntimeIdentifier, EventContextRecord Context);
-    private sealed record InputRecord(string Path, long Bytes, string Sha256);
+    private sealed record InputRecord(string ParameterName, string ItemSpec, string Path, long Bytes, string Sha256);
 }
