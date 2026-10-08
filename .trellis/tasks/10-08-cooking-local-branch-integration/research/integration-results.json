@@ -1,0 +1,1200 @@
+{
+  "status": "Passed",
+  "sourceSha": "70ed8ec81a6be824476f21fcb613b4037f83f652",
+  "dirty": true,
+  "dirtyQualification": "Only preexisting Python cache and private Cooking workflow records; tracked sources clean.",
+  "sdk": "10.0.300",
+  "runtime": "10.0.8",
+  "configuration": "Debug",
+  "build": {
+    "nativeExit": 0,
+    "warnings": 2095,
+    "errors": 0,
+    "rawLog": "local\\Logs\\branch-integration-20261008\\build.log",
+    "sha256": "830B400EA53064BB04A82C645C25D0E14C342655609990C35BB215DA536429D7"
+  },
+  "focusedTests": {
+    "nativeExit": 0,
+    "counters": {
+      "total": "14",
+      "executed": "14",
+      "passed": "14",
+      "failed": "0",
+      "error": "0",
+      "timeout": "0",
+      "aborted": "0",
+      "inconclusive": "0",
+      "passedButRunAborted": "0",
+      "notRunnable": "0",
+      "notExecuted": "0",
+      "disconnected": "0",
+      "warning": "0",
+      "completed": "0",
+      "inProgress": "0",
+      "pending": "0"
+    },
+    "testNames": [
+      "AbilityKit.ET.Runtime.Tests.CookingFixedFlowTests.First_product_failure_survives_cleanup_failure_with_synthetic_cut_labelled",
+      "AbilityKit.ET.Runtime.Tests.CookingFixedFlowTests.Real_frame_fault_preserves_accepted_pickup_event_and_executed_terminal_without_clock_advance",
+      "AbilityKit.ET.Runtime.Tests.CookingFixedFlowTests.Missing_required_events_and_report_failure_deadline_wrong_identity_or_no_result_fail_closed",
+      "AbilityKit.ET.Runtime.Tests.CookingFixedFlowTests.Real_immediate_duplicate_merges_terminal_sources_once_and_admission_without_terminal_is_known",
+      "AbilityKit.ET.Runtime.Tests.CookingFixedFlowTests.Real_network_flows_use_three_children_current_projections_and_confirm_native_exits(flow: \"pickup-drop-one-item\")",
+      "AbilityKit.ET.Runtime.Tests.CookingFixedFlowTests.Synthetic_rule_controls_detect_hand_location_reject_success_replay_effects_and_missing_goals",
+      "AbilityKit.ET.Runtime.Tests.CookingFixedFlowTests.Real_network_flows_use_three_children_current_projections_and_confirm_native_exits(flow: \"compete-one-item\")",
+      "AbilityKit.ET.Runtime.Tests.CookingFixedFlowTests.Typed_schema_catalog_limits_and_old_outputs_reject_before_host_creation",
+      "AbilityKit.ET.Runtime.Tests.CookingFixedFlowTests.Startup_fault_is_blocked_and_runtime_cancel_timeout_preserve_facts_and_independent_cleanup",
+      "AbilityKit.ET.Runtime.Tests.CookingFixedFlowTests.Real_child_EOF_protocol_fault_and_sent_command_cancellation_preserve_facts_and_exit_evidence",
+      "AbilityKit.ET.Runtime.Tests.CookingFixedFlowTests.Real_registered_flows_and_two_fresh_runs_have_complete_evidence_and_no_residual(flow: \"compete-one-item\")",
+      "AbilityKit.ET.Runtime.Tests.CookingFixedFlowTests.Collector_bounds_wrong_run_sequence_overflow_partial_and_write_fault_are_latched",
+      "AbilityKit.ET.Runtime.Tests.CookingFixedFlowTests.Real_registered_flows_and_two_fresh_runs_have_complete_evidence_and_no_residual(flow: \"pickup-drop-one-item\")",
+      "AbilityKit.ET.Runtime.Tests.CookingFixedFlowTests.Synthetic_role_protocol_and_projection_fences_reject_wrong_binding_old_payload_and_partial_input"
+    ],
+    "trx": "local\\Logs\\branch-integration-20261008\\focused-tests\\fixed-flow-integration.trx",
+    "trxSha256": "7B5166974795414EC2F52A3AD332182A0981A22362C32AC9E0D07FE76440DA80"
+  },
+  "flowAssembly": {
+    "path": "src\\AbilityKit.Game.Cooking.FlowAcceptance\\bin\\Debug\\net10.0\\AbilityKit.Game.Cooking.FlowAcceptance.dll",
+    "sha256": "E44CE9ACFAF18655B20B5FD2464F9CFBA08F65E7295D8B2472E8A324D0BB55F1"
+  },
+  "testAssembly": {
+    "path": "src\\AbilityKit.ET.Runtime.Tests\\bin\\Debug\\net10.0\\AbilityKit.ET.Runtime.Tests.dll",
+    "sha256": "D42A952314CBA167E8D7420E24EF24B7832A4B95877F5652B2CFDF0A5721B0AB"
+  },
+  "acceptedDeliveryBlobs": {
+    "status": "Passed",
+    "count": 22,
+    "files": [
+      {
+        "file": "Docs/design/CookingGame/testing/fixed-flow.md",
+        "gitBlobSha256": "E9057C5582B1033489EC2450CC374FE50D27F36BE631C22AFA1B87907EBEE588",
+        "acceptedBlob": "7c8b53bd47a3eb90b078909c8e750c857361eabd",
+        "mergedBlob": "7c8b53bd47a3eb90b078909c8e750c857361eabd"
+      },
+      {
+        "file": "Docs/design/CookingGame/testing/flow-rules.json",
+        "gitBlobSha256": "AB250FC0F7526181A0C097CC2A898EDBD456C8D2CABBA1782764D2ED55ED666F",
+        "acceptedBlob": "ce493d394f555f36543faca839d99a8396d6b8c9",
+        "mergedBlob": "ce493d394f555f36543faca839d99a8396d6b8c9"
+      },
+      {
+        "file": "Docs/design/CookingGame/testing/requests/compete-network.json",
+        "gitBlobSha256": "8613D68281ECF48F401328F92A61CE05A217CB77CBD06313239FD746234CD9E2",
+        "acceptedBlob": "868bb1faa769341bd3a1909c920f9638a50a035a",
+        "mergedBlob": "868bb1faa769341bd3a1909c920f9638a50a035a"
+      },
+      {
+        "file": "Docs/design/CookingGame/testing/requests/compete-offline.json",
+        "gitBlobSha256": "3C48D9FD2248B7E73D67FA13EE7F1EF20FC19E5461B1B6B3D8FC4B2CCF17A477",
+        "acceptedBlob": "49f1748aaf9bdcfdf04c2773ff26d27b9c3b0ab5",
+        "mergedBlob": "49f1748aaf9bdcfdf04c2773ff26d27b9c3b0ab5"
+      },
+      {
+        "file": "Docs/design/CookingGame/testing/requests/pickup-drop-network.json",
+        "gitBlobSha256": "0093163EDCDD4FA339286B876FB19E1FAEF6B0B2B3CF350F90C95E1850D496A8",
+        "acceptedBlob": "4247192bb61c50551d3bd0dbb83234a97dd01a7c",
+        "mergedBlob": "4247192bb61c50551d3bd0dbb83234a97dd01a7c"
+      },
+      {
+        "file": "Docs/design/CookingGame/testing/requests/pickup-drop-offline.json",
+        "gitBlobSha256": "AE94743CC203B512EDF0888BFF939431DBE0D9989D477EF1A2F6A01271611079",
+        "acceptedBlob": "fdc2109cfd78487a779c6ca08887a381e15d17b9",
+        "mergedBlob": "fdc2109cfd78487a779c6ca08887a381e15d17b9"
+      },
+      {
+        "file": "src/AbilityKit.ET.Runtime.Tests/AbilityKit.ET.Runtime.Tests.csproj",
+        "gitBlobSha256": "D0E904C698D1EC05B8420933E2739F6E78C84DCCFB4C7E08B39365E9B03AAB07",
+        "acceptedBlob": "1a2711ba9bdb228acd4253ff7bf8f0ddd81bedb1",
+        "mergedBlob": "1a2711ba9bdb228acd4253ff7bf8f0ddd81bedb1"
+      },
+      {
+        "file": "src/AbilityKit.ET.Runtime.Tests/CookingFixedFlowTests.cs",
+        "gitBlobSha256": "F44AB4D7B832B78AC7E17337A99511B63A17D39EFCF55004F774180E043E496D",
+        "acceptedBlob": "13d79977503ce9f11db7b662749a3d210a950556",
+        "mergedBlob": "13d79977503ce9f11db7b662749a3d210a950556"
+      },
+      {
+        "file": "src/AbilityKit.Game.Cooking.FlowAcceptance/AbilityKit.Game.Cooking.FlowAcceptance.csproj",
+        "gitBlobSha256": "F76FF700426B7F253F805846F412238128D3B5E8185B9AEE8FED16DFEC0C929E",
+        "acceptedBlob": "c909864bea41e66b26c9939e2b347a2d9dfcb44c",
+        "mergedBlob": "c909864bea41e66b26c9939e2b347a2d9dfcb44c"
+      },
+      {
+        "file": "src/AbilityKit.Game.Cooking.FlowAcceptance/FixedFlows.cs",
+        "gitBlobSha256": "1D46843DC0FE4A6A49A72FCCB3EA6C223D811AE5D9120F0A59559FCA15942E4E",
+        "acceptedBlob": "1f728bca4fc86695c87098907cabf96853693530",
+        "mergedBlob": "1f728bca4fc86695c87098907cabf96853693530"
+      },
+      {
+        "file": "src/AbilityKit.Game.Cooking.FlowAcceptance/FlowContracts.cs",
+        "gitBlobSha256": "9A247D026CD122BC6E587DEE7856B1F54F42723D8E266A6047C3AF4E0E626D05",
+        "acceptedBlob": "49997c378e6c03da631b5915754ce46da3962d4e",
+        "mergedBlob": "49997c378e6c03da631b5915754ce46da3962d4e"
+      },
+      {
+        "file": "src/AbilityKit.Game.Cooking.FlowAcceptance/FlowEventCollector.cs",
+        "gitBlobSha256": "12CD20C9DF53B7244D150AF7167128A7248791C5D3F07D55CB9E34C5A409D411",
+        "acceptedBlob": "2dd0b0ea4f7815cea388803e4137c4959f57d8c3",
+        "mergedBlob": "2dd0b0ea4f7815cea388803e4137c4959f57d8c3"
+      },
+      {
+        "file": "src/AbilityKit.Game.Cooking.FlowAcceptance/FlowFixture.cs",
+        "gitBlobSha256": "44FCEAA075BED2587E39E0455DF10B85D70800A474D45D502E27B86A705D9F2E",
+        "acceptedBlob": "e73e918598f691d853a9da918864e9cfdab0ed2b",
+        "mergedBlob": "e73e918598f691d853a9da918864e9cfdab0ed2b"
+      },
+      {
+        "file": "src/AbilityKit.Game.Cooking.FlowAcceptance/FlowOrchestrator.cs",
+        "gitBlobSha256": "53B00D403B14510359D0A4470AC3AB6A21A7BF4FA643FBB37F60D7739AC33740",
+        "acceptedBlob": "a60aca88b77ea5e4291e7f0274e15018c96a7a6e",
+        "mergedBlob": "a60aca88b77ea5e4291e7f0274e15018c96a7a6e"
+      },
+      {
+        "file": "src/AbilityKit.Game.Cooking.FlowAcceptance/FlowReport.cs",
+        "gitBlobSha256": "D48C5CE0B5E9199C1773F3C7B65286692271F2D16FACF20061D2FBF0456AB4B9",
+        "acceptedBlob": "051b89e86d06046908f1fc3bed434950660a960d",
+        "mergedBlob": "051b89e86d06046908f1fc3bed434950660a960d"
+      },
+      {
+        "file": "src/AbilityKit.Game.Cooking.FlowAcceptance/FlowResourceScope.cs",
+        "gitBlobSha256": "368A09B0231FEBF0463481D9BAA3C03DB2DF01E3E2F2C41F7E05B4AEA5427DB8",
+        "acceptedBlob": "ab0557dd0b012b98d3f93e094d5c38075b5f737a",
+        "mergedBlob": "ab0557dd0b012b98d3f93e094d5c38075b5f737a"
+      },
+      {
+        "file": "src/AbilityKit.Game.Cooking.FlowAcceptance/FlowRoleProtocol.cs",
+        "gitBlobSha256": "777274BBE86C45FB92ABDB78C737ACFAF0B699D268B70ECC9709113696B804E3",
+        "acceptedBlob": "e2eb08b9ea0255fc320356a21b2e3cc245071559",
+        "mergedBlob": "e2eb08b9ea0255fc320356a21b2e3cc245071559"
+      },
+      {
+        "file": "src/AbilityKit.Game.Cooking.FlowAcceptance/FlowRuleEvaluator.cs",
+        "gitBlobSha256": "387858413CFAD6F6CD871EF04A0BECCE2EC95DCA9C8B484C2098227DC08CE4C3",
+        "acceptedBlob": "74dfafcaa0b58eea6a67d949b75f70056daec0ca",
+        "mergedBlob": "74dfafcaa0b58eea6a67d949b75f70056daec0ca"
+      },
+      {
+        "file": "src/AbilityKit.Game.Cooking.FlowAcceptance/NetworkFlowAdapter.cs",
+        "gitBlobSha256": "EB0C2243A0B5271A47F32F7C1ADA857CACFE95E1F6D984CE0D9BB9E74E3E3DB6",
+        "acceptedBlob": "1fc7011bc82fed4b2f0ab66e2c1b9c6d22105271",
+        "mergedBlob": "1fc7011bc82fed4b2f0ab66e2c1b9c6d22105271"
+      },
+      {
+        "file": "src/AbilityKit.Game.Cooking.FlowAcceptance/NetworkRoleHost.cs",
+        "gitBlobSha256": "B3D6131385709709CEA4D2E94DD32898A1B8A371C897C7712DAAAE3AD1E2DDEA",
+        "acceptedBlob": "4606413fc76c9f145b6d6ce66cd7b623a7ce6774",
+        "mergedBlob": "4606413fc76c9f145b6d6ce66cd7b623a7ce6774"
+      },
+      {
+        "file": "src/AbilityKit.Game.Cooking.FlowAcceptance/OfflineFlowAdapter.cs",
+        "gitBlobSha256": "2B1E445D8E5918970289A946CFB4019413F4C617769C7CF69FCA834B89727B85",
+        "acceptedBlob": "4fdeb91e92118a16f4e5c8994784bbda79f1a91b",
+        "mergedBlob": "4fdeb91e92118a16f4e5c8994784bbda79f1a91b"
+      },
+      {
+        "file": "src/AbilityKit.Game.Cooking.FlowAcceptance/Program.cs",
+        "gitBlobSha256": "554E4658DA01E1B89D9B2142CEF232BA8A244BCA7B64C9422BD88A1B1494DFA8",
+        "acceptedBlob": "2991c22251e0adb3a5d5b673512f60091b6f1327",
+        "mergedBlob": "2991c22251e0adb3a5d5b673512f60091b6f1327"
+      }
+    ]
+  },
+  "cliCases": [
+    {
+      "Name": "compete-offline",
+      "Command": "dotnet",
+      "Arguments": [
+        "D:\\MyWorkTree\\AbilityKit\\src\\AbilityKit.Game.Cooking.FlowAcceptance\\bin\\Debug\\net10.0\\AbilityKit.Game.Cooking.FlowAcceptance.dll",
+        "run",
+        "--request",
+        "Docs/design/CookingGame/testing/requests/compete-offline.json",
+        "--output-root",
+        "D:\\MyWorkTree\\AbilityKit\\local\\Logs\\branch-integration-20261008\\flow-compete-offline"
+      ],
+      "StartedUtc": "2026-10-08T01:42:16.0598556Z",
+      "FinishedUtc": "2026-10-08T01:42:16.5903416Z",
+      "NativeExit": 0,
+      "ExpectedExit": 0,
+      "OutputRoot": "D:\\MyWorkTree\\AbilityKit\\local\\Logs\\branch-integration-20261008\\flow-compete-offline",
+      "RawLog": "D:\\MyWorkTree\\AbilityKit\\local\\Logs\\branch-integration-20261008\\compete-offline.log",
+      "controlStatus": "Passed",
+      "result": {
+        "schemaVersion": 1,
+        "run": {
+          "requestId": "compete-offline-v1",
+          "runId": "run-fff7e9984a794c4aa25cd4c9661095bf",
+          "attemptId": "7a4968bf491a4c4992bced1a5339319d",
+          "runGeneration": 1
+        },
+        "source": {
+          "commit": "70ed8ec81a6be824476f21fcb613b4037f83f652",
+          "dirty": true,
+          "configuration": "Debug",
+          "toolVersion": "SDK 10.0.300; runtime 10.0.8"
+        },
+        "flowId": "compete-one-item",
+        "flowVersion": 1,
+        "mode": "Offline",
+        "status": "Passed",
+        "executionComplete": true,
+        "verdict": "Passed",
+        "evidenceComplete": true,
+        "cleanup": {
+          "state": "Complete",
+          "resources": [
+            {
+              "roleId": "authority",
+              "processId": null,
+              "exitConfirmed": true,
+              "errorCode": null
+            }
+          ],
+          "errors": []
+        },
+        "checks": [
+          {
+            "rule": {
+              "id": "C13-OWN",
+              "version": "1.0"
+            },
+            "verdict": "Passed",
+            "stepId": "pickup",
+            "expected": "Unique versioned ownership at each committed cut",
+            "actual": "Independent item and hands agree",
+            "evidenceRefs": [
+              "cut:initial",
+              "cut:pickup",
+              "call:call-A",
+              "call:call-B"
+            ]
+          },
+          {
+            "rule": {
+              "id": "C13-REJECT",
+              "version": "1.0"
+            },
+            "verdict": "Passed",
+            "stepId": "pickup",
+            "expected": "Reject only its own side effects",
+            "actual": "Other legal actor changes allowed",
+            "evidenceRefs": [
+              "cut:initial",
+              "cut:pickup",
+              "call:call-A",
+              "call:call-B"
+            ]
+          },
+          {
+            "rule": {
+              "id": "C13-IDEMP",
+              "version": "1.0"
+            },
+            "verdict": "Passed",
+            "stepId": "retry-winner",
+            "expected": "Command effects stay identical",
+            "actual": "Global tick/version changes are allowed",
+            "evidenceRefs": [
+              "cut:initial",
+              "cut:pickup",
+              "cut:retry",
+              "call:call-A",
+              "call:call-B",
+              "call:call-retry"
+            ]
+          },
+          {
+            "rule": {
+              "id": "C13-COMPLETE",
+              "version": "1.0"
+            },
+            "verdict": "Passed",
+            "stepId": "completion",
+            "expected": "All declared execution facts; cleanup assessed separately",
+            "actual": "Execution facts complete",
+            "evidenceRefs": [
+              "cut:initial",
+              "cut:pickup",
+              "cut:retry",
+              "call:call-A",
+              "call:call-B",
+              "call:call-retry"
+            ]
+          }
+        ],
+        "completedGoals": [
+          "competing-pickup",
+          "exact-replay"
+        ],
+        "unverifiedGoals": [
+          "CONVERGE:N/A(S1)",
+          "Network:NotRun",
+          "Unity:NotRun",
+          "PhysicalLAN:NotRun",
+          "S3CallerDiagnostics:NotRun",
+          "OrcaAutomaticWake:NotRun"
+        ],
+        "failures": [],
+        "timing": {
+          "buildMs": null,
+          "startupMs": 173,
+          "executeMs": 45,
+          "resetMs": 4,
+          "totalMs": 228
+        }
+      },
+      "resultSha256": "24A039558611A3C6F6FFC645CA1207D0DA0E33581C2464946583D716AB697F11"
+    },
+    {
+      "Name": "pickup-drop-offline",
+      "Command": "dotnet",
+      "Arguments": [
+        "D:\\MyWorkTree\\AbilityKit\\src\\AbilityKit.Game.Cooking.FlowAcceptance\\bin\\Debug\\net10.0\\AbilityKit.Game.Cooking.FlowAcceptance.dll",
+        "run",
+        "--request",
+        "Docs/design/CookingGame/testing/requests/pickup-drop-offline.json",
+        "--output-root",
+        "D:\\MyWorkTree\\AbilityKit\\local\\Logs\\branch-integration-20261008\\flow-pickup-drop-offline"
+      ],
+      "StartedUtc": "2026-10-08T01:42:16.6213428Z",
+      "FinishedUtc": "2026-10-08T01:42:17.1249064Z",
+      "NativeExit": 0,
+      "ExpectedExit": 0,
+      "OutputRoot": "D:\\MyWorkTree\\AbilityKit\\local\\Logs\\branch-integration-20261008\\flow-pickup-drop-offline",
+      "RawLog": "D:\\MyWorkTree\\AbilityKit\\local\\Logs\\branch-integration-20261008\\pickup-drop-offline.log",
+      "controlStatus": "Passed",
+      "result": {
+        "schemaVersion": 1,
+        "run": {
+          "requestId": "pickup-drop-offline-v1",
+          "runId": "run-418d367b38644ddba9059e447b127172",
+          "attemptId": "4749fe68f0994bca88464d2bd20759d5",
+          "runGeneration": 1
+        },
+        "source": {
+          "commit": "70ed8ec81a6be824476f21fcb613b4037f83f652",
+          "dirty": true,
+          "configuration": "Debug",
+          "toolVersion": "SDK 10.0.300; runtime 10.0.8"
+        },
+        "flowId": "pickup-drop-one-item",
+        "flowVersion": 1,
+        "mode": "Offline",
+        "status": "Passed",
+        "executionComplete": true,
+        "verdict": "Passed",
+        "evidenceComplete": true,
+        "cleanup": {
+          "state": "Complete",
+          "resources": [
+            {
+              "roleId": "authority",
+              "processId": null,
+              "exitConfirmed": true,
+              "errorCode": null
+            }
+          ],
+          "errors": []
+        },
+        "checks": [
+          {
+            "rule": {
+              "id": "C13-OWN",
+              "version": "1.0"
+            },
+            "verdict": "Passed",
+            "stepId": "pickup",
+            "expected": "Unique versioned ownership at each committed cut",
+            "actual": "Independent item and hands agree",
+            "evidenceRefs": [
+              "cut:initial",
+              "cut:pickup",
+              "call:call-pickup"
+            ]
+          },
+          {
+            "rule": {
+              "id": "C13-OWN",
+              "version": "1.0"
+            },
+            "verdict": "Passed",
+            "stepId": "pickup",
+            "expected": "Unique versioned ownership at each committed cut",
+            "actual": "Independent item and hands agree",
+            "evidenceRefs": [
+              "cut:initial",
+              "cut:pickup",
+              "cut:drop",
+              "call:call-pickup",
+              "call:call-drop"
+            ]
+          },
+          {
+            "rule": {
+              "id": "C13-REJECT",
+              "version": "1.0"
+            },
+            "verdict": "Passed",
+            "stepId": "pickup",
+            "expected": "Reject only its own side effects",
+            "actual": "N/A: no rejection in pickup/drop flow",
+            "evidenceRefs": [
+              "cut:initial",
+              "cut:pickup",
+              "cut:drop",
+              "call:call-pickup",
+              "call:call-drop"
+            ]
+          },
+          {
+            "rule": {
+              "id": "C13-IDEMP",
+              "version": "1.0"
+            },
+            "verdict": "Passed",
+            "stepId": "retry-winner",
+            "expected": "Exact replay when flow declares replay",
+            "actual": "N/A: pickup/drop uses new business IDs",
+            "evidenceRefs": [
+              "cut:initial",
+              "cut:pickup",
+              "cut:drop",
+              "call:call-pickup",
+              "call:call-drop"
+            ]
+          },
+          {
+            "rule": {
+              "id": "C13-COMPLETE",
+              "version": "1.0"
+            },
+            "verdict": "Passed",
+            "stepId": "completion",
+            "expected": "All declared execution facts; cleanup assessed separately",
+            "actual": "Execution facts complete",
+            "evidenceRefs": [
+              "cut:initial",
+              "cut:pickup",
+              "cut:drop",
+              "call:call-pickup",
+              "call:call-drop"
+            ]
+          }
+        ],
+        "completedGoals": [
+          "pickup-drop"
+        ],
+        "unverifiedGoals": [
+          "CONVERGE:N/A(S1)",
+          "Network:NotRun",
+          "Unity:NotRun",
+          "PhysicalLAN:NotRun",
+          "S3CallerDiagnostics:NotRun",
+          "OrcaAutomaticWake:NotRun"
+        ],
+        "failures": [],
+        "timing": {
+          "buildMs": null,
+          "startupMs": 173,
+          "executeMs": 44,
+          "resetMs": 4,
+          "totalMs": 227
+        }
+      },
+      "resultSha256": "9771E1B26D178F6958BB9C0591FB29768D78CBAF59A9831CA48795E627F86977"
+    },
+    {
+      "Name": "compete-network",
+      "Command": "dotnet",
+      "Arguments": [
+        "D:\\MyWorkTree\\AbilityKit\\src\\AbilityKit.Game.Cooking.FlowAcceptance\\bin\\Debug\\net10.0\\AbilityKit.Game.Cooking.FlowAcceptance.dll",
+        "run",
+        "--request",
+        "Docs/design/CookingGame/testing/requests/compete-network.json",
+        "--output-root",
+        "D:\\MyWorkTree\\AbilityKit\\local\\Logs\\branch-integration-20261008\\flow-compete-network"
+      ],
+      "StartedUtc": "2026-10-08T01:42:17.1259037Z",
+      "FinishedUtc": "2026-10-08T01:42:18.7924638Z",
+      "NativeExit": 0,
+      "ExpectedExit": 0,
+      "OutputRoot": "D:\\MyWorkTree\\AbilityKit\\local\\Logs\\branch-integration-20261008\\flow-compete-network",
+      "RawLog": "D:\\MyWorkTree\\AbilityKit\\local\\Logs\\branch-integration-20261008\\compete-network.log",
+      "controlStatus": "Passed",
+      "result": {
+        "schemaVersion": 1,
+        "run": {
+          "requestId": "compete-network",
+          "runId": "run-8225e1485e4347e4af05de2564c6e24f",
+          "attemptId": "f0899a77d40f4c4ba61c21cab1101bd8",
+          "runGeneration": 1
+        },
+        "source": {
+          "commit": "70ed8ec81a6be824476f21fcb613b4037f83f652",
+          "dirty": true,
+          "configuration": "Debug",
+          "toolVersion": "SDK 10.0.300; runtime 10.0.8"
+        },
+        "flowId": "compete-one-item",
+        "flowVersion": 1,
+        "mode": "Network",
+        "status": "Passed",
+        "executionComplete": true,
+        "verdict": "Passed",
+        "evidenceComplete": true,
+        "cleanup": {
+          "state": "Complete",
+          "resources": [
+            {
+              "roleId": "server",
+              "processId": 93988,
+              "exitConfirmed": true,
+              "errorCode": null
+            },
+            {
+              "roleId": "client-a",
+              "processId": 83064,
+              "exitConfirmed": true,
+              "errorCode": null
+            },
+            {
+              "roleId": "client-b",
+              "processId": 78220,
+              "exitConfirmed": true,
+              "errorCode": null
+            }
+          ],
+          "errors": []
+        },
+        "checks": [
+          {
+            "rule": {
+              "id": "C13-OWN",
+              "version": "1.0"
+            },
+            "verdict": "Passed",
+            "stepId": "pickup",
+            "expected": "Unique versioned ownership at each committed cut",
+            "actual": "Independent item and hands agree",
+            "evidenceRefs": [
+              "cut:initial",
+              "cut:initial.client-a",
+              "cut:initial.client-b",
+              "cut:call.call-A.before",
+              "cut:call.call-B.before",
+              "cut:call.call-A.after",
+              "cut:call.call-B.after",
+              "cut:pickup",
+              "call:call-A",
+              "call:call-B"
+            ]
+          },
+          {
+            "rule": {
+              "id": "C13-REJECT",
+              "version": "1.0"
+            },
+            "verdict": "Passed",
+            "stepId": "pickup",
+            "expected": "Reject only its own side effects",
+            "actual": "Other legal actor changes allowed",
+            "evidenceRefs": [
+              "cut:initial",
+              "cut:initial.client-a",
+              "cut:initial.client-b",
+              "cut:call.call-A.before",
+              "cut:call.call-B.before",
+              "cut:call.call-A.after",
+              "cut:call.call-B.after",
+              "cut:pickup",
+              "call:call-A",
+              "call:call-B"
+            ]
+          },
+          {
+            "rule": {
+              "id": "C13-CONVERGE",
+              "version": "1.0"
+            },
+            "verdict": "Passed",
+            "stepId": "pickup",
+            "expected": "Installed target projections in both current clients",
+            "actual": "Version fence and item/hand fields reached; no exact target ACK claim",
+            "evidenceRefs": [
+              "cut:initial",
+              "cut:initial.client-a",
+              "cut:initial.client-b",
+              "cut:call.call-A.before",
+              "cut:call.call-B.before",
+              "cut:call.call-A.after",
+              "cut:call.call-B.after",
+              "cut:pickup",
+              "cut:pickup.client-a",
+              "cut:pickup.client-b",
+              "call:call-A",
+              "call:call-B"
+            ]
+          },
+          {
+            "rule": {
+              "id": "C13-IDEMP",
+              "version": "1.0"
+            },
+            "verdict": "Passed",
+            "stepId": "retry-winner",
+            "expected": "Command effects stay identical",
+            "actual": "Global tick/version changes are allowed",
+            "evidenceRefs": [
+              "cut:initial",
+              "cut:initial.client-a",
+              "cut:initial.client-b",
+              "cut:call.call-A.before",
+              "cut:call.call-B.before",
+              "cut:call.call-A.after",
+              "cut:call.call-B.after",
+              "cut:pickup",
+              "cut:pickup.client-a",
+              "cut:pickup.client-b",
+              "cut:call.call-retry.before",
+              "cut:call.call-retry.after",
+              "cut:retry",
+              "call:call-A",
+              "call:call-B",
+              "call:call-retry"
+            ]
+          },
+          {
+            "rule": {
+              "id": "C13-COMPLETE",
+              "version": "1.0"
+            },
+            "verdict": "Passed",
+            "stepId": "completion",
+            "expected": "All declared execution facts; cleanup assessed separately",
+            "actual": "Execution facts complete",
+            "evidenceRefs": [
+              "cut:initial",
+              "cut:initial.client-a",
+              "cut:initial.client-b",
+              "cut:call.call-A.before",
+              "cut:call.call-B.before",
+              "cut:call.call-A.after",
+              "cut:call.call-B.after",
+              "cut:pickup",
+              "cut:pickup.client-a",
+              "cut:pickup.client-b",
+              "cut:call.call-retry.before",
+              "cut:call.call-retry.after",
+              "cut:retry",
+              "call:call-A",
+              "call:call-B",
+              "call:call-retry"
+            ]
+          }
+        ],
+        "completedGoals": [
+          "competing-pickup",
+          "exact-replay"
+        ],
+        "unverifiedGoals": [
+          "Unity:NotRun",
+          "PhysicalLAN:NotRun",
+          "S3CallerDiagnostics:NotRun",
+          "OrcaAutomaticWake:NotRun"
+        ],
+        "failures": [],
+        "timing": {
+          "buildMs": null,
+          "startupMs": 867,
+          "executeMs": 461,
+          "resetMs": 53,
+          "totalMs": 1387
+        }
+      },
+      "resultSha256": "B2A81657DC038C1E11AE1F522C5EBCABB0B6DC305FB562CD49F15695CE604374",
+      "children": [
+        {
+          "roleId": "server",
+          "processId": 93988,
+          "endpoint": "127.0.0.1:62055",
+          "exitCode": 0,
+          "stopped": true,
+          "readerComplete": true
+        },
+        {
+          "roleId": "client-a",
+          "processId": 83064,
+          "endpoint": null,
+          "exitCode": 0,
+          "stopped": true,
+          "readerComplete": true
+        },
+        {
+          "roleId": "client-b",
+          "processId": 78220,
+          "endpoint": null,
+          "exitCode": 0,
+          "stopped": true,
+          "readerComplete": true
+        }
+      ]
+    },
+    {
+      "Name": "pickup-drop-network",
+      "Command": "dotnet",
+      "Arguments": [
+        "D:\\MyWorkTree\\AbilityKit\\src\\AbilityKit.Game.Cooking.FlowAcceptance\\bin\\Debug\\net10.0\\AbilityKit.Game.Cooking.FlowAcceptance.dll",
+        "run",
+        "--request",
+        "Docs/design/CookingGame/testing/requests/pickup-drop-network.json",
+        "--output-root",
+        "D:\\MyWorkTree\\AbilityKit\\local\\Logs\\branch-integration-20261008\\flow-pickup-drop-network"
+      ],
+      "StartedUtc": "2026-10-08T01:42:18.7934649Z",
+      "FinishedUtc": "2026-10-08T01:42:20.4033250Z",
+      "NativeExit": 0,
+      "ExpectedExit": 0,
+      "OutputRoot": "D:\\MyWorkTree\\AbilityKit\\local\\Logs\\branch-integration-20261008\\flow-pickup-drop-network",
+      "RawLog": "D:\\MyWorkTree\\AbilityKit\\local\\Logs\\branch-integration-20261008\\pickup-drop-network.log",
+      "controlStatus": "Passed",
+      "result": {
+        "schemaVersion": 1,
+        "run": {
+          "requestId": "pickup-drop-network",
+          "runId": "run-11ccc250251c4734bcf414508db31246",
+          "attemptId": "ddc539d1a3fd462d928f084ebb0ce33a",
+          "runGeneration": 1
+        },
+        "source": {
+          "commit": "70ed8ec81a6be824476f21fcb613b4037f83f652",
+          "dirty": true,
+          "configuration": "Debug",
+          "toolVersion": "SDK 10.0.300; runtime 10.0.8"
+        },
+        "flowId": "pickup-drop-one-item",
+        "flowVersion": 1,
+        "mode": "Network",
+        "status": "Passed",
+        "executionComplete": true,
+        "verdict": "Passed",
+        "evidenceComplete": true,
+        "cleanup": {
+          "state": "Complete",
+          "resources": [
+            {
+              "roleId": "server",
+              "processId": 80436,
+              "exitConfirmed": true,
+              "errorCode": null
+            },
+            {
+              "roleId": "client-a",
+              "processId": 92468,
+              "exitConfirmed": true,
+              "errorCode": null
+            },
+            {
+              "roleId": "client-b",
+              "processId": 86428,
+              "exitConfirmed": true,
+              "errorCode": null
+            }
+          ],
+          "errors": []
+        },
+        "checks": [
+          {
+            "rule": {
+              "id": "C13-OWN",
+              "version": "1.0"
+            },
+            "verdict": "Passed",
+            "stepId": "pickup",
+            "expected": "Unique versioned ownership at each committed cut",
+            "actual": "Independent item and hands agree",
+            "evidenceRefs": [
+              "cut:initial",
+              "cut:initial.client-a",
+              "cut:initial.client-b",
+              "cut:pickup",
+              "call:call-pickup"
+            ]
+          },
+          {
+            "rule": {
+              "id": "C13-CONVERGE",
+              "version": "1.0"
+            },
+            "verdict": "Passed",
+            "stepId": "pickup",
+            "expected": "Installed target projections in both current clients",
+            "actual": "Version fence and item/hand fields reached; no exact target ACK claim",
+            "evidenceRefs": [
+              "cut:initial",
+              "cut:initial.client-a",
+              "cut:initial.client-b",
+              "cut:pickup",
+              "cut:pickup.client-a",
+              "cut:pickup.client-b",
+              "call:call-pickup"
+            ]
+          },
+          {
+            "rule": {
+              "id": "C13-OWN",
+              "version": "1.0"
+            },
+            "verdict": "Passed",
+            "stepId": "pickup",
+            "expected": "Unique versioned ownership at each committed cut",
+            "actual": "Independent item and hands agree",
+            "evidenceRefs": [
+              "cut:initial",
+              "cut:initial.client-a",
+              "cut:initial.client-b",
+              "cut:pickup",
+              "cut:pickup.client-a",
+              "cut:pickup.client-b",
+              "cut:drop",
+              "call:call-pickup",
+              "call:call-drop"
+            ]
+          },
+          {
+            "rule": {
+              "id": "C13-REJECT",
+              "version": "1.0"
+            },
+            "verdict": "Passed",
+            "stepId": "pickup",
+            "expected": "Reject only its own side effects",
+            "actual": "N/A: no rejection in pickup/drop flow",
+            "evidenceRefs": [
+              "cut:initial",
+              "cut:initial.client-a",
+              "cut:initial.client-b",
+              "cut:pickup",
+              "cut:pickup.client-a",
+              "cut:pickup.client-b",
+              "cut:drop",
+              "call:call-pickup",
+              "call:call-drop"
+            ]
+          },
+          {
+            "rule": {
+              "id": "C13-IDEMP",
+              "version": "1.0"
+            },
+            "verdict": "Passed",
+            "stepId": "retry-winner",
+            "expected": "Exact replay when flow declares replay",
+            "actual": "N/A: pickup/drop uses new business IDs",
+            "evidenceRefs": [
+              "cut:initial",
+              "cut:initial.client-a",
+              "cut:initial.client-b",
+              "cut:pickup",
+              "cut:pickup.client-a",
+              "cut:pickup.client-b",
+              "cut:drop",
+              "call:call-pickup",
+              "call:call-drop"
+            ]
+          },
+          {
+            "rule": {
+              "id": "C13-CONVERGE",
+              "version": "1.0"
+            },
+            "verdict": "Passed",
+            "stepId": "pickup",
+            "expected": "Installed target projections in both current clients",
+            "actual": "Version fence and item/hand fields reached; no exact target ACK claim",
+            "evidenceRefs": [
+              "cut:initial",
+              "cut:initial.client-a",
+              "cut:initial.client-b",
+              "cut:pickup",
+              "cut:pickup.client-a",
+              "cut:pickup.client-b",
+              "cut:drop",
+              "cut:drop.client-a",
+              "cut:drop.client-b",
+              "call:call-pickup",
+              "call:call-drop"
+            ]
+          },
+          {
+            "rule": {
+              "id": "C13-COMPLETE",
+              "version": "1.0"
+            },
+            "verdict": "Passed",
+            "stepId": "completion",
+            "expected": "All declared execution facts; cleanup assessed separately",
+            "actual": "Execution facts complete",
+            "evidenceRefs": [
+              "cut:initial",
+              "cut:initial.client-a",
+              "cut:initial.client-b",
+              "cut:pickup",
+              "cut:pickup.client-a",
+              "cut:pickup.client-b",
+              "cut:drop",
+              "cut:drop.client-a",
+              "cut:drop.client-b",
+              "call:call-pickup",
+              "call:call-drop"
+            ]
+          }
+        ],
+        "completedGoals": [
+          "pickup-drop"
+        ],
+        "unverifiedGoals": [
+          "Unity:NotRun",
+          "PhysicalLAN:NotRun",
+          "S3CallerDiagnostics:NotRun",
+          "OrcaAutomaticWake:NotRun"
+        ],
+        "failures": [],
+        "timing": {
+          "buildMs": null,
+          "startupMs": 866,
+          "executeMs": 414,
+          "resetMs": 55,
+          "totalMs": 1342
+        }
+      },
+      "resultSha256": "D57EE1ABE39F8A3ACC10689DC3AE4FAA37952BC0B41172A64E6194A69F60279F",
+      "children": [
+        {
+          "roleId": "server",
+          "processId": 80436,
+          "endpoint": "127.0.0.1:62064",
+          "exitCode": 0,
+          "stopped": true,
+          "readerComplete": true
+        },
+        {
+          "roleId": "client-a",
+          "processId": 92468,
+          "endpoint": null,
+          "exitCode": 0,
+          "stopped": true,
+          "readerComplete": true
+        },
+        {
+          "roleId": "client-b",
+          "processId": 86428,
+          "endpoint": null,
+          "exitCode": 0,
+          "stopped": true,
+          "readerComplete": true
+        }
+      ]
+    },
+    {
+      "Name": "caller-failure",
+      "Command": "dotnet",
+      "Arguments": [
+        "D:\\MyWorkTree\\AbilityKit\\src\\AbilityKit.Game.Cooking.FlowAcceptance\\bin\\Debug\\net10.0\\AbilityKit.Game.Cooking.FlowAcceptance.dll",
+        "run",
+        "--request",
+        "Docs/design/CookingGame/testing/requests/compete-network.json",
+        "--output-root",
+        "D:\\MyWorkTree\\AbilityKit\\local\\Logs\\branch-integration-20261008\\flow-caller-failure",
+        "--diagnostic-fault",
+        "fail-after-start"
+      ],
+      "StartedUtc": "2026-10-08T01:42:20.4043250Z",
+      "FinishedUtc": "2026-10-08T01:42:21.6395608Z",
+      "NativeExit": 1,
+      "ExpectedExit": 1,
+      "OutputRoot": "D:\\MyWorkTree\\AbilityKit\\local\\Logs\\branch-integration-20261008\\flow-caller-failure",
+      "RawLog": "D:\\MyWorkTree\\AbilityKit\\local\\Logs\\branch-integration-20261008\\caller-failure.log",
+      "controlStatus": "Passed",
+      "result": {
+        "schemaVersion": 1,
+        "run": {
+          "requestId": "compete-network",
+          "runId": "run-39343eea6e8e455e9838f5dd41d0e6c9",
+          "attemptId": "51fff204178a415a838a82da2a23a08f",
+          "runGeneration": 1
+        },
+        "source": {
+          "commit": "70ed8ec81a6be824476f21fcb613b4037f83f652",
+          "dirty": true,
+          "configuration": "Debug",
+          "toolVersion": "SDK 10.0.300; runtime 10.0.8"
+        },
+        "flowId": "compete-one-item",
+        "flowVersion": 1,
+        "mode": "Network",
+        "status": "Failed",
+        "executionComplete": false,
+        "verdict": "Undetermined",
+        "evidenceComplete": true,
+        "cleanup": {
+          "state": "Complete",
+          "resources": [
+            {
+              "roleId": "server",
+              "processId": 70524,
+              "exitConfirmed": true,
+              "errorCode": null
+            },
+            {
+              "roleId": "client-a",
+              "processId": 69340,
+              "exitConfirmed": true,
+              "errorCode": null
+            },
+            {
+              "roleId": "client-b",
+              "processId": 72692,
+              "exitConfirmed": true,
+              "errorCode": null
+            }
+          ],
+          "errors": []
+        },
+        "checks": [
+          {
+            "rule": {
+              "id": "C13-COMPLETE",
+              "version": "1.0"
+            },
+            "verdict": "Undetermined",
+            "stepId": "completion",
+            "expected": "All goal cuts, invocation terminals and events",
+            "actual": "Execution incomplete",
+            "evidenceRefs": [
+              "cut:initial",
+              "cut:failure"
+            ]
+          }
+        ],
+        "completedGoals": [],
+        "unverifiedGoals": [
+          "competing-pickup:NotRun",
+          "exact-replay:NotRun",
+          "Unity:NotRun",
+          "PhysicalLAN:NotRun",
+          "S3CallerDiagnostics:NotRun",
+          "OrcaAutomaticWake:NotRun"
+        ],
+        "failures": [
+          {
+            "kind": "HarnessOrEnvironmentFailure",
+            "code": "DiagnosticFailAfterStart",
+            "stepId": "diagnostic-after-start",
+            "callId": null,
+            "expected": "Complete bounded flow",
+            "actual": "FlowExecutionException",
+            "evidenceRefs": [
+              "cut:initial"
+            ]
+          },
+          {
+            "kind": "HarnessOrEnvironmentFailure",
+            "code": "ExecutionFactsIncomplete",
+            "stepId": "completion",
+            "callId": null,
+            "expected": "All goal cuts, invocation terminals and events",
+            "actual": "Execution incomplete",
+            "evidenceRefs": [
+              "cut:initial",
+              "cut:failure"
+            ]
+          }
+        ],
+        "timing": {
+          "buildMs": null,
+          "startupMs": 877,
+          "executeMs": 0,
+          "resetMs": 55,
+          "totalMs": 968
+        }
+      },
+      "resultSha256": "BB83D11FEAE8AA04A3865FCFCCCF2BEF8324622FFC3A87223D2293F4979BAA21",
+      "children": [
+        {
+          "roleId": "server",
+          "processId": 70524,
+          "endpoint": "127.0.0.1:62073",
+          "exitCode": 0,
+          "stopped": true,
+          "readerComplete": true
+        },
+        {
+          "roleId": "client-a",
+          "processId": 69340,
+          "endpoint": null,
+          "exitCode": 0,
+          "stopped": true,
+          "readerComplete": true
+        },
+        {
+          "roleId": "client-b",
+          "processId": 72692,
+          "endpoint": null,
+          "exitCode": 0,
+          "stopped": true,
+          "readerComplete": true
+        }
+      ]
+    },
+    {
+      "Name": "caller-no-result",
+      "Command": "dotnet",
+      "Arguments": [
+        "D:\\MyWorkTree\\AbilityKit\\src\\AbilityKit.Game.Cooking.FlowAcceptance\\bin\\Debug\\net10.0\\AbilityKit.Game.Cooking.FlowAcceptance.dll",
+        "run",
+        "--request",
+        "Docs/design/CookingGame/testing/requests/compete-network.json",
+        "--output-root",
+        "D:\\MyWorkTree\\AbilityKit\\local\\Logs\\branch-integration-20261008\\flow-caller-no-result",
+        "--diagnostic-exit-before-run"
+      ],
+      "StartedUtc": "2026-10-08T01:42:21.6405606Z",
+      "FinishedUtc": "2026-10-08T01:42:21.7695752Z",
+      "NativeExit": 86,
+      "ExpectedExit": 86,
+      "OutputRoot": "D:\\MyWorkTree\\AbilityKit\\local\\Logs\\branch-integration-20261008\\flow-caller-no-result",
+      "RawLog": "D:\\MyWorkTree\\AbilityKit\\local\\Logs\\branch-integration-20261008\\caller-no-result.log",
+      "controlStatus": "Passed",
+      "productStatus": "Incomplete",
+      "resultExists": false
+    }
+  ],
+  "recordedChildPids": [
+    93988,
+    83064,
+    78220,
+    80436,
+    92468,
+    86428,
+    70524,
+    69340,
+    72692
+  ],
+  "preservedLocalFiles": {
+    "count": 517,
+    "hashesUnchanged": true
+  },
+  "bundle": {
+    "path": "local\\Logs\\branch-integration-20261008\\original-local-branches.bundle",
+    "sha256": "504DC00B54FAED996A9B03933D256458EE96774B8CD64BAACE3C9C36B55646E1",
+    "verifyNativeExit": 0,
+    "incremental": true
+  },
+  "notRun": [
+    "Remote push",
+    "Issue close",
+    "CI",
+    "Unity",
+    "Physical LAN",
+    "Performance",
+    "Broad test gates"
+  ]
+}

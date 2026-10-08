@@ -1,5 +1,13 @@
 # Cooking Game 当前工程进度
 
+## 本地分支整合与回收（2026-10-08）
+
+Owner 随后明确要求逐渐把本地分支合入 master，并删除其他本地分支。限定 Cooking 内容已本地整合：实际验证源码 `70ed8ec81a6be824476f21fcb613b4037f83f652`，包含 Issue13 已接受交付、日志及根协调者创建 worktree 的规则。两个历史编译修复已在 master，以相同补丁和不变 Git tree 核对后只补齐合并 ancestry，保留后续修复。22 个交付文件与已接受 manifest/实现完全一致。
+
+合并后的实际构建 Passed/native0；固定 Flow 测试 14/14、四个 offline/network CLI 正例 native0，以及诊断 native1/无结果 native86 的两项预期控制均通过核对。诊断 Flow 仍 Failed/Undetermined，无结果调用仍 Incomplete；不是产品成功。9 个实际联网子进程退出记录完整。源码 dirty=true 仅因既存本机缓存/私有工作流记录，517 个原文件 hash 保持不变；构建保留 2095 个警告/0 错误。完整命令、TRX、二进制与原始证据见[本地整合记录](../../../.trellis/tasks/10-08-cooking-local-branch-integration/research/closeout.md)。
+
+7 条非 master 本地分支名已删除，仅保留 master；原 tip 均有 `archive/local-branches-20261008/` 标签及增量 bundle 保护。`audit/issue6-b1` 和 `audit/issue6-b2a` 含越界示例改动，仍未合入，只归档隔离后删除本地 ref。远端 push、Issue 关闭、CI、Unity、物理双机 LAN、性能与宽门禁均 NotRun。下方 branch-only/旧 worker 保留状态是原交付的历史事实；随后 Owner 授权的 worker 回收见[原记录](../../../.trellis/tasks/10-07-cooking-issue13-flow-orchestrator/research/owner-cleanup-20261008.md)。原任务及其 canonical 私有证据地址保持不变。
+
 ## Issue #13 分支交付已完成（2026-10-08）
 
 Owner 显式调用 cooking-dot-workflow 的限定 S1/S2/S3 已完成。dot 接受最终证据候选 `a38ef86f5cccb686f42c6dfe5fb40d2717147e58`，实现为 `6a41945b348bdf2cc0d62fc8e2d61e7a72049292`；分支 `Kakusya/issue13-flow-s0`。交付是两个固定 Flow 的 offline 与同机真实三进程 network，以及实际调用器 native0/诊断 native1/无结果 native86 的有界交接。22 个交付文件保持已接受哈希；原失败与 UNKNOWN 保留。没有重复测试套件。

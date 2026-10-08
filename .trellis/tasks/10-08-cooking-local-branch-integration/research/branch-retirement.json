@@ -1,0 +1,62 @@
+{
+    "Status":  "Passed",
+    "IntegratedSource":  "70ed8ec81a6be824476f21fcb613b4037f83f652",
+    "Branches":  [
+                     {
+                         "Branch":  "Kakusya/cooking-dot-api-design-review-20261007",
+                         "OriginalTip":  "06825bde981082541c9f4f30e59fad4c3b3ccd83",
+                         "ArchiveTag":  "archive/local-branches-20261008/Kakusya/cooking-dot-api-design-review-20261007",
+                         "Disposition":  "Merged; local branch deleted",
+                         "DeletionNativeExit":  0
+                     },
+                     {
+                         "Branch":  "docs/supervised-issue-sop",
+                         "OriginalTip":  "31dc81fafcb2418184887c7d3b8590b2498f4bb5",
+                         "ArchiveTag":  "archive/local-branches-20261008/docs/supervised-issue-sop",
+                         "Disposition":  "Merged; local branch deleted",
+                         "DeletionNativeExit":  0
+                     },
+                     {
+                         "Branch":  "Kakusya/issue6-compiler-trace-repair-ccswitch",
+                         "OriginalTip":  "a54b49ab46cd4229d25face493146a5f6b8349f1",
+                         "ArchiveTag":  "archive/local-branches-20261008/Kakusya/issue6-compiler-trace-repair-ccswitch",
+                         "Disposition":  "Merged; local branch deleted",
+                         "DeletionNativeExit":  0
+                     },
+                     {
+                         "Branch":  "Kakusya/issue6-compiler-input-target-repair-ccswitch",
+                         "OriginalTip":  "3fe069c3da5fd574ed6875d225bb9fd76bd69fa1",
+                         "ArchiveTag":  "archive/local-branches-20261008/Kakusya/issue6-compiler-input-target-repair-ccswitch",
+                         "Disposition":  "Merged; local branch deleted",
+                         "DeletionNativeExit":  0
+                     },
+                     {
+                         "Branch":  "Kakusya/issue13-flow-s0",
+                         "OriginalTip":  "b3bbc4bb5fec7f768dfcc33808343a05db4e7fa5",
+                         "ArchiveTag":  "archive/local-branches-20261008/Kakusya/issue13-flow-s0",
+                         "Disposition":  "Merged; local branch deleted",
+                         "DeletionNativeExit":  0
+                     },
+                     {
+                         "Branch":  "audit/issue6-b1",
+                         "OriginalTip":  "56ebd215d496554d6a9dd7406b4c1f1d0897958a",
+                         "ArchiveTag":  "archive/local-branches-20261008/audit/issue6-b1",
+                         "Disposition":  "Quarantined; unmerged local branch deleted after tag/bundle verification",
+                         "DeletionNativeExit":  0
+                     },
+                     {
+                         "Branch":  "audit/issue6-b2a",
+                         "OriginalTip":  "4dd4f3fff0d7d08cf59dfdbbadc73fe35836705f",
+                         "ArchiveTag":  "archive/local-branches-20261008/audit/issue6-b2a",
+                         "Disposition":  "Quarantined; unmerged local branch deleted after tag/bundle verification",
+                         "DeletionNativeExit":  0
+                     }
+                 ],
+    "RemainingBranches":  [
+                              "master"
+                          ],
+    "LiveFlowRoleCount":  0,
+    "RemoteRefs":  "Untouched",
+    "ArchiveTags":  "Seven annotated tags preserve original local tips",
+    "Bundle":  "local/Logs/branch-integration-20261008/original-local-branches.bundle"
+}

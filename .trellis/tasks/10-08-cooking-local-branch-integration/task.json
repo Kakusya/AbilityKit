@@ -15,12 +15,27 @@
   "branch": "master",
   "base_branch": "master",
   "worktree_path": null,
-  "commit": null,
+  "commit": "70ed8ec81a6be824476f21fcb613b4037f83f652",
   "pr_url": null,
   "subtasks": [],
   "children": [],
   "parent": null,
   "relatedFiles": [],
   "notes": "",
-  "meta": {}
+  "meta": {
+    "delivery_mode": "local-integration",
+    "owner_approval": "2026-10-08 current conversation: gradual local merge and deletion of other local branches",
+    "verification": "research/integration-results.json",
+    "branch_retirement": "research/branch-retirement.json",
+    "remaining_local_branches": [
+      "master"
+    ],
+    "quarantined_unmerged": [
+      "audit/issue6-b1",
+      "audit/issue6-b2a"
+    ],
+    "remote_push": "NotRun",
+    "issue_close": "NotRun",
+    "archive_policy": "Non-PR-backed direct master integration; skip only self-referential branch metadata validation."
+  }
 }
