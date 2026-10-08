@@ -28,7 +28,7 @@
     "planning_request": "AK-I13-S0-PLAN-20261007-01",
     "planning_sha": "a8ea630ca1fd29fcf0327556f7847e13f589c218",
     "planning_decision": "accept-plan-S0-only",
-    "next_action": "S2-frozen-candidate-final-dot-review-before-S3",
+    "next_action": "one-bounded-same-worker-S2-R1-R2-revision",
     "owner_approval": "research/owner-approval-20261007.md",
     "api_amendment_request": "AK-I13-API-CLARIFY-20261007-01",
     "api_amendment_sha": "6ad948d0c72255873b4fbd1cd6b5fce7594e3d13",
@@ -37,6 +37,8 @@
     "s1_review_request": "AK-I13-S1-REVISION-REVIEW-20261008-01",
     "s2_replay_request": "AK-I13-S2-REPLAY-API-20261008-01",
     "s2_worker_dispatch": "ctx_d4e0d35062e5",
-    "s2_independent_check": "research/s2-check.md"
+    "s2_independent_check": "research/s2-check.md",
+    "s2_review_request": "AK-I13-S2-REVIEW-20261008-01",
+    "s2_review_decision": "needs-revision"
   }
 }

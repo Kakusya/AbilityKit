@@ -45,3 +45,8 @@ S1 exact candidate `2201931e1846acb9ab8a205d501e39731b5a39bb` is accepted with c
 ## Current S2 replay clarification (2026-10-08)
 
 [Exact accepted replay contract](research/accepted-s2-replay-contract.md) and [full dot source](research/dot-s2-replay-api-reply-raw.txt) resolve the worker semantic question without new public API or category meaning. Read actual native/domain identities, mode-specific evaluator path and supporting current binding observations; keep original14file boundary and focused checks. Main reviewed this supplement before replying to the existing worker. Dirty S2 remains unaccepted until independent check/freeze/final review.
+
+
+## S2 R1/R2 revision, 2026-10-08
+
+[Complete current dot decision](research/dot-s2-review-decision.md) requires [five-file bounded revision](research/s2-revision-plan.md) before S3. Main reviewed plan and context; valid Owner scope permits same-worker new dispatch. Earlier positive checks remain evidence, not exact candidate acceptance.
