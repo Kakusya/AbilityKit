@@ -40,3 +40,8 @@ S1只offline两个注册Flow/真实正例/明确synthetic反例与归位控制�
 ## Current S2 continuation (2026-10-08)
 
 S1 exact candidate `2201931e1846acb9ab8a205d501e39731b5a39bb` is accepted with complete API behavior finding. [Current decision](research/dot-s1-revision-review-decision.md) and [bounded 14-file S2 execution plan](research/s2-dispatch-plan.md) supersede historical deferred-S2/S0-only scheduling passages. One retained managed Orca worker may now implement S2 under existing Owner approval; main reviewed these artifacts and context manifests. Independent check/freeze/new dot review precedes S3. Branch-only and honest evidence remain.
+
+
+## Current S2 replay clarification (2026-10-08)
+
+[Exact accepted replay contract](research/accepted-s2-replay-contract.md) and [full dot source](research/dot-s2-replay-api-reply-raw.txt) resolve the worker semantic question without new public API or category meaning. Read actual native/domain identities, mode-specific evaluator path and supporting current binding observations; keep original14file boundary and focused checks. Main reviewed this supplement before replying to the existing worker. Dirty S2 remains unaccepted until independent check/freeze/final review.

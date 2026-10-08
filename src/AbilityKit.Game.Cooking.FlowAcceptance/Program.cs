@@ -15,6 +15,19 @@ public static class Program
         Console.CancelKeyPress += onCancel;
         try
         {
+            if (args.Length > 0 && args[0] == "role")
+            {
+                if (args.Length != 3 || args[1] != "--id" || args[2] is not ("server" or "client-a" or "client-b"))
+                    throw new InvalidDataException("Usage: role --id server|client-a|client-b");
+                var protocolOutput = Console.OpenStandardOutput();
+                var previousOutput = Console.Out;
+                Console.SetOut(Console.Error); // Existing ET diagnostics must never enter the role NDJSON stream.
+                try
+                {
+                    return await NetworkRoleHost.RunAsync(args[2], Console.OpenStandardInput(), protocolOutput, Console.Error, cancelled.Token);
+                }
+                finally { Console.SetOut(previousOutput); }
+            }
             var actualInvocation = CaptureInvocation();
             var parsed = ParseArguments(args);
             var request = FlowJson.ReadRequest(parsed.RequestPath);
@@ -39,7 +52,7 @@ public static class Program
             }
             var source = CaptureSource();
             var assembly = Assembly.GetExecutingAssembly().Location;
-            var orchestrator = new FlowOrchestrator(new OfflineFlowSessionFactory(), catalog, new FlowReport(), source);
+            var orchestrator = new FlowOrchestrator(new FixedFlowSessionFactory(), catalog, new FlowReport(), source);
             var options = new FlowRunOptions(actualInvocation, parsed.DiagnosticFault);
             var result = await orchestrator.RunAsync(request, options, cancelled.Token);
             Console.Write(FlowReport.Summary(result));

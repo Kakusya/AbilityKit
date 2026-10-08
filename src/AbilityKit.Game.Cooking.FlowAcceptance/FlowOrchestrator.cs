@@ -66,7 +66,7 @@ public sealed class FlowOrchestrator : IFlowOrchestrator
             { source, assemblySha256 = Convert.ToHexString(SHA256.HashData(File.ReadAllBytes(assemblyPath))),
                 sourceMeaning = "Invocation checkout; build inputs not archived", buildMs = (long?)null }, FlowJson.Options), 8192, active.Token);
             collector = createCollector(Path.Combine(directory, "events.jsonl"), run, request.Logs);
-            context = new(run, approvals, Record);
+            context = new(run, approvals, Record, request.Mode);
             session = sessions.Create(request.Mode);
             resources = new(session);
             using (var startupToken = CancellationTokenSource.CreateLinkedTokenSource(active.Token))
@@ -144,7 +144,7 @@ public sealed class FlowOrchestrator : IFlowOrchestrator
                 var executionEvidence = context.Evidence();
                 evidenceComplete = collector.HasRequiredEvents(executionEvidence);
                 var completeApproval = approvals.Single(a => a.Rule.Id == "C13-COMPLETE");
-                var completeCheck = new FlowRuleEvaluator(completeApproval.Rule).Evaluate(context.Evidence(evidenceComplete), completeApproval);
+                var completeCheck = new FlowRuleEvaluator(completeApproval.Rule, request.Mode).Evaluate(context.Evidence(evidenceComplete), completeApproval);
                 Record(completeCheck);
                 if (completeCheck.Verdict == FlowVerdict.Undetermined)
                     AddFailure(FailureKind.HarnessOrEnvironmentFailure, "ExecutionFactsIncomplete", "completion", completeCheck.Expected, completeCheck.Actual);
@@ -171,7 +171,8 @@ public sealed class FlowOrchestrator : IFlowOrchestrator
             checks.ToArray(), context.CompletedGoals.ToArray(),
             (request.FlowId == "compete-one-item" ? new[] { "competing-pickup", "exact-replay" } : new[] { "pickup-drop" })
                 .Except(context.CompletedGoals).Select(g => g + ":NotRun")
-                .Concat(new[] { "CONVERGE:N/A(S1)", "Unity:NotRun", "Network:NotRun", "PhysicalLAN:NotRun", "OrcaAutomaticWake:NotRun" }).ToArray(),
+                .Concat(request.Mode == FlowMode.Offline ? new[] { "CONVERGE:N/A(S1)", "Network:NotRun" } : Array.Empty<string>())
+                .Concat(new[] { "Unity:NotRun", "PhysicalLAN:NotRun", "S3CallerDiagnostics:NotRun", "OrcaAutomaticWake:NotRun" }).ToArray(),
             failures.ToArray(), new(null, startupMs, executeMs, resetMs, total.ElapsedMilliseconds));
         if (ownedDirectory)
         {

@@ -248,6 +248,22 @@ public interface IFlowReportWriter
         CancellationToken publishToken);
 }
 
+public enum RoleControlKind { Initialize, ArmAction, ReleaseBarrier, Observe, Stop }
+public enum RoleReplyKind { Ready, Armed, Event, Fault, Stopped }
+
+public sealed record RoleInit(
+    string RoleId, string? ActorId, string? Endpoint,
+    FixtureSpec? Fixture, FlowBudgets Budgets, FlowLogLimits Logs);
+
+public sealed record RoleControl(
+    int SchemaVersion, RunIdentity Run, string RoleId, long ControlSequence, string ControlId,
+    RoleControlKind Kind, RoleInit? Init, FlowAction? Action, string? ReplayOfCallId,
+    string? BarrierId, string? ObservationPoint);
+
+public sealed record RoleReply(
+    int SchemaVersion, RunIdentity Run, string RoleId, long HostSequence, string? ControlId,
+    RoleReplyKind Kind, FlowEvent? Event, string? BoundEndpoint, string? ErrorCode);
+
 // One test JSON boundary, unrelated to the product wire schema.
 public static class FlowJson
 {
@@ -292,7 +308,7 @@ public static class FlowJson
 
     public static void Validate(FlowRequest request)
     {
-        if (request is null || request.SchemaVersion != 1 || request.FlowVersion != 1 || request.Mode != FlowMode.Offline ||
+        if (request is null || request.SchemaVersion != 1 || request.FlowVersion != 1 || !Enum.IsDefined(request.Mode) ||
             request.FlowId is not ("compete-one-item" or "pickup-drop-one-item"))
             throw new InvalidDataException("Unsupported schema, mode or registered flow version.");
         RequireId(request.RequestId);
@@ -307,8 +323,9 @@ public static class FlowJson
             throw new InvalidDataException("Budgets outside approved parameters.");
         var l = request.Logs ?? throw new InvalidDataException("Missing log limits.");
         if (l != new FlowLogLimits(256, 65536, 4096, 8388608, 262144)) throw new InvalidDataException("Log limits outside approved parameters.");
-        if (request.Rules is null || request.Rules.Count != 4 || request.Rules.Any(r => r is null) ||
-            request.Rules.Select(r => r.Id).Distinct().Count() != 4) throw new InvalidDataException("Missing or duplicate rule references.");
+        var ruleCount = request.Mode == FlowMode.Offline ? 4 : 5;
+        if (request.Rules is null || request.Rules.Count != ruleCount || request.Rules.Any(r => r is null) ||
+            request.Rules.Select(r => r.Id).Distinct().Count() != ruleCount) throw new InvalidDataException("Missing or duplicate rule references.");
         if (string.IsNullOrWhiteSpace(request.OutputRoot) || request.OutputRoot.Length > 1024)
             throw new InvalidDataException("Missing or oversized output directory.");
         var path = Path.GetFullPath(request.OutputRoot);

@@ -6,3 +6,4 @@
 {"file": ".trellis/tasks/10-07-cooking-issue13-flow-orchestrator/research/accepted-s2-bootstrap.md", "reason": "Exact approved role bootstrap, protocol lifecycle and fourteen-file scope"}
 {"file": ".trellis/tasks/10-07-cooking-issue13-flow-orchestrator/research/dot-s1-revision-review-decision.md", "reason": "Exact current S1 acceptance and explicit S2 allowed_next_action"}
 {"file": ".trellis/tasks/10-07-cooking-issue13-flow-orchestrator/research/s2-dispatch-plan.md", "reason": "Reviewed S2 ownership, file consumers, invariants, focused checks and stop boundary"}
+{"file": ".trellis/tasks/10-07-cooking-issue13-flow-orchestrator/research/accepted-s2-replay-contract.md", "reason": "Exact dot-authorized mode-specific replay, actual domain-ID event attribution, binding/evidence and no-new-public-API contract"}

@@ -23,10 +23,11 @@ public sealed class FlowReport : IFlowReportWriter
         await WriteAtomicAsync(Path.Combine(runDirectory, "summary.txt"), summary, 8192, publishToken);
         var rows = string.Join("", result.Checks.Select(c => "<tr><td>" + E(c.Rule.Id) + "</td><td>" + c.Verdict +
             "</td><td>" + E(c.StepId) + "</td><td>" + E(c.Actual) + "</td></tr>"));
-        var html = "<!doctype html><html lang=\"en\"><meta charset=\"utf-8\"><title>Cooking S1 fixed flow</title>" +
+        var html = "<!doctype html><html lang=\"en\"><meta charset=\"utf-8\"><title>Cooking fixed flow</title>" +
             "<style>body{font:16px system-ui;max-width:1000px;margin:3rem auto;padding:1rem}table{border-collapse:collapse}td,th{padding:.6rem;border:1px solid #aaa}pre{white-space:pre-wrap}</style>" +
             "<h1>Cooking fixed flow: " + result.Status + "</h1><pre>" + E(summary) + "</pre><table><tr><th>Rule</th><th>Verdict</th><th>Step</th><th>Fact</th></tr>" +
-            rows + "</table><p>CONVERGE: N/A in S1. Unity, network, physical LAN and automatic Orca wake: NotRun.</p>" +
+            rows + "</table><p>" + (result.Mode == FlowMode.Network ? "Real independent server and two external clients; installed target projections, no exact target ACK claim. See network-resources.json for child identity/native exits." : "CONVERGE: N/A in S1. Network: NotRun.") +
+            " Unity, physical LAN, S3 caller diagnostics and automatic Orca wake: NotRun.</p>" +
             "<p>Collector order is receipt order, not cross-host causality. Cancellation never claims undo. Normal process/file delivery only.</p></html>";
         await WriteAtomicAsync(Path.Combine(runDirectory, "report.html"), html, 131072, publishToken);
         // Result is the completion marker and is always the final atomic file publication.

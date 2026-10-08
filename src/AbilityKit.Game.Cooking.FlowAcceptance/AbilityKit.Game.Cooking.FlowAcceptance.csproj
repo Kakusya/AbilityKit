@@ -9,6 +9,7 @@
   <ItemGroup>
     <ProjectReference Include="../AbilityKit.Game.Cooking/AbilityKit.Game.Cooking.csproj" />
     <ProjectReference Include="../AbilityKit.Game.Cooking.EtRuntime/AbilityKit.Game.Cooking.EtRuntime.csproj" />
+    <ProjectReference Include="../AbilityKit.Network.Transport.LiteNet/AbilityKit.Network.Transport.LiteNet.csproj" />
     <Compile Include="../AbilityKit.Game.Cooking.NetworkRichRecoveryAcceptance/SingleThreadOwner.cs" Link="SingleThreadOwner.cs" />
     <Content Include="../../Docs/design/CookingGame/testing/flow-rules.json" Link="flow-rules.json" CopyToOutputDirectory="PreserveNewest" />
   </ItemGroup>

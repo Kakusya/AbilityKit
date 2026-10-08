@@ -1,6 +1,8 @@
 using System.Reflection;
 using System.Text.Json;
 using System.Text.Json.Nodes;
+using System.Diagnostics;
+using System.Text;
 using AbilityKit.Game.Cooking;
 using AbilityKit.Game.Cooking.EtRuntime;
 using AbilityKit.Game.Cooking.FlowAcceptance;
@@ -8,11 +10,10 @@ using Xunit;
 
 namespace AbilityKit.ET.Runtime.Tests;
 
-[Trait("FlowStage", "S1")]
 public sealed class CookingFixedFlowTests
 {
     private static readonly string Root = FindRoot();
-    private static readonly string Results = Path.Combine(Root, "local", "Logs", "issue13-s1-worker", "tests-" + Guid.NewGuid().ToString("N"));
+    private static readonly string Results = Path.Combine(Root, "local", "Logs", "issue13-s2-worker", "tests-" + Guid.NewGuid().ToString("N"));
     private static readonly SourceStamp TestSource = (SourceStamp)typeof(AbilityKit.Game.Cooking.FlowAcceptance.Program)
         .GetMethod("CaptureSource", BindingFlags.NonPublic | BindingFlags.Static)!.Invoke(null, null)!;
     private static readonly FlowInvocation TestInvocation = (FlowInvocation)typeof(AbilityKit.Game.Cooking.FlowAcceptance.Program)
@@ -25,6 +26,7 @@ public sealed class CookingFixedFlowTests
             .RunAsync(request, new FlowRunOptions(TestInvocation, diagnostic), token));
 
     [Theory]
+    [Trait("FlowStage", "S1")]
     [InlineData("compete-one-item")]
     [InlineData("pickup-drop-one-item")]
     public void Real_registered_flows_and_two_fresh_runs_have_complete_evidence_and_no_residual(string flow)
@@ -79,6 +81,7 @@ public sealed class CookingFixedFlowTests
     }
 
     [Fact]
+    [Trait("FlowStage", "S1")]
     public void Real_immediate_duplicate_merges_terminal_sources_once_and_admission_without_terminal_is_known()
     {
         OnOwner(async () =>
@@ -119,6 +122,8 @@ public sealed class CookingFixedFlowTests
     }
 
     [Fact]
+    [Trait("FlowStage", "S1")]
+    [Trait("FlowStage", "S2")]
     public void Synthetic_rule_controls_detect_hand_location_reject_success_replay_effects_and_missing_goals()
     {
         var request = FixedFlows.Request("compete-one-item", Output("synthetic-source"));
@@ -164,6 +169,7 @@ public sealed class CookingFixedFlowTests
     }
 
     [Fact]
+    [Trait("FlowStage", "S1")]
     public void Real_frame_fault_preserves_accepted_pickup_event_and_executed_terminal_without_clock_advance()
     {
         OnOwner(async () =>
@@ -196,6 +202,7 @@ public sealed class CookingFixedFlowTests
     }
 
     [Fact]
+    [Trait("FlowStage", "S1")]
     public void Startup_fault_is_blocked_and_runtime_cancel_timeout_preserve_facts_and_independent_cleanup()
     {
         foreach (var mode in new[] { Control.StartupFault, Control.CancelAfterDispatch, Control.Timeout })
@@ -243,6 +250,7 @@ public sealed class CookingFixedFlowTests
     }
 
     [Fact]
+    [Trait("FlowStage", "S1")]
     public void First_product_failure_survives_cleanup_failure_with_synthetic_cut_labelled()
     {
         var request = FixedFlows.Request("compete-one-item", Output("synthetic product cleanup path"));
@@ -278,6 +286,7 @@ public sealed class CookingFixedFlowTests
     }
 
     [Fact]
+    [Trait("FlowStage", "S1")]
     public void Typed_schema_catalog_limits_and_old_outputs_reject_before_host_creation()
     {
         var good = FixedFlows.Request("compete-one-item", Output("json"));
@@ -328,6 +337,8 @@ public sealed class CookingFixedFlowTests
     }
 
     [Fact]
+    [Trait("FlowStage", "S1")]
+    [Trait("FlowStage", "S2")]
     public void Missing_required_events_and_report_failure_deadline_wrong_identity_or_no_result_fail_closed()
     {
         var missing = Run(FixedFlows.Request("compete-one-item", Output("missing-events")), new Factory(() => new ControlledSession(Control.MissingEvents, null)));
@@ -360,6 +371,7 @@ public sealed class CookingFixedFlowTests
     }
 
     [Fact]
+    [Trait("FlowStage", "S1")]
     public async Task Collector_bounds_wrong_run_sequence_overflow_partial_and_write_fault_are_latched()
     {
         var identity = new RunIdentity("request", "collector-run", "attempt", 1);
@@ -426,6 +438,280 @@ public sealed class CookingFixedFlowTests
     {
         var approval = Catalog().ResolveApproved(FixedFlows.Request("compete-one-item", Output("unused")).Rules, FlowMode.Offline).Single(r => r.Rule.Id == id);
         return new FlowRuleEvaluator(approval.Rule).Evaluate(evidence, approval);
+    }
+
+    private static readonly string NetworkResults = Path.Combine(Root, "local", "Logs", "issue13-s2-worker", "tests-" + Guid.NewGuid().ToString("N"));
+    private static string NetworkOutput(string name) => Path.Combine(NetworkResults, name + "-" + Guid.NewGuid().ToString("N"));
+    private static FlowRequest NetworkRequest(string flow, string output)
+    {
+        var request = FixedFlows.Request(flow, output);
+        return request with { Mode = FlowMode.Network, Rules = request.Rules.Append(new RuleRef("C13-CONVERGE", "1.0")).ToArray() };
+    }
+
+    [Theory]
+    [Trait("FlowStage", "S2")]
+    [InlineData("compete-one-item")]
+    [InlineData("pickup-drop-one-item")]
+    public void Real_network_flows_use_three_children_current_projections_and_confirm_native_exits(string flow)
+    {
+        var request = NetworkRequest(flow, NetworkOutput(flow));
+        var result = Run(request, new FixedFlowSessionFactory());
+        Assert.Equal(FlowStatus.Passed, result.Status); Assert.Empty(result.Failures);
+        Assert.True(result.ExecutionComplete); Assert.True(result.EvidenceComplete);
+        Assert.Equal(FlowVerdict.Passed, result.Verdict); Assert.Equal(CleanupState.Complete, result.Cleanup.State);
+        Assert.Equal(3, result.Cleanup.Resources.Count);
+        Assert.Equal(3, result.Cleanup.Resources.Select(r => r.ProcessId).Distinct().Count());
+        Assert.All(result.Cleanup.Resources, r => { Assert.True(r.ExitConfirmed); Assert.Null(r.ErrorCode); Assert.NotEqual(Environment.ProcessId, r.ProcessId); });
+        Assert.DoesNotContain("Network:NotRun", result.UnverifiedGoals);
+        Assert.All(result.Checks, c => Assert.Equal(FlowVerdict.Passed, c.Verdict));
+        var records = File.ReadAllLines(Path.Combine(request.OutputRoot, "events.jsonl")).Select(FlowJson.Read<LoggedEvent>).ToArray();
+        Assert.All(records, e => Assert.Equal(result.Run.RunId, e.Event.RunId));
+        foreach (var host in records.GroupBy(r => r.Event.HostId))
+            Assert.Equal(Enumerable.Range(1, host.Count()).Select(n => (long)n), host.Select(e => e.Event.HostSequence));
+        var commands = records.Where(r => r.Event.Command is not null).Select(r => r.Event.Command!).ToArray();
+        Assert.Equal(flow == "compete-one-item" ? 3 : 2, commands.Length);
+        Assert.All(commands, c => { Assert.Equal(0, c.FrozenCommand.SimulationBatch); Assert.Null(c.WireCorrelationId); Assert.NotNull(c.DomainCommandId); });
+        var ready = records.Where(e => e.Event.Kind == FlowEventKind.RoleReady).Select(e => e.Event.Observation!).ToArray();
+        Assert.Equal(3, ready.Length);
+        var authority = ready.Single(c => c.Origin == ObservationOrigin.Authority);
+        Assert.All(ready.Where(c => c.Origin == ObservationOrigin.Client), c =>
+        { Assert.Equal(authority.Fence.ServerSessionInstance, c.Fence.ServerSessionInstance); Assert.Equal(authority.Fence.Scope, c.Fence.Scope); Assert.True(c.Fence.ConnectionGeneration > 0); });
+        var pickupCheck = records.First(e => e.Event.Check?.Rule.Id == "C13-CONVERGE");
+        Assert.True(pickupCheck.CollectorSequence < records.First(e => e.Event.Command?.StepId == (flow == "compete-one-item" ? "retry-winner" : "drop")).CollectorSequence);
+        if (flow == "compete-one-item")
+        {
+            var winner = Assert.Single(commands.Where(c => c.StepId == "compete"), c => c.BusinessResult!.Outcome == CookingRecipeOutcome.Accepted);
+            var loser = Assert.Single(commands.Where(c => c.StepId == "compete"), c => c.BusinessResult!.Outcome == CookingRecipeOutcome.Rejected);
+            Assert.Empty(loser.BusinessResult!.Events);
+            var replay = commands.Single(c => c.StepId == "retry-winner");
+            Assert.Equal(winner.FrozenCommand, replay.FrozenCommand); Assert.Equal(winner.DomainCommandId, replay.DomainCommandId);
+            Assert.True(replay.BusinessResult!.IsDuplicate); Assert.Empty(replay.BusinessResult.Events);
+            var cut = records.Last(r => r.Event.Observation?.Origin == ObservationOrigin.Authority).Event.Observation!;
+            Assert.Single(cut.CommandEvents, e => e.Command.Value == winner.DomainCommandId);
+        }
+        using var proof = JsonDocument.Parse(File.ReadAllText(Path.Combine(request.OutputRoot, "network-resources.json")));
+        Assert.Equal(result.Run.RunId, proof.RootElement.GetProperty("run").GetProperty("runId").GetString());
+        var children = proof.RootElement.GetProperty("children").EnumerateArray().ToArray();
+        Assert.Equal(3, children.Length);
+        Assert.All(children, child =>
+        {
+            Assert.Equal(0, child.GetProperty("exitCode").GetInt32()); Assert.True(child.GetProperty("stopped").GetBoolean());
+            Assert.True(child.GetProperty("readerComplete").GetBoolean()); Assert.True(child.GetProperty("diagnosticsComplete").GetBoolean());
+            Assert.Equal(JsonValueKind.Null, child.GetProperty("error").ValueKind);
+        });
+    }
+
+    [Fact]
+    [Trait("FlowStage", "S2")]
+    public void Synthetic_role_protocol_and_projection_fences_reject_wrong_binding_old_payload_and_partial_input()
+    {
+        var request = NetworkRequest("compete-one-item", NetworkOutput("synthetic"));
+        var run = new RunIdentity(request.RequestId, "synthetic-run", "attempt", 1);
+        var initialize = new RoleControl(1, run, "server", 1, "init", RoleControlKind.Initialize,
+            new("server", null, null, request.Fixture, request.Budgets, request.Logs), null, null, null, null);
+        void Validate(RoleControl c, RunIdentity? frozen, long sequence) => InvokeProtocol("ValidateControl", c, "server", frozen, sequence);
+        Validate(initialize, null, 1);
+        foreach (var wrong in new[] { initialize with { SchemaVersion = 2 }, initialize with { RoleId = "client-a" },
+            initialize with { ControlSequence = 2 }, initialize with { Action = new("call", "business", "A", FlowVerb.Pickup, "flow-item", 1, null) } })
+            Assert.Throws<TargetInvocationException>(() => Validate(wrong, null, 1));
+        Assert.Throws<TargetInvocationException>(() => Validate(initialize with { ControlSequence = 2 }, run, 2));
+        var stop = initialize with { Init = null, Kind = RoleControlKind.Stop, ControlSequence = 2, ControlId = "stop" };
+        Assert.Throws<TargetInvocationException>(() => Validate(stop with { Run = run with { RunGeneration = 2 } }, run, 2));
+        var json = JsonSerializer.Serialize(initialize, FlowJson.Options);
+        Assert.ThrowsAny<Exception>(() => FlowJson.Read<RoleControl>(json.Replace("\"schemaVersion\":1", "\"schemaVersion\":1,\"unknown\":true")));
+        Assert.ThrowsAny<Exception>(() => FlowJson.Read<RoleControl>(json.Replace("\"controlId\":\"init\",", "")));
+        foreach (var text in new[] { "partial", new string('x', 65537) })
+            Assert.ThrowsAny<Exception>(() => ((Task<string?>)InvokeProtocol("ReadLineAsync", new MemoryStream(Encoding.UTF8.GetBytes(text)), CancellationToken.None)!).GetAwaiter().GetResult());
+        var scope = new FlowFixture(run).Scope;
+        var authority = new BindingFence(1, scope, "server-instance", null);
+        var item = new ItemProbe("flow-item", 2, false, "PlayerHand", "A", null);
+        var hands = new[] { new HandProbe("A", "flow-item", HandEvidence.DomainHandIndex), new HandProbe("B", null, HandEvidence.DomainHandIndex) };
+        var expected = new ProjectionFence(authority, new[] { "client-a", "client-b" }, 10, new[] { item }, hands);
+        var observed = new FlowObservation("client-a", ObservationOrigin.Client, true, null, authority with { ConnectionGeneration = 7 },
+            11, 12, 13, 5, false, new[] { item }, hands.Select(h => h with { Evidence = HandEvidence.ClientProjection }).ToArray(), Array.Empty<CookingRecipeEvent>());
+        bool Matches(FlowObservation value) => (bool)typeof(NetworkFlowAdapter).GetMethod("ProjectionMatches", BindingFlags.Static | BindingFlags.NonPublic)!.Invoke(null, new object[] { value, expected })!;
+        Assert.True(Matches(observed)); // installed fields can converge without claiming exact target ACK.
+        foreach (var bad in new[] { observed with { StateVersion = 9 }, observed with { BaselineSequence = 0 }, observed with { Available = false },
+            observed with { Fence = observed.Fence with { RunGeneration = 2 } }, observed with { Fence = observed.Fence with { ServerSessionInstance = "old" } },
+            observed with { Fence = observed.Fence with { Scope = new(scope.MatchScope, scope.RestaurantRuntime, scope.Level, 2) } }, observed with { Fence = observed.Fence with { ConnectionGeneration = 0 } },
+            observed with { Items = new[] { item with { OwnerId = "B" } } }, observed with { Hands = observed.Hands.Select(h => h with { ItemId = null }).ToArray() } })
+            Assert.False(Matches(bad));
+        var eventValue = new FlowEvent(1, run.RunId, "server", 1, 1, "initial", null, FlowEventKind.RoleReady, null, null,
+            observed with { ObserverId = "authority", Origin = ObservationOrigin.Authority, Fence = authority }, null, null, null);
+        var ready = new RoleReply(1, run, "server", 1, "init", RoleReplyKind.Ready, eventValue, "127.0.0.1:1234", null);
+        InvokeProtocol("ValidateReply", ready, run, "server", 1L, 1L);
+        foreach (var bad in new[] { ready with { Run = run with { AttemptId = "old" } }, ready with { HostSequence = 2 },
+            ready with { Event = eventValue with { HostSequence = 2 } }, ready with { Kind = RoleReplyKind.Armed }, ready with { Event = null } })
+            Assert.Throws<TargetInvocationException>(() => InvokeProtocol("ValidateReply", bad, run, "server", 1L, 1L));
+        // Armed consumes reply sequence without consuming event sequence.
+        InvokeProtocol("ValidateReply", new RoleReply(1, run, "server", 2, "arm", RoleReplyKind.Armed, null, null, null), run, "server", 2L, 1L);
+        InvokeProtocol("ValidateReply", ready with { HostSequence = 3, Event = eventValue with { HostSequence = 2 } }, run, "server", 3L, 2L);
+        // Synthetic network replay controls exercise actual domain identity, not wire stable-ID guesses.
+        var domain = AbilityKit.Game.Cooking.Session.CookingNetworkWireCodec.DomainId(authority.ServerSessionInstance!, scope, new("A"), "pickup-A").Value;
+        var rejectedDomain = AbilityKit.Game.Cooking.Session.CookingNetworkWireCodec.DomainId(authority.ServerSessionInstance!, scope, new("B"), "pickup-B").Value;
+        var committed = new CookingRecipeEvent(1, 3, new("A"), new(domain), CookingRecipeOperation.Pickup, null, null, new("flow-item"), "synthetic accepted pickup");
+        var frozen = new CookingRecipeCommand(scope.MatchScope, 0, new("A"), new("pickup-A"), CookingRecipeOperation.Pickup,
+            Item: new ItemId("flow-item"), ExpectedItemVersion: 1);
+        var winner = new CommandObservation("compete", "call-A", "pickup-A", "A", frozen, null, null, "Executed", domain, null, "None",
+            new(CookingRecipeOutcome.Accepted, CookingRecipeRejectionReason.None, 10, false, new[] { committed }), CallCompletion.Terminal, null);
+        var loser = winner with { CallId = "call-B", BusinessId = "pickup-B", ActorId = "B", DomainCommandId = rejectedDomain,
+            FrozenCommand = frozen with { Player = new("B"), Command = new("pickup-B") },
+            BusinessResult = CookingRecipeCommandResult.Reject(CookingRecipeRejectionReason.ItemStale, 10) };
+        var replay = winner with { StepId = "retry-winner", CallId = "call-retry", BusinessResult = winner.BusinessResult! with
+            { IsDuplicate = true, Events = Array.Empty<CookingRecipeEvent>() } };
+        var initial = eventValue.Observation! with { StateVersion = 9, Items = new[] { item with { Version = 1, LocationKind = "StationSlot", OwnerId = null, SlotId = "source" } },
+            Hands = hands.Select(h => h with { ItemId = null }).ToArray() };
+        var pickup = initial with { StateVersion = 10, Items = new[] { item }, Hands = hands, CommandEvents = new[] { committed } };
+        var cuts = new Dictionary<string, FlowObservation> { ["initial"] = initial, ["pickup"] = pickup, ["retry"] = pickup with { StateVersion = 11 },
+            ["initial.client-a"] = observed, ["initial.client-b"] = observed with { ObserverId = "client-b", Fence = observed.Fence with { ConnectionGeneration = 2 } } };
+        foreach (var call in new[] { "call-A", "call-retry" }) foreach (var point in new[] { "before", "after" }) cuts["call." + call + "." + point] = observed;
+        var evidence = new FlowEvidence(new[] { winner, loser, replay }, cuts, true);
+        RuleCheck NetworkEvaluate(string id, FlowEvidence value)
+        {
+            var approval = Catalog().ResolveApproved(request.Rules, FlowMode.Network).Single(r => r.Rule.Id == id);
+            var evaluator = (IFlowRule)Activator.CreateInstance(typeof(FlowRuleEvaluator), BindingFlags.Instance | BindingFlags.NonPublic,
+                null, new object[] { approval.Rule, FlowMode.Network }, null)!;
+            return evaluator.Evaluate(value, approval);
+        }
+        Assert.Equal(FlowVerdict.Passed, NetworkEvaluate("C13-IDEMP", evidence).Verdict);
+        foreach (var variation in new[] { replay with { DomainCommandId = null }, replay with { DomainCommandId = "replacement" },
+            replay with { BusinessResult = null }, replay with { Completion = CallCompletion.Unknown }, replay with { NativeDisposition = "Cancelled" },
+            replay with { FrozenCommand = frozen with { ExpectedItemVersion = 2 } } })
+            Assert.Equal(FlowVerdict.Undetermined, NetworkEvaluate("C13-IDEMP", evidence with { Commands = new[] { winner, loser, variation } }).Verdict);
+        Assert.Equal(FlowVerdict.Undetermined, NetworkEvaluate("C13-IDEMP", Replace(evidence, "call.call-retry.after",
+            observed with { Fence = observed.Fence with { ConnectionGeneration = 8 } })).Verdict);
+        foreach (var variation in new[] { replay with { BusinessResult = replay.BusinessResult! with { StateVersion = 11 } },
+            replay with { BusinessResult = replay.BusinessResult! with { Events = new[] { committed } } } })
+            Assert.Equal(FlowVerdict.Failed, NetworkEvaluate("C13-IDEMP", evidence with { Commands = new[] { winner, loser, variation } }).Verdict);
+        Assert.Equal(FlowVerdict.Failed, NetworkEvaluate("C13-IDEMP", Replace(evidence, "retry", pickup with
+        { CommandEvents = new[] { committed, committed with { Sequence = 2 } } })).Verdict);
+        Assert.Equal(FlowVerdict.Failed, NetworkEvaluate("C13-IDEMP", Replace(evidence, "retry", pickup with
+        { Hands = hands.Select(h => h with { ItemId = null }).ToArray() })).Verdict);
+        var falseRejectedEffect = committed with { Command = new(rejectedDomain), Player = new("B"), Sequence = 2 };
+        Assert.NotEqual(loser.BusinessId, falseRejectedEffect.Command.Value);
+        Assert.Equal(FlowVerdict.Failed, NetworkEvaluate("C13-REJECT", Replace(evidence, "pickup", pickup with
+        { CommandEvents = new[] { committed, falseRejectedEffect } })).Verdict);
+        Assert.Equal(FlowVerdict.Undetermined, NetworkEvaluate("C13-REJECT", evidence with { Commands = new[] { winner, loser with { DomainCommandId = null }, replay } }).Verdict);
+        Assert.Equal(FlowVerdict.Failed, NetworkEvaluate("C13-REJECT", Replace(evidence with
+        { Commands = new[] { winner with { BusinessResult = null, Completion = CallCompletion.Unknown }, loser, replay } }, "pickup", pickup with
+        { CommandEvents = new[] { committed, falseRejectedEffect } })).Verdict);
+    }
+
+    [Fact]
+    [Trait("FlowStage", "S2")]
+    public async Task Real_child_EOF_protocol_fault_and_sent_command_cancellation_preserve_facts_and_exit_evidence()
+    {
+        var request = NetworkRequest("compete-one-item", NetworkOutput("native-controls"));
+        var run = new RunIdentity(request.RequestId, "native-role-run", "attempt", 1);
+        Directory.CreateDirectory(request.OutputRoot);
+        foreach (var mode in new[] { "eof", "old-run", "server-arm" })
+        {
+            var info = new ProcessStartInfo("dotnet") { UseShellExecute = false, CreateNoWindow = true, RedirectStandardInput = true,
+                RedirectStandardOutput = true, RedirectStandardError = true };
+            foreach (var arg in new[] { typeof(AbilityKit.Game.Cooking.FlowAcceptance.Program).Assembly.Location, "role", "--id", "server" }) info.ArgumentList.Add(arg);
+            using var child = Process.Start(info)!;
+            try
+            {
+            var init = new RoleControl(1, run, "server", 1, "init", RoleControlKind.Initialize,
+                new("server", null, null, request.Fixture, request.Budgets, request.Logs), null, null, null, null);
+            child.StandardInput.WriteLine(JsonSerializer.Serialize(init, FlowJson.Options)); child.StandardInput.Flush();
+            var line = await child.StandardOutput.ReadLineAsync().WaitAsync(TimeSpan.FromSeconds(10));
+            File.WriteAllText(Path.Combine(request.OutputRoot, mode + "-startup.json"), JsonSerializer.Serialize(new { processId = child.Id, firstLine = line }, FlowJson.Options));
+            var ready = FlowJson.Read<RoleReply>(line!); Assert.Equal(RoleReplyKind.Ready, ready.Kind);
+            if (mode != "eof")
+            {
+                var bad = new RoleControl(1, mode == "old-run" ? run with { RunId = "old-run" } : run, "server", 2, "bad",
+                    mode == "old-run" ? RoleControlKind.Observe : RoleControlKind.ArmAction, null, null,
+                    mode == "server-arm" ? "unknown-call" : null, mode == "server-arm" ? "barrier" : null, mode == "old-run" ? "capture" : null);
+                child.StandardInput.WriteLine(JsonSerializer.Serialize(bad, FlowJson.Options)); child.StandardInput.Flush();
+            }
+            child.StandardInput.Close();
+            var stdout = child.StandardOutput.ReadToEndAsync(); var stderr = child.StandardError.ReadToEndAsync();
+            using var exitWait = new CancellationTokenSource(10000);
+            await child.WaitForExitAsync(exitWait.Token);
+            var rest = await stdout; var diagnostic = await stderr;
+            Assert.Equal(mode == "eof" ? 1 : 2, child.ExitCode);
+            Assert.DoesNotContain("\"kind\":\"Stopped\"", rest);
+            File.WriteAllText(Path.Combine(request.OutputRoot, mode + ".json"), JsonSerializer.Serialize(new
+            { mode, processId = child.Id, child.ExitCode, ready, stdout = rest, stderr = diagnostic }, FlowJson.Options));
+            }
+            finally
+            {
+                if (!child.HasExited)
+                {
+                    child.StandardInput.Close();
+                    using var cleanup = new CancellationTokenSource(1000);
+                    try { await child.WaitForExitAsync(cleanup.Token); }
+                    catch (OperationCanceledException) { child.Kill(); await child.WaitForExitAsync(); }
+                }
+            }
+        }
+        OnOwner(async () =>
+        {
+            var networkRequest = NetworkRequest("compete-one-item", NetworkOutput("cancel-after-send"));
+            Directory.CreateDirectory(networkRequest.OutputRoot);
+            using var cancelled = new CancellationTokenSource();
+            var sink = new CancelOnSentSink(cancelled);
+            var adapter = new NetworkFlowAdapter();
+            var identity = new RunIdentity(networkRequest.RequestId, "sent-run", "attempt", 1);
+            var initial = await adapter.StartAsync(networkRequest, identity, sink, default);
+            try
+            {
+                await Assert.ThrowsAsync<ArgumentException>(async () => await adapter.ReplayAsync("retry", "unknown-call", "new-call", 10000, default));
+                var dispatch = await adapter.DispatchGroupAsync("pickup", new[] { new FlowAction("sent-call", "sent-business", "A", FlowVerb.Pickup,
+                    "flow-item", 1, null) }, 10000, cancelled.Token);
+                Assert.True(cancelled.IsCancellationRequested); Assert.False(dispatch.Complete);
+                Assert.DoesNotContain(dispatch.Outcomes, c => c.BusinessResult?.Outcome == CookingRecipeOutcome.Rejected);
+                Assert.All(dispatch.Outcomes, c => Assert.NotEqual(CallCompletion.NotAdmitted, c.Completion));
+                using var wait = new CancellationTokenSource(1000);
+                FlowObservation current;
+                do { current = await adapter.CaptureAsync("authority", wait.Token); if (current.Items[0].Version == 2) break; await Task.Delay(5, wait.Token); }
+                while (!wait.IsCancellationRequested);
+                Assert.Equal(2, current.Items[0].Version); Assert.Equal("A", current.Items[0].OwnerId);
+                Assert.Single(current.CommandEvents, e => e.Player.Value == "A");
+                // Exact repeated Arm/Release controls cannot execute a sent action a second time.
+                var liveRoles = (System.Collections.IEnumerable)typeof(NetworkFlowAdapter).GetField("roles", BindingFlags.Instance | BindingFlags.NonPublic)!.GetValue(adapter)!;
+                var sender = liveRoles.Cast<object>().Single(r => (string)r.GetType().GetField("Id", BindingFlags.Instance | BindingFlags.NonPublic)!.GetValue(r)! == "client-a");
+                var sent = ((System.Collections.IEnumerable)sender.GetType().GetField("Sent", BindingFlags.Instance | BindingFlags.NonPublic)!.GetValue(sender)!).Cast<RoleControl>().ToArray();
+                var arm = sent.Single(c => c.Kind == RoleControlKind.ArmAction);
+                var release = sent.Single(c => c.Kind == RoleControlKind.ReleaseBarrier);
+                foreach (var repeat in new[] { arm, release })
+                {
+                    var task = (Task<string>)typeof(NetworkFlowAdapter).GetMethod("Send", BindingFlags.Instance | BindingFlags.NonPublic)!.Invoke(adapter,
+                        new object?[] { sender, repeat.Kind, CancellationToken.None, repeat.ControlId, repeat.Init, repeat.Action, repeat.ReplayOfCallId,
+                            repeat.BarrierId, repeat.ObservationPoint })!;
+                    await task;
+                }
+                await adapter.CaptureAsync("client-a", wait.Token); // observes control processing after both duplicate messages.
+                var afterControls = await adapter.CaptureAsync("authority", wait.Token);
+                Assert.Equal(current.Items, afterControls.Items); Assert.Equal(current.Hands, afterControls.Hands);
+                Assert.Equal(current.CommandEvents, afterControls.CommandEvents);
+                File.WriteAllText(Path.Combine(networkRequest.OutputRoot, "sent-cancellation-facts.json"), JsonSerializer.Serialize(new { initial, dispatch, current }, FlowJson.Options));
+                // An actual child crash after committed effects stops this attempt, without a fabricated Stopped.
+                var roleList = (System.Collections.IEnumerable)typeof(NetworkFlowAdapter).GetField("roles", BindingFlags.Instance | BindingFlags.NonPublic)!.GetValue(adapter)!;
+                var crashed = roleList.Cast<object>().Single(r => (string)r.GetType().GetField("Id", BindingFlags.Instance | BindingFlags.NonPublic)!.GetValue(r)! == "client-b");
+                var process = (Process)crashed.GetType().GetField("Process", BindingFlags.Instance | BindingFlags.NonPublic)!.GetValue(crashed)!;
+                process.Kill(); await process.WaitForExitAsync();
+                await Assert.ThrowsAnyAsync<Exception>(async () => await adapter.CaptureAsync("authority", default));
+            }
+            finally
+            {
+                var closed = await adapter.CloseAsync(10000, default);
+                Assert.Equal(CleanupState.Incomplete, closed.State); Assert.All(closed.Resources, r => Assert.True(r.ExitConfirmed));
+                Assert.Contains(closed.Resources, r => r.RoleId == "client-b" && r.ErrorCode is not null);
+                Assert.Same(closed, await adapter.CloseAsync(10000, default));
+            }
+            return 0;
+        });
+    }
+
+    private static object? InvokeProtocol(string method, params object?[] args) => typeof(NetworkFlowAdapter).Assembly
+        .GetType("AbilityKit.Game.Cooking.FlowAcceptance.FlowRoleProtocol")!.GetMethod(method, BindingFlags.Static | BindingFlags.NonPublic)!.Invoke(null, args);
+    private sealed class CancelOnSentSink(CancellationTokenSource cancelled) : IFlowEventSink
+    {
+        public bool EvidenceComplete => true;
+        public bool TryPublish(FlowEvent value)
+        { if (value.Kind == FlowEventKind.StepStarted && value.HostId == "client-a") cancelled.Cancel(); return true; }
     }
     private static FlowEvidence Replace(FlowEvidence evidence, string key, FlowObservation cut)
     {
