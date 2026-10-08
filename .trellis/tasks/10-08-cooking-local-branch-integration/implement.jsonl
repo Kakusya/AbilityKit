@@ -1,0 +1,4 @@
+{"file":"AGENTS.md","reason":"Cooking-only authorization and preservation boundary"}
+{"file":".trellis/spec/abilitykit/supervised-issue-delivery.md","reason":"Merge, verification and retirement responsibilities"}
+{"file":".trellis/tasks/10-08-cooking-local-branch-integration/prd.md","reason":"Current explicit local integration/delete authorization"}
+{"file":".trellis/tasks/10-08-cooking-local-branch-integration/design.md","reason":"Per-branch decisions, patch equivalence and quarantine"}
