@@ -116,3 +116,27 @@ Owner authorized execution after dot accept-candidate. Exact reviewed documentat
 ### Status
 
 [OK] **Completed**
+
+
+## Session 5: Integrate local Cooking branches and preserve quarantined audit history
+<!-- trellis-session: v=2 fp=4957d5490b88bbd3 -->
+
+**Date**: 2026-10-08
+**Task**: Integrate local Cooking branches and preserve quarantined audit history
+**Branch**: `master`
+
+### Summary
+
+Owner authorized local merge and local branch deletion. Accepted Cooking Flow and governance integrated; patch-equivalent compiler repairs added ancestry without changing trees. Build native0; focused14/14; four actual offline/network positives and expected native1/native86 caller controls verified; nine child exits complete. All seven non-master local branches deleted after tag/bundle preservation. Two prohibited audit histories remain quarantined and unmerged. Private517 files preserved; remote push and Issue close NotRun.
+
+### Git Commits
+
+| Hash | Message |
+|------|---------|
+| `70ed8ec81a6be824476f21fcb613b4037f83f652` | Merge accepted Cooking fixed-flow CLI and delivery records |
+| `98aaecee0` | docs(cooking): record local integration checks and branch retirement |
+| `d225c9055` | Merge approved coordinator-only worktree rules |
+
+### Status
+
+[OK] **Completed**

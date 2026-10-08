@@ -8,8 +8,8 @@
 
 <!-- @@@auto:current-status -->
 - **Active File**: `journal-1.md`
-- **Total Sessions**: 4
-- **Last Active**: 2026-10-07
+- **Total Sessions**: 5
+- **Last Active**: 2026-10-08
 <!-- @@@/auto:current-status -->
 
 ---
@@ -19,7 +19,7 @@
 <!-- @@@auto:active-documents -->
 | File | Lines | Status |
 |------|-------|--------|
-| `journal-1.md` | ~118 | Active |
+| `journal-1.md` | ~142 | Active |
 <!-- @@@/auto:active-documents -->
 
 ---
@@ -29,6 +29,7 @@
 <!-- @@@auto:session-history -->
 | # | Date | Title | Commits | Branch |
 |---|------|-------|---------|--------|
+| 5 | 2026-10-08 | Integrate local Cooking branches and preserve quarantined audit history | `70ed8ec81a6be824476f21fcb613b4037f83f652`, `98aaecee0`, `d225c9055` | `master` |
 | 4 | 2026-10-07 | Apply accepted Cooking dot API design contract | `06825bde981082541c9f4f30e59fad4c3b3ccd83`, `271f76c8e4ab88ae93b28fb49e46f4700a399b66` | `master` |
 | 3 | 2026-10-05 | Cooking dot skill polish accepted and branch pilot complete | `ca077b3c42f9d86e8bd5dce76445e3d9b8534f75` | `Kakusya/cooking-dot-skill-polish` |
 | 2 | 2026-10-05 | Cooking dot workflow skill implementation | `a2434830b` | `docs/supervised-issue-sop` |
