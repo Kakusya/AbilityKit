@@ -440,7 +440,7 @@ public sealed class CookingFixedFlowTests
         return new FlowRuleEvaluator(approval.Rule).Evaluate(evidence, approval);
     }
 
-    private static readonly string NetworkResults = Path.Combine(Root, "local", "Logs", "issue13-s2-worker", "tests-" + Guid.NewGuid().ToString("N"));
+    private static readonly string NetworkResults = Path.Combine(Root, "local", "Logs", "issue13-s2-revision", "tests-" + Guid.NewGuid().ToString("N"));
     private static string NetworkOutput(string name) => Path.Combine(NetworkResults, name + "-" + Guid.NewGuid().ToString("N"));
     private static FlowRequest NetworkRequest(string flow, string output)
     {
@@ -528,10 +528,11 @@ public sealed class CookingFixedFlowTests
         var hands = new[] { new HandProbe("A", "flow-item", HandEvidence.DomainHandIndex), new HandProbe("B", null, HandEvidence.DomainHandIndex) };
         var expected = new ProjectionFence(authority, new[] { "client-a", "client-b" }, 10, new[] { item }, hands);
         var observed = new FlowObservation("client-a", ObservationOrigin.Client, true, null, authority with { ConnectionGeneration = 7 },
-            11, 12, 13, 5, false, new[] { item }, hands.Select(h => h with { Evidence = HandEvidence.ClientProjection }).ToArray(), Array.Empty<CookingRecipeEvent>());
+            11, 12, 13, 5, true, new[] { item }, hands.Select(h => h with { Evidence = HandEvidence.ClientProjection }).ToArray(), Array.Empty<CookingRecipeEvent>());
         bool Matches(FlowObservation value) => (bool)typeof(NetworkFlowAdapter).GetMethod("ProjectionMatches", BindingFlags.Static | BindingFlags.NonPublic)!.Invoke(null, new object[] { value, expected })!;
         Assert.True(Matches(observed)); // installed fields can converge without claiming exact target ACK.
         foreach (var bad in new[] { observed with { StateVersion = 9 }, observed with { BaselineSequence = 0 }, observed with { Available = false },
+            observed with { SynchronizedObserved = false }, observed with { SynchronizedObserved = null },
             observed with { Fence = observed.Fence with { RunGeneration = 2 } }, observed with { Fence = observed.Fence with { ServerSessionInstance = "old" } },
             observed with { Fence = observed.Fence with { Scope = new(scope.MatchScope, scope.RestaurantRuntime, scope.Level, 2) } }, observed with { Fence = observed.Fence with { ConnectionGeneration = 0 } },
             observed with { Items = new[] { item with { OwnerId = "B" } } }, observed with { Hands = observed.Hands.Select(h => h with { ItemId = null }).ToArray() } })
@@ -574,6 +575,21 @@ public sealed class CookingFixedFlowTests
             return evaluator.Evaluate(value, approval);
         }
         Assert.Equal(FlowVerdict.Passed, NetworkEvaluate("C13-IDEMP", evidence).Verdict);
+        var convergence = Replace(Replace(evidence, "pickup.client-a", observed), "pickup.client-b", cuts["initial.client-b"]);
+        Assert.Equal(FlowVerdict.Passed, NetworkEvaluate("C13-CONVERGE", convergence).Verdict);
+        foreach (var invalid in new bool?[] { false, null })
+        {
+            Assert.Equal(FlowVerdict.Undetermined, NetworkEvaluate("C13-IDEMP", Replace(evidence, "call.call-retry.after",
+                observed with { SynchronizedObserved = invalid })).Verdict);
+            Assert.Equal(FlowVerdict.Undetermined, NetworkEvaluate("C13-IDEMP", Replace(evidence, "initial.client-a",
+                observed with { SynchronizedObserved = invalid })).Verdict);
+            Assert.Equal(FlowVerdict.Undetermined, NetworkEvaluate("C13-CONVERGE", Replace(convergence, "pickup.client-b",
+                cuts["initial.client-b"] with { SynchronizedObserved = invalid })).Verdict);
+            Assert.Equal(FlowVerdict.Undetermined, NetworkEvaluate("C13-CONVERGE", Replace(convergence, "initial.client-a",
+                observed with { SynchronizedObserved = invalid })).Verdict);
+            Assert.Throws<TargetInvocationException>(() => typeof(NetworkFlowAdapter).GetMethod("ValidateClient", BindingFlags.Static | BindingFlags.NonPublic)!
+                .Invoke(null, new object?[] { observed with { SynchronizedObserved = invalid }, authority, "client-a", observed.Fence }));
+        }
         foreach (var variation in new[] { replay with { DomainCommandId = null }, replay with { DomainCommandId = "replacement" },
             replay with { BusinessResult = null }, replay with { Completion = CallCompletion.Unknown }, replay with { NativeDisposition = "Cancelled" },
             replay with { FrozenCommand = frozen with { ExpectedItemVersion = 2 } } })
@@ -591,6 +607,10 @@ public sealed class CookingFixedFlowTests
         Assert.NotEqual(loser.BusinessId, falseRejectedEffect.Command.Value);
         Assert.Equal(FlowVerdict.Failed, NetworkEvaluate("C13-REJECT", Replace(evidence, "pickup", pickup with
         { CommandEvents = new[] { committed, falseRejectedEffect } })).Verdict);
+        Assert.Equal(FlowVerdict.Failed, NetworkEvaluate("C13-REJECT", Replace(Replace(evidence, "call.call-retry.after",
+            observed with { SynchronizedObserved = false }), "pickup", pickup with { CommandEvents = new[] { committed, falseRejectedEffect } })).Verdict);
+        Assert.Equal(FlowVerdict.Failed, NetworkEvaluate("C13-OWN", Replace(Replace(evidence, "initial.client-b",
+            cuts["initial.client-b"] with { SynchronizedObserved = null }), "pickup", pickup with { Hands = hands.Select(h => h with { ItemId = null }).ToArray() })).Verdict);
         Assert.Equal(FlowVerdict.Undetermined, NetworkEvaluate("C13-REJECT", evidence with { Commands = new[] { winner, loser with { DomainCommandId = null }, replay } }).Verdict);
         Assert.Equal(FlowVerdict.Failed, NetworkEvaluate("C13-REJECT", Replace(evidence with
         { Commands = new[] { winner with { BusinessResult = null, Completion = CallCompletion.Unknown }, loser, replay } }, "pickup", pickup with
@@ -646,6 +666,7 @@ public sealed class CookingFixedFlowTests
                 }
             }
         }
+        OnOwner(async () => { await ReadyThenDisconnect(request); return 0; });
         OnOwner(async () =>
         {
             var networkRequest = NetworkRequest("compete-one-item", NetworkOutput("cancel-after-send"));
@@ -692,17 +713,132 @@ public sealed class CookingFixedFlowTests
                 var crashed = roleList.Cast<object>().Single(r => (string)r.GetType().GetField("Id", BindingFlags.Instance | BindingFlags.NonPublic)!.GetValue(r)! == "client-b");
                 var process = (Process)crashed.GetType().GetField("Process", BindingFlags.Instance | BindingFlags.NonPublic)!.GetValue(crashed)!;
                 process.Kill(); await process.WaitForExitAsync();
+                File.WriteAllText(Path.Combine(networkRequest.OutputRoot, "actual-crash-native.json"), JsonSerializer.Serialize(new
+                { processId = process.Id, process.ExitCode, knownToTest = true }, FlowJson.Options));
                 await Assert.ThrowsAnyAsync<Exception>(async () => await adapter.CaptureAsync("authority", default));
+                // Synthetic OS failures are instance-private seams; the actual owned crash above remains separate evidence.
+                typeof(NetworkFlowAdapter).GetField("hasExited", BindingFlags.Instance | BindingFlags.NonPublic)!.SetValue(adapter,
+                    new Func<Process, bool>(p => p.Id == process.Id ? throw new IOException("SyntheticExitQuery") : p.HasExited));
+                typeof(NetworkFlowAdapter).GetField("terminate", BindingFlags.Instance | BindingFlags.NonPublic)!.SetValue(adapter,
+                    new Action<Process>(p => { if (p.Id == process.Id) throw new IOException("SyntheticOwnedTermination"); p.Kill(); }));
+                typeof(NetworkFlowAdapter).GetField("readExitCode", BindingFlags.Instance | BindingFlags.NonPublic)!.SetValue(adapter,
+                    new Func<Process, int>(p => p.Id == process.Id ? throw new IOException("SyntheticExitCode") : p.ExitCode));
             }
             finally
             {
                 var closed = await adapter.CloseAsync(10000, default);
-                Assert.Equal(CleanupState.Incomplete, closed.State); Assert.All(closed.Resources, r => Assert.True(r.ExitConfirmed));
-                Assert.Contains(closed.Resources, r => r.RoleId == "client-b" && r.ErrorCode is not null);
+                Assert.Equal(CleanupState.Incomplete, closed.State);
+                Assert.All(closed.Resources.Where(r => r.RoleId != "client-b"), r => { Assert.True(r.ExitConfirmed); Assert.Null(r.ErrorCode); });
+                Assert.Contains(closed.Resources, r => r.RoleId == "client-b" && !r.ExitConfirmed && r.ErrorCode is not null);
+                Assert.Contains(closed.Errors, e => e.Contains("StopOrExit:IOException:SyntheticExitQuery"));
+                Assert.Contains(closed.Errors, e => e.Contains("ExitQuery:IOException:SyntheticExitQuery"));
+                Assert.Contains(closed.Errors, e => e.Contains("OwnedTermination:IOException:SyntheticOwnedTermination"));
+                Assert.Contains(closed.Errors, e => e.Contains("UnconfirmedExit:IOException:SyntheticExitCode"));
+                using var resources = JsonDocument.Parse(File.ReadAllText(Path.Combine(networkRequest.OutputRoot, "network-resources.json")));
+                var children = resources.RootElement.GetProperty("children").EnumerateArray().ToArray();
+                Assert.All(children, c => { Assert.True(c.GetProperty("readerComplete").GetBoolean()); Assert.True(c.GetProperty("diagnosticsComplete").GetBoolean()); });
+                Assert.All(children.Where(c => c.GetProperty("roleId").GetString() != "client-b"), c =>
+                { Assert.True(c.GetProperty("stopped").GetBoolean()); Assert.Equal(0, c.GetProperty("exitCode").GetInt32()); });
+                Assert.Equal(JsonValueKind.Null, children.Single(c => c.GetProperty("roleId").GetString() == "client-b").GetProperty("exitCode").ValueKind);
+                File.WriteAllText(Path.Combine(networkRequest.OutputRoot, "cleanup-synthetic-os-facts.json"), JsonSerializer.Serialize(closed, FlowJson.Options));
                 Assert.Same(closed, await adapter.CloseAsync(10000, default));
             }
             return 0;
         });
+    }
+
+    private static async Task ReadyThenDisconnect(FlowRequest request)
+    {
+        var run = new RunIdentity(request.RequestId, "disconnect-run", "attempt", 1);
+        using var authority = new FlowFixture(run).CreateHost();
+        var listener = new AbilityKit.Network.Transport.LiteNet.LiteNetChannelListener(System.Net.IPAddress.Loopback, 0, "abilitykit-cooking-v3");
+        var accepted = new TaskCompletionSource<AbilityKit.Network.Host.IServerChannel>(TaskCreationOptions.RunContinuationsAsynchronously);
+        listener.ChannelAccepted += channel => accepted.TrySetResult(channel);
+        using var server = new AbilityKit.Game.Cooking.Session.CookingNetworkSessionHost(new CookingNetworkAuthorityAdapter(authority),
+            listener,
+            new Dictionary<PlayerId, string> { [new("A")] = "flow-A", [new("B")] = "flow-B" });
+        server.Start();
+        var endpoint = server.Endpoint;
+        var info = new ProcessStartInfo("dotnet") { UseShellExecute = false, CreateNoWindow = true, RedirectStandardInput = true,
+            RedirectStandardOutput = true, RedirectStandardError = true };
+        foreach (var arg in new[] { typeof(AbilityKit.Game.Cooking.FlowAcceptance.Program).Assembly.Location, "role", "--id", "client-a" }) info.ArgumentList.Add(arg);
+        using var child = Process.Start(info)!;
+        File.WriteAllText(Path.Combine(request.OutputRoot, "disconnect-child-start.json"), JsonSerializer.Serialize(new
+        { processId = child.Id, endpoint, assembly = typeof(AbilityKit.Game.Cooking.FlowAcceptance.Program).Assembly.Location }, FlowJson.Options));
+        var diagnostic = child.StandardError.ReadToEndAsync();
+        var replies = new List<RoleReply>();
+        using var wait = new CancellationTokenSource(10000);
+        try
+        {
+            var initialize = new RoleControl(1, run, "client-a", 1, "init", RoleControlKind.Initialize,
+                new("client-a", "A", endpoint, null, request.Budgets, request.Logs), null, null, null, null);
+            await child.StandardInput.WriteLineAsync(JsonSerializer.Serialize(initialize, FlowJson.Options));
+            await child.StandardInput.FlushAsync(wait.Token);
+            var ready = await ReadWhilePumping(); replies.Add(ready);
+            Assert.Equal(RoleReplyKind.Ready, ready.Kind);
+            Assert.True(ready.Event!.Observation!.Available); Assert.True(ready.Event.Observation.SynchronizedObserved);
+            Assert.True(ready.Event.Observation.BaselineSequence > 0);
+            var observe = new RoleControl(1, run, "client-a", 2, "before-disconnect", RoleControlKind.Observe, null, null, null, null, "capture");
+            await child.StandardInput.WriteLineAsync(JsonSerializer.Serialize(observe, FlowJson.Options)); await child.StandardInput.FlushAsync(wait.Token);
+            var historical = await ReadWhilePumping(); replies.Add(historical);
+            Assert.Equal(FlowEventKind.StateObserved, historical.Event!.Kind); Assert.True(historical.Event.Observation!.SynchronizedObserved);
+            Assert.False(child.HasExited);
+            File.WriteAllText(Path.Combine(request.OutputRoot, "disconnect-before.json"), JsonSerializer.Serialize(new { ready, historical }, FlowJson.Options));
+            // Close the real connection owned by this test server. Keep its listener alive to deliver the disconnect packet.
+            // Neither the external client process nor its control pipe is stopped by the test.
+            (await accepted.Task.WaitAsync(wait.Token)).Close();
+            var aliveAtDisconnect = !child.HasExited;
+            string? observeWriteError = null;
+            try
+            {
+                await child.StandardInput.WriteLineAsync(JsonSerializer.Serialize(observe with
+                { ControlSequence = 3, ControlId = "after-disconnect" }, FlowJson.Options));
+                await child.StandardInput.FlushAsync(wait.Token);
+            }
+            catch (IOException e) { observeWriteError = e.Message; }
+            var later = new List<RoleReply>();
+            while (true)
+            {
+                var line = await child.StandardOutput.ReadLineAsync().WaitAsync(wait.Token);
+                Assert.NotNull(line);
+                var reply = FlowJson.Read<RoleReply>(line); later.Add(reply);
+                if (reply.Kind == RoleReplyKind.Fault) break;
+            }
+            // Observe the invalid-session fault while both process and control pipe are still alive.
+            var aliveAtFault = !child.HasExited;
+            Assert.True(aliveAtFault);
+            child.StandardInput.Close(); // Only after the fault, allow the owned pipe reader to finish cleanup.
+            var tailTask = child.StandardOutput.ReadToEndAsync();
+            await child.WaitForExitAsync(wait.Token);
+            var tail = await tailTask.WaitAsync(wait.Token); var stderr = await diagnostic.WaitAsync(wait.Token);
+            later.AddRange(tail.Split('\n', StringSplitOptions.RemoveEmptyEntries).Select(line => FlowJson.Read<RoleReply>(line.TrimEnd('\r'))));
+            replies.AddRange(later);
+            // A cut received before the asynchronous disconnect callback is history; the latched fault ends current evidence/actions.
+            var fault = Assert.Single(later, r => r.Kind == RoleReplyKind.Fault);
+            Assert.Contains("RoleClientSessionInvalid", fault.ErrorCode!);
+            Assert.Equal(1, child.ExitCode); Assert.DoesNotContain(later, r => r.Kind == RoleReplyKind.Stopped);
+            Assert.DoesNotContain(replies.SkipWhile(r => r != fault).Skip(1), r => r.Event?.Observation?.Available == true || r.Kind == RoleReplyKind.Armed);
+            File.WriteAllText(Path.Combine(request.OutputRoot, "ready-then-disconnect.json"), JsonSerializer.Serialize(new
+            { run, parentProcessId = Environment.ProcessId, processId = child.Id, endpoint,
+                aliveAtDisconnect, aliveAtFault, controlPipeClosedAfterFault = true, child.ExitCode, historical, replies, observeWriteError, stderr }, FlowJson.Options));
+        }
+        finally
+        {
+            if (!child.HasExited)
+            {
+                child.StandardInput.Close();
+                using var cleanup = new CancellationTokenSource(1000);
+                try { await child.WaitForExitAsync(cleanup.Token); }
+                catch (OperationCanceledException) { child.Kill(); await child.WaitForExitAsync(); }
+            }
+        }
+
+        async Task<RoleReply> ReadWhilePumping()
+        {
+            var line = child.StandardOutput.ReadLineAsync();
+            while (!line.IsCompleted) { server.ProcessOwnerFrame(); await Task.Delay(5, wait.Token); }
+            return FlowJson.Read<RoleReply>((await line.WaitAsync(wait.Token))!);
+        }
     }
 
     private static object? InvokeProtocol(string method, params object?[] args) => typeof(NetworkFlowAdapter).Assembly

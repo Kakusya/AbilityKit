@@ -32,7 +32,7 @@ internal static class NetworkRoleHost
         Task? joining = null;
         CancellationTokenSource? joinWait = null;
         BindingFence? binding = null;
-        string? initializeId = null;
+        string? initializeId = null, invalidClient = null;
         long replySequence = 0, eventSequence = 0;
         bool ready = false, stopped = false;
         int exit = 2;
@@ -229,7 +229,8 @@ internal static class NetworkRoleHost
             if (client is not null)
             {
                 var current = CaptureClient();
-                if (!current.Available || current.Fence != binding) throw new InvalidOperationException("RoleClientBindingChanged");
+                if (!current.Available || current.SynchronizedObserved != true || current.Fence != binding)
+                    throw new InvalidOperationException(invalidClient ?? "RoleClientBindingChanged");
             }
         }
         void ValidateAction(FlowAction action)
@@ -254,12 +255,22 @@ internal static class NetworkRoleHost
         FlowObservation CaptureClient()
         {
             var baseline = client!.LatestBaseline;
-            if (baseline is null || baseline.Identity.ServerSessionInstance != client.ServerSessionInstance)
-                return Unavailable(roleId, ObservationOrigin.Client, "NoCurrentInstalledBaseline");
+            var synchronized = client.IsSynchronized;
+            if (invalidClient is not null || !synchronized || baseline is null ||
+                baseline.Identity.ServerSessionInstance != client.ServerSessionInstance)
+            {
+                if (ready && !stopped) invalidClient ??= "RoleClientSessionInvalid";
+                return Unavailable(roleId, ObservationOrigin.Client, invalidClient ?? "NoCurrentInstalledBaseline");
+            }
             var current = new BindingFence(run!.RunGeneration, baseline.Identity.Scope, baseline.Identity.ServerSessionInstance,
                 baseline.Identity.ConnectionGeneration);
+            if (ready && !stopped && (current != binding || !client.IsSynchronized))
+            {
+                invalidClient ??= "RoleClientSessionInvalid";
+                return Unavailable(roleId, ObservationOrigin.Client, invalidClient);
+            }
             return Project(roleId, ObservationOrigin.Client, current, baseline.State.Observation, baseline.Identity.SnapshotSequence,
-                client.IsSynchronized, baseline.State.Observation.Players.Select(p => new HandProbe(p.Id.Value, p.HeldItem?.Value,
+                synchronized, baseline.State.Observation.Players.Select(p => new HandProbe(p.Id.Value, p.HeldItem?.Value,
                     HandEvidence.ClientProjection)).ToArray(), Array.Empty<CookingRecipeEvent>());
         }
         FlowObservation Unavailable(string observer, ObservationOrigin origin, string error) => new(observer, origin, false, error,
@@ -286,6 +297,9 @@ internal static class NetworkRoleHost
             using var publish = new CancellationTokenSource(2000);
             await FlowRoleProtocol.WriteAsync(replyOutput, new RoleReply(1, run!, roleId, ++replySequence, control, kind, e, endpoint, error), publish.Token);
             CheckOwner();
+            // Keep a delivered real terminal as history, then stop if its session became invalid during the write.
+            // Fault and normal Stop replies must remain deliverable after retirement.
+            if (ready && !stopped && kind is not (RoleReplyKind.Fault or RoleReplyKind.Stopped)) CheckLive();
         }
         Task Emit(RoleReplyKind kind, FlowEventKind eventKind, string step, string? control, CommandObservation? command = null,
             FlowObservation? observation = null, string? endpoint = null, string? error = null) =>

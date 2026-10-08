@@ -22,6 +22,8 @@ public sealed class NetworkFlowAdapter : IFlowSession
     {
         internal string Id = id;
         internal Process Process = process;
+        internal readonly int ProcessId = process.Id;
+        internal readonly List<string> CleanupErrors = new();
         internal long ControlSequence, ReplySequence, EventSequence;
         internal readonly Channel<RoleReply> Replies = Channel.CreateBounded<RoleReply>(256);
         internal readonly Dictionary<string, RoleReply> Controls = new(StringComparer.Ordinal);
@@ -47,6 +49,10 @@ public sealed class NetworkFlowAdapter : IFlowSession
     private CleanupResult? cleanup;
     private string? error;
     private long controls;
+    // Instance-local OS call seams; private tests can exercise exit races without a product/CLI fault hook.
+    private Func<Process, bool> hasExited = static process => process.HasExited;
+    private Action<Process> terminate = static process => process.Kill();
+    private Func<Process, int> readExitCode = static process => process.ExitCode;
 
     public async ValueTask<FlowObservation> StartAsync(FlowRequest request, RunIdentity run, IFlowEventSink events, CancellationToken cancellationToken)
     {
@@ -186,7 +192,7 @@ public sealed class NetworkFlowAdapter : IFlowSession
     }
 
     internal static bool ProjectionMatches(FlowObservation observation, ProjectionFence fence) =>
-        observation.Available && observation.Origin == ObservationOrigin.Client && fence.RequiredClients.Contains(observation.ObserverId) &&
+        observation.Available && observation.SynchronizedObserved == true && observation.Origin == ObservationOrigin.Client && fence.RequiredClients.Contains(observation.ObserverId) &&
         observation.Fence.RunGeneration == fence.Authority.RunGeneration && observation.Fence.Scope == fence.Authority.Scope &&
         observation.Fence.ServerSessionInstance == fence.Authority.ServerSessionInstance && observation.Fence.ConnectionGeneration is > 0 &&
         observation.BaselineSequence is > 0 && observation.StateVersion >= fence.MinimumStateVersion &&
@@ -200,59 +206,89 @@ public sealed class NetworkFlowAdapter : IFlowSession
         using var bounded = CancellationTokenSource.CreateLinkedTokenSource(cleanupToken);
         bounded.CancelAfter(timeoutMs);
         var errors = new List<string>();
-        // Stop clients before the authority; each child's own idle cleanup is independent of active cancellation.
-        foreach (var role in roles.OrderBy(r => r.Id == "server" ? 1 : 0))
-        {
-            try
-            {
-                if (!role.Process.HasExited)
-                {
-                    var id = await Send(role, RoleControlKind.Stop, bounded.Token);
-                    role.Process.StandardInput.Close();
-                    await Receive(role, r => r.Kind == RoleReplyKind.Stopped && r.ControlId == id, bounded.Token, cleanupRead: true);
-                }
-                await role.Process.WaitForExitAsync(bounded.Token);
-                role.ExitCode = role.Process.ExitCode;
-                await role.Reader.WaitAsync(bounded.Token); await role.Diagnostics.WaitAsync(bounded.Token);
-                if (!role.Stopped || role.ExitCode != 0 || role.Error is not null) errors.Add(role.Id + ":" + (role.Error ?? "NoNormalStop/native=" + role.ExitCode));
-            }
-            catch (Exception e)
-            {
-                errors.Add(role.Id + ":" + e.GetType().Name);
-                // Only this invocation's owned child, never a global process/tree kill.
-                if (!role.Process.HasExited) role.Process.Kill();
-                if (role.Process.HasExited) role.ExitCode = role.Process.ExitCode;
-            }
-        }
-        readers.Cancel();
-        foreach (var role in roles)
-        {
-            try
-            {
-                await role.Process.WaitForExitAsync(bounded.Token);
-                role.ExitCode = role.Process.ExitCode;
-                await role.Reader.WaitAsync(bounded.Token); await role.Diagnostics.WaitAsync(bounded.Token);
-            }
-            catch (Exception e) { errors.Add(role.Id + ":UnconfirmedReaderOrExit:" + e.GetType().Name); }
-        }
-        var resources = roles.Select(r => new ResourceOutcome(r.Id, r.Process.Id, r.ExitCode is not null,
-            r.ExitCode == 0 && r.Stopped && r.Error is null ? null : r.Error ?? "NoNormalStop/native=" + r.ExitCode)).ToArray();
         try
         {
-            var assembly = typeof(Program).Assembly.Location;
-            await FlowReport.WriteAtomicAsync(Path.Combine(request.OutputRoot, "network-resources.json"), JsonSerializer.Serialize(new
+            // Every owned role gets an attempt within the same total budget, even if another OS operation fails.
+            foreach (var role in roles.OrderBy(r => r.Id == "server" ? 1 : 0))
             {
-                run, parentProcessId = Environment.ProcessId, assembly, assemblySha256 = Convert.ToHexString(SHA256.HashData(File.ReadAllBytes(assembly))),
-                children = roles.Select(r => new { roleId = r.Id, processId = r.Process.Id, executable = "dotnet", arguments = new[] { assembly, "role", "--id", r.Id },
-                    r.Endpoint, r.Binding, r.ExitCode, r.Stopped, readerComplete = r.Reader.IsCompleted, diagnosticsComplete = r.Diagnostics.IsCompleted,
-                    r.Error, r.Stderr, r.Identity, controls = r.Sent }).ToArray()
-            }, FlowJson.Options), 1048576, bounded.Token);
+                try
+                {
+                    if (!hasExited(role.Process))
+                    {
+                        var id = await Send(role, RoleControlKind.Stop, bounded.Token);
+                        role.Process.StandardInput.Close();
+                        await Receive(role, r => r.Kind == RoleReplyKind.Stopped && r.ControlId == id, bounded.Token, cleanupRead: true);
+                    }
+                    await role.Process.WaitForExitAsync(bounded.Token);
+                    role.ExitCode = readExitCode(role.Process);
+                    await role.Reader.WaitAsync(bounded.Token);
+                    await role.Diagnostics.WaitAsync(bounded.Token);
+                    if (!role.Stopped || role.ExitCode != 0 || role.Error is not null)
+                        Record(role, "NoNormalStop/native=" + role.ExitCode + "/" + role.Error);
+                }
+                catch (Exception e)
+                {
+                    Record(role, "StopOrExit", e);
+                    // Query and termination errors are independent. A failed query still permits an owned-child attempt.
+                    bool mayBeAlive = true;
+                    try { mayBeAlive = !hasExited(role.Process); }
+                    catch (Exception query) { Record(role, "ExitQuery", query); }
+                    if (mayBeAlive)
+                        try { terminate(role.Process); }
+                        catch (Exception kill) { Record(role, "OwnedTermination", kill); }
+                }
+                finally
+                {
+                    try
+                    {
+                        await role.Process.WaitForExitAsync(bounded.Token);
+                        role.ExitCode ??= readExitCode(role.Process);
+                    }
+                    catch (Exception e) { Record(role, "UnconfirmedExit", e); }
+                }
+            }
         }
-        catch (Exception e) { errors.Add("ResourceEvidenceWrite:" + e.GetType().Name); }
-        foreach (var role in roles) role.Process.Dispose();
-        readers.Dispose();
+        finally
+        {
+            try { readers.Cancel(); }
+            catch (Exception e) { errors.Add("ReaderCancellation:" + e.GetType().Name + ":" + e.Message); }
+            foreach (var role in roles)
+            {
+                try { await role.Reader.WaitAsync(bounded.Token); }
+                catch (Exception e) { Record(role, "UnconfirmedReader", e); }
+                try { await role.Diagnostics.WaitAsync(bounded.Token); }
+                catch (Exception e) { Record(role, "UnconfirmedDiagnostics", e); }
+                // Preserve a first role fault separately from later cleanup errors.
+                if (role.Error is not null && !errors.Contains(role.Id + ":" + role.Error)) errors.Add(role.Id + ":" + role.Error);
+                try { role.Process.Dispose(); }
+                catch (Exception e) { Record(role, "HandleDispose", e); }
+            }
+            try { readers.Dispose(); }
+            catch (Exception e) { errors.Add("ReaderTokenDispose:" + e.GetType().Name + ":" + e.Message); }
+            try
+            {
+                var assembly = typeof(Program).Assembly.Location;
+                await FlowReport.WriteAtomicAsync(Path.Combine(request.OutputRoot, "network-resources.json"), JsonSerializer.Serialize(new
+                {
+                    run, parentProcessId = Environment.ProcessId, assembly, assemblySha256 = Convert.ToHexString(SHA256.HashData(File.ReadAllBytes(assembly))),
+                    children = roles.Select(r => new { roleId = r.Id, processId = r.ProcessId, executable = "dotnet", arguments = new[] { assembly, "role", "--id", r.Id },
+                        r.Endpoint, r.Binding, r.ExitCode, r.Stopped, readerComplete = r.Reader.IsCompleted, diagnosticsComplete = r.Diagnostics.IsCompleted,
+                        r.Error, r.CleanupErrors, r.Stderr, r.Identity, controls = r.Sent }).ToArray()
+                }, FlowJson.Options), 1048576, bounded.Token);
+            }
+            catch (Exception e) { errors.Add("ResourceEvidenceWrite:" + e.GetType().Name + ":" + e.Message); }
+        }
+        var resources = roles.Select(r => new ResourceOutcome(r.Id, r.ProcessId, r.ExitCode is not null,
+            r.ExitCode == 0 && r.Stopped && r.Error is null && r.CleanupErrors.Count == 0 ? null :
+                string.Join(";", new[] { r.Error ?? "NoNormalStop/native=" + r.ExitCode }.Concat(r.CleanupErrors)))).ToArray();
         cleanup = new(errors.Count == 0 ? CleanupState.Complete : CleanupState.Incomplete, resources, errors);
         return cleanup;
+
+        void Record(Role role, string phase, Exception? e = null)
+        {
+            var detail = phase + (e is null ? "" : ":" + e.GetType().Name + ":" + e.Message);
+            role.CleanupErrors.Add(detail); errors.Add(role.Id + ":" + detail);
+        }
     }
 
     private Role Launch(string roleId)
@@ -338,7 +374,10 @@ public sealed class NetworkFlowAdapter : IFlowSession
             {
                 if (role.Binding is not null && cut.Fence != role.Binding) throw new InvalidDataException("RoleObservationBindingChanged");
                 if (cut.Origin == ObservationOrigin.Client)
-                    ValidateClient(cut, roles.Single(r => r.Id == "server").Binding!, role.Id, role.Binding);
+                {
+                    try { ValidateClient(cut, roles.Single(r => r.Id == "server").Binding!, role.Id, role.Binding); }
+                    catch (InvalidDataException invalid) { role.Error ??= invalid.Message; error ??= invalid.Message; throw; }
+                }
                 role.Last = cut;
             }
             if (e.Command is { } command)
@@ -360,7 +399,7 @@ public sealed class NetworkFlowAdapter : IFlowSession
     }
     private static void ValidateClient(FlowObservation cut, BindingFence authority, string id, BindingFence? original)
     {
-        if (!cut.Available || cut.Origin != ObservationOrigin.Client || cut.ObserverId != id || cut.BaselineSequence is not > 0 ||
+        if (!cut.Available || cut.SynchronizedObserved != true || cut.Origin != ObservationOrigin.Client || cut.ObserverId != id || cut.BaselineSequence is not > 0 ||
             cut.Fence.RunGeneration != authority.RunGeneration || cut.Fence.Scope != authority.Scope ||
             cut.Fence.ServerSessionInstance != authority.ServerSessionInstance || cut.Fence.ConnectionGeneration is not > 0 ||
             original is not null && cut.Fence != original) throw new InvalidDataException("ClientBindingMismatch");

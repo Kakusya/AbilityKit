@@ -140,8 +140,8 @@ public sealed class FlowRuleEvaluator : IFlowRule
                     var role = original.ActorId == "A" ? "client-a" : "client-b";
                     var observations = new[] { "call." + original.CallId + ".before", "call." + original.CallId + ".after",
                         "call." + retry.CallId + ".before", "call." + retry.CallId + ".after" };
-                    if (!evidence.Cuts.TryGetValue("initial." + role, out var first) || observations.Any(key =>
-                        !evidence.Cuts.TryGetValue(key, out var current) || !current.Available || current.Origin != ObservationOrigin.Client ||
+                    if (!evidence.Cuts.TryGetValue("initial." + role, out var first) || !first.Available || first.SynchronizedObserved != true || observations.Any(key =>
+                        !evidence.Cuts.TryGetValue(key, out var current) || !current.Available || current.SynchronizedObserved != true || current.Origin != ObservationOrigin.Client ||
                         current.ObserverId != role || current.Fence != first.Fence || current.Fence.Scope != initial.Fence.Scope ||
                         current.Fence.RunGeneration != initial.Fence.RunGeneration || current.Fence.ServerSessionInstance != initial.Fence.ServerSessionInstance ||
                         current.Fence.ConnectionGeneration is not > 0 || current.BaselineSequence is not > 0))
@@ -184,8 +184,8 @@ public sealed class FlowRuleEvaluator : IFlowRule
                     var target = evidence.Cuts[point];
                     foreach (var id in new[] { "client-a", "client-b" })
                     {
-                        if (!evidence.Cuts.TryGetValue("initial." + id, out var first) ||
-                            !evidence.Cuts.TryGetValue(point + "." + id, out var projection) || !projection.Available ||
+                        if (!evidence.Cuts.TryGetValue("initial." + id, out var first) || !first.Available || first.SynchronizedObserved != true ||
+                            !evidence.Cuts.TryGetValue(point + "." + id, out var projection) || !projection.Available || projection.SynchronizedObserved != true ||
                             projection.Fence != first.Fence || projection.Fence.RunGeneration != target.Fence.RunGeneration ||
                             projection.Fence.Scope != target.Fence.Scope || projection.Fence.ServerSessionInstance != target.Fence.ServerSessionInstance ||
                             projection.Fence.ConnectionGeneration is not > 0 || projection.BaselineSequence is not > 0 ||

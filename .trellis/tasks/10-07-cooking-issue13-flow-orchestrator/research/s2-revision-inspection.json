@@ -1,0 +1,2051 @@
+{
+  "status": "Passed",
+  "scope": "5 approved S2 R1/R2 delivery changes; 22 total delivered files",
+  "validation_source": "9cbf95815429fadc9fd1974d8066bc087a2bdd3b dirty=true Debug",
+  "binary": [
+    {
+      "Path": "D:\\MyWorkTree\\AbilityKit\\src\\AbilityKit.Game.Cooking.FlowAcceptance\\bin\\Debug\\net10.0\\AbilityKit.Game.Cooking.FlowAcceptance.dll",
+      "Hash": "7A1F355392452B7B66EA7266E22D1903536B69B82C101676385FC40EB67F2DB8"
+    },
+    {
+      "Path": "D:\\MyWorkTree\\AbilityKit\\src\\AbilityKit.ET.Runtime.Tests\\bin\\Debug\\net10.0\\AbilityKit.ET.Runtime.Tests.dll",
+      "Hash": "AC5085BCA37D65ACF0F053BA65B01A3F716034BF2CD67151D0F27204B5168DB9"
+    }
+  ],
+  "builds": [
+    {
+      "name": "build-01",
+      "exit": 1,
+      "raw_sha256": "B8D78EA6583265C142EB3BD31B0BC9E8B06188A9CC2FCC455FD03387F3D7DB18",
+      "tail": "et\\Runtime\\Transport\\LiteNetTransport.cs(21,49): warning CS1591: 缺少对公共可见类型或成员“LiteNetTransport.BytesReceived”的 XML 注释 [D:\\MyWorkTree\\AbilityKit\\src\\AbilityKit.Network.Transport.LiteNet\\AbilityKit.Network.Transport.LiteNet.csproj]\r\nD:\\MyWorkTree\\AbilityKit\\Unity\\Packages\\com.abilitykit.network.transport.litenet\\Runtime\\Transport\\LiteNetTransport.cs(23,21): warning CS1591: 缺少对公共可见类型或成员“LiteNetTransport.Connect(string, int)”的 XML 注释 [D:\\MyWorkTree\\AbilityKit\\src\\AbilityKit.Network.Transport.LiteNet\\AbilityKit.Network.Transport.LiteNet.csproj]\r\nD:\\MyWorkTree\\AbilityKit\\Unity\\Packages\\com.abilitykit.network.transport.litenet\\Runtime\\Transport\\LiteNetTransport.cs(69,21): warning CS1591: 缺少对公共可见类型或成员“LiteNetTransport.Send(ArraySegment<byte>)”的 XML 注释 [D:\\MyWorkTree\\AbilityKit\\src\\AbilityKit.Network.Transport.LiteNet\\AbilityKit.Network.Transport.LiteNet.csproj]\r\nD:\\MyWorkTree\\AbilityKit\\Unity\\Packages\\com.abilitykit.network.transport.litenet\\Runtime\\Transport\\LiteNetTransport.cs(108,21): warning CS1591: 缺少对公共可见类型或成员“LiteNetTransport.Close()”的 XML 注释 [D:\\MyWorkTree\\AbilityKit\\src\\AbilityKit.Network.Transport.LiteNet\\AbilityKit.Network.Transport.LiteNet.csproj]\r\nD:\\MyWorkTree\\AbilityKit\\Unity\\Packages\\com.abilitykit.network.transport.litenet\\Runtime\\Transport\\LiteNetTransport.cs(109,21): warning CS1591: 缺少对公共可见类型或成员“LiteNetTransport.Dispose()”的 XML 注释 [D:\\MyWorkTree\\AbilityKit\\src\\AbilityKit.Network.Transport.LiteNet\\AbilityKit.Network.Transport.LiteNet.csproj]\r\nD:\\MyWorkTree\\AbilityKit\\src\\AbilityKit.Game.Cooking.FlowAcceptance\\NetworkFlowAdapter.cs(379,49): error CS0136: 无法在此范围中声明名为“e”的局部变量或参数，因为该名称在封闭局部范围中用于定义局部变量或参数 [D:\\MyWorkTree\\AbilityKit\\src\\AbilityKit.Game.Cooking.FlowAcceptance\\AbilityKit.Game.Cooking.FlowAcceptance.csproj]\r\n    2095 个警告\r\n    1 个错误\r\n\r\n已用时间 00:00:05.82\r\n"
+    },
+    {
+      "name": "build-02",
+      "exit": 0,
+      "raw_sha256": "47790CCD58B9FC5BB7567EC25936A83D7461FEAC5FA530AB240ABA18BA5EBF50",
+      "tail": "  正在确定要还原的项目…\r\n  所有项目均是最新的，无法还原。\r\n  AbilityKit.ET.RelationAnalyzer -> D:\\MyWorkTree\\AbilityKit\\src\\AbilityKit.ET.RelationAnalyzer\\bin\\Debug\\netstandard2.0\\AbilityKit.ET.RelationAnalyzer.dll\r\n  AbilityKit.ET.Runtime -> D:\\MyWorkTree\\AbilityKit\\src\\AbilityKit.ET.Runtime\\bin\\Debug\\net10.0\\AbilityKit.ET.Runtime.dll\r\n  AbilityKit.Deterministic -> D:\\MyWorkTree\\AbilityKit\\src\\AbilityKit.Deterministic\\bin\\Debug\\net10.0\\AbilityKit.Deterministic.dll\r\n  AbilityKit.Core -> D:\\MyWorkTree\\AbilityKit\\src\\AbilityKit.Core\\bin\\Debug\\net10.0\\AbilityKit.Core.dll\r\n  AbilityKit.Protocol -> D:\\MyWorkTree\\AbilityKit\\src\\AbilityKit.Protocol\\bin\\Debug\\net10.0\\AbilityKit.Protocol.dll\r\n  AbilityKit.Network.Runtime -> D:\\MyWorkTree\\AbilityKit\\src\\AbilityKit.Network.Runtime\\bin\\Debug\\net10.0\\AbilityKit.Network.Runtime.dll\r\n  AbilityKit.Network.Host -> D:\\MyWorkTree\\AbilityKit\\src\\AbilityKit.Network.Host\\bin\\Debug\\net10.0\\AbilityKit.Network.Host.dll\r\n  AbilityKit.Network.Transport.LiteNet -> D:\\MyWorkTree\\AbilityKit\\src\\AbilityKit.Network.Transport.LiteNet\\bin\\Debug\\net10.0\\AbilityKit.Network.Transport.LiteNet.dll\r\n  AbilityKit.Game.Cooking -> D:\\MyWorkTree\\AbilityKit\\src\\AbilityKit.Game.Cooking\\bin\\Debug\\net10.0\\AbilityKit.Game.Cooking.dll\r\n  AbilityKit.Game.Cooking.EtRuntime -> D:\\MyWorkTree\\AbilityKit\\src\\AbilityKit.Game.Cooking.EtRuntime\\bin\\Debug\\net10.0\\AbilityKit.Game.Cooking.EtRuntime.dll\r\n  AbilityKit.Game.Cooking.FlowAcceptance -> D:\\MyWorkTree\\AbilityKit\\src\\AbilityKit.Game.Cooking.FlowAcceptance\\bin\\Debug\\net10.0\\AbilityKit.Game.Cooking.FlowAcceptance.dll\r\n  AbilityKit.ET.Runtime.Tests -> D:\\MyWorkTree\\AbilityKit\\src\\AbilityKit.ET.Runtime.Tests\\bin\\Debug\\net10.0\\AbilityKit.ET.Runtime.Tests.dll\r\n\r\n已成功生成。\r\n    0 个警告\r\n    0 个错误\r\n\r\n已用时间 00:00:04.14\r\n"
+    },
+    {
+      "name": "build-03-disconnect-control",
+      "exit": 0,
+      "raw_sha256": "C36663415CE18B1AB2E2ED7DA767D3E046C69F32A313A38F40FEB1FC2680F94B",
+      "tail": "  正在确定要还原的项目…\r\n  所有项目均是最新的，无法还原。\r\n  AbilityKit.ET.RelationAnalyzer -> D:\\MyWorkTree\\AbilityKit\\src\\AbilityKit.ET.RelationAnalyzer\\bin\\Debug\\netstandard2.0\\AbilityKit.ET.RelationAnalyzer.dll\r\n  AbilityKit.Deterministic -> D:\\MyWorkTree\\AbilityKit\\src\\AbilityKit.Deterministic\\bin\\Debug\\net10.0\\AbilityKit.Deterministic.dll\r\n  AbilityKit.ET.Runtime -> D:\\MyWorkTree\\AbilityKit\\src\\AbilityKit.ET.Runtime\\bin\\Debug\\net10.0\\AbilityKit.ET.Runtime.dll\r\n  AbilityKit.Core -> D:\\MyWorkTree\\AbilityKit\\src\\AbilityKit.Core\\bin\\Debug\\net10.0\\AbilityKit.Core.dll\r\n  AbilityKit.Protocol -> D:\\MyWorkTree\\AbilityKit\\src\\AbilityKit.Protocol\\bin\\Debug\\net10.0\\AbilityKit.Protocol.dll\r\n  AbilityKit.Network.Runtime -> D:\\MyWorkTree\\AbilityKit\\src\\AbilityKit.Network.Runtime\\bin\\Debug\\net10.0\\AbilityKit.Network.Runtime.dll\r\n  AbilityKit.Network.Host -> D:\\MyWorkTree\\AbilityKit\\src\\AbilityKit.Network.Host\\bin\\Debug\\net10.0\\AbilityKit.Network.Host.dll\r\n  AbilityKit.Network.Transport.LiteNet -> D:\\MyWorkTree\\AbilityKit\\src\\AbilityKit.Network.Transport.LiteNet\\bin\\Debug\\net10.0\\AbilityKit.Network.Transport.LiteNet.dll\r\n  AbilityKit.Game.Cooking -> D:\\MyWorkTree\\AbilityKit\\src\\AbilityKit.Game.Cooking\\bin\\Debug\\net10.0\\AbilityKit.Game.Cooking.dll\r\n  AbilityKit.Game.Cooking.EtRuntime -> D:\\MyWorkTree\\AbilityKit\\src\\AbilityKit.Game.Cooking.EtRuntime\\bin\\Debug\\net10.0\\AbilityKit.Game.Cooking.EtRuntime.dll\r\n  AbilityKit.Game.Cooking.FlowAcceptance -> D:\\MyWorkTree\\AbilityKit\\src\\AbilityKit.Game.Cooking.FlowAcceptance\\bin\\Debug\\net10.0\\AbilityKit.Game.Cooking.FlowAcceptance.dll\r\n  AbilityKit.ET.Runtime.Tests -> D:\\MyWorkTree\\AbilityKit\\src\\AbilityKit.ET.Runtime.Tests\\bin\\Debug\\net10.0\\AbilityKit.ET.Runtime.Tests.dll\r\n\r\n已成功生成。\r\n    0 个警告\r\n    0 个错误\r\n\r\n已用时间 00:00:02.91\r\n"
+    },
+    {
+      "name": "build-04-native-read-order",
+      "exit": 0,
+      "raw_sha256": "EC65C05663FF86E994EED054CCE25B22D7B18BC35BA9C10AD5FEEB5CC103B128",
+      "tail": "  正在确定要还原的项目…\r\n  所有项目均是最新的，无法还原。\r\n  AbilityKit.ET.RelationAnalyzer -> D:\\MyWorkTree\\AbilityKit\\src\\AbilityKit.ET.RelationAnalyzer\\bin\\Debug\\netstandard2.0\\AbilityKit.ET.RelationAnalyzer.dll\r\n  AbilityKit.Deterministic -> D:\\MyWorkTree\\AbilityKit\\src\\AbilityKit.Deterministic\\bin\\Debug\\net10.0\\AbilityKit.Deterministic.dll\r\n  AbilityKit.ET.Runtime -> D:\\MyWorkTree\\AbilityKit\\src\\AbilityKit.ET.Runtime\\bin\\Debug\\net10.0\\AbilityKit.ET.Runtime.dll\r\n  AbilityKit.Core -> D:\\MyWorkTree\\AbilityKit\\src\\AbilityKit.Core\\bin\\Debug\\net10.0\\AbilityKit.Core.dll\r\n  AbilityKit.Protocol -> D:\\MyWorkTree\\AbilityKit\\src\\AbilityKit.Protocol\\bin\\Debug\\net10.0\\AbilityKit.Protocol.dll\r\n  AbilityKit.Network.Runtime -> D:\\MyWorkTree\\AbilityKit\\src\\AbilityKit.Network.Runtime\\bin\\Debug\\net10.0\\AbilityKit.Network.Runtime.dll\r\n  AbilityKit.Network.Host -> D:\\MyWorkTree\\AbilityKit\\src\\AbilityKit.Network.Host\\bin\\Debug\\net10.0\\AbilityKit.Network.Host.dll\r\n  AbilityKit.Network.Transport.LiteNet -> D:\\MyWorkTree\\AbilityKit\\src\\AbilityKit.Network.Transport.LiteNet\\bin\\Debug\\net10.0\\AbilityKit.Network.Transport.LiteNet.dll\r\n  AbilityKit.Game.Cooking -> D:\\MyWorkTree\\AbilityKit\\src\\AbilityKit.Game.Cooking\\bin\\Debug\\net10.0\\AbilityKit.Game.Cooking.dll\r\n  AbilityKit.Game.Cooking.EtRuntime -> D:\\MyWorkTree\\AbilityKit\\src\\AbilityKit.Game.Cooking.EtRuntime\\bin\\Debug\\net10.0\\AbilityKit.Game.Cooking.EtRuntime.dll\r\n  AbilityKit.Game.Cooking.FlowAcceptance -> D:\\MyWorkTree\\AbilityKit\\src\\AbilityKit.Game.Cooking.FlowAcceptance\\bin\\Debug\\net10.0\\AbilityKit.Game.Cooking.FlowAcceptance.dll\r\n  AbilityKit.ET.Runtime.Tests -> D:\\MyWorkTree\\AbilityKit\\src\\AbilityKit.ET.Runtime.Tests\\bin\\Debug\\net10.0\\AbilityKit.ET.Runtime.Tests.dll\r\n\r\n已成功生成。\r\n    0 个警告\r\n    0 个错误\r\n\r\n已用时间 00:00:02.68\r\n"
+    }
+  ],
+  "tests": [
+    {
+      "file": "flow-s2-revision.trx",
+      "counters": {
+        "total": "2",
+        "executed": "2",
+        "passed": "1",
+        "failed": "1",
+        "error": "0",
+        "timeout": "0",
+        "aborted": "0",
+        "inconclusive": "0",
+        "passedButRunAborted": "0",
+        "notRunnable": "0",
+        "notExecuted": "0",
+        "disconnected": "0",
+        "warning": "0",
+        "completed": "0",
+        "inProgress": "0",
+        "pending": "0"
+      },
+      "native_exit": 1,
+      "cases": [
+        {
+          "name": "AbilityKit.ET.Runtime.Tests.CookingFixedFlowTests.Synthetic_role_protocol_and_projection_fences_reject_wrong_binding_old_payload_and_partial_input",
+          "outcome": "Passed"
+        },
+        {
+          "name": "AbilityKit.ET.Runtime.Tests.CookingFixedFlowTests.Real_child_EOF_protocol_fault_and_sent_command_cancellation_preserve_facts_and_exit_evidence",
+          "outcome": "Failed"
+        }
+      ],
+      "trx_sha256": "ED99AD719E17D3F3E120A9F62887CE567313AF35181783D2FA8EAE60A7A5AA07",
+      "log_sha256": "A95B1973CEF07CB22C466893B1739B5D0AF017ECD4185BEC5E35045BEF2BED1C"
+    },
+    {
+      "file": "flow-s2-revision-native-repair.trx",
+      "counters": {
+        "total": "1",
+        "executed": "1",
+        "passed": "0",
+        "failed": "1",
+        "error": "0",
+        "timeout": "0",
+        "aborted": "0",
+        "inconclusive": "0",
+        "passedButRunAborted": "0",
+        "notRunnable": "0",
+        "notExecuted": "0",
+        "disconnected": "0",
+        "warning": "0",
+        "completed": "0",
+        "inProgress": "0",
+        "pending": "0"
+      },
+      "native_exit": 1,
+      "cases": [
+        {
+          "name": "AbilityKit.ET.Runtime.Tests.CookingFixedFlowTests.Real_child_EOF_protocol_fault_and_sent_command_cancellation_preserve_facts_and_exit_evidence",
+          "outcome": "Failed"
+        }
+      ],
+      "trx_sha256": "BA12E2CD7B227AF03C998E15B1DDBA9071EAAA8E92555D0CDF314A03509190D2",
+      "log_sha256": "0DCA195C463F0CBDB66F566DE681938AB8A28EB48A8BDA7B3EE00A828E9E3941"
+    },
+    {
+      "file": "flow-s2-revision-native-read-order.trx",
+      "counters": {
+        "total": "1",
+        "executed": "1",
+        "passed": "1",
+        "failed": "0",
+        "error": "0",
+        "timeout": "0",
+        "aborted": "0",
+        "inconclusive": "0",
+        "passedButRunAborted": "0",
+        "notRunnable": "0",
+        "notExecuted": "0",
+        "disconnected": "0",
+        "warning": "0",
+        "completed": "0",
+        "inProgress": "0",
+        "pending": "0"
+      },
+      "native_exit": 0,
+      "cases": [
+        {
+          "name": "AbilityKit.ET.Runtime.Tests.CookingFixedFlowTests.Real_child_EOF_protocol_fault_and_sent_command_cancellation_preserve_facts_and_exit_evidence",
+          "outcome": "Passed"
+        }
+      ],
+      "trx_sha256": "02207175FA83673DE5C86F696EB5B3FD16311FFA31D0B42BDEF9D0D652AF7BDB",
+      "log_sha256": "BE6CFA1C1EDDDE3318008A84605AE86B2430614532F5D037996E8930CA6187CF"
+    }
+  ],
+  "cli": [
+    {
+      "name": "compete-cli",
+      "run": {
+        "requestId": "compete-network",
+        "runId": "run-8d72ca3a14c8416f9c3984dd585bf930",
+        "attemptId": "cef1ecf9cd574d5baadf55cf5ca470b6",
+        "runGeneration": 1
+      },
+      "status": "Passed",
+      "source": {
+        "commit": "9cbf95815429fadc9fd1974d8066bc087a2bdd3b",
+        "dirty": true,
+        "configuration": "Debug",
+        "toolVersion": "SDK 10.0.300; runtime 10.0.8"
+      },
+      "native_exit": 0,
+      "events": 29,
+      "parent_pid": 72260,
+      "children": [
+        {
+          "role": "server",
+          "pid": 81188,
+          "exit": 0,
+          "endpoint": "127.0.0.1:49819",
+          "binding": {
+            "runGeneration": 1,
+            "scope": {
+              "matchScope": {
+                "session": {
+                  "value": "run-8d72ca3a14c8416f9c3984dd585bf930"
+                },
+                "world": {
+                  "value": "flow-world"
+                },
+                "match": {
+                  "value": "flow-match"
+                }
+              },
+              "restaurantRuntime": {
+                "value": 1
+              },
+              "level": {
+                "value": "flow-level"
+              },
+              "levelEpoch": 1
+            },
+            "serverSessionInstance": "7b38c827ccde42fc9cc96d3cadf39bc9",
+            "connectionGeneration": null
+          }
+        },
+        {
+          "role": "client-a",
+          "pid": 83996,
+          "exit": 0,
+          "endpoint": null,
+          "binding": {
+            "runGeneration": 1,
+            "scope": {
+              "matchScope": {
+                "session": {
+                  "value": "run-8d72ca3a14c8416f9c3984dd585bf930"
+                },
+                "world": {
+                  "value": "flow-world"
+                },
+                "match": {
+                  "value": "flow-match"
+                }
+              },
+              "restaurantRuntime": {
+                "value": 1
+              },
+              "level": {
+                "value": "flow-level"
+              },
+              "levelEpoch": 1
+            },
+            "serverSessionInstance": "7b38c827ccde42fc9cc96d3cadf39bc9",
+            "connectionGeneration": 1
+          }
+        },
+        {
+          "role": "client-b",
+          "pid": 92716,
+          "exit": 0,
+          "endpoint": null,
+          "binding": {
+            "runGeneration": 1,
+            "scope": {
+              "matchScope": {
+                "session": {
+                  "value": "run-8d72ca3a14c8416f9c3984dd585bf930"
+                },
+                "world": {
+                  "value": "flow-world"
+                },
+                "match": {
+                  "value": "flow-match"
+                }
+              },
+              "restaurantRuntime": {
+                "value": 1
+              },
+              "level": {
+                "value": "flow-level"
+              },
+              "levelEpoch": 1
+            },
+            "serverSessionInstance": "7b38c827ccde42fc9cc96d3cadf39bc9",
+            "connectionGeneration": 1
+          }
+        }
+      ],
+      "commands": [
+        {
+          "stepId": "compete",
+          "callId": "call-A",
+          "businessId": "pickup-A",
+          "actorId": "A",
+          "frozenCommand": {
+            "scope": {
+              "session": {
+                "value": "run-8d72ca3a14c8416f9c3984dd585bf930"
+              },
+              "world": {
+                "value": "flow-world"
+              },
+              "match": {
+                "value": "flow-match"
+              }
+            },
+            "simulationBatch": 0,
+            "player": {
+              "value": "A"
+            },
+            "command": {
+              "value": "pickup-A"
+            },
+            "operation": "Pickup",
+            "recipe": null,
+            "process": null,
+            "item": {
+              "value": "flow-item"
+            },
+            "station": null,
+            "container": null,
+            "order": null,
+            "expectedItemVersion": 1,
+            "tickCount": 0,
+            "moveX": 0,
+            "moveY": 0,
+            "facingX": 0,
+            "facingY": 0,
+            "worldAnchor": null,
+            "supplierId": null,
+            "deliveryId": null,
+            "supplyRequestId": null
+          },
+          "admissionAccepted": null,
+          "admissionReason": null,
+          "nativeDisposition": "Executed",
+          "domainCommandId": "net3-4980baf11549b6697e92be1dd47e0d4a14a14c724e2c48fe307da583af04c6bd",
+          "wireCorrelationId": null,
+          "wireReason": "executed",
+          "businessResult": {
+            "outcome": "Rejected",
+            "reason": "TargetOutOfRange",
+            "stateVersion": 36,
+            "isDuplicate": false,
+            "events": [],
+            "supply": null
+          },
+          "completion": "Terminal",
+          "errorCode": null
+        },
+        {
+          "stepId": "compete",
+          "callId": "call-B",
+          "businessId": "pickup-B",
+          "actorId": "B",
+          "frozenCommand": {
+            "scope": {
+              "session": {
+                "value": "run-8d72ca3a14c8416f9c3984dd585bf930"
+              },
+              "world": {
+                "value": "flow-world"
+              },
+              "match": {
+                "value": "flow-match"
+              }
+            },
+            "simulationBatch": 0,
+            "player": {
+              "value": "B"
+            },
+            "command": {
+              "value": "pickup-B"
+            },
+            "operation": "Pickup",
+            "recipe": null,
+            "process": null,
+            "item": {
+              "value": "flow-item"
+            },
+            "station": null,
+            "container": null,
+            "order": null,
+            "expectedItemVersion": 1,
+            "tickCount": 0,
+            "moveX": 0,
+            "moveY": 0,
+            "facingX": 0,
+            "facingY": 0,
+            "worldAnchor": null,
+            "supplierId": null,
+            "deliveryId": null,
+            "supplyRequestId": null
+          },
+          "admissionAccepted": null,
+          "admissionReason": null,
+          "nativeDisposition": "Executed",
+          "domainCommandId": "net3-76eae847eb7b9987ddedc213ff721d9ccfc45e2ee56a0f1924314af1cefa511b",
+          "wireCorrelationId": null,
+          "wireReason": "executed",
+          "businessResult": {
+            "outcome": "Accepted",
+            "reason": "None",
+            "stateVersion": 36,
+            "isDuplicate": false,
+            "events": [
+              {
+                "sequence": 36,
+                "simulationBatch": 36,
+                "player": {
+                  "value": "B"
+                },
+                "command": {
+                  "value": "net3-76eae847eb7b9987ddedc213ff721d9ccfc45e2ee56a0f1924314af1cefa511b"
+                },
+                "operation": "Pickup",
+                "recipe": null,
+                "process": null,
+                "item": {
+                  "value": "flow-item"
+                },
+                "summary": "ingredient-picked-up"
+              }
+            ],
+            "supply": null
+          },
+          "completion": "Terminal",
+          "errorCode": null
+        },
+        {
+          "stepId": "retry-winner",
+          "callId": "call-retry",
+          "businessId": "pickup-B",
+          "actorId": "B",
+          "frozenCommand": {
+            "scope": {
+              "session": {
+                "value": "run-8d72ca3a14c8416f9c3984dd585bf930"
+              },
+              "world": {
+                "value": "flow-world"
+              },
+              "match": {
+                "value": "flow-match"
+              }
+            },
+            "simulationBatch": 0,
+            "player": {
+              "value": "B"
+            },
+            "command": {
+              "value": "pickup-B"
+            },
+            "operation": "Pickup",
+            "recipe": null,
+            "process": null,
+            "item": {
+              "value": "flow-item"
+            },
+            "station": null,
+            "container": null,
+            "order": null,
+            "expectedItemVersion": 1,
+            "tickCount": 0,
+            "moveX": 0,
+            "moveY": 0,
+            "facingX": 0,
+            "facingY": 0,
+            "worldAnchor": null,
+            "supplierId": null,
+            "deliveryId": null,
+            "supplyRequestId": null
+          },
+          "admissionAccepted": null,
+          "admissionReason": null,
+          "nativeDisposition": "Executed",
+          "domainCommandId": "net3-76eae847eb7b9987ddedc213ff721d9ccfc45e2ee56a0f1924314af1cefa511b",
+          "wireCorrelationId": null,
+          "wireReason": "executed",
+          "businessResult": {
+            "outcome": "Accepted",
+            "reason": "None",
+            "stateVersion": 36,
+            "isDuplicate": true,
+            "events": [],
+            "supply": null
+          },
+          "completion": "Terminal",
+          "errorCode": null
+        }
+      ],
+      "raw_sha256": {
+        "result.json": "42D7B2B44843B705B066A91B67288ABF84F0D16BE77D5253A7520115BC4AFCAA",
+        "events.jsonl": "05AA01AC2886E4E5DC6FB37F07C4BC04924C2AFF668179F09FBE1A65E6EEBC5C",
+        "network-resources.json": "A677D0A834D618A77516CBC1AF739EBF63ADF0FCB32DE98B820722B477197246",
+        "provenance.json": "9858D8CC61D064D85450132C4048BC77E181EF570791D082456E72D753CA0451",
+        "request.json": "18563C1F97D3BCE7FF48E2D134AD335B1EC895237944000DD8447CFC306C8A66",
+        "identity.json": "4D4B3AD44C8CB114AFDB3160355AF5DA24C1FE243D951DD49BCD612B141AD96D"
+      }
+    },
+    {
+      "name": "pickup-drop-cli",
+      "run": {
+        "requestId": "pickup-drop-network",
+        "runId": "run-03dfd76d24da41a7a72fd60fb2470f5d",
+        "attemptId": "7845cb151b86420199901e989baf04d8",
+        "runGeneration": 1
+      },
+      "status": "Passed",
+      "source": {
+        "commit": "9cbf95815429fadc9fd1974d8066bc087a2bdd3b",
+        "dirty": true,
+        "configuration": "Debug",
+        "toolVersion": "SDK 10.0.300; runtime 10.0.8"
+      },
+      "native_exit": 0,
+      "events": 27,
+      "parent_pid": 79780,
+      "children": [
+        {
+          "role": "server",
+          "pid": 35008,
+          "exit": 0,
+          "endpoint": "127.0.0.1:51107",
+          "binding": {
+            "runGeneration": 1,
+            "scope": {
+              "matchScope": {
+                "session": {
+                  "value": "run-03dfd76d24da41a7a72fd60fb2470f5d"
+                },
+                "world": {
+                  "value": "flow-world"
+                },
+                "match": {
+                  "value": "flow-match"
+                }
+              },
+              "restaurantRuntime": {
+                "value": 1
+              },
+              "level": {
+                "value": "flow-level"
+              },
+              "levelEpoch": 1
+            },
+            "serverSessionInstance": "ca931a9574424fa9b51724b35a13a40b",
+            "connectionGeneration": null
+          }
+        },
+        {
+          "role": "client-a",
+          "pid": 94032,
+          "exit": 0,
+          "endpoint": null,
+          "binding": {
+            "runGeneration": 1,
+            "scope": {
+              "matchScope": {
+                "session": {
+                  "value": "run-03dfd76d24da41a7a72fd60fb2470f5d"
+                },
+                "world": {
+                  "value": "flow-world"
+                },
+                "match": {
+                  "value": "flow-match"
+                }
+              },
+              "restaurantRuntime": {
+                "value": 1
+              },
+              "level": {
+                "value": "flow-level"
+              },
+              "levelEpoch": 1
+            },
+            "serverSessionInstance": "ca931a9574424fa9b51724b35a13a40b",
+            "connectionGeneration": 1
+          }
+        },
+        {
+          "role": "client-b",
+          "pid": 87628,
+          "exit": 0,
+          "endpoint": null,
+          "binding": {
+            "runGeneration": 1,
+            "scope": {
+              "matchScope": {
+                "session": {
+                  "value": "run-03dfd76d24da41a7a72fd60fb2470f5d"
+                },
+                "world": {
+                  "value": "flow-world"
+                },
+                "match": {
+                  "value": "flow-match"
+                }
+              },
+              "restaurantRuntime": {
+                "value": 1
+              },
+              "level": {
+                "value": "flow-level"
+              },
+              "levelEpoch": 1
+            },
+            "serverSessionInstance": "ca931a9574424fa9b51724b35a13a40b",
+            "connectionGeneration": 1
+          }
+        }
+      ],
+      "commands": [
+        {
+          "stepId": "pickup",
+          "callId": "call-pickup",
+          "businessId": "pickup-A",
+          "actorId": "A",
+          "frozenCommand": {
+            "scope": {
+              "session": {
+                "value": "run-03dfd76d24da41a7a72fd60fb2470f5d"
+              },
+              "world": {
+                "value": "flow-world"
+              },
+              "match": {
+                "value": "flow-match"
+              }
+            },
+            "simulationBatch": 0,
+            "player": {
+              "value": "A"
+            },
+            "command": {
+              "value": "pickup-A"
+            },
+            "operation": "Pickup",
+            "recipe": null,
+            "process": null,
+            "item": {
+              "value": "flow-item"
+            },
+            "station": null,
+            "container": null,
+            "order": null,
+            "expectedItemVersion": 1,
+            "tickCount": 0,
+            "moveX": 0,
+            "moveY": 0,
+            "facingX": 0,
+            "facingY": 0,
+            "worldAnchor": null,
+            "supplierId": null,
+            "deliveryId": null,
+            "supplyRequestId": null
+          },
+          "admissionAccepted": null,
+          "admissionReason": null,
+          "nativeDisposition": "Executed",
+          "domainCommandId": "net3-cd7b1f2383732cec5ec3a91994bf12c5cf2bc7ef2b9df7251ed429b26120a8a0",
+          "wireCorrelationId": null,
+          "wireReason": "executed",
+          "businessResult": {
+            "outcome": "Accepted",
+            "reason": "None",
+            "stateVersion": 36,
+            "isDuplicate": false,
+            "events": [
+              {
+                "sequence": 36,
+                "simulationBatch": 36,
+                "player": {
+                  "value": "A"
+                },
+                "command": {
+                  "value": "net3-cd7b1f2383732cec5ec3a91994bf12c5cf2bc7ef2b9df7251ed429b26120a8a0"
+                },
+                "operation": "Pickup",
+                "recipe": null,
+                "process": null,
+                "item": {
+                  "value": "flow-item"
+                },
+                "summary": "ingredient-picked-up"
+              }
+            ],
+            "supply": null
+          },
+          "completion": "Terminal",
+          "errorCode": null
+        },
+        {
+          "stepId": "drop",
+          "callId": "call-drop",
+          "businessId": "drop-A",
+          "actorId": "A",
+          "frozenCommand": {
+            "scope": {
+              "session": {
+                "value": "run-03dfd76d24da41a7a72fd60fb2470f5d"
+              },
+              "world": {
+                "value": "flow-world"
+              },
+              "match": {
+                "value": "flow-match"
+              }
+            },
+            "simulationBatch": 0,
+            "player": {
+              "value": "A"
+            },
+            "command": {
+              "value": "drop-A"
+            },
+            "operation": "Drop",
+            "recipe": null,
+            "process": null,
+            "item": {
+              "value": "flow-item"
+            },
+            "station": {
+              "value": "drop"
+            },
+            "container": null,
+            "order": null,
+            "expectedItemVersion": 2,
+            "tickCount": 0,
+            "moveX": 0,
+            "moveY": 0,
+            "facingX": 0,
+            "facingY": 0,
+            "worldAnchor": null,
+            "supplierId": null,
+            "deliveryId": null,
+            "supplyRequestId": null
+          },
+          "admissionAccepted": null,
+          "admissionReason": null,
+          "nativeDisposition": "Executed",
+          "domainCommandId": "net3-4c5a158a26b8c63f4efef403f5b44b16d7f4af569a8f6bcac06826db84245f39",
+          "wireCorrelationId": null,
+          "wireReason": "executed",
+          "businessResult": {
+            "outcome": "Accepted",
+            "reason": "None",
+            "stateVersion": 48,
+            "isDuplicate": false,
+            "events": [
+              {
+                "sequence": 48,
+                "simulationBatch": 47,
+                "player": {
+                  "value": "A"
+                },
+                "command": {
+                  "value": "net3-4c5a158a26b8c63f4efef403f5b44b16d7f4af569a8f6bcac06826db84245f39"
+                },
+                "operation": "Drop",
+                "recipe": null,
+                "process": null,
+                "item": {
+                  "value": "flow-item"
+                },
+                "summary": "item-dropped"
+              }
+            ],
+            "supply": null
+          },
+          "completion": "Terminal",
+          "errorCode": null
+        }
+      ],
+      "raw_sha256": {
+        "result.json": "D479DD784D568270D8784BF8DB01FB965FD8AF044FF6E82EB16614F0E0A817B9",
+        "events.jsonl": "FAF456128A4A27EBBE8CF16F719E41B47DD8AB77256A9EC18869A2EBC9AD2372",
+        "network-resources.json": "33A728D87F19CFFA39A23087A6EEA23C9261227BEA39F2F56B09511318068E46",
+        "provenance.json": "9858D8CC61D064D85450132C4048BC77E181EF570791D082456E72D753CA0451",
+        "request.json": "996F6A5F63B0EA825E5FD6A5BCEFB4AEB5EA2ADDE3A8E7D4B36F8603C1A43230",
+        "identity.json": "A19DC38B4BBEE476384DE8801B6BB3AD65BCEE0B1356CB5B476057ABE3C6156D"
+      }
+    }
+  ],
+  "native_controls_index": [
+    {
+      "Path": "local/Logs/issue13-s2-revision\\tests-3883b22eef2d4fbe8e723f5f54bf9595\\native-controls-19c1647d3e194ec5b159e600fb522ee4\\server-arm.json",
+      "Data": {
+        "mode": "server-arm",
+        "processId": 77788,
+        "exitCode": 2,
+        "ready": {
+          "schemaVersion": 1,
+          "run": {
+            "requestId": "request-c285e3878c3746b1a56c796b571f1291",
+            "runId": "native-role-run",
+            "attemptId": "attempt",
+            "runGeneration": 1
+          },
+          "roleId": "server",
+          "hostSequence": 1,
+          "controlId": "init",
+          "kind": "Ready",
+          "event": {
+            "schemaVersion": 1,
+            "runId": "native-role-run",
+            "hostId": "server",
+            "runGeneration": 1,
+            "hostSequence": 1,
+            "stepId": "initial",
+            "callId": null,
+            "kind": "RoleReady",
+            "gameTick": 0,
+            "command": null,
+            "observation": {
+              "observerId": "authority",
+              "origin": "Authority",
+              "available": true,
+              "errorCode": null,
+              "fence": {
+                "runGeneration": 1,
+                "scope": {
+                  "matchScope": {
+                    "session": {
+                      "value": "native-role-run"
+                    },
+                    "world": {
+                      "value": "flow-world"
+                    },
+                    "match": {
+                      "value": "flow-match"
+                    }
+                  },
+                  "restaurantRuntime": {
+                    "value": 1
+                  },
+                  "level": {
+                    "value": "flow-level"
+                  },
+                  "levelEpoch": 1
+                },
+                "serverSessionInstance": "159a9deaac4341bc89b3b0feb9424d92",
+                "connectionGeneration": null
+              },
+              "stateVersion": 0,
+              "hostFrame": 0,
+              "logicalTick": 0,
+              "baselineSequence": null,
+              "synchronizedObserved": null,
+              "items": [
+                {
+                  "itemId": "flow-item",
+                  "version": 1,
+                  "removed": false,
+                  "locationKind": "StationSlot",
+                  "ownerId": null,
+                  "slotId": "source"
+                }
+              ],
+              "hands": [
+                {
+                  "actorId": "A",
+                  "itemId": null,
+                  "evidence": "DomainHandIndex"
+                },
+                {
+                  "actorId": "B",
+                  "itemId": null,
+                  "evidence": "DomainHandIndex"
+                }
+              ],
+              "commandEvents": []
+            },
+            "check": null,
+            "errorCode": null,
+            "detail": "{\"processId\":77788,\"executable\":\"D:\\\\Environment\\\\dotnet\\\\dotnet.exe\",\"assembly\":\"D:\\\\MyWorkTree\\\\AbilityKit\\\\src\\\\AbilityKit.ET.Runtime.Tests\\\\bin\\\\Debug\\\\net10.0\\\\AbilityKit.Game.Cooking.FlowAcceptance.dll\",\"assemblySha256\":\"7A1F355392452B7B66EA7266E22D1903536B69B82C101676385FC40EB67F2DB8\",\"runtime\":\"10.0.8\",\"ownerThread\":2}"
+          },
+          "boundEndpoint": "127.0.0.1:63564",
+          "errorCode": null
+        },
+        "stdout": "{\"schemaVersion\":1,\"run\":{\"requestId\":\"request-c285e3878c3746b1a56c796b571f1291\",\"runId\":\"native-role-run\",\"attemptId\":\"attempt\",\"runGeneration\":1},\"roleId\":\"server\",\"hostSequence\":2,\"controlId\":null,\"kind\":\"Fault\",\"event\":{\"schemaVersion\":1,\"runId\":\"native-role-run\",\"hostId\":\"server\",\"runGeneration\":1,\"hostSequence\":2,\"stepId\":\"role\",\"callId\":null,\"kind\":\"RoleFaulted\",\"gameTick\":null,\"command\":null,\"observation\":null,\"check\":null,\"errorCode\":\"InvalidDataException:RoleArmPrecondition\",\"detail\":null},\"boundEndpoint\":null,\"errorCode\":\"InvalidDataException:RoleArmPrecondition\"}\n",
+        "stderr": "[INFO] scene create: 0 1 646065494813573121\r\nInvalidDataException: RoleArmPrecondition\r\n[INFO] scene dispose: 0 1 0\r\n"
+      }
+    },
+    {
+      "Path": "local/Logs/issue13-s2-revision\\tests-902ec834ce8d41ab9abb304aa2ab78ad\\native-controls-9f95cd0bb0394cef975ed622fbba3134\\server-arm.json",
+      "Data": {
+        "mode": "server-arm",
+        "processId": 64344,
+        "exitCode": 2,
+        "ready": {
+          "schemaVersion": 1,
+          "run": {
+            "requestId": "request-bd1cd8af3d7e41fbb5f68781294375bd",
+            "runId": "native-role-run",
+            "attemptId": "attempt",
+            "runGeneration": 1
+          },
+          "roleId": "server",
+          "hostSequence": 1,
+          "controlId": "init",
+          "kind": "Ready",
+          "event": {
+            "schemaVersion": 1,
+            "runId": "native-role-run",
+            "hostId": "server",
+            "runGeneration": 1,
+            "hostSequence": 1,
+            "stepId": "initial",
+            "callId": null,
+            "kind": "RoleReady",
+            "gameTick": 0,
+            "command": null,
+            "observation": {
+              "observerId": "authority",
+              "origin": "Authority",
+              "available": true,
+              "errorCode": null,
+              "fence": {
+                "runGeneration": 1,
+                "scope": {
+                  "matchScope": {
+                    "session": {
+                      "value": "native-role-run"
+                    },
+                    "world": {
+                      "value": "flow-world"
+                    },
+                    "match": {
+                      "value": "flow-match"
+                    }
+                  },
+                  "restaurantRuntime": {
+                    "value": 1
+                  },
+                  "level": {
+                    "value": "flow-level"
+                  },
+                  "levelEpoch": 1
+                },
+                "serverSessionInstance": "340d2418a1f148a4ada0a2ccb899d7df",
+                "connectionGeneration": null
+              },
+              "stateVersion": 0,
+              "hostFrame": 0,
+              "logicalTick": 0,
+              "baselineSequence": null,
+              "synchronizedObserved": null,
+              "items": [
+                {
+                  "itemId": "flow-item",
+                  "version": 1,
+                  "removed": false,
+                  "locationKind": "StationSlot",
+                  "ownerId": null,
+                  "slotId": "source"
+                }
+              ],
+              "hands": [
+                {
+                  "actorId": "A",
+                  "itemId": null,
+                  "evidence": "DomainHandIndex"
+                },
+                {
+                  "actorId": "B",
+                  "itemId": null,
+                  "evidence": "DomainHandIndex"
+                }
+              ],
+              "commandEvents": []
+            },
+            "check": null,
+            "errorCode": null,
+            "detail": "{\"processId\":64344,\"executable\":\"D:\\\\Environment\\\\dotnet\\\\dotnet.exe\",\"assembly\":\"D:\\\\MyWorkTree\\\\AbilityKit\\\\src\\\\AbilityKit.ET.Runtime.Tests\\\\bin\\\\Debug\\\\net10.0\\\\AbilityKit.Game.Cooking.FlowAcceptance.dll\",\"assemblySha256\":\"7A1F355392452B7B66EA7266E22D1903536B69B82C101676385FC40EB67F2DB8\",\"runtime\":\"10.0.8\",\"ownerThread\":2}"
+          },
+          "boundEndpoint": "127.0.0.1:54714",
+          "errorCode": null
+        },
+        "stdout": "{\"schemaVersion\":1,\"run\":{\"requestId\":\"request-bd1cd8af3d7e41fbb5f68781294375bd\",\"runId\":\"native-role-run\",\"attemptId\":\"attempt\",\"runGeneration\":1},\"roleId\":\"server\",\"hostSequence\":2,\"controlId\":null,\"kind\":\"Fault\",\"event\":{\"schemaVersion\":1,\"runId\":\"native-role-run\",\"hostId\":\"server\",\"runGeneration\":1,\"hostSequence\":2,\"stepId\":\"role\",\"callId\":null,\"kind\":\"RoleFaulted\",\"gameTick\":null,\"command\":null,\"observation\":null,\"check\":null,\"errorCode\":\"InvalidDataException:RoleArmPrecondition\",\"detail\":null},\"boundEndpoint\":null,\"errorCode\":\"InvalidDataException:RoleArmPrecondition\"}\n",
+        "stderr": "[INFO] scene create: 0 1 646065855590825985\r\nInvalidDataException: RoleArmPrecondition\r\n[INFO] scene dispose: 0 1 0\r\n"
+      }
+    },
+    {
+      "Path": "local/Logs/issue13-s2-revision\\tests-3883b22eef2d4fbe8e723f5f54bf9595\\native-controls-19c1647d3e194ec5b159e600fb522ee4\\old-run.json",
+      "Data": {
+        "mode": "old-run",
+        "processId": 89316,
+        "exitCode": 2,
+        "ready": {
+          "schemaVersion": 1,
+          "run": {
+            "requestId": "request-c285e3878c3746b1a56c796b571f1291",
+            "runId": "native-role-run",
+            "attemptId": "attempt",
+            "runGeneration": 1
+          },
+          "roleId": "server",
+          "hostSequence": 1,
+          "controlId": "init",
+          "kind": "Ready",
+          "event": {
+            "schemaVersion": 1,
+            "runId": "native-role-run",
+            "hostId": "server",
+            "runGeneration": 1,
+            "hostSequence": 1,
+            "stepId": "initial",
+            "callId": null,
+            "kind": "RoleReady",
+            "gameTick": 0,
+            "command": null,
+            "observation": {
+              "observerId": "authority",
+              "origin": "Authority",
+              "available": true,
+              "errorCode": null,
+              "fence": {
+                "runGeneration": 1,
+                "scope": {
+                  "matchScope": {
+                    "session": {
+                      "value": "native-role-run"
+                    },
+                    "world": {
+                      "value": "flow-world"
+                    },
+                    "match": {
+                      "value": "flow-match"
+                    }
+                  },
+                  "restaurantRuntime": {
+                    "value": 1
+                  },
+                  "level": {
+                    "value": "flow-level"
+                  },
+                  "levelEpoch": 1
+                },
+                "serverSessionInstance": "059a8700fe8f4365b3b113f7c203d6d5",
+                "connectionGeneration": null
+              },
+              "stateVersion": 0,
+              "hostFrame": 0,
+              "logicalTick": 0,
+              "baselineSequence": null,
+              "synchronizedObserved": null,
+              "items": [
+                {
+                  "itemId": "flow-item",
+                  "version": 1,
+                  "removed": false,
+                  "locationKind": "StationSlot",
+                  "ownerId": null,
+                  "slotId": "source"
+                }
+              ],
+              "hands": [
+                {
+                  "actorId": "A",
+                  "itemId": null,
+                  "evidence": "DomainHandIndex"
+                },
+                {
+                  "actorId": "B",
+                  "itemId": null,
+                  "evidence": "DomainHandIndex"
+                }
+              ],
+              "commandEvents": []
+            },
+            "check": null,
+            "errorCode": null,
+            "detail": "{\"processId\":89316,\"executable\":\"D:\\\\Environment\\\\dotnet\\\\dotnet.exe\",\"assembly\":\"D:\\\\MyWorkTree\\\\AbilityKit\\\\src\\\\AbilityKit.ET.Runtime.Tests\\\\bin\\\\Debug\\\\net10.0\\\\AbilityKit.Game.Cooking.FlowAcceptance.dll\",\"assemblySha256\":\"7A1F355392452B7B66EA7266E22D1903536B69B82C101676385FC40EB67F2DB8\",\"runtime\":\"10.0.8\",\"ownerThread\":2}"
+          },
+          "boundEndpoint": "127.0.0.1:63563",
+          "errorCode": null
+        },
+        "stdout": "{\"schemaVersion\":1,\"run\":{\"requestId\":\"request-c285e3878c3746b1a56c796b571f1291\",\"runId\":\"native-role-run\",\"attemptId\":\"attempt\",\"runGeneration\":1},\"roleId\":\"server\",\"hostSequence\":2,\"controlId\":null,\"kind\":\"Fault\",\"event\":{\"schemaVersion\":1,\"runId\":\"native-role-run\",\"hostId\":\"server\",\"runGeneration\":1,\"hostSequence\":2,\"stepId\":\"role\",\"callId\":null,\"kind\":\"RoleFaulted\",\"gameTick\":null,\"command\":null,\"observation\":null,\"check\":null,\"errorCode\":\"InvalidDataException:RoleRunChanged\",\"detail\":null},\"boundEndpoint\":null,\"errorCode\":\"InvalidDataException:RoleRunChanged\"}\n",
+        "stderr": "[INFO] scene create: 0 1 646065490518605825\r\nInvalidDataException: RoleRunChanged\r\n[INFO] scene dispose: 0 1 0\r\n"
+      }
+    },
+    {
+      "Path": "local/Logs/issue13-s2-revision\\tests-902ec834ce8d41ab9abb304aa2ab78ad\\native-controls-9f95cd0bb0394cef975ed622fbba3134\\old-run.json",
+      "Data": {
+        "mode": "old-run",
+        "processId": 88756,
+        "exitCode": 2,
+        "ready": {
+          "schemaVersion": 1,
+          "run": {
+            "requestId": "request-bd1cd8af3d7e41fbb5f68781294375bd",
+            "runId": "native-role-run",
+            "attemptId": "attempt",
+            "runGeneration": 1
+          },
+          "roleId": "server",
+          "hostSequence": 1,
+          "controlId": "init",
+          "kind": "Ready",
+          "event": {
+            "schemaVersion": 1,
+            "runId": "native-role-run",
+            "hostId": "server",
+            "runGeneration": 1,
+            "hostSequence": 1,
+            "stepId": "initial",
+            "callId": null,
+            "kind": "RoleReady",
+            "gameTick": 0,
+            "command": null,
+            "observation": {
+              "observerId": "authority",
+              "origin": "Authority",
+              "available": true,
+              "errorCode": null,
+              "fence": {
+                "runGeneration": 1,
+                "scope": {
+                  "matchScope": {
+                    "session": {
+                      "value": "native-role-run"
+                    },
+                    "world": {
+                      "value": "flow-world"
+                    },
+                    "match": {
+                      "value": "flow-match"
+                    }
+                  },
+                  "restaurantRuntime": {
+                    "value": 1
+                  },
+                  "level": {
+                    "value": "flow-level"
+                  },
+                  "levelEpoch": 1
+                },
+                "serverSessionInstance": "d9ddf37ca60b4e8db22dd6a6e3af6a5e",
+                "connectionGeneration": null
+              },
+              "stateVersion": 0,
+              "hostFrame": 0,
+              "logicalTick": 0,
+              "baselineSequence": null,
+              "synchronizedObserved": null,
+              "items": [
+                {
+                  "itemId": "flow-item",
+                  "version": 1,
+                  "removed": false,
+                  "locationKind": "StationSlot",
+                  "ownerId": null,
+                  "slotId": "source"
+                }
+              ],
+              "hands": [
+                {
+                  "actorId": "A",
+                  "itemId": null,
+                  "evidence": "DomainHandIndex"
+                },
+                {
+                  "actorId": "B",
+                  "itemId": null,
+                  "evidence": "DomainHandIndex"
+                }
+              ],
+              "commandEvents": []
+            },
+            "check": null,
+            "errorCode": null,
+            "detail": "{\"processId\":88756,\"executable\":\"D:\\\\Environment\\\\dotnet\\\\dotnet.exe\",\"assembly\":\"D:\\\\MyWorkTree\\\\AbilityKit\\\\src\\\\AbilityKit.ET.Runtime.Tests\\\\bin\\\\Debug\\\\net10.0\\\\AbilityKit.Game.Cooking.FlowAcceptance.dll\",\"assemblySha256\":\"7A1F355392452B7B66EA7266E22D1903536B69B82C101676385FC40EB67F2DB8\",\"runtime\":\"10.0.8\",\"ownerThread\":2}"
+          },
+          "boundEndpoint": "127.0.0.1:54713",
+          "errorCode": null
+        },
+        "stdout": "{\"schemaVersion\":1,\"run\":{\"requestId\":\"request-bd1cd8af3d7e41fbb5f68781294375bd\",\"runId\":\"native-role-run\",\"attemptId\":\"attempt\",\"runGeneration\":1},\"roleId\":\"server\",\"hostSequence\":2,\"controlId\":null,\"kind\":\"Fault\",\"event\":{\"schemaVersion\":1,\"runId\":\"native-role-run\",\"hostId\":\"server\",\"runGeneration\":1,\"hostSequence\":2,\"stepId\":\"role\",\"callId\":null,\"kind\":\"RoleFaulted\",\"gameTick\":null,\"command\":null,\"observation\":null,\"check\":null,\"errorCode\":\"InvalidDataException:RoleRunChanged\",\"detail\":null},\"boundEndpoint\":null,\"errorCode\":\"InvalidDataException:RoleRunChanged\"}\n",
+        "stderr": "[INFO] scene create: 0 1 646065855590825985\r\nInvalidDataException: RoleRunChanged\r\n[INFO] scene dispose: 0 1 0\r\n"
+      }
+    },
+    {
+      "Path": "local/Logs/issue13-s2-revision\\tests-902ec834ce8d41ab9abb304aa2ab78ad\\native-controls-9f95cd0bb0394cef975ed622fbba3134\\eof.json",
+      "Data": {
+        "mode": "eof",
+        "processId": 82536,
+        "exitCode": 1,
+        "ready": {
+          "schemaVersion": 1,
+          "run": {
+            "requestId": "request-bd1cd8af3d7e41fbb5f68781294375bd",
+            "runId": "native-role-run",
+            "attemptId": "attempt",
+            "runGeneration": 1
+          },
+          "roleId": "server",
+          "hostSequence": 1,
+          "controlId": "init",
+          "kind": "Ready",
+          "event": {
+            "schemaVersion": 1,
+            "runId": "native-role-run",
+            "hostId": "server",
+            "runGeneration": 1,
+            "hostSequence": 1,
+            "stepId": "initial",
+            "callId": null,
+            "kind": "RoleReady",
+            "gameTick": 0,
+            "command": null,
+            "observation": {
+              "observerId": "authority",
+              "origin": "Authority",
+              "available": true,
+              "errorCode": null,
+              "fence": {
+                "runGeneration": 1,
+                "scope": {
+                  "matchScope": {
+                    "session": {
+                      "value": "native-role-run"
+                    },
+                    "world": {
+                      "value": "flow-world"
+                    },
+                    "match": {
+                      "value": "flow-match"
+                    }
+                  },
+                  "restaurantRuntime": {
+                    "value": 1
+                  },
+                  "level": {
+                    "value": "flow-level"
+                  },
+                  "levelEpoch": 1
+                },
+                "serverSessionInstance": "beaeea7fd9e347eea782238848dd3104",
+                "connectionGeneration": null
+              },
+              "stateVersion": 0,
+              "hostFrame": 0,
+              "logicalTick": 0,
+              "baselineSequence": null,
+              "synchronizedObserved": null,
+              "items": [
+                {
+                  "itemId": "flow-item",
+                  "version": 1,
+                  "removed": false,
+                  "locationKind": "StationSlot",
+                  "ownerId": null,
+                  "slotId": "source"
+                }
+              ],
+              "hands": [
+                {
+                  "actorId": "A",
+                  "itemId": null,
+                  "evidence": "DomainHandIndex"
+                },
+                {
+                  "actorId": "B",
+                  "itemId": null,
+                  "evidence": "DomainHandIndex"
+                }
+              ],
+              "commandEvents": []
+            },
+            "check": null,
+            "errorCode": null,
+            "detail": "{\"processId\":82536,\"executable\":\"D:\\\\Environment\\\\dotnet\\\\dotnet.exe\",\"assembly\":\"D:\\\\MyWorkTree\\\\AbilityKit\\\\src\\\\AbilityKit.ET.Runtime.Tests\\\\bin\\\\Debug\\\\net10.0\\\\AbilityKit.Game.Cooking.FlowAcceptance.dll\",\"assemblySha256\":\"7A1F355392452B7B66EA7266E22D1903536B69B82C101676385FC40EB67F2DB8\",\"runtime\":\"10.0.8\",\"ownerThread\":2}"
+          },
+          "boundEndpoint": "127.0.0.1:54712",
+          "errorCode": null
+        },
+        "stdout": "{\"schemaVersion\":1,\"run\":{\"requestId\":\"request-bd1cd8af3d7e41fbb5f68781294375bd\",\"runId\":\"native-role-run\",\"attemptId\":\"attempt\",\"runGeneration\":1},\"roleId\":\"server\",\"hostSequence\":2,\"controlId\":null,\"kind\":\"Fault\",\"event\":{\"schemaVersion\":1,\"runId\":\"native-role-run\",\"hostId\":\"server\",\"runGeneration\":1,\"hostSequence\":2,\"stepId\":\"role\",\"callId\":null,\"kind\":\"RoleFaulted\",\"gameTick\":null,\"command\":null,\"observation\":null,\"check\":null,\"errorCode\":\"EndOfStreamException:ControlEOFBeforeStop\",\"detail\":null},\"boundEndpoint\":null,\"errorCode\":\"EndOfStreamException:ControlEOFBeforeStop\"}\n",
+        "stderr": "[INFO] scene create: 0 1 646065855590825985\r\nEndOfStreamException: ControlEOFBeforeStop\r\n[INFO] scene dispose: 0 1 0\r\n"
+      }
+    },
+    {
+      "Path": "local/Logs/issue13-s2-revision\\tests-3883b22eef2d4fbe8e723f5f54bf9595\\native-controls-19c1647d3e194ec5b159e600fb522ee4\\eof.json",
+      "Data": {
+        "mode": "eof",
+        "processId": 89612,
+        "exitCode": 1,
+        "ready": {
+          "schemaVersion": 1,
+          "run": {
+            "requestId": "request-c285e3878c3746b1a56c796b571f1291",
+            "runId": "native-role-run",
+            "attemptId": "attempt",
+            "runGeneration": 1
+          },
+          "roleId": "server",
+          "hostSequence": 1,
+          "controlId": "init",
+          "kind": "Ready",
+          "event": {
+            "schemaVersion": 1,
+            "runId": "native-role-run",
+            "hostId": "server",
+            "runGeneration": 1,
+            "hostSequence": 1,
+            "stepId": "initial",
+            "callId": null,
+            "kind": "RoleReady",
+            "gameTick": 0,
+            "command": null,
+            "observation": {
+              "observerId": "authority",
+              "origin": "Authority",
+              "available": true,
+              "errorCode": null,
+              "fence": {
+                "runGeneration": 1,
+                "scope": {
+                  "matchScope": {
+                    "session": {
+                      "value": "native-role-run"
+                    },
+                    "world": {
+                      "value": "flow-world"
+                    },
+                    "match": {
+                      "value": "flow-match"
+                    }
+                  },
+                  "restaurantRuntime": {
+                    "value": 1
+                  },
+                  "level": {
+                    "value": "flow-level"
+                  },
+                  "levelEpoch": 1
+                },
+                "serverSessionInstance": "f6251b4e93b04057aa355d520c6f8748",
+                "connectionGeneration": null
+              },
+              "stateVersion": 0,
+              "hostFrame": 0,
+              "logicalTick": 0,
+              "baselineSequence": null,
+              "synchronizedObserved": null,
+              "items": [
+                {
+                  "itemId": "flow-item",
+                  "version": 1,
+                  "removed": false,
+                  "locationKind": "StationSlot",
+                  "ownerId": null,
+                  "slotId": "source"
+                }
+              ],
+              "hands": [
+                {
+                  "actorId": "A",
+                  "itemId": null,
+                  "evidence": "DomainHandIndex"
+                },
+                {
+                  "actorId": "B",
+                  "itemId": null,
+                  "evidence": "DomainHandIndex"
+                }
+              ],
+              "commandEvents": []
+            },
+            "check": null,
+            "errorCode": null,
+            "detail": "{\"processId\":89612,\"executable\":\"D:\\\\Environment\\\\dotnet\\\\dotnet.exe\",\"assembly\":\"D:\\\\MyWorkTree\\\\AbilityKit\\\\src\\\\AbilityKit.ET.Runtime.Tests\\\\bin\\\\Debug\\\\net10.0\\\\AbilityKit.Game.Cooking.FlowAcceptance.dll\",\"assemblySha256\":\"7A1F355392452B7B66EA7266E22D1903536B69B82C101676385FC40EB67F2DB8\",\"runtime\":\"10.0.8\",\"ownerThread\":2}"
+          },
+          "boundEndpoint": "127.0.0.1:63562",
+          "errorCode": null
+        },
+        "stdout": "{\"schemaVersion\":1,\"run\":{\"requestId\":\"request-c285e3878c3746b1a56c796b571f1291\",\"runId\":\"native-role-run\",\"attemptId\":\"attempt\",\"runGeneration\":1},\"roleId\":\"server\",\"hostSequence\":2,\"controlId\":null,\"kind\":\"Fault\",\"event\":{\"schemaVersion\":1,\"runId\":\"native-role-run\",\"hostId\":\"server\",\"runGeneration\":1,\"hostSequence\":2,\"stepId\":\"role\",\"callId\":null,\"kind\":\"RoleFaulted\",\"gameTick\":null,\"command\":null,\"observation\":null,\"check\":null,\"errorCode\":\"EndOfStreamException:ControlEOFBeforeStop\",\"detail\":null},\"boundEndpoint\":null,\"errorCode\":\"EndOfStreamException:ControlEOFBeforeStop\"}\n",
+        "stderr": "[INFO] scene create: 0 1 646065490518605825\r\nEndOfStreamException: ControlEOFBeforeStop\r\n[INFO] scene dispose: 0 1 0\r\n"
+      }
+    },
+    {
+      "Path": "local/Logs/issue13-s2-revision\\tests-902ec834ce8d41ab9abb304aa2ab78ad\\native-controls-9f95cd0bb0394cef975ed622fbba3134\\disconnect-child-start.json",
+      "Data": {
+        "processId": 88048,
+        "endpoint": "127.0.0.1:54715",
+        "assembly": "D:\\MyWorkTree\\AbilityKit\\src\\AbilityKit.ET.Runtime.Tests\\bin\\Debug\\net10.0\\AbilityKit.Game.Cooking.FlowAcceptance.dll"
+      }
+    },
+    {
+      "Path": "local/Logs/issue13-s2-revision\\tests-3302e8a9bf694ce2b13f815793e49457\\native-controls-6b7ed047545744c9982b6b6978b27e32\\eof.json",
+      "Data": {
+        "mode": "eof",
+        "processId": 81344,
+        "exitCode": 1,
+        "ready": {
+          "schemaVersion": 1,
+          "run": {
+            "requestId": "request-a124f44fc6de40d4a232fd58c8ea7df2",
+            "runId": "native-role-run",
+            "attemptId": "attempt",
+            "runGeneration": 1
+          },
+          "roleId": "server",
+          "hostSequence": 1,
+          "controlId": "init",
+          "kind": "Ready",
+          "event": {
+            "schemaVersion": 1,
+            "runId": "native-role-run",
+            "hostId": "server",
+            "runGeneration": 1,
+            "hostSequence": 1,
+            "stepId": "initial",
+            "callId": null,
+            "kind": "RoleReady",
+            "gameTick": 0,
+            "command": null,
+            "observation": {
+              "observerId": "authority",
+              "origin": "Authority",
+              "available": true,
+              "errorCode": null,
+              "fence": {
+                "runGeneration": 1,
+                "scope": {
+                  "matchScope": {
+                    "session": {
+                      "value": "native-role-run"
+                    },
+                    "world": {
+                      "value": "flow-world"
+                    },
+                    "match": {
+                      "value": "flow-match"
+                    }
+                  },
+                  "restaurantRuntime": {
+                    "value": 1
+                  },
+                  "level": {
+                    "value": "flow-level"
+                  },
+                  "levelEpoch": 1
+                },
+                "serverSessionInstance": "3f15b501220d451cb1e85ac4adb1884d",
+                "connectionGeneration": null
+              },
+              "stateVersion": 0,
+              "hostFrame": 0,
+              "logicalTick": 0,
+              "baselineSequence": null,
+              "synchronizedObserved": null,
+              "items": [
+                {
+                  "itemId": "flow-item",
+                  "version": 1,
+                  "removed": false,
+                  "locationKind": "StationSlot",
+                  "ownerId": null,
+                  "slotId": "source"
+                }
+              ],
+              "hands": [
+                {
+                  "actorId": "A",
+                  "itemId": null,
+                  "evidence": "DomainHandIndex"
+                },
+                {
+                  "actorId": "B",
+                  "itemId": null,
+                  "evidence": "DomainHandIndex"
+                }
+              ],
+              "commandEvents": []
+            },
+            "check": null,
+            "errorCode": null,
+            "detail": "{\"processId\":81344,\"executable\":\"D:\\\\Environment\\\\dotnet\\\\dotnet.exe\",\"assembly\":\"D:\\\\MyWorkTree\\\\AbilityKit\\\\src\\\\AbilityKit.ET.Runtime.Tests\\\\bin\\\\Debug\\\\net10.0\\\\AbilityKit.Game.Cooking.FlowAcceptance.dll\",\"assemblySha256\":\"7A1F355392452B7B66EA7266E22D1903536B69B82C101676385FC40EB67F2DB8\",\"runtime\":\"10.0.8\",\"ownerThread\":2}"
+          },
+          "boundEndpoint": "127.0.0.1:61200",
+          "errorCode": null
+        },
+        "stdout": "{\"schemaVersion\":1,\"run\":{\"requestId\":\"request-a124f44fc6de40d4a232fd58c8ea7df2\",\"runId\":\"native-role-run\",\"attemptId\":\"attempt\",\"runGeneration\":1},\"roleId\":\"server\",\"hostSequence\":2,\"controlId\":null,\"kind\":\"Fault\",\"event\":{\"schemaVersion\":1,\"runId\":\"native-role-run\",\"hostId\":\"server\",\"runGeneration\":1,\"hostSequence\":2,\"stepId\":\"role\",\"callId\":null,\"kind\":\"RoleFaulted\",\"gameTick\":null,\"command\":null,\"observation\":null,\"check\":null,\"errorCode\":\"EndOfStreamException:ControlEOFBeforeStop\",\"detail\":null},\"boundEndpoint\":null,\"errorCode\":\"EndOfStreamException:ControlEOFBeforeStop\"}\n",
+        "stderr": "[INFO] scene create: 0 1 646066203483176961\r\nEndOfStreamException: ControlEOFBeforeStop\r\n[INFO] scene dispose: 0 1 0\r\n"
+      }
+    },
+    {
+      "Path": "local/Logs/issue13-s2-revision\\tests-3302e8a9bf694ce2b13f815793e49457\\native-controls-6b7ed047545744c9982b6b6978b27e32\\disconnect-child-start.json",
+      "Data": {
+        "processId": 86032,
+        "endpoint": "127.0.0.1:61203",
+        "assembly": "D:\\MyWorkTree\\AbilityKit\\src\\AbilityKit.ET.Runtime.Tests\\bin\\Debug\\net10.0\\AbilityKit.Game.Cooking.FlowAcceptance.dll"
+      }
+    },
+    {
+      "Path": "local/Logs/issue13-s2-revision\\tests-3302e8a9bf694ce2b13f815793e49457\\native-controls-6b7ed047545744c9982b6b6978b27e32\\ready-then-disconnect.json",
+      "Data": {
+        "run": {
+          "requestId": "request-a124f44fc6de40d4a232fd58c8ea7df2",
+          "runId": "disconnect-run",
+          "attemptId": "attempt",
+          "runGeneration": 1
+        },
+        "parentProcessId": 92404,
+        "processId": 86032,
+        "endpoint": "127.0.0.1:61203",
+        "aliveAtDisconnect": true,
+        "aliveAtFault": true,
+        "controlPipeClosedAfterFault": true,
+        "exitCode": 1,
+        "historical": {
+          "schemaVersion": 1,
+          "run": {
+            "requestId": "request-a124f44fc6de40d4a232fd58c8ea7df2",
+            "runId": "disconnect-run",
+            "attemptId": "attempt",
+            "runGeneration": 1
+          },
+          "roleId": "client-a",
+          "hostSequence": 2,
+          "controlId": "before-disconnect",
+          "kind": "Event",
+          "event": {
+            "schemaVersion": 1,
+            "runId": "disconnect-run",
+            "hostId": "client-a",
+            "runGeneration": 1,
+            "hostSequence": 2,
+            "stepId": "capture",
+            "callId": null,
+            "kind": "StateObserved",
+            "gameTick": 24,
+            "command": null,
+            "observation": {
+              "observerId": "client-a",
+              "origin": "Client",
+              "available": true,
+              "errorCode": null,
+              "fence": {
+                "runGeneration": 1,
+                "scope": {
+                  "matchScope": {
+                    "session": {
+                      "value": "disconnect-run"
+                    },
+                    "world": {
+                      "value": "flow-world"
+                    },
+                    "match": {
+                      "value": "flow-match"
+                    }
+                  },
+                  "restaurantRuntime": {
+                    "value": 1
+                  },
+                  "level": {
+                    "value": "flow-level"
+                  },
+                  "levelEpoch": 1
+                },
+                "serverSessionInstance": "6d3d3b7f0e954fd887ae8b9727f46a06",
+                "connectionGeneration": 1
+              },
+              "stateVersion": 24,
+              "hostFrame": 24,
+              "logicalTick": 24,
+              "baselineSequence": 3,
+              "synchronizedObserved": true,
+              "items": [
+                {
+                  "itemId": "flow-item",
+                  "version": 1,
+                  "removed": false,
+                  "locationKind": "StationSlot",
+                  "ownerId": null,
+                  "slotId": "source"
+                }
+              ],
+              "hands": [
+                {
+                  "actorId": "A",
+                  "itemId": null,
+                  "evidence": "ClientProjection"
+                },
+                {
+                  "actorId": "B",
+                  "itemId": null,
+                  "evidence": "ClientProjection"
+                }
+              ],
+              "commandEvents": []
+            },
+            "check": null,
+            "errorCode": null,
+            "detail": null
+          },
+          "boundEndpoint": null,
+          "errorCode": null
+        },
+        "replies": [
+          {
+            "schemaVersion": 1,
+            "run": {
+              "requestId": "request-a124f44fc6de40d4a232fd58c8ea7df2",
+              "runId": "disconnect-run",
+              "attemptId": "attempt",
+              "runGeneration": 1
+            },
+            "roleId": "client-a",
+            "hostSequence": 1,
+            "controlId": "init",
+            "kind": "Ready",
+            "event": {
+              "schemaVersion": 1,
+              "runId": "disconnect-run",
+              "hostId": "client-a",
+              "runGeneration": 1,
+              "hostSequence": 1,
+              "stepId": "initial",
+              "callId": null,
+              "kind": "RoleReady",
+              "gameTick": 21,
+              "command": null,
+              "observation": {
+                "observerId": "client-a",
+                "origin": "Client",
+                "available": true,
+                "errorCode": null,
+                "fence": {
+                  "runGeneration": 1,
+                  "scope": {
+                    "matchScope": {
+                      "session": {
+                        "value": "disconnect-run"
+                      },
+                      "world": {
+                        "value": "flow-world"
+                      },
+                      "match": {
+                        "value": "flow-match"
+                      }
+                    },
+                    "restaurantRuntime": {
+                      "value": 1
+                    },
+                    "level": {
+                      "value": "flow-level"
+                    },
+                    "levelEpoch": 1
+                  },
+                  "serverSessionInstance": "6d3d3b7f0e954fd887ae8b9727f46a06",
+                  "connectionGeneration": 1
+                },
+                "stateVersion": 21,
+                "hostFrame": 21,
+                "logicalTick": 21,
+                "baselineSequence": 2,
+                "synchronizedObserved": true,
+                "items": [
+                  {
+                    "itemId": "flow-item",
+                    "version": 1,
+                    "removed": false,
+                    "locationKind": "StationSlot",
+                    "ownerId": null,
+                    "slotId": "source"
+                  }
+                ],
+                "hands": [
+                  {
+                    "actorId": "A",
+                    "itemId": null,
+                    "evidence": "ClientProjection"
+                  },
+                  {
+                    "actorId": "B",
+                    "itemId": null,
+                    "evidence": "ClientProjection"
+                  }
+                ],
+                "commandEvents": []
+              },
+              "check": null,
+              "errorCode": null,
+              "detail": "{\"processId\":86032,\"executable\":\"D:\\\\Environment\\\\dotnet\\\\dotnet.exe\",\"assembly\":\"D:\\\\MyWorkTree\\\\AbilityKit\\\\src\\\\AbilityKit.ET.Runtime.Tests\\\\bin\\\\Debug\\\\net10.0\\\\AbilityKit.Game.Cooking.FlowAcceptance.dll\",\"assemblySha256\":\"7A1F355392452B7B66EA7266E22D1903536B69B82C101676385FC40EB67F2DB8\",\"runtime\":\"10.0.8\",\"ownerThread\":2}"
+            },
+            "boundEndpoint": null,
+            "errorCode": null
+          },
+          {
+            "schemaVersion": 1,
+            "run": {
+              "requestId": "request-a124f44fc6de40d4a232fd58c8ea7df2",
+              "runId": "disconnect-run",
+              "attemptId": "attempt",
+              "runGeneration": 1
+            },
+            "roleId": "client-a",
+            "hostSequence": 2,
+            "controlId": "before-disconnect",
+            "kind": "Event",
+            "event": {
+              "schemaVersion": 1,
+              "runId": "disconnect-run",
+              "hostId": "client-a",
+              "runGeneration": 1,
+              "hostSequence": 2,
+              "stepId": "capture",
+              "callId": null,
+              "kind": "StateObserved",
+              "gameTick": 24,
+              "command": null,
+              "observation": {
+                "observerId": "client-a",
+                "origin": "Client",
+                "available": true,
+                "errorCode": null,
+                "fence": {
+                  "runGeneration": 1,
+                  "scope": {
+                    "matchScope": {
+                      "session": {
+                        "value": "disconnect-run"
+                      },
+                      "world": {
+                        "value": "flow-world"
+                      },
+                      "match": {
+                        "value": "flow-match"
+                      }
+                    },
+                    "restaurantRuntime": {
+                      "value": 1
+                    },
+                    "level": {
+                      "value": "flow-level"
+                    },
+                    "levelEpoch": 1
+                  },
+                  "serverSessionInstance": "6d3d3b7f0e954fd887ae8b9727f46a06",
+                  "connectionGeneration": 1
+                },
+                "stateVersion": 24,
+                "hostFrame": 24,
+                "logicalTick": 24,
+                "baselineSequence": 3,
+                "synchronizedObserved": true,
+                "items": [
+                  {
+                    "itemId": "flow-item",
+                    "version": 1,
+                    "removed": false,
+                    "locationKind": "StationSlot",
+                    "ownerId": null,
+                    "slotId": "source"
+                  }
+                ],
+                "hands": [
+                  {
+                    "actorId": "A",
+                    "itemId": null,
+                    "evidence": "ClientProjection"
+                  },
+                  {
+                    "actorId": "B",
+                    "itemId": null,
+                    "evidence": "ClientProjection"
+                  }
+                ],
+                "commandEvents": []
+              },
+              "check": null,
+              "errorCode": null,
+              "detail": null
+            },
+            "boundEndpoint": null,
+            "errorCode": null
+          },
+          {
+            "schemaVersion": 1,
+            "run": {
+              "requestId": "request-a124f44fc6de40d4a232fd58c8ea7df2",
+              "runId": "disconnect-run",
+              "attemptId": "attempt",
+              "runGeneration": 1
+            },
+            "roleId": "client-a",
+            "hostSequence": 3,
+            "controlId": null,
+            "kind": "Fault",
+            "event": {
+              "schemaVersion": 1,
+              "runId": "disconnect-run",
+              "hostId": "client-a",
+              "runGeneration": 1,
+              "hostSequence": 3,
+              "stepId": "role",
+              "callId": null,
+              "kind": "RoleFaulted",
+              "gameTick": null,
+              "command": null,
+              "observation": null,
+              "check": null,
+              "errorCode": "InvalidOperationException:RoleClientSessionInvalid",
+              "detail": null
+            },
+            "boundEndpoint": null,
+            "errorCode": "InvalidOperationException:RoleClientSessionInvalid"
+          }
+        ],
+        "observeWriteError": null,
+        "stderr": "InvalidOperationException: RoleClientSessionInvalid\r\n"
+      }
+    },
+    {
+      "Path": "local/Logs/issue13-s2-revision\\tests-3302e8a9bf694ce2b13f815793e49457\\native-controls-6b7ed047545744c9982b6b6978b27e32\\old-run.json",
+      "Data": {
+        "mode": "old-run",
+        "processId": 72708,
+        "exitCode": 2,
+        "ready": {
+          "schemaVersion": 1,
+          "run": {
+            "requestId": "request-a124f44fc6de40d4a232fd58c8ea7df2",
+            "runId": "native-role-run",
+            "attemptId": "attempt",
+            "runGeneration": 1
+          },
+          "roleId": "server",
+          "hostSequence": 1,
+          "controlId": "init",
+          "kind": "Ready",
+          "event": {
+            "schemaVersion": 1,
+            "runId": "native-role-run",
+            "hostId": "server",
+            "runGeneration": 1,
+            "hostSequence": 1,
+            "stepId": "initial",
+            "callId": null,
+            "kind": "RoleReady",
+            "gameTick": 0,
+            "command": null,
+            "observation": {
+              "observerId": "authority",
+              "origin": "Authority",
+              "available": true,
+              "errorCode": null,
+              "fence": {
+                "runGeneration": 1,
+                "scope": {
+                  "matchScope": {
+                    "session": {
+                      "value": "native-role-run"
+                    },
+                    "world": {
+                      "value": "flow-world"
+                    },
+                    "match": {
+                      "value": "flow-match"
+                    }
+                  },
+                  "restaurantRuntime": {
+                    "value": 1
+                  },
+                  "level": {
+                    "value": "flow-level"
+                  },
+                  "levelEpoch": 1
+                },
+                "serverSessionInstance": "feee45a8cd2c4803adaf6b61539d256e",
+                "connectionGeneration": null
+              },
+              "stateVersion": 0,
+              "hostFrame": 0,
+              "logicalTick": 0,
+              "baselineSequence": null,
+              "synchronizedObserved": null,
+              "items": [
+                {
+                  "itemId": "flow-item",
+                  "version": 1,
+                  "removed": false,
+                  "locationKind": "StationSlot",
+                  "ownerId": null,
+                  "slotId": "source"
+                }
+              ],
+              "hands": [
+                {
+                  "actorId": "A",
+                  "itemId": null,
+                  "evidence": "DomainHandIndex"
+                },
+                {
+                  "actorId": "B",
+                  "itemId": null,
+                  "evidence": "DomainHandIndex"
+                }
+              ],
+              "commandEvents": []
+            },
+            "check": null,
+            "errorCode": null,
+            "detail": "{\"processId\":72708,\"executable\":\"D:\\\\Environment\\\\dotnet\\\\dotnet.exe\",\"assembly\":\"D:\\\\MyWorkTree\\\\AbilityKit\\\\src\\\\AbilityKit.ET.Runtime.Tests\\\\bin\\\\Debug\\\\net10.0\\\\AbilityKit.Game.Cooking.FlowAcceptance.dll\",\"assemblySha256\":\"7A1F355392452B7B66EA7266E22D1903536B69B82C101676385FC40EB67F2DB8\",\"runtime\":\"10.0.8\",\"ownerThread\":2}"
+          },
+          "boundEndpoint": "127.0.0.1:61201",
+          "errorCode": null
+        },
+        "stdout": "{\"schemaVersion\":1,\"run\":{\"requestId\":\"request-a124f44fc6de40d4a232fd58c8ea7df2\",\"runId\":\"native-role-run\",\"attemptId\":\"attempt\",\"runGeneration\":1},\"roleId\":\"server\",\"hostSequence\":2,\"controlId\":null,\"kind\":\"Fault\",\"event\":{\"schemaVersion\":1,\"runId\":\"native-role-run\",\"hostId\":\"server\",\"runGeneration\":1,\"hostSequence\":2,\"stepId\":\"role\",\"callId\":null,\"kind\":\"RoleFaulted\",\"gameTick\":null,\"command\":null,\"observation\":null,\"check\":null,\"errorCode\":\"InvalidDataException:RoleRunChanged\",\"detail\":null},\"boundEndpoint\":null,\"errorCode\":\"InvalidDataException:RoleRunChanged\"}\n",
+        "stderr": "[INFO] scene create: 0 1 646066207778144257\r\nInvalidDataException: RoleRunChanged\r\n[INFO] scene dispose: 0 1 0\r\n"
+      }
+    },
+    {
+      "Path": "local/Logs/issue13-s2-revision\\tests-3302e8a9bf694ce2b13f815793e49457\\cancel-after-send-0e4a1be7d28e4bfe823b58f87ca9cc53\\actual-crash-native.json",
+      "Data": {
+        "processId": 73160,
+        "exitCode": -1,
+        "knownToTest": true
+      }
+    },
+    {
+      "Path": "local/Logs/issue13-s2-revision\\tests-3302e8a9bf694ce2b13f815793e49457\\native-controls-6b7ed047545744c9982b6b6978b27e32\\server-arm.json",
+      "Data": {
+        "mode": "server-arm",
+        "processId": 55428,
+        "exitCode": 2,
+        "ready": {
+          "schemaVersion": 1,
+          "run": {
+            "requestId": "request-a124f44fc6de40d4a232fd58c8ea7df2",
+            "runId": "native-role-run",
+            "attemptId": "attempt",
+            "runGeneration": 1
+          },
+          "roleId": "server",
+          "hostSequence": 1,
+          "controlId": "init",
+          "kind": "Ready",
+          "event": {
+            "schemaVersion": 1,
+            "runId": "native-role-run",
+            "hostId": "server",
+            "runGeneration": 1,
+            "hostSequence": 1,
+            "stepId": "initial",
+            "callId": null,
+            "kind": "RoleReady",
+            "gameTick": 0,
+            "command": null,
+            "observation": {
+              "observerId": "authority",
+              "origin": "Authority",
+              "available": true,
+              "errorCode": null,
+              "fence": {
+                "runGeneration": 1,
+                "scope": {
+                  "matchScope": {
+                    "session": {
+                      "value": "native-role-run"
+                    },
+                    "world": {
+                      "value": "flow-world"
+                    },
+                    "match": {
+                      "value": "flow-match"
+                    }
+                  },
+                  "restaurantRuntime": {
+                    "value": 1
+                  },
+                  "level": {
+                    "value": "flow-level"
+                  },
+                  "levelEpoch": 1
+                },
+                "serverSessionInstance": "5f3d98190b1247feb19ad48a496a3b64",
+                "connectionGeneration": null
+              },
+              "stateVersion": 0,
+              "hostFrame": 0,
+              "logicalTick": 0,
+              "baselineSequence": null,
+              "synchronizedObserved": null,
+              "items": [
+                {
+                  "itemId": "flow-item",
+                  "version": 1,
+                  "removed": false,
+                  "locationKind": "StationSlot",
+                  "ownerId": null,
+                  "slotId": "source"
+                }
+              ],
+              "hands": [
+                {
+                  "actorId": "A",
+                  "itemId": null,
+                  "evidence": "DomainHandIndex"
+                },
+                {
+                  "actorId": "B",
+                  "itemId": null,
+                  "evidence": "DomainHandIndex"
+                }
+              ],
+              "commandEvents": []
+            },
+            "check": null,
+            "errorCode": null,
+            "detail": "{\"processId\":55428,\"executable\":\"D:\\\\Environment\\\\dotnet\\\\dotnet.exe\",\"assembly\":\"D:\\\\MyWorkTree\\\\AbilityKit\\\\src\\\\AbilityKit.ET.Runtime.Tests\\\\bin\\\\Debug\\\\net10.0\\\\AbilityKit.Game.Cooking.FlowAcceptance.dll\",\"assemblySha256\":\"7A1F355392452B7B66EA7266E22D1903536B69B82C101676385FC40EB67F2DB8\",\"runtime\":\"10.0.8\",\"ownerThread\":2}"
+          },
+          "boundEndpoint": "127.0.0.1:61202",
+          "errorCode": null
+        },
+        "stdout": "{\"schemaVersion\":1,\"run\":{\"requestId\":\"request-a124f44fc6de40d4a232fd58c8ea7df2\",\"runId\":\"native-role-run\",\"attemptId\":\"attempt\",\"runGeneration\":1},\"roleId\":\"server\",\"hostSequence\":2,\"controlId\":null,\"kind\":\"Fault\",\"event\":{\"schemaVersion\":1,\"runId\":\"native-role-run\",\"hostId\":\"server\",\"runGeneration\":1,\"hostSequence\":2,\"stepId\":\"role\",\"callId\":null,\"kind\":\"RoleFaulted\",\"gameTick\":null,\"command\":null,\"observation\":null,\"check\":null,\"errorCode\":\"InvalidDataException:RoleArmPrecondition\",\"detail\":null},\"boundEndpoint\":null,\"errorCode\":\"InvalidDataException:RoleArmPrecondition\"}\n",
+        "stderr": "[INFO] scene create: 0 1 646066207778144257\r\nInvalidDataException: RoleArmPrecondition\r\n[INFO] scene dispose: 0 1 0\r\n"
+      }
+    },
+    {
+      "Path": "local/Logs/issue13-s2-revision\\tests-3302e8a9bf694ce2b13f815793e49457\\cancel-after-send-0e4a1be7d28e4bfe823b58f87ca9cc53\\cleanup-synthetic-os-facts.json",
+      "Data": {
+        "state": "Incomplete",
+        "resources": [
+          {
+            "roleId": "server",
+            "processId": 84228,
+            "exitConfirmed": true,
+            "errorCode": null
+          },
+          {
+            "roleId": "client-a",
+            "processId": 83264,
+            "exitConfirmed": true,
+            "errorCode": null
+          },
+          {
+            "roleId": "client-b",
+            "processId": 73160,
+            "exitConfirmed": false,
+            "errorCode": "NoNormalStop/native=;StopOrExit:IOException:SyntheticExitQuery;ExitQuery:IOException:SyntheticExitQuery;OwnedTermination:IOException:SyntheticOwnedTermination;UnconfirmedExit:IOException:SyntheticExitCode"
+          }
+        ],
+        "errors": [
+          "client-b:StopOrExit:IOException:SyntheticExitQuery",
+          "client-b:ExitQuery:IOException:SyntheticExitQuery",
+          "client-b:OwnedTermination:IOException:SyntheticOwnedTermination",
+          "client-b:UnconfirmedExit:IOException:SyntheticExitCode"
+        ]
+      }
+    }
+  ],
+  "residual_inventory": {
+    "ObservedUtc": "2026-10-08T00:29:09.3819624+00:00",
+    "MatchingRoleProcesses": [],
+    "ChildOwnedUdpEndpoints": [],
+    "RecordedProcessIds": [
+      35008,
+      55428,
+      64344,
+      72708,
+      73160,
+      77788,
+      81188,
+      81344,
+      82536,
+      83264,
+      83996,
+      84228,
+      86032,
+      87628,
+      88048,
+      88756,
+      89316,
+      89612,
+      92716,
+      94032
+    ],
+    "Filter": "dotnet.exe and FlowAcceptance.dll role arguments; excludes inventory PowerShell self-match"
+  },
+  "limitations": [
+    "No single final-binary 2/2 run; unchanged synthetic first-window pass reused, native failures repaired separately; Flow DLL unchanged",
+    "Older S2 parser PID/exit unknown; new first disconnect-timeout PID/exit unknown and second PID88048 exit unknown retained; later inventory never reconstructs exit",
+    "S3 caller diagnostic/native86 pilot NotRun; Unity/physicalLAN/automaticwake NotRun",
+    "Exact S2 dot acceptance pending; branch-only no merge/close/cleanup"
+  ]
+}
