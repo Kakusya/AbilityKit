@@ -1,9 +1,11 @@
 param(
     [ValidateRange(1,3)][int]$Repeats=3,
+    [ValidateRange(0,65535)][int]$Port=0,
     [switch]$NoBuild,
     [string]$OutputDirectory='local/Logs/cooking-network-process-measurement'
 )
 $ErrorActionPreference='Stop'
+. (Join-Path $PSScriptRoot 'cooking-test-ports.ps1')
 $measurementRoot=Split-Path -Parent $PSScriptRoot
 $measurementProject=Join-Path $measurementRoot 'src/AbilityKit.Game.Cooking.NetworkProcessMeasurement/AbilityKit.Game.Cooking.NetworkProcessMeasurement.csproj'
 $measurementDll=Join-Path $measurementRoot 'src/AbilityKit.Game.Cooking.NetworkProcessMeasurement/bin/Debug/net10.0/AbilityKit.Game.Cooking.NetworkProcessMeasurement.dll'
@@ -19,7 +21,7 @@ if(!$NoBuild){
 if(!(Test-Path -LiteralPath $measurementDll)){throw 'Process measurement executable absent.'}
 Get-FileHash -LiteralPath $measurementDll -Algorithm SHA256 | ConvertTo-Json | Set-Content -LiteralPath (Join-Path $measurementDirectory 'executable-hash.json')
 Get-ChildItem -LiteralPath (Split-Path -Parent $measurementProject) -File | Where-Object { $_.Extension -in '.cs','.csproj' } | ForEach-Object { Get-FileHash -LiteralPath $_.FullName -Algorithm SHA256 } | ConvertTo-Json | Set-Content -LiteralPath (Join-Path $measurementDirectory 'owned-source-hashes.json')
-Get-FileHash -LiteralPath $PSCommandPath,(Join-Path $measurementRoot 'src/AbilityKit.Game.Cooking.NetworkAcceptance/SingleThreadOwner.cs') -Algorithm SHA256 | ConvertTo-Json | Set-Content -LiteralPath (Join-Path $measurementDirectory 'linked-wrapper-source-hashes.json')
+Get-FileHash -LiteralPath $PSCommandPath,(Join-Path $PSScriptRoot 'cooking-test-ports.ps1'),(Join-Path $measurementRoot 'src/AbilityKit.Game.Cooking.NetworkAcceptance/SingleThreadOwner.cs') -Algorithm SHA256 | ConvertTo-Json | Set-Content -LiteralPath (Join-Path $measurementDirectory 'linked-wrapper-source-hashes.json')
 function Quote-MeasurementArgument([string]$value){if($value.Contains('"')){throw 'Unsupported quote in argument.'};return '"'+$value+'"'}
 function Require-Measurement([bool]$condition,[string]$message){if(!$condition){throw $message}}
 $paired=@()
@@ -29,7 +31,8 @@ for($measurementRepeat=1;$measurementRepeat -le $Repeats;$measurementRepeat++){
     $hostReportPath=Join-Path $pairDirectory 'host.json';$clientReportPath=Join-Path $pairDirectory 'client.json';$hostOutput=Join-Path $pairDirectory 'host.stdout.log'
     $hostProcess=$null;$clientProcess=$null
     try{
-        $hostArgs=(Quote-MeasurementArgument $measurementDll)+' host --ip 127.0.0.1 --port 0 --repeat '+$measurementRepeat+' --report '+(Quote-MeasurementArgument $hostReportPath)
+        $selection=Get-CookingTestPort -WorkspaceRoot $measurementRoot -RunDirectory $pairDirectory -RequestedPort $Port
+        $hostArgs=(Quote-MeasurementArgument $measurementDll)+' host --ip 127.0.0.1 --port '+$selection.Port+' --repeat '+$measurementRepeat+' --report '+(Quote-MeasurementArgument $hostReportPath)
         $hostProcess=Start-Process dotnet -ArgumentList $hostArgs -WindowStyle Hidden -PassThru -RedirectStandardOutput $hostOutput -RedirectStandardError (Join-Path $pairDirectory 'host.stderr.log')
         $null=$hostProcess.Handle
         $readyPort=$null;$readyDeadline=[DateTime]::UtcNow.AddSeconds(30)
@@ -38,8 +41,9 @@ for($measurementRepeat=1;$measurementRepeat -le $Repeats;$measurementRepeat++){
             if(Test-Path -LiteralPath $hostOutput){
                 $text=Get-Content -LiteralPath $hostOutput -Raw
                 if($text -match '(?m)^READY ([0-9]+) ([0-9]+)\s*$'){
-                    Require-Measurement ([int]$Matches[2] -eq $hostProcess.Id) 'Readiness PID mismatch.'
-                    $readyPort=[int]$Matches[1];break
+                    $readyPort=[int]$Matches[1]
+                    Assert-CookingTestReady $selection $readyPort ([int]$Matches[2]) $hostProcess.Id
+                    break
                 }
             }
             Start-Sleep -Milliseconds 100

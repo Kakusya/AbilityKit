@@ -1,0 +1,9 @@
+{
+  "schemaVersion": 1,
+  "startPort": 18090,
+  "endPort": 18099,
+  "protocol": "UDP",
+  "profiles": ["Private", "Public"],
+  "remoteAddress": "LocalSubnet",
+  "ruleName": "AbilityKit.Cooking.TestPorts"
+}

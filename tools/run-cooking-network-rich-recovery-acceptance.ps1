@@ -8,6 +8,7 @@ param(
  [ValidateSet('OFF','ON')][string]$Diagnostics='OFF',[string]$DiagnosticParticipant='',[string]$DiagnosticStable=''
 )
 $ErrorActionPreference='Stop'
+. (Join-Path $PSScriptRoot 'cooking-test-ports.ps1')
 if($Diagnostics -eq 'OFF' -and ($DiagnosticParticipant -ne '' -or $DiagnosticStable -ne '')){throw 'OFF cannot have diagnostic selectors.'}
 if($Diagnostics -eq 'ON' -and ($DiagnosticParticipant -notmatch '^[A-Za-z0-9_-]{1,128}$' -or $DiagnosticStable -notmatch '^[A-Za-z0-9_-]{1,128}$')){throw 'ON requires bounded participant/stable selectors.'}
 if($Diagnostics -eq 'ON' -and $Mode -eq 'ConcurrencyControls'){throw 'Rich diagnostics do not configure the concurrency executable.'}
@@ -64,13 +65,14 @@ if ($NoBuild) {
  Equal-Manifest $original.verifierFiles (Binary-Files $verifierDirectory) 'complete verifier binaries/config/dependencies'
  if($Mode -eq 'ConcurrencyControls'){Equal-Manifest $original.controlFiles (Binary-Files (Split-Path $controlDll)) 'complete controls frozen binary set'}
  if($original.runnerScriptSha256 -ne (File-Sha $PSCommandPath)){throw 'Original runner script changed.'}
+ if($original.portHelperSha256 -ne (File-Sha (Join-Path $PSScriptRoot 'cooking-test-ports.ps1'))){throw 'Original manifest lacks the current port helper identity; rebuild to freeze this execution dependency.'}
  if($original.comparatorScriptSha256 -ne (File-Sha (Join-Path $PSScriptRoot 'compare-cooking-network-pair.ps1'))){throw 'Original comparator script changed.'}
  Copy-Item -LiteralPath $FrozenManifest -Destination $manifestPath
 } else {
  if($Source -ne $currentHead){throw 'Build Source must equal actual compile HEAD.'}
  $beforeInputs=Inputs
  function Build-Project([string]$target,[string]$label) {
-  $process=Start-Process dotnet -ArgumentList ('build '+(Q $target)+' --no-incremental --verbosity minimal') -WindowStyle Hidden -PassThru -RedirectStandardOutput (Join-Path $rootDirectory ($label+'-build.log')) -RedirectStandardError (Join-Path $rootDirectory ($label+'-build.stderr.log'))
+  $process=Start-Process dotnet -ArgumentList ('build '+(Q $target)+' --no-incremental --verbosity minimal -m:1') -WindowStyle Hidden -PassThru -RedirectStandardOutput (Join-Path $rootDirectory ($label+'-build.log')) -RedirectStandardError (Join-Path $rootDirectory ($label+'-build.stderr.log'))
   $null=$process.Handle; $start=$process.StartTime; $until=[DateTime]::UtcNow.AddSeconds(180)
   try{while(!$process.HasExited -and [DateTime]::UtcNow -lt $until){Start-Sleep -Milliseconds 100;$process.Refresh()};if(!$process.HasExited){throw 'Build180s deadline.'};$process.WaitForExit();if($process.ExitCode -ne 0){throw ($label+' build failed.')}}
   finally{$process.Refresh();if(!$process.HasExited){$current=Get-Process -Id $process.Id -ErrorAction SilentlyContinue;if($current -and $current.StartTime -eq $start){Stop-Process -InputObject $current};$process.WaitForExit()};@{pid=$process.Id;startUtc=$start.ToUniversalTime().ToString('O');exitCode=$process.ExitCode;project=$target}|ConvertTo-Json|Write-Utf8Json -LiteralPath (Join-Path $rootDirectory ($label+'-build.exit.json'));$process.Dispose()}
@@ -85,7 +87,7 @@ if ($NoBuild) {
  Build-Project $verifierProject 'verifier'
  Equal-Manifest $beforeInputs (Inputs) 'compile before/after ALL actual dependency inputs'
  if($currentHead -ne (& git -C $workspaceRoot rev-parse HEAD).Trim()){throw 'HEAD changed while compiling.'}
- @{schema=2;buildSucceeded=$true;sourceHead=$currentHead;dirty=$Dirty;savedPatchSha256=(File-Sha $patchPath);runnerScriptSha256=(File-Sha $PSCommandPath);comparatorScriptSha256=(File-Sha (Join-Path $PSScriptRoot 'compare-cooking-network-pair.ps1'));sourceInputs=$beforeInputs;files=(Binary-Files $binDirectory);verifierFiles=(Binary-Files $verifierDirectory);controlFiles=(Binary-Files (Split-Path $controlDll));buildReceipts=@('runner','controls','verifier'|ForEach-Object{Get-Content -LiteralPath (Join-Path $rootDirectory ($_+'-build.exit.json')) -Raw|ConvertFrom-Json});buildUtc=[DateTime]::UtcNow.ToString('O')}|ConvertTo-Json -Depth 12|Write-Utf8Json -LiteralPath $manifestPath
+ @{schema=2;buildSucceeded=$true;sourceHead=$currentHead;dirty=$Dirty;savedPatchSha256=(File-Sha $patchPath);runnerScriptSha256=(File-Sha $PSCommandPath);portHelperSha256=(File-Sha (Join-Path $PSScriptRoot 'cooking-test-ports.ps1'));comparatorScriptSha256=(File-Sha (Join-Path $PSScriptRoot 'compare-cooking-network-pair.ps1'));sourceInputs=$beforeInputs;files=(Binary-Files $binDirectory);verifierFiles=(Binary-Files $verifierDirectory);controlFiles=(Binary-Files (Split-Path $controlDll));buildReceipts=@('runner','controls','verifier'|ForEach-Object{Get-Content -LiteralPath (Join-Path $rootDirectory ($_+'-build.exit.json')) -Raw|ConvertFrom-Json});buildUtc=[DateTime]::UtcNow.ToString('O')}|ConvertTo-Json -Depth 12|Write-Utf8Json -LiteralPath $manifestPath
 }
 if (!(Test-Path -LiteralPath $dll) -or !(Test-Path -LiteralPath $verifier)){throw 'Frozen runner/verifier binaries missing.'}
 @{currentHead=$currentHead;frozenManifestSha256=(File-Sha $manifestPath);frozenSourceHead=$Source;diagnostics=$Diagnostics;diagnosticParticipant=$DiagnosticParticipant;diagnosticStable=$DiagnosticStable}|ConvertTo-Json|Write-Utf8Json -LiteralPath (Join-Path $rootDirectory 'invocation-provenance.json')
@@ -111,15 +113,16 @@ foreach ($selected in $cases) {
   @{schema=1;role=$role;runId=$RunId;caseId=$selected;pid=$process.Id;machine=[Environment]::MachineName;startUtc=$process.StartTime.ToUniversalTime().ToString('O');exitCode=$process.ExitCode;executableSha256=(File-Sha $(if($Mode -eq 'ConcurrencyControls'){$controlDll}else{$dll}));reportSha256=if(Test-Path -LiteralPath (Join-Path $runDirectory ($role+'.json'))){File-Sha (Join-Path $runDirectory ($role+'.json'))}else{$null}} | ConvertTo-Json | Write-Utf8Json -LiteralPath (Join-Path $runDirectory ($role+'.exit.json'))
  }
  try {
+  $selection=Get-CookingTestPort -WorkspaceRoot $workspaceRoot -RunDirectory $runDirectory -RequestedPort $Port -Mode $Mode
   if ($Mode -eq 'Client' -and $Port -eq 0) { throw 'Client requires actual Host READY port.' }
   $hostProcess=$null;$clientProcess=$null
-  if ($Mode -ne 'Client') {$hostProcess=Endpoint 'host' $(if($Mode -in @('SameMachine','ConcurrencyControls')){'127.0.0.1'}else{$BindIp}) $Port $(if($Mode -in @('SameMachine','ConcurrencyControls')){'SameMachineIndependentProcessesUdp'}else{'SeparateHostsRequiresPairedEvidence'});$owned+=@(@{process=$hostProcess;role='host';start=$hostProcess.StartTime})}
+  if ($Mode -ne 'Client') {$hostProcess=Endpoint 'host' $(if($Mode -in @('SameMachine','ConcurrencyControls')){'127.0.0.1'}else{$BindIp}) $selection.Port $(if($Mode -in @('SameMachine','ConcurrencyControls')){'SameMachineIndependentProcessesUdp'}else{'SeparateHostsRequiresPairedEvidence'});$owned+=@(@{process=$hostProcess;role='host';start=$hostProcess.StartTime})}
   if ($Mode -in @('SameMachine','ConcurrencyControls')) {
    $readyDeadline=[DateTime]::UtcNow.AddSeconds(20);$readyPort=0
    while ([DateTime]::UtcNow -lt $readyDeadline) {
     $hostProcess.Refresh();if($hostProcess.HasExited){throw 'Host exited before READY.'}
     $stdout=Join-Path $runDirectory 'host.stdout.log'
-    if(Test-Path -LiteralPath $stdout){$text=Get-Content -LiteralPath $stdout -Raw;if($text -match '(?m)^READY ([0-9]+) ([0-9]+)\s*$'){if([int]$Matches[2] -ne $hostProcess.Id){throw 'Host READY PID mismatch.'};$readyPort=[int]$Matches[1];break}}
+    if(Test-Path -LiteralPath $stdout){$text=Get-Content -LiteralPath $stdout -Raw;if($text -match '(?m)^READY ([0-9]+) ([0-9]+)\s*$'){$readyPort=[int]$Matches[1];Assert-CookingTestReady $selection $readyPort ([int]$Matches[2]) $hostProcess.Id;break}}
     Start-Sleep -Milliseconds 100
    }
    if($readyPort -le 0){throw 'Actual READY20s deadline.'}
@@ -128,10 +131,11 @@ foreach ($selected in $cases) {
   $announced=$false
   while([DateTime]::UtcNow -lt $pairDeadline -and [DateTime]::UtcNow -lt $aggregateDeadline){
    foreach($entry in $owned){$entry.process.Refresh()}
-   if($Mode -eq 'Host' -and !$announced -and (Test-Path -LiteralPath (Join-Path $runDirectory 'host.stdout.log'))){$text=Get-Content -LiteralPath (Join-Path $runDirectory 'host.stdout.log') -Raw;if($text -match '(?m)^READY ([0-9]+) ([0-9]+)\s*$'){Write-Output $Matches[0];$announced=$true}}
+   if($Mode -eq 'Host' -and !$announced -and (Test-Path -LiteralPath (Join-Path $runDirectory 'host.stdout.log'))){$text=Get-Content -LiteralPath (Join-Path $runDirectory 'host.stdout.log') -Raw;if($text -match '(?m)^READY ([0-9]+) ([0-9]+)\s*$'){$readyLine=$Matches[0];Assert-CookingTestReady $selection ([int]$Matches[1]) ([int]$Matches[2]) $hostProcess.Id;Write-Output $readyLine;$announced=$true}}
    if(@($owned|Where-Object{!$_.process.HasExited}).Count -eq 0){break};Start-Sleep -Milliseconds 100
   }
   if(@($owned|Where-Object{!$_.process.HasExited}).Count -ne 0){throw 'Real pair630s / aggregate2520s deadline.'}
+  if($Mode -eq 'Host' -and !$announced){throw 'Host completed without verified READY; inspect retained stdout/stderr and rerun to reacquire.'}
   foreach($entry in $owned){Receipt $entry.process $entry.role;if($entry.process.ExitCode -ne 0){throw 'Actual endpoint failed; preserved complete artifacts.'}}
   if($Mode -ne 'ConcurrencyControls'){
    foreach($entry in $owned){

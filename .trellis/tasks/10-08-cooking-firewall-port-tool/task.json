@@ -1,0 +1,37 @@
+{
+    "id":  "cooking-firewall-port-tool",
+    "name":  "cooking-firewall-port-tool",
+    "title":  "Cooking local firewall port-range tool",
+    "description":  "Owner approved Cooking-only UDP firewall opening tool, shared machine port configuration, and AGENTS usage documentation after reviewing multi-worktree design.",
+    "status":  "completed",
+    "dev_type":  null,
+    "scope":  null,
+    "package":  null,
+    "priority":  "P2",
+    "creator":  "Kakusya",
+    "assignee":  "Kakusya",
+    "createdAt":  "2026-10-08",
+    "completedAt":  "2026-10-08",
+    "branch":  "master",
+    "base_branch":  "master",
+    "worktree_path":  null,
+    "commit":  null,
+    "pr_url":  null,
+    "subtasks":  [
+
+                 ],
+    "children":  [
+
+                 ],
+    "parent":  null,
+    "relatedFiles":  [
+                         "tools/cooking-firewall.ps1",
+                         "tools/cooking-network.defaults.json",
+                         "tools/cooking-firewall.tests.ps1",
+                         "AGENTS.md"
+                     ],
+    "notes":  "Owner-authorized tool implemented, installed and applied locally; 27 isolated controls and distinct review passed; actual config/rules/restore/reapply verified. Physical LAN NotRun. Uncommitted for review; archive deferred to a future authorized commit/branch workflow.",
+    "meta":  {
+
+             }
+}

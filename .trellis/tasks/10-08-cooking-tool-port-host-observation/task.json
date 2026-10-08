@@ -1,0 +1,36 @@
+{
+    "id":  "cooking-tool-port-host-observation",
+    "name":  "cooking-tool-port-host-observation",
+    "title":  "Cooking tool-selected host port and timed observation",
+    "description":  "Owner requires obtaining a concrete port through installed tool before launching Cooking host and closing it after five minutes.",
+    "status":  "completed",
+    "dev_type":  null,
+    "scope":  null,
+    "package":  null,
+    "priority":  "P2",
+    "creator":  "Kakusya",
+    "assignee":  "Kakusya",
+    "createdAt":  "2026-10-08",
+    "completedAt":  "2026-10-08",
+    "branch":  "master",
+    "base_branch":  "master",
+    "worktree_path":  null,
+    "commit":  null,
+    "pr_url":  null,
+    "subtasks":  [
+
+                 ],
+    "children":  [
+
+                 ],
+    "parent":  null,
+    "relatedFiles":  [
+                         "tools/cooking-firewall.ps1",
+                         "tools/cooking-firewall.tests.ps1",
+                         "AGENTS.md"
+                     ],
+    "notes":  "GetPort added/installed;34 isolated controls and independent review passed; tool port/READY/socket matched. Owned host auto-stopped after300.034s. Owner accepted observation. Existing test-framework callers not integrated; no framework code changed. Uncommitted.",
+    "meta":  {
+
+             }
+}

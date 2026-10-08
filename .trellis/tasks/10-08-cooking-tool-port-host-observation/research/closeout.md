@@ -1,0 +1,12 @@
+# Timed local observation closeout
+
+Owner message: “这个测试算通过”. Record this startup/firewall-popup observation as operator-accepted Passed, with no invented UI details and no physical-LAN/gameplay acceptance claim.
+
+Evidence root local/Logs/cooking-tool-port-observation/20261008-135733. Installed GetPort/native0 returned18090 from SavedConfig; actual READY1809088212 and UDPv4/v6 owner88212 matched. Host started2026-10-08T05:59:17.3142982Z (13:59:17 local), scheduled shutdown06:04:17.3142982Z (14:04:17 local), actually stopped06:04:17.3460415Z. elapsedSeconds300.0337455, hasExited=true, native exitCode=-1 retained, reason OwnerRequestedFiveMinuteStop. This expected deliberate stop is not a natural successful gameplay completion. Independent guardian89392 also exited. Main verified both processes absent and no UDP endpoint still owned by host88212 after the user interrupted the observing turn. No unrelated process stopped.
+
+34 isolated controls and independent review/parser Passed/native0, AGENTS whitespace Passed; no additional firewall mutation. Installed and source GetPort script hashes match. Popup outcome accepted by operator; physical two-PC/LAN remoteConnectivity NotRun/NOT_VERIFIED. Code remains uncommitted; no automatic archive/commit/push.
+
+## Test-framework integration status (owner question)
+Not automatically integrated. Tool is installed, independently tested, documented in AGENTS, and used by this one-off observation guardian. Existing Cooking process acceptance/concurrency/rich wrappers still default Port0 or pass explicit ports, measurement wrapper explicitly supplies --port0. Fixed FlowAcceptance NetworkRoleHost.cs:94 still constructs LiteNetChannelListener(IPAddress.Loopback,0,...). None of those callers references cook-firewall/GetPort. Git and Orca inventory again found only this AbilityKit checkout; other repositories were untouched.
+
+An integration followup would target approved Windows Cooking process/LAN test launchers: invoke tool for candidate, pass port to Host, verify actual READY/PID, pass actual endpoint to clients, retry only binding conflicts through tool, explicitly fail exhaustion/tool failures, retain port/config/run provenance. Cross-platform offline/InProcess tests should retain their existing host independence. The owner's question asks status; no test-framework code modifications have been authorized or performed in this task.

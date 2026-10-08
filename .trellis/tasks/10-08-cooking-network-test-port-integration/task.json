@@ -1,0 +1,46 @@
+{
+    "id":  "cooking-network-test-port-integration",
+    "name":  "cooking-network-test-port-integration",
+    "title":  "Cooking network test port integration",
+    "description":  "Integrate read-only GetPort into Windows Cooking PowerShell process launchers and fixed-flow network testing; validate READY and retain port provenance without firewall mutation.",
+    "status":  "completed",
+    "dev_type":  null,
+    "scope":  null,
+    "package":  null,
+    "priority":  "P2",
+    "creator":  "Kakusya",
+    "assignee":  "Kakusya",
+    "createdAt":  "2026-10-08",
+    "completedAt":  "2026-10-08",
+    "branch":  "master",
+    "base_branch":  "master",
+    "worktree_path":  null,
+    "commit":  null,
+    "pr_url":  null,
+    "subtasks":  [
+
+                 ],
+    "children":  [
+
+                 ],
+    "parent":  null,
+    "relatedFiles":  [
+                         "tools/cooking-test-ports.ps1",
+                         "tools/cooking-test-ports.tests.ps1",
+                         "tools/run-cooking-network-process-acceptance.ps1",
+                         "tools/run-cooking-network-concurrency-acceptance.ps1",
+                         "tools/run-cooking-network-rich-recovery-acceptance.ps1",
+                         "tools/run-cooking-network-process-measurement.ps1",
+                         "src/AbilityKit.Game.Cooking.FlowAcceptance/CookingTestPortSelector.cs",
+                         "src/AbilityKit.Game.Cooking.FlowAcceptance/NetworkFlowAdapter.cs",
+                         "src/AbilityKit.Game.Cooking.FlowAcceptance/NetworkRoleHost.cs",
+                         "src/AbilityKit.ET.Runtime.Tests/CookingNetworkTestPortTests.cs",
+                         "src/AbilityKit.ET.Runtime.Tests/CookingFixedFlowTests.cs",
+                         "AGENTS.md",
+                         ".trellis/spec/cooking/cooking-lan-session.md"
+                     ],
+    "notes":  "Windows automatic GetPort startup integrated. C#59/PS16/firewall34 controls Passed; primary, concurrency, measurement and rich ConcurrencyControls actual Passed. Full rich manual-paused Failed Whole600s; preserved limitation. All12 PS endpoint PIDs absent; shared config/tool/rules unchanged. Physical LAN/broad gates/CI NotRun. Uncommitted; no automatic archive.",
+    "meta":  {
+
+             }
+}

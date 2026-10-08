@@ -89,9 +89,11 @@ internal static class NetworkRoleHost
                         run = control.Run; init = control.Init!; initializeId = control.ControlId;
                         if (roleId == "server")
                         {
+                            var selectedPort = CookingTestPortSelector.ReadChildPort(
+                                Environment.GetEnvironmentVariable(CookingTestPortSelector.PortEnvironmentVariable), OperatingSystem.IsWindows());
                             authority = new FlowFixture(run).CreateHost();
                             server = new(new CookingNetworkAuthorityAdapter(authority),
-                                new LiteNetChannelListener(IPAddress.Loopback, 0, "abilitykit-cooking-v3"),
+                                new LiteNetChannelListener(IPAddress.Loopback, selectedPort, "abilitykit-cooking-v3"),
                                 new Dictionary<PlayerId, string> { [new("A")] = "flow-A", [new("B")] = "flow-B" });
                             server.Start();
                             binding = new(run.RunGeneration, authority.Binding.LevelScope, server.ServerSessionInstance, null);

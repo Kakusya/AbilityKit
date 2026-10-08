@@ -491,6 +491,26 @@ public sealed class CookingFixedFlowTests
         }
         using var proof = JsonDocument.Parse(File.ReadAllText(Path.Combine(request.OutputRoot, "network-resources.json")));
         Assert.Equal(result.Run.RunId, proof.RootElement.GetProperty("run").GetProperty("runId").GetString());
+        var selectionProof = proof.RootElement.GetProperty("portSelection");
+        Assert.False(selectionProof.GetProperty("portReserved").GetBoolean());
+        if (OperatingSystem.IsWindows())
+        {
+            Assert.Equal("CookingGetPort", selectionProof.GetProperty("mode").GetString());
+            var selectedPort = selectionProof.GetProperty("port").GetInt32();
+            Assert.InRange(selectedPort, selectionProof.GetProperty("startPort").GetInt32(), selectionProof.GetProperty("endPort").GetInt32());
+            Assert.Equal(0, selectionProof.GetProperty("selectorNativeExitCode").GetInt32());
+            Assert.Equal(64, selectionProof.GetProperty("scriptSha256").GetString()!.Length);
+            Assert.True(selectionProof.GetProperty("selectorProcessId").GetInt32() > 0);
+            using var selectorResponse = JsonDocument.Parse(selectionProof.GetProperty("selectorResponse").GetString()!);
+            Assert.Equal(selectedPort, selectorResponse.RootElement.GetProperty("port").GetInt32());
+            var serverProof = proof.RootElement.GetProperty("children").EnumerateArray().Single(c => c.GetProperty("roleId").GetString() == "server");
+            Assert.Equal("127.0.0.1:" + selectedPort, serverProof.GetProperty("endpoint").GetString());
+        }
+        else
+        {
+            Assert.Equal("OsEphemeral", selectionProof.GetProperty("mode").GetString());
+            Assert.Equal(0, selectionProof.GetProperty("port").GetInt32());
+        }
         var children = proof.RootElement.GetProperty("children").EnumerateArray().ToArray();
         Assert.Equal(3, children.Length);
         Assert.All(children, child =>
@@ -629,6 +649,16 @@ public sealed class CookingFixedFlowTests
             var info = new ProcessStartInfo("dotnet") { UseShellExecute = false, CreateNoWindow = true, RedirectStandardInput = true,
                 RedirectStandardOutput = true, RedirectStandardError = true };
             foreach (var arg in new[] { typeof(AbilityKit.Game.Cooking.FlowAcceptance.Program).Assembly.Location, "role", "--id", "server" }) info.ArgumentList.Add(arg);
+            if (OperatingSystem.IsWindows())
+            {
+                using var selectionBudget = new CancellationTokenSource(request.Budgets.StartupMs);
+                var selector = typeof(NetworkFlowAdapter).Assembly.GetType("AbilityKit.Game.Cooking.FlowAcceptance.CookingTestPortSelector")!;
+                var selectionTask = (Task)selector.GetMethod("SelectAsync", BindingFlags.Static | BindingFlags.NonPublic)!
+                    .Invoke(null, new object[] { selectionBudget.Token })!;
+                await selectionTask;
+                var selection = selectionTask.GetType().GetProperty("Result")!.GetValue(selectionTask)!;
+                info.Environment["ABILITYKIT_COOKING_FLOW_TEST_PORT"] = selection.GetType().GetProperty("Port")!.GetValue(selection)!.ToString();
+            }
             using var child = Process.Start(info)!;
             try
             {

@@ -4,6 +4,16 @@
 
 # P1 LAN listen host/client：cooking-lan-session
 
+## 2026-10-08 Windows 联网测试端口启动契约
+
+来源：Owner 要求将已验证的 `GetPort` 工具融入测试框架；任务 [cooking-network-test-port-integration](../../tasks/10-08-cooking-network-test-port-integration/design.md)。只改变 Cooking .NET 测试启动层，不改变领域状态、Tick、游戏消息或 Flow 结果协议。
+
+- Windows 的四个标准进程启动包装脚本与固定 Flow Network 模式在房主启动前调用只读 `cooking-firewall.ps1 -Action GetPort`。已安装的固定位置工具优先，仓库工具作为未安装时入口；共享用户配置仍由工具解释，调用方不复制端口范围或扫描逻辑。
+- 默认自动端口直接传入监听器；房主实际 READY 的端口和身份必须一致，才启动客户端。PowerShell 显式非零 `-Port` 保留调用方选择并记录，不宣称该端口已获防火墙放行；Client/BuildOnly 不分配端口。
+- GetPort 不是租约。范围耗尽、工具错误、绑定竞争、READY 不一致或超时明确失败，重新运行重新获取；禁止退回范围外或随机端口。启动失败的进程与工具子进程由创建方释放，不能全局杀进程。
+- 取端口不要求提权，不自动修改防火墙、安装工具或 PATH。配置/选择及实际端点分别记录；同机 UDP、规则有效和物理两 PC LAN 是不同证据。后者仍保持 NOT_VERIFIED。
+- 离线流程、非 Windows Flow 的 OS 临时端口、专用 impairment relay/proxy 与进程内传输 fixture 保留各自测试语义。游戏 owner 与可变状态权威不受影响。
+
 ## 2026-10-03 exact ACK cleanup and paused publication contract
 
 ### Scope / trigger

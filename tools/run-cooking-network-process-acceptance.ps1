@@ -7,6 +7,7 @@ param(
     [switch]$NoBuild
 )
 $ErrorActionPreference = 'Stop'
+. (Join-Path $PSScriptRoot 'cooking-test-ports.ps1')
 $workspaceRoot = Split-Path -Parent $PSScriptRoot
 $project = Join-Path $workspaceRoot 'src/AbilityKit.Game.Cooking.NetworkAcceptance/AbilityKit.Game.Cooking.NetworkAcceptance.csproj'
 $dll = Join-Path $workspaceRoot 'src/AbilityKit.Game.Cooking.NetworkAcceptance/bin/Debug/net10.0/AbilityKit.Game.Cooking.NetworkAcceptance.dll'
@@ -18,11 +19,9 @@ if (!$NoBuild) {
     if ($LASTEXITCODE -ne 0) { throw "Build failed; inspect $runDirectory/build.log" }
 }
 if (!(Test-Path -LiteralPath $dll)) { throw "Executable not found: $dll" }
-if ($Mode -ne 'SameMachine') {
-    if ($Port -eq 0 -and $Mode -eq 'Client') { throw 'Client mode requires the actual host port.' }
-    $role = $Mode.ToLowerInvariant()
-    $address = if ($Mode -eq 'Host') { $BindIp } else { $RemoteIp }
-    & dotnet $dll $role --ip $address --port $Port --report (Join-Path $runDirectory "$role.json") --topology 'SeparateHostsRequiresPairedEvidence'
+if ($Mode -eq 'Client') {
+    $selection = Get-CookingTestPort -WorkspaceRoot $workspaceRoot -RunDirectory $runDirectory -RequestedPort $Port -Mode Client
+    & dotnet $dll client --ip $RemoteIp --port $Port --report (Join-Path $runDirectory 'client.json') --topology 'SeparateHostsRequiresPairedEvidence'
     exit $LASTEXITCODE
 }
 
@@ -34,7 +33,10 @@ function Quote-Argument([string]$value) {
 $hostReportPath = Join-Path $runDirectory 'host.json'
 $clientReportPath = Join-Path $runDirectory 'client.json'
 $hostStdout = Join-Path $runDirectory 'host.stdout.log'
-$hostArguments = (Quote-Argument $dll) + ' host --ip 127.0.0.1 --port ' + $Port + ' --report ' + (Quote-Argument $hostReportPath) + ' --topology SameMachineIndependentProcessesUdp'
+$selection = Get-CookingTestPort -WorkspaceRoot $workspaceRoot -RunDirectory $runDirectory -RequestedPort $Port -Mode $Mode
+$hostAddress = if ($Mode -eq 'Host') { $BindIp } else { '127.0.0.1' }
+$topology = if ($Mode -eq 'Host') { 'SeparateHostsRequiresPairedEvidence' } else { 'SameMachineIndependentProcessesUdp' }
+$hostArguments = (Quote-Argument $dll) + ' host --ip ' + (Quote-Argument $hostAddress) + ' --port ' + $selection.Port + ' --report ' + (Quote-Argument $hostReportPath) + ' --topology ' + $topology
 $hostProcess = Start-Process dotnet -ArgumentList $hostArguments -WindowStyle Hidden -PassThru -RedirectStandardOutput $hostStdout -RedirectStandardError (Join-Path $runDirectory 'host.stderr.log')
 $null = $hostProcess.Handle # Retain the native handle before Refresh observes exit.
 $clientProcess = $null
@@ -48,13 +50,22 @@ try {
             $readyText = Get-Content -LiteralPath $hostStdout -Raw
             if ($readyText -match '(?m)^READY ([0-9]+) ([0-9]+)\s*$') {
                 $readyPort = [int]$Matches[1]
-                if ([int]$Matches[2] -ne $hostProcess.Id) { throw 'Ready message PID does not match the launched Host.' }
+                Assert-CookingTestReady $selection $readyPort ([int]$Matches[2]) $hostProcess.Id
                 break
             }
         }
         Start-Sleep -Milliseconds 100
     }
     if ($null -eq $readyPort -or $readyPort -le 0) { throw 'Host readiness deadline expired.' }
+    if ($Mode -eq 'Host') {
+        Write-Output "READY $readyPort $($hostProcess.Id)"
+        $hostDeadline = [DateTime]::UtcNow.AddSeconds(600)
+        while (!$hostProcess.HasExited -and [DateTime]::UtcNow -lt $hostDeadline) { Start-Sleep -Milliseconds 100; $hostProcess.Refresh() }
+        if (!$hostProcess.HasExited) { throw 'Separate Host deadline expired.' }
+        $hostProcess.WaitForExit()
+        Write-Output "Artifacts: $runDirectory; separate endpoints require paired physical topology review."
+        exit $hostProcess.ExitCode
+    }
     $clientArguments = (Quote-Argument $dll) + ' client --ip 127.0.0.1 --port ' + $readyPort + ' --report ' + (Quote-Argument $clientReportPath) + ' --topology SameMachineIndependentProcessesUdp'
     $clientProcess = Start-Process dotnet -ArgumentList $clientArguments -WindowStyle Hidden -PassThru -RedirectStandardOutput (Join-Path $runDirectory 'client.stdout.log') -RedirectStandardError (Join-Path $runDirectory 'client.stderr.log')
     $null = $clientProcess.Handle

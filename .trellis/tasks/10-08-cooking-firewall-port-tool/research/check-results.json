@@ -1,0 +1,27 @@
+{
+  "sourceBase": "aa5e26cc8b05d24f86e7952b7ffa495a03f535b1",
+  "dirty": true,
+  "evidenceDirectory": "local/Logs/cooking-firewall-tool/20261008-113245",
+  "checks": [
+    {"name":"Isolated PowerShell controls", "result":"Passed", "exitCode":0, "count":27, "command":"powershell -NoProfile -ExecutionPolicy Bypass -File tools/cooking-firewall.tests.ps1", "raw":"isolated-controls.log"},
+    {"name":"Install", "result":"Passed", "exitCode":0, "command":"powershell -NoProfile -ExecutionPolicy Bypass -File tools/cooking-firewall.ps1 -Action Install", "raw":"install.json"},
+    {"name":"Real Open", "result":"Passed", "exitCode":0, "command":"cooking-firewall.ps1 -Action Open -StartPort 18090 -EndPort 18099 -ProgramPath <CookingNetworkAcceptance.exe> -RepairProgramBlock", "raw":"open-first.json"},
+    {"name":"Restore program block fields", "result":"Passed", "exitCode":0, "command":"cooking-firewall.ps1 -Action RestoreBlock -BackupPath <first backup>", "raw":"restore.json"},
+    {"name":"Restored block negative control", "result":"Passed", "exitCode":1, "expectedExitCode":1, "expectedReportedStatus":"Failed/ProgramBlocked", "raw":"restored-blocked-check.json"},
+    {"name":"Reapply saved range", "result":"Passed", "exitCode":0, "raw":"open-final.json"},
+    {"name":"Installed Show outside repo", "result":"Passed", "exitCode":0, "raw":"installed-show.json"},
+    {"name":"Installed Check outside repo", "result":"Passed", "exitCode":0, "raw":"installed-check.json"},
+    {"name":"Installed idempotent Open outside repo", "result":"Passed", "exitCode":0, "raw":"installed-open.json"},
+    {"name":"Independent final policy/config/PATH/binary checks", "result":"Passed", "exitCode":0, "raw":"independent-final-rule.json; final-program-rules.json; saved-config-final.json; source-hashes.json"},
+    {"name":"Physical UDP LAN", "result":"NotRun", "coverage":"NOT_VERIFIED"},
+    {"name":"PSScriptAnalyzer", "result":"NotRun", "reason":"Tool is not installed"},
+    {"name":"C#/Unity gates and typecheck", "result":"Skipped", "coverage":"N/A", "reason":"PowerShell-only Cooking local tool and AGENTS documentation"}
+  ],
+  "retainedFailures": [
+    {"owner":"Implement worker", "exitCode":1, "afterControls":2, "reason":"File.Replace null-string coercion"},
+    {"owner":"Implement worker", "exitCode":1, "afterControls":13, "reason":"Comma/arithmetic precedence"},
+    {"owner":"Implement worker", "exitCode":1, "afterControls":20, "reason":"Native cwd vs PowerShell provider path normalization"},
+    {"owner":"Main", "exitCode":1, "reason":"Initial absent owned-rule lookup in before-state collection"},
+    {"owner":"Main", "exitCode":1, "reason":"Snapshot comparison wrapped ConvertFrom-Json root array; corrected without tool mutation"}
+  ]
+}

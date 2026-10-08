@@ -7,6 +7,7 @@ param(
     [string]$OutputDirectory = 'local/Logs/cooking-network-concurrency', [switch]$NoBuild
 )
 $ErrorActionPreference = 'Stop'
+. (Join-Path $PSScriptRoot 'cooking-test-ports.ps1')
 $workspaceRoot = Split-Path -Parent $PSScriptRoot
 $project = Join-Path $workspaceRoot 'src/AbilityKit.Game.Cooking.NetworkConcurrencyAcceptance/AbilityKit.Game.Cooking.NetworkConcurrencyAcceptance.csproj'
 $dll = Join-Path $workspaceRoot 'src/AbilityKit.Game.Cooking.NetworkConcurrencyAcceptance/bin/Debug/net10.0/AbilityKit.Game.Cooking.NetworkConcurrencyAcceptance.dll'
@@ -35,22 +36,28 @@ $ownedProcesses = @()
 $script:readyAnnounced = $false
 $wholeDeadline = [DateTime]::UtcNow.AddSeconds(210)
 try {
+    $selection = Get-CookingTestPort -WorkspaceRoot $workspaceRoot -RunDirectory $runDirectory -RequestedPort $Port -Mode $Mode
     if ($Mode -ne 'SameMachine') {
         if ($Mode -eq 'Client' -and $Port -eq 0) { throw 'Client requires the actual READY endpoint port.' }
         $role = $Mode.ToLowerInvariant(); $address = if ($Mode -eq 'Host') { $BindIp } else { $RemoteIp }
-        $endpoint = Start-Endpoint $role $address $Port 'SeparateHostsRequiresPairedEvidence'; $ownedProcesses += $endpoint
+        $endpoint = Start-Endpoint $role $address $selection.Port 'SeparateHostsRequiresPairedEvidence'; $ownedProcesses += $endpoint
         while (!$endpoint.HasExited -and [DateTime]::UtcNow -lt $wholeDeadline) {
             if ($role -eq 'host' -and (Test-Path -LiteralPath (Join-Path $runDirectory 'host.stdout.log'))) {
                 $text = Get-Content -LiteralPath (Join-Path $runDirectory 'host.stdout.log') -Raw
-                if ($text -match '(?m)^READY ([0-9]+) ([0-9]+)\s*$' -and !$script:readyAnnounced) { Write-Output $Matches[0]; $script:readyAnnounced = $true }
+                if ($text -match '(?m)^READY ([0-9]+) ([0-9]+)\s*$' -and !$script:readyAnnounced) {
+                    $readyLine = $Matches[0]
+                    Assert-CookingTestReady $selection ([int]$Matches[1]) ([int]$Matches[2]) $endpoint.Id
+                    Write-Output $readyLine; $script:readyAnnounced = $true
+                }
             }
             Start-Sleep -Milliseconds 100; $endpoint.Refresh()
         }
         if (!$endpoint.HasExited) { throw '210-second wrapper deadline.' }
+        if ($Mode -eq 'Host' -and !$script:readyAnnounced) { throw 'Host completed without verified READY; inspect stdout/stderr and rerun to reacquire.' }
         $endpoint.WaitForExit(); Write-Output "Artifacts: $runDirectory; separate endpoints require manual paired physical topology review."
         exit $endpoint.ExitCode
     }
-    $hostProcess = Start-Endpoint 'host' '127.0.0.1' $Port 'SameMachineIndependentProcessesUdp'; $ownedProcesses += $hostProcess
+    $hostProcess = Start-Endpoint 'host' '127.0.0.1' $selection.Port 'SameMachineIndependentProcessesUdp'; $ownedProcesses += $hostProcess
     $readyPort = 0; $readyDeadline = [DateTime]::UtcNow.AddSeconds(20)
     while ([DateTime]::UtcNow -lt $readyDeadline) {
         $hostProcess.Refresh(); if ($hostProcess.HasExited) { throw 'Host exited before READY.' }
@@ -58,8 +65,9 @@ try {
         if (Test-Path -LiteralPath $stdout) {
             $text = Get-Content -LiteralPath $stdout -Raw
             if ($text -match '(?m)^READY ([0-9]+) ([0-9]+)\s*$') {
-                if ([int]$Matches[2] -ne $hostProcess.Id) { throw 'READY PID mismatch.' }
-                $readyPort = [int]$Matches[1]; break
+                $readyPort = [int]$Matches[1]
+                Assert-CookingTestReady $selection $readyPort ([int]$Matches[2]) $hostProcess.Id
+                break
             }
         }
         Start-Sleep -Milliseconds 100

@@ -53,6 +53,8 @@ public sealed class NetworkFlowAdapter : IFlowSession
     private Func<Process, bool> hasExited = static process => process.HasExited;
     private Action<Process> terminate = static process => process.Kill();
     private Func<Process, int> readExitCode = static process => process.ExitCode;
+    private Func<CancellationToken, Task<CookingTestPortSelection>> selectPort = CookingTestPortSelector.SelectAsync;
+    private CookingTestPortSelection? portSelection;
 
     public async ValueTask<FlowObservation> StartAsync(FlowRequest request, RunIdentity run, IFlowEventSink events, CancellationToken cancellationToken)
     {
@@ -61,11 +63,14 @@ public sealed class NetworkFlowAdapter : IFlowSession
         started = true; this.request = request; this.run = run; this.events = events;
         using var bounded = CancellationTokenSource.CreateLinkedTokenSource(cancellationToken);
         bounded.CancelAfter(request.Budgets.StartupMs);
+        portSelection = await selectPort(bounded.Token);
+        CheckActive(bounded.Token, requireEvidence: false);
         var server = Launch("server");
         var initialize = await Send(server, RoleControlKind.Initialize, bounded.Token,
             init: new("server", null, null, request.Fixture, request.Budgets, request.Logs));
         var serverReady = await Receive(server, r => r.Kind == RoleReplyKind.Ready && r.ControlId == initialize, bounded.Token);
         CheckActive(bounded.Token);
+        CookingTestPortSelector.ValidateReadyEndpoint(serverReady.BoundEndpoint, portSelection.Port);
         var initial = serverReady.Event!.Observation!;
         if (!initial.Available || initial.Origin != ObservationOrigin.Authority || initial.ObserverId != "authority" ||
             initial.Fence.RunGeneration != run.RunGeneration || initial.Fence.Scope.MatchScope.Session.Value != run.RunId ||
@@ -271,6 +276,7 @@ public sealed class NetworkFlowAdapter : IFlowSession
                 await FlowReport.WriteAtomicAsync(Path.Combine(request.OutputRoot, "network-resources.json"), JsonSerializer.Serialize(new
                 {
                     run, parentProcessId = Environment.ProcessId, assembly, assemblySha256 = Convert.ToHexString(SHA256.HashData(File.ReadAllBytes(assembly))),
+                    portSelection,
                     children = roles.Select(r => new { roleId = r.Id, processId = r.ProcessId, executable = "dotnet", arguments = new[] { assembly, "role", "--id", r.Id },
                         r.Endpoint, r.Binding, r.ExitCode, r.Stopped, readerComplete = r.Reader.IsCompleted, diagnosticsComplete = r.Diagnostics.IsCompleted,
                         r.Error, r.CleanupErrors, r.Stderr, r.Identity, controls = r.Sent }).ToArray()
@@ -296,6 +302,10 @@ public sealed class NetworkFlowAdapter : IFlowSession
         var info = new ProcessStartInfo("dotnet") { UseShellExecute = false, CreateNoWindow = true,
             RedirectStandardInput = true, RedirectStandardOutput = true, RedirectStandardError = true };
         foreach (var arg in new[] { typeof(Program).Assembly.Location, "role", "--id", roleId }) info.ArgumentList.Add(arg);
+        // Never inherit a parent's stale selected-port value into a different role/run.
+        info.Environment.Remove(CookingTestPortSelector.PortEnvironmentVariable);
+        if (roleId == "server" && portSelection!.Port != 0)
+            info.Environment[CookingTestPortSelector.PortEnvironmentVariable] = portSelection.Port.ToString(System.Globalization.CultureInfo.InvariantCulture);
         var role = new Role(roleId, Process.Start(info) ?? throw new IOException("ChildStartFailed"));
         roles.Add(role);
         role.Reader = ReadReplies(role); role.Diagnostics = ReadDiagnostics(role);
