@@ -1,0 +1,344 @@
+{
+  "stage": "S3 actual original main caller pilot",
+  "accepted_implementation_sha": "6a41945b348bdf2cc0d62fc8e2d61e7a72049292",
+  "delivered_files_unchanged": 22,
+  "assembly_sha256": "7A1F355392452B7B66EA7266E22D1903536B69B82C101676385FC40EB67F2DB8",
+  "build_or_test_reruns": 0,
+  "cases": [
+    {
+      "case": "success",
+      "pilot_check": "Passed",
+      "native_exit": 0,
+      "request_id": "compete-network",
+      "caller": {
+        "started_utc": "2026-10-08T00:44:49.0167937Z",
+        "completed_utc": "2026-10-08T00:44:50.6762400Z",
+        "native_exit": 0,
+        "caller": "original main functions.exec/tools.exec_command/PowerShell/dotnet",
+        "wait": "single blocking tool call; no watcher"
+      },
+      "tool_chunk_id": "19bcbd",
+      "tool_completed": true,
+      "tool_result_complete": true,
+      "tool_receipt_sha256": "F814993126E6462D5968D7279AD45CECF31EE2E6FF4F6F34FEFFD8D49A818719",
+      "command_template": "dotnet src/AbilityKit.Game.Cooking.FlowAcceptance/bin/Debug/net10.0/AbilityKit.Game.Cooking.FlowAcceptance.dll run --request Docs/design/CookingGame/testing/requests/compete-network.json --output-root <fresh-success>",
+      "files": [
+        {
+          "file": "events.jsonl",
+          "bytes": 29392,
+          "sha256": "68C8BC392521BDFEB9675AB2B2F70BA70EEEBACAAF5991C608054CE1E4A98520"
+        },
+        {
+          "file": "identity.json",
+          "bytes": 143,
+          "sha256": "CE7F991874D4D90F0AC8023D4DFB98EB2A26833DC0BA4AF05470031703410725"
+        },
+        {
+          "file": "network-resources.json",
+          "bytes": 13739,
+          "sha256": "355B3244C57344AA9CE6574930F96E8A32AE75A94B6E450FCE4522F86002119B"
+        },
+        {
+          "file": "provenance.json",
+          "bytes": 310,
+          "sha256": "6C0DC16BC7B64CECA0177A0828EEA8E5D2099A33F78AC26EFAC7E723E52C62E6"
+        },
+        {
+          "file": "report.html",
+          "bytes": 1830,
+          "sha256": "7CF64EE2D4875D69955F492A437199585CC7BA3D0BB423D0A765E22F1BB1DC41"
+        },
+        {
+          "file": "request.json",
+          "bytes": 799,
+          "sha256": "BDF222C5268E81CFA45A103F4C44F4511EB4309E343B018C67E58CA9F893DFE6"
+        },
+        {
+          "file": "result.json",
+          "bytes": 3378,
+          "sha256": "8348CEC19495D89452A57594F0FB22FB37A2016466AB56CC094AC9B8DDE6EB5A"
+        },
+        {
+          "file": "summary.txt",
+          "bytes": 503,
+          "sha256": "EDE7E31E9E54DBCC681D85FCBFBD4F87FF44B46ABE1BACF772439B55CEDEA1CC"
+        }
+      ],
+      "run_id": "run-188e84b8fcf24588be0cb1acbf5ba6b2",
+      "flow_status": "Passed",
+      "product": "Passed",
+      "execution_complete": true,
+      "evidence_complete": true,
+      "event_count": 29,
+      "timing": {
+        "buildMs": null,
+        "startupMs": 857,
+        "executeMs": 436,
+        "resetMs": 45,
+        "totalMs": 1344
+      },
+      "unverified_goals": [
+        "Unity:NotRun",
+        "PhysicalLAN:NotRun",
+        "S3CallerDiagnostics:NotRun",
+        "OrcaAutomaticWake:NotRun"
+      ],
+      "source": {
+        "commit": "6a41945b348bdf2cc0d62fc8e2d61e7a72049292",
+        "dirty": true,
+        "configuration": "Debug",
+        "toolVersion": "SDK 10.0.300; runtime 10.0.8"
+      },
+      "cleanup": {
+        "state": "Complete",
+        "resources": [
+          {
+            "roleId": "server",
+            "processId": 84336,
+            "exitConfirmed": true,
+            "errorCode": null
+          },
+          {
+            "roleId": "client-a",
+            "processId": 83376,
+            "exitConfirmed": true,
+            "errorCode": null
+          },
+          {
+            "roleId": "client-b",
+            "processId": 91464,
+            "exitConfirmed": true,
+            "errorCode": null
+          }
+        ],
+        "errors": []
+      },
+      "parent_pid": 87624,
+      "children": [
+        {
+          "roleId": "server",
+          "processId": 84336,
+          "endpoint": "127.0.0.1:50708",
+          "exitCode": 0,
+          "stopped": true,
+          "readerComplete": true,
+          "diagnosticsComplete": true
+        },
+        {
+          "roleId": "client-a",
+          "processId": 83376,
+          "endpoint": null,
+          "exitCode": 0,
+          "stopped": true,
+          "readerComplete": true,
+          "diagnosticsComplete": true
+        },
+        {
+          "roleId": "client-b",
+          "processId": 91464,
+          "endpoint": null,
+          "exitCode": 0,
+          "stopped": true,
+          "readerComplete": true,
+          "diagnosticsComplete": true
+        }
+      ]
+    },
+    {
+      "case": "failure",
+      "pilot_check": "Passed",
+      "native_exit": 1,
+      "request_id": "compete-network",
+      "caller": {
+        "started_utc": "2026-10-08T00:44:58.0820164Z",
+        "completed_utc": "2026-10-08T00:44:59.2916291Z",
+        "native_exit": 1,
+        "caller": "original main functions.exec/tools.exec_command/PowerShell/dotnet",
+        "wait": "single blocking tool call; no watcher"
+      },
+      "tool_chunk_id": "d604ed",
+      "tool_completed": true,
+      "tool_result_complete": true,
+      "tool_receipt_sha256": "834758520BF1E20F5FC2066B12F7F68E492428B834EC7B2E0DE14208AD1FA6D3",
+      "command_template": "dotnet src/AbilityKit.Game.Cooking.FlowAcceptance/bin/Debug/net10.0/AbilityKit.Game.Cooking.FlowAcceptance.dll run --request Docs/design/CookingGame/testing/requests/compete-network.json --output-root <fresh-failure> --diagnostic-fault fail-after-start",
+      "files": [
+        {
+          "file": "events.jsonl",
+          "bytes": 7982,
+          "sha256": "B82ACB510567255B727ACE8980DCA14AC2EDAC64045B7410111910061195DFB5"
+        },
+        {
+          "file": "failure-pack.json",
+          "bytes": 10707,
+          "sha256": "045E5C21C72351F285B71A30A2AD0661EE9B3A6E0CB224227253BA1870213B19"
+        },
+        {
+          "file": "first-failure.json",
+          "bytes": 10497,
+          "sha256": "173C56488780E0852026315CE11E486F84607DD1C06D46EB6D932BA5C053D364"
+        },
+        {
+          "file": "identity.json",
+          "bytes": 143,
+          "sha256": "D1F3A7AC8290357A660AB994772D7743F6925B5E5F5093290478E24C59D05DF4"
+        },
+        {
+          "file": "network-resources.json",
+          "bytes": 7559,
+          "sha256": "C87DD5B5D9924682C97AEC2D029368238876F2DE35B48A978E6F6282F28B4469"
+        },
+        {
+          "file": "provenance.json",
+          "bytes": 310,
+          "sha256": "6C0DC16BC7B64CECA0177A0828EEA8E5D2099A33F78AC26EFAC7E723E52C62E6"
+        },
+        {
+          "file": "report.html",
+          "bytes": 1426,
+          "sha256": "78231ECBEAE020963FF34C2945919C3FE393F34B600B04FA73D5F0CC34764939"
+        },
+        {
+          "file": "request.json",
+          "bytes": 799,
+          "sha256": "183DF92E1630F55F3042F16A9EB7A402EE2D4F6DB5D67F326211040DEF096554"
+        },
+        {
+          "file": "result.json",
+          "bytes": 1742,
+          "sha256": "77BB0AEBDC648CECC749397247AF3521E9447176DE76BA3CD3E218A69A08A9BC"
+        },
+        {
+          "file": "summary.txt",
+          "bytes": 542,
+          "sha256": "C598829FA4B92FAF9B51D105BD67649A7D89E4A1BD3AFC2668795C2E2C3E436A"
+        }
+      ],
+      "run_id": "run-45b196d87e6b4f51aa521e0962339dda",
+      "flow_status": "Failed",
+      "product": "Undetermined",
+      "execution_complete": false,
+      "evidence_complete": true,
+      "first_failure": {
+        "kind": "HarnessOrEnvironmentFailure",
+        "code": "DiagnosticFailAfterStart",
+        "stepId": "diagnostic-after-start",
+        "callId": null,
+        "expected": "Complete bounded flow",
+        "actual": "FlowExecutionException",
+        "evidenceRefs": [
+          "cut:initial"
+        ]
+      },
+      "failure_pack_bytes": 10707,
+      "event_window_count": 5,
+      "failure_read_scope": "Only bounded failure-pack for interpretation; resource JSON for structural/cleanup checks; no failure result/events/first-failure read",
+      "actual_invocation_source": "FailurePack.ActualInvocation; hash-bound original retained locally",
+      "reproduce_command_present": true,
+      "source": {
+        "commit": "6a41945b348bdf2cc0d62fc8e2d61e7a72049292",
+        "dirty": true,
+        "configuration": "Debug",
+        "toolVersion": "SDK 10.0.300; runtime 10.0.8"
+      },
+      "cleanup": {
+        "state": "Complete",
+        "resources": [
+          {
+            "roleId": "server",
+            "processId": 75152,
+            "exitConfirmed": true,
+            "errorCode": null
+          },
+          {
+            "roleId": "client-a",
+            "processId": 57792,
+            "exitConfirmed": true,
+            "errorCode": null
+          },
+          {
+            "roleId": "client-b",
+            "processId": 80164,
+            "exitConfirmed": true,
+            "errorCode": null
+          }
+        ],
+        "errors": []
+      },
+      "parent_pid": 79140,
+      "children": [
+        {
+          "roleId": "server",
+          "processId": 75152,
+          "endpoint": "127.0.0.1:53714",
+          "exitCode": 0,
+          "stopped": true,
+          "readerComplete": true,
+          "diagnosticsComplete": true
+        },
+        {
+          "roleId": "client-a",
+          "processId": 57792,
+          "endpoint": null,
+          "exitCode": 0,
+          "stopped": true,
+          "readerComplete": true,
+          "diagnosticsComplete": true
+        },
+        {
+          "roleId": "client-b",
+          "processId": 80164,
+          "endpoint": null,
+          "exitCode": 0,
+          "stopped": true,
+          "readerComplete": true,
+          "diagnosticsComplete": true
+        }
+      ]
+    },
+    {
+      "case": "no-result",
+      "pilot_check": "Passed",
+      "native_exit": 86,
+      "request_id": "compete-network",
+      "caller": {
+        "started_utc": "2026-10-08T00:45:08.2587508Z",
+        "completed_utc": "2026-10-08T00:45:08.4252849Z",
+        "native_exit": 86,
+        "caller": "original main functions.exec/tools.exec_command/PowerShell/dotnet",
+        "wait": "single blocking tool call; no watcher"
+      },
+      "tool_chunk_id": "ecbe6f",
+      "tool_completed": true,
+      "tool_result_complete": true,
+      "tool_receipt_sha256": "4DFA762EF894315EC391AEBF9C36E247DF68A925904B83BBEADC110827746AF3",
+      "command_template": "dotnet src/AbilityKit.Game.Cooking.FlowAcceptance/bin/Debug/net10.0/AbilityKit.Game.Cooking.FlowAcceptance.dll run --request Docs/design/CookingGame/testing/requests/compete-network.json --output-root <fresh-no-result> --diagnostic-exit-before-run",
+      "files": [
+        {
+          "file": "request.json",
+          "bytes": 801,
+          "sha256": "1BB43BEFFBF802ECFF1B98F8BD03F48DD475F8043FC8D0DF7B7EBC37C62FB8DD"
+        }
+      ],
+      "run_id": null,
+      "flow_result": null,
+      "caller_outcome": "Incomplete",
+      "result_present": false,
+      "failure_pack_present": false,
+      "identity_present": false,
+      "classification": "Expected native86 before orchestrator/session/collector/resources; no invented RunIdentity"
+    }
+  ],
+  "pilot_assessment": "Passed: expected normal0/diagnostic1/no-result86 correctly distinguished; native86 caller itself Incomplete",
+  "automatic_wake": "NotRun; ordinary bounded tool return only",
+  "old_flowresult_S3_field": "Kept NotRun; external caller record is separate authority",
+  "old_failures_unknown": "Preserved; no reconstruction or retroactive Passed",
+  "S3_API_design": "N/A existing CLI/evidence only",
+  "worker": "task_b76e64358174/ctx_aea704cd7d71 settled/retained; no new dispatch",
+  "limitations": [
+    "Unity NotRun",
+    "physical two-PC LAN NOT_VERIFIED",
+    "performance NotRun",
+    "MCP/watcher NotRun",
+    "merge/postmerge/Issue close NotRun"
+  ]
+}

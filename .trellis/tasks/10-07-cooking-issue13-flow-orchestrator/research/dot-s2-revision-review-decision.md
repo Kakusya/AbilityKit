@@ -1,0 +1,5 @@
+# S2 exact candidate accepted; S3 authorized
+
+Full SHA **6a41945b348bdf2cc0d62fc8e2d61e7a72049292**, request AK-I13-S2-REVISION-REVIEW-20261008-01, flow a2dafd3b-6a4d-4914-aa68-6a4a20af7a02: accept-candidate. [Full original reply](dot-s2-revision-review-reply-raw.txt) contains a separate complete S2 API declaration/behavior conformance finding and bounded S3 allowed next action. Main independently agrees on scope/evidence from s2-revision-check/native-inspection/22-file manifest. Full response observed 2026-10-08T00:43:49.9632392+00:00 +2s within original 2026-10-08T01:07:39.862730Z; server posted time unknown/null. Boundary/order/generation/raw observation proof retained locally. No supplement used.
+
+S3 API design: **N/A**, existing CLI caller pilot and evidence only, no executable/API changes. Dot requires final bounded pilot evidence review. Branch-only remains; no merge, close, release, deletion or publication authorization. Old failures/UNKNOWN retained; no final-binary single-window2/2 claim.

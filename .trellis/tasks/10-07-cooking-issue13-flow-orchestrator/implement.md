@@ -114,3 +114,8 @@ S1 exact candidate `2201931e1846acb9ab8a205d501e39731b5a39bb` is accepted with c
 ## S2 R1/R2 revision, 2026-10-08
 
 [Complete current dot decision](research/dot-s2-review-decision.md) requires [five-file bounded revision](research/s2-revision-plan.md) before S3. Main reviewed plan and context; valid Owner scope permits same-worker new dispatch. Earlier positive checks remain evidence, not exact candidate acceptance.
+
+
+## Accepted S2 revision and S3 caller pilot
+
+[Exact acceptance](research/dot-s2-revision-review-decision.md) and [reviewed S3 records-only plan](research/s3-caller-pilot-plan.md). S3 API design N/A; no new executable code. Final pilot delivery review remains required.
