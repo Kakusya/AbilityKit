@@ -1,0 +1,55 @@
+{
+    "schemaVersion":  1,
+    "rules":  [
+                  {
+                      "rule":  {
+                                   "id":  "C13-OWN",
+                                   "version":  "1.0"
+                               },
+                      "approvalRef":  ".trellis/tasks/10-07-cooking-issue13-flow-orchestrator/research/owner-approval-20261007.md@6ad948d0c72255873b4fbd1cd6b5fce7594e3d13",
+                      "parameters":  {
+                                         "fixture":  "one-item/1.0"
+                                     }
+                  },
+                  {
+                      "rule":  {
+                                   "id":  "C13-REJECT",
+                                   "version":  "1.0"
+                               },
+                      "approvalRef":  ".trellis/tasks/10-07-cooking-issue13-flow-orchestrator/research/owner-approval-20261007.md@6ad948d0c72255873b4fbd1cd6b5fce7594e3d13",
+                      "parameters":  {
+                                         "fixture":  "one-item/1.0"
+                                     }
+                  },
+                  {
+                      "rule":  {
+                                   "id":  "C13-IDEMP",
+                                   "version":  "1.0"
+                               },
+                      "approvalRef":  ".trellis/tasks/10-07-cooking-issue13-flow-orchestrator/research/owner-approval-20261007.md@6ad948d0c72255873b4fbd1cd6b5fce7594e3d13",
+                      "parameters":  {
+                                         "fixture":  "one-item/1.0"
+                                     }
+                  },
+                  {
+                      "rule":  {
+                                   "id":  "C13-CONVERGE",
+                                   "version":  "1.0"
+                               },
+                      "approvalRef":  ".trellis/tasks/10-07-cooking-issue13-flow-orchestrator/research/owner-approval-20261007.md@6ad948d0c72255873b4fbd1cd6b5fce7594e3d13",
+                      "parameters":  {
+                                         "fixture":  "one-item/1.0"
+                                     }
+                  },
+                  {
+                      "rule":  {
+                                   "id":  "C13-COMPLETE",
+                                   "version":  "1.0"
+                               },
+                      "approvalRef":  ".trellis/tasks/10-07-cooking-issue13-flow-orchestrator/research/owner-approval-20261007.md@6ad948d0c72255873b4fbd1cd6b5fce7594e3d13",
+                      "parameters":  {
+                                         "fixture":  "one-item/1.0"
+                                     }
+                  }
+              ]
+}

@@ -1,0 +1,218 @@
+裁决：accept-plan，接受下述有界 API 修订。它解决已发布设计的三个缺口，不构成 S1 实现或最终候选验收。
+
+request_id：AK-I13-API-CLARIFY-20261007-01
+flow_id：a2dafd3b-6a4d-4914-aa68-6a4a20af7a02
+reviewed_sha：6ad948d0c72255873b4fbd1cd6b5fce7594e3d13
+
+已全文读取该 SHA 的 accepted-api-design.md、dot-plan-reply-raw.txt、owner-approval-20261007.md、prd.md、design.md、implement.md。以下明确替换或补充的部分优先，其余已接受 API 保持不变。
+来源：已接受 API(https://github.com/Kakusya/AbilityKit/blob/6ad948d0c72255873b4fbd1cd6b5fce7594e3d13/.trellis/tasks/10-07-cooking-issue13-flow-orchestrator/research/accepted-api-design.md)。
+
+失败包：补 Source 和实际调用，保留可执行复现命令
+
+result.json＋failure-pack.json 可以作为小交接集合，原设计并非因此完全不可用。但 agent 只打开失败包时不该再拼接来源信息。这次选择直接补齐两个字段。
+
+新增类型：
+
+C#
+public sealed record FlowInvocation(
+    string Executable,
+    IReadOnlyList<string> Arguments,
+    string WorkingDirectory);
+
+替换 FailurePack 声明：
+
+C#
+public sealed record FailurePack(
+    RunIdentity Run,
+    FlowRequest Request,
+    SourceStamp Source,
+    FlowInvocation ActualInvocation,
+    FlowFailure FirstFailure,
+    IReadOnlyList<FlowObservation> RelevantCuts,
+    IReadOnlyList<LoggedEvent> EventWindow,
+    string ReproduceCommand,
+    CleanupResult Cleanup);
+
+SourceStamp 原声明不变：
+
+C#
+public sealed record SourceStamp(
+    string Commit, bool Dirty, string Configuration, string ToolVersion);
+
+职责与约束：
+
+Program 捕获实际 executable、参数数组和工作目录；参数数组保留参数边界，不用一个可能错误拆词的字符串代替。
+编排者/报告层使用同一次运行采集的 SourceStamp，result 与 failure pack 的 Run、Source、Cleanup 必须一致。当前 dirty 如实保存，不增添编译输入或 DLL 归档。
+ActualInvocation 是已经执行的调用事实。ReproduceCommand 是下一次调用建议，两者不能混为一谈。
+SourceStamp 不得靠传入请求里的字符串冒充实际观测；无法取得必需来源时报告该缺口，不填假 clean。
+保存 request.json 无需改变 FlowRequest 或 IFlowReportWriter 的签名。保存的是验证后实际采用的请求，包括实际 OutputRoot；保留原始请求来源供定位即可，不必增设一套归档。
+复现命令引用本次保存的 request.json，并使用新的输出位置。不得使用 <request>、<output> 这种占位符充当最终可执行复现命令。
+
+为此批准一个窄 CLI 参数：
+run --request <saved-request.json> --output-root <fresh-directory>
+
+--output-root 只覆盖 FlowRequest.OutputRoot，随后按原校验规则验证并保存有效请求；不能改 fixture、规则、预算或阈值。该目录必须新建且无旧结果，不覆盖历史运行。复现生成新的 RunId/AttemptId；可保留原 RequestId 关联同一需求。
+
+路径有空格时按实际使用的 shell 正确引用。最终包写入真实路径；不承诺脱离当前工作区后路径仍可用。诊断失败的复现命令也必须保留下面的诊断参数。
+
+S3 故意失败：选择显式的测试宿主故障点
+
+不需要为 S3 故意杀一个联网 child。最小且可控的路径是：真实 CLI → 正常创建测试会话并完成 StartAsync → 保存真实初始观察 → 在第一个玩法动作前触发明确的诊断故障 → 走正常失败归位和报告路径。
+
+这是真实 CLI 的失败交接验证；故障原因是人为注入的测试宿主故障，不是产品 bug。S2 原有 child crash/EOF 控制仍按其自身范围验证，不能用本项替代。
+
+新增声明：
+
+C#
+public enum FlowDiagnosticFault
+{
+    None,
+    FailAfterStart
+}
+
+public sealed record FlowRunOptions(
+    FlowInvocation ActualInvocation,
+    FlowDiagnosticFault DiagnosticFault = FlowDiagnosticFault.None);
+
+为避免隐藏环境变量、全局开关或主会话自行补构造器合同，明确替换 IFlowOrchestrator 的方法签名：
+
+C#
+public interface IFlowOrchestrator
+{
+    Task<FlowResult> RunAsync(
+        FlowRequest request,
+        FlowRunOptions options,
+        CancellationToken cancellationToken);
+}
+
+返回类型 FlowResult 不变；FlowRequest、IFlowSession、IFlowReportWriter 不变。此处是本次唯一的既有方法签名替换。所有调用者显式传入 options；普通调用用 None，不保留一个悄悄虚构调用来源的兼容重载。
+
+CLI：
+
+正常：run --request <file> [--output-root <fresh-directory>]
+故意失败：run --request <file> [--output-root <fresh-directory>] --diagnostic-fault fail-after-start
+缺结果出口：run --request <file> [--output-root <fresh-directory>] --diagnostic-exit-before-run
+
+只允许这个故障值；不开放任意 step、延迟、角色、异常类型或脚本。两个诊断选项互斥；未知或重复选项在创建 host 前拒绝，CLI 2。诊断意图只由这次显式调用提供，不从旧文件、环境变量或请求 JSON 偷偷继承。
+
+FlowRequest JSON 不增加 fault 字段。ActualInvocation.Arguments 会原样记录诊断参数；FailurePack.FirstFailure.Code 另明确记录故障类别。因此普通 request 可以原封不动用于正常和诊断调用，规则也不变。
+
+最小调用示意：
+
+C#
+var options = new FlowRunOptions(
+    actualInvocation,
+    FlowDiagnosticFault.FailAfterStart);
+
+FlowResult result =
+    await orchestrator.RunAsync(request, options, cancellationToken);
+
+FailAfterStart 的固定语义：
+
+先通过全部请求/规则验证，StartAsync 真正成功，初始观察有效，资源已经纳入本次归位范围。
+保存该观察后，在任何 DispatchGroupAsync/ReplayAsync 之前触发一次。
+若实际启动本来就失败，不冒称诊断点已经到达；保存真正的启动失败。
+写明 FailureKind=HarnessOrEnvironmentFailure，Code=DiagnosticFailAfterStart，StepId=diagnostic-after-start，CallId=null。
+FlowStatus=Failed、CLI 1、ExecutionComplete=false、Verdict=Undetermined。未执行玩法目标进入 UnverifiedGoals，不伪造 OWN/REJECT/IDEMP 的产品失败。
+仍调用正常的有界 CloseAsync，使用独立 cleanup token，结束本次后台任务，排空 collector，再发布失败包和 result。
+EvidenceComplete 按已经产生且应保存的证据判断；完整保存诊断和收尾可以为 true，但不代表未执行玩法已得到覆盖。
+清理失败另行保留；注入点的原始事实不得被覆盖。故障调用本身永远不能变为 Passed；外部控制可以报告“按预期发现故障”，两者分开记录。
+
+--diagnostic-exit-before-run 的固定语义：
+
+仅由 Program 处理，完成请求验证、新输出位置准备及保存请求后，在创建 orchestrator/session/collector/child 之前直接返回 native exit 86。86 是这个诊断入口的专用 native 值，不属于 FlowStatus 的 0–4 映射。
+不传入 RunAsync，不创建 result.json 或 failure-pack.json，不制造假的 FlowResult。
+stderr 留下明确的 DiagnosticExitBeforeRun 和请求/输出位置；调用器保留实际 argv、退出码和“未找到对应结果”的事实。如果此时尚未分配 RunIdentity，就只记录已知 RequestId、调用和输出位置，不虚构 RunId。
+这是有意的无结果提前退出控制，不称为崩溃恢复或 gameplay 执行验证。调用器必须把它识别为不完整运行，不能按任意非零码推断产品失败，也不能误读其他目录的旧 result。
+这里没有创建游戏资源，不需要为了测试这一出口而引入 kill、后台服务或 watcher。
+
+两个诊断入口仅在新的 FlowAcceptance 测试程序内；不得传播到产品 API、游戏 wire 或正式角色命令。
+
+Replay：ControlId 就是该次 Arm 调用的 CallId
+
+不再新增 NewCallId 字段。明确采用：
+
+ArmAction 的 ControlId 等于这次调用的 CallId。
+新动作要求 Action.CallId == ControlId。
+重放时 Action=null、ReplayOfCallId=原调用 ID；新的 ControlId 就是 ReplayAsync 的 newCallId。
+ReleaseBarrier、Observe、Stop 各自有自己的控制 ID。它们不覆盖已经 Arm 的调用 ID。
+
+把此前正文追加字段合并成完整声明，消除复制遗漏：
+
+C#
+public sealed record RoleControl(
+    int SchemaVersion,
+    RunIdentity Run,
+    string RoleId,
+    long ControlSequence,
+    string ControlId,
+    RoleControlKind Kind,
+    RoleInit? Init,
+    FlowAction? Action,
+    string? ReplayOfCallId,
+    string? BarrierId,
+    string? ObservationPoint);
+
+这没有增加此前未批准的 payload 字段，只把 ReplayOfCallId 纳入正式声明并收敛 ID 语义。
+
+精确调用序列：
+
+父 adapter 收到 ReplayAsync(stepId, originalCallId, newCallId, timeoutMs, ct)。
+向该原调用所属 client 发送 ArmAction：ControlId=newCallId、Action=null、ReplayOfCallId=originalCallId、指定本次 barrier。
+client 校验 run/role/generation/当前 session/scope，找到自己保存的原始冻结命令，回 Armed。
+父进程以另一个唯一 ControlId 发送 ReleaseBarrier。
+client 使用原 BusinessId/stable ID 和完整原 payload 调用既有 SendCommandAsync；新的调用观察 CallId=newCallId。
+RoleReply.ControlId 关联它响应的控制；CommandObservation.CallId 关联实际 Arm 调用，不能误写成 ReleaseBarrier 的 ID。
+
+约束：
+
+ArmAction 恰好有 Action 或 ReplayOfCallId 之一；其他控制不得携带这两个动作 payload。
+ControlId 在本 run 内唯一；重复 Arm/重复 release 不再次执行。按原协议报告拒绝，不能静默当作一次新的重试。
+未知原调用、不同角色/run/scope/session/generation、CallId 重用或 Action.CallId 不匹配，均在发出玩法命令前拒绝。
+已知原调用的冻结命令才可重放，不根据最新观察重新构造 ExpectedItemVersion 等字段。
+本地 CallId 不充当游戏 BusinessId，也不冒充 client 内部 wire correlation。
+
+RoleInit 的类型和签名不变。client 通过现有真实 Join/session/baseline 路径发现并建立自身 fence；不通过 RoleInit 安装 snapshot。
+
+父进程持有本次 server 的实际启动观察，核对 client 观察到的 scope/server instance 是否属于它；connection generation 则按各角色自己的当前连接记录核对，不能随意拿不同角色的 generation 数字要求相等。单有 RunIdentity/Endpoint 不能证明已加入正确会话。若缺少可验证的当前绑定或 baseline，保持未就绪，不允许 Arm。意外重连/换 scope 仍停止首版 flow，不据此扩建恢复协议。
+
+线程、生命周期和版本的受影响部分
+新增 options 是本次调用的不可变输入，开始后不能改诊断模式；保存时复制参数列表，避免调用者后来修改。
+FailAfterStart 发生在已有 owner 执行路径，不增加 Tick，不用另一个线程抛异常，不改命令 effects-survive-fixedstep-failure 语义。
+异步等待后的取消/当前 generation 校验和独立收尾预算保持原合同；诊断模式不免除超时、事件上限或归位条件。
+CLI 提前退出点必须在资源启动之前；已有资源的失败统一走正常收尾，不能调用这个出口绕过 finally。
+测试 JSON schema 继续使用当前尚未正式交付的 version 1，本次一起定稿；游戏 wire v3 不变。Source/ActualInvocation 成为新的失败包必需字段。
+旧草稿失败包缺字段时只能说明它属于旧草稿，不能补造调用信息后声称符合新合同。JSON 枚举、必需字段和大小限制继续按既有约定。
+无需新增许可、签名、schema 注册服务或日志格式系统。
+最小文件范围和验证
+
+在原批准清单内，本次只需要改：
+
+FlowContracts.cs：FlowInvocation、FlowRunOptions、FlowDiagnosticFault、FailurePack 和 RunAsync 签名。
+Program.cs：捕获调用、三个窄 CLI 参数、保存有效请求、无结果提前退出出口。
+FlowOrchestrator.cs：接收 options、固定诊断点、连接现有失败/归位路径。
+FlowReport.cs：新增来源与调用字段、可执行复现命令、摘要清楚标识诊断失败。
+CookingFixedFlowTests.cs：聚焦检查上述合同。
+fixed-flow.md 及本 task 的 accepted-api-design/design/implement 和原始决定记录：同步用法、边界与证据。
+S2 原批准的 FlowRoleProtocol.cs、NetworkFlowAdapter.cs、NetworkRoleHost.cs：落实完整 RoleControl 和 ID/绑定校验；不因此提前进入 S2。
+
+不需要新增 helper 文件、依赖、项目引用或修改规则卡语义。
+
+必要检查合并到现有聚焦窗口，不按控制数量追求增长：
+
+一个序列化往返/缺字段反例，确认 result 与 failure pack 的 Source/Run 一致；argv 参数边界和带空格路径不会被破坏。
+一个未知诊断值或互斥选项反例，确认 host 尚未创建。
+一个真实 CLI 正常成功；一个真实 CLI fail-after-start，确认初始观察真实、玩法未派发、退出 1、小失败包齐全、归位完成。
+一个真实 CLI exit-before-run，确认 native 86 且没有结果，实际调用器不会误报成功。
+S2 原窗口加入 ID 对应、重复/未知/越界重放拒绝以及当前绑定检查；使用既有真实重放正例，不另造长时间网络矩阵。
+
+其中 S3 的三个实际 CLI 试点可使用同一合法的短 offline flow，故意失败不必等待联网或依赖杀进程。正常试点若本次已有同一源码、同一调用器且完整记录的一次运行，可直接复用，不为凑次数重跑。纯 evaluator 合成负例继续标 synthetic。
+
+试点记录一次提交、实际工具等待方式、native exit、结果路径与小摘要。只有真实使用过 Orca 调用器，才算该调用器的交接证据；普通测试进程验证不能冒称 agent 自动唤醒。若工具需要一次显式 wait，如实记录即可。
+
+允许的下一步
+
+allowed_next_action：
+主会话保存本回复，把上述明确修订写入现行合同，并按原主控/Orca 分工纳入已授权的 S1 工作；当前 worker 完成后按阶段停点交付独立检查和冻结候选审阅。S2/S3 继续遵守已接受的技术阶段门，不需为本次已澄清事项重复请求 Owner 规则批准。
+
+没有剩余的规划 blocker。S1 未发布实现仍未审阅；后续候选必须明确检查与这份 API 修订是否一致。该 accept-plan 不授予 merge、关单、资源清理或旧 Issue6 工作权限。

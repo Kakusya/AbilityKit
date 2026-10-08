@@ -1,0 +1,71 @@
+裁决：accept-candidate。接受这份精确候选的 S1 有界实现；B1/B2/B3 已解决，可以进入既定 S2。
+
+request_id：AK-I13-S1-REVISION-REVIEW-20261008-01
+flow_id：a2dafd3b-6a4d-4914-aa68-6a4a20af7a02
+reviewed_sha：2201931e1846acb9ab8a205d501e39731b5a39bb
+
+审阅范围与证据限制
+
+本轮读取了 evaluator、collector、orchestrator 的完整修订源码、相关测试和 fixed-flow 文档，核对当前 API 原案/amendment、修订检查报告、inspection、17 文件 manifest 与 accepted-s2-bootstrap。
+
+提交链确认：原候选之后，92313027…仅记录审阅和规划；本候选的交付修改确实只有批准的五个文件，另有 task/检查证据。FlowContracts 的 Git blob 与上轮相同。
+
+已发布证据支持：
+
+一次聚焦构建、一次 S1 测试窗口，10/10 执行通过；
+两个真实 offline CLI 均 Passed/native 0，各 13 条连续且匹配 run 的事件；
+execution、product、evidence、cleanup 的正常出口完整；
+修订负例纳入已有用例，没有靠增加测试数量代替验证。
+
+实际测试来源仍是 92313027d67706cf2c45f3e948f30ced6e66da01、dirty=true、Debug；我接受其与冻结交付文本的已记录对应关系，不把它改写为 clean 2201931… 构建。我没有执行代码，也没有直接读取保留在本地的原始 TRX/日志；本轮依据已发布源码、脱敏结果和主控独立检查记录。
+检查报告(https://github.com/Kakusya/AbilityKit/blob/2201931e1846acb9ab8a205d501e39731b5a39bb/.trellis/tasks/10-07-cooking-issue13-flow-orchestrator/research/s1-revision-check.md)。
+
+B1/B2/B3 结论
+
+B1：已解决。
+REJECT 先检查已有正式拒绝的确定违规，再判断终态是否足够；缺少终态本身返回 Undetermined，只有业务事实完整后才检查竞争结果数量。新增断言覆盖“部分终态未知”和“仍有独立可证明的拒绝副作用/手槽矛盾”，避免用不完整证据抹去真实违规。Timeout 控制也明确要求 CommandTimeout、产品 Undetermined、没有 ProductFailure。
+源码(https://github.com/Kakusya/AbilityKit/blob/2201931e1846acb9ab8a205d501e39731b5a39bb/src/AbilityKit.Game.Cooking.FlowAcceptance/FlowRuleEvaluator.cs#L87-L106)。
+
+B2：已解决。
+ValidPayload 按 Kind 验证唯一允许的 payload，未知 Kind 也拒绝；检查发生在序列化、入队、事件窗口和 required 索引之前。wrong-kind 控制检查拒绝、窗口为空、不能满足 required facts，符合原合同。
+源码(https://github.com/Kakusya/AbilityKit/blob/2201931e1846acb9ab8a205d501e39731b5a39bb/src/AbilityKit.Game.Cooking.FlowAcceptance/FlowEventCollector.cs#L39-L99)。
+
+B3：已解决。
+最终状态生成前以及报告读回确认时都观察调用方取消。完成点之前的取消不能整体 Passed；已写出但未接受的成功 marker 会保留为 incomplete-result.json，并生成取消失败包。cleanup/publication 继续使用独立 token，已完成的玩法与证据不被改成失败或撤销。
+
+确定性 publisher 控制覆盖了“成功 marker 已写、尚未接受时取消”；组合控制保留原 C13-OWN 首因和 cleanup 失败。它们是实际运行过的测试接缝控制，仍不等于外部 S3 取消试点。
+源码(https://github.com/Kakusya/AbilityKit/blob/2201931e1846acb9ab8a205d501e39731b5a39bb/src/AbilityKit.Game.Cooking.FlowAcceptance/FlowOrchestrator.cs#L159-L221)。
+
+一个精确的行为边界：原本已经 Failed 的报告在发布后才观察到取消时，返回值追加 CallerCancelled，已写的失败报告保留原版首因；并非所有晚取消都会重写磁盘报告。本轮目标是防止误通过并保存首因，这不构成剩余阻塞，也不要求为此再开修订。
+
+API 一致性结论
+
+S1 API conformance：接受。
+
+公开 DTO/方法签名与原案及 amendment 一致，没有新的接口、类别、规则版本或依赖变更。此次三个行为修复也回到了已接受合同：
+
+不把未知业务事实归因为产品失败；
+不把错误事件类型充当证据；
+取消参与完成判定，归位保持独立，首因保持稳定。
+
+原 owner/Tick、完整冻结命令重放、按调用汇合终态、独立手槽探针，以及 fixed-step 失败保留先前 command effects 的实现路径未被修改。未发现这次修订引入需要另行设计的偏差。
+
+S1 的 CONVERGE 为 N/A；pickup/drop 中不适用的拒绝/重放不算实际覆盖。S2 真实联网、S3 实际调用器失败/native86 交接、自动唤醒、Unity、物理 LAN 仍为 NotRun。本次接受不代表 Issue13 全部完成。
+
+allowed_next_action
+
+主会话可保存本次精确 SHA 接受决定，并给一个受管 Orca worker 派发已经批准、已经设计的 S2 切片，无需重复请求相同 Owner 批准。
+
+文件范围严格沿用 accepted-s2-bootstrap.md 的 14 文件：
+
+新增 NetworkFlowAdapter.cs、NetworkRoleHost.cs、FlowRoleProtocol.cs；
+修改 FlowAcceptance.csproj、Program.cs、FlowContracts.cs、FixedFlows.cs、FlowRuleEvaluator.cs、FlowOrchestrator.cs、FlowReport.cs；
+同一 CookingFixedFlowTests.cs、fixed-flow.md；
+新增 compete-network.json、pickup-drop-network.json。
+
+采用父编排进程＋独立 server＋两个外部 client。沿用已定内部 role 入口、Initialize/Arm/Release/Observe/Stop、真实 Join/baseline 和 ControlId 重放语义；保持 owner pump、真实端口绑定、单 collector、独立有界收尾。不得把进程内假网络算作 S2。
+
+一次聚焦 S2 构建/验证窗口，两个真实联网正例、必要反例及受改动影响的短 S1 回归即可。新增文件/API 或语义缺口先询问；不扩成全仓门禁。S2 完成后主控独立检查、冻结新候选，再审阅。
+S2 既定边界(https://github.com/Kakusya/AbilityKit/blob/2201931e1846acb9ab8a205d501e39731b5a39bb/.trellis/tasks/10-07-cooking-issue13-flow-orchestrator/research/accepted-s2-bootstrap.md)。
+
+无需为取得本次 S1 接受重复运行已通过的测试。后续纯决定/证据提交应列明 diff，并确认交付文件未变；新的 S2 代码由下一候选独立验收。branch-only 及无合并、关单、清理、发布授权的边界继续有效。

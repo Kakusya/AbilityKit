@@ -1,0 +1,178 @@
+裁决：needs-revision。两个正常离线流程已有真实成功证据；但当前候选有三处失败处理缺口，修复后再接受 S1。它们都可以在现有测试层内小修，不需要扩大测试范围。
+
+request_id：AK-I13-S1-REVIEW-20261007-01
+flow_id：a2dafd3b-6a4d-4914-aa68-6a4a20af7a02
+reviewed_sha：b387179fd4ae60339c3aa7f3a6efb3f12f7a976a
+baseline：765bcb9f0c933aff81b1571a1a9a32f7cbe7ad04
+
+实际读取与验证范围
+
+已读取 manifest 中的 17 份实现/测试/文档，以及 s1-check、s1-inspection、manifest、当前 API 原案和 amendment、两份原始回复、Owner approval、prd/design/implement。GitHub commit 的直接父提交确为给定 baseline，差异为 17 份交付文件＋4 份 task 文件；测试 csproj 仅新增一个项目引用。
+
+公布的证据支持：聚焦构建 native 0；10 项测试执行通过；两个真实 offline CLI native 0，各 13 条事件。它们的调用来源是 765bcb9… dirty=true，不能改写成在 clean b387179… 上执行过。manifest 已分别记录工作区字节与换行规范化后的 Git 字节。
+
+我读取的是已发布源码和脱敏证据，没有执行测试，也没有读取仅保存在本地的原始日志/TRX。下面的缺陷是源码路径可推导的问题，不是声称我复现运行过。
+
+三个阻塞问题和最小修订
+
+B1：没有取得业务终态，会被误报成产品规则失败
+
+FixedFlows 在验证 pair 的终态完整性之前评估 OWN/REJECT；REJECT 又把“没有恰好一个 Rejected 结果”直接判为 Failed。
+
+现有 Timeout 控制恰好会产生两个 Unknown、BusinessResult=null 的调用。于是：
+
+OWN 为 Undetermined；
+REJECT 却为 Failed；
+编排者把它记为 ProductFailure，最终产品 Verdict=Failed。
+
+这时只知道测试等待超时，并没有证明游戏拒绝逻辑出错。现有测试只检查 Verdict 不是 Passed，因此漏过了误分类。
+
+位置：
+FixedFlows.cs 25–35(https://github.com/Kakusya/AbilityKit/blob/b387179fd4ae60339c3aa7f3a6efb3f12f7a976a/src/AbilityKit.Game.Cooking.FlowAcceptance/FixedFlows.cs#L25-L35)；
+FlowRuleEvaluator.cs 87–98(https://github.com/Kakusya/AbilityKit/blob/b387179fd4ae60339c3aa7f3a6efb3f12f7a976a/src/AbilityKit.Game.Cooking.FlowAcceptance/FlowRuleEvaluator.cs#L87-L98)；
+CookingFixedFlowTests.cs 190–206(https://github.com/Kakusya/AbilityKit/blob/b387179fd4ae60339c3aa7f3a6efb3f12f7a976a/src/AbilityKit.ET.Runtime.Tests/CookingFixedFlowTests.cs#L190-L206)。
+
+修订：
+
+“拒绝数量违反规则”必须建立在足够的正式业务终态上；缺失终态时返回 Undetermined。
+超时/协议拒绝/准入拒绝仍保留各自真实原因，不伪装成领域拒绝或产品 bug。
+不要简单地在所有规则前一刀切丢弃不完整结果：已观察到的独立手槽矛盾、拒绝方真实成功副作用等，仍然可以构成确定的 ProductFailure。
+加强现有 Timeout 子用例：要求产品 Verdict=Undetermined、无 ProductFailure、保留超时原因且正常归位。已有真实产品失败＋清理失败控制继续保留。
+
+B2：错误事件类型携带的 payload 也能充当完整证据
+
+collector 目前只检查某些 Kind 的必需 payload 是否存在，没有禁止其他 payload。合法序号的 StepStarted 如果携带 Command 或 Observation，会被接收并索引；HasRequiredEvents 随后可以把它当成正式命令/状态证据。
+
+这违反了原合同中“payload 与 Kind 匹配，其他 payload 为空”的要求。
+
+位置：FlowEventCollector.cs 39–70(https://github.com/Kakusya/AbilityKit/blob/b387179fd4ae60339c3aa7f3a6efb3f12f7a976a/src/AbilityKit.Game.Cooking.FlowAcceptance/FlowEventCollector.cs#L39-L70)。
+
+修订，在入队和索引之前验证：
+
+CommandObserved：只有 Command 非空，CallId 匹配。
+RoleReady / StateObserved：只有 Observation 非空。
+RuleChecked：只有 Check 非空。
+StepStarted / RoleFaulted / RoleStopped：Command、Observation、Check 全部为空。
+不合格记录锁存 evidence incomplete；不能进入命令/观察索引。
+
+把 wrong-kind payload 反例并入现有 collector 测试，确认它不能满足 HasRequiredEvents。无须新增事件类型或改 DTO。
+
+B3：执行结束后的取消可能仍返回 Passed/0
+
+最后一次检查调用方取消发生在玩法执行结束附近。随后 cleanup、collector flush 和报告发布使用独立 token，但最终通过判定和发布读回没有再检查原调用方 token。
+
+因此在 flush 或报告 I/O 期间收到 Ctrl+C，有可能最终仍留下 Passed result 并退出 0。
+
+位置：FlowOrchestrator.cs 137–201(https://github.com/Kakusya/AbilityKit/blob/b387179fd4ae60339c3aa7f3a6efb3f12f7a976a/src/AbilityKit.Game.Cooking.FlowAcceptance/FlowOrchestrator.cs#L137-L201)。
+
+修订：
+
+明确以最终发布/读回确认作为完成点；在此之前观察到调用方取消，应锁存为执行环境/调用取消事实，不能整体 Passed。
+清理仍用独立 token，不因原 token 已取消而跳过。
+生成最终状态前，以及发布等待返回后，检查取消是否已发生。若已经写出但尚未接受的 Passed marker，沿用现有不完整结果处理，不让调用器把它当成功交付。
+已经完成的玩法结果、command effects 和真实证据保持原样；不能把取消改写成产品失败或撤销已提交动作。
+完成点之后的取消不追溯改写已完成测试。
+
+在现有取消/报告控制中增加一个确定性的 late-cancellation 子场景即可，例如报告等待期间取消调用 token。无需靠长时间 sleep 制造竞态。
+
+API 一致性结论
+
+声明层面，S1 适用的 DTO/接口与原案及 amendment 一致，包括：
+
+FailurePack.Source / ActualInvocation；
+FlowInvocation / FlowRunOptions / FlowDiagnosticFault；
+只有显式 options 的 RunAsync；
+FlowRequest、IFlowSession、IFlowReportWriter 保持原签名。
+
+新增的 FlowJson、目录文档类型、内部执行上下文/异常，以及构造器里的测试注入点，属于可接受的测试层实现辅助，不构成游戏 API 或批准玩法范围扩张。S2 Role DTO 尚未交付，不算 S1 缺项。
+
+行为层面不能给“完全符合”：B1、B2、B3 是当前实现与已接受合同的差异，必须修订。
+
+下列路径在本轮源码检查中未发现额外阻塞：
+
+一个 owner，同组先准入再 Tick；
+按本次 correlation 汇合即时终态与历史，重放保存完整原命令；
+独立 ItemInHand 探针，借用后仅复制值；
+后续 fixed-step 故障保留已提交 effects/event/terminal；
+请求不能自带批准，固定 fixture/目录/预算验证；
+首次产品失败在 Close 前保留，后续 cleanup 错误不覆盖它；
+invocation 参数复制、显式诊断点、失败包 Run/Source/Cleanup 一致性。
+
+pickup/drop 报告中标成 N/A 的 REJECT/IDEMP，不应计为该次流程实际覆盖了拒绝和重放。两条能力的真实覆盖来自 compete/replay 流程。
+
+程序内 diagnostic 控制不等于真实 S3 调用器交接。外部 diagnostic-failure/native 86、真实三进程网络和自动唤醒仍为 NotRun。
+
+当前允许的修订与最少验证
+
+本轮只需一个有界 Orca 修订切片：
+
+FlowRuleEvaluator.cs；必要时 FixedFlows.cs：B1。
+FlowEventCollector.cs：B2。
+FlowOrchestrator.cs；确有需要时 FlowReport.cs：B3。
+CookingFixedFlowTests.cs：把上述反例并入已有聚焦控制。
+task 的修订/检查记录；fixed-flow.md 仅在需要明确完成点时调整。
+
+不需要变更公开 DTO、产品代码、规则类别或依赖。
+
+源码修改后，一次聚焦构建、一次 S1 聚焦测试窗口，再运行两个短的真实 offline CLI，确认共享判定/报告路径没有回归即可。两次 CLI 可与正常正例验证合并，不要求再跑多套相同成功窗口。主会话检查原始结果及新 diff，不重复相同测试。保持旧 10/10 和两次成功的历史记录，不把它们改写成修复后验证。
+
+随后冻结新的完整 SHA，再提交 S1 复审。当前候选保持不变。
+
+S2 边界与内部启动 API：设计确认，暂不派发
+
+你列出的 14 文件范围可以作为修复后 S1 获接受时的下一阶段边界：
+
+新增 NetworkFlowAdapter.cs、NetworkRoleHost.cs、FlowRoleProtocol.cs；
+修改 FlowAcceptance.csproj、Program.cs、FlowContracts.cs、FixedFlows.cs、FlowRuleEvaluator.cs、FlowOrchestrator.cs、FlowReport.cs；
+CookingFixedFlowTests.cs、fixed-flow.md；
+新增 compete-network.json、pickup-drop-network.json。
+
+csproj 仅增加现有 LiteNet 项目引用。其他文件只读，额外文件/API 需求先说明。由于这次 S1 尚未通过，现在不能据这段设计派发 S2。
+
+不需要新公共产品 API。为了避免主会话自行补协议，明确一个 implementation-private 入口：
+
+NetworkRoleHost 类中的设计签名：
+
+C#
+internal static Task<int> RunAsync(
+    string roleId,
+    Stream controlInput,
+    Stream replyOutput,
+    TextWriter diagnostics,
+    CancellationToken cancellationToken)
+
+CLI：
+role --id server
+role --id client-a
+role --id client-b
+
+父 NetworkFlowAdapter 用同一个测试程序启动三个独立进程，并重定向 stdin/stdout/stderr。Program 在现有 SingleThreadOwner.Run 内分派这个入口，不再套第二个 owner loop。role 入口不接受 run 的请求/输出/诊断选项；所有装配信息来自第一条已定义的 Initialize。
+
+最小初始化顺序：
+
+child 首先在固定 10 秒启动预算内等待一条有界 NDJSON Initialize，读取前就限制消息大小；未收到、格式错误或 EOF 则退出，不能无限等待。
+第一条要求 schemaVersion=1、ControlSequence=1、RoleId 与 --id 相同、Init.RoleId 相同、唯一合法 ControlId，其他动作 payload 为空。校验非空合法的 RequestId/RunId/AttemptId 和有效 generation，固定完整 RunIdentity，随后消息不得换 run/attempt/generation；第二次 Initialize 拒绝。
+server 的 Init 使用已批准 fixture，ActorId/Endpoint 为空。创建真实 ET/session，使用 loopback 地址和构造参数 port=0，再调用现有 listener.Start()，从实际 Endpoint 回报绑定端口，不预留后关闭端口。这里更正一个签名细节：当前源码是构造器接收 port，Start() 无参数，并不存在 Start(0) 重载。
+server Ready 回传真实初始 authority 观察和实际 endpoint。
+父进程再初始化 client-a/A、client-b/B；client Init 的 Fixture 为空，Endpoint 为刚才的 loopback 端点。
+client 通过实际 Join/session/baseline 建立当前绑定，Ready 带真实 client 观察。父进程核对 server instance/scope 和各 client 自己的当前 connection generation；没有当前已安装 baseline 就不能 Arm。
+按已接受 Arm/Release/Observe/Stop 和 ReplayOfCallId 合同推进。ControlId 与 replay CallId 的映射保持 amendment，不另加字段。
+
+RoleReply.HostSequence 是全部回复的序列；嵌套 FlowEvent.HostSequence 是事件流的序列，分别连续递增。Armed 等无事件回复不能造成 collector 事件序列缺口。父进程不能补造缺失事件来“填序号”。
+
+职责与出口：
+
+pipe reader 只做有界读取/校验/入队；游戏初始化、ProcessOwnerFrame、观察和释放均在 child owner。
+server 只有 ProcessOwnerFrame 驱动现有权威，不额外 Tick；网络 command batch=0。等待 stdin 或 client 就绪时也必须保持 owner pump 推进，否则真实 Join/ACK 会因无人处理而卡住。
+stdout 仅 RoleReply NDJSON，stderr 为有界诊断。只有父 collector 写最终 events.jsonl 和报告。
+返回 0 仅表示收到 Stop 后本角色正常收尾；1 为运行故障；2 为启动/协议前置拒绝。child exit 0 不是玩法通过，父进程仍要检查全部规则、证据、归位。
+提前 EOF、崩溃、错绑定或取消停止新动作，保留已知终态；按原预算关闭本次资源/reader。父进程记录 native exit，未知退出不得伪造 Stopped。
+client 取消等待不撤回已发送 command；意外换 scope/重连仍停止本轮，不新增恢复框架。
+Stop/关闭使用独立收尾预算。Session.Dispose 不代替 ET authority 的释放；在合法 idle-owner 点分别释放本次拥有的对象并结束 reader。现有客户端内部 15 秒等待由外层已批准的更短 token 限制，不改产品超时。
+
+端口和 owner pump 的源码依据：LiteNetChannelListener(https://github.com/Kakusya/AbilityKit/blob/b387179fd4ae60339c3aa7f3a6efb3f12f7a976a/Unity/Packages/com.abilitykit.network.transport.litenet/Runtime/Transport/LiteNetChannelListener.cs#L24-L65)；ProcessOwnerFrame(https://github.com/Kakusya/AbilityKit/blob/b387179fd4ae60339c3aa7f3a6efb3f12f7a976a/src/AbilityKit.Game.Cooking/Session/CookingNetworkSessionHost.cs#L213-L248)。读取 Unity 路径下的共享 transport 源码不授权修改它。
+
+S2 验证仍是一次聚焦窗口：两个真实三进程正例，必要的错误绑定/旧投影、重放、EOF/child 故障负例，加受共享改动影响的短 S1 回归。pickup 投影必须在 replay/drop 前验证。S3 后续复用已批准三个 CLI 路径，不新增方案。
+
+allowed_next_action：
+记录本裁决，安排上述 S1 有界修订、聚焦验证、main 独立检查和新 SHA 复审。S2 暂停在技术门前。无 merge、关单、清理、发布或旧 Issue6 工作授权。

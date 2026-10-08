@@ -1,0 +1,121 @@
+裁决：accept-plan，接受这项 S2 有界行为澄清。保留真实原生状态，网络缓存重放可以是 Executed＋IsDuplicate；事件归因使用实际 DomainCommandId。公开测试 API 不变。
+
+request_id：AK-I13-S2-REPLAY-API-20261008-01
+flow_id：a2dafd3b-6a4d-4914-aa68-6a4a20af7a02
+reviewed_sha：929b2fbfa2a89d86dee40548ab29612d2a9a29c3
+
+一、读取范围及规则含义
+
+已读取本提交的问题文档、Host.Map/Complete、Client.SendCommandAsync/接收路径、WireCodec.DomainId、现行 evaluator、规则卡和 S2 dispatch/bootstrap；核对 API 原案/amendment 与已接受版本一致。commit 相对直接父提交只增加问题文档。我没有读取或接受 dirty S2 实现，也没有执行验证。
+
+源码确实表明：命中已缓存且 fingerprint 相同的 terminal 时，host 保留原 Disposition，仅将业务 Result 改为 IsDuplicate=true、Events=[]。因此把网络重放一律要求成 NativeDisposition=Duplicate，会错误拒绝当前正式实现。
+Map/Complete(https://github.com/Kakusya/AbilityKit/blob/929b2fbfa2a89d86dee40548ab29612d2a9a29c3/src/AbilityKit.Game.Cooking/Session/CookingNetworkSessionHost.cs#L281-L320)。
+
+这是现有 C13-IDEMP 的技术适配，不是新类别或保证放宽。已批准规则要求同身份/同 payload 不产生第二次业务效果，并允许原结果重放；没有要求所有运行方式使用同一个原生枚举值。规则版本继续 1.0，不需要为这项适配重复请求 Owner 批准。
+规则卡(https://github.com/Kakusya/AbilityKit/blob/929b2fbfa2a89d86dee40548ab29612d2a9a29c3/.trellis/tasks/10-07-cooking-issue13-flow-orchestrator/research/rule-categories.md)。
+
+二、API DESIGN：复用原合同
+
+不增加 public DTO、字段或接口，不改游戏 API/wire。
+
+继续使用：
+
+CommandObservation：CallId 区分调用；BusinessId 保存 wire stable ID；DomainCommandId 保存实际返回的领域 ID；FrozenCommand 保存实际发送的冻结 payload；NativeDisposition、WireReason、BusinessResult 均保留原值。
+FlowObservation.BindingFence、FlowEvidence.Commands/Cuts：保存已验证的本次观察、原调用和重放事实。
+IFlowSession.ReplayAsync(stepId, originalCallId, newCallId, timeoutMs, cancellationToken)：签名、返回 DispatchResult 不变。
+IFlowRule.Evaluate(FlowEvidence, ApprovedRule)：签名、返回 RuleCheck 不变。
+RoleControl：Arm.ControlId 为新 CallId，Action=null，ReplayOfCallId 指向本角色已知原调用；RoleReply 继续承载实际结果和观察。
+
+NetworkFlowAdapter/NetworkRoleHost 在本次会话内保存不可变的调用关联：
+原 CallId → role/actor、stable ID、完整冻结 payload、实际发送时的 run/scope/server instance/自身 connection generation。
+这是现有 adapter 的运行数据，不是新持久化身份服务，也不能用保存的 ID 自行证明当前连接有效。
+
+模式不能根据“看到 Executed 就放宽”来猜。由已经校验的 FlowRequest.Mode 选择内部评估路径。若现有 evaluator 需要显式配置，批准以下实现内部构造器签名：
+
+C#
+internal FlowRuleEvaluator(RuleRef identity, FlowMode mode)
+
+原公开 FlowRuleEvaluator(RuleRef identity) 保持 Offline 行为；IFlowRule.Evaluate 不变。FixedFlows/内部运行上下文从已校验请求传递模式，拒绝未知模式。这个内部配置不进入请求自报的“已验证”字段，也不改变公共 API。
+
+三、网络重放的必要条件
+
+本次 compete/replay 仍然先取得胜者的正式 Accepted 结果，再发起重放。
+
+通过 C13-IDEMP 必须同时满足：
+
+当前绑定相同。
+同 run/attempt/generation、同 role/actor、同完整 scope、同 server instance；重放前后该 client 自己的 connection generation 不变。使用真实 Join/已安装 baseline 和当前角色状态校验，不要求两个不同 client 的 generation 数字相等。
+
+重放的是原命令。
+新 CallId，原 BusinessId，完整 FrozenCommand 不变，包括 ExpectedItemVersion、Command 字段和 network SimulationBatch=0。不能根据最新 snapshot 重建命令，不能把领域映射后的 ID/batch 写回 wire FrozenCommand。
+
+身份来自实际响应。
+原调用及重放的实际 DomainCommandId 均非空、相同，实际 stable ID 与请求的 BusinessId 相符。
+可以用现有 CookingNetworkWireCodec.DomainId(实际 server instance, 实际 scope, participant, stableId) 校验预期值，但计算值只能用于比较，不能填补缺失的实际 DomainCommandId。DomainId 的计算不含 connection generation；因此相同 DomainCommandId 也不能替代当前连接 generation 校验。
+
+取得正式业务终态。
+Completion=Terminal，BusinessResult 存在，无本次调用错误，且原生状态属于所验证的正式路径。
+
+Offline：保留现有 NativeDisposition=Duplicate 的重放要求。
+Network：允许 NativeDisposition=Duplicate；也允许已完成原调用为 Executed、本次缓存返回仍为 Executed 的路径。
+两种网络路径都必须有 IsDuplicate=true 和下面全部内容约束。不能只凭这两个字段通过。
+Conflicted、Cancelled、协议拒绝、未知/缺失状态不属于成功重放；缓存了某个拒绝或取消记录也不自动使它合格。
+
+业务结果及效果相同。
+重放的 Outcome、业务 Reason、StateVersion 与原正式结果相同；IsDuplicate=true、返回 Events 为空。原结果若有其他业务字段也不能静默忽略：当前 CookingRecipeCommandResult 还有 Supply，本次 Pickup fixture 应保持双方均为 null。
+缓存 Executed 路径保留原 wire disposition/reason；原生 Duplicate 路径如有不同 wire reason，原样记录，不能伪造为缓存结果。
+
+权威效果没有重复。
+在验证 scope 的 authority 切片里，按实际 DomainCommandId＋ActorId 关联事件。该命令事件身份/数量不增加，目标 item 和独立 hand 索引不因 retry 再变。当前成功 Pickup 原本应有的业务事件也不能缺失，不能用“前后都是零条”假装证明幂等。
+允许无关 Tick 推进全局 StateVersion/LogicalTick；不比较整个世界完全不变。
+
+调用顺序仍是：
+正式竞争结果 → 权威 OWN/REJECT → pickup 客户端投影收敛 → 原胜者精确重放 → 正式重放结果及当前绑定复核 → 权威 retry 切片 → IDEMP。
+
+adapter 在每个相关 await 后检查绑定，并把支撑判断的观察保存在既有 Cuts/事件中。不能仅保存一个“检查过=true”后让 evaluator 盲信。实际 wire correlation 对公开接口不可见时仍为 null，不用 CallId 或猜测的 cmd-N 填充。
+
+四、C13-REJECT 也按实际 DomainCommandId 归因
+
+网络事件的 Command.Value 是领域映射 ID，不是 wire BusinessId。REJECT 和 IDEMP 必须采用相同的关联原则：
+
+在匹配的 authority scope 内：
+event.Command.Value == observation.DomainCommandId
+并且 event.Player.Value == observation.ActorId。
+
+Offline 的实际领域 ID 恰好与业务 ID 一致，仍然读取已有真实 DomainCommandId，不靠 fallback 补值。缺少 ID 时不能把“按错误 ID 找不到事件”当成“没有副作用”。
+
+保留 B1 的判定边界：
+
+缺身份、缺正式终态或事实不足：相关检查 Undetermined；已启动但不能完成目标的 run 不能 Passed。
+已知且可靠的拒绝方成功事件/持物矛盾，即便另一调用尚无终态，仍保留确定违规。
+错 scope/session/generation 或响应身份不匹配：停止本次关联和新动作，记录绑定/协议/测试证据错误；不能拿别的调用补齐。
+测试器发错 payload 不属于有效精确重放，应在发送前拒绝或停止；不能将其包装成产品幂等 bug。
+在正确身份和实际相同 payload 下，正式结果变化、重复业务事件或目标所有权再次变化，才是这里能够证明的规则失败。
+若刻意用同 stable ID、不同 payload 检查冲突，按现有冲突事实记录，不把 Conflicted 当成功 replay；本次不新增这种玩法 flow。
+
+五、in-flight duplicate 不等于缓存重放完成
+
+Map 对尚无 cached terminal 的重复请求会继续走正式映射/等待路径。排队、Arm/ACK、客户端投影、原生 Duplicate 字样本身都不是完整执行证明。
+
+首个固定 flow 已等待原胜者结果，所以它验证的是完成后的精确重放。对于碰到的 in-flight 情况：
+
+在原预算内等待各自正式结果，保持不同 CallId 和真实返回事实；
+获得正式 Duplicate＋有效业务 Result 后，才能按同一组身份/结果/效果条件评估；
+无 Result、超时、取消、断线或结果不明，保持 Unknown/Undetermined 或实际协议拒绝；不复制原调用结果冒充该调用返回；
+不因等待失败重置预算、自动重发或声称命令未执行。
+
+不需要为此增加一个长时间的 in-flight 并发场景作为本轮隐藏前置。
+
+六、最小验证和允许下一步
+
+在既有 S2 聚焦窗口内完成：
+
+真实网络 compete/replay 正例，保留实际 Executed＋IsDuplicate 返回，并证明 wire stable ID 与领域事件 ID 的关联正确。
+把缺失/替换 DomainCommandId、错误绑定、未知或无 Result 的终态、改 payload/结果、重复事件或手槽变化，合并为已有 evaluator/protocol 控制的少量参数化反例；不做全组合矩阵。
+加一个“错误地用 BusinessId 查事件会漏掉违规”的合成反例，确保 REJECT/IDEMP 均使用领域 ID。
+原 Offline 重放要求继续由既有短 S1 回归覆盖。合成变体不得写成真实网络产品 bug 或已执行的 in-flight 压力测试。
+
+allowed_next_action：
+主会话保存本请求/SHA 的 accept-plan，把上述行为补入当前 S2 合同，然后通知同一个已批准、正等待此问题的 Orca worker 继续。修改只落在既定 14 文件内的 adapter/role host、内部模式传递、evaluator、测试和说明；产品 Session/codec/transport、规则类别/版本、依赖及范围外文件保持只读。
+
+完成 S2 后仍须主控独立检查、冻结新的候选并提交最终审阅，之后才进入 S3。本回复不接受任何 dirty S2 实现；此问题边界上的 S2 runtime checks 仍为 NotRun。

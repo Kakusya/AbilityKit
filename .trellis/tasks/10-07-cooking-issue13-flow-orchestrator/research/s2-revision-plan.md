@@ -1,0 +1,18 @@
+# Approved S2 R1/R2 bounded revision plan
+
+Authority: complete dot AK-I13-S2-REVIEW-20261008-01 needs-revision for fd3f103d8fa4514a8627b483c1f41fe4a7ce8da5. Owner full Issue13 scope persists. Main reviewed design/implement/context and this plan; no routine Owner reapproval. Read full dot-s2-review-reply-raw.txt, not just this summary.
+
+Exactly five worker-owned files:
+- src/AbilityKit.Game.Cooking.FlowAcceptance/NetworkRoleHost.cs: Cooking roles latch invalid session after Ready; no retained baseline reused as current Observe/Arm/replay evidence; after-await checks; expected Stop disconnect doesn't add fault; committed terminals/effects survive.
+- src/AbilityKit.Game.Cooking.FlowAcceptance/NetworkFlowAdapter.cs: parent current observation guard and per-role resilient independent cleanup. A query/kill/native-exit fault records own error, continues other owned roles; finally reader cancellation/resource handles, bounded total budget, preserve original+later errors/unknown exits.
+- src/AbilityKit.Game.Cooking.FlowAcceptance/FlowRuleEvaluator.cs: Network CONVERGE/replay binding requires SynchronizedObserved=true with actual existing binding/projection/domain facts. False/null is Undetermined, no invented product bug; known definite independent violations retain precedence.
+- src/AbilityKit.ET.Runtime.Tests/CookingFixedFlowTests.cs: fold Ready-then-disconnect native control, synthetic invalid-session false/null, existing crash/cleanup control and test-private OS seam only if needed into focused existing cases. No public fault flags/product hooks.
+- Docs/design/CookingGame/testing/fixed-flow.md: explain session validity distinct from precise target ACK, actual nonzero protocol classifications, resilient cleanup and limits.
+
+Other delivery files remain read-only. FlowRoleProtocol is optional in dot's boundary but not currently needed/assigned: stop and ask main if a concrete necessity appears. No public API/DTO/category/version/productSession/codec/transport/dependency/Unity/example changes. Main owns Trellis/research/manifests/coordination.
+
+Existing API remains: FlowObservation.Available/SynchronizedObserved/Fence; private CheckLive/CaptureClient; parent CaptureAsync/WaitForProjectionAsync/CloseAsync; IFlowSession.CloseAsync(int,CancellationToken)->ValueTask<CleanupResult>. No new public types/signatures. Stop is expected cleanup and not unexpected disconnect; real committed terminal facts never rollback.
+
+Minimum checks: one affected Debug build, one affected test window selecting existing synthetic projection/replay and native EOF/cancel/crash/cleanup cases augmented with a Ready-after-real-baseline disconnect where external client/control pipe stays alive. Test-owned real server close may cause actual disconnect; no product hook. Existing false synthetic positive becomes valid true, false/null negatives fail closed. Cleanup error one role must not prevent other owned attempts; private seam allowed only necessary. Two short real network CLI positives required after guard change. Unaffected old successes retained, no full stable window/S1 rerun/broadgates/Richmatrix/physicalLAN. Actual failure may require only affected repair/rerun, preserve initial outputs.
+
+New GUID local/Logs/issue13-s2-revision paths; record actual source SHA/dirty/tools/commands/exits/counters/raw/binary identity, parent/children/currentbindings/nativeexit/reader/resource facts and original+new failures. Original parser PID/nativeexit UNKNOWN remains, do not reconstruct. Main checks/freeze/newdotreview after one current worker_done; S3NotRun. No commit/push/merge/close/archive/release/delete by worker.

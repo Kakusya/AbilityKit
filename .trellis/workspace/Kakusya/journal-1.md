@@ -93,3 +93,26 @@ Cooking dot skill accepted at ca077b3c42f9d86e8bd5dce76445e3d9b8534f75 after act
 ### Next Steps
 
 - No work remains in this branch-only task; deferred recovery candidates require separate approval
+
+
+## Session 4: Apply accepted Cooking dot API design contract
+<!-- trellis-session: v=2 fp=b2ebf0684c180060 -->
+
+**Date**: 2026-10-07
+**Task**: Apply accepted Cooking dot API design contract
+**Branch**: `master`
+
+### Summary
+
+Owner authorized execution after dot accept-candidate. Exact reviewed documentation fast-forwarded to local master; integrated docs/context/24 links Passed. Stock validator remains Blocked for missing PyYAML, explicitly nonblocking for accepted static scope. Only owning task archived; no remote master push or unrelated work.
+
+### Git Commits
+
+| Hash | Message |
+|------|---------|
+| `06825bde981082541c9f4f30e59fad4c3b3ccd83` | docs(cooking): require API design in dot replies |
+| `271f76c8e4ab88ae93b28fb49e46f4700a399b66` | docs(cooking): archive accepted API design workflow review |
+
+### Status
+
+[OK] **Completed**

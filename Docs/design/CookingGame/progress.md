@@ -1,5 +1,12 @@
 # Cooking Game 当前工程进度
 
+## Issue #13 分支交付已完成（2026-10-08）
+
+Owner 显式调用 cooking-dot-workflow 的限定 S1/S2/S3 已完成。dot 接受最终证据候选 `a38ef86f5cccb686f42c6dfe5fb40d2717147e58`，实现为 `6a41945b348bdf2cc0d62fc8e2d61e7a72049292`；分支 `Kakusya/issue13-flow-s0`。交付是两个固定 Flow 的 offline 与同机真实三进程 network，以及实际调用器 native0/诊断 native1/无结果 native86 的有界交接。22 个交付文件保持已接受哈希；原失败与 UNKNOWN 保留。没有重复测试套件。
+
+[当前任务收尾](../../../.trellis/tasks/10-07-cooking-issue13-flow-orchestrator/research/branch-only-closeout.md)、[完整最终裁决](../../../.trellis/tasks/10-07-cooking-issue13-flow-orchestrator/research/dot-s3-final-review-reply-raw.txt)、[S3 实际调用证据](../../../.trellis/tasks/10-07-cooking-issue13-flow-orchestrator/research/s3-caller-pilot.md)。Issue #13 仍 OPEN；本次 branch-only 不包含 master 合并、集成关单、Unity、物理双机 LAN、性能或自动唤醒。worker 明确保留并已记账，未清理工作树。下方其他 Issue/旧阶段记录保留原范围与来源，不因 #13 完成而解锁。
+
+
 ## Issue #6 Cooking-only 续作（2026-10-06）
 
 Owner 显式调用 cooking-dot-workflow，当前 dot 已 accept-plan `cf41218ab468a40457f6a15bbe0fc2556158b983`，规划与剩余出口见 [当前 task](../../../.trellis/tasks/10-06-cooking-issue6-truthful-gates/prd.md) 和 [完整决定](../../../.trellis/tasks/10-06-cooking-issue6-truthful-gates/research/cooking-dot-flow/evidence/dot-plan-reply-raw.txt)。新分支 `Kakusya/issue6-cooking-truthful-gates` 从 master `c78ed3de83f69bb53ff1a09bbc23638115928e1e` 创建；仅适配两个 Cooking .NET gates 的结果/覆盖/provenance，未适配入口启动前 Blocked。旧十八 producer、Unity mirror/Editor/exporter、示例五项目验收退出条件被收窄，本轮 N/A/实际 NotRun；旧越界分支保持停止隔离。当前只有规划接受，实施/真实测试/最终接受/合并/关单均未完成。下方旧 #6 调度是历史，不恢复旧 Run 或授权。

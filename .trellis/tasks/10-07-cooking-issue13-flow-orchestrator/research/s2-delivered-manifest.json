@@ -1,0 +1,138 @@
+{
+  "stage": "S2 candidate",
+  "files": [
+    {
+      "file": "Docs/design/CookingGame/testing/fixed-flow.md",
+      "sha256": "8E89CC4BFD6A23023F30B0FDD85911F3875AC9CC6C39E54C7249ACD6AFD53060",
+      "gitBlobSha256": "8E89CC4BFD6A23023F30B0FDD85911F3875AC9CC6C39E54C7249ACD6AFD53060",
+      "changedInS2": true
+    },
+    {
+      "file": "Docs/design/CookingGame/testing/flow-rules.json",
+      "sha256": "ED10868C0D48F078C98AC664F4E9E67EBBE7FBECDFD508DDEEBEFC899B20595A",
+      "gitBlobSha256": "AB250FC0F7526181A0C097CC2A898EDBD456C8D2CABBA1782764D2ED55ED666F",
+      "changedInS2": false
+    },
+    {
+      "file": "Docs/design/CookingGame/testing/requests/compete-network.json",
+      "sha256": "91B0AAB2AEF24F87FB76489DA4BB49D60E46B4F748EDD84B3B02B37A6804217F",
+      "gitBlobSha256": "8613D68281ECF48F401328F92A61CE05A217CB77CBD06313239FD746234CD9E2",
+      "changedInS2": true
+    },
+    {
+      "file": "Docs/design/CookingGame/testing/requests/compete-offline.json",
+      "sha256": "FCFC9E3AC20FFE6E0CB6ADB9F1E2DB4385D9C5C707E45E2A5D334A96FB160FB3",
+      "gitBlobSha256": "3C48D9FD2248B7E73D67FA13EE7F1EF20FC19E5461B1B6B3D8FC4B2CCF17A477",
+      "changedInS2": false
+    },
+    {
+      "file": "Docs/design/CookingGame/testing/requests/pickup-drop-network.json",
+      "sha256": "845FB90E9E2FCB9CD894C25E08A615B98AAF80F0FF5A5817D888425BF4F738F5",
+      "gitBlobSha256": "0093163EDCDD4FA339286B876FB19E1FAEF6B0B2B3CF350F90C95E1850D496A8",
+      "changedInS2": true
+    },
+    {
+      "file": "Docs/design/CookingGame/testing/requests/pickup-drop-offline.json",
+      "sha256": "6F3DAA5740BECE819DCB8E7EFF2D62E1E31C6BA22D346ACEFD8E597CB2EC83B2",
+      "gitBlobSha256": "AE94743CC203B512EDF0888BFF939431DBE0D9989D477EF1A2F6A01271611079",
+      "changedInS2": false
+    },
+    {
+      "file": "src/AbilityKit.ET.Runtime.Tests/AbilityKit.ET.Runtime.Tests.csproj",
+      "sha256": "D0E904C698D1EC05B8420933E2739F6E78C84DCCFB4C7E08B39365E9B03AAB07",
+      "gitBlobSha256": "D0E904C698D1EC05B8420933E2739F6E78C84DCCFB4C7E08B39365E9B03AAB07",
+      "changedInS2": false
+    },
+    {
+      "file": "src/AbilityKit.ET.Runtime.Tests/CookingFixedFlowTests.cs",
+      "sha256": "280D8B30C1956AE491B385AD2A70E5CA225802FF907726BC3E664E6CD94965A9",
+      "gitBlobSha256": "8F33069F62E8694E539615F0D791A936446A925769624C3BD6E70D66A0B910A0",
+      "changedInS2": true
+    },
+    {
+      "file": "src/AbilityKit.Game.Cooking.FlowAcceptance/AbilityKit.Game.Cooking.FlowAcceptance.csproj",
+      "sha256": "F76FF700426B7F253F805846F412238128D3B5E8185B9AEE8FED16DFEC0C929E",
+      "gitBlobSha256": "F76FF700426B7F253F805846F412238128D3B5E8185B9AEE8FED16DFEC0C929E",
+      "changedInS2": true
+    },
+    {
+      "file": "src/AbilityKit.Game.Cooking.FlowAcceptance/FixedFlows.cs",
+      "sha256": "1D46843DC0FE4A6A49A72FCCB3EA6C223D811AE5D9120F0A59559FCA15942E4E",
+      "gitBlobSha256": "1D46843DC0FE4A6A49A72FCCB3EA6C223D811AE5D9120F0A59559FCA15942E4E",
+      "changedInS2": true
+    },
+    {
+      "file": "src/AbilityKit.Game.Cooking.FlowAcceptance/FlowContracts.cs",
+      "sha256": "AB7A54397759006E1E3E96FA49D3D244CD7F899BBD5AA72DA7BB98114541466C",
+      "gitBlobSha256": "9A247D026CD122BC6E587DEE7856B1F54F42723D8E266A6047C3AF4E0E626D05",
+      "changedInS2": true
+    },
+    {
+      "file": "src/AbilityKit.Game.Cooking.FlowAcceptance/FlowEventCollector.cs",
+      "sha256": "12CD20C9DF53B7244D150AF7167128A7248791C5D3F07D55CB9E34C5A409D411",
+      "gitBlobSha256": "12CD20C9DF53B7244D150AF7167128A7248791C5D3F07D55CB9E34C5A409D411",
+      "changedInS2": false
+    },
+    {
+      "file": "src/AbilityKit.Game.Cooking.FlowAcceptance/FlowFixture.cs",
+      "sha256": "44FCEAA075BED2587E39E0455DF10B85D70800A474D45D502E27B86A705D9F2E",
+      "gitBlobSha256": "44FCEAA075BED2587E39E0455DF10B85D70800A474D45D502E27B86A705D9F2E",
+      "changedInS2": false
+    },
+    {
+      "file": "src/AbilityKit.Game.Cooking.FlowAcceptance/FlowOrchestrator.cs",
+      "sha256": "53B00D403B14510359D0A4470AC3AB6A21A7BF4FA643FBB37F60D7739AC33740",
+      "gitBlobSha256": "53B00D403B14510359D0A4470AC3AB6A21A7BF4FA643FBB37F60D7739AC33740",
+      "changedInS2": true
+    },
+    {
+      "file": "src/AbilityKit.Game.Cooking.FlowAcceptance/FlowReport.cs",
+      "sha256": "D48C5CE0B5E9199C1773F3C7B65286692271F2D16FACF20061D2FBF0456AB4B9",
+      "gitBlobSha256": "D48C5CE0B5E9199C1773F3C7B65286692271F2D16FACF20061D2FBF0456AB4B9",
+      "changedInS2": true
+    },
+    {
+      "file": "src/AbilityKit.Game.Cooking.FlowAcceptance/FlowResourceScope.cs",
+      "sha256": "368A09B0231FEBF0463481D9BAA3C03DB2DF01E3E2F2C41F7E05B4AEA5427DB8",
+      "gitBlobSha256": "368A09B0231FEBF0463481D9BAA3C03DB2DF01E3E2F2C41F7E05B4AEA5427DB8",
+      "changedInS2": false
+    },
+    {
+      "file": "src/AbilityKit.Game.Cooking.FlowAcceptance/FlowRoleProtocol.cs",
+      "sha256": "777274BBE86C45FB92ABDB78C737ACFAF0B699D268B70ECC9709113696B804E3",
+      "gitBlobSha256": "777274BBE86C45FB92ABDB78C737ACFAF0B699D268B70ECC9709113696B804E3",
+      "changedInS2": true
+    },
+    {
+      "file": "src/AbilityKit.Game.Cooking.FlowAcceptance/FlowRuleEvaluator.cs",
+      "sha256": "030AD479A4CF972D407F35300AF492CB4DDD0674081C382C6FF54D4D33052CF4",
+      "gitBlobSha256": "030AD479A4CF972D407F35300AF492CB4DDD0674081C382C6FF54D4D33052CF4",
+      "changedInS2": true
+    },
+    {
+      "file": "src/AbilityKit.Game.Cooking.FlowAcceptance/NetworkFlowAdapter.cs",
+      "sha256": "23E95370C4E7172B447A8C1160610F4B71981B432F244AE6C347AA9B8DBE39E9",
+      "gitBlobSha256": "23E95370C4E7172B447A8C1160610F4B71981B432F244AE6C347AA9B8DBE39E9",
+      "changedInS2": true
+    },
+    {
+      "file": "src/AbilityKit.Game.Cooking.FlowAcceptance/NetworkRoleHost.cs",
+      "sha256": "2D076F7C7252CB3805A55DDB0990B555AD533FD593659BF1BB7AE6F495895494",
+      "gitBlobSha256": "2D076F7C7252CB3805A55DDB0990B555AD533FD593659BF1BB7AE6F495895494",
+      "changedInS2": true
+    },
+    {
+      "file": "src/AbilityKit.Game.Cooking.FlowAcceptance/OfflineFlowAdapter.cs",
+      "sha256": "2B1E445D8E5918970289A946CFB4019413F4C617769C7CF69FCA834B89727B85",
+      "gitBlobSha256": "2B1E445D8E5918970289A946CFB4019413F4C617769C7CF69FCA834B89727B85",
+      "changedInS2": false
+    },
+    {
+      "file": "src/AbilityKit.Game.Cooking.FlowAcceptance/Program.cs",
+      "sha256": "554E4658DA01E1B89D9B2142CEF232BA8A244BCA7B64C9422BD88A1B1494DFA8",
+      "gitBlobSha256": "554E4658DA01E1B89D9B2142CEF232BA8A244BCA7B64C9422BD88A1B1494DFA8",
+      "changedInS2": true
+    }
+  ],
+  "fingerprint_meaning": "Actual workspace bytes plus LF-normalized Git blobs; validation checkout dirty=true; not a compiler input archive"
+}

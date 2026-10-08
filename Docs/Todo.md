@@ -1,5 +1,11 @@
 > 2026-10-04?????????[?????????????](design/CookingGame/session-closeout-2026-10-04.md)?????N02/N03???????????????????????????????
 
+## Cooking Issue #13 当前交付（2026-10-08）
+
+- [x] 限定 branch-only：两个固定 Flow 的离线、同机真实三进程联网及实际调用器成功/诊断失败/无结果交接；最终证据候选 `a38ef86f5cccb686f42c6dfe5fb40d2717147e58` 已获 dot 接受。见 [收尾与证据](../.trellis/tasks/10-07-cooking-issue13-flow-orchestrator/research/branch-only-closeout.md)。
+- [ ] master 集成/Issue #13 关单：本次未授权、NotRun；Issue 仍 OPEN。Unity、物理双机 LAN、性能、自动唤醒不计入已完成交付。
+
+
 > Owner2026-10-03: latency/throughput and O04 native/timer candidate OWNER_DEFERRED, not completed. Current priority: existing-framework functional gameplay/cooperation/recovery/fault correctness. Read [current disposition](../.trellis/tasks/10-02-cooking-network-reconnect-measurement/research/functional-first-owner-disposition.md). Preserve previous evidence/thresholds, physicalNOT_VERIFIED and Unity/S15deferred. Older optimization-first notices historical.
 
 > Current2026-10-03: O03 boundedProfile81315 terminal1 as required (12initial/midpassed,6finalNOT_MEASURED,36endpointnative0), originals independently reviewed. Matchedmid no stable1ms gain; no adoption/import. Actual primitiveOFF/ON/OFF calibration79616 independently passed1800samples/native0 and exactleasecleanup, WaitOne1 medians15.5102/1.0145/15.5099ms. Isolated matched12pair timer-matrix SOURCE ONLY approved; build/runtime pending review. No networkperformance or productionadoption claim. Owner confirms secondPC unavailable; no repeated hardware question. N02/N03 remain incomplete; fullrich4/P6/ordinaryperformance/physicalLAN open, Unitydeferred. Read latest master-assembled-relay-verification.md/native-wait-calibration.md/current-network-exit-refresh.md; older notices historical.

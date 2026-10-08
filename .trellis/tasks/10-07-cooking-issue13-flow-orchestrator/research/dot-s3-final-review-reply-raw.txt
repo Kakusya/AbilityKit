@@ -1,0 +1,86 @@
+裁决：accept-candidate。接受本候选的 S3 实际调用器证据，并确认限定范围内的 Issue13 S1/S2/S3 branch-only 技术交付完成。没有剩余技术阻塞项，不要求再跑一轮测试。
+
+request_id：AK-I13-S3-FINAL-REVIEW-20261008-01
+flow_id：a2dafd3b-6a4d-4914-aa68-6a4a20af7a02
+reviewed_sha：a38ef86f5cccb686f42c6dfe5fb40d2717147e58
+accepted_implementation_sha：6a41945b348bdf2cc0d62fc8e2d61e7a72049292
+
+读取范围及证据边界
+
+本轮读取了：
+
+GitHub candidate commit 的父提交和完整十文件变更清单；
+s3-caller-pilot.md、s3-caller-pilot-plan.md、完整分段读取的 s3-caller-inspection.json；
+design/implement、两个 JSONL manifest、task.json 的本次差异；
+上轮 S2 revision 接受记录及保存回复的对应内容；
+保持不变的 22 文件交付 manifest。
+
+候选直接父提交就是已接受的 6a41945…，十个变更全部在所属 task/research；可执行代码、测试、API、schema 和依赖没有变化。这使上一轮对原设计、amendment、bootstrap、replay、R1/R2 的源码结论可以延续，无需为证据提交重新实施或测试。
+
+我核实的是 GitHub 已发布的记录、提交差异和证据索引。没有本地执行，没有读取私有原始 tool receipts/logs，也没有重新计算本地 DLL 哈希。公开记录中的哈希用于定位保留原件，不能说成我已独立读取并验证那些原件。
+
+S3 报告(https://github.com/Kakusya/AbilityKit/blob/a38ef86f5cccb686f42c6dfe5fb40d2717147e58/.trellis/tasks/10-07-cooking-issue13-flow-orchestrator/research/s3-caller-pilot.md)；
+检查记录(https://github.com/Kakusya/AbilityKit/blob/a38ef86f5cccb686f42c6dfe5fb40d2717147e58/.trellis/tasks/10-07-cooking-issue13-flow-orchestrator/research/s3-caller-inspection.json)。
+
+三条实际调用路径：接受
+
+成功路径：
+tool chunk 19bcbd，native0，对应 run-188e84b8fcf24588be0cb1acbf5ba6b2。结果为 Passed/product Passed，执行和证据完整，cleanup Complete；29 条事件、三个 child 的 Stopped/native0/readers complete 与运行关联一致。
+
+补这一次主调用器成功是合理的：旧 worker transcript 有截断，不能充当完整主调用器交接证据。此次没有重跑 S2 测试套件。
+
+故意失败路径：
+tool chunk d604ed，native1，对应 run-45b196d87e6b4f51aa521e0962339dda。它是实际启动后的 DiagnosticFailAfterStart，分类 HarnessOrEnvironmentFailure，产品 Undetermined、执行未完成，cleanup Complete。
+
+10,707 字节失败包包含首因、初始切片、五条事件窗口、来源、实际调用、重现信息和 cleanup，足以完成本次小失败包交接。另读资源文件核对结构/身份/退出，不等于要求 agent 通读全量失败日志。这项试点通过，底层 Flow 仍然 Failed。
+
+无结果路径：
+tool chunk ecbe6f，保留 native86；目录只有 801 字节 request.json，没有 result、failure-pack、identity 或虚构 RunId。调用器将其识别为 Incomplete，符合预期。
+
+PowerShell 包装错误不应覆盖真实退出码。这里正确保留了 86，也没有把“负例检查通过”写成“Flow Passed”。
+
+以上支持“一次提交、程序等待、普通工具返回、一次结果处理”这条实际路径。它不证明异步自动唤醒、常驻监视或所有宿主都具备同样能力。
+
+API conformance finding
+
+结论：延续已接受的 S2 API 声明和行为符合结论；本次没有新增偏差。
+
+S3 API design：N/A。原因是本轮只调用现有 CLI 并记录结果，没有新接口、DTO、方法、CLI 参数或可执行行为设计。
+
+三条路径符合已接受 amendment：
+
+正常 run 返回现有 FlowResult；
+fail-after-start 在真实初始化后产生既有诊断失败和 FailurePack，保留 Source/ActualInvocation 与独立 cleanup；
+exit-before-run 在保存有效请求后、创建 orchestrator/session/collector/运行身份之前返回 86。
+
+原接口的身份、owner/Tick、取消后保留已提交效果、重放冻结 payload/实际 DomainCommandId、客户端有效性与投影判断、按角色隔离 cleanup 错误等行为没有被此次记录改动。
+
+记录仍如实保留 6a41945… dirty=true Debug 和同一已接受 Flow DLL；不得将它改写为 clean a38ef86… 的构建。无需新增 API 或为了更新报告字段重编译。
+
+完成含义与历史保留
+
+本次接受覆盖：
+
+S1 固定离线 flow；
+S2 同机真实 server＋两个外部 client，以及已接受的 R1/R2 修复；
+S3 主调用器成功、诊断失败、小失败包、无结果退出的实际交接；
+当前分支上的限定交付。
+
+原 FlowResult 中 S3CallerDiagnostics:NotRun 保留是正确的。该结果由运行程序生成；本轮外部调用器检查是另一层证据，应明确引用，不能回写旧结果伪装为当时已验证。
+
+原 CS0136、两次断线测试超时、旧 parser 失败和未捕获 native exit 继续保留。分段测试通过不改称最终单窗口 2/2，真实故障控制不改称产品 bug 修复。
+
+Unity、物理双机 LAN、性能、自动唤醒以及 master 集成/关单均不由本裁决宣称完成。
+
+allowed_next_action
+
+允许主会话按现有 Owner/SOP 范围完成以下收尾：
+
+保存本完整回复、request/flow/SHA 关联和接受决定；
+更新本 task、Cooking 进度及限定交付状态，标记“branch-only S1/S2/S3 已完成”；
+在 Issue #13 写入状态评论，链接本候选及验收证据，说明分支交付已接受、Issue 仍 OPEN；
+如需证据/记账提交，列明准确新增/修改文件，核对 22 个交付文件与已接受版本不变，再按既有分支权限 push/readback。
+
+纯证据和准确进度更新不需要再重复同一轮测试或技术验收；但不能借此夹带实现变化。若交付源码/API 改动，必须重新冻结并审阅。
+
+不允许据此合并 master、关闭 Issue、发布产品、删除资源或清理工作树。保留中的 worker/工作目录继续按现有已批准安排处理，不把“技术交付完成”解释为释放或删除授权。

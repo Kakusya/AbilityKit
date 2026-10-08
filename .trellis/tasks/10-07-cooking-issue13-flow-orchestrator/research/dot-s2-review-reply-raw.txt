@@ -1,0 +1,132 @@
+裁决：needs-revision。真实三进程正例和分段验证证据有价值，但当前源码仍有一个可能误通过的断线缺口，以及一处需要收紧的异常收尾路径。修复范围很小，不要求全仓回归或重跑一整套旧验证。
+
+request_id：AK-I13-S2-REVIEW-20261008-01
+flow_id：a2dafd3b-6a4d-4914-aa68-6a4a20af7a02
+reviewed_sha：fd3f103d8fa4514a8627b483c1f41fe4a7ce8da5
+
+一、读取范围与验证判断
+
+已读取三个新增网络文件、相关 Program/Contracts/FixedFlows/evaluator/orchestrator/report、S2 测试路径与使用说明，核对原 API、amendment、bootstrap、replay supplement、dispatch plan、检查报告和 manifest。commit 直接父提交为 929b2fb…；交付差异符合所列 14 文件，另有 task/证据文件。LiteNet 只增加现有项目引用，没有产品或依赖版本修改。
+
+我接受这种“保留失败、只重跑受影响部分”的验证方式：
+
+初始 6 项执行，3 通过、3 失败；
+修复后重跑失败的 3 项，通过；
+最后补充 duplicate-control 子用例，针对性 1 项通过；
+未受修复影响的已通过用例继续引用原证据。
+
+不需要仅为凑出“最终二进制 6/6”再跑一遍。两次最终 Flow DLL 的真实 CLI 正例、31/27 条事件和三个 child 的退出记录，可以支持其声明的正常路径。原 parser 失败没有捕获的 PID/native exit 继续 UNKNOWN，后来的残留检查不能补造它。
+
+这不是 clean fd3f103… 构建：实际来源仍为 929b2fb… dirty=true。我的工作是读取已发布源码及证据，没有执行本地测试或读取未发布的私有原始日志。
+检查报告(https://github.com/Kakusya/AbilityKit/blob/fd3f103d8fa4514a8627b483c1f41fe4a7ce8da5/.trellis/tasks/10-07-cooking-issue13-flow-orchestrator/research/s2-check.md)。
+
+二、阻塞修订
+
+R1：客户端断线后，保留的 baseline 仍可被当作当前有效投影
+
+实际产品 OnDisconnected 会将 IsSynchronized 置 false，但保留 LatestBaseline 和 binding。测试层 CaptureClient 继续从保留的 baseline 返回 Available=true；CheckLive 只检查 Available/fence，父 adapter 和 CONVERGE 也接受这些旧字段。
+
+具体误通过路径：
+client-b 已收到最终 Drop baseline → 网络连接断开，但 child 进程和控制管道仍存在 → Observe 返回保留的 item/hand/version/fence → Drop 收敛通过 → 正常 Stop/退出 → 整体可能 Passed。
+
+若断线发生在 pickup 后，则还可能继续让 A 执行 Drop，违反已接受的“意外断线停止当前尝试”。
+
+位置：
+NetworkRoleHost.cs 222–263(https://github.com/Kakusya/AbilityKit/blob/fd3f103d8fa4514a8627b483c1f41fe4a7ce8da5/src/AbilityKit.Game.Cooking.FlowAcceptance/NetworkRoleHost.cs#L222-L263)；
+NetworkFlowAdapter.cs 188–194(https://github.com/Kakusya/AbilityKit/blob/fd3f103d8fa4514a8627b483c1f41fe4a7ce8da5/src/AbilityKit.Game.Cooking.FlowAcceptance/NetworkFlowAdapter.cs#L188-L194)；
+产品断线行为(https://github.com/Kakusya/AbilityKit/blob/fd3f103d8fa4514a8627b483c1f41fe4a7ce8da5/src/AbilityKit.Game.Cooking/Session/CookingNetworkSessionClient.cs#L149-L156)。
+
+最小行为修订：
+
+初始 Ready 之后，活动阶段检查 client.IsSynchronized 及既有绑定；一旦观察到失效，锁存本次连接/角色故障，停止新动作。
+Observe/Arm/replay 及相关 await 后不得把已失效会话的 retained baseline 返回为当前可用证据。旧切片可以保留为历史，但不是新的合格收敛切片。
+父侧及 evaluator 不能将 SynchronizedObserved=false/null 的网络观察当作已验证的当前会话事实；不足时 Undetermined/执行失败，不凭此诊断游戏规则 bug。
+正常 Stop 后由 cleanup 主动断开属于预期收尾，不应再制造一个额外“意外断线”错误。
+已提交 command effects/终态仍保存，不取消、不回滚。
+
+这里需要明确纠正测试注释的含义：
+“IsSynchronized 不能证明当前目标 baseline 的精确 ACK”是对的；“所以已知 IsSynchronized=false 也可证明当前会话有效”不成立。当前实现初次 Ready 后，正常同 scope baseline 更新不会为每张新快照清掉这个标志；它变 false 表示断线、权威不可用或其他失效。要求仍处于有效会话，不是在新增精确 ACK 要求。
+
+现有 synthetic projection 正例故意使用 false，应调整：有效会话正例用 true，但仍不能声称已证明目标 ACK；false/null 不能通过完整收敛/重放绑定判定。
+
+R2：清理异常的处理本身抛错，可能跳过其他 owned children
+
+CloseAsync 的 catch 中再次直接读取 HasExited、调用 Kill、读取 ExitCode，没有保护。若这一段发生退出竞争或 OS 调用失败，异常会跳出整个 CloseAsync；后面的其他角色收尾、reader 取消和资源记录可能不再执行。外层记成 Incomplete 虽然不会误报成功，却未履行“一个角色失败仍尝试收尾其他已拥有资源”的职责。
+
+位置：NetworkFlowAdapter.cs 204–254(https://github.com/Kakusya/AbilityKit/blob/fd3f103d8fa4514a8627b483c1f41fe4a7ce8da5/src/AbilityKit.Game.Cooking.FlowAcceptance/NetworkFlowAdapter.cs#L204-L254)。
+
+最小修订：
+
+单个角色的查询/终止失败只追加该角色错误，继续处理其他本次 owned roles。
+reader 取消、已知退出事实整理和资源句柄释放置于确保执行的收尾结构中。
+不延长批准的总收尾预算，不全局 kill；未能确认退出仍如实 Incomplete。
+保留最初错误及后续 cleanup 错误，不用第二个异常覆盖它。
+
+这是源码上的异常分支风险，我没有声称已经在本机复现过。
+
+三、S2 API conformance finding
+
+声明层面：符合已接受设计。
+
+IFlowSession、IFlowRule、FlowRequest/Result/FailurePack 等原公共签名保持。
+RoleInit/RoleControl/RoleReply 与 amendment 一致。
+NetworkRoleHost 的内部 stream 入口和 role CLI 符合 bootstrap。
+已批准的内部 mode constructor 来自请求模式，公开单参数 evaluator 仍是 Offline。
+session factory helper 属于既有接口的实现，没有新增游戏 API。
+
+行为层面：部分符合，R1/R2 修复前不能完整接受。
+
+已确认符合的部分：
+
+独立 server＋两个外部 client，真实 Join/installed baseline；port0 实际绑定。
+server ProcessOwnerFrame 是唯一权威驱动，owner 在等待 stdin/Join 时持续推进。
+控制消息有界，stdout 与诊断分离，reply/event 序列分别递增，父 collector 唯一写日志。
+CallId、stable BusinessId、实际 DomainCommandId 分离；FrozenCommand 保持 batch0 和原 payload。
+cached Executed＋IsDuplicate 保留原生事实，并检查实际身份、结果/Supply、事件及 item/hand；没有把 ACK 当业务终态。
+pickup 收敛位于 replay/drop 之前；不同 client 使用各自 generation。
+已发送后的取消不被描述成未提交；S1 的首因和晚取消处理保持。
+
+两个实现差异也明确说明：
+
+完全相同 ControlId/payload、使用后续合法控制序号的重复 Arm 会再次回复 Armed，重复 Release 不再执行；这比早期“拒绝重复控制”的文字更宽。只要不同 payload 的同 ID 仍拒绝、没有新增业务调用/终态，我接受这种控制层幂等回应，不要求为纯回包方式返工。
+Ready 后 malformed JSON 可能按运行故障 native 1 退出，而部分协议前置拒绝是 2。两者均为实际非零失败，不是游戏通过。本轮不因这项非零分类差异扩大修复；说明中不要声称所有格式错误一律为 2。
+
+四、修订 API 与最少验证
+
+无需新增 public API、DTO、规则类别、连接协议或故障 CLI。
+
+继续使用现有：
+
+FlowObservation.Available / SynchronizedObserved / Fence；
+NetworkRoleHost 的 CheckLive/CaptureClient 内部判断；
+NetworkFlowAdapter 的 CaptureAsync、WaitForProjectionAsync、CloseAsync；
+IFlowSession.CloseAsync(int timeoutMs, CancellationToken cleanupToken) → ValueTask<CleanupResult>；
+FlowFailure 与 CleanupResult 记录故障和未知退出。
+
+允许的修订文件仍在已批准范围：
+NetworkRoleHost.cs、NetworkFlowAdapter.cs、必要的 FlowRuleEvaluator.cs、CookingFixedFlowTests.cs、fixed-flow.md，以及 task 证据。FlowRoleProtocol 仅在确有必要同步校验时调整。产品 Session/codec/transport 不改。
+
+必要验证可合并到现有聚焦用例：
+
+一个 Ready 后断线控制：先取得真实 baseline，再让测试拥有的连接断开，client 进程/控制管道保持存在。随后不能取得合格的当前 Observe/Arm/收敛，必须停止并保留历史事实。
+可用测试拥有的真实 session server＋一个外部 client role，让 server 关闭会话来触发实际断线；无需新增产品 hook。这个负例不冒称替代完整三进程正例。
+现有 synthetic projection/replay 控制加入已失效会话反例。
+复用既有 EOF/crash/cleanup 控制，确认一个 role 的收尾错误不会阻止其余 owned roles 的处理，未知退出不被补成成功。若需要模拟 OS 调用异常，只用测试私有接缝，不加公共故障参数。
+修改后一次聚焦构建和受影响测试窗口，两条短网络 CLI 正例确认连接守卫没有破坏正常流程。未修改的其他已通过用例保留原证据，不为计数整齐重跑。
+
+主会话独立检查新原始结果和 diff，冻结新 SHA 复审。原失败、UNKNOWN 和当前成功记录全部保留。
+
+五、S3 当前不放行；后续试点无需新 API
+
+S3 API design：N/A，原因是预定阶段只验证既有 CLI 的真实调用器交接并保存记录，不设计或改动可执行 API。它继续使用已批准的三个入口：
+
+正常 run；
+--diagnostic-fault fail-after-start；
+--diagnostic-exit-before-run。
+
+等修复后的 S2 候选获接受，再做一次实际调用器提交/等待/结果读取；故意失败须 native 1 和小失败包，native86 须无结果并被调用器识别为不完整。无需 watcher/MCP，也不能把普通返回说成自动唤醒。
+
+若届时已有同一被接受实现、相同实际调用器路径、完整关联请求/结果/退出的 S2 成功记录，可以复用成功项；只凭 CLI 曾返回 0 不够。当前候选尚未接受，不能据此提前完成 S3。
+
+allowed_next_action：
+保存本裁决，在同一批准 S2 范围内安排上述有界修订，随后独立检查、冻结并重新审阅。暂不进入 S3；不合并、关单、发布、清理工作树或扩大到其他产品。
