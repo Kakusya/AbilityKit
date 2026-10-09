@@ -1,0 +1,28 @@
+{
+  "id": "agents-module-routing",
+  "name": "agents-module-routing",
+  "title": "AGENTS module routing optimization",
+  "description": "Optimize repository instruction routing and document entry points only; no tests, builds, product code, historical issue recovery, SHA checks, or evidence snapshots.",
+  "status": "in_progress",
+  "dev_type": null,
+  "scope": null,
+  "package": null,
+  "priority": "P2",
+  "creator": "Kakusya",
+  "assignee": "Kakusya",
+  "createdAt": "2026-10-09",
+  "completedAt": null,
+  "branch": "master",
+  "base_branch": "master",
+  "worktree_path": null,
+  "commit": null,
+  "pr_url": null,
+  "subtasks": [],
+  "children": [],
+  "parent": null,
+  "relatedFiles": [],
+  "notes": "",
+  "meta": {
+    "status": "completed"
+  }
+}

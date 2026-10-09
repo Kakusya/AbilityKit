@@ -1,5 +1,9 @@
 # AbilityKit 工作区指引
 
+## 核心规则
+- 永远要以推进业务为核心。
+- 使用的语言要非常浅显易懂,使用的语种为简体中文.
+
 ## Owner SHA 校验禁令（2026-10-09）
 
 - 禁止模型执行、要求或通过脚本、工具、执行者间接进行任何形式的 SHA 校验，包括 SHA-1、SHA-256、文件／产物／源码 hash 比对、批量 hash 清单及精确 SHA 审阅。
@@ -33,6 +37,25 @@
 
 当前阶段、验证指针与完整剩余出口的唯一入口是 [Cooking progress](Docs/design/CookingGame/progress.md)。执行前再读对应 Issue 的最新正文、标签、依赖与批准范围；状态摘要和 `orca-ready` 不增加授权。历史通知与损坏原文见 [历史索引](Docs/design/CookingGame/history/agents-notices-2026-10-04.md)。
 
+## 任务与模块路由
+
+先判断请求涉及什么，再按需读对应入口。文档链接说明“去哪里找”，不增加修改、测试、恢复、合并或发布授权。
+
+| 请求涉及 | 先读 | 再读 |
+|---|---|---|
+| Cooking 当前工作、恢复或剩余目标 | [progress](Docs/design/CookingGame/progress.md) | [.trellis/spec/cooking/index.md](.trellis/spec/cooking/index.md)、对应 task／最新 Issue；先应用上方暂停与 Owner 约束 |
+| Cooking 玩法、菜单、配置、网络或存档 | [模块路由：Cooking](.trellis/spec/abilitykit/module-routing.md#cooking-应用) | 表中对应稳定契约；规划再读 [gameplay-menu-plan](.trellis/spec/cooking/gameplay-menu-plan.md) |
+| 共享框架、协议或跨模块问题 | [工程规范](.trellis/spec/abilitykit/index.md)、[模块路由：共享框架](.trellis/spec/abilitykit/module-routing.md#共享框架) | 对应设计／包文档与实际源码；修改须先证明 Cooking 消费者和必要性 |
+| Cooking 防火墙、端口、房主 READY | [本机联网工具规范](.trellis/spec/abilitykit/cooking-network-tooling.md) | `tools/cooking-firewall.ps1` 及对应 Cooking 调用方；不据工具说明自行运行验收 |
+| AGENTS、Trellis、任务、协作或工作树 | [.trellis/workflow.md](.trellis/workflow.md)、[协作 SOP](.trellis/spec/abilitykit/supervised-issue-delivery.md) | 相关配置、task 与已批准的工作树；模块路由维护规则见 [路由规范](.trellis/spec/abilitykit/module-routing.md#路由维护) |
+| 产品方向、架构取舍或来源冲突 | [长期目标](ADR/long-term-goals.md)、[ADR 索引](ADR/README.md) | 对应 Accepted ADR 与 [ET 合同](Docs/design/CookingGame/current-et-foundation-contract.md)；明确列出冲突 |
+
+- 只读当前问题相关的模块行及其文档，不把全部设计、历史 task 和所有技能加载成必读上下文。
+- 跨模块问题按 Cooking 消费链读取，分别说明各层职责；不能由名字相似推导复用或实施许可。
+- 共享源码主要在 `Unity/Packages/com.abilitykit.*`，Cooking 应用源码在 `src/AbilityKit.Game.Cooking*`。`src/` 既有 Compile Include 工程，也有自有源码，以实际 `.csproj` 为准。
+- 未命中路由时，从 [设计总索引](Docs/design/00-index.md) 和包文档定位；入口缺失、历史文档与源码冲突时如实记录，不恢复已删除技能、不猜测 API、不扩大范围。
+- 本文件的 Owner 约束先于链接中的历史通知、命令和技能流程。用户要求不测试时，停止测试路由，仅审阅文档与必要源码。
+
 ## 架构与权威
 
 - 当前 ET 固定仓库副本 `core@3.0.3`、`sourcegenerator@3.0.1` 和提炼 runtime；包版本不等于统一 ET 大版本。禁止隐式升级或把完整 ET 网络/调度栈作为隐藏前置。来源、宿主闭包、现状/目标与规则检查映射见 [当前 ET 合同](Docs/design/CookingGame/current-et-foundation-contract.md)。
@@ -47,40 +70,30 @@
 - 新基础设施先评估锁定版本的当前框架能力、平台/BCL、已有适配和成熟依赖。新增依赖、复制上游、长期 fork 或第二套同类机制须 ADR 记录差距、拒绝理由、宿主、维护者、来源/许可、测试、回退和退出条件；薄适配与业务规则无需强套通用框架。
 - DI 装配与 ET 释放责任不得重叠。日志与观测从提交结果旁路采集，不驱动成功，不默认记录凭证或无界 payload。持久化须声明正常重启/进程崩溃/OS/掉电故障模型；文件存在、hash 或序列化成功不能证明掉电事务。
 - 网络、存档、配置 schema 各有唯一权威源；生成文件不得手改，Check 不得改输入/产物。变更覆盖旧新互读或明确拒绝、未知/缺失字段、编号不重用、损坏与超限；同一 serializer 不意味着 schema 兼容。
-- 工具链、生成器、UPM/NuGet/npm 与 vendored 来源记录不可变版本、hash、patch、license/notice、宿主、消费者和退役条件。新依赖不使用浮动 latest/main；允许的版本差异逐宿主审阅。SDK/最终应用恢复闭包待补齐时如实标待建，不虚称已锁定。
+- 工具链、生成器、UPM/NuGet/npm 与 vendored 来源记录不可变版本、patch、license/notice、宿主、消费者和退役条件；遵守上方 SHA 校验禁令。新依赖不使用浮动 latest/main；允许的版本差异逐宿主审阅。SDK/最终应用恢复闭包待补齐时如实标待建，不虚称已锁定。
 - 当前 ET 保持 internal-only；发布必须检查受限代码的传递依赖闭包，不能仅靠名字或 IsPackable=false。未知许可/再分发范围独立审阅，不据其他版本推断当前授权。
 - 架构规则映射到合同中的现有 gate、待建 gate 或明确人工 check；新机器检查必须有正确正例与故意违规负例。AKET001/002 不代表完整所有权防线。
-- 结果使用 Passed / Failed / Blocked / Skipped / NotRun；声明覆盖所需环境缺失、声明应执行测试或必需测试覆盖却实际零测试、旧产物、SHA 不匹配均不得记 Passed。纯构建或文档检查可按自身声明覆盖记 Passed；不适用的测试明确记 N/A，未运行的测试记 NotRun，不得冒称测试通过。记录源 SHA/dirty、工具版本、实际命令/退出码、覆盖数量、原始结果和二进制身份；保留原失败，性能延期不等于通过。CI/required checks 需实际核实，不能由配置引用推断已存在。
-- 默认由协调审计者接替 dot，负责方案、审阅与 Issue 组织，Orca 执行者在已批准边界内实施；历史 dot 审阅保留来源，默认不再等待该角色。仅显式调用 [$cooking-dot-workflow](.agents/skills/cooking-dot-workflow/SKILL.md) 时，由调用主会话唯一调度、dot 做最终技术规划与裁决，按 [协作 SOP 的显式流程约定](.trellis/spec/abilitykit/supervised-issue-delivery.md#显式-cooking-dot-工作流2026-10-05-owner-批准) 执行该需求授权、精确 SHA 审阅及恢复；Owner 范围与真实证据仍优先，旧 orca-ready/#6 不解锁。交付、依赖调度与收尾遵循 [协作 SOP](.trellis/spec/abilitykit/supervised-issue-delivery.md)。经批准且依赖已审阅的有界任务可用 orca-ready 交接；标签、报告、草案和 Proposed ADR 不授权升级、扩大范围、合并或发布。删除旧框架先查反向消费者及替代验收。
+- 结果使用 Passed / Failed / Blocked / Skipped / NotRun；声明覆盖所需环境缺失、声明应执行测试或必需测试覆盖却实际零测试、旧产物均不得记 Passed。纯构建或文档检查可按自身声明覆盖记 Passed；不适用的测试明确记 N/A，未运行的测试记 NotRun，不得冒称测试通过。记录工作分支／dirty、工具版本、实际命令／退出码、覆盖数量、原日志路径和已知运行程序身份；不做 SHA 校验、不复制原始输出、不新增 JSON 证据。保留原失败，性能延期不等于通过。CI/required checks 需实际核实，不能由配置引用推断已存在。
+- 默认由协调审计者接替 dot，负责方案、审阅与 Issue 组织，Orca 执行者在已批准边界内实施；历史 dot 审阅保留来源，默认不再等待该角色。Owner 允许时可就具体疑问咨询 dot；咨询不等于启动完整工作流或恢复旧工程。仅显式调用 [$cooking-dot-workflow](.agents/skills/cooking-dot-workflow/SKILL.md) 时，由调用主会话唯一调度、dot 做最终技术规划与裁决，按 [协作 SOP 的显式流程约定](.trellis/spec/abilitykit/supervised-issue-delivery.md#显式-cooking-dot-工作流2026-10-05-owner-批准) 执行该需求授权与恢复；不得执行其中已被上方 Owner 禁令覆盖的 SHA 校验、JSON 证据归档或框架控制扩写。旧 orca-ready/#6 不解锁。交付、依赖调度与收尾遵循 [协作 SOP](.trellis/spec/abilitykit/supervised-issue-delivery.md)。经批准且依赖已审阅的有界任务可用 orca-ready 交接；标签、报告、草案和 Proposed ADR 不授权升级、扩大范围、合并或发布。删除旧框架先查反向消费者及替代验收。
 
 ## 项目与来源边界
 
 - 项目是 Unity UPM + 纯 C#/.NET 工具库；Cooking 是应用产品方向。先读 [长期目标](ADR/long-term-goals.md)、[ADR 索引](ADR/README.md)；游戏规则、房间流程和权威策略由应用层拥有，不塞入通用框架。
-- `Unity/Packages/` 是共享源码主入口；`src/` 以 Compile Include 复用。修改前同时核对 csproj、asmdef、包依赖与生成器闭包；纯 .NET 编译不能证明 Unity Mono/IL2CPP/AOT 或跨宿主兼容。Server/Orleans 是示例，不是游戏必需服务；Coordinator 为精简契约，不假设旧 SessionCoordinator 或 Local/Remote/Hybrid 实现。
+- `Unity/Packages/` 是共享源码主入口；相关 `src/` 工程以 Compile Include 复用，Cooking 应用另有自有源码。修改前同时核对 csproj、asmdef、包依赖与生成器闭包；纯 .NET 编译不能证明 Unity Mono/IL2CPP/AOT 或跨宿主兼容。Server/Orleans 是示例，不是游戏必需服务；Coordinator 为精简契约，不假设旧 SessionCoordinator 或 Local/Remote/Hybrid 实现。
 - 应用路线唯一正文为 [technical-roadmap](Docs/design/CookingGame/technical-roadmap.md)，规范入口为 [cooking index](.trellis/spec/cooking/index.md)。相关规划先读 [gameplay-menu-plan](.trellis/spec/cooking/gameplay-menu-plan.md) 及其 Task 注册/菜单整合/架构记录路由。参考资料先读 [reference README](Docs/design/CookingGame/reference/README.md)，再读主题；参考、路线、计划不代表实现或验证。
 - 项目待办统一在 [Docs/Todo](Docs/Todo.md)；菜单原始资料见 [menu-v0.1](Docs/design/CookingGame/reference/menu-v0.1/README.md)，候选目录不等于 runtime 配置。保持已确认固定伙伴、自然完成和成功检查点语义。
 - 来源归属：长期方向/空白 → ADR/long-term-goals；架构取舍 → ADR/decisions；框架设计 → Docs/design；工程/稳定契约 → .trellis/spec；当前目标/研究/check → .trellis/tasks；.trellis/migration 只读。冲突显式列出，不自行合并成产品新语义；Proposed 不能因写完提案改 Accepted。
 
 ## Cooking 本机防火墙与共享端口工具
 
-- 源码入口：[cooking-firewall.ps1](tools/cooking-firewall.ps1)，默认配置：[cooking-network.defaults.json](tools/cooking-network.defaults.json)。只服务 Cooking Windows 联网测试；默认开放 **UDP 18090–18099**，Private/Public 网络类别，来源限制为 LocalSubnet。不切换网卡类别、不关闭防火墙，不自动开放 TCP。
-- 管理员终端配置：`powershell -ExecutionPolicy Bypass -File tools/cooking-firewall.ps1 -Action Open`。自定义范围同时指定 `-StartPort` 与 `-EndPort`。只有规则实际写入并核对后，才保存到 `%LOCALAPPDATA%\AbilityKit\CookingNetwork\ports.json`；各 worktree 共享本机这份配置，后续工具读配置，不把端口常量复制到各工作树。参数覆盖已保存配置，已保存配置覆盖随工具分发的默认值；损坏或不支持的配置报错，不静默回退。
-- 固定位置安装：`powershell -ExecutionPolicy Bypass -File tools/cooking-firewall.ps1 -Action Install`，将工具及默认配置复制到 `%LOCALAPPDATA%\AbilityKit\CookingNetwork\bin`，向当前用户 PATH 去重追加目录；新开终端后运行 `cook-firewall -Action Show` 或 `cook-firewall -Action Check`。固定安装无常驻服务；PATH 只负责找到命令，不授予 worktree 子进程防火墙权限。
-- Windows Cooking 联网测试现在自动调用 **`GetPort`**：`run-cooking-network-process-acceptance.ps1`、`run-cooking-network-concurrency-acceptance.ps1`、`run-cooking-network-rich-recovery-acceptance.ps1`、`run-cooking-network-process-measurement.ps1` 与固定 Flow 的 Network 模式均在启动房主前取端口。优先调用 `%LOCALAPPDATA%\AbilityKit\CookingNetwork\bin\cooking-firewall.ps1`，未安装时调用当前仓库工具；两者读取同一份本机配置。包装脚本默认 `-Port 0` 表示自动取端口，显式非零 `-Port` 保留调用方选择；Client 只使用房主端口，BuildOnly 不取端口。
-- 自动路径将 JSON `port` 直接交给房主，核对实际 `READY` 的端口与进程身份后再启动客户端。端口选择仍只由工具查询共享配置和 UDP 占用；`portReserved=false` 表示未保留候选。范围耗尽、工具失败、绑定冲突或 READY 不一致均明确失败；重新运行测试会重新取端口，不静默退回随机端口或范围外端口。选择与实际端点证据保存在运行目录。手动启动仍先执行 `cook-firewall -Action GetPort`。
-- `Show` 读取配置；`Check` 核对本机规则。两者只读，可通过 `-ProgramPath` 检查确切 Cooking EXE 的阻止规则。显式 Block 优先于 Allow；若需修复该程序冲突，管理员使用 `Open -ProgramPath '<实际 Cooking EXE 完整路径>' -RepairProgramBlock`，先备份，再仅从该程序的本地 UDP 阻止规则扣除配置端口范围，保留范围外端口和原 TCP 规则；不删除其他应用或策略规则。输出提供备份路径，回退使用 `-Action RestoreBlock -BackupPath '<备份路径>'`。
-- 默认 Check，操作输出 JSON，失败返回非零退出码；`-ConfigPath` 用于显式隔离配置或测试。`Show` 与 `GetPort` 只读配置／端口占用，不证明防火墙或远端连通。规则核对、端口占用、应用监听、远端实际连通是不同事实；不能用 `Test-NetConnection -Port` 的 TCP 测试证明 UDP。缺少实际物理双机证据时连通性保持 NotRun/NOT_VERIFIED。现有房主输出 `READY <实际端口> <PID>`；本工具获取候选端口并管理防火墙及范围配置，尚不负责房主启动／关闭／查询或端口保留。
-- 聚焦控制：`powershell -ExecutionPolicy Bypass -File tools/cooking-firewall.tests.ps1`。测试使用隔离模拟，不修改真实防火墙或用户 PATH；本机应用另保留规则、端口过滤器、配置与原始退出码证据，不把它当产品 LAN 验收。
-- 集成控制：`powershell -ExecutionPolicy Bypass -File tools/cooking-test-ports.tests.ps1`；固定流程回归：`dotnet test src/AbilityKit.ET.Runtime.Tests/AbilityKit.ET.Runtime.Tests.csproj -m:1 --filter "FullyQualifiedName~CookingFixedFlowTests|FullyQualifiedName~CookingNetworkTestPortTests"`。这些测试启动时只读取配置与端口占用，不自动调用 Open/Install。离线模式、非 Windows Flow、专用 impairment relay 与进程内传输 fixture 保留各自运行语义；同机通过仍不证明物理双机 LAN。
+按需读取 [本机联网工具规范](.trellis/spec/abilitykit/cooking-network-tooling.md)，包含默认 UDP 范围、安装、共享配置、GetPort、READY 核对和阻止规则修复。操作说明不提供测试或环境修改授权；端口查询、防火墙规则、应用监听和真实远端连通分别判断。
 
-## 构建与验证（仓库根目录）
+## 构建与验证路由
 
-- 默认：`powershell -ExecutionPolicy Bypass -File tools/run_test_gate.ps1`，`-List` 查看、按范围选择 `-Gate core-stability` / `-Gate runtime-contracts`；权威为 [test-gates](tools/test-gates.json)。先读 [测试规范](Docs/AbilityKit测试门禁与批量回归规范.md)，不能用 MOBA precheck 代替全部范围。
-- 聚焦构建：`dotnet build src/AbilityKit.Demo.Moba.Console/AbilityKit.Demo.Moba.Console.csproj`。主要 .NET 项目 net10.0，其他宿主按实际 csproj；README SDK 10.0.300 不表示已有 global.json 固定。
-- Unity 2022.3.62f1，打开 Unity/；不得编辑自动生成 csproj、Library/、Temp/。编译辅助：`powershell -ExecutionPolicy Bypass -File tools/run-unity-compile-check.ps1`；需要本机 managed DLL，缺失或脚本 exit0 跳过都不算通过。
-- EditMode：`powershell -ExecutionPolicy Bypass -File tools/run-unity-editmode-tests.ps1 -TestAssembly AbilityKit.Ability.Editor.Tests`；另一 Editor 占用时不运行批处理、不删锁文件。
-- 协议修改先读 [Protocols README](Protocols/README.md)。Catalog：`powershell -ExecutionPolicy Bypass -File tools/compile-protocol-catalogs.ps1 -Check`；wire：`tools/export-protocol-wire.ps1 -Projects shooter,moba -Check -Strict`。Catalogs/WireSchemas 修改后经生成器更新，勿手改派生文件。
-- 以上是已发现命令，交付报告实际执行和未执行原因；Cooking Unity 仍后置且未授权实施。物理两 PC 不可用时保留 NOT_VERIFIED，不重复询问硬件、不用同机替代出口；见 [physical runbook](.trellis/tasks/10-02-cooking-network-gameplay-loop/research/physical-lan-runbook.md)。
+- 先应用 Owner 测试范围与本轮授权，再读 [Cooking FlowAcceptance](Docs/design/CookingGame/testing/fixed-flow.md)。不将全仓 gate、示例 build、旧 rich、框架控制或 Unity 检查当作默认下一步；用户要求不测试时，本路由停止执行。
+- [测试规范](Docs/AbilityKit测试门禁与批量回归规范.md)、[历史命令](.trellis/spec/abilitykit/validation.md) 与 `tools/test-gates.json` 只用于定位既有配置；配置存在不证明已授权、已运行或已通过。协议生成先读 [Protocols README](Protocols/README.md)，不默认导出 shooter／moba。
+- 实际构建目标与 SDK 以相关 `.csproj` 和已存在的配置为准；主要 .NET 工程为 net10.0，README 中的 SDK 版本不证明已有固定配置。Unity 工程版本为 2022.3.62f1；Cooking Unity 仍后置且未授权实施。不得编辑 Unity 自动生成 csproj、Library/、Temp/，不得删 Editor 锁文件。
+- 报告只记录实际执行的结果、退出码、未执行原因和原日志路径。未运行的测试记 NotRun；物理双机不可用时保持 NOT_VERIFIED，不用同机替代、不重复询问硬件，见 [physical runbook](.trellis/tasks/10-02-cooking-network-gameplay-loop/research/physical-lan-runbook.md)。
 
 ## Orca、工作树与 Trellis
 
