@@ -1,0 +1,31 @@
+{
+  "id": "test-gate-result-contract",
+  "name": "test-gate-result-contract",
+  "title": "Issue 6 gate result truth and coverage contract",
+  "description": "Plan/schema approval before implementing truthful gate results, coverage aggregation and provenance.",
+  "status": "planning",
+  "dev_type": "documentation",
+  "scope": "gate-runner-plan-and-schema",
+  "package": null,
+  "priority": "P0",
+  "creator": "Kakusya",
+  "assignee": "Kakusya",
+  "createdAt": "2026-10-04",
+  "completedAt": null,
+  "branch": "Kakusya/issue6-test-gate-results",
+  "base_branch": "master",
+  "worktree_path": null,
+  "commit": null,
+  "pr_url": "https://github.com/Kakusya/AbilityKit/pull/11",
+  "subtasks": [],
+  "children": [],
+  "parent": null,
+  "relatedFiles": [],
+  "notes": "Planning only. Await Dot approval before runner implementation. Owner started Issue 6 after Issue 5 closeout.",
+  "meta": {
+    "issue": 6,
+    "base_sha": "7aa3e8b67c13a469192edaa761cb3dfc1fa9294b",
+    "base_dirty": false,
+    "approval": "pending-dot-plan-schema"
+  }
+}

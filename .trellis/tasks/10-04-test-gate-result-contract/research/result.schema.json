@@ -1,0 +1,398 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "$id": "urn:abilitykit:test-gate-result:proposal:1",
+  "title": "Proposed result shape; semantic validator additionally required",
+  "$ref": "#/$defs/result",
+  "$defs": {
+    "artifact": {
+      "type": "object",
+      "required": [
+        "path",
+        "bytes",
+        "sha256",
+        "producerRunId",
+        "producerResultId"
+      ],
+      "additionalProperties": false,
+      "properties": {
+        "path": {
+          "type": "string",
+          "pattern": "^(?![A-Za-z]:|/|\\\\|.*(?:^|/)\\.\\.(?:/|$)).+"
+        },
+        "bytes": {
+          "type": "integer",
+          "minimum": 1
+        },
+        "sha256": {
+          "type": "string",
+          "pattern": "^[0-9a-f]{64}$"
+        },
+        "producerRunId": {
+          "type": "string",
+          "minLength": 1
+        },
+        "producerResultId": {
+          "type": "string",
+          "minLength": 1
+        }
+      }
+    },
+    "coverage": {
+      "type": "object",
+      "required": [
+        "required",
+        "optional",
+        "completed",
+        "missingRequired",
+        "missingOptional"
+      ],
+      "additionalProperties": false,
+      "properties": {
+        "required": {
+          "type": "array",
+          "uniqueItems": true,
+          "items": {
+            "type": "string",
+            "minLength": 1
+          }
+        },
+        "optional": {
+          "type": "array",
+          "uniqueItems": true,
+          "items": {
+            "type": "string",
+            "minLength": 1
+          }
+        },
+        "completed": {
+          "type": "array",
+          "uniqueItems": true,
+          "items": {
+            "type": "string",
+            "minLength": 1
+          }
+        },
+        "missingRequired": {
+          "type": "array",
+          "uniqueItems": true,
+          "items": {
+            "type": "string",
+            "minLength": 1
+          }
+        },
+        "missingOptional": {
+          "type": "array",
+          "uniqueItems": true,
+          "items": {
+            "type": "string",
+            "minLength": 1
+          }
+        }
+      }
+    },
+    "result": {
+      "type": "object",
+      "required": [
+        "schemaVersion",
+        "example",
+        "resultType",
+        "runId",
+        "resultId",
+        "name",
+        "kind",
+        "status",
+        "cliExitCode",
+        "processExitCode",
+        "reason",
+        "source",
+        "configSha256",
+        "startedAt",
+        "endedAt",
+        "command",
+        "tools",
+        "coverage",
+        "tests",
+        "artifacts",
+        "fullGateAccepted",
+        "steps"
+      ],
+      "additionalProperties": false,
+      "properties": {
+        "schemaVersion": {
+          "const": 1
+        },
+        "example": {
+          "type": "boolean"
+        },
+        "resultType": {
+          "enum": [
+            "gate",
+            "step"
+          ]
+        },
+        "runId": {
+          "type": "string",
+          "minLength": 1
+        },
+        "resultId": {
+          "type": "string",
+          "minLength": 1
+        },
+        "name": {
+          "type": "string"
+        },
+        "kind": {
+          "type": "string"
+        },
+        "status": {
+          "enum": [
+            "Passed",
+            "Failed",
+            "Blocked",
+            "Skipped",
+            "NotRun"
+          ]
+        },
+        "cliExitCode": {
+          "type": "integer",
+          "minimum": 0,
+          "maximum": 4
+        },
+        "processExitCode": {
+          "type": [
+            "integer",
+            "null"
+          ]
+        },
+        "reason": {
+          "type": [
+            "string",
+            "null"
+          ]
+        },
+        "source": {
+          "type": "object",
+          "required": [
+            "sha",
+            "dirty",
+            "inputManifestSha256"
+          ],
+          "additionalProperties": false,
+          "properties": {
+            "sha": {
+              "type": "string",
+              "pattern": "^[0-9a-f]{40}$"
+            },
+            "dirty": {
+              "type": "boolean"
+            },
+            "inputManifestSha256": {
+              "type": [
+                "string",
+                "null"
+              ],
+              "pattern": "^[0-9a-f]{64}$"
+            }
+          }
+        },
+        "configSha256": {
+          "type": "string",
+          "pattern": "^[0-9a-f]{64}$"
+        },
+        "startedAt": {
+          "type": [
+            "string",
+            "null"
+          ],
+          "format": "date-time"
+        },
+        "endedAt": {
+          "type": [
+            "string",
+            "null"
+          ],
+          "format": "date-time"
+        },
+        "command": {
+          "type": [
+            "object",
+            "null"
+          ],
+          "required": [
+            "executable",
+            "arguments"
+          ],
+          "additionalProperties": false,
+          "properties": {
+            "executable": {
+              "type": "string"
+            },
+            "arguments": {
+              "type": "array",
+              "items": {
+                "type": "string"
+              }
+            }
+          }
+        },
+        "tools": {
+          "type": "array",
+          "items": {
+            "type": "object",
+            "required": [
+              "name",
+              "version"
+            ],
+            "additionalProperties": false,
+            "properties": {
+              "name": {
+                "type": "string"
+              },
+              "version": {
+                "type": [
+                  "string",
+                  "null"
+                ]
+              }
+            }
+          }
+        },
+        "coverage": {
+          "$ref": "#/$defs/coverage"
+        },
+        "tests": {
+          "type": [
+            "object",
+            "null"
+          ],
+          "required": [
+            "declared",
+            "total",
+            "passed",
+            "failed",
+            "skipped"
+          ],
+          "additionalProperties": false,
+          "properties": {
+            "declared": {
+              "type": "boolean"
+            },
+            "total": {
+              "type": "integer",
+              "minimum": 0
+            },
+            "passed": {
+              "type": "integer",
+              "minimum": 0
+            },
+            "failed": {
+              "type": "integer",
+              "minimum": 0
+            },
+            "skipped": {
+              "type": "integer",
+              "minimum": 0
+            }
+          }
+        },
+        "artifacts": {
+          "type": "array",
+          "items": {
+            "$ref": "#/$defs/artifact"
+          }
+        },
+        "fullGateAccepted": {
+          "type": "boolean"
+        },
+        "steps": {
+          "type": "array",
+          "items": {
+            "$ref": "#/$defs/result"
+          }
+        }
+      },
+      "allOf": [
+        {
+          "if": {
+            "properties": {
+              "status": {
+                "const": "Passed"
+              }
+            }
+          },
+          "then": {
+            "properties": {
+              "cliExitCode": {
+                "const": 0
+              }
+            }
+          }
+        },
+        {
+          "if": {
+            "properties": {
+              "status": {
+                "const": "Failed"
+              }
+            }
+          },
+          "then": {
+            "properties": {
+              "cliExitCode": {
+                "const": 1
+              }
+            }
+          }
+        },
+        {
+          "if": {
+            "properties": {
+              "status": {
+                "const": "Blocked"
+              }
+            }
+          },
+          "then": {
+            "properties": {
+              "cliExitCode": {
+                "const": 2
+              }
+            }
+          }
+        },
+        {
+          "if": {
+            "properties": {
+              "status": {
+                "const": "Skipped"
+              }
+            }
+          },
+          "then": {
+            "properties": {
+              "cliExitCode": {
+                "const": 3
+              }
+            }
+          }
+        },
+        {
+          "if": {
+            "properties": {
+              "status": {
+                "const": "NotRun"
+              }
+            }
+          },
+          "then": {
+            "properties": {
+              "cliExitCode": {
+                "const": 4
+              }
+            }
+          }
+        }
+      ]
+    }
+  }
+}
